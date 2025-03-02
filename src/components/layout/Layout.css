@@ -39,6 +39,21 @@
   text-decoration: underline;
 }
 
+.nav-button {
+  background: none;
+  border: 1px solid white;
+  color: white;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 .app-main {
   flex: 1;
   padding: 2rem;
@@ -53,4 +68,4 @@
   text-align: center;
   padding: 1rem;
   margin-top: auto;
-} 
+}

@@ -1,9 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
+import logger from '../../utils/logger';
+import './GamePage.css';
 
 const GamePage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    logger.component.mount('GamePage');
+    logger.component.render('GamePage');
+    logger.debug('GamePage', 'Usuario actual:', user);
+    
+    return () => {
+      logger.component.unmount('GamePage');
+    };
+  }, [user]);
 
   return (
     <div className="game-page">
@@ -16,4 +28,4 @@ const GamePage: React.FC = () => {
   );
 };
 
-export default GamePage; 
+export default GamePage;

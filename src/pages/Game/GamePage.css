@@ -1,0 +1,22 @@
+.game-page {
+  padding: 2rem;
+}
+
+.game-page h1 {
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+}
+
+.game-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  min-height: 400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-size: 1.2rem;
+  color: #666;
+} 

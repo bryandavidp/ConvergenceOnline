@@ -1,34 +1,28 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
+import { loggerMiddleware } from './middleware/loggerMiddleware';
+import logger from '../utils/logger';
+
+// Log la inicialización de la tienda
+logger.info('Store', 'Inicializando la tienda Redux');
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     user: userReducer,
   },
-});
-
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
-
-
-/* import { configureStore } from '@reduxjs/toolkit';
-import gameReducer from './slices/gameSlice';
-import authReducer from './slices/authSlice';
-import chatReducer from './slices/chatSlice';
-import { apiMiddleware } from './middleware/apiMiddleware';
-
-export const store = configureStore({
-  reducer: {
-    game: gameReducer,
-    auth: authReducer,
-    chat: chatReducer
-  },
   middleware: (getDefaultMiddleware) => 
-    getDefaultMiddleware().concat(apiMiddleware)
+    getDefaultMiddleware({
+      serializableCheck: {
+        // Ignorar algunas acciones no serializables si es necesario
+        ignoredActions: [],
+      },
+    }).concat(loggerMiddleware)
 });
+
+// Log cuando la tienda ha sido configurada
+logger.info('Store', 'Tienda Redux inicializada correctamente');
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
- */
