@@ -6,9 +6,16 @@ import './GameInfo.css';
 const GameInfo: React.FC = () => {
   const { score, highScore, level, timer, spawnRate } = useSelector((state: RootState) => state.game);
   
-  // Calcular el multiplicador de velocidad
-  const baseSpeed = 3000; // ms
-  const speedMultiplier = (baseSpeed / spawnRate).toFixed(1);
+  // Calcular el multiplicador de velocidad basado en la configuración actual
+  const baseSpawnRate = 3.5; // Velocidad base en segundos
+  const speedMultiplier = (baseSpawnRate / spawnRate).toFixed(1);
+  
+  // Formatear el tiempo para mostrar minutos:segundos
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
   
   return (
     <div className="game-info">
@@ -26,7 +33,7 @@ const GameInfo: React.FC = () => {
       
       <div className="stat-card">
         <div className="stat-icon">⏱️</div>
-        <div className="stat-value">{timer}</div>
+        <div className="stat-value">{formatTime(timer)}</div>
         <div className="stat-label">Tiempo</div>
       </div>
       

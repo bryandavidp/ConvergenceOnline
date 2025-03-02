@@ -1,7 +1,7 @@
 /* Variables */
 :root {
   --cell-size: 60px;
-  --board-size: 6;
+  --board-size: 8;
   --border-radius: 16px;
   --cell-border-radius: 12px;
   --cell-gap: 8px;
@@ -9,6 +9,7 @@
   --board-bg-color: #5d73e8;
   --cell-bg-color: #e6e6e6;
   --cell-border-color: #7a8bfe;
+  --highlight-color: #ffcc00;
 }
 
 /* Contenedor del tablero */
@@ -18,20 +19,15 @@
   align-items: center;
   width: 100%;
   height: 100%;
-  max-width: 100vw;
-  overflow: hidden;
-  background-color: transparent;
-  border-radius: var(--border-radius);
-  padding: 5px;
-  box-sizing: border-box;
+  padding: 10px;
 }
 
 /* Tablero */
 .board {
   display: grid;
-  grid-template-columns: repeat(var(--board-size), minmax(30px, var(--cell-size)));
-  grid-template-rows: repeat(var(--board-size), minmax(30px, var(--cell-size)));
-  gap: var(--cell-gap);
+  grid-template-columns: repeat(var(--board-size), var(--cell-size));
+  grid-template-rows: repeat(var(--board-size), var(--cell-size));
+  gap: 2px;
   padding: var(--board-padding);
   background-color: var(--board-bg-color);
   border-radius: var(--border-radius);
@@ -45,20 +41,26 @@
 
 /* Celdas */
 .cell {
-  width: 100%;
-  height: 100%;
+  width: var(--cell-size);
+  height: var(--cell-size);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   font-size: calc(var(--cell-size) * 0.6);
+  user-select: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  user-select: none;
-  border-radius: var(--cell-border-radius);
   position: relative;
   overflow: hidden;
-  background-color: var(--cell-bg-color);
-  box-shadow: 0 0 0 3px var(--cell-border-color);
+}
+
+/* Celda resaltada (para pistas) */
+.cell.highlighted {
+  animation: pulse 1.5s infinite alternate;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+  z-index: 10;
 }
 
 /* Quitar colores alternos y usar un solo estilo para todas las celdas */
@@ -68,8 +70,7 @@
 
 /* Hover sobre celdas */
 .cell:hover {
-  transform: scale(0.97);
-  opacity: 0.9;
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Estados especiales */
@@ -89,84 +90,74 @@
 
 .cell.error {
   animation: shake 0.5s;
-  border: 2px solid #F44336;
-  box-shadow: 0 0 10px #F44336;
+  background-color: rgba(255, 0, 0, 0.2);
 }
 
 /* Animación para nuevos iconos */
 .cell.new-icon {
-  animation: popIn 0.5s ease-out;
+  animation: fadeIn 0.5s;
 }
 
 /* Animación para eliminar iconos */
 .cell.removing-icon {
-  animation: popOut 0.5s ease-in forwards;
+  animation: fadeOut 0.3s;
 }
 
 /* Efecto de brillo */
 .cell.glow-effect {
-  animation: glow 1s;
+  animation: glow 0.8s;
 }
 
 /* Animaciones */
-@keyframes popIn {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  70% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes popOut {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(0);
-    opacity: 0;
-  }
-}
-
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-@keyframes glow {
-  0% { box-shadow: 0 0 5px #2196F3; }
-  50% { box-shadow: 0 0 20px #2196F3; }
-  100% { box-shadow: 0 0 5px #2196F3; }
+  0% { 
+    transform: scale(1);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  }
+  100% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+  }
 }
 
 @keyframes shake {
-  0%, 100% {
-    transform: translateX(0);
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+@keyframes fadeIn {
+  0% { 
+    opacity: 0;
+    transform: scale(0.8);
   }
-  10%, 30%, 50%, 70%, 90% {
-    transform: translateX(-5px);
+  100% { 
+    opacity: 1;
+    transform: scale(1);
   }
-  20%, 40%, 60%, 80% {
-    transform: translateX(5px);
+}
+
+@keyframes fadeOut {
+  0% { 
+    opacity: 1;
+    transform: scale(1);
   }
+  100% { 
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.8); }
+  100% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  :root {
-    --cell-gap: 6px;
-    --board-padding: 8px;
-  }
-  
-  .cell {
-    font-size: calc(var(--cell-size) * 0.5);
+  .board {
+    gap: 1px;
   }
 }
 
@@ -240,4 +231,17 @@
     transform: scale(1);
     opacity: 1;
   }
+}
+
+.cell.empty {
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.cell.empty:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px dashed rgba(255, 255, 255, 0.5);
+}
+
+.cell.occupied {
+  border: 1px solid rgba(255, 255, 255, 0.2);
 } 

@@ -4,9 +4,12 @@ import { RootState } from '../../../store';
 import { setGameStatus, resetGame } from '../../../store/slices/gameSlice';
 import useGameLogic from '../../../hooks/useGameLogic';
 import { audioManager } from '../../../utils/audioManager';
-import logger from '../../../utils/logger';
-import * as config from '../../../utils/config';
+import { createLogger } from '../../../utils/logUtils';
+import * as gameConfig from '../../../config/gameConfig';
 import './GameControls.css';
+
+// Crear un logger específico para este componente
+const logger = createLogger('GameControls');
 
 const GameControls: React.FC = () => {
   const dispatch = useDispatch();
@@ -18,22 +21,34 @@ const GameControls: React.FC = () => {
   
   // Manejar botón nueva partida
   const handleNewGame = useCallback(() => {
-    logger.info('GameControls', 'Nueva partida iniciada');
+    const transaction = logger.transaction('iniciar-nueva-partida');
+    
+    logger.userAction('Nueva partida iniciada', {
+      prevStatus: status,
+      boardSize
+    });
+    
     audioManager.play('start');
     dispatch(resetGame());
+    
     setTimeout(() => {
       dispatch(setGameStatus('playing'));
+      transaction.success('Juego iniciado correctamente');
     }, 300);
-  }, [dispatch]);
+  }, [dispatch, status, boardSize]);
   
   // Manejar botón de pausa/continuar
   const handlePauseToggle = useCallback(() => {
     if (status === 'playing') {
-      logger.info('GameControls', 'Juego pausado');
+      logger.userAction('Juego pausado', { 
+        tiempoTranscurrido: document.querySelector('.timer-value')?.textContent 
+      });
       audioManager.play('pause');
       dispatch(setGameStatus('paused'));
     } else if (status === 'paused') {
-      logger.info('GameControls', 'Juego reanudado');
+      logger.userAction('Juego reanudado', { 
+        tiempoPausado: document.querySelector('.timer-value')?.textContent 
+      });
       audioManager.play('resume');
       dispatch(setGameStatus('playing'));
     }
@@ -41,33 +56,46 @@ const GameControls: React.FC = () => {
   
   // Manejar botón de pista
   const handleHint = useCallback(() => {
-    logger.info('GameControls', 'Pista solicitada');
+    const timer = logger.timer('mostrar-pista');
+    
+    logger.userAction('Pista solicitada', {
+      estadoJuego: status,
+      tablero: `${boardSize}x${boardSize}`
+    });
+    
     const hint = showHint();
     
     if (!hint) {
-      logger.info('GameControls', 'No hay pistas disponibles');
-      audioManager.play('error');
+      logger.warn('No hay pistas disponibles', {
+        razon: 'No se encontraron convergencias'
+      });
+      // El sonido de error ya se reproduce en el hook useGameLogic
+    } else {
+      logger.debug('Pista mostrada correctamente', hint);
     }
     
-    // La animación de la pista se maneja en el componente GameBoard
-    if (hint) {
-      // Indicar globalmente que se ha solicitado una pista
-      (window as any).gameHintRequested = true;
-    }
-  }, [showHint]);
+    timer.end();
+    // La animación de la pista se maneja en el componente GameBoard a través del estado highlightedCells
+  }, [showHint, status, boardSize]);
   
   // Manejar toggle de música
   const handleToggleMusic = useCallback(() => {
     const newState = audioManager.toggleMusic();
     setIsMusicMuted(!newState);
-    logger.info('GameControls', `Música ${newState ? 'activada' : 'desactivada'}`);
+    
+    logger.userAction(`Música ${newState ? 'activada' : 'desactivada'}`, {
+      estadoPrevio: !newState
+    });
   }, []);
   
   // Manejar toggle de sonidos
   const handleToggleSound = useCallback(() => {
     const newState = audioManager.toggleSound();
     setIsSoundMuted(!newState);
-    logger.info('GameControls', `Efectos de sonido ${newState ? 'activados' : 'desactivados'}`);
+    
+    logger.userAction(`Efectos de sonido ${newState ? 'activados' : 'desactivados'}`, {
+      estadoPrevio: !newState
+    });
   }, []);
   
   // Manejar toggle del tema
@@ -78,18 +106,23 @@ const GameControls: React.FC = () => {
     if (isDarkTheme) {
       html.classList.remove('dark-theme');
       html.classList.add('light-theme');
-      logger.info('GameControls', 'Tema claro activado');
+      logger.userAction('Tema claro activado');
     } else {
       html.classList.remove('light-theme');
       html.classList.add('dark-theme');
-      logger.info('GameControls', 'Tema oscuro activado');
+      logger.userAction('Tema oscuro activado');
     }
   }, [isDarkTheme]);
   
   // Efecto para inicializar temas
   useEffect(() => {
+    const lifecycleLog = logger.subcontext('Inicialización');
+    lifecycleLog.lifecycle('Montando componente');
+    
     // Detectar preferencia de tema del sistema
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    lifecycleLog.debug('Preferencia de tema detectada', { prefersDark });
+    
     if (prefersDark) {
       setIsDarkTheme(true);
       document.documentElement.classList.add('dark-theme');
@@ -101,6 +134,11 @@ const GameControls: React.FC = () => {
     const savedMusicPref = localStorage.getItem('musicEnabled');
     const savedSoundPref = localStorage.getItem('soundEnabled');
     
+    lifecycleLog.debug('Preferencias de usuario cargadas', {
+      musicaGuardada: savedMusicPref,
+      sonidoGuardado: savedSoundPref
+    });
+    
     if (savedMusicPref) {
       const isEnabled = savedMusicPref !== 'false';
       setIsMusicMuted(!isEnabled);
@@ -111,9 +149,10 @@ const GameControls: React.FC = () => {
       setIsSoundMuted(!isEnabled);
     }
     
-    logger.component.mount('GameControls');
+    logger.component.mount();
     return () => {
-      logger.component.unmount('GameControls');
+      logger.component.unmount();
+      lifecycleLog.lifecycle('Componente desmontado');
     };
   }, []);
   
@@ -121,11 +160,20 @@ const GameControls: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('isMusicMuted', isMusicMuted.toString());
     localStorage.setItem('isSoundMuted', isSoundMuted.toString());
+    
+    logger.debug('Preferencias de usuario guardadas', {
+      isMusicMuted,
+      isSoundMuted
+    });
   }, [isMusicMuted, isSoundMuted]);
   
   // Calcular velocidad para mostrar
-  const speedMultiplier = config.INITIAL_SPAWN_RATE / spawnRate;
+  const baseSpawnRate = gameConfig.SPAWN_RATES.MEDIUM; // Usamos el MEDIUM como base
+  const speedMultiplier = baseSpawnRate / spawnRate;
   const speedDisplay = speedMultiplier.toFixed(1) + 'x';
+  
+  // Renderizar el componente
+  logger.component.render();
   
   return (
     <div className="game-controls">

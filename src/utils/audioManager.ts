@@ -58,11 +58,11 @@ export function createAudioManager(): AudioManagerInstance {
   loadSound('removeIcon', '/assets/audio/pops/bubble-pop.wav');
   loadSound('hint', '/assets/audio/pops/hint.wav');
   loadSound('speedUp', '/assets/audio/speed-up.mp3');
-  loadSound('penalty', '/assets/audio/negatives/penalty.mp3');
+  loadSound('penalty', '/assets/audio/error.mp3');
   loadSound('emptyBoard', '/assets/audio/pops/chime-up.wav');
   loadSound('levelTransition', '/assets/audio/positives/cartoon-sparkle.wav');
-  loadSound('convergingFound', '/assets/audio/positives/found.mp3');
-  loadSound('start', '/assets/audio/positives/start.mp3');
+  loadSound('convergingFound', '/assets/audio/positives/bleep.wav');
+  loadSound('start', '/assets/audio/positives/bleep.wav');
 
   // Música de fondo
   loadMusic('/assets/audio/level-music-2.mp3');

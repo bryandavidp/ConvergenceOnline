@@ -4,6 +4,7 @@ import { RootState } from '../../../store';
 import useGameLogic from '../../../hooks/useGameLogic';
 import logger from '../../../utils/logger';
 import { audioManager } from '../../../utils/audioManager';
+import * as gameConfig from '../../../config/gameConfig';
 import './GameBoard.css';
 
 // Componente para una celda individual
@@ -11,19 +12,33 @@ const Cell = React.memo(({
   row, 
   col, 
   value, 
-  onClick 
+  onClick,
+  isHighlighted,
+  registerCellRef
 }: { 
   row: number; 
   col: number; 
   value: string | null; 
   onClick: (row: number, col: number) => void;
+  isHighlighted?: boolean;
+  registerCellRef?: (row: number, col: number, element: HTMLDivElement | null) => void;
 }) => {
+  const cellRef = useRef<HTMLDivElement>(null);
+
+  // Registrar la referencia de la celda al montar el componente
+  useEffect(() => {
+    if (registerCellRef && cellRef.current) {
+      registerCellRef(row, col, cellRef.current);
+    }
+  }, [row, col, registerCellRef]);
+
   return (
     <div 
-      className="cell" 
+      className={`cell ${isHighlighted ? 'highlighted' : ''} ${value ? 'occupied' : 'empty'}`} 
       data-row={row} 
       data-col={col} 
       onClick={() => onClick(row, col)}
+      ref={cellRef}
     >
       {value}
     </div>
@@ -34,32 +49,17 @@ Cell.displayName = 'Cell';
 
 const GameBoard: React.FC = () => {
   const { board, boardSize, status } = useSelector((state: RootState) => state.game);
-  const { handleCellClick } = useGameLogic();
+  const { 
+    handleCellClick, 
+    highlightedCells, 
+    registerCellRef,
+    adjustBoardSize
+  } = useGameLogic();
   
   // Referencias
   const boardRef = useRef<HTMLDivElement>(null);
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  
-  // Ajustar el tamaño del tablero según el contenedor
-  const adjustBoardSize = useCallback(() => {
-    if (!boardRef.current || !boardContainerRef.current) return;
-    
-    const containerWidth = boardContainerRef.current.clientWidth;
-    const containerHeight = boardContainerRef.current.clientHeight;
-    
-    // Calcular el tamaño disponible (el mínimo entre ancho y alto)
-    const size = Math.min(containerWidth, containerHeight) - 20; // Margen
-    
-    // Establecer el tamaño como variable CSS para el grid
-    document.documentElement.style.setProperty('--board-size', boardSize.toString());
-    
-    // Calcular y establecer el tamaño de celda
-    const cellSize = Math.max(30, Math.min(80, Math.floor(size / boardSize) - 8));
-    document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
-    
-    logger.debug('GameBoard', 'Tablero ajustado', { containerSize: { width: containerWidth, height: containerHeight }, boardSize: size, cellSize });
-  }, [boardSize]);
   
   // Manejar click en celda
   const onCellClick = useCallback((row: number, col: number) => {
@@ -77,12 +77,16 @@ const GameBoard: React.FC = () => {
   // Configurar el observador de tamaño
   useEffect(() => {
     // Ajustar el tamaño inicialmente
-    adjustBoardSize();
+    if (boardRef.current && boardContainerRef.current) {
+      adjustBoardSize(boardContainerRef.current, boardRef.current);
+    }
     
     // Crear un observador de cambio de tamaño
     if (!resizeObserverRef.current && boardContainerRef.current) {
       resizeObserverRef.current = new ResizeObserver(() => {
-        adjustBoardSize();
+        if (boardRef.current && boardContainerRef.current) {
+          adjustBoardSize(boardContainerRef.current, boardRef.current);
+        }
       });
       
       resizeObserverRef.current.observe(boardContainerRef.current);
@@ -99,8 +103,15 @@ const GameBoard: React.FC = () => {
   
   // Ajustar el tamaño cuando cambia el tablero
   useEffect(() => {
-    adjustBoardSize();
+    if (boardRef.current && boardContainerRef.current) {
+      adjustBoardSize(boardContainerRef.current, boardRef.current);
+    }
   }, [board, boardSize, adjustBoardSize]);
+
+  // Verificar si una celda está resaltada (para pistas)
+  const isCellHighlighted = useCallback((row: number, col: number) => {
+    return highlightedCells?.some(cell => cell.row === row && cell.col === col) || false;
+  }, [highlightedCells]);
   
   return (
     <div className="board-container" ref={boardContainerRef}>
@@ -120,6 +131,8 @@ const GameBoard: React.FC = () => {
               col={colIndex}
               value={cell}
               onClick={onCellClick}
+              isHighlighted={isCellHighlighted(rowIndex, colIndex)}
+              registerCellRef={registerCellRef}
             />
           ))
         )}
