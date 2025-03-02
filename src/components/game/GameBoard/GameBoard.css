@@ -1,0 +1,51 @@
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, var(--cell-size, 50px));
+  grid-template-rows: repeat(8, var(--cell-size, 50px));
+  gap: 2px;
+  margin: 0 auto;
+  background-color: #ccc;
+  border-radius: 8px;
+  padding: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.board-shake {
+  animation: board-shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.level-transition {
+  animation: level-transition 1s ease-in-out;
+}
+
+@keyframes board-shake {
+  10%, 90% {
+    transform: translate3d(-2px, 0, 0);
+  }
+  20%, 80% {
+    transform: translate3d(4px, 0, 0);
+  }
+  30%, 50%, 70% {
+    transform: translate3d(-8px, 0, 0);
+  }
+  40%, 60% {
+    transform: translate3d(8px, 0, 0);
+  }
+}
+
+@keyframes level-transition {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+} 

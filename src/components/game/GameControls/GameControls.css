@@ -1,0 +1,153 @@
+.game-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.control-button {
+  width: 3.5rem;
+  height: 3.5rem;
+  font-size: 1.5rem;
+  border: none;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+.control-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.control-button:active {
+  transform: scale(0.95);
+}
+
+.control-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.control-button.new-game {
+  background-color: #2196f3;
+  color: white;
+}
+
+.control-button.hint {
+  background-color: #ffca28;
+  color: #333;
+}
+
+.control-button.pause-toggle {
+  background-color: #4caf50;
+  color: white;
+}
+
+.control-button.sound,
+.control-button.music {
+  background-color: #9c27b0;
+  color: white;
+}
+
+/* Tema */
+.theme-toggle {
+  position: relative;
+  display: inline-block;
+  margin-left: 1rem;
+}
+
+.theme-switch {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-switch-label {
+  display: block;
+  width: 60px;
+  height: 30px;
+  background: linear-gradient(to right, #f5a623, #7b68ee);
+  border-radius: 30px;
+  cursor: pointer;
+  position: relative;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: white;
+  transition: all 0.3s ease;
+}
+
+.sun-icon,
+.moon-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+}
+
+.sun-icon {
+  left: 10px;
+}
+
+.moon-icon {
+  right: 10px;
+  opacity: 0.5;
+}
+
+.theme-switch:checked + .theme-switch-label .toggle-thumb {
+  left: calc(100% - 28px);
+}
+
+.theme-switch:checked + .theme-switch-label .sun-icon {
+  opacity: 0.5;
+}
+
+.theme-switch:checked + .theme-switch-label .moon-icon {
+  opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .game-controls {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  
+  .control-button {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.2rem;
+  }
+  
+  .theme-switch-label {
+    width: 50px;
+    height: 26px;
+  }
+  
+  .toggle-thumb {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .theme-switch:checked + .theme-switch-label .toggle-thumb {
+    left: calc(100% - 24px);
+  }
+} 

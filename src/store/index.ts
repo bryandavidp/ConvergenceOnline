@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
+import gameReducer from './slices/gameSlice';
 import { loggerMiddleware } from './middleware/loggerMiddleware';
 import logger from '../utils/logger';
 
@@ -11,6 +12,7 @@ export const store = configureStore({
   reducer: {
     auth: authReducer,
     user: userReducer,
+    game: gameReducer
   },
   middleware: (getDefaultMiddleware) => 
     getDefaultMiddleware({
