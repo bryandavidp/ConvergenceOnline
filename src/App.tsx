@@ -1,6 +1,7 @@
 import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { AppDispatch } from './store';
 import { checkAuth } from './store/slices/authSlice';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
@@ -14,7 +15,7 @@ const ProfilePage = lazy(() => import('./pages/Profile/ProfilePage'));
 const NotFoundPage = lazy(() => import('./pages/NotFound/NotFoundPage'));
 
 const App: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   
   useEffect(() => {
     dispatch(checkAuth());

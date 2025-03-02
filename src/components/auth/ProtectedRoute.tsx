@@ -1,13 +1,4 @@
 // src/components/auth/ProtectedRoute.tsx
-import * as React from 'react';
-
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <>{children}</>;
-};
-
-
-
-/* // src/components/auth/ProtectedRoute.tsx
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -43,5 +34,5 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   return <>{children}</>;
 };
+
 export default ProtectedRoute;
- */
