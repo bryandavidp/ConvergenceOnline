@@ -58,6 +58,18 @@ class SocketService {
   isConnected() {
     return this.connected;
   }
+  
+  on(event: string, callback: (...args: any[]) => void) {
+    if (this.socket) {
+      this.socket.on(event, callback);
+    }
+  }
+  
+  off(event: string, callback?: (...args: any[]) => void) {
+    if (this.socket) {
+      this.socket.off(event, callback);
+    }
+  }
 }
 
 export const socketService = new SocketService();

@@ -1,6 +1,5 @@
-import React, { useCallback, useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../../store';
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { setGameStatus, setGameMode } from '../../../store/slices/gameSlice';
 import { audioManager } from '../../../utils/audioManager';
 import logger from '../../../utils/logger';
@@ -10,47 +9,92 @@ interface StartGameModalProps {
   isVisible: boolean;
 }
 
-type GameMode = 'easy' | 'normal' | 'hard';
+// Definir tipos de acuerdo con GameState
+type GameMode = 'easy' | 'normal' | 'hard' | 'tutorial';
 
 const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible }) => {
   const dispatch = useDispatch();
-  const { currentMode } = useSelector((state: RootState) => state.game);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<GameMode>('normal');
+  const [selectedMode, setSelectedMode] = useState<string>('normal');
   
-  // Iniciar juego
-  const handleStartGame = useCallback(() => {
-    // Usar modo normal por defecto
-    const modeToUse = 'normal';
+  const handleStartGame = () => {
+    // Registrar inicio del juego
+    logger.info('StartGameModal', `Juego iniciado en modo: ${selectedMode}`);
     
-    logger.info('StartGameModal', 'Juego iniciado en modo: ' + modeToUse);
+    // Actualizar el estado global con la dificultad y modo seleccionados
+    dispatch(setGameMode(selectedDifficulty));
+    
+    // Cambiar el estado del juego a 'playing'
+    dispatch(setGameStatus('playing'));
+    
+    // Reproducir sonido de inicio
     audioManager.play('start');
     
-    // Actualizar el modo en el store si es necesario
-    if (modeToUse !== currentMode) {
-      dispatch(setGameMode(modeToUse));
-    }
-    
-    // Cambiar el estado del juego a "playing" con un breve retraso
+    // Esperar un momento antes de iniciar la música
     setTimeout(() => {
-      dispatch(setGameStatus('playing'));
-    }, 300);
-  }, [dispatch, currentMode]);
+      // Reproducir música de fondo si está habilitada
+      audioManager.startMusic();
+    }, 500);
+  };
   
   if (!isVisible) return null;
   
   return (
-    <div className="game-modal start-game">
+    <div className="modal-container">
       <div className="modal-content">
-        <h1>Convergencia</h1>
-        <p className="subtitle">Conecta y combina iconos iguales</p>
+        <h2>¡Convergencia!</h2>
+        <p>Une los mismos iconos desde direcciones opuestas.</p>
         
-        <div className="game-icon-preview">
-          {['🍎', '🍊', '🍇', '🍓'].map(icon => (
-            <div key={icon} className="preview-icon">{icon}</div>
-          ))}
+        <div className="form-group">
+          <label>Dificultad:</label>
+          <div className="button-group">
+            <button 
+              className={selectedDifficulty === 'easy' ? 'active' : ''} 
+              onClick={() => setSelectedDifficulty('easy')}
+            >
+              Fácil
+            </button>
+            <button 
+              className={selectedDifficulty === 'normal' ? 'active' : ''} 
+              onClick={() => setSelectedDifficulty('normal')}
+            >
+              Normal
+            </button>
+            <button 
+              className={selectedDifficulty === 'hard' ? 'active' : ''} 
+              onClick={() => setSelectedDifficulty('hard')}
+            >
+              Difícil
+            </button>
+          </div>
+        </div>
+        
+        <div className="form-group">
+          <label>Modo de juego:</label>
+          <div className="button-group">
+            <button 
+              className={selectedMode === 'normal' ? 'active' : ''} 
+              onClick={() => setSelectedMode('normal')}
+            >
+              Normal
+            </button>
+            <button 
+              className={selectedMode === 'timed' ? 'active' : ''} 
+              onClick={() => setSelectedMode('timed')}
+            >
+              Contrarreloj
+            </button>
+            <button 
+              className={selectedMode === 'zen' ? 'active' : ''} 
+              onClick={() => setSelectedMode('zen')}
+            >
+              Zen
+            </button>
+          </div>
         </div>
         
         <button className="start-button" onClick={handleStartGame}>
-          Jugar
+          ¡Jugar Ahora!
         </button>
       </div>
     </div>

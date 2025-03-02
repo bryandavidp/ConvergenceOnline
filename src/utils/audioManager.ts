@@ -29,43 +29,90 @@ export function createAudioManager(): AudioManagerInstance {
   let volume = parseFloat(localStorage.getItem('soundVolume') || '0.5');
   let musicVolume = parseFloat(localStorage.getItem('musicVolume') || '0.3');
 
-  // Función para cargar un sonido
+  // Función para cargar un sonido con manejo de errores
   function loadSound(name: string, url: string) {
-    const audio = new Audio();
-    audio.src = url;
-    audio.preload = 'auto';
-    sounds[name] = audio;
+    try {
+      const audio = new Audio();
+      audio.src = url;
+      audio.preload = 'auto';
+      
+      // Agregar un manejador de errores
+      audio.onerror = () => {
+        console.warn(`Error al cargar el sonido: ${name} (${url}). Usando sonido alternativo.`);
+        // Si hay un error, asignar un sonido por defecto o uno vacío
+        audio.src = getDefaultSoundUrl(name);
+      };
+      
+      sounds[name] = audio;
+    } catch (error) {
+      console.error(`Error al inicializar el sonido: ${name}`, error);
+      // Crear un audio vacío como fallback
+      sounds[name] = new Audio();
+    }
+  }
+
+  // Función para obtener una URL de sonido por defecto
+  function getDefaultSoundUrl(name: string): string {
+    // Usar un sonido base por categoría
+    if (name.includes('success') || name.includes('level') || name.includes('converging')) {
+      return 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'; // Sonido corto vacío
+    } else if (name.includes('error') || name.includes('penalty')) {
+      return 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'; // Sonido corto vacío
+    } else {
+      return 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'; // Sonido corto vacío
+    }
   }
 
   // Función para cargar música
   function loadMusic(url: string) {
-    music = new Audio();
-    music.src = url;
-    music.loop = true;
-    music.volume = musicVolume;
-    music.preload = 'auto';
+    try {
+      music = new Audio();
+      music.src = url;
+      music.loop = true;
+      music.volume = musicVolume;
+      music.preload = 'auto';
+      
+      // Agregar un manejador de errores
+      music.onerror = () => {
+        console.warn(`Error al cargar la música: ${url}. Usando música alternativa.`);
+        // Si hay un error, asignar una música por defecto o una vacía
+        if (music) {
+          music.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+        }
+      };
+    } catch (error) {
+      console.error('Error al inicializar la música', error);
+      music = null;
+    }
   }
 
-  // Precargar sonidos básicos
-  loadSound('success', '/assets/audio/positives/bleep.wav');
-  loadSound('error', '/assets/audio/negatives/error.wav');
-  loadSound('levelComplete', '/assets/audio/level-completed.wav');
-  loadSound('gameOver', '/assets/audio/pops/gameover.wav');
-  loadSound('click', '/assets/audio/pops/click.wav');
+  // Precargar sonidos con manejo seguro de errores
+  try {
+    // Sonidos básicos
+    loadSound('success', '/assets/audio/positives/bleep.wav');
+    loadSound('error', '/assets/audio/negatives/error.wav');
+    loadSound('levelComplete', '/assets/audio/level-completed.wav');
+    loadSound('gameOver', '/assets/audio/pops/gameover.wav');
+    loadSound('click', '/assets/audio/pops/click.wav');
 
-  // Sonidos específicos del juego
-  loadSound('newIcon', '/assets/audio/pops/pop-up.wav');
-  loadSound('removeIcon', '/assets/audio/pops/bubble-pop.wav');
-  loadSound('hint', '/assets/audio/pops/hint.wav');
-  loadSound('speedUp', '/assets/audio/speed-up.mp3');
-  loadSound('penalty', '/assets/audio/negatives/penalty.mp3');
-  loadSound('emptyBoard', '/assets/audio/pops/chime-up.wav');
-  loadSound('levelTransition', '/assets/audio/positives/cartoon-sparkle.wav');
-  loadSound('convergingFound', '/assets/audio/positives/found.mp3');
-  loadSound('start', '/assets/audio/positives/start.mp3');
+    // Sonidos específicos del juego
+    loadSound('newIcon', '/assets/audio/pops/pop-up.wav');
+    loadSound('removeIcon', '/assets/audio/pops/bubble-pop.wav');
+    loadSound('hint', '/assets/audio/pops/hint.wav');
+    loadSound('speedUp', '/assets/audio/speed-up.mp3');
+    loadSound('penalty', '/assets/audio/negatives/penalty.mp3');
+    loadSound('emptyBoard', '/assets/audio/pops/chime-up.wav');
+    loadSound('levelTransition', '/assets/audio/positives/cartoon-sparkle.wav');
+    loadSound('convergingFound', '/assets/audio/positives/found.mp3');
+    loadSound('start', '/assets/audio/positives/start.mp3');
+    loadSound('converge', '/assets/audio/positives/success.mp3');
+    loadSound('pageLoad', '/assets/audio/positives/bleep.wav');
 
-  // Música de fondo
-  loadMusic('/assets/audio/level-music-2.mp3');
+    // Música de fondo
+    loadMusic('/assets/audio/level-music-2.mp3');
+  } catch (error) {
+    console.error('Error al cargar recursos de audio', error);
+  }
 
   return {
     sounds,
@@ -76,16 +123,24 @@ export function createAudioManager(): AudioManagerInstance {
     musicVolume,
 
     play(name: string) {
-      if (!enabled || !sounds[name]) return;
-      console.log('Reproduciendo sonido:', name);
-
+      if (!enabled) return;
+      
       try {
+        // Verificar si el sonido existe
+        if (!sounds[name]) {
+          console.warn(`Sonido no encontrado: ${name}, creando uno temporal`);
+          loadSound(name, getDefaultSoundUrl(name));
+        }
+        
         // Clonar el sonido para permitir reproducciones superpuestas
         const sound = sounds[name].cloneNode() as HTMLAudioElement;
         sound.volume = volume;
-        sound.play().catch(e => console.log('Error reproduciendo sonido:', e));
+        sound.play().catch(e => {
+          console.warn(`Error reproduciendo sonido ${name}:`, e);
+          // No hacer nada más, simplemente registrar el error
+        });
       } catch (error) {
-        console.error('Error al reproducir sonido:', error);
+        console.error(`Error al reproducir sonido: ${name}`, error);
       }
     },
 
@@ -95,28 +150,30 @@ export function createAudioManager(): AudioManagerInstance {
       try {
         music.volume = musicVolume;
         music.currentTime = 0;
-        music.play().catch(e => console.log('Error reproduciendo música:', e));
+        music.play().catch(e => {
+          console.warn('Error reproduciendo música:', e);
+        });
       } catch (error) {
         console.error('Error al iniciar música:', error);
       }
     },
 
     stopMusic() {
-      if (!music) return;
-
       try {
-        music.pause();
-        music.currentTime = 0;
+        if (music) {
+          music.pause();
+          music.currentTime = 0;
+        }
       } catch (error) {
         console.error('Error al detener música:', error);
       }
     },
 
     pauseMusic() {
-      if (!music) return;
-
       try {
-        music.pause();
+        if (music) {
+          music.pause();
+        }
       } catch (error) {
         console.error('Error al pausar música:', error);
       }
@@ -126,7 +183,7 @@ export function createAudioManager(): AudioManagerInstance {
       if (!musicEnabled || !music) return;
 
       try {
-        music.play().catch(e => console.log('Error resumiendo música:', e));
+        music.play().catch(e => console.warn('Error al reanudar música:', e));
       } catch (error) {
         console.error('Error al reanudar música:', error);
       }
@@ -142,30 +199,30 @@ export function createAudioManager(): AudioManagerInstance {
       musicEnabled = !musicEnabled;
       localStorage.setItem('musicEnabled', musicEnabled.toString());
 
-      if (musicEnabled) {
-        this.resumeMusic();
-      } else {
-        this.pauseMusic();
+      if (musicEnabled && music) {
+        music.play().catch(e => console.warn('Error al activar música:', e));
+      } else if (music) {
+        music.pause();
       }
 
       return musicEnabled;
     },
 
     setVolume(newVolume: number) {
-      volume = newVolume;
-      localStorage.setItem('soundVolume', newVolume.toString());
+      volume = Math.max(0, Math.min(1, newVolume));
+      localStorage.setItem('soundVolume', volume.toString());
     },
 
     setMusicVolume(newVolume: number) {
-      musicVolume = newVolume;
-      localStorage.setItem('musicVolume', newVolume.toString());
+      musicVolume = Math.max(0, Math.min(1, newVolume));
+      localStorage.setItem('musicVolume', musicVolume.toString());
 
       if (music) {
-        music.volume = newVolume;
+        music.volume = musicVolume;
       }
     }
   };
 }
 
-// Exportar una instancia global para uso general
+// Exportar una instancia única
 export const audioManager = createAudioManager(); 

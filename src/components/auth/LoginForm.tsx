@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { login } from '../../store/slices/authSlice';
 import './LoginForm.css';
+import { AppDispatch } from '../../store';
 
 const LoginForm: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,7 +16,11 @@ const LoginForm: React.FC = () => {
     setError('');
     
     try {
-      await dispatch(login({ email, password }));
+      const result = await dispatch(login({ email, password }));
+      // Verificar si la acción fue rechazada
+      if (login.rejected.match(result)) {
+        setError('Error al iniciar sesión. Verifica tus credenciales.');
+      }
     } catch (err) {
       setError('Error al iniciar sesión. Verifica tus credenciales.');
     }
