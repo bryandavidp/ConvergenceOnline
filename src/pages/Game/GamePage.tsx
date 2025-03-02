@@ -5,7 +5,6 @@ import { setGameStatus, setLevel, setBoardSize, setAvailableIcons, setSpawnRate 
 import logger from '../../utils/logger';
 import useGameLogic from '../../hooks/useGameLogic';
 import GameBoard from '../../components/game/GameBoard/GameBoard';
-import GameControls from '../../components/game/GameControls/GameControls';
 import GameOverModal from '../../components/game/GameModals/GameOverModal';
 import LevelCompleteModal from '../../components/game/GameModals/LevelCompleteModal';
 import StartGameModal from '../../components/game/GameModals/StartGameModal';
@@ -15,7 +14,7 @@ import './GamePage.css';
 
 const GamePage: React.FC = () => {
   const dispatch = useDispatch();
-  const { status, level, boardSize, currentMode } = useSelector((state: RootState) => state.game);
+  const { status, level, boardSize, currentMode, score, timer, spawnRate } = useSelector((state: RootState) => state.game);
   const { initializeBoard, stopTimers } = useGameLogic();
   const [boardInitialized, setBoardInitialized] = useState<boolean>(false);
   
@@ -120,27 +119,36 @@ const GamePage: React.FC = () => {
     }
   }, [level, boardSize, dispatch]);
   
-  // Verificar si es nivel tutorial
-  const isTutorialLevel = level <= config.LEVEL_LIMITS.TUTORIAL_LEVELS;
+  // Calcular el multiplicador de velocidad para mostrar
+  const speedMultiplier = (config.SPAWN_RATES.MEDIUM / spawnRate).toFixed(1);
   
   return (
     <div className="game-page">
+      {/* Barra superior minimalista con estadísticas */}
       <div className="game-header">
-        <h1>Juego de Convergencia</h1>
-        <div className="level-display">
-          <span className="level-label">Nivel:</span>
-          <span className="level-number">{level}</span>
-          {isTutorialLevel && <span className="tutorial-badge">Tutorial</span>}
+        <div className="game-stats">
+          <div className="stat-item">
+            <div className="stat-icon">🏆</div>
+            <div className="stat-value">{score}</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-icon">🏅</div>
+            <div className="stat-value">{level}</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-icon">⏱️</div>
+            <div className="stat-value">{timer}</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-icon">🚀</div>
+            <div className="stat-value">{speedMultiplier}x</div>
+          </div>
         </div>
       </div>
       
       <div className="game-container">
         <div className="game-area">
           <GameBoard />
-        </div>
-        
-        <div className="game-sidebar">
-          <GameControls />
         </div>
       </div>
       

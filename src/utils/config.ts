@@ -78,12 +78,12 @@ export const LEVEL_LIMITS = {
   // Nivel máximo para dificultad difícil es MAX_LEVEL
 };
 
-// Iconos disponibles en el juego
+// Iconos disponibles en el juego (frutas y vegetales)
 export const AVAILABLE_ICONS = [
-  '🐢', '🐬', '🦊', '🐨', '🦁', 
-  '🐯', '🐷', '🐸', '🦄', '🐼',
-  '🦓', '🦘', '🦥', '🦦', '🦝', 
-  '🦔', '🦙', '🦒', '🦨', '🐘'
+  '🍎', '🍊', '🍇', '🍓', '🍐', 
+  '🍌', '🍉', '🍑', '🍒', '🍍',
+  '🥝', '🥑', '🥕', '🌽', '🍅', 
+  '🫐', '🍆', '🥔', '🥦', '🥭'
 ];
 
 // Número de iconos a utilizar según el nivel

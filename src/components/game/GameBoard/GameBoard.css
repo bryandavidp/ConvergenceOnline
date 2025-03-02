@@ -2,10 +2,13 @@
 :root {
   --cell-size: 60px;
   --board-size: 6;
-  --border-radius: 8px;
-  --cell-border-radius: 5px;
-  --cell-gap: 2px;
-  --board-padding: 5px;
+  --border-radius: 16px;
+  --cell-border-radius: 12px;
+  --cell-gap: 8px;
+  --board-padding: 10px;
+  --board-bg-color: #5d73e8;
+  --cell-bg-color: #e6e6e6;
+  --cell-border-color: #7a8bfe;
 }
 
 /* Contenedor del tablero */
@@ -17,10 +20,9 @@
   height: 100%;
   max-width: 100vw;
   overflow: hidden;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: transparent;
   border-radius: var(--border-radius);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 10px;
+  padding: 5px;
   box-sizing: border-box;
 }
 
@@ -31,13 +33,12 @@
   grid-template-rows: repeat(var(--board-size), minmax(30px, var(--cell-size)));
   gap: var(--cell-gap);
   padding: var(--board-padding);
-  background-color: #333;
+  background-color: var(--board-bg-color);
   border-radius: var(--border-radius);
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
   width: 100%;
   height: 100%;
-  max-width: min(90vw, 90vh);
-  max-height: min(90vw, 90vh);
+  max-width: min(95vw, 95vh);
+  max-height: min(95vw, 95vh);
   aspect-ratio: 1 / 1;
   margin: auto;
 }
@@ -56,21 +57,19 @@
   border-radius: var(--cell-border-radius);
   position: relative;
   overflow: hidden;
+  background-color: var(--cell-bg-color);
+  box-shadow: 0 0 0 3px var(--cell-border-color);
 }
 
-/* Colores alternos para las celdas */
-.cell.light {
-  background-color: #e8e8e8;
-}
-
-.cell.dark {
-  background-color: #d0d0d0;
+/* Quitar colores alternos y usar un solo estilo para todas las celdas */
+.cell.light, .cell.dark {
+  background-color: var(--cell-bg-color);
 }
 
 /* Hover sobre celdas */
 .cell:hover {
-  transform: scale(0.95);
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+  transform: scale(0.97);
+  opacity: 0.9;
 }
 
 /* Estados especiales */
@@ -136,30 +135,15 @@
 }
 
 @keyframes pulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
 @keyframes glow {
-  0% {
-    box-shadow: 0 0 5px rgba(33, 150, 243, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(33, 150, 243, 0.8);
-  }
-  100% {
-    box-shadow: 0 0 5px rgba(33, 150, 243, 0.5);
-  }
+  0% { box-shadow: 0 0 5px #2196F3; }
+  50% { box-shadow: 0 0 20px #2196F3; }
+  100% { box-shadow: 0 0 5px #2196F3; }
 }
 
 @keyframes shake {
@@ -174,17 +158,11 @@
   }
 }
 
-/* Media Queries para responsive */
+/* Responsive */
 @media (max-width: 768px) {
   :root {
-    --cell-size: 40px;
-    --cell-gap: 1px;
-    --board-padding: 3px;
-  }
-  
-  .board {
-    max-width: 95vw;
-    max-height: 95vw;
+    --cell-gap: 6px;
+    --board-padding: 8px;
   }
   
   .cell {
