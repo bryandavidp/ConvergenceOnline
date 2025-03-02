@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../store';
-import { setGameStatus, setLevel } from '../../../store/slices/gameSlice';
+import { setGameStatus, setLevel, resetGame } from '../../../store/slices/gameSlice';
 import { audioManager } from '../../../utils/audioManager';
 import logger from '../../../utils/logger';
 import './GameModals.css';
@@ -17,6 +17,7 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible }) =>
   useEffect(() => {
     if (isVisible) {
       logger.info('LevelCompleteModal', 'Nivel completado mostrado', { level, timer });
+      audioManager.play('levelComplete');
       createConfetti();
     }
   }, [isVisible, level, timer]);
@@ -33,6 +34,19 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible }) =>
       dispatch(setGameStatus('playing'));
     }, 500);
   }, [dispatch, level]);
+  
+  const handleRestart = useCallback(() => {
+    logger.info('LevelCompleteModal', 'Reiniciando juego en el mismo nivel');
+    audioManager.play('start');
+    
+    // Reiniciar el juego conservando el nivel actual
+    dispatch(resetGame());
+    
+    // Cambiar el estado después de un breve retraso para permitir la animación
+    setTimeout(() => {
+      dispatch(setGameStatus('playing'));
+    }, 500);
+  }, [dispatch]);
   
   // Función para crear efecto de confeti
   const createConfetti = () => {
@@ -63,9 +77,14 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible }) =>
         <p>Tiempo: <span className="highlight">{timer} segundos</span></p>
         <p>Puntuación: <span className="highlight">{score} puntos</span></p>
         
-        <button className="modal-button" onClick={handleNextLevel}>
-          Siguiente Nivel
-        </button>
+        <div className="modal-buttons">
+          <button className="modal-button primary" onClick={handleNextLevel}>
+            Siguiente Nivel
+          </button>
+          <button className="modal-button secondary" onClick={handleRestart}>
+            Reintentar Nivel
+          </button>
+        </div>
         
         <div id="confetti-container" className="confetti-container"></div>
       </div>

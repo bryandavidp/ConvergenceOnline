@@ -1,92 +1,193 @@
-import React, { useEffect, useRef, useCallback } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../store';
-import GameCell from '../GameCell/GameCell';
-import { useGameLogic } from '../../../hooks/useGameLogic';
+import useGameLogic from '../../../hooks/useGameLogic';
 import logger from '../../../utils/logger';
+import * as config from '../../../utils/originalGame/js/config';
+import { audioManager } from '../../../utils/audioManager';
 import './GameBoard.css';
 
-const GameBoard: React.FC = () => {
-  const { board, boardSize, status } = useSelector((state: RootState) => state.game);
-  const { handleCellClick } = useGameLogic();
-  const boardRef = useRef<HTMLDivElement>(null);
+interface CellProps {
+  row: number;
+  col: number;
+  value: string | null;
+  onClick: (row: number, col: number) => void;
+}
+
+// Componente para una celda individual
+const Cell: React.FC<CellProps> = React.memo(({ row, col, value, onClick }) => {
+  const isLight = (row + col) % 2 === 0;
+  const cellClass = `cell ${isLight ? 'light' : 'dark'}`;
   
-  // Ajustar tamaño del tablero
+  return (
+    <div 
+      className={cellClass} 
+      data-row={row} 
+      data-col={col} 
+      onClick={() => onClick(row, col)}
+    >
+      {value}
+    </div>
+  );
+});
+
+const GameBoard: React.FC = () => {
+  const dispatch = useDispatch();
+  const { board, boardSize, status } = useSelector((state: RootState) => state.game);
+  const { handleCellClick, showHint } = useGameLogic();
+  
+  // Referencias
+  const boardRef = useRef<HTMLDivElement>(null);
+  const boardContainerRef = useRef<HTMLDivElement>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const [highlightedCells, setHighlightedCells] = useState<{[key: string]: string}>({});
+  
+  // Ajustar el tamaño del tablero según el contenedor
   const adjustBoardSize = useCallback(() => {
-    if (!boardRef.current) return;
+    if (!boardRef.current || !boardContainerRef.current) return;
     
-    const boardContainer = boardRef.current.parentElement;
-    if (!boardContainer) return;
+    const containerWidth = boardContainerRef.current.clientWidth;
+    const containerHeight = boardContainerRef.current.clientHeight;
     
-    const containerWidth = boardContainer.clientWidth;
-    const containerHeight = boardContainer.clientHeight;
-    const size = Math.min(containerWidth, containerHeight) - 10;
+    // Calcular el tamaño disponible (el mínimo entre ancho y alto)
+    const size = Math.min(containerWidth, containerHeight) - 20; // Margen
     
-    boardRef.current.style.width = `${size}px`;
-    boardRef.current.style.height = `${size}px`;
+    // Establecer el tamaño como variable CSS para el grid
+    document.documentElement.style.setProperty('--board-size', boardSize.toString());
     
-    // Ajustar tamaño de celda
-    const cellSize = (size / boardSize) - 2;
+    // Calcular y establecer el tamaño de celda
+    const cellSize = Math.max(30, Math.min(80, Math.floor(size / boardSize) - 2));
     document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     
-    logger.debug('GameBoard', 'Tamaño del tablero ajustado', { size, cellSize });
+    logger.debug('GameBoard', 'Tablero ajustado', { containerSize: { width: containerWidth, height: containerHeight }, boardSize: size, cellSize });
   }, [boardSize]);
   
-  // Ajustar tamaño al cambiar dimensiones o tamaño
+  // Función para limpiar destacados
+  const clearHighlights = useCallback(() => {
+    setHighlightedCells({});
+  }, []);
+  
+  // Función para destacar celdas
+  const highlightCells = useCallback((cells: {row: number, col: number}[], className: string) => {
+    const newHighlights = {...highlightedCells};
+    
+    cells.forEach(({row, col}) => {
+      const key = `${row},${col}`;
+      newHighlights[key] = className;
+    });
+    
+    setHighlightedCells(newHighlights);
+  }, [highlightedCells]);
+  
+  // Manejar click en celda
+  const onCellClick = useCallback((row: number, col: number) => {
+    if (status !== 'playing') return;
+    
+    try {
+      handleCellClick(row, col);
+      clearHighlights();
+    } catch (error) {
+      logger.error('GameBoard', 'Error al hacer clic en celda', { row, col, error });
+      // No propagar el error para evitar que se rompa la UI
+    }
+  }, [status, handleCellClick, clearHighlights]);
+  
+  // Mostrar una pista cuando se solicita
+  const handleShowHint = useCallback(() => {
+    if (status !== 'playing') return;
+    
+    const hint = showHint();
+    if (hint) {
+      clearHighlights();
+      
+      // Destacar las celdas que convergen
+      if (hint.convergingIcons && hint.convergingIcons.length > 0) {
+        highlightCells(hint.convergingIcons, 'hint');
+      }
+      
+      // Si hay una celda objetivo, destacarla diferente
+      if (hint.targetCell) {
+        highlightCells([hint.targetCell], 'hint-target');
+      }
+      
+      // Limpiar después de un tiempo
+      setTimeout(clearHighlights, config.ANIMATION_DURATIONS.HINT);
+    }
+  }, [status, showHint, clearHighlights, highlightCells]);
+  
+  // Efecto para detectar solicitudes de pista globales
   useEffect(() => {
-    logger.component.mount('GameBoard');
+    const checkForHintRequest = () => {
+      if ((window as any).gameHintRequested) {
+        handleShowHint();
+        (window as any).gameHintRequested = false;
+      }
+    };
     
-    // Ajuste inicial
-    adjustBoardSize();
-    
-    // Ajuste en resize
-    window.addEventListener('resize', adjustBoardSize);
+    const intervalId = setInterval(checkForHintRequest, 100);
     
     return () => {
-      logger.component.unmount('GameBoard');
-      window.removeEventListener('resize', adjustBoardSize);
+      clearInterval(intervalId);
+    };
+  }, [handleShowHint]);
+  
+  // Configurar observador de redimensionamiento
+  useEffect(() => {
+    if (!boardContainerRef.current) return;
+    
+    // Inicializar el ResizeObserver
+    resizeObserverRef.current = new ResizeObserver(() => {
+      adjustBoardSize();
+    });
+    
+    // Observar el contenedor del tablero
+    resizeObserverRef.current.observe(boardContainerRef.current);
+    
+    // Ajustar tamaño inicial
+    adjustBoardSize();
+    
+    // También ajustar en cambios de orientación
+    const handleOrientationChange = () => {
+      setTimeout(adjustBoardSize, 300); // Pequeño retraso para asegurar que los valores sean correctos
+    };
+    
+    window.addEventListener('resize', handleOrientationChange);
+    window.addEventListener('orientationchange', handleOrientationChange);
+    
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+      window.removeEventListener('resize', handleOrientationChange);
+      window.removeEventListener('orientationchange', handleOrientationChange);
     };
   }, [adjustBoardSize]);
   
-  // Re-ajustar al cambiar el tamaño del tablero
+  // Ajustar cuando cambia el tamaño del tablero
   useEffect(() => {
     adjustBoardSize();
   }, [boardSize, adjustBoardSize]);
   
-  // Registrar renderización
-  useEffect(() => {
-    logger.component.render('GameBoard');
-  }, [board]);
-
-  const onCellClick = useCallback((row: number, col: number) => {
-    if (status === 'playing') {
-      handleCellClick(row, col);
-    }
-  }, [status, handleCellClick]);
-
   return (
-    <div 
-      ref={boardRef}
-      className="board"
-      style={{
-        gridTemplateColumns: `repeat(${boardSize}, var(--cell-size))`,
-        gridTemplateRows: `repeat(${boardSize}, var(--cell-size))`
-      }}
-    >
-      {board.map((row, rowIndex) => 
-        row.map((icon, colIndex) => (
-          <GameCell
-            key={`${rowIndex}-${colIndex}`}
-            icon={icon}
-            row={rowIndex}
-            col={colIndex}
-            onClick={() => onCellClick(rowIndex, colIndex)}
-            isEven={(rowIndex + colIndex) % 2 === 0}
-          />
-        ))
-      )}
+    <div className="board-container" ref={boardContainerRef}>
+      <div 
+        className="board" 
+        ref={boardRef}
+      >
+        {board.map((row, rowIndex) => 
+          row.map((cell, colIndex) => (
+            <Cell
+              key={`${rowIndex}-${colIndex}`}
+              row={rowIndex}
+              col={colIndex}
+              value={cell}
+              onClick={onCellClick}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 };
 
-export default React.memo(GameBoard); 
+export default GameBoard; 
