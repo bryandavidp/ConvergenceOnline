@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { setGameStatus, setLevel, setBoardSize, setAvailableIcons, setSpawnRate } from '../../store/slices/gameSlice';
 import logger from '../../utils/logger';
-import useGameLogic from '../../hooks/useGameLogic';
+import { useGameLogic } from '../../hooks/useGameLogic';
 import GameBoard from '../../components/game/GameBoard/GameBoard';
 import GameOverModal from '../../components/game/GameModals/GameOverModal';
 import LevelCompleteModal from '../../components/game/GameModals/LevelCompleteModal';
@@ -15,8 +15,10 @@ import './GamePage.css';
 const GamePage: React.FC = () => {
   const dispatch = useDispatch();
   const { status, level, boardSize, currentMode, score, timer, spawnRate } = useSelector((state: RootState) => state.game);
-  const { initializeBoard, stopTimers } = useGameLogic();
-  const [boardInitialized, setBoardInitialized] = useState<boolean>(false);
+  const { initializeBoard, stopTimers, isInitialized, startTimers } = useGameLogic();
+  // Referencia para controlar las inicializaciones repetidas
+  const isInitializingRef = useRef<boolean>(false);
+  const lastBoardSizeRef = useRef<number>(0);
   
   // Cargar configuración y preparar el juego
   useEffect(() => {
@@ -53,31 +55,47 @@ const GamePage: React.FC = () => {
     };
   }, [dispatch, stopTimers]);
   
-  // Inicializar el tablero cuando cambia el tamaño o el nivel
+  // Inicializar el tablero cuando cambia el estatus a 'playing'
   useEffect(() => {
-    if (status === 'playing' && !boardInitialized) {
-      logger.info('GamePage', `Inicializando tablero: Nivel ${level}, Tamaño ${boardSize}x${boardSize}`);
+    if (status === 'playing') {
+      // Evitar inicializaciones repetidas
+      if (isInitializingRef.current) {
+        logger.debug('GamePage', 'Inicialización ya en progreso, se omite la solicitud');
+        return;
+      }
+
+      // Verificar si el tablero necesita ser reinicializado (cambio de nivel/tamaño)
+      const needsReinitialization = !isInitialized || lastBoardSizeRef.current !== boardSize;
       
-      // Pequeño retraso para asegurar que los estados están actualizados
-      setTimeout(() => {
+      if (needsReinitialization) {
+        // Establecer bandera de inicialización
+        isInitializingRef.current = true;
+        
+        logger.info('GamePage', `Inicializando tablero: Nivel ${level}, Tamaño ${boardSize}x${boardSize}`);
+        
+        // Actualizar referencia del tamaño
+        lastBoardSizeRef.current = boardSize;
+        
+        // Inicializar el tablero
         initializeBoard(boardSize);
-        setBoardInitialized(true);
         
-        // Reproducir sonido de inicio de nivel
-        audioManager.play('start');
-        
-        // Iniciar música si está habilitada
-        audioManager.startMusic();
-      }, 100);
+        // Restablecer bandera después de la inicialización
+        setTimeout(() => {
+          isInitializingRef.current = false;
+        }, 200);
+      } else {
+        logger.debug('GamePage', 'No es necesario reinicializar el tablero, solo los temporizadores');
+      }
+      
+      // Asegurarnos de que los temporizadores se inicien
+      if (isInitialized && !isInitializingRef.current) {
+        startTimers();
+      }
     }
-  }, [status, level, boardSize, initializeBoard, boardInitialized]);
+  }, [status, level, boardSize, initializeBoard, isInitialized, startTimers]);
   
-  // Reiniciar el indicador cuando cambia el estado
+  // Reiniciar temporizadores cuando el estado cambia
   useEffect(() => {
-    if (status !== 'playing') {
-      setBoardInitialized(false);
-    }
-    
     // Detener temporizadores cuando el juego se pausa o termina
     if (status === 'paused' || status === 'gameOver' || status === 'levelCompleted') {
       stopTimers();
@@ -96,7 +114,7 @@ const GamePage: React.FC = () => {
   
   // Configuración al cambiar de nivel
   useEffect(() => {
-    if (level > 1) { // No cambiar en el nivel inicial
+    if (level > 1 && status === 'playing') { // No cambiar en el nivel inicial ni cuando no está jugando
       // Obtener nuevo tamaño del tablero
       const newSize = config.getLevelBoardSize(level);
       
@@ -112,12 +130,38 @@ const GamePage: React.FC = () => {
       if (newSize !== boardSize) {
         logger.info('GamePage', `Ajustando tamaño del tablero para el nivel ${level}: ${newSize}x${newSize}`);
         dispatch(setBoardSize(newSize));
+        
+        // El tablero se reiniciará automáticamente a través del otro useEffect
+        // cuando detecte el cambio en boardSize
+      } else {
+        // Si el tamaño no cambia, pero necesitamos reiniciar para el nuevo nivel
+        // sin causar bucles, lo hacemos solo si no hay una inicialización en curso
+        if (!isInitializingRef.current && isInitialized) {
+          isInitializingRef.current = true;
+          logger.info('GamePage', `Reinicializando tablero para nivel ${level} sin cambio de tamaño`);
+          
+          // Detener temporizadores
+          stopTimers();
+          
+          // Pequeña pausa antes de reinicializar
+          setTimeout(() => {
+            // Verificar que seguimos en estado de juego
+            if (status === 'playing') {
+              initializeBoard(boardSize);
+              setTimeout(() => {
+                isInitializingRef.current = false;
+              }, 200);
+            } else {
+              isInitializingRef.current = false;
+            }
+          }, 300);
+        }
       }
       
       dispatch(setSpawnRate(newSpawnRate));
       dispatch(setAvailableIcons(selectedIcons));
     }
-  }, [level, boardSize, dispatch]);
+  }, [level, boardSize, dispatch, status, isInitialized, isInitializingRef, initializeBoard, stopTimers]);
   
   // Calcular el multiplicador de velocidad para mostrar
   const speedMultiplier = (config.SPAWN_RATES.MEDIUM / spawnRate).toFixed(1);

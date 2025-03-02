@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   incrementScore, 
@@ -244,6 +245,10 @@ const useGameLogic = () => {
       { dr: 0, dc: 1 },  // Derecha
       { dr: 1, dc: 0 },  // Abajo
       { dr: 0, dc: -1 }, // Izquierda
+      { dr: -1, dc: 0 }, // Arriba
+      { dr: 0, dc: 1 },  // Derecha
+      { dr: 1, dc: 0 },  // Abajo
+      { dr: 0, dc: -1 }, // Izquierda
     ];
     
     // Para cada dirección, buscar el primer icono
@@ -253,10 +258,26 @@ const useGameLogic = () => {
       let r = row + dr;
       let c = col + dc;
       
+      
       // Seguir en esa dirección hasta encontrar un icono o salir del tablero
       while (isValidCell(r, c, boardSize)) {
         if (board[r][c]) {
+      while (isValidCell(r, c, boardSize)) {
+        if (board[r][c]) {
           const icon = board[r][c] as string;
+          const key = `${r},${c}`;
+          
+          // Si no hemos visitado esta celda antes
+          if (!visited.has(key)) {
+            visited.add(key);
+            
+            // Agrupar por tipo de icono
+            if (!iconsByType[icon]) {
+              iconsByType[icon] = [];
+            }
+            
+            iconsByType[icon].push({ row: r, col: c });
+          }
           const key = `${r},${c}`;
           
           // Si no hemos visitado esta celda antes
@@ -279,6 +300,8 @@ const useGameLogic = () => {
     }
     
     // Verificar si hay al menos 2 iconos del mismo tipo que convergen
+    
+    // Verificar si hay al menos 2 iconos del mismo tipo que convergen
     for (const icon in iconsByType) {
       if (iconsByType[icon].length >= 2) {
         // Agregar el tipo de icono a cada objeto para facilitar la referencia
@@ -287,6 +310,7 @@ const useGameLogic = () => {
         });
       }
     }
+    
     
     return convergingIcons;
   }, [board, boardSize]);
@@ -668,5 +692,3 @@ const useGameLogic = () => {
     addInitialIcons
   };
 };
-
-export default useGameLogic; 

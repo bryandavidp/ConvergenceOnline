@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store';
-import useGameLogic from '../../../hooks/useGameLogic';
+import { useGameLogic } from '../../../hooks/useGameLogic';
 import logger from '../../../utils/logger';
 import { audioManager } from '../../../utils/audioManager';
 import * as gameConfig from '../../../config/gameConfig';
@@ -74,7 +74,7 @@ const GameBoard: React.FC = () => {
     }
   }, [status, handleCellClick]);
   
-  // Configurar el observador de tamaño
+  // Configurar el observador de tamaño - Solo una vez al montar el componente
   useEffect(() => {
     // Ajustar el tamaño inicialmente
     if (boardRef.current && boardContainerRef.current) {
@@ -101,7 +101,7 @@ const GameBoard: React.FC = () => {
     };
   }, [adjustBoardSize]);
   
-  // Ajustar el tamaño cuando cambia el tablero
+  // Solo ajustar el tamaño cuando cambia el tamaño del tablero, no cuando cambia su contenido
   useEffect(() => {
     if (boardRef.current && boardContainerRef.current) {
       adjustBoardSize(boardContainerRef.current, boardRef.current);

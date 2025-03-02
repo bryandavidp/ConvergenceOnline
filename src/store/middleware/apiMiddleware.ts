@@ -15,11 +15,12 @@ export interface ApiAction {
 
 export const apiMiddleware: Middleware = ({ dispatch }) => (next) => async (action) => {
   // Verificar si es una acción API
-  if (!action[RSAA]) {
+  if (!action || typeof action !== 'object' || !(RSAA in action)) {
     return next(action);
   }
 
-  const { endpoint, method, headers = {}, body, types } = action[RSAA];
+  const apiAction = action as ApiAction;
+  const { endpoint, method, headers = {}, body, types } = apiAction[RSAA];
   const [requestType, successType, failureType] = types;
 
   // Dispatch de acción de request

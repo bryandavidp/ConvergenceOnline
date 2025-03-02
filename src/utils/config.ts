@@ -2,16 +2,40 @@
 // Configuración del juego de Convergencia
 
 // Dimensiones y visuales
-export const BOARD_MIN_SIZE = 6;
+export const BOARD_MIN_SIZE = 8;
 export const BOARD_MAX_SIZE = 10;
-export const DEFAULT_BOARD_SIZE = 6;
+export const DEFAULT_BOARD_SIZE = 8;
 
 // Niveles de dificultad
-export const DIFFICULTY_LEVELS = {
-  EASY: 'easy',
-  NORMAL: 'normal',
-  HARD: 'hard',
-  TUTORIAL: 'tutorial'
+export const DIFFICULTY_LEVELS: Record<string, any> = {
+  EASY: {
+    name: 'easy',
+    initialSpawnRate: 3000, // 3 segundos
+    maxSpeedMultiplier: 1.5,
+    speedIncreaseTime: 45000, // 45 segundos
+    penaltyIcons: 1
+  },
+  NORMAL: {
+    name: 'normal',
+    initialSpawnRate: 2000, // 2 segundos
+    maxSpeedMultiplier: 2,
+    speedIncreaseTime: 30000, // 30 segundos
+    penaltyIcons: 2
+  },
+  HARD: {
+    name: 'hard',
+    initialSpawnRate: 1500, // 1.5 segundos
+    maxSpeedMultiplier: 3,
+    speedIncreaseTime: 20000, // 20 segundos
+    penaltyIcons: 3
+  },
+  TUTORIAL: {
+    name: 'tutorial',
+    initialSpawnRate: 4000, // 4 segundos
+    maxSpeedMultiplier: 1.2,
+    speedIncreaseTime: 60000, // 60 segundos
+    penaltyIcons: 1
+  }
 };
 
 // Modos de juego
@@ -24,19 +48,25 @@ export const GAME_MODES = {
 // Duración base del juego en segundos para modo temporizado
 export const BASE_GAME_DURATION = 180; // 3 minutos
 
-// Velocidades de aparición de iconos (en segundos)
+// Velocidades de aparición de iconos (en milisegundos)
 export const SPAWN_RATES = {
-  TUTORIAL: 3.5,
-  VERY_SLOW: 3.0,
-  SLOW: 2.5,
-  MEDIUM: 1.5,
-  FAST: 0.8,
-  SUPER_FAST: 0.5,
-  EXTREME: 0.3
+  TUTORIAL: 2000,
+  VERY_SLOW: 1800,
+  SLOW: 1500,
+  MEDIUM: 1000,
+  FAST: 800,
+  SUPER_FAST: 500,
+  EXTREME: 300
 };
 
 // Velocidad inicial de aparición de iconos
 export const INITIAL_SPAWN_RATE = SPAWN_RATES.MEDIUM;
+
+// Número de iconos iniciales en el tablero
+export const INITIAL_ICONS = 5;
+
+// Número de iconos de penalización al fallar
+export const PENALTY_ICONS = 1;
 
 // Animaciones
 export const ANIMATION_DURATIONS = {
@@ -44,6 +74,7 @@ export const ANIMATION_DURATIONS = {
   ICON_SPAWN: 400,
   ICON_REMOVE: 300,
   HINT: 800,
+  newIcon: 500 // Para compatibilidad con código original
 };
 
 // Puntuación
@@ -115,4 +146,4 @@ export const getLevelSpawnRate = (level: number): number => {
   if (level <= 11) return SPAWN_RATES.FAST;       // Niveles 9-11
   if (level <= 13) return SPAWN_RATES.SUPER_FAST; // Niveles 12-13
   return SPAWN_RATES.EXTREME;                     // Niveles 14+
-}; 
+};
