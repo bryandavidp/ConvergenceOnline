@@ -4,6 +4,8 @@ import { RootState } from '../../../store';
 import { setGameStatus, setLevel } from '../../../store/slices/gameSlice';
 import { audioManager } from '../../../utils/audioManager';
 import logger from '../../../utils/logger';
+import useGameLogic from '../../../hooks/useGameLogic';
+import * as config from '../../../utils/config';
 import './GameModals.css';
 
 interface LevelCompleteModalProps {
@@ -12,17 +14,27 @@ interface LevelCompleteModalProps {
 
 const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible }) => {
   const dispatch = useDispatch();
-  const { level, timer, score } = useSelector((state: RootState) => state.game);
+  const { level, timer, score, boardSize } = useSelector((state: RootState) => state.game);
   const [isClosing, setIsClosing] = useState(false);
+  const { advanceToNextLevel, resetCurrentLevel } = useGameLogic();
+  
+  // Verificar si se recibió el bonus por vaciar el tablero
+  const receivedEmptyBoardBonus = score % config.SCORE_VALUES.EMPTY_BOARD_BONUS === 0 && score > 0;
   
   useEffect(() => {
     if (isVisible) {
       setIsClosing(false);
-      logger.info('LevelCompleteModal', 'Nivel completado mostrado', { level, timer, score });
+      logger.info('LevelCompleteModal', 'Nivel completado mostrado', { 
+        level, 
+        timer, 
+        score,
+        boardSize,
+        bonusTableroVacío: receivedEmptyBoardBonus
+      });
       audioManager.play('levelComplete');
       createConfetti();
     }
-  }, [isVisible, level, timer, score]);
+  }, [isVisible, level, timer, score, boardSize, receivedEmptyBoardBonus]);
   
   const handleNextLevel = useCallback(() => {
     setIsClosing(true);
@@ -36,16 +48,10 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible }) =>
     setTimeout(() => {
       audioManager.play('levelTransition');
       
-      // Solo incrementamos el nivel, manteniendo puntuación, tiempo y velocidad
-      const nextLevel = level + 1;
-      dispatch(setLevel(nextLevel));
-      
-      // Cambiar el estado después de un breve retraso para permitir la animación
-      setTimeout(() => {
-        dispatch(setGameStatus('playing'));
-      }, 200);
+      // Usar la función avanzada de advanceToNextLevel
+      advanceToNextLevel();
     }, 300);
-  }, [dispatch, level, score, timer]);
+  }, [advanceToNextLevel, level, score, timer]);
   
   const handleRestart = useCallback(() => {
     setIsClosing(true);
@@ -54,13 +60,10 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible }) =>
     setTimeout(() => {
       audioManager.play('start');
       
-      // Cambiar el estado después de un breve retraso para permitir la animación
-      setTimeout(() => {
-        // Reiniciar el nivel actual, pero manteniendo la puntuación y el tiempo
-        dispatch(setGameStatus('playing'));
-      }, 200);
+      // Usar la función de resetCurrentLevel para mantener la lógica consistente
+      resetCurrentLevel();
     }, 300);
-  }, [dispatch]);
+  }, [resetCurrentLevel]);
   
   // Función para crear efecto de confeti
   const createConfetti = () => {
@@ -107,6 +110,10 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible }) =>
   
   if (!isVisible) return null;
   
+  // Calcular estadísticas del nivel
+  const nextLevelSize = config.getLevelBoardSize(level + 1);
+  const nextLevelIconSet = config.getIconSetForLevel(level + 1).length;
+  
   return (
     <div className={`game-modal level-complete ${isClosing ? 'closing' : ''}`}>
       <div className="modal-content">
@@ -114,6 +121,32 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible }) =>
         <p>Has superado el nivel {level}</p>
         <p>Tiempo: <span className="highlight">{timer} segundos</span></p>
         <p>Puntuación: <span className="highlight">{score} puntos</span></p>
+        
+        {receivedEmptyBoardBonus && (
+          <div className="bonus-badge">
+            ¡Bonus de tablero vacío! +{config.SCORE_VALUES.EMPTY_BOARD_BONUS} puntos
+          </div>
+        )}
+        
+        <div className="next-level-info">
+          <h3>Próximo nivel: {level + 1}</h3>
+          <div className="level-details">
+            <div className="detail-item">
+              <span className="detail-label">Tablero:</span>
+              <span className="detail-value">{nextLevelSize}×{nextLevelSize}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Iconos:</span>
+              <span className="detail-value">{nextLevelIconSet} tipos</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Dificultad:</span>
+              <span className="detail-value">
+                {level < 5 ? 'Fácil' : level < 10 ? 'Media' : 'Difícil'}
+              </span>
+            </div>
+          </div>
+        </div>
         
         <div className="modal-buttons">
           <button className="modal-button primary" onClick={handleNextLevel}>

@@ -10,17 +10,123 @@
   --cell-bg-color: #e6e6e6;
   --cell-border-color: #7a8bfe;
   --highlight-color: #ffcc00;
+  --hint-button-color: #4CAF50;
+  --hint-disabled-color: #999;
+  --hint-cooldown-color: #f57c00;
+  --level-complete-color: #ffeb3b;
 }
 
 /* Contenedor del tablero */
 .board-container {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   width: 100%;
   height: 100%;
   padding: 10px;
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden; /* Evitar desplazamiento */
+}
+
+/* Controles del tablero */
+.board-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 0 10px;
+}
+
+/* Información del tablero */
+.board-info {
+  display: flex;
+  gap: 15px;
+  font-weight: bold;
+}
+
+/* Indicadores de nivel e iconos */
+.level-indicator, .icon-count-indicator {
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+/* Botón de pista */
+.hint-button {
+  background-color: var(--hint-button-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.hint-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.hint-button.disabled {
+  background-color: var(--hint-disabled-color);
+  cursor: not-allowed;
+}
+
+.hint-button.cooldown {
+  background-color: var(--hint-cooldown-color);
+  animation: cooldown-pulse 2s infinite;
+}
+
+.hint-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: white;
+  color: var(--hint-button-color);
+  font-size: 0.7rem;
+  font-weight: bold;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hint-button.disabled .hint-count {
+  color: var(--hint-disabled-color);
+}
+
+.hint-button.cooldown .hint-count {
+  color: var(--hint-cooldown-color);
+}
+
+/* Indicador de nivel completado */
+.level-complete-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: var(--level-complete-color);
+  padding: 15px 30px;
+  border-radius: 10px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  z-index: 100;
+  box-shadow: 0 0 20px rgba(255, 235, 59, 0.5);
+  animation: appear 0.5s ease-out;
 }
 
 /* Tablero de juego */
@@ -36,6 +142,13 @@
   width: fit-content;
   margin: auto;
   transition: all 0.3s ease;
+  position: relative; /* Asegurar posición relativa para cálculo correcto de coordenadas */
+  touch-action: none; /* Mejorar el manejo táctil */
+}
+
+/* Ajuste para tableros grandes */
+.game-board.large {
+  --cell-size: min(60px, calc(60px * 8 / var(--board-size)));
 }
 
 /* Fila del tablero */
@@ -58,13 +171,17 @@
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
+  box-sizing: border-box; /* Asegurar que el padding no altere el tamaño */
+  touch-action: manipulation; /* Optimización para dispositivos táctiles */
 }
 
 /* Celda resaltada (para pistas) */
 .cell.highlighted {
   animation: pulse 1.5s infinite alternate;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 10px var(--highlight-color);
   z-index: 10;
+  background-color: rgba(255, 255, 0, 0.15);
+  border: 2px solid var(--highlight-color);
 }
 
 /* Quitar colores alternos y usar un solo estilo para todas las celdas */
@@ -103,8 +220,8 @@
 }
 
 /* Animación para eliminar iconos */
-.cell.removing-icon {
-  animation: fadeOut 0.3s;
+.cell.removed {
+  animation: fadeOut 0.3s forwards;
 }
 
 /* Efecto de brillo */
@@ -158,10 +275,42 @@
   100% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
 }
 
+@keyframes cooldown-pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+@keyframes appear {
+  0% { 
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  100% { 
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .game-board {
     gap: 1px;
+  }
+  
+  .board-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .hint-button {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .level-complete-indicator {
+    font-size: 1.2rem;
+    padding: 10px 20px;
   }
 }
 
@@ -181,6 +330,27 @@
   .cell {
     font-size: calc(var(--cell-size) * 0.45);
     border-radius: 3px;
+  }
+  
+  .level-indicator, .icon-count-indicator {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+  
+  .hint-button {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .hint-count {
+    width: 15px;
+    height: 15px;
+    font-size: 0.6rem;
+  }
+  
+  .level-complete-indicator {
+    font-size: 1rem;
+    padding: 8px 15px;
   }
 }
 

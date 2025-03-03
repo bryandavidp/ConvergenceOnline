@@ -142,7 +142,83 @@ export class LogContext {
  * Crea un contexto de logging con nombre específico
  */
 export function createLogger(context: string): LogContext {
-  return new LogContext(context);
+  // Crear un mapa para registrar la frecuencia de logs por subcontexto
+  const logFrequencyMap = new Map<string, {
+    lastLogTime: number;
+    count: number;
+  }>();
+  
+  // Crear un proxy para interceptar las llamadas a los métodos de logging
+  const contextLogger = new LogContext(context);
+  
+  // Sobrescribir el método subcontext para limitar la frecuencia de logs en subcontextos
+  const originalSubcontext = contextLogger.subcontext;
+  contextLogger.subcontext = function(name: string): LogContext {
+    const subContext = originalSubcontext.call(this, name);
+    const fullContextName = `${context}/${name}`;
+    
+    // Sobrescribir los métodos de logging para controlar la frecuencia
+    const originalDebug = subContext.debug;
+    const originalInfo = subContext.info;
+    const originalWarn = subContext.warn;
+    const originalError = subContext.error;
+    
+    // Función para limitar la frecuencia de logs
+    const shouldLog = (method: string) => {
+      const key = `${fullContextName}:${method}`;
+      const now = Date.now();
+      const data = logFrequencyMap.get(key) || { lastLogTime: 0, count: 0 };
+      
+      // Si han pasado más de 2 segundos desde el último log, reiniciar el contador
+      if (now - data.lastLogTime > 2000) {
+        logFrequencyMap.set(key, { lastLogTime: now, count: 1 });
+        return true;
+      }
+      
+      // Si ya se han generado más de 5 logs en los últimos 2 segundos, limitar
+      if (data.count > 5) {
+        // Cada 10 logs, permitir uno para que sepamos que sigue ocurriendo
+        data.count++;
+        if (data.count % 10 === 0) {
+          logFrequencyMap.set(key, { lastLogTime: now, count: data.count });
+          return true;
+        }
+        return false;
+      }
+      
+      // Incrementar el contador y permitir el log
+      data.count++;
+      logFrequencyMap.set(key, { lastLogTime: now, count: data.count });
+      return true;
+    };
+    
+    // Redefinir los métodos para incluir la limitación de frecuencia
+    subContext.debug = function(message: string, data?: any): void {
+      if (shouldLog('debug')) {
+        originalDebug.call(this, message, data);
+      }
+    };
+    
+    subContext.info = function(message: string, data?: any): void {
+      if (shouldLog('info')) {
+        originalInfo.call(this, message, data);
+      }
+    };
+    
+    subContext.warn = function(message: string, data?: any): void {
+      // Siempre permitir los warnings
+      originalWarn.call(this, message, data);
+    };
+    
+    subContext.error = function(message: string, error?: any): void {
+      // Siempre permitir los errores
+      originalError.call(this, message, error);
+    };
+    
+    return subContext;
+  };
+  
+  return contextLogger;
 }
 
 /**

@@ -5,6 +5,7 @@ import { setGameStatus, setLevel } from '../../store/slices/gameSlice';
 import logger from '../../utils/logger';
 import useGameLogic from '../../hooks/useGameLogic';
 import GameBoard from '../../components/game/GameBoard/GameBoard';
+import GameHUD from '../../components/game/GameHUD/GameHUD';
 import GameOverModal from '../../components/game/GameModals/GameOverModal';
 import LevelCompleteModal from '../../components/game/GameModals/LevelCompleteModal';
 import StartGameModal from '../../components/game/GameModals/StartGameModal';
@@ -20,7 +21,7 @@ import './GamePage.css';
 
 const GamePage: React.FC = () => {
   const dispatch = useDispatch();
-  const { status, level, boardSize, currentMode, score, timer, spawnRate } = useSelector((state: RootState) => state.game);
+  const { status, level, boardSize, currentPlayMode, score, timer, spawnRate } = useSelector((state: RootState) => state.game);
   const { initializeBoard, stopTimers, startTimers } = useGameLogic();
   // Referencia para controlar las inicializaciones repetidas
   const isInitializingRef = useRef<boolean>(false);
@@ -53,18 +54,37 @@ const GamePage: React.FC = () => {
   
   // Inicializar el tablero cuando cambie su tamaño
   useEffect(() => {
-    if (!isBoardInitializedRef.current && !isInitializingRef.current && status === 'playing') {
-      isInitializingRef.current = true;
-      logger.info('GamePage', `Inicializando tablero con tamaño ${boardSize}x${boardSize}`);
+    if (status === 'playing') {
+      // Evitar inicializaciones múltiples
+      if (isInitializingRef.current) {
+        logger.warn('GamePage', 'Se intentó inicializar el tablero mientras ya hay una inicialización en curso');
+        return;
+      }
       
-      initializeBoard(boardSize);
-      isBoardInitializedRef.current = true;
-      
-      setTimeout(() => {
-        isInitializingRef.current = false;
-      }, 200);
+      // Solo inicializar si no está inicializado
+      if (!isBoardInitializedRef.current) {
+        isInitializingRef.current = true;
+        logger.info('GamePage', `Inicializando tablero con tamaño ${boardSize}x${boardSize}`);
+        
+        // Detener temporizadores primero para prevenir reinicios continuos
+        stopTimers();
+        
+        // Inicializar el tablero con el tamaño actual
+        setTimeout(() => {
+          initializeBoard(boardSize);
+          
+          // Marcar como inicializado después de un breve retraso
+          setTimeout(() => {
+            isBoardInitializedRef.current = true;
+            isInitializingRef.current = false;
+          }, 300);
+        }, 100);
+      }
+    } else {
+      // Reiniciar el estado de inicialización cuando no estamos jugando
+      isBoardInitializedRef.current = false;
     }
-  }, [boardSize, initializeBoard, status]);
+  }, [boardSize, initializeBoard, status, stopTimers]);
   
   // Limpiar al desmontar
   useEffect(() => {
@@ -83,41 +103,43 @@ const GamePage: React.FC = () => {
     if (level > 1) {
       logger.info('GamePage', `Configurando tablero para nivel ${level}`);
       
-      // Usar la función modularizada para configurar el tablero según el nivel
-      // Mantener la velocidad actual para preservar la dificultad progresiva
+      // Establecer el estado de inicialización
       isInitializingRef.current = true;
+      
+      // Detener temporizadores temporalmente
+      stopTimers();
       
       const oldSize = boardSize;
       const newConfig = configureBoardForLevel(level, true);
       
-      // Si el tamaño del tablero cambió, el useEffect de boardSize manejará la inicialización
-      if (newConfig.size !== oldSize) {
-        logger.info('GamePage', `El tamaño del tablero cambiará de ${oldSize}x${oldSize} a ${newConfig.size}x${newConfig.size}`);
-        // La inicialización será manejada por el useEffect que observa cambios en boardSize
-      } else {
-        // Si no hay cambio de tamaño, reinicializar manualmente
-        if (!isInitializingRef.current && isBoardInitializedRef.current) {
+      // Pequeña pausa antes de continuar para permitir que terminen procesos pendientes
+      setTimeout(() => {
+        // Si el tamaño del tablero cambió, no necesitamos hacer nada ya que
+        // el cambio de boardSize activará el useEffect correspondiente
+        if (newConfig.size !== oldSize) {
+          logger.info('GamePage', `El tamaño del tablero cambiará de ${oldSize}x${oldSize} a ${newConfig.size}x${newConfig.size}`);
+          // La inicialización la manejará el useEffect que observa boardSize
+        } else {
+          // Si el tamaño no cambió, necesitamos reinicializar manualmente
           logger.info('GamePage', `Reinicializando tablero sin cambio de tamaño`);
           
-          // Detener temporizadores temporalmente
-          stopTimers();
+          // Reiniciar el flag de inicialización
+          isBoardInitializedRef.current = false;
           
-          // Pequeña pausa antes de reinicializar
+          // Inicializar el tablero (esto activará el useEffect que observa boardSize)
+          // porque cambiamos isBoardInitializedRef
           setTimeout(() => {
-            // Verificar que seguimos en estado de juego
+            // Asegurarnos de que seguimos en estado de juego
             if (status === 'playing') {
-              initializeBoard(boardSize);
-              setTimeout(() => {
-                isInitializingRef.current = false;
-              }, 200);
+              isInitializingRef.current = false;
             } else {
               isInitializingRef.current = false;
             }
           }, 300);
         }
-      }
+      }, 200);
     }
-  }, [level, boardSize, dispatch, status, initializeBoard, stopTimers, spawnRate, timer, score]);
+  }, [level, boardSize, status, initializeBoard, stopTimers]);
   
   // Calcular el multiplicador de velocidad para mostrar
   const speedMultiplier = (config.SPAWN_RATES.MEDIUM / spawnRate).toFixed(1);
@@ -151,26 +173,7 @@ const GamePage: React.FC = () => {
   return (
     <div className="game-page">
       <div className="game-container">
-        <div className="game-header">
-          <div className="game-info">
-            <div className="info-item">
-              <span className="label">Nivel</span>
-              <span className="value">{level}</span>
-            </div>
-            <div className="info-item">
-              <span className="label">Puntos</span>
-              <span className="value">{score}</span>
-            </div>
-            <div className="info-item">
-              <span className="label">Tiempo</span>
-              <span className="value">{timer}s</span>
-            </div>
-            <div className="info-item">
-              <span className="label">Velocidad</span>
-              <span className="value">{speedMultiplier}x</span>
-            </div>
-          </div>
-        </div>
+        <GameHUD />
         
         <div className="board-container" ref={boardContainerRef}>
           <GameBoard ref={boardElementRef} />

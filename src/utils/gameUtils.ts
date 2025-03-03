@@ -117,4 +117,15 @@ export const hasValidMoves = (board: (string | null)[][], boardSize: number): bo
   }
   
   return false;
+};
+
+/**
+ * Calcula el porcentaje de ocupación del tablero
+ * @param iconCount Número de iconos en el tablero
+ * @param boardSize Tamaño del tablero
+ * @returns Porcentaje de ocupación (0-100)
+ */
+export const calculateBoardOccupation = (iconCount: number, boardSize: number): number => {
+  const boardCapacity = boardSize * boardSize;
+  return Math.round((iconCount / boardCapacity) * 100);
 }; 

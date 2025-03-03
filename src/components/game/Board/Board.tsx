@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store';
 import Cell from '../Cell/Cell';
-import { useGameLogic } from '../../../hooks/useGameLogic';
+import useGameLogic from '../../../hooks/useGameLogic';
 import './Board.css';
 
 interface BoardProps {

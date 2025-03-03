@@ -16,6 +16,28 @@
   box-sizing: border-box;
 }
 
+/* Clases de visibilidad para los modales */
+.game-modal.visible {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.game-modal.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+
+.game-modal.closing {
+  animation: fadeOut 0.5s ease forwards;
+}
+
+.game-modal.closing .modal-content {
+  animation: scaleOut 0.5s ease forwards;
+}
+
 .modal-content {
   background-color: white;
   border-radius: 16px;
@@ -33,12 +55,20 @@
 /* StartGame Modal */
 .start-game .modal-content {
   padding: 30px;
+  max-width: 450px;
 }
 
 .start-game h1 {
   color: #5d73e8;
   margin-bottom: 10px;
   font-size: 2.2rem;
+  font-weight: 700;
+}
+
+.start-game h2 {
+  color: #5d73e8;
+  margin-bottom: 10px;
+  font-size: 2rem;
   font-weight: 700;
 }
 
@@ -76,6 +106,83 @@
 
 .preview-icon:hover {
   transform: scale(1.1) rotate(0);
+}
+
+/* Formulario y opciones */
+.form-group {
+  margin-bottom: 25px;
+  position: relative;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 12px;
+  color: #444;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.game-option {
+  flex: 1;
+  min-width: 80px;
+  padding: 12px 8px;
+  background-color: #f5f5f5;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.game-option:hover {
+  background-color: #eef1ff;
+  transform: translateY(-3px);
+  box-shadow: 0 3px 10px rgba(93, 115, 232, 0.15);
+}
+
+.game-option.active {
+  background-color: #eef1ff;
+  border-color: #5d73e8;
+  color: #5d73e8;
+  font-weight: 600;
+  box-shadow: 0 3px 10px rgba(93, 115, 232, 0.2);
+}
+
+/* Descripciones de opciones */
+.option-description {
+  background-color: #f8f9ff;
+  border-left: 4px solid #5d73e8;
+  padding: 15px;
+  margin-top: 15px;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #555;
+  border-radius: 0 8px 8px 0;
+  line-height: 1.5;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.difficulty-options .game-option {
+  border-radius: 25px;
+}
+
+.mode-options {
+  margin-top: 10px;
+  justify-content: center;
+}
+
+.mode-options .game-option {
+  padding: 12px 8px;
+  font-size: 0.9rem;
 }
 
 .start-button {
@@ -132,6 +239,72 @@
 /* Level Complete Modal */
 .level-complete h2 {
   color: #4CAF50;
+  margin-bottom: 10px;
+}
+
+/* Información del siguiente nivel */
+.next-level-info {
+  background-color: #f5f9ff;
+  border-radius: 12px;
+  padding: 15px;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.next-level-info h3 {
+  color: #5d73e8;
+  margin-top: 0;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.level-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.detail-label {
+  color: #666;
+  font-weight: 600;
+}
+
+.detail-value {
+  color: #333;
+  font-weight: 700;
+}
+
+/* Indicador de bonificación */
+.bonus-badge {
+  background-color: #FFF9C4;
+  color: #FF8F00;
+  border: 2px solid #FFEB3B;
+  border-radius: 8px;
+  padding: 8px 15px;
+  margin: 10px auto;
+  display: inline-block;
+  font-weight: bold;
+  animation: pulse 1.5s infinite alternate;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+  font-size: 0.95rem;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+  }
+  100% {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.5);
+  }
 }
 
 /* Botones para modales */
@@ -171,6 +344,7 @@
   transform: translateY(1px);
 }
 
+/* Animaciones */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -181,6 +355,48 @@
   to { transform: scale(1); opacity: 1; }
 }
 
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes scaleOut {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(0.9); opacity: 0; }
+}
+
+/* Confetti animation */
+.confetti-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 20px;
+  background-color: #f00;
+  top: -20px;
+  animation: fall 3s linear infinite;
+}
+
+@keyframes fall {
+  0% {
+    top: -20px;
+    transform: rotate(0deg) translateX(0);
+  }
+  100% {
+    top: 100%;
+    transform: rotate(720deg) translateX(100px);
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .modal-content {
@@ -188,7 +404,7 @@
     padding: 20px;
   }
   
-  .start-game h1 {
+  .start-game h1, .start-game h2 {
     font-size: 1.8rem;
   }
   
@@ -212,53 +428,30 @@
   .modal-button {
     width: 100%;
   }
-}
-
-/* Confetti animation */
-.confetti-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 10;
-  overflow: hidden;
-}
-
-.confetti {
-  position: absolute;
-  width: 10px;
-  height: 15px;
-  top: -50px;
-  animation: fall 3s linear infinite;
-  transform-origin: center;
-  opacity: 0.9;
-  border-radius: 2px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-@keyframes fall {
-  0% { 
-    top: -50px; 
-    transform: rotate(0deg) translateX(0);
-    opacity: 1;
+  
+  .button-group {
+    flex-direction: column;
   }
-  25% {
-    transform: rotate(45deg) translateX(25px);
-    opacity: 0.9;
+  
+  .game-option {
+    width: 100%;
   }
-  50% {
-    transform: rotate(90deg) translateX(0);
-    opacity: 0.8;
+  
+  .next-level-info {
+    padding: 12px;
+    margin: 15px 0;
   }
-  75% {
-    transform: rotate(135deg) translateX(-25px);
-    opacity: 0.7;
+  
+  .next-level-info h3 {
+    font-size: 1rem;
   }
-  100% { 
-    top: 110%; 
-    transform: rotate(180deg) translateX(0);
-    opacity: 0.5;
+  
+  .detail-item {
+    font-size: 0.8rem;
+  }
+  
+  .bonus-badge {
+    font-size: 0.85rem;
+    padding: 6px 12px;
   }
 } 

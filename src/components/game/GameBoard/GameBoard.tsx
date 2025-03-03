@@ -4,7 +4,7 @@ import { RootState } from '../../../store';
 import useGameLogic from '../../../hooks/useGameLogic';
 import logger from '../../../utils/logger';
 import { audioManager } from '../../../utils/audioManager';
-import * as gameConfig from '../../../config/gameConfig';
+import * as config from '../../../utils/config';
 import './GameBoard.css';
 
 // Componente para una celda individual
@@ -30,14 +30,28 @@ const Cell = React.memo(({
     if (registerCellRef && cellRef.current) {
       registerCellRef(row, col, cellRef.current);
     }
+    
+    return () => {
+      // Limpiar la referencia al desmontar
+      if (registerCellRef) {
+        registerCellRef(row, col, null);
+      }
+    };
   }, [row, col, registerCellRef]);
+
+  // Manejador de clics específico para esta celda
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevenir comportamiento por defecto
+    e.stopPropagation(); // Evitar propagación
+    onClick(row, col);
+  };
 
   return (
     <div 
       className={`cell ${isHighlighted ? 'highlighted' : ''} ${value ? 'occupied' : 'empty'}`} 
       data-row={row} 
       data-col={col} 
-      onClick={() => onClick(row, col)}
+      onClick={handleClick}
       ref={cellRef}
     >
       {value}
@@ -49,8 +63,23 @@ Cell.displayName = 'Cell';
 
 // Usar forwardRef para poder pasar la referencia desde el componente padre
 const GameBoard = forwardRef<HTMLDivElement, {}>((props, ref) => {
-  const { board, handleCellClick, highlightedCells, adjustBoardSize, registerCellRef } = useGameLogic();
-  const { status, boardSize } = useSelector((state: RootState) => state.game);
+  const { 
+    board, 
+    handleCellClick, 
+    highlightedCells, 
+    adjustBoardSize, 
+    registerCellRef,
+    showHint 
+  } = useGameLogic();
+  
+  const { 
+    status, 
+    boardSize, 
+    hintsRemaining, 
+    hintCooldown, 
+    level,
+    iconCount
+  } = useSelector((state: RootState) => state.game);
   
   // Referencia al contenedor del tablero
   const boardContainerRef = useRef<HTMLDivElement>(null);
@@ -67,6 +96,17 @@ const GameBoard = forwardRef<HTMLDivElement, {}>((props, ref) => {
   const isCellHighlighted = useCallback((row: number, col: number): boolean => {
     return highlightedCells.some(cell => cell.row === row && cell.col === col);
   }, [highlightedCells]);
+  
+  // Manejar clic en el botón de pista
+  const handleHintClick = useCallback(() => {
+    if (status === 'playing' && !hintCooldown && hintsRemaining > 0) {
+      showHint();
+    } else if (hintCooldown) {
+      logger.info('Pista', 'No se puede usar la pista: en período de enfriamiento');
+    } else if (hintsRemaining <= 0) {
+      logger.info('Pista', 'No quedan pistas disponibles para este nivel');
+    }
+  }, [status, hintCooldown, hintsRemaining, showHint]);
   
   // Renderizar el contenido del tablero
   const renderBoard = () => {
@@ -103,13 +143,35 @@ const GameBoard = forwardRef<HTMLDivElement, {}>((props, ref) => {
   };
   
   // Determinar clases adicionales para el tablero basadas en su estado
-  const boardClass = `game-board ${status === 'playing' ? 'active' : ''}`;
+  const boardClass = `game-board ${status === 'playing' ? 'active' : ''} ${boardSize > 8 ? 'large' : ''}`;
   
   return (
     <div ref={boardContainerRef} className="board-container">
+      <div className="board-controls">
+        <div className="board-info">
+          <span className="level-indicator">Nivel {level}</span>
+          <span className="icon-count-indicator">Iconos: {iconCount}</span>
+        </div>
+        
+        <button 
+          className={`hint-button ${hintCooldown ? 'cooldown' : ''} ${hintsRemaining <= 0 ? 'disabled' : ''}`}
+          onClick={handleHintClick}
+          disabled={hintCooldown || hintsRemaining <= 0 || status !== 'playing'}
+        >
+          <span role="img" aria-label="pista">💡</span>
+          <span className="hint-count">{hintsRemaining}</span>
+        </button>
+      </div>
+      
       <div ref={ref} className={boardClass}>
         {renderBoard()}
       </div>
+      
+      {status === 'levelCompleted' && (
+        <div className="level-complete-indicator">
+          ¡Nivel Completado!
+        </div>
+      )}
     </div>
   );
 });

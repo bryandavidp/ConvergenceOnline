@@ -12,7 +12,7 @@ interface GameOverModalProps {
 
 const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible }) => {
   const dispatch = useDispatch();
-  const { score, highScore, level, currentMode } = useSelector((state: RootState) => state.game);
+  const { score, highScore, level, currentPlayMode } = useSelector((state: RootState) => state.game);
   const [isClosing, setIsClosing] = useState(false);
   
   useEffect(() => {
@@ -29,9 +29,9 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible }) => {
     
     setTimeout(() => {
       audioManager.play('start');
-      dispatch(resetGame(currentMode));
+      dispatch(resetGame({ playMode: currentPlayMode }));
     }, 300);
-  }, [dispatch, currentMode]);
+  }, [dispatch, currentPlayMode]);
 
   const handleGoToHome = useCallback(() => {
     setIsClosing(true);
@@ -61,7 +61,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible }) => {
         <p>Tu puntuación final: <span className="highlight">{score}</span></p>
         <p>Mejor puntuación: <span className="highlight">{highScore}</span></p>
         <p>Nivel alcanzado: <span className="highlight">{level}</span></p>
-        <p>Modo de juego: <span className="highlight">{currentMode}</span></p>
+        <p>Modo de juego: <span className="highlight">{currentPlayMode}</span></p>
         
         <div className="modal-buttons">
           <button className="modal-button primary" onClick={handleRestart}>

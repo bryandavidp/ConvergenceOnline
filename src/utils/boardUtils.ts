@@ -154,28 +154,47 @@ export function adjustBoardVisuals(
   const {
     minCellSize = DEFAULT_BOARD_CONFIG.minCellSize,
     maxCellSize = DEFAULT_BOARD_CONFIG.maxCellSize,
-    cellMargin = DEFAULT_BOARD_CONFIG.cellMargin
+    cellMargin = DEFAULT_BOARD_CONFIG.cellMargin || 8
   } = config || {};
   
   // Calcular el tamaño disponible
   const containerWidth = boardContainer.clientWidth;
   const containerHeight = boardContainer.clientHeight;
-  const size = Math.min(containerWidth, containerHeight) - 20; // Margen
   
-  // Ajustar el tamaño del tablero
-  boardElement.style.width = `${size}px`;
-  boardElement.style.height = `${size}px`;
+  // Usar el mínimo entre ancho y alto disponible, con un margen seguro
+  const availableSize = Math.min(containerWidth, containerHeight) - 20; // 20px de margen
   
-  // Calcular y establecer el tamaño de celda
+  // Calcular el tamaño de la celda basado en el espacio disponible y el número de celdas
+  const totalCellsSpace = availableSize - (boardSize * cellMargin * 2);
+  const calculatedCellSize = Math.floor(totalCellsSpace / boardSize);
+  
+  // Aplicar límites al tamaño de celda calculado
   const cellSize = Math.max(
     minCellSize || 30, 
-    Math.min(maxCellSize || 80, Math.floor(size / boardSize) - (cellMargin || 8))
+    Math.min(maxCellSize || 80, calculatedCellSize)
   );
+  
+  // Calcular el tamaño total del tablero basado en el tamaño de celda final
+  const finalBoardSize = (cellSize * boardSize) + (cellMargin * 2 * boardSize);
+  
+  // Aplicar tamaños al tablero y celdas
+  boardElement.style.width = `${finalBoardSize}px`;
+  boardElement.style.height = `${finalBoardSize}px`;
   document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
+  
+  // Establecer otras variables CSS para asegurar consistencia en el diseño
+  document.documentElement.style.setProperty('--board-size', `${boardSize}`);
+  document.documentElement.style.setProperty('--cell-gap', `${cellMargin}px`);
+  
+  // Asegurarnos de que el tablero permanezca centrado
+  boardElement.style.position = 'relative';
+  boardElement.style.margin = 'auto';
   
   logger.debug('Tablero ajustado visualmente', { 
     containerSize: { width: containerWidth, height: containerHeight }, 
-    boardSize: size, 
-    cellSize 
+    boardSize: finalBoardSize, 
+    cellSize,
+    cellMargin,
+    availableSize
   });
 } 

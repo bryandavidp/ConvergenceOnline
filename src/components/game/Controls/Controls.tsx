@@ -6,7 +6,7 @@ import {
   resetGame, 
   setGameStatus 
 } from '../../../store/slices/gameSlice';
-import { useGameLogic } from '../../../hooks/useGameLogic';
+import useGameLogic from '../../../hooks/useGameLogic';
 import { useAudio } from '../../../hooks/useAudio';
 import './Controls.css';
 

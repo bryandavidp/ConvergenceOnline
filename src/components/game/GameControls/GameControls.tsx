@@ -63,16 +63,9 @@ const GameControls: React.FC = () => {
       tablero: `${boardSize}x${boardSize}`
     });
     
-    const hint = showHint();
+    showHint();
     
-    if (!hint) {
-      logger.warn('No hay pistas disponibles', {
-        razon: 'No se encontraron convergencias'
-      });
-      // El sonido de error ya se reproduce en el hook useGameLogic
-    } else {
-      logger.debug('Pista mostrada correctamente', hint);
-    }
+    logger.debug('Pista solicitada correctamente');
     
     timer.end();
     // La animación de la pista se maneja en el componente GameBoard a través del estado highlightedCells
