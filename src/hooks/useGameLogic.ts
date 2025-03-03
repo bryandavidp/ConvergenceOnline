@@ -605,6 +605,287 @@ const useGameLogic = () => {
     return bestResult;
   }, [board]);
   
+  // Añadir un icono aleatorio en una celda vacía
+  const addRandomIcon = useCallback(() => {
+    logger.debug('Agregando icono aleatorio al tablero');
+    
+    try {
+      // Verificar que el tablero sea válido
+      if (!board || board.length === 0) {
+        logger.error('Tablero no válido');
+        return false;
+      }
+      
+      // Obtener el estado más reciente del tablero (evita trabajar con una versión antigua)
+      const currentBoard = store.getState().game.board;
+      const currentIconCount = store.getState().game.iconCount;
+      
+      // Buscar celdas vacías
+      const emptyCells: { row: number; col: number }[] = [];
+      
+      for (let row = 0; row < boardSize; row++) {
+        for (let col = 0; col < boardSize; col++) {
+          if (currentBoard[row][col] === null) {
+            emptyCells.push({ row, col });
+          }
+        }
+      }
+      
+      // Si no hay celdas vacías, el juego termina
+      if (emptyCells.length === 0) {
+        logger.info('Tablero lleno, no se pueden agregar más iconos');
+        if (status === 'playing') {
+          dispatch(setGameStatus('gameOver'));
+        }
+        return false;
+      }
+      
+      // Seleccionar una celda vacía aleatoria
+      const randomIndex = Math.floor(Math.random() * emptyCells.length);
+      const { row, col } = emptyCells[randomIndex];
+      
+      // Seleccionar un icono aleatorio del conjunto disponible
+      const randomIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
+      
+      // Crear una copia del tablero actual
+      const newBoard = JSON.parse(JSON.stringify(currentBoard));
+      
+      // Colocar el icono en el tablero
+      newBoard[row][col] = randomIcon;
+      
+      // Actualizar el tablero en el estado
+      dispatch(updateBoard(newBoard));
+      
+      // Incrementar el contador de iconos
+      dispatch(setIconCount(currentIconCount + 1));
+      
+      // Reproducir sonido de nuevo icono (si está disponible)
+      audioManager.play('newIcon');
+      
+      // Verificar si aún hay movimientos válidos
+      setTimeout(() => {
+        const hasValidMovesLeft = hasValidMoves();
+        if (!hasValidMovesLeft && status === 'playing') {
+          logger.info('No hay movimientos válidos después de añadir un icono');
+          
+          // Dependiendo del modo de juego, puede ser fin de juego o nivel completado
+          if (currentPlayMode === 'survival') {
+            dispatch(setGameStatus('gameOver'));
+          } else {
+            dispatch(setGameStatus('levelCompleted'));
+          }
+        }
+      }, 100); // Pequeño retraso para permitir que el estado se actualice
+      
+      return true;
+    } catch (error) {
+      logger.error('Error al añadir icono aleatorio', error);
+      return false;
+    }
+  }, [board, boardSize, availableIcons, dispatch, iconCount, status, currentPlayMode, hasValidMoves]);
+
+  // Función de iniciar temporizadores definida antes del useEffect que la usa
+  const startTimers = useCallback(() => {
+    const currentSpawnRate = store.getState().game.spawnRate;
+    const currentMode = store.getState().game.currentPlayMode;
+    
+    // Evitar inicializar los temporizadores más de una vez
+    if (timersActiveRef.current) {
+      logger.warn('Se intentó iniciar los temporizadores cuando ya estaban activos');
+      return;
+    }
+    
+    logger.info('Iniciando temporizadores del juego', { 
+      spawnRate: currentSpawnRate,
+      modoJuego: currentMode
+    });
+
+    // Marcar que los temporizadores están activos
+    timersActiveRef.current = true;
+    
+    // 1. Temporizador principal del juego (incrementa timer cada segundo)
+    gameTimerRef.current = setInterval(() => {
+      if (isTimedMode()) {
+        // En modo contrarreloj, decrementar el tiempo restante
+        dispatch(decrementTimeRemaining());
+        
+        // Verificar si se acabó el tiempo
+        const { timeRemaining } = store.getState().game;
+        if (timeRemaining <= 0) {
+          logger.info('Tiempo agotado en modo contrarreloj');
+          stopTimers();
+          dispatch(setGameStatus('gameOver'));
+        }
+      } else {
+        // En otros modos, incrementar el contador de tiempo
+        dispatch(incrementTimer());
+        
+        // En modo supervivencia, incrementar también el contador de tiempo de supervivencia
+        if (isSurvivalMode()) {
+          // Aquí se podría implementar la lógica específica para supervivencia
+        }
+      }
+    }, 1000);
+    
+    // 2. Temporizador para añadir nuevos iconos
+    iconTimerRef.current = setInterval(() => {
+      // Obtener el estado más reciente
+      const state = store.getState().game;
+      
+      if (state.status !== 'playing') {
+        return; // No añadir iconos si el juego no está en curso
+      }
+      
+      // Añadir icono
+      addRandomIcon();
+    }, currentSpawnRate);
+    
+    // 3. Temporizador para aumentar la velocidad
+    // Este temporizador es diferente según el modo de juego
+    if (currentMode === 'classic' || currentMode === 'timed') {
+      // En modos clásico y contrarreloj, la velocidad aumenta gradualmente
+      const speedIncreaseInterval = currentMode === 'classic' 
+        ? SPAWN_RATE_INCREASE_INTERVAL // Usar la constante definida al inicio
+        : SPAWN_RATE_INCREASE_INTERVAL; // Se podría personalizar para el modo contrarreloj
+      
+      speedIncreaseTimerRef.current = setInterval(() => {
+        // Reducir el tiempo entre spawns (incrementar velocidad)
+        dispatch(increaseSpeed(0.1)); // Usar un argumento para el método
+        
+        // Obtener el spawn rate actualizado
+        const { spawnRate } = store.getState().game;
+        logger.info('Velocidad aumentada', { nuevoSpawnRate: spawnRate });
+        
+        // Si estamos mostrando efectos visuales, hacerlo
+        // (Implementación específica depende de la UI)
+      }, speedIncreaseInterval);
+    } else if (currentMode === 'survival') {
+      // En modo supervivencia, la velocidad aumenta más rápido con el tiempo
+      speedIncreaseTimerRef.current = setInterval(() => {
+        // Lógica especial para modo supervivencia
+        // Aumenta más rápido cuanto más tiempo pasa
+        dispatch(increaseSpeed(0.2)); // Mayor incremento en modo supervivencia
+        
+        // Obtener el spawn rate actualizado
+        const { spawnRate } = store.getState().game;
+        logger.info('Velocidad aumentada en modo supervivencia', { nuevoSpawnRate: spawnRate });
+      }, SPAWN_RATE_INCREASE_INTERVAL / 2); // Más frecuente en supervivencia
+    }
+    
+    // 4. Temporizador para recargar pistas (si están habilitadas)
+    const HINT_RECHARGE_ENABLED = true; // Esto debería estar en config
+    const MAX_HINTS = 3; // Esto debería estar en config
+    const HINT_RECHARGE_TIME = 60000; // 60 segundos
+    
+    if (HINT_RECHARGE_ENABLED) {
+      hintTimerRef.current = setInterval(() => {
+        const { hintsRemaining } = store.getState().game;
+        if (hintsRemaining < MAX_HINTS) {
+          dispatch(rechargeHint());
+        }
+      }, HINT_RECHARGE_TIME);
+    }
+  }, [dispatch, addRandomIcon]);
+
+  // Detener los temporizadores
+  const stopTimers = useCallback(() => {
+    logger.info('Deteniendo temporizadores del juego');
+    
+    // Limpiar todos los intervalos
+    if (gameTimerRef.current) {
+      clearInterval(gameTimerRef.current);
+      gameTimerRef.current = null;
+    }
+    
+    if (iconTimerRef.current) {
+      clearInterval(iconTimerRef.current);
+      iconTimerRef.current = null;
+    }
+    
+    if (speedIncreaseTimerRef.current) {
+      clearInterval(speedIncreaseTimerRef.current);
+      speedIncreaseTimerRef.current = null;
+    }
+    
+    if (hintTimerRef.current) {
+      clearInterval(hintTimerRef.current);
+      hintTimerRef.current = null;
+    }
+    
+    // Marcar que los temporizadores ya no están activos
+    timersActiveRef.current = false;
+    
+    logger.info('Temporizadores detenidos');
+  }, []);
+
+  // Añadir función para buscar iconos convergentes
+  const findConvergingIcons = useCallback((row: number, col: number): { row: number; col: number }[] => {
+    if (board[row][col] !== null) {
+      logger.debug('findConvergingIcons: la celda no está vacía', { row, col });
+      return [];
+    }
+    
+    const convergingIcons: { row: number; col: number }[] = [];
+    const visited = new Set<string>();
+    
+    // Buscar en las cuatro direcciones (arriba, derecha, abajo, izquierda)
+    const directions = [
+      { dr: -1, dc: 0 }, // Arriba
+      { dr: 0, dc: 1 },  // Derecha
+      { dr: 1, dc: 0 },  // Abajo
+      { dr: 0, dc: -1 }, // Izquierda
+    ];
+    
+    // Para cada dirección, buscar el primer icono
+    const iconsByType: Record<string, { row: number; col: number }[]> = {};
+    
+    for (const { dr, dc } of directions) {
+      let r = row + dr;
+      let c = col + dc;
+      
+      // Seguir en esa dirección hasta encontrar un icono o salir del tablero
+      while (isValidCell(r, c, boardSize)) {
+        if (board[r][c]) {
+          const icon = board[r][c] as string;
+          const key = `${r},${c}`;
+          
+          // Si no hemos visitado esta celda antes
+          if (!visited.has(key)) {
+            visited.add(key);
+            
+            // Agrupar por tipo de icono
+            if (!iconsByType[icon]) {
+              iconsByType[icon] = [];
+            }
+            
+            iconsByType[icon].push({ row: r, col: c });
+          }
+          break;
+        }
+        
+        r += dr;
+        c += dc;
+      }
+    }
+    
+    // Verificar si hay al menos 2 iconos del mismo tipo que convergen
+    for (const icon in iconsByType) {
+      if (iconsByType[icon].length >= 2) {
+        convergingIcons.push(...iconsByType[icon]);
+      }
+    }
+    
+    logger.debug('findConvergingIcons resultado', { 
+      encontrados: convergingIcons.length,
+      porTipo: Object.entries(iconsByType).map(([icon, positions]) => ({
+        icon,
+        count: positions.length
+      }))
+    });
+    
+    return convergingIcons;
+  }, [board, boardSize]);
+
   // Manejar el clic en una celda
   const handleCellClick = useCallback((row: number, col: number) => {
     // Ignorar clics si el juego no está activo o si estamos procesando una eliminación
@@ -616,316 +897,195 @@ const useGameLogic = () => {
       return;
     }
     
-    // Solo podemos detectar convergencias en celdas ocupadas
+    logger.info('Procesando clic en celda', { row, col });
+    audioManager.play('click');
+    
+    // Limpiar cualquier resaltado previo
+    dispatch(setHighlightedCells([]));
+    
+    // Lógica mejorada basada en el archivo HTML
+    // Solo se pueden hacer convergencias en celdas vacías
     if (board[row][col] === null) {
-      logger.info('Celda vacía, no se puede detectar convergencia', { row, col });
-      return;
-    }
-    
-    logger.info('Verificando convergencia en', { row, col, icono: board[row][col] });
-    
-    // Verificar convergencias usando getAlignedPositions que busca iconos iguales en línea
-    const icon = board[row][col];
-    
-    // Buscar convergencias en todas las direcciones
-    const alignedPositions = getAlignedPositions(
-      [{row, col}], 
-      boardSize
-    );
-    
-    // Verificamos si hay al menos 3 iconos del mismo tipo alineados
-    const hasConvergence = alignedPositions.length >= 3;
-    const convergingCells = hasConvergence ? alignedPositions : [];
-    
-    logger.debug('Resultado de búsqueda de convergencia:', {
-      hasConvergence,
-      numCeldas: convergingCells.length,
-      celdas: convergingCells
-    });
-    
-    // Si hay convergencia (3 o más iconos iguales)
-    if (hasConvergence && convergingCells.length >= 3) {
-      logger.info('¡Convergencia encontrada!', { 
-        icono: icon, 
-        celdas: convergingCells.length 
-      });
+      logger.info('Verificando convergencias en celda vacía', { row, col });
       
-      // Marcar que estamos en proceso de eliminación
-      isRemovingIconsRef.current = true;
+      // Buscar iconos que convergen en esta celda vacía
+      const convergingIcons = findConvergingIcons(row, col);
       
-      // Obtener una copia fresca del estado del tablero
-      const currentBoard = JSON.parse(JSON.stringify(board));
-      
-      // Marcado visual de las celdas que van a ser eliminadas
-      setTimeout(() => {
-        logger.debug('Iniciando animación de eliminación para convergencia');
+      if (convergingIcons.length >= 2) {
+        // Hay al menos 2 iconos convergentes
+        logger.info('Convergencia encontrada', { 
+          celdas: convergingIcons.length,
+          posiciones: convergingIcons 
+        });
         
-        // Verificar que todas las celdas de convergencia son válidas y tienen el icono correcto
-        let allCellsValid = true;
-        for (const cell of convergingCells) {
-          if (!currentBoard[cell.row] || currentBoard[cell.row][cell.col] !== icon) {
-            allCellsValid = false;
-            logger.error('Celda inválida en convergencia', { cell, icon });
-          }
-        }
+        audioManager.play('convergingFound');
         
-        if (!allCellsValid) {
-          logger.error('Convergencia cancelada: celdas inválidas');
-          isRemovingIconsRef.current = false;
-          return;
-        }
+        // Marcar que estamos procesando una eliminación
+        isRemovingIconsRef.current = true;
         
-        // Crear una copia del tablero con las celdas marcadas para eliminación
-        const markingBoard = JSON.parse(JSON.stringify(currentBoard));
+        // Crear copia del tablero actual
+        const currentBoard = JSON.parse(JSON.stringify(board));
         
-        // Marcar las celdas para animación
-        for (const cell of convergingCells) {
-          markingBoard[cell.row][cell.col] = `${icon}_removing`;
-        }
+        // Resaltar las celdas que se van a eliminar
+        dispatch(setHighlightedCells(convergingIcons));
         
-        // Actualizar tablero con la marca visual
-        dispatch(updateBoard(markingBoard));
-        
-        // Eliminar las celdas después de la animación
+        // Animar la eliminación
         setTimeout(() => {
-          logger.debug('Completando eliminación de convergencia');
+          // Marcar los iconos para animación de eliminación
+          const markingBoard = JSON.parse(JSON.stringify(currentBoard));
           
-          // Obtener otra copia fresca del tablero
-          const latestBoard = store.getState().game.board;
-          const updatedBoard = JSON.parse(JSON.stringify(latestBoard));
+          // Obtener el tipo de icono (todos son iguales)
+          const icon = currentBoard[convergingIcons[0].row][convergingIcons[0].col];
           
-          // Vaciar las celdas convergentes
-          let removedCount = 0;
-          for (const cell of convergingCells) {
-            // Verificar que la celda tiene el icono con marca de eliminación
-            if (updatedBoard[cell.row][cell.col] === `${icon}_removing`) {
-              updatedBoard[cell.row][cell.col] = null;
-              removedCount++;
+          // Verificar todos los iconos y marcarlos
+          logger.info('Marcando iconos para eliminación', {
+            icon,
+            convergingIcons: convergingIcons.map(cell => ({
+              row: cell.row,
+              col: cell.col,
+              valor: markingBoard[cell.row][cell.col]
+            }))
+          });
+          
+          for (const cell of convergingIcons) {
+            if (markingBoard[cell.row][cell.col] === icon) {
+              markingBoard[cell.row][cell.col] = `${icon}_removing`;
+            } else {
+              logger.error('Inconsistencia en animación de convergencia', { 
+                esperado: icon, 
+                encontrado: markingBoard[cell.row][cell.col]
+              });
             }
           }
           
-          logger.info('Eliminando iconos convergentes', { eliminados: removedCount });
+          // Actualizar el tablero con las marcas visuales
+          dispatch(updateBoard(markingBoard));
           
-          // Actualizar el tablero
-          dispatch(updateBoard(updatedBoard));
-          
-          // Actualizar puntuación y contador de iconos
-          dispatch(incrementScore(removedCount * (level + 1)));
-          dispatch(setIconCount(iconCount - removedCount));
-          
-          // Reproducir sonido de convergencia
-          audioManager.play('convergence');
-          
-          // Verificar victoria (tablero vacío = victoria)
-          let remainingIcons = 0;
-          for (let r = 0; r < boardSize; r++) {
-            for (let c = 0; c < boardSize; c++) {
-              if (updatedBoard[r][c] !== null) {
-                remainingIcons++;
+          // Completar la eliminación después de la animación
+          setTimeout(() => {
+            // Obtener el estado más reciente del tablero desde Redux
+            const latestBoard = store.getState().game.board;
+            const finalBoard = JSON.parse(JSON.stringify(latestBoard));
+            
+            // Log del estado actual del tablero antes de la eliminación
+            logger.info('Estado del tablero antes de eliminar iconos', {
+              iconosAEliminar: convergingIcons.map(cell => ({
+                row: cell.row,
+                col: cell.col,
+                valor: finalBoard[cell.row][cell.col]
+              }))
+            });
+            
+            // Eliminar los iconos marcados
+            let removedCount = 0;
+            for (const cell of convergingIcons) {
+              const cellContent = finalBoard[cell.row][cell.col];
+              if (cellContent && (cellContent.includes('_removing') || cellContent === icon)) {
+                // Asegurarse de que la celda se limpie correctamente
+                finalBoard[cell.row][cell.col] = null;
+                removedCount++;
+                
+                // Añadir un log para verificar que se eliminó
+                logger.debug('Eliminando icono en celda', { row: cell.row, col: cell.col, valor: cellContent });
               }
             }
-          }
-          
-          logger.info('Iconos restantes después de eliminación:', { remainingIcons });
-          
-          if (remainingIcons === 0) {
-            // Tablero vacío = nivel completado
-            logger.info('¡Tablero vacío! Nivel completado.');
-            dispatch(setGameStatus('levelCompleted'));
-            audioManager.play('levelComplete');
-          }
-          
-          // Finalizar proceso de eliminación
-          isRemovingIconsRef.current = false;
-        }, 500); // Tiempo de la animación de eliminación
-      }, 200); // Pequeña pausa antes de iniciar la animación
+            
+            logger.info('Iconos eliminados en convergencia', { cantidad: removedCount, total: convergingIcons.length });
+            
+            // Actualizar el tablero sin los iconos
+            dispatch(updateBoard(finalBoard));
+            
+            // Actualizar puntuación según el número de iconos eliminados
+            const pointsEarned = removedCount * 10 * level;
+            logger.info('Puntos ganados', { puntos: pointsEarned, multiplicador: level });
+            dispatch(incrementScore(pointsEarned));
+            
+            // Actualizar el contador de iconos
+            dispatch(setIconCount(iconCount - removedCount));
+            
+            // Reproducir sonido de eliminación completada
+            audioManager.play('removeIcon');
+            
+            // Limpiar las celdas destacadas después de un tiempo para evitar restos visuales
+            setTimeout(() => {
+              dispatch(setHighlightedCells([]));
+            }, 700); // Esperar un poco más que la animación para asegurar que se complete
+            
+            // Verificar si el tablero está vacío (victoria inmediata)
+            if (iconCount - removedCount === 0) {
+              logger.info('Tablero vacío. ¡Nivel completado!');
+              dispatch(setGameStatus('levelCompleted'));
+              audioManager.play('levelComplete');
+            }
+            // Verificar si no hay más movimientos válidos
+            else if (!hasValidMoves()) {
+              logger.info('No hay más movimientos válidos. Nivel completado.');
+              setTimeout(() => {
+                dispatch(setGameStatus('levelCompleted'));
+              }, 500);
+            }
+            
+            // Finalizar el proceso de eliminación
+            isRemovingIconsRef.current = false;
+          }, 500); // Duración de la animación de eliminación
+        }, 200); // Pequeña pausa antes de iniciar la animación
+      } else {
+        // No hay convergencia, penalizar al jugador
+        logger.info('No hay convergencia. Penalizando al jugador.');
+        audioManager.play('error');
+        
+        // Animar error
+        // animateErrorCell(row, col);
+        // animateBoard();
+        
+        // Aumentar la velocidad como penalización
+        const currentSpawnRate = store.getState().game.spawnRate;
+        const newSpawnRate = Math.max(
+          MIN_SPAWN_RATE, // Usar la constante definida al inicio
+          currentSpawnRate * 0.95
+        );
+        
+        // Actualizar el spawn rate
+        dispatch(setSpawnRate(newSpawnRate));
+        
+        // Añadir iconos de penalización
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            addRandomIcon();
+          }, i * 200);
+        }
+      }
     } else {
-      // No hay convergencia
-      logger.info('No hay convergencia en esta posición', { row, col });
-      // Feedback visual o sonoro de que no hay convergencia
+      // La celda no está vacía, no se puede realizar una convergencia
+      logger.info('Celda ocupada, no se puede hacer convergencia', { 
+        row, col, 
+        icono: board[row][col] 
+      });
       audioManager.play('error');
     }
-  }, [board, boardSize, dispatch, status, level, iconCount, getAlignedPositions]);
-  
-  // Verificar condiciones de victoria
-  const checkWinConditions = useCallback(() => {
-    if (status !== 'playing') return false;
-    
-    // Contar iconos en el tablero
-    let iconCount = 0;
-    let emptyCells = 0;
-    const totalCells = boardSize * boardSize;
-    
-    for (let row = 0; row < boardSize; row++) {
-      for (let col = 0; col < boardSize; col++) {
-        if (board[row][col] !== null) {
-          iconCount++;
-        } else {
-          emptyCells++;
-        }
-      }
-    }
-    
-    // Victoria si el tablero está vacío
-    if (iconCount === 0) {
-      logger.info('Tablero vacío, nivel completado');
-      dispatch(setGameStatus('levelCompleted'));
-      return true;
-    }
-    
-    // Victoria si no hay movimientos y el nivel es completo
-    if (emptyCells === 0) {
-      logger.info('Tablero lleno, verificando si hay convergencias');
-      
-      // Verificar si hay convergencias posibles
-      for (let row = 0; row < boardSize; row++) {
-        for (let col = 0; col < boardSize; col++) {
-          if (hasConvergence(board, row, col, boardSize)) {
-            return false; // Todavía hay convergencias posibles
-          }
-        }
-      }
-      
-      // Si no hay convergencias y el tablero está lleno
-      logger.info('Tablero lleno sin convergencias, nivel fallido');
-      dispatch(setGameStatus('gameOver'));
-      return true;
-    }
-    
-    // Verificar si quedan movimientos posibles
-    if (!hasValidMoves()) {
-      if (currentPlayMode === 'survival') {
-        logger.info('Sin movimientos válidos, juego terminado (supervivencia)');
-        dispatch(setGameStatus('gameOver'));
-      } else {
-        logger.info('Sin movimientos válidos, nivel completado');
-        dispatch(setGameStatus('levelCompleted'));
-      }
-      return true;
-    }
-    
-    return false;
-  }, [board, boardSize, dispatch, currentPlayMode, status, hasValidMoves, hasConvergence]);
-  
+
+    // Limpiar las celdas destacadas después de eliminar los iconos
+    setTimeout(() => {
+      // Asegurarnos que no queden celdas destacadas después de la eliminación
+      dispatch(setHighlightedCells([]));
+    }, 700); // Tiempo ligeramente más largo que la animación
+  }, [
+    board, 
+    status, 
+    boardSize, 
+    level, 
+    iconCount, 
+    dispatch, 
+    findConvergingIcons, 
+    hasValidMoves, 
+    addRandomIcon
+  ]);
+
   // Ajustar el tamaño visual del tablero
   const adjustBoardSize = useCallback((container: HTMLElement, boardElement: HTMLElement) => {
     adjustBoardVisuals(container, boardElement);
   }, []);
 
-  // Declaración de stopTimers antes de su uso en useEffect
-  const stopTimers = useCallback(() => {
-    logger.info('Deteniendo temporizadores del juego');
-    
-    if (spawnTimerRef.current) {
-      clearInterval(spawnTimerRef.current);
-      spawnTimerRef.current = null;
-    }
-    
-    if (speedIncreaseTimerRef.current) {
-      clearInterval(speedIncreaseTimerRef.current);
-      speedIncreaseTimerRef.current = null;
-    }
-    
-    if (gameTimerRef.current) {
-      clearInterval(gameTimerRef.current);
-      gameTimerRef.current = null;
-    }
-    
-    // Limpiar todos los temporizadores adicionales
-    if (hintTimerRef.current) {
-      clearTimeout(hintTimerRef.current);
-      hintTimerRef.current = null;
-    }
-    
-    timersActiveRef.current = false;
-  }, []);
-
-  // Función auxiliar para generar iconos aleatorios
-  const generateRandomIcon = useCallback(() => {
-    // Esta función debería ser implementada según la lógica del juego
-    return false; // Simplificada para el ejemplo
-  }, []);
-
-  // Función de iniciar temporizadores definida antes del useEffect que la usa
-  const startTimers = useCallback(() => {
-    const spawnRate = store.getState().game.spawnRate;
-    const currentPlayMode = store.getState().game.currentPlayMode;
-    
-    // Evitar inicializar los temporizadores más de una vez
-    if (timersActiveRef.current) {
-      logger.warn('Se intentó iniciar los temporizadores cuando ya estaban activos');
-      return;
-    }
-    
-    logger.info('Iniciando temporizadores del juego', { 
-      spawnRate, 
-      modoJuego: currentPlayMode 
-    });
-    
-    // Iniciar el temporizador del juego (actualiza el contador de tiempo)
-    gameTimerRef.current = setInterval(() => {
-      dispatch(incrementTimer());
-      
-      // En modo contrarreloj, decrementar el tiempo restante
-      if (currentPlayMode === 'timed') {
-        dispatch(decrementTimeRemaining());
-      }
-    }, 1000);
-    
-    // Temporizador para generar nuevos iconos
-    spawnTimerRef.current = setInterval(() => {
-      // Solo generar iconos si el juego está en estado "playing"
-      const status = store.getState().game.status;
-      if (status === 'playing') {
-        // Verificar si estamos en proceso de eliminación para evitar interferencias
-        if (!isRemovingIconsRef.current) {
-          generateRandomIcon();
-        } else {
-          logger.debug('Generación de icono pospuesta: hay una eliminación en curso');
-        }
-      }
-    }, spawnRate);
-    
-    // Para el modo supervivencia, iniciar temporizador que aumenta la velocidad gradualmente
-    if (currentPlayMode === 'survival') {
-      speedIncreaseTimerRef.current = setInterval(() => {
-        // Solo aumentar velocidad si el juego está en estado "playing"
-        if (store.getState().game.status === 'playing') {
-          // Calcular incremento de velocidad basado en el nivel y tiempo transcurrido
-          const level = store.getState().game.level;
-          const speedIncrease = 0.05 + (level * 0.01); // Mayor incremento en niveles altos
-          
-          // Aumentar la velocidad
-          dispatch(increaseSpeed(speedIncrease));
-          logger.info('Velocidad aumentada automáticamente en modo supervivencia');
-        }
-      }, SPAWN_RATE_INCREASE_INTERVAL);
-    }
-    
-    // Establecer la bandera de temporizadores activos
-    timersActiveRef.current = true;
-  }, [dispatch, generateRandomIcon]);
-  
-  // Efecto para manejar el estado del juego
-  useEffect(() => {
-    if (status === 'playing') {
-      // Si los temporizadores no están activos, iniciarlos
-      if (!timersActiveRef.current) {
-        startTimers();
-      }
-    } else {
-      // Si los temporizadores están activos, detenerlos
-      if (timersActiveRef.current) {
-        stopTimers();
-      }
-    }
-    
-    return () => {
-      // Limpiar temporizadores al desmontar
-      stopTimers();
-    };
-  }, [status, startTimers, stopTimers]);
-  
   // Función para mostrar pistas (destacar convergencias potenciales)
   const showHint = useCallback(() => {
     // Verificar si hay pistas disponibles
@@ -1043,7 +1203,8 @@ const useGameLogic = () => {
     registerCellRef,
     showHint,
     resetCurrentLevel,
-    advanceToNextLevel
+    advanceToNextLevel,
+    findConvergingIcons
   };
 }; // fin del hook
 

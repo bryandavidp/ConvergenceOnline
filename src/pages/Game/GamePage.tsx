@@ -94,6 +94,14 @@ const GamePage: React.FC = () => {
     }
   }, [stopTimers]);
   
+  // Iniciar temporizadores automáticamente cuando el juego está en estado 'playing'
+  useEffect(() => {
+    if (status === 'playing' && isBoardInitializedRef.current && !isInitializingRef.current) {
+      console.log('Iniciando temporizadores automáticamente');
+      startTimers();
+    }
+  }, [status, startTimers, isInitializingRef]);
+  
   // Actualizar configuración cuando cambia el nivel
   useEffect(() => {
     // Ignorar si no estamos en juego o hay una inicialización en curso

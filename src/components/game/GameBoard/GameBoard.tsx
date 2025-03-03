@@ -24,6 +24,10 @@ const Cell = React.memo(({
   registerCellRef?: (row: number, col: number, element: HTMLDivElement | null) => void;
 }) => {
   const cellRef = useRef<HTMLDivElement>(null);
+  const isRemoving = value?.includes('_removing') || false;
+  
+  // Extraer el icono base en caso de que incluya "_removing"
+  const displayValue = isRemoving && value ? value.split('_')[0] : value;
 
   // Registrar la referencia de la celda al montar el componente
   useEffect(() => {
@@ -48,13 +52,13 @@ const Cell = React.memo(({
 
   return (
     <div 
-      className={`cell ${isHighlighted ? 'highlighted' : ''} ${value ? 'occupied' : 'empty'}`} 
+      className={`cell ${isHighlighted ? 'highlighted' : ''} ${value ? 'occupied' : 'empty'} ${isRemoving ? 'removing' : ''}`} 
       data-row={row} 
       data-col={col} 
       onClick={handleClick}
       ref={cellRef}
     >
-      {value}
+      {displayValue}
     </div>
   );
 });
