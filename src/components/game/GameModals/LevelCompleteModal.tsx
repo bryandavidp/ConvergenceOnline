@@ -1,7 +1,7 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../store';
-import { setGameStatus, setLevel, resetGame } from '../../../store/slices/gameSlice';
+import { setGameStatus, setLevel } from '../../../store/slices/gameSlice';
 import { audioManager } from '../../../utils/audioManager';
 import logger from '../../../utils/logger';
 import './GameModals.css';
@@ -13,64 +13,102 @@ interface LevelCompleteModalProps {
 const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible }) => {
   const dispatch = useDispatch();
   const { level, timer, score } = useSelector((state: RootState) => state.game);
+  const [isClosing, setIsClosing] = useState(false);
   
   useEffect(() => {
     if (isVisible) {
-      logger.info('LevelCompleteModal', 'Nivel completado mostrado', { level, timer });
+      setIsClosing(false);
+      logger.info('LevelCompleteModal', 'Nivel completado mostrado', { level, timer, score });
       audioManager.play('levelComplete');
       createConfetti();
     }
-  }, [isVisible, level, timer]);
+  }, [isVisible, level, timer, score]);
   
   const handleNextLevel = useCallback(() => {
-    logger.info('LevelCompleteModal', 'Avanzando al siguiente nivel');
-    audioManager.play('levelTransition');
+    setIsClosing(true);
+    logger.info('LevelCompleteModal', 'Avanzando al siguiente nivel', { 
+      nivelActual: level,
+      siguienteNivel: level + 1,
+      puntuación: score,
+      tiempo: timer
+    });
     
-    const nextLevel = level + 1;
-    dispatch(setLevel(nextLevel));
-    
-    // Cambiar el estado después de un breve retraso para permitir la animación
     setTimeout(() => {
-      dispatch(setGameStatus('playing'));
-    }, 500);
-  }, [dispatch, level]);
+      audioManager.play('levelTransition');
+      
+      // Solo incrementamos el nivel, manteniendo puntuación, tiempo y velocidad
+      const nextLevel = level + 1;
+      dispatch(setLevel(nextLevel));
+      
+      // Cambiar el estado después de un breve retraso para permitir la animación
+      setTimeout(() => {
+        dispatch(setGameStatus('playing'));
+      }, 200);
+    }, 300);
+  }, [dispatch, level, score, timer]);
   
   const handleRestart = useCallback(() => {
+    setIsClosing(true);
     logger.info('LevelCompleteModal', 'Reiniciando juego en el mismo nivel');
-    audioManager.play('start');
     
-    // Reiniciar el juego conservando el nivel actual
-    dispatch(resetGame());
-    
-    // Cambiar el estado después de un breve retraso para permitir la animación
     setTimeout(() => {
-      dispatch(setGameStatus('playing'));
-    }, 500);
+      audioManager.play('start');
+      
+      // Cambiar el estado después de un breve retraso para permitir la animación
+      setTimeout(() => {
+        // Reiniciar el nivel actual, pero manteniendo la puntuación y el tiempo
+        dispatch(setGameStatus('playing'));
+      }, 200);
+    }, 300);
   }, [dispatch]);
   
   // Función para crear efecto de confeti
   const createConfetti = () => {
     const container = document.getElementById('confetti-container');
-    if (!container) return;
+    if (!container) {
+      logger.error('LevelCompleteModal', 'No se encontró el contenedor de confeti');
+      return;
+    }
     
+    // Limpiar el contenedor antes de añadir nuevo confeti
     container.innerHTML = '';
-    const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4'];
+    
+    // Colores vibrantes para el confeti
+    const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800', '#FF5722'];
     
     // Crear 150 piezas de confeti
     for (let i = 0; i < 150; i++) {
       const confetti = document.createElement('div');
       confetti.className = 'confetti';
+      
+      // Posición aleatoria
       confetti.style.left = `${Math.random() * 100}%`;
+      
+      // Color aleatorio
       confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      
+      // Retraso aleatorio para la animación
       confetti.style.animationDelay = `${Math.random() * 3}s`;
+      
+      // Duración aleatoria para la animación
+      confetti.style.animationDuration = `${3 + Math.random() * 2}s`;
+      
+      // Tamaño aleatorio
+      const size = 5 + Math.random() * 10;
+      confetti.style.width = `${size}px`;
+      confetti.style.height = `${size * 1.5}px`;
+      
+      // Añadir al contenedor
       container.appendChild(confetti);
     }
+    
+    logger.info('LevelCompleteModal', 'Efecto de confeti creado con éxito');
   };
   
   if (!isVisible) return null;
   
   return (
-    <div className="game-modal level-complete">
+    <div className={`game-modal level-complete ${isClosing ? 'closing' : ''}`}>
       <div className="modal-content">
         <h2>¡Nivel Completado!</h2>
         <p>Has superado el nivel {level}</p>

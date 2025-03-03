@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, forwardRef } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store';
-import { useGameLogic } from '../../../hooks/useGameLogic';
+import useGameLogic from '../../../hooks/useGameLogic';
 import logger from '../../../utils/logger';
 import { audioManager } from '../../../utils/audioManager';
 import * as gameConfig from '../../../config/gameConfig';
@@ -47,98 +47,74 @@ const Cell = React.memo(({
 
 Cell.displayName = 'Cell';
 
-const GameBoard: React.FC = () => {
-  const { board, boardSize, status } = useSelector((state: RootState) => state.game);
-  const { 
-    handleCellClick, 
-    highlightedCells, 
-    registerCellRef,
-    adjustBoardSize
-  } = useGameLogic();
+// Usar forwardRef para poder pasar la referencia desde el componente padre
+const GameBoard = forwardRef<HTMLDivElement, {}>((props, ref) => {
+  const { board, handleCellClick, highlightedCells, adjustBoardSize, registerCellRef } = useGameLogic();
+  const { status, boardSize } = useSelector((state: RootState) => state.game);
   
-  // Referencias
-  const boardRef = useRef<HTMLDivElement>(null);
+  // Referencia al contenedor del tablero
   const boardContainerRef = useRef<HTMLDivElement>(null);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
   
-  // Manejar click en celda
-  const onCellClick = useCallback((row: number, col: number) => {
-    if (status !== 'playing') return;
-    
-    try {
-      // Reproducir sonido de clic
-      audioManager.play('click');
-      handleCellClick(row, col);
-    } catch (error) {
-      logger.error('GameBoard', 'Error al hacer clic en celda', { row, col, error });
-    }
-  }, [status, handleCellClick]);
-  
-  // Configurar el observador de tamaño - Solo una vez al montar el componente
+  // Efecto para ajustar el tamaño del tablero cuando cambia su dimensión
   useEffect(() => {
-    // Ajustar el tamaño inicialmente
-    if (boardRef.current && boardContainerRef.current) {
-      adjustBoardSize(boardContainerRef.current, boardRef.current);
+    const boardElement = ref as React.RefObject<HTMLDivElement>;
+    if (boardContainerRef.current && boardElement && boardElement.current) {
+      adjustBoardSize(boardContainerRef.current, boardElement.current);
     }
-    
-    // Crear un observador de cambio de tamaño
-    if (!resizeObserverRef.current && boardContainerRef.current) {
-      resizeObserverRef.current = new ResizeObserver(() => {
-        if (boardRef.current && boardContainerRef.current) {
-          adjustBoardSize(boardContainerRef.current, boardRef.current);
-        }
-      });
-      
-      resizeObserverRef.current.observe(boardContainerRef.current);
-    }
-    
-    // Limpiar
-    return () => {
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
-        resizeObserverRef.current = null;
-      }
-    };
-  }, [adjustBoardSize]);
+  }, [boardSize, adjustBoardSize, ref]);
   
-  // Solo ajustar el tamaño cuando cambia el tamaño del tablero, no cuando cambia su contenido
-  useEffect(() => {
-    if (boardRef.current && boardContainerRef.current) {
-      adjustBoardSize(boardContainerRef.current, boardRef.current);
-    }
-  }, [board, boardSize, adjustBoardSize]);
-
-  // Verificar si una celda está resaltada (para pistas)
-  const isCellHighlighted = useCallback((row: number, col: number) => {
-    return highlightedCells?.some(cell => cell.row === row && cell.col === col) || false;
+  // Comprobar si una celda está resaltada
+  const isCellHighlighted = useCallback((row: number, col: number): boolean => {
+    return highlightedCells.some(cell => cell.row === row && cell.col === col);
   }, [highlightedCells]);
   
+  // Renderizar el contenido del tablero
+  const renderBoard = () => {
+    const boardContent = [];
+    
+    for (let row = 0; row < boardSize; row++) {
+      const rowContent = [];
+      
+      for (let col = 0; col < boardSize; col++) {
+        const cellValue = board && board[row] ? board[row][col] : null;
+        const isHighlighted = isCellHighlighted(row, col);
+        
+        rowContent.push(
+          <Cell 
+            key={`cell-${row}-${col}`}
+            row={row}
+            col={col}
+            value={cellValue}
+            onClick={handleCellClick}
+            isHighlighted={isHighlighted}
+            registerCellRef={registerCellRef}
+          />
+        );
+      }
+      
+      boardContent.push(
+        <div key={`row-${row}`} className="board-row">
+          {rowContent}
+        </div>
+      );
+    }
+    
+    return boardContent;
+  };
+  
+  // Determinar clases adicionales para el tablero basadas en su estado
+  const boardClass = `game-board ${status === 'playing' ? 'active' : ''}`;
+  
   return (
-    <div className="board-container" ref={boardContainerRef}>
-      <div 
-        className="board" 
-        ref={boardRef}
-        style={{
-          gridTemplateColumns: `repeat(${boardSize}, var(--cell-size))`,
-          gridTemplateRows: `repeat(${boardSize}, var(--cell-size))`
-        }}
-      >
-        {board && board.map((row, rowIndex) => 
-          row.map((cell, colIndex) => (
-            <Cell
-              key={`${rowIndex}-${colIndex}`}
-              row={rowIndex}
-              col={colIndex}
-              value={cell}
-              onClick={onCellClick}
-              isHighlighted={isCellHighlighted(rowIndex, colIndex)}
-              registerCellRef={registerCellRef}
-            />
-          ))
-        )}
+    <div ref={boardContainerRef} className="board-container">
+      <div ref={ref} className={boardClass}>
+        {renderBoard()}
       </div>
     </div>
   );
-};
+});
+
+// Añadir nombre para depuración
+GameBoard.displayName = 'GameBoard';
 
 export default GameBoard; 

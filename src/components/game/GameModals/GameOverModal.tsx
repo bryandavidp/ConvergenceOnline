@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../store';
 import { resetGame, setGameStatus } from '../../../store/slices/gameSlice';
@@ -13,16 +13,33 @@ interface GameOverModalProps {
 const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible }) => {
   const dispatch = useDispatch();
   const { score, highScore, level, currentMode } = useSelector((state: RootState) => state.game);
+  const [isClosing, setIsClosing] = useState(false);
+  
+  useEffect(() => {
+    if (isVisible) {
+      setIsClosing(false);
+      // Reproducir sonido de fin de juego si es visible
+      audioManager.play('gameOver');
+    }
+  }, [isVisible]);
   
   const handleRestart = useCallback(() => {
+    setIsClosing(true);
     logger.info('GameOverModal', 'Reiniciando juego');
-    audioManager.play('start');
-    dispatch(resetGame(currentMode));
+    
+    setTimeout(() => {
+      audioManager.play('start');
+      dispatch(resetGame(currentMode));
+    }, 300);
   }, [dispatch, currentMode]);
 
   const handleGoToHome = useCallback(() => {
+    setIsClosing(true);
     logger.info('GameOverModal', 'Volviendo a la pantalla principal');
-    dispatch(setGameStatus('startScreen'));
+    
+    setTimeout(() => {
+      dispatch(setGameStatus('startScreen'));
+    }, 300);
   }, [dispatch]);
   
   if (!isVisible) return null;
@@ -30,7 +47,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible }) => {
   const isNewHighScore = score === highScore && score > 0;
   
   return (
-    <div className="game-modal game-over">
+    <div className={`game-modal game-over ${isClosing ? 'closing' : ''}`}>
       <div className="modal-content">
         <h2>{isNewHighScore ? '¡Nueva Puntuación Máxima!' : 'Juego Terminado'}</h2>
         

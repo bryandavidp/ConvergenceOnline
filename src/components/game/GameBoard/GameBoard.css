@@ -20,23 +20,27 @@
   width: 100%;
   height: 100%;
   padding: 10px;
+  box-sizing: border-box;
 }
 
-/* Tablero */
-.board {
+/* Tablero de juego */
+.game-board {
   display: grid;
   grid-template-columns: repeat(var(--board-size), var(--cell-size));
   grid-template-rows: repeat(var(--board-size), var(--cell-size));
-  gap: 2px;
+  gap: var(--cell-gap);
   padding: var(--board-padding);
   background-color: var(--board-bg-color);
   border-radius: var(--border-radius);
-  width: 100%;
-  height: 100%;
-  max-width: min(95vw, 95vh);
-  max-height: min(95vw, 95vh);
-  aspect-ratio: 1 / 1;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  width: fit-content;
   margin: auto;
+  transition: all 0.3s ease;
+}
+
+/* Fila del tablero */
+.board-row {
+  display: contents;
 }
 
 /* Celdas */
@@ -156,7 +160,7 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .board {
+  .game-board {
     gap: 1px;
   }
 }
@@ -168,7 +172,7 @@
     --board-padding: 2px;
   }
   
-  .board {
+  .game-board {
     max-width: 98vw;
     max-height: 98vw;
     border-radius: 4px;
@@ -181,7 +185,7 @@
 }
 
 /* Tema oscuro */
-.dark-theme .board {
+.dark-theme .game-board {
   background-color: #222;
 }
 

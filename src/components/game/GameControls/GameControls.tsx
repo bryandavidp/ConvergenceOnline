@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../store';
 import { setGameStatus, resetGame } from '../../../store/slices/gameSlice';
-import { useGameLogic } from '../../../hooks/useGameLogic';
+import useGameLogic from '../../../hooks/useGameLogic';
 import { audioManager } from '../../../utils/audioManager';
 import { createLogger } from '../../../utils/logUtils';
 import * as gameConfig from '../../../config/gameConfig';

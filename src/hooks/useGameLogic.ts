@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   incrementScore, 
@@ -11,11 +10,16 @@ import {
   GameState
 } from '../store/slices/gameSlice';
 import { RootState } from '../store';
+import { store } from '../store';
 import { createLogger } from '../utils/logUtils';
 import * as config from '../utils/config';
 import * as gameConfig from '../config/gameConfig';
 import { isValidCell, getRandomInt, shuffleArray, hasValidMoves as checkValidMoves } from '../utils/gameUtils';
 import { audioManager } from '../utils/audioManager';
+import { 
+  adjustBoardVisuals,
+  changeSpawnRate
+} from '../utils/boardUtils';
 
 // Crear un logger específico para este hook
 const logger = createLogger('useGameLogic');
@@ -47,36 +51,30 @@ const useGameLogic = () => {
   const spawnTimerRef = useRef<NodeJS.Timeout | null>(null);
   const speedIncreaseTimerRef = useRef<NodeJS.Timeout | null>(null);
   const gameTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Referencias para las celdas del tablero (DOM)
+  const cellRefs = useRef<Record<string, HTMLElement>>({});
+  
+  // Referencia para controlar si los temporizadores están activos
   const timersActiveRef = useRef<boolean>(false);
+  
+  // Referencia para marcar si el tablero ha sido inicializado
   const isInitializedRef = useRef<boolean>(false);
   
-  // Referencias para las celdas (similar a cellRefs en la clase Board)
-  const cellRefsMapRef = useRef<Map<string, HTMLDivElement>>(new Map());
-  
-  // Registrar una celda para acceso rápido
-  const registerCellRef = useCallback((row: number, col: number, element: HTMLDivElement | null) => {
+  // Registrar referencia para una celda
+  const registerCellRef = useCallback((row: number, col: number, element: HTMLElement | null) => {
+    const key = `${row}-${col}`;
     if (element) {
-      const key = `${row},${col}`;
-      cellRefsMapRef.current.set(key, element);
+      cellRefs.current[key] = element;
+    } else {
+      delete cellRefs.current[key];
     }
   }, []);
   
-  // Obtener el elemento DOM de una celda (similar a getCellElement)
-  const getCellElement = useCallback((row: number, col: number): HTMLDivElement | null => {
-    const key = `${row},${col}`;
-    if (cellRefsMapRef.current.has(key)) {
-      return cellRefsMapRef.current.get(key) || null;
-    }
-    
-    // Fallback si no se encontró la referencia
-    const element = document.querySelector(`[data-row="${row}"][data-col="${col}"]`) as HTMLDivElement;
-    return element;
-  }, []);
-  
-  // Calcular el tamaño de celda según el tamaño del tablero
-  const calculateCellSize = useCallback((size: number) => {
-    // Función simplificada, la lógica real estaría en CSS o en un util
-    return Math.max(30, Math.min(80, Math.floor(500 / size) - 8));
+  // Obtener el elemento DOM para una celda
+  const getCellElement = useCallback((row: number, col: number) => {
+    const key = `${row}-${col}`;
+    return cellRefs.current[key] || null;
   }, []);
   
   // Detectar si hay movimientos válidos
@@ -199,8 +197,7 @@ const useGameLogic = () => {
       const randomIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
       
       // Crear una copia del tablero y actualizar la celda
-      const newBoard = [...board];
-      newBoard[row] = [...newBoard[row]];
+      const newBoard = JSON.parse(JSON.stringify(board));
       newBoard[row][col] = randomIcon;
       
       // Actualizar en el store
@@ -210,17 +207,52 @@ const useGameLogic = () => {
       // Reproducir sonido de nuevo icono
       audioManager.play('newIcon');
       
-      gameStateLogger.debug('Nuevo icono generado', { 
-        row, 
-        col, 
-        icon: randomIcon,
-        iconosRestantes: (boardSize * boardSize) - (iconCount + 1)
+      // Añadir la clase de animación al elemento DOM
+      setTimeout(() => {
+        const cellElement = getCellElement(row, col);
+        if (cellElement) {
+          cellElement.classList.add('new-icon');
+          // Eliminar la clase después de la animación
+          setTimeout(() => {
+            cellElement.classList.remove('new-icon');
+          }, 500);
+        }
+      }, 50);
+      
+      gameStateLogger.debug('Icono generado aleatoriamente', { 
+        posición: { row, col }, 
+        icono: randomIcon 
       });
       
       // Verificar si hay movimientos válidos después de añadir el icono
-      if (checkMoves && !hasValidMoves()) {
-        gameStateLogger.info('No hay movimientos válidos después de añadir un icono. Forzando movimiento...');
-        forceValidMove();
+      if (checkMoves) {
+        // Usamos setTimeout para asegurar que el tablero ha sido actualizado
+        setTimeout(() => {
+          const currentBoard = JSON.parse(JSON.stringify(store.getState().game.board));
+          if (!checkValidMoves(currentBoard, boardSize)) {
+            gameStateLogger.info('No hay movimientos válidos después de añadir un icono. Verificando condiciones de fin de juego...');
+            
+            // Verificar si el tablero está lleno
+            let iconCount = 0;
+            for (let r = 0; r < boardSize; r++) {
+              for (let c = 0; c < boardSize; c++) {
+                if (currentBoard[r][c] !== null) {
+                  iconCount++;
+                }
+              }
+            }
+            
+            if (iconCount >= boardSize * boardSize) {
+              // El tablero está lleno y no hay movimientos válidos: fin del juego
+              gameStateLogger.info('Tablero lleno y sin movimientos válidos, juego terminado');
+              audioManager.play('gameOver');
+              dispatch(setGameStatus('gameOver'));
+            } else {
+              // Aún hay espacio, intentar forzar un movimiento válido
+              forceValidMove();
+            }
+          }
+        }, 100);
       }
       
       return true;
@@ -228,10 +260,10 @@ const useGameLogic = () => {
       gameStateLogger.error('Error al generar icono aleatorio', error);
       return false;
     }
-  }, [board, boardSize, availableIcons, iconCount, status, hasValidMoves, forceValidMove, dispatch]);
+  }, [board, boardSize, availableIcons, iconCount, status, forceValidMove, dispatch]);
   
   // Encontrar iconos que convergen en una celda vacía
-  const findConvergingIcons = useCallback((row: number, col: number) => {
+  const findConvergingIcons = useCallback((row: number, col: number): {row: number, col: number, icon: string}[] => {
     if (!board || board.length === 0 || !isValidCell(row, col, boardSize) || board[row][col] !== null) {
       return [];
     }
@@ -245,10 +277,6 @@ const useGameLogic = () => {
       { dr: 0, dc: 1 },  // Derecha
       { dr: 1, dc: 0 },  // Abajo
       { dr: 0, dc: -1 }, // Izquierda
-      { dr: -1, dc: 0 }, // Arriba
-      { dr: 0, dc: 1 },  // Derecha
-      { dr: 1, dc: 0 },  // Abajo
-      { dr: 0, dc: -1 }, // Izquierda
     ];
     
     // Para cada dirección, buscar el primer icono
@@ -258,26 +286,10 @@ const useGameLogic = () => {
       let r = row + dr;
       let c = col + dc;
       
-      
       // Seguir en esa dirección hasta encontrar un icono o salir del tablero
       while (isValidCell(r, c, boardSize)) {
         if (board[r][c]) {
-      while (isValidCell(r, c, boardSize)) {
-        if (board[r][c]) {
           const icon = board[r][c] as string;
-          const key = `${r},${c}`;
-          
-          // Si no hemos visitado esta celda antes
-          if (!visited.has(key)) {
-            visited.add(key);
-            
-            // Agrupar por tipo de icono
-            if (!iconsByType[icon]) {
-              iconsByType[icon] = [];
-            }
-            
-            iconsByType[icon].push({ row: r, col: c });
-          }
           const key = `${r},${c}`;
           
           // Si no hemos visitado esta celda antes
@@ -300,8 +312,6 @@ const useGameLogic = () => {
     }
     
     // Verificar si hay al menos 2 iconos del mismo tipo que convergen
-    
-    // Verificar si hay al menos 2 iconos del mismo tipo que convergen
     for (const icon in iconsByType) {
       if (iconsByType[icon].length >= 2) {
         // Agregar el tipo de icono a cada objeto para facilitar la referencia
@@ -311,45 +321,8 @@ const useGameLogic = () => {
       }
     }
     
-    
     return convergingIcons;
   }, [board, boardSize]);
-  
-  // Mostrar pista resaltando celdas con movimientos válidos
-  const showHint = useCallback(() => {
-    const hintLogger = logger.subcontext('Pista');
-    
-    // Primero limpiar cualquier resaltado anterior
-    setHighlightedCells([]);
-    
-    // Buscar convergencias posibles
-    for (let row = 0; row < boardSize; row++) {
-      for (let col = 0; col < boardSize; col++) {
-        if (!board[row][col]) {
-          const convergingIcons = findConvergingIcons(row, col);
-          if (convergingIcons.length > 0) {
-            // Añadir la celda objetivo también
-            const cellsToHighlight = [...convergingIcons.map(({ row, col }) => ({ row, col })), { row, col }];
-            setHighlightedCells(cellsToHighlight);
-            
-            hintLogger.info('Pista mostrada', { 
-              celdaObjetivo: { row, col }, 
-              iconosConvergentes: convergingIcons.length 
-            });
-            
-            // Reproducir sonido de pista
-            audioManager.play('hint');
-            
-            // Solo mostrar la primera pista que encontremos
-            return true;
-          }
-        }
-      }
-    }
-    
-    hintLogger.warn('No se encontraron movimientos para mostrar como pista');
-    return false;
-  }, [board, boardSize, findConvergingIcons]);
   
   // Aplicar penalización (añadir iconos aleatorios)
   const applyPenalty = useCallback(() => {
@@ -365,13 +338,123 @@ const useGameLogic = () => {
     
     penaltyLogger.info(`Aplicando penalización: añadir ${penaltyIcons} iconos`, { mode: currentMode });
     
-    // Añadir los iconos de penalización
-    for (let i = 0; i < penaltyIcons; i++) {
-      setTimeout(() => {
-        generateRandomIcon(true);
-      }, i * 300); // Añadir retardo para visualizar mejor la penalización
+    // Crear una copia del tablero actual
+    const newBoard = JSON.parse(JSON.stringify(board));
+    let iconsAdded = 0;
+    
+    // Encontrar todas las celdas vacías
+    const emptyCells: {row: number, col: number}[] = [];
+    for (let row = 0; row < boardSize; row++) {
+      for (let col = 0; col < boardSize; col++) {
+        if (!newBoard[row][col]) {
+          emptyCells.push({ row, col });
+        }
+      }
     }
-  }, [currentMode, generateRandomIcon]);
+    
+    // Si no hay celdas vacías, no podemos añadir penalización
+    if (emptyCells.length === 0) {
+      penaltyLogger.info('No hay celdas vacías para aplicar penalización');
+      return;
+    }
+    
+    // Mezclar las celdas vacías para seleccionarlas aleatoriamente
+    shuffleArray(emptyCells);
+    
+    // Añadir los iconos de penalización (tantos como sea posible)
+    const iconCount = store.getState().game.iconCount;
+    let totalToAdd = Math.min(penaltyIcons, emptyCells.length);
+    totalToAdd = Math.min(totalToAdd, boardSize * boardSize - iconCount);
+    
+    if (totalToAdd <= 0) {
+      penaltyLogger.info('No se pueden añadir más iconos de penalización');
+      return;
+    }
+    
+    for (let i = 0; i < totalToAdd; i++) {
+      const { row, col } = emptyCells[i];
+      const randomIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
+      newBoard[row][col] = randomIcon;
+      iconsAdded++;
+      
+      // Añadir la clase de animación al elemento DOM
+      setTimeout(() => {
+        const cellElement = getCellElement(row, col);
+        if (cellElement) {
+          cellElement.classList.add('new-icon');
+          // Eliminar la clase después de la animación
+          setTimeout(() => {
+            cellElement.classList.remove('new-icon');
+          }, 500);
+        }
+      }, i * 300);
+    }
+    
+    // Actualizar el tablero y el contador de iconos
+    dispatch(updateBoard(newBoard));
+    dispatch(setIconCount(iconCount + iconsAdded));
+    
+    // Reproducir sonido para cada icono añadido
+    for (let i = 0; i < iconsAdded; i++) {
+      setTimeout(() => {
+        audioManager.play('newIcon');
+      }, i * 300);
+    }
+    
+    penaltyLogger.info(`Se añadieron ${iconsAdded} iconos de penalización al tablero`);
+    
+    // Verificar si hay movimientos válidos después de la penalización
+    setTimeout(() => {
+      if (!checkValidMoves(newBoard, boardSize)) {
+        penaltyLogger.warn('No hay movimientos válidos después de aplicar la penalización');
+        
+        // Si el tablero está lleno, es game over
+        if (iconCount + iconsAdded >= boardSize * boardSize) {
+          audioManager.play('gameOver');
+          dispatch(setGameStatus('gameOver'));
+        } else {
+          // Intentar forzar un movimiento válido
+          forceValidMove();
+        }
+      }
+    }, totalToAdd * 300 + 100);
+  }, [board, boardSize, currentMode, getCellElement, forceValidMove]);
+  
+  // Mostrar pista resaltando celdas con movimientos válidos
+  const showHint = useCallback(() => {
+    const hintLogger = logger.subcontext('Pista');
+    
+    // Primero limpiar cualquier resaltado anterior
+    setHighlightedCells([]);
+    
+    // Buscar convergencias posibles
+    for (let row = 0; row < boardSize; row++) {
+      for (let col = 0; col < boardSize; col++) {
+        if (!board[row][col]) {
+          const convergences = findConvergingIcons(row, col);
+          if (convergences.length > 0) {
+            // Añadir la celda objetivo también
+            const cellsToHighlight = [...convergences.map(({ row, col }) => ({ row, col })), { row, col }];
+            setHighlightedCells(cellsToHighlight);
+            
+            hintLogger.info('Pista mostrada', { 
+              celdaObjetivo: { row, col }, 
+              iconosConvergentes: convergences.length 
+            });
+            
+            // Reproducir sonido de pista
+            audioManager.play('hint');
+            
+            // Solo mostrar la primera pista que encontremos
+            return true;
+          }
+        }
+      }
+    }
+    
+    hintLogger.warn('No se encontraron movimientos para mostrar como pista');
+    return false;
+  }, [board, boardSize, findConvergingIcons]);
   
   // Manejar click en celda
   const handleCellClick = useCallback((row: number, col: number) => {
@@ -389,9 +472,9 @@ const useGameLogic = () => {
     }
     
     // Buscar iconos convergentes
-    const convergingIcons = findConvergingIcons(row, col);
+    const convergences = findConvergingIcons(row, col);
     
-    if (convergingIcons.length > 0) {
+    if (convergences.length > 0) {
       // Limpiar cualquier resaltado anterior
       setHighlightedCells([]);
       
@@ -401,29 +484,66 @@ const useGameLogic = () => {
       // Crear una copia profunda del tablero
       const newBoard = JSON.parse(JSON.stringify(board));
       
-      // Eliminar los iconos convergentes
-      convergingIcons.forEach(({ row: r, col: c }) => {
-        newBoard[r][c] = null;
+      // Eliminar los iconos convergentes - Simplemente eliminarlos, no colocar uno nuevo
+      convergences.forEach(({ row: r, col: c }) => {
+        // Añadir la clase de animación antes de eliminar el icono
+        const cellElement = getCellElement(r, c);
+        if (cellElement) {
+          cellElement.classList.add('removing-icon');
+        }
+        
+        // Programar la eliminación real después de la animación
+        setTimeout(() => {
+          if (cellElement) {
+            cellElement.classList.remove('removing-icon');
+          }
+          // Eliminar el icono del tablero (será efectivo en la siguiente actualización)
+          newBoard[r][c] = null;
+          
+          // Actualizar el tablero después de la última eliminación
+          if (r === convergences[convergences.length - 1].row && c === convergences[convergences.length - 1].col) {
+            // Actualizar el tablero
+            dispatch(updateBoard(newBoard));
+            
+            // Decrementar el contador de iconos por los eliminados
+            dispatch(setIconCount(iconCount - convergences.length));
+            
+            // Calcular y añadir puntuación
+            const pointsEarned = gameConfig.calculateScore(convergences.length, level);
+            dispatch(incrementScore(pointsEarned));
+            
+            // Verificar si el tablero está vacío (victoria)
+            setTimeout(() => {
+              const currentBoard = JSON.parse(JSON.stringify(store.getState().game.board));
+              let remainingIcons = 0;
+              
+              for (let r = 0; r < boardSize; r++) {
+                for (let c = 0; c < boardSize; c++) {
+                  if (currentBoard[r][c] !== null) {
+                    remainingIcons++;
+                  }
+                }
+              }
+              
+              if (remainingIcons === 0) {
+                // Tablero vacío: nivel completado
+                clickLogger.info('Tablero vacío, nivel completado');
+                audioManager.play('levelComplete');
+                dispatch(setGameStatus('levelCompleted'));
+              } else if (!checkValidMoves(currentBoard, boardSize)) {
+                // No hay movimientos válidos pero quedan iconos: fin del juego
+                clickLogger.info('No hay movimientos válidos disponibles y quedan iconos, juego terminado');
+                audioManager.play('gameOver');
+                dispatch(setGameStatus('gameOver'));
+              }
+            }, 100);
+          }
+        }, 300); // Tiempo para completar la animación de desaparición
       });
       
-      // Colocar el icono en la celda objetivo
-      const icon = convergingIcons[0].icon;
-      newBoard[row][col] = icon;
-      
-      // Actualizar el tablero
-      dispatch(updateBoard(newBoard));
-      
-      // Decrementar el contador de iconos por los eliminados (se eliminan los convergentes pero se añade uno nuevo)
-      dispatch(setIconCount(iconCount - convergingIcons.length + 1));
-      
-      // Calcular y añadir puntuación
-      const pointsEarned = gameConfig.calculateScore(convergingIcons.length, level);
-      dispatch(incrementScore(pointsEarned));
-      
       clickLogger.info('Convergencia exitosa', { 
-        iconosEliminados: convergingIcons.length,
-        iconoColocado: icon,
-        puntos: pointsEarned
+        iconosEliminados: convergences.length,
+        puntos: gameConfig.calculateScore(convergences.length, level)
       });
       
       return true;
@@ -477,7 +597,9 @@ const useGameLogic = () => {
         // Solo reducir si no hemos llegado al mínimo
         if (spawnRate > MIN_SPAWN_RATE) {
           const newSpawnRate = Math.max(MIN_SPAWN_RATE, spawnRate - SPAWN_RATE_STEP);
-          dispatch(setSpawnRate(newSpawnRate));
+          
+          // Usar la función modularizada para cambiar la velocidad
+          changeSpawnRate(newSpawnRate);
           
           timerLogger.info('Velocidad incrementada', {
             anterior: spawnRate,
@@ -533,33 +655,126 @@ const useGameLogic = () => {
     const initLogger = logger.subcontext('Inicialización');
     initLogger.info(`Añadiendo ${INITIAL_ICONS} iconos iniciales`);
     
-    let attempts = 0;
-    const maxAttempts = 10;
+    // Reiniciar el tablero
+    const newBoard = Array(boardSize).fill(null).map(() => Array(boardSize).fill(null));
     
-    do {
-      // Reiniciar el tablero
-      const newBoard = Array(boardSize).fill(null).map(() => Array(boardSize).fill(null));
-      dispatch(updateBoard(newBoard));
-      dispatch(setIconCount(0));
-      
-      // Añadir iconos iniciales
-      for (let i = 0; i < INITIAL_ICONS; i++) {
-        generateRandomIcon(false);
+    // Obtener todas las posiciones disponibles del tablero
+    const allPositions: {row: number, col: number}[] = [];
+    for (let r = 0; r < boardSize; r++) {
+      for (let c = 0; c < boardSize; c++) {
+        allPositions.push({row: r, col: c});
       }
-      
-      attempts++;
-      
-      if (!hasValidMoves()) {
-        initLogger.warn(`No hay movimientos válidos. Reintento ${attempts}/${maxAttempts}`);
-      }
-      
-    } while (!hasValidMoves() && attempts < maxAttempts);
-    
-    if (!hasValidMoves()) {
-      initLogger.warn('No se pudo generar un tablero con movimientos válidos. Forzando movimiento...');
-      forceValidMove();
     }
-  }, [boardSize, generateRandomIcon, hasValidMoves, forceValidMove, dispatch]);
+    
+    // Mezclar las posiciones para obtener ubicaciones aleatorias
+    shuffleArray(allPositions);
+    
+    // Reservar posiciones para los iconos iniciales (máximo INITIAL_ICONS)
+    const selectedPositions = allPositions.slice(0, INITIAL_ICONS);
+    
+    // Crear una copia del tablero para trabajar con ella
+    let workingBoard = JSON.parse(JSON.stringify(newBoard));
+    
+    // Asegurarnos de tener al menos dos posiciones que podrían converger
+    let guaranteedValidMove = false;
+    
+    if (selectedPositions.length >= 2) {
+      // Buscar dos posiciones que podrían formar una convergencia (en la misma fila o columna)
+      for (let i = 0; i < selectedPositions.length - 1 && !guaranteedValidMove; i++) {
+        for (let j = i + 1; j < selectedPositions.length && !guaranteedValidMove; j++) {
+          const pos1 = selectedPositions[i];
+          const pos2 = selectedPositions[j];
+          
+          // Si están en la misma fila o columna y no son adyacentes, podemos usar el mismo icono
+          if ((pos1.row === pos2.row && Math.abs(pos1.col - pos2.col) >= 2) || 
+              (pos1.col === pos2.col && Math.abs(pos1.row - pos2.row) >= 2)) {
+            // Seleccionar un icono aleatorio para ambas posiciones
+            const randomIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
+            workingBoard[pos1.row][pos1.col] = randomIcon;
+            workingBoard[pos2.row][pos2.col] = randomIcon;
+            
+            // Marcar estas posiciones como usadas
+            selectedPositions[i] = { row: -1, col: -1 }; // Marcamos como usada
+            selectedPositions[j] = { row: -1, col: -1 }; // Marcamos como usada
+            
+            guaranteedValidMove = true;
+            initLogger.debug('Movimiento válido garantizado', { pos1, pos2, icon: randomIcon });
+          }
+        }
+      }
+    }
+    
+    // Llenar el resto de posiciones seleccionadas con iconos aleatorios
+    for (const pos of selectedPositions) {
+      // Saltar posiciones ya usadas para la convergencia garantizada
+      if (pos.row === -1 && pos.col === -1) continue;
+      
+      // Añadir un icono aleatorio en esta posición
+      const randomIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
+      workingBoard[pos.row][pos.col] = randomIcon;
+    }
+    
+    // Contar cuántos iconos hemos colocado realmente
+    let iconCount = 0;
+    for (let r = 0; r < boardSize; r++) {
+      for (let c = 0; c < boardSize; c++) {
+        if (workingBoard[r][c] !== null) {
+          iconCount++;
+        }
+      }
+    }
+    
+    // Actualizar el tablero una sola vez con todos los iconos añadidos
+    dispatch(updateBoard(workingBoard));
+    dispatch(setIconCount(iconCount));
+    
+    // Usando una referencia al tablero actual para verificar los movimientos válidos
+    const currentBoard = workingBoard;
+    
+    // Verificar si hay movimientos válidos después de la inicialización
+    // Primero actualizamos el tablero y luego verificamos los movimientos
+    setTimeout(() => {
+      const boardToCheck = JSON.parse(JSON.stringify(store.getState().game.board));
+      if (!hasValidMoves()) {
+        initLogger.warn('No hay movimientos válidos después de la inicialización. Forzando movimiento...');
+        
+        // Si no hay movimientos válidos, añadir un par de iconos iguales en posiciones estratégicas
+        const emptyPositions: {row: number, col: number}[] = [];
+        for (let r = 0; r < boardSize; r++) {
+          for (let c = 0; c < boardSize; c++) {
+            if (boardToCheck[r][c] === null) {
+              emptyPositions.push({row: r, col: c});
+            }
+          }
+        }
+        
+        if (emptyPositions.length >= 2) {
+          shuffleArray(emptyPositions);
+          const randomIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
+          
+          // Colocar el mismo icono en las dos primeras posiciones vacías
+          const pos1 = emptyPositions[0];
+          const pos2 = emptyPositions[1];
+          
+          // Crear una nueva copia del tablero para evitar modificar el original (que puede ser de solo lectura)
+          const updatedBoard = JSON.parse(JSON.stringify(boardToCheck));
+          
+          // Ahora modificar la copia
+          updatedBoard[pos1.row][pos1.col] = randomIcon;
+          updatedBoard[pos2.row][pos2.col] = randomIcon;
+          
+          // Actualizar el tablero y el contador
+          dispatch(updateBoard(updatedBoard));
+          dispatch(setIconCount(iconCount + 2));
+          
+          initLogger.debug('Iconos adicionales añadidos para garantizar jugabilidad', {
+            posiciones: [pos1, pos2],
+            icono: randomIcon
+          });
+        }
+      }
+    }, 100); // Pequeño retraso para asegurar que el estado se haya actualizado
+  }, [boardSize, availableIcons, hasValidMoves, dispatch]);
   
   // Inicializar el tablero
   const initializeBoard = useCallback((size: number) => {
@@ -651,26 +866,8 @@ const useGameLogic = () => {
   
   // Calcular y ajustar el tamaño del tablero basado en el contenedor
   const adjustBoardSize = useCallback((boardContainer: HTMLElement, boardElement: HTMLElement) => {
-    if (!boardContainer || !boardElement) return;
-    
-    // Calcular el tamaño disponible
-    const containerWidth = boardContainer.clientWidth;
-    const containerHeight = boardContainer.clientHeight;
-    const size = Math.min(containerWidth, containerHeight) - 20; // Margen
-    
-    // Ajustar el tamaño del tablero
-    boardElement.style.width = `${size}px`;
-    boardElement.style.height = `${size}px`;
-    
-    // Calcular y establecer el tamaño de celda
-    const cellSize = Math.max(30, Math.min(80, Math.floor(size / boardSize) - 8));
-    document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
-    
-    logger.debug('Tablero ajustado', { 
-      containerSize: { width: containerWidth, height: containerHeight }, 
-      boardSize: size, 
-      cellSize 
-    });
+    // Usar la función modularizada para ajustar el tamaño visual del tablero
+    adjustBoardVisuals(boardContainer, boardElement);
   }, [boardSize]);
   
   return {
@@ -692,3 +889,5 @@ const useGameLogic = () => {
     addInitialIcons
   };
 };
+
+export default useGameLogic;

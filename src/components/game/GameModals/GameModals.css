@@ -212,4 +212,53 @@
   .modal-button {
     width: 100%;
   }
+}
+
+/* Confetti animation */
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 15px;
+  top: -50px;
+  animation: fall 3s linear infinite;
+  transform-origin: center;
+  opacity: 0.9;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+@keyframes fall {
+  0% { 
+    top: -50px; 
+    transform: rotate(0deg) translateX(0);
+    opacity: 1;
+  }
+  25% {
+    transform: rotate(45deg) translateX(25px);
+    opacity: 0.9;
+  }
+  50% {
+    transform: rotate(90deg) translateX(0);
+    opacity: 0.8;
+  }
+  75% {
+    transform: rotate(135deg) translateX(-25px);
+    opacity: 0.7;
+  }
+  100% { 
+    top: 110%; 
+    transform: rotate(180deg) translateX(0);
+    opacity: 0.5;
+  }
 } 

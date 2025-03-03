@@ -1,146 +1,105 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { setGameStatus, setLevel, setBoardSize, setAvailableIcons, setSpawnRate } from '../../store/slices/gameSlice';
+import { setGameStatus, setLevel } from '../../store/slices/gameSlice';
 import logger from '../../utils/logger';
-import { useGameLogic } from '../../hooks/useGameLogic';
+import useGameLogic from '../../hooks/useGameLogic';
 import GameBoard from '../../components/game/GameBoard/GameBoard';
 import GameOverModal from '../../components/game/GameModals/GameOverModal';
 import LevelCompleteModal from '../../components/game/GameModals/LevelCompleteModal';
 import StartGameModal from '../../components/game/GameModals/StartGameModal';
 import { audioManager } from '../../utils/audioManager';
 import * as config from '../../utils/config';
+import {
+  configureBoardForLevel,
+  changeBoardSize,
+  changeSpawnRate,
+  adjustBoardVisuals
+} from '../../utils/boardUtils';
 import './GamePage.css';
 
 const GamePage: React.FC = () => {
   const dispatch = useDispatch();
   const { status, level, boardSize, currentMode, score, timer, spawnRate } = useSelector((state: RootState) => state.game);
-  const { initializeBoard, stopTimers, isInitialized, startTimers } = useGameLogic();
+  const { initializeBoard, stopTimers, startTimers } = useGameLogic();
   // Referencia para controlar las inicializaciones repetidas
   const isInitializingRef = useRef<boolean>(false);
-  const lastBoardSizeRef = useRef<number>(0);
+  // Track if board has been initialized
+  const isBoardInitializedRef = useRef<boolean>(false);
   
-  // Cargar configuración y preparar el juego
+  // Referencias a los elementos del tablero
+  const boardContainerRef = useRef<HTMLDivElement>(null);
+  const boardElementRef = useRef<HTMLDivElement>(null);
+  
+  // Ajustar el tamaño del tablero cuando cambia la ventana
   useEffect(() => {
-    logger.component.mount('GamePage');
+    const handleResize = () => {
+      if (boardContainerRef.current && boardElementRef.current) {
+        // Usamos la función adjustBoardVisuals importada al principio del archivo
+        adjustBoardVisuals(boardContainerRef.current, boardElementRef.current);
+      }
+    };
+
+    // Ajustar tamaño inicialmente
+    handleResize();
     
-    // Cargar sonidos
-    audioManager.play('pageLoad');
-    
-    // Configurar nivel inicial
-    const initialLevel = 1;
-    dispatch(setLevel(initialLevel));
-    
-    // Configurar tamaño del tablero basado en el nivel
-    const size = config.getLevelBoardSize(initialLevel);
-    dispatch(setBoardSize(size));
-    
-    // Configurar velocidad inicial basada en el nivel
-    const initialSpawnRate = config.getLevelSpawnRate(initialLevel);
-    dispatch(setSpawnRate(initialSpawnRate));
-    
-    // Seleccionar iconos para el nivel
-    const iconCount = config.iconCountByLevel(initialLevel);
-    const shuffledIcons = [...config.AVAILABLE_ICONS].sort(() => Math.random() - 0.5);
-    const selectedIcons = shuffledIcons.slice(0, iconCount);
-    dispatch(setAvailableIcons(selectedIcons));
-    
-    // Estado inicial
-    dispatch(setGameStatus('startScreen'));
+    // Escuchar cambios de tamaño
+    window.addEventListener('resize', handleResize);
     
     return () => {
-      logger.component.unmount('GamePage');
-      stopTimers(); // Asegurarse de detener todos los temporizadores
-      audioManager.stopMusic();
+      window.removeEventListener('resize', handleResize);
     };
-  }, [dispatch, stopTimers]);
+  }, [boardSize]);
   
-  // Inicializar el tablero cuando cambia el estatus a 'playing'
+  // Inicializar el tablero cuando cambie su tamaño
   useEffect(() => {
-    if (status === 'playing') {
-      // Evitar inicializaciones repetidas
-      if (isInitializingRef.current) {
-        logger.debug('GamePage', 'Inicialización ya en progreso, se omite la solicitud');
-        return;
-      }
-
-      // Verificar si el tablero necesita ser reinicializado (cambio de nivel/tamaño)
-      const needsReinitialization = !isInitialized || lastBoardSizeRef.current !== boardSize;
+    if (!isBoardInitializedRef.current && !isInitializingRef.current && status === 'playing') {
+      isInitializingRef.current = true;
+      logger.info('GamePage', `Inicializando tablero con tamaño ${boardSize}x${boardSize}`);
       
-      if (needsReinitialization) {
-        // Establecer bandera de inicialización
-        isInitializingRef.current = true;
-        
-        logger.info('GamePage', `Inicializando tablero: Nivel ${level}, Tamaño ${boardSize}x${boardSize}`);
-        
-        // Actualizar referencia del tamaño
-        lastBoardSizeRef.current = boardSize;
-        
-        // Inicializar el tablero
-        initializeBoard(boardSize);
-        
-        // Restablecer bandera después de la inicialización
-        setTimeout(() => {
-          isInitializingRef.current = false;
-        }, 200);
-      } else {
-        logger.debug('GamePage', 'No es necesario reinicializar el tablero, solo los temporizadores');
-      }
+      initializeBoard(boardSize);
+      isBoardInitializedRef.current = true;
       
-      // Asegurarnos de que los temporizadores se inicien
-      if (isInitialized && !isInitializingRef.current) {
-        startTimers();
-      }
+      setTimeout(() => {
+        isInitializingRef.current = false;
+      }, 200);
     }
-  }, [status, level, boardSize, initializeBoard, isInitialized, startTimers]);
+  }, [boardSize, initializeBoard, status]);
   
-  // Reiniciar temporizadores cuando el estado cambia
+  // Limpiar al desmontar
   useEffect(() => {
-    // Detener temporizadores cuando el juego se pausa o termina
-    if (status === 'paused' || status === 'gameOver' || status === 'levelCompleted') {
+    return () => {
+      logger.info('GamePage', 'Componente desmontado, limpiando');
       stopTimers();
     }
-    
-    // Pausar música cuando el juego se pausa o termina
-    if (status === 'paused') {
-      audioManager.pauseMusic();
-    } else if (status === 'gameOver') {
-      audioManager.stopMusic();
-      audioManager.play('gameOver');
-    } else if (status === 'levelCompleted') {
-      audioManager.play('levelComplete');
-    }
-  }, [status, stopTimers]);
+  }, [stopTimers]);
   
-  // Configuración al cambiar de nivel
+  // Actualizar configuración cuando cambia el nivel
   useEffect(() => {
-    if (level > 1 && status === 'playing') { // No cambiar en el nivel inicial ni cuando no está jugando
-      // Obtener nuevo tamaño del tablero
-      const newSize = config.getLevelBoardSize(level);
+    // Ignorar si no estamos en juego o hay una inicialización en curso
+    if (status !== 'playing' || isInitializingRef.current) return;
+    
+    // Solo actualizar si estamos más allá del nivel 1
+    if (level > 1) {
+      logger.info('GamePage', `Configurando tablero para nivel ${level}`);
       
-      // Obtener nueva velocidad de spawn
-      const newSpawnRate = config.getLevelSpawnRate(level);
+      // Usar la función modularizada para configurar el tablero según el nivel
+      // Mantener la velocidad actual para preservar la dificultad progresiva
+      isInitializingRef.current = true;
       
-      // Seleccionar iconos para el nivel
-      const iconCount = config.iconCountByLevel(level);
-      const shuffledIcons = [...config.AVAILABLE_ICONS].sort(() => Math.random() - 0.5);
-      const selectedIcons = shuffledIcons.slice(0, iconCount);
+      const oldSize = boardSize;
+      const newConfig = configureBoardForLevel(level, true);
       
-      // Actualizar configuración
-      if (newSize !== boardSize) {
-        logger.info('GamePage', `Ajustando tamaño del tablero para el nivel ${level}: ${newSize}x${newSize}`);
-        dispatch(setBoardSize(newSize));
-        
-        // El tablero se reiniciará automáticamente a través del otro useEffect
-        // cuando detecte el cambio en boardSize
+      // Si el tamaño del tablero cambió, el useEffect de boardSize manejará la inicialización
+      if (newConfig.size !== oldSize) {
+        logger.info('GamePage', `El tamaño del tablero cambiará de ${oldSize}x${oldSize} a ${newConfig.size}x${newConfig.size}`);
+        // La inicialización será manejada por el useEffect que observa cambios en boardSize
       } else {
-        // Si el tamaño no cambia, pero necesitamos reiniciar para el nuevo nivel
-        // sin causar bucles, lo hacemos solo si no hay una inicialización en curso
-        if (!isInitializingRef.current && isInitialized) {
-          isInitializingRef.current = true;
-          logger.info('GamePage', `Reinicializando tablero para nivel ${level} sin cambio de tamaño`);
+        // Si no hay cambio de tamaño, reinicializar manualmente
+        if (!isInitializingRef.current && isBoardInitializedRef.current) {
+          logger.info('GamePage', `Reinicializando tablero sin cambio de tamaño`);
           
-          // Detener temporizadores
+          // Detener temporizadores temporalmente
           stopTimers();
           
           // Pequeña pausa antes de reinicializar
@@ -157,49 +116,90 @@ const GamePage: React.FC = () => {
           }, 300);
         }
       }
-      
-      dispatch(setSpawnRate(newSpawnRate));
-      dispatch(setAvailableIcons(selectedIcons));
     }
-  }, [level, boardSize, dispatch, status, isInitialized, isInitializingRef, initializeBoard, stopTimers]);
+  }, [level, boardSize, dispatch, status, initializeBoard, stopTimers, spawnRate, timer, score]);
   
   // Calcular el multiplicador de velocidad para mostrar
   const speedMultiplier = (config.SPAWN_RATES.MEDIUM / spawnRate).toFixed(1);
   
+  // Manejar cambio manual de velocidad (para depuración o características avanzadas)
+  const handleSpeedChange = (multiplier: number) => {
+    const baseSpeed = config.SPAWN_RATES.MEDIUM;
+    const newSpeed = Math.round(baseSpeed / multiplier);
+    
+    logger.info('GamePage', `Cambiando velocidad manualmente`, {
+      multiplicador: multiplier,
+      nuevaVelocidad: newSpeed
+    });
+    
+    // Usar la función modularizada para cambiar la velocidad
+    changeSpawnRate(newSpeed);
+    
+    // Reiniciar los temporizadores para aplicar la nueva velocidad
+    stopTimers();
+    startTimers();
+  };
+  
+  // Manejar cambio manual de tamaño del tablero
+  const handleSizeChange = (newSize: number) => {
+    logger.info('GamePage', `Cambiando tamaño del tablero manualmente a ${newSize}x${newSize}`);
+    
+    // Usar la función modularizada para cambiar el tamaño
+    changeBoardSize(newSize);
+  };
+  
   return (
     <div className="game-page">
-      {/* Barra superior minimalista con estadísticas */}
-      <div className="game-header">
-        <div className="game-stats">
-          <div className="stat-item">
-            <div className="stat-icon">🏆</div>
-            <div className="stat-value">{score}</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-icon">🏅</div>
-            <div className="stat-value">{level}</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-icon">⏱️</div>
-            <div className="stat-value">{timer}</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-icon">🚀</div>
-            <div className="stat-value">{speedMultiplier}x</div>
-          </div>
-        </div>
-      </div>
-      
       <div className="game-container">
-        <div className="game-area">
-          <GameBoard />
+        <div className="game-header">
+          <div className="game-info">
+            <div className="info-item">
+              <span className="label">Nivel</span>
+              <span className="value">{level}</span>
+            </div>
+            <div className="info-item">
+              <span className="label">Puntos</span>
+              <span className="value">{score}</span>
+            </div>
+            <div className="info-item">
+              <span className="label">Tiempo</span>
+              <span className="value">{timer}s</span>
+            </div>
+            <div className="info-item">
+              <span className="label">Velocidad</span>
+              <span className="value">{speedMultiplier}x</span>
+            </div>
+          </div>
         </div>
+        
+        <div className="board-container" ref={boardContainerRef}>
+          <GameBoard ref={boardElementRef} />
+        </div>
+        
+        {/* Modales del juego */}
+        <StartGameModal isVisible={status === 'startScreen'} />
+        <GameOverModal isVisible={status === 'gameOver'} />
+        <LevelCompleteModal isVisible={status === 'levelCompleted'} />
+        
+        {/* Controles de desarrollo (ocultos en producción) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="dev-controls">
+            <div className="dev-section">
+              <h4>Velocidad</h4>
+              <button onClick={() => handleSpeedChange(0.5)}>0.5x</button>
+              <button onClick={() => handleSpeedChange(1)}>1x</button>
+              <button onClick={() => handleSpeedChange(2)}>2x</button>
+              <button onClick={() => handleSpeedChange(3)}>3x</button>
+            </div>
+            <div className="dev-section">
+              <h4>Tamaño</h4>
+              <button onClick={() => handleSizeChange(6)}>6x6</button>
+              <button onClick={() => handleSizeChange(8)}>8x8</button>
+              <button onClick={() => handleSizeChange(10)}>10x10</button>
+            </div>
+          </div>
+        )}
       </div>
-      
-      {/* Modales del juego */}
-      <StartGameModal isVisible={status === 'startScreen'} />
-      <GameOverModal isVisible={status === 'gameOver'} />
-      <LevelCompleteModal isVisible={status === 'levelCompleted'} />
     </div>
   );
 };
