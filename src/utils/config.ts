@@ -6,54 +6,98 @@ export const BOARD_MIN_SIZE = 5;
 export const BOARD_MAX_SIZE = 12;
 export const DEFAULT_BOARD_SIZE = 8;
 
+// Configuración de tamaños de tablero por nivel
+export const BOARD_SIZES = [
+  8, // Nivel 1: 8x8
+  8, // Nivel 2: 8x8
+  8, // Nivel 3: 8x8
+  8, // Nivel 4: 8x8
+  9, // Nivel 5: 9x9
+];
+
+// Conjuntos de iconos por nivel
+export const LEVEL_ICONS = [
+  // Nivel 1: Frutas
+  ["🍎", "🍇", "🍊", "🍓"],
+  // Nivel 2: Animales
+  ["🐶", "🐱", "🐭", "🐹"],
+  // Nivel 3: Símbolos
+  ["⭐", "💫", "🔥", "🌈", "🌪️"],
+  // Nivel 4: Deportes
+  ["⚽", "🏀", "🏉", "🎱", "🏓"],
+  // Nivel 5: Vehículos
+  ["🚗", "🏎️", "🚓", "🚑", "✈️"],
+];
+
 // Velocidades de aparición de iconos (en milisegundos)
 export const SPAWN_RATES = {
-  TUTORIAL: 4000,
-  VERY_SLOW: 3000,
-  SLOW: 2000,
-  MEDIUM: 1500,
-  FAST: 1000,
-  SUPER_FAST: 750,
-  EXTREME: 500
+  TUTORIAL: 5000,
+  VERY_SLOW: 4000,
+  SLOW: 3000,
+  MEDIUM: 2000,
+  FAST: 1500,
+  SUPER_FAST: 1000,
+  EXTREME: 800
 };
 
-// Niveles de dificultad
-export const DIFFICULTY_LEVELS: Record<string, any> = {
+// Parámetros de configuración generales
+export const INITIAL_ICONS = 5;  // Número de iconos iniciales al comenzar
+export const MAX_LEVELS = 5;     // Máximo número de niveles
+export const PENALTY_ICONS = 3;  // Número de iconos que aparecen como penalización
+
+// Configuración básica de velocidad
+export const INITIAL_SPAWN_RATE = 3000; // Tiempo inicial entre spawns (3 segundos)
+export const SPEED_INCREASE_TIME = 15000; // Aumentar velocidad cada 15 segundos
+export const MAX_SPEED_MULTIPLIER = 3; // Velocidad máxima (3x la inicial)
+
+// Configuración de modos de juego
+export const GAME_MODES = {
+  // Modo clásico (original)
+  CLASSIC: 'classic',
+  // Modo contrarreloj
+  TIMED: 'timed',
+  // Modo supervivencia
+  SURVIVAL: 'survival',
+};
+
+// Configuración por dificultad
+export const DIFFICULTY_LEVELS = {
   EASY: {
     name: 'easy',
-    initialSpawnRate: 3000, // 3 segundos
-    maxSpeedMultiplier: 1.5,
-    speedIncreaseTime: 45000, // 45 segundos
-    penaltyIcons: 1
+    initialSpawnRate: 4000,
+    speedIncreaseTime: 30000, // 30 segundos
+    maxSpeedMultiplier: 2,
+    penaltyIcons: 1,
+    initialIcons: 4,
+    maxLevel: 3,
   },
   NORMAL: {
     name: 'normal',
-    initialSpawnRate: 2000, // 2 segundos
-    maxSpeedMultiplier: 2,
-    speedIncreaseTime: 30000, // 30 segundos
-    penaltyIcons: 2
+    initialSpawnRate: 3000,
+    speedIncreaseTime: 20000, // 20 segundos
+    maxSpeedMultiplier: 3,
+    penaltyIcons: 2,
+    initialIcons: 5,
+    maxLevel: 4,
   },
   HARD: {
     name: 'hard',
-    initialSpawnRate: 1500, // 1.5 segundos
-    maxSpeedMultiplier: 3,
-    speedIncreaseTime: 20000, // 20 segundos
-    penaltyIcons: 3
+    initialSpawnRate: 2000,
+    speedIncreaseTime: 15000, // 15 segundos
+    maxSpeedMultiplier: 4,
+    penaltyIcons: 3,
+    initialIcons: 6,
+    maxLevel: 5,
   },
   TUTORIAL: {
     name: 'tutorial',
-    initialSpawnRate: 4000, // 4 segundos
-    maxSpeedMultiplier: 1.2,
+    initialSpawnRate: 5000,
     speedIncreaseTime: 60000, // 60 segundos
-    penaltyIcons: 1
-  }
-};
-
-// Modos de juego
-export const GAME_MODES = {
-  CLASSIC: 'classic',
-  TIMED: 'timed',
-  SURVIVAL: 'survival',
+    maxSpeedMultiplier: 1.5,
+    penaltyIcons: 0,
+    initialIcons: 3,
+    maxLevel: 1,
+  },
 };
 
 // Configuración específica para cada modo de juego
@@ -89,28 +133,6 @@ export const GAME_MODE_CONFIG = {
   }
 };
 
-// Duración base del juego en segundos para modo temporizado
-export const BASE_GAME_DURATION = 120; // 2 minutos
-
-// Velocidad inicial de aparición de iconos
-export const INITIAL_SPAWN_RATE = SPAWN_RATES.MEDIUM;
-
-// Número de iconos iniciales en el tablero
-export const INITIAL_ICONS = 5;
-
-// Número de iconos de penalización al fallar
-export const PENALTY_ICONS = 1;
-
-// Animaciones
-export const ANIMATION_DURATIONS = {
-  CELL_CLICK: 300,
-  ICON_SPAWN: 400,
-  ICON_REMOVE: 300,
-  HINT: 800,
-  LEVEL_TRANSITION: 1200,
-  newIcon: 500 // Para compatibilidad con código original
-};
-
 // Puntuación
 export const SCORE_VALUES = {
   BASE_CONVERGENCE: 10,    // Puntos base por convergencia (por icono)
@@ -144,81 +166,95 @@ export const HINT_SYSTEM = {
 export const CSS_VARIABLES = {
   cellSizeFormula: (boardSize: number): number => {
     // Calcula el tamaño de celda en función del tamaño del tablero
-    // Asegurando que sea cómodo visualmente
-    return Math.max(30, Math.min(80, Math.floor(480 / boardSize)));
+    return Math.max(35, 60 - (boardSize - 8) * 5);
   }
 };
 
-// Límites de nivel
-export const LEVEL_LIMITS = {
-  MAX_LEVEL: 15,                // Nivel máximo alcanzable
-  TUTORIAL_LEVELS: 2,          // Número de niveles de tutorial
-  EASY_MAX_LEVEL: 5,            // Nivel máximo para dificultad fácil
-  NORMAL_MAX_LEVEL: 10,         // Nivel máximo para dificultad normal
-  // Nivel máximo para dificultad difícil es MAX_LEVEL
+// Configuración de animaciones
+export const ANIMATION_DURATIONS = {
+  newIcon: 400,           // Aparición de nuevo icono
+  removeIcon: 300,        // Eliminación de icono
+  pointsDisplay: 1000,    // Mostrar puntos ganados
+  hint: 3000,             // Duración de pista
+  levelTransition: 1000,  // Transición entre niveles
+  speedAlert: 2500,       // Alerta de cambio de velocidad
+  penaltyAlert: 2000,     // Alerta de penalización
+  CELL_CLICK: 300,        // Para compatibilidad con código original
+  ICON_SPAWN: 400,        // Para compatibilidad con código original
+  ICON_REMOVE: 300,       // Para compatibilidad con código original
+  HINT: 800,              // Para compatibilidad con código original
+  LEVEL_TRANSITION: 1200  // Para compatibilidad con código original
 };
 
-// Iconos disponibles en el juego (frutas y vegetales)
+// Iconos disponibles en el juego (mantener para compatibilidad)
 export const AVAILABLE_ICONS = [
   '🍎', '🍊', '🍇', '🍓', '🍐', 
   '🍌', '🍉', '🍑', '🍒', '🍍',
   '🥝', '🥑', '🥕', '🌽', '🍅', 
-  '🫐', '🍆', '🥔', '🥦', '🥭'
+  '🫐', '🍆', '🥔', '🥦', '🥭',
+  // Añadir los nuevos iconos
+  '🐶', '🐱', '🐭', '🐹',
+  '⭐', '💫', '🔥', '🌈', '🌪️',
+  '⚽', '🏀', '🏉', '🎱', '🏓',
+  '🚗', '🏎️', '🚓', '🚑', '✈️'
 ];
-
-// Conjuntos de iconos por nivel
-export const ICON_SETS = [
-  ['🍎', '🍊', '🍇', '🍓'],               // Nivel 1 - Frutas básicas
-  ['🍐', '🍌', '🍉', '🍑', '🍒'],         // Nivel 2 - Más frutas
-  ['🥝', '🥑', '🥕', '🌽', '🍅', '🫐'],   // Nivel 3 - Vegetales y frutas
-  ['🍆', '🥔', '🥦', '🥭', '🍍', '🍎'],   // Nivel 4 - Mixto
-  // Más conjuntos se pueden añadir para niveles avanzados
-];
-
-// Número de iconos a utilizar según el nivel
-export const iconCountByLevel = (level: number): number => {
-  if (level <= 2) return 4;         // Tutorial y nivel 2
-  if (level <= 4) return 5;         // Niveles 3-4
-  if (level <= 6) return 6;         // Niveles 5-6
-  if (level <= 8) return 7;         // Niveles 7-8
-  if (level <= 10) return 8;        // Niveles 9-10
-  if (level <= 12) return 9;        // Niveles 11-12
-  return 10;                        // Niveles 13+
-};
-
-// Calcular tamaño del tablero según el nivel
-export const getLevelBoardSize = (level: number): number => {
-  if (level <= 3) return 6;         // Tutorial hasta nivel 3
-  if (level <= 6) return 7;         // Niveles 4-6
-  if (level <= 9) return 8;         // Niveles 7-9
-  if (level <= 12) return 9;        // Niveles 10-12
-  return 10;                        // Niveles 13+
-};
-
-// Calcular velocidad de aparición según el nivel
-export const getLevelSpawnRate = (level: number): number => {
-  if (level <= 1) return SPAWN_RATES.TUTORIAL;    // Tutorial
-  if (level <= 3) return SPAWN_RATES.VERY_SLOW;   // Niveles 2-3
-  if (level <= 5) return SPAWN_RATES.SLOW;        // Niveles 4-5
-  if (level <= 8) return SPAWN_RATES.MEDIUM;      // Niveles 6-8
-  if (level <= 11) return SPAWN_RATES.FAST;       // Niveles 9-11
-  if (level <= 13) return SPAWN_RATES.SUPER_FAST; // Niveles 12-13
-  return SPAWN_RATES.EXTREME;                     // Niveles 14+
-};
 
 // Obtener conjunto de iconos para un nivel específico
-export const getIconSetForLevel = (level: number): string[] => {
-  // Usar un conjunto predefinido si existe para el nivel
-  if (level <= ICON_SETS.length) {
-    return ICON_SETS[level - 1];
+export function getIconSetForLevel(level: number): string[] {
+  // Ajustar el nivel para indexación base 0
+  const adjustedLevel = level - 1;
+  
+  // Si tenemos un conjunto específico para este nivel
+  if (adjustedLevel >= 0 && adjustedLevel < LEVEL_ICONS.length) {
+    return LEVEL_ICONS[adjustedLevel];
   }
   
-  // Para niveles superiores, seleccionar aleatoriamente de todos los disponibles
-  return shuffleArray([...AVAILABLE_ICONS]).slice(0, iconCountByLevel(level));
-};
+  // Fallback a conjunto básico si no hay definición específica
+  return ["🍎", "🍇", "🍊", "🍓"];
+}
 
-// Función auxiliar para mezclar array (duplicada de gameUtils para evitar dependencia circular)
-function shuffleArray<T>(array: T[]): T[] {
+// Obtener tamaño del tablero para un nivel específico
+export function getBoardSizeForLevel(level: number): number {
+  // Ajustar el nivel para indexación base 0
+  const adjustedLevel = level - 1;
+  
+  // Si tenemos un tamaño específico para este nivel
+  if (adjustedLevel >= 0 && adjustedLevel < BOARD_SIZES.length) {
+    return BOARD_SIZES[adjustedLevel];
+  }
+  
+  // Valor por defecto
+  return DEFAULT_BOARD_SIZE;
+}
+
+// Obtener configuración completa basada en dificultad y modo
+export function getGameConfig(difficulty: string, mode: string): any {
+  // Normalizar entradas
+  const normalizedDifficulty = difficulty.toUpperCase();
+  const normalizedMode = mode.toUpperCase();
+  
+  // Obtener configuración base de dificultad
+  const difficultyConfig = DIFFICULTY_LEVELS[normalizedDifficulty as keyof typeof DIFFICULTY_LEVELS] || DIFFICULTY_LEVELS.NORMAL;
+  
+  // Obtener configuración base de modo
+  const modeConfig = GAME_MODE_CONFIG[normalizedMode as keyof typeof GAME_MODE_CONFIG] || GAME_MODE_CONFIG.CLASSIC;
+  
+  // Multiplicadores de puntuación basados en dificultad y modo
+  const difficultyMultiplier = 
+    SCORE_VALUES.DIFFICULTY_MULTIPLIERS[difficultyConfig.name as keyof typeof SCORE_VALUES.DIFFICULTY_MULTIPLIERS] || 1;
+  const modeMultiplier = 
+    SCORE_VALUES.MODE_MULTIPLIERS[modeConfig.name as keyof typeof SCORE_VALUES.MODE_MULTIPLIERS] || 1;
+  
+  // Combinar configuraciones
+  return {
+    ...difficultyConfig,
+    ...modeConfig,
+    scoreMultiplier: difficultyMultiplier * modeMultiplier
+  };
+}
+
+// Función auxiliar para mezclar array (para compatibilidad)
+export function shuffleArray<T>(array: T[]): T[] {
   const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -226,3 +262,6 @@ function shuffleArray<T>(array: T[]): T[] {
   }
   return newArray;
 }
+
+// Duración base del juego en segundos para modo temporizado
+export const BASE_GAME_DURATION = 120; // 2 minutos

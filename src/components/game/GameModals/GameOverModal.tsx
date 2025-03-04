@@ -7,10 +7,11 @@ import logger from '../../../utils/logger';
 import './GameModals.css';
 
 interface GameOverModalProps {
-  isVisible: boolean;
+  isVisible?: boolean;
+  onRestart?: () => void;
 }
 
-const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible }) => {
+const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = true, onRestart }) => {
   const dispatch = useDispatch();
   const { score, highScore, level, currentPlayMode } = useSelector((state: RootState) => state.game);
   const [isClosing, setIsClosing] = useState(false);
@@ -30,8 +31,13 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible }) => {
     setTimeout(() => {
       audioManager.play('start');
       dispatch(resetGame({ playMode: currentPlayMode }));
+      
+      // Llamar a la función onRestart si se proporcionó
+      if (onRestart) {
+        onRestart();
+      }
     }, 300);
-  }, [dispatch, currentPlayMode]);
+  }, [dispatch, currentPlayMode, onRestart]);
 
   const handleGoToHome = useCallback(() => {
     setIsClosing(true);

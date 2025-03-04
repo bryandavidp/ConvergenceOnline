@@ -2,147 +2,123 @@
 .game-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  width: 100%;
-  background: linear-gradient(135deg, #4a69bd, #6a89cc);
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: #5d73e8;
+  background-image: linear-gradient(135deg, #5d73e8 0%, #8492ea 100%);
   overflow: hidden;
+  margin: 0;
+  max-width: 100%;
 }
 
 .game-container {
+  width: 100%;
+  max-width: 800px;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 10px;
-  box-sizing: border-box;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
-/* Cabecera con información del juego */
 .game-header {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
-  margin-bottom: 10px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  backdrop-filter: blur(5px);
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
 }
 
-.game-info {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 80px;
-}
-
-.info-item .label {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 4px;
-}
-
-.info-item .value {
-  font-size: 22px;
-  font-weight: bold;
-  color: white;
-}
-
-/* Contenedor del tablero */
-.board-container {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 10px;
-  box-sizing: border-box;
-}
-
-/* Controles de desarrollo */
-.dev-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  padding: 10px;
-  margin-top: 10px;
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-}
-
-.dev-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.dev-section h4 {
+.game-header h1 {
   margin: 0;
-  color: white;
-  font-size: 14px;
+  font-size: 2rem;
+  color: #333;
+  font-weight: 700;
 }
 
-.dev-section button {
-  padding: 5px 10px;
-  background-color: #3a59af;
-  color: white;
+.game-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.control-button {
+  padding: 8px 16px;
   border: none;
   border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
-.dev-section button:hover {
-  background-color: #264085;
+.control-button.play {
+  background-color: #4caf50;
+  color: white;
 }
 
-/* Responsive */
+.control-button.pause {
+  background-color: #ff9800;
+  color: white;
+}
+
+.control-button.restart {
+  background-color: #f44336;
+  color: white;
+}
+
+.control-button:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.game-board-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  min-height: 400px;
+  margin-top: 20px;
+}
+
+/* Estilos responsivos */
 @media (max-width: 768px) {
-  .game-info {
-    gap: 10px;
+  .game-container {
+    padding: 15px;
   }
   
-  .info-item {
-    min-width: 60px;
+  .game-header h1 {
+    font-size: 1.5rem;
   }
   
-  .info-item .value {
-    font-size: 18px;
+  .control-button {
+    padding: 6px 12px;
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 480px) {
   .game-header {
-    padding: 8px;
-  }
-  
-  .info-item {
-    min-width: 50px;
-  }
-  
-  .info-item .label {
-    font-size: 12px;
-  }
-  
-  .info-item .value {
-    font-size: 16px;
-  }
-  
-  .dev-controls {
     flex-direction: column;
     gap: 10px;
+  }
+  
+  .game-controls {
+    width: 100%;
+    justify-content: center;
   }
 }
 
 /* Estilos para la página principal del juego */
+/* Removiendo duplicados para evitar conflictos */
+/* 
 .game-page {
   display: flex;
   flex-direction: column;
@@ -152,10 +128,13 @@
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: #5d73e8; /* Fondo azul como en la imagen */
+  background-color: #5d73e8;
 }
+*/
 
 /* Barra superior del juego */
+/* Mantener solo una definición de game-header */
+/* 
 .game-header {
   display: flex;
   justify-content: center;
@@ -166,6 +145,7 @@
   margin: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
+*/
 
 /* Contenedor de estadísticas */
 .game-stats {
@@ -193,7 +173,6 @@
 }
 
 /* Ocultar elementos innecesarios */
-.game-header h1, 
 .level-label,
 .game-sidebar {
   display: none;
@@ -224,7 +203,7 @@
   min-height: 0;
   border-radius: 16px;
   overflow: hidden;
-  background-color: #5d73e8; /* Fondo azul como en la imagen */
+  background-color: #5d73e8;
   box-shadow: none;
 }
 
@@ -253,42 +232,25 @@
   justify-content: center;
 }
 
-/* Estilos específicos para el Board */
-.game-board {
-  display: grid;
-  gap: 8px;
-  width: 100%;
-  height: 100%;
-  padding: 10px;
-}
-
-.board-cell {
-  background-color: #f0f0f0;
-  border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 2rem;
-  cursor: pointer;
-  background-color: #e6e6e6;
-  box-shadow: 0 0 0 3px #7a8bfe;
-}
-
-/* Animaciones */
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-.level-number {
-  animation: pulse 2s infinite ease-in-out;
-}
-
 /* Estilos para modo oscuro/claro */
 .light-theme .game-page {
   --primary-color: #2c73d2;
   --accent-color: #ff6b6b;
   --secondary-bg: #f8f9fa;
   --text-color: #333;
+}
+
+/* Estilos para la sección de configuración */
+.config-section {
+  width: 100%;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+}
+
+/* Evitar conflictos con los estilos del módulo CSS */
+.config-section > div {
+  margin: 0 !important;
+  width: 100%;
 } 

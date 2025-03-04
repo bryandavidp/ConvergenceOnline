@@ -9,6 +9,7 @@ import GameHUD from '../../components/game/GameHUD/GameHUD';
 import GameOverModal from '../../components/game/GameModals/GameOverModal';
 import LevelCompleteModal from '../../components/game/GameModals/LevelCompleteModal';
 import StartGameModal from '../../components/game/GameModals/StartGameModal';
+import GameConfigSelector from '../../components/game/GameConfig';
 import { audioManager } from '../../utils/audioManager';
 import * as config from '../../utils/config';
 import {
@@ -22,15 +23,33 @@ import './GamePage.css';
 const GamePage: React.FC = () => {
   const dispatch = useDispatch();
   const { status, level, boardSize, currentPlayMode, score, timer, spawnRate } = useSelector((state: RootState) => state.game);
-  const { initializeBoard, stopTimers, startTimers } = useGameLogic();
+  const { initializeBoard, stopTimers, startTimers, changeGameConfig } = useGameLogic();
   // Referencia para controlar las inicializaciones repetidas
   const isInitializingRef = useRef<boolean>(false);
   // Track if board has been initialized
   const isBoardInitializedRef = useRef<boolean>(false);
   
+  // Estado para controlar la visualización del selector de configuración
+  const [showConfig, setShowConfig] = useState<boolean>(true);
+  
   // Referencias a los elementos del tablero
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const boardElementRef = useRef<HTMLDivElement>(null);
+  
+  // Efecto para inicializar el estado de juego
+  useEffect(() => {
+    // Establecer el estado inicial del juego cuando se carga la página
+    if (status === 'idle') {
+      dispatch(setGameStatus('startScreen'));
+    }
+    
+    // Mostrar el selector de configuración en la pantalla de inicio
+    if (status === 'startScreen' || status === 'paused' || status === 'gameOver' || status === 'levelCompleted') {
+      setShowConfig(true);
+    } else {
+      setShowConfig(false);
+    }
+  }, [status, dispatch]);
   
   // Ajustar el tamaño del tablero cuando cambia la ventana
   useEffect(() => {
@@ -86,21 +105,28 @@ const GamePage: React.FC = () => {
     }
   }, [boardSize, initializeBoard, status, stopTimers]);
   
-  // Limpiar al desmontar
+  // Gestionar arranque y parada de temporizadores según estado del juego
+  useEffect(() => {
+    // Detener temporizadores cuando el juego no está en estado 'playing'
+    if (status !== 'playing' && !isInitializingRef.current) {
+      logger.info('GamePage', `Deteniendo temporizadores por cambio de estado a: ${status}`);
+      stopTimers();
+    }
+    
+    // Iniciar temporizadores cuando el juego está en estado 'playing'
+    if (status === 'playing' && isBoardInitializedRef.current && !isInitializingRef.current) {
+      logger.info('GamePage', 'Iniciando temporizadores por estado playing');
+      startTimers();
+    }
+  }, [status, startTimers, stopTimers, isInitializingRef]);
+  
+  // Limpiar recursos al desmontar el componente
   useEffect(() => {
     return () => {
-      logger.info('GamePage', 'Componente desmontado, limpiando');
+      logger.info('GamePage', 'Componente desmontado, limpiando todos los temporizadores');
       stopTimers();
     }
   }, [stopTimers]);
-  
-  // Iniciar temporizadores automáticamente cuando el juego está en estado 'playing'
-  useEffect(() => {
-    if (status === 'playing' && isBoardInitializedRef.current && !isInitializingRef.current) {
-      console.log('Iniciando temporizadores automáticamente');
-      startTimers();
-    }
-  }, [status, startTimers, isInitializingRef]);
   
   // Actualizar configuración cuando cambia el nivel
   useEffect(() => {
@@ -149,68 +175,85 @@ const GamePage: React.FC = () => {
     }
   }, [level, boardSize, status, initializeBoard, stopTimers]);
   
-  // Calcular el multiplicador de velocidad para mostrar
-  const speedMultiplier = (config.SPAWN_RATES.MEDIUM / spawnRate).toFixed(1);
+  // Manejar cambio de dificultad y modo
+  const handleApplyConfig = (difficulty: any, mode: any) => {
+    logger.info('GamePage', `Aplicando configuración: ${difficulty}, ${mode}`);
+    if (changeGameConfig) {
+      changeGameConfig(difficulty, mode);
+    }
+  };
   
-  // Manejar cambio manual de velocidad (para depuración o características avanzadas)
-  const handleSpeedChange = (multiplier: number) => {
-    const baseSpeed = config.SPAWN_RATES.MEDIUM;
-    const newSpeed = Math.round(baseSpeed / multiplier);
-    
-    logger.info('GamePage', `Cambiando velocidad manualmente`, {
-      multiplicador: multiplier,
-      nuevaVelocidad: newSpeed
-    });
-    
-    // Usar la función modularizada para cambiar la velocidad
-    changeSpawnRate(newSpeed);
-    
-    // Reiniciar los temporizadores para aplicar la nueva velocidad
+  // Manejadores para los botones de control
+  const handlePlayPauseClick = () => {
+    if (status === 'playing') {
+      dispatch(setGameStatus('paused'));
+      stopTimers();
+    } else if (status === 'paused') {
+      dispatch(setGameStatus('playing'));
+      startTimers();
+    }
+  };
+
+  const handleRestartClick = () => {
     stopTimers();
+    isBoardInitializedRef.current = false;
+    dispatch(setGameStatus('startScreen'));
+  };
+
+  const handleStartGame = () => {
+    dispatch(setGameStatus('playing'));
     startTimers();
   };
-  
-  // Manejar cambio manual de tamaño del tablero
-  const handleSizeChange = (newSize: number) => {
-    logger.info('GamePage', `Cambiando tamaño del tablero manualmente a ${newSize}x${newSize}`);
-    
-    // Usar la función modularizada para cambiar el tamaño
-    changeBoardSize(newSize);
+
+  const handleNextLevel = () => {
+    stopTimers();
+    dispatch(setLevel(level + 1));
+    dispatch(setGameStatus('startScreen'));
   };
-  
+
   return (
     <div className="game-page">
       <div className="game-container">
-        <GameHUD />
-        
-        <div className="board-container" ref={boardContainerRef}>
-          <GameBoard ref={boardElementRef} />
+        <div className="game-header">
+          <h1>Convergence</h1>
+          <div className="game-controls">
+            {status === 'playing' || status === 'paused' ? (
+              <button 
+                className={`control-button ${status === 'playing' ? 'pause' : 'play'}`}
+                onClick={handlePlayPauseClick}
+              >
+                {status === 'playing' ? 'Pausar' : 'Reanudar'}
+              </button>
+            ) : null}
+            
+            <button 
+              className="control-button restart"
+              onClick={handleRestartClick}
+            >
+              {status === 'playing' || status === 'paused' ? 'Reiniciar' : 'Inicio'}
+            </button>
+          </div>
         </div>
         
-        {/* Modales del juego */}
-        <StartGameModal isVisible={status === 'startScreen'} />
-        <GameOverModal isVisible={status === 'gameOver'} />
-        <LevelCompleteModal isVisible={status === 'levelCompleted'} />
-        
-        {/* Controles de desarrollo (ocultos en producción) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="dev-controls">
-            <div className="dev-section">
-              <h4>Velocidad</h4>
-              <button onClick={() => handleSpeedChange(0.5)}>0.5x</button>
-              <button onClick={() => handleSpeedChange(1)}>1x</button>
-              <button onClick={() => handleSpeedChange(2)}>2x</button>
-              <button onClick={() => handleSpeedChange(3)}>3x</button>
-            </div>
-            <div className="dev-section">
-              <h4>Tamaño</h4>
-              <button onClick={() => handleSizeChange(6)}>6x6</button>
-              <button onClick={() => handleSizeChange(8)}>8x8</button>
-              <button onClick={() => handleSizeChange(10)}>10x10</button>
-            </div>
+        {/* Selector de configuración del juego - lo mostramos explícitamente según el estado */}
+        {showConfig && (
+          <div className="config-section">
+            <GameConfigSelector onApplyConfig={handleApplyConfig} />
           </div>
         )}
+        
+        <div className="game-board-container" ref={boardContainerRef}>
+          <GameHUD />
+          <div className="game-board-frame" ref={boardElementRef} style={{ width: '100%', height: '100%' }}>
+            <GameBoard />
+          </div>
+        </div>
       </div>
+      
+      {/* Modales del juego */}
+      {status === 'startScreen' && <StartGameModal onStart={handleStartGame} />}
+      {status === 'gameOver' && <GameOverModal onRestart={handleRestartClick} />}
+      {status === 'levelCompleted' && <LevelCompleteModal onContinue={handleNextLevel} />}
     </div>
   );
 };

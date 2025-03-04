@@ -1,73 +1,119 @@
-import React, { useEffect, useRef, forwardRef } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store';
 import useBoardInteraction from './hooks/useBoardInteraction';
-import BoardUI from './components/BoardUI';
 import './GameBoard.css';
 
-// Usar forwardRef para poder pasar la referencia desde el componente padre
-const GameBoard = forwardRef<HTMLDivElement, {}>((props, ref) => {
+const GameBoard: React.FC = () => {
   const { 
-    status, 
+    board, 
     boardSize, 
-    hintsRemaining, 
-    hintCooldown, 
-    level,
-    iconCount
+    status, 
+    highlightedCells
   } = useSelector((state: RootState) => state.game);
   
   const { 
-    adjustBoardSize, 
-    showHint, 
-    showSpeedAlert, 
-    speedMultiplier, 
-    showPenaltyAlert 
+    handleCellClick, 
+    registerCellRef
   } = useBoardInteraction();
   
-  // Referencia al contenedor del tablero
-  const boardContainerRef = useRef<HTMLDivElement>(null);
+  // Verificar si una celda está resaltada
+  const isCellHighlighted = useCallback((row: number, col: number) => {
+    return highlightedCells.some(cell => cell.row === row && cell.col === col);
+  }, [highlightedCells]);
   
-  // Efecto para ajustar el tamaño del tablero cuando cambia su dimensión
-  useEffect(() => {
-    const boardElement = ref as React.RefObject<HTMLDivElement>;
-    if (boardContainerRef.current && boardElement && boardElement.current) {
-      adjustBoardSize(boardContainerRef.current, boardElement.current);
+  // Procesar el contenido de la celda para manejar estados especiales
+  const processCellContent = useCallback((content: string | null) => {
+    if (!content) return { icon: null, isRemoving: false };
+    
+    // Comprobar si el icono está marcado para eliminación
+    if (content.includes('_removing')) {
+      return {
+        icon: content.replace('_removing', ''),
+        isRemoving: true
+      };
     }
-  }, [boardSize, adjustBoardSize, ref]);
+    
+    // Icono normal
+    return {
+      icon: content,
+      isRemoving: false
+    };
+  }, []);
+  
+  // Renderizar el tablero como una grid
+  const renderBoard = () => {
+    // Si el tablero está vacío o status no es 'playing', mostrar mensaje
+    if (!board || board.length === 0 || (status !== 'playing' && status !== 'paused')) {
+      return (
+        <div className="empty-board-message">
+          {status === 'startScreen' && 'Selecciona la configuración para comenzar'}
+          {status === 'gameOver' && 'Juego terminado'}
+          {status === 'levelCompleted' && '¡Nivel completado!'}
+          {status === 'paused' && 'Juego en pausa'}
+          {!board || board.length === 0 ? 'Cargando tablero...' : ''}
+        </div>
+      );
+    }
+    
+    // Crear un array de filas y columnas para la estructura del grid
+    const rows = [];
+    
+    for (let row = 0; row < boardSize; row++) {
+      const cells = [];
+      
+      for (let col = 0; col < boardSize; col++) {
+        const cellContent = board[row] ? board[row][col] : null;
+        const { icon, isRemoving } = processCellContent(cellContent);
+        
+        // Determinar clases para la celda
+        const cellClasses = [
+          'board-cell',
+          isCellHighlighted(row, col) ? 'highlighted' : '',
+          isRemoving ? 'removing' : '',
+          icon && !isRemoving ? 'has-icon' : '',
+          !icon ? 'empty' : ''
+        ].filter(Boolean).join(' ');
+        
+        cells.push(
+          <div
+            key={`cell-${row}-${col}`}
+            className={cellClasses}
+            onClick={() => handleCellClick(row, col)}
+            ref={(el) => registerCellRef(row, col, el)}
+            data-row={row}
+            data-col={col}
+          >
+            {icon && <span className="cell-content">{icon}</span>}
+          </div>
+        );
+      }
+      
+      rows.push(
+        <div key={`row-${row}`} className="board-row" style={{ display: 'contents' }}>
+          {cells}
+        </div>
+      );
+    }
+    
+    // Calcular el estilo del grid basado en el tamaño del tablero
+    const gridStyle = {
+      gridTemplateColumns: `repeat(${boardSize}, 1fr)`,
+      gridTemplateRows: `repeat(${boardSize}, 1fr)`
+    };
+    
+    return (
+      <div className="game-board-grid" style={gridStyle}>
+        {rows}
+      </div>
+    );
+  };
   
   return (
-    <div ref={boardContainerRef} className="board-container">
-      <div className="board-controls">
-        <div className="board-info">
-          <span className="level-indicator">Nivel {level}</span>
-          <span className="icon-count-indicator">Iconos: {iconCount}</span>
-        </div>
-        
-        <button 
-          className={`hint-button ${hintCooldown ? 'cooldown' : ''} ${hintsRemaining <= 0 ? 'disabled' : ''}`}
-          onClick={showHint}
-          disabled={hintCooldown || hintsRemaining <= 0 || status !== 'playing'}
-        >
-          <span role="img" aria-label="pista">💡</span>
-          <span className="hint-count">{hintsRemaining}</span>
-        </button>
-      </div>
-      
-      <BoardUI ref={ref} />
-      
-      {/* Alertas visuales */}
-      <div className={`speed-alert ${showSpeedAlert ? 'visible' : ''}`}>
-        ¡Velocidad x{speedMultiplier}!
-      </div>
-      
-      <div className={`penalty-alert ${showPenaltyAlert ? 'visible' : ''}`}>
-        ¡Penalización! Velocidad aumentada
-      </div>
+    <div className="game-board-wrapper">
+      {renderBoard()}
     </div>
   );
-});
-
-// Añadir nombre para depuración
-GameBoard.displayName = 'GameBoard';
+};
 
 export default GameBoard; 

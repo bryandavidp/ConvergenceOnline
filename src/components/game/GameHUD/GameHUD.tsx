@@ -1,106 +1,54 @@
-import React, { useCallback } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React from 'react';
+import { useSelector } from 'react-redux';
 import { RootState } from '../../../store';
-import useGameLogic from '../../../hooks/useGameLogic';
-import * as config from '../../../utils/config';
-import { formatTime, calculateBoardOccupation } from '../../../utils/gameUtils';
-import { audioManager } from '../../../utils/audioManager';
 import './GameHUD.css';
 
 const GameHUD: React.FC = () => {
-  const { 
-    score, 
-    level, 
-    timer, 
-    status, 
-    boardSize, 
-    iconCount, 
-    speedMultiplier,
-    hintsRemaining, 
-    hintCooldown 
-  } = useSelector((state: RootState) => state.game);
+  const { score, level, timer, currentPlayMode, timeRemaining, survivalTime } = useSelector((state: RootState) => state.game);
   
-  const { showHint, resetCurrentLevel } = useGameLogic();
-  
-  // Manejar clic en el botón de pista
-  const handleHintClick = useCallback(() => {
-    if (status === 'playing' && !hintCooldown && hintsRemaining > 0) {
-      audioManager.play('hint');
-      showHint();
-    }
-  }, [status, hintCooldown, hintsRemaining, showHint]);
-  
-  // Manejar clic en el botón de reiniciar nivel
-  const handleResetLevel = useCallback(() => {
-    if (status === 'playing') {
-      audioManager.play('click');
-      resetCurrentLevel();
-    }
-  }, [status, resetCurrentLevel]);
-  
-  // Calcular porcentaje de ocupación del tablero usando la función auxiliar
-  const occupationPercentage = calculateBoardOccupation(iconCount, boardSize);
+  // Formatear tiempo para mostrar minutos:segundos
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
   
   return (
     <div className="game-hud">
-      <div className="game-info-section main-info">
-        <div className="info-item score">
-          <span className="info-label">Puntuación</span>
-          <span className="info-value">{score}</span>
-        </div>
-        
-        <div className="info-item level">
-          <span className="info-label">Nivel</span>
-          <span className="info-value">{level}</span>
-        </div>
-        
-        <div className="info-item timer">
-          <span className="info-label">Tiempo</span>
-          <span className="info-value">{formatTime(timer)}</span>
-        </div>
+      <div className="hud-section">
+        <span className="hud-label">Puntuación</span>
+        <span className="hud-value score">{score}</span>
       </div>
       
-      <div className="game-info-section board-info">
-        <div className="info-item board-size">
-          <span className="info-label">Tablero</span>
-          <span className="info-value">{boardSize}×{boardSize}</span>
-        </div>
-        
-        <div className="info-item occupation">
-          <span className="info-label">Ocupación</span>
-          <div className="occupation-bar">
-            <div 
-              className="occupation-fill" 
-              style={{width: `${occupationPercentage}%`}}
-              data-status={occupationPercentage > 80 ? 'critical' : occupationPercentage > 60 ? 'warning' : 'normal'}
-            ></div>
-            <span className="occupation-text">{occupationPercentage}%</span>
-          </div>
-        </div>
-        
-        <div className="info-item speed">
-          <span className="info-label">Velocidad</span>
-          <span className="info-value">{speedMultiplier}×</span>
-        </div>
+      <div className="hud-section">
+        <span className="hud-label">Nivel</span>
+        <span className="hud-value level">{level}</span>
       </div>
       
-      <div className="game-controls">
-        <button 
-          className={`hint-button control-button ${hintCooldown ? 'cooldown' : ''} ${hintsRemaining <= 0 ? 'disabled' : ''}`}
-          onClick={handleHintClick}
-          disabled={hintCooldown || hintsRemaining <= 0 || status !== 'playing'}
-        >
-          <span role="img" aria-label="pista">💡</span>
-          <span className="hint-count">{hintsRemaining}</span>
-        </button>
-        
-        <button 
-          className="reset-level-button control-button"
-          onClick={handleResetLevel}
-          disabled={status !== 'playing'}
-        >
-          <span role="img" aria-label="reiniciar">🔄</span>
-        </button>
+      {currentPlayMode === 'timed' ? (
+        <div className="hud-section">
+          <span className="hud-label">Tiempo Restante</span>
+          <span className="hud-value timer">{formatTime(timeRemaining)}</span>
+        </div>
+      ) : currentPlayMode === 'survival' ? (
+        <div className="hud-section">
+          <span className="hud-label">Tiempo Supervivencia</span>
+          <span className="hud-value timer">{formatTime(survivalTime)}</span>
+        </div>
+      ) : (
+        <div className="hud-section">
+          <span className="hud-label">Tiempo</span>
+          <span className="hud-value timer">{formatTime(timer)}</span>
+        </div>
+      )}
+      
+      <div className="hud-section">
+        <span className="hud-label">Modo</span>
+        <span className="hud-value mode">
+          {currentPlayMode === 'classic' && 'Clásico'}
+          {currentPlayMode === 'timed' && 'Contrarreloj'}
+          {currentPlayMode === 'survival' && 'Supervivencia'}
+        </span>
       </div>
     </div>
   );

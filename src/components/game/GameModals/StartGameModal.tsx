@@ -7,10 +7,11 @@ import * as config from '../../../utils/config';
 import './GameModals.css';
 
 interface StartGameModalProps {
-  isVisible: boolean;
+  isVisible?: boolean;
+  onStart?: () => void;
 }
 
-const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible }) => {
+const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onStart }) => {
   const dispatch = useDispatch();
   const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>('normal');
   const [selectedMode, setSelectedMode] = useState<GamePlayMode>('classic');
@@ -46,6 +47,11 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible }) => {
       
       // Reproducir sonido de inicio
       audioManager.play('start');
+      
+      // Llamar a la función onStart si se proporcionó
+      if (onStart) {
+        onStart();
+      }
     }, 500);
   };
   

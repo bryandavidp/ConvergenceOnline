@@ -1,16 +1,19 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../../store';
+import { store } from '../../../../store';
 import { 
   setHighlightedCells, 
   useHint, 
   resetHintCooldown, 
   incrementScore,
   setSpawnRate,
-  setGameStatus
+  setGameStatus,
+  updateBoard,
+  setIconCount
 } from '../../../../store/slices/gameSlice';
 import { findConvergences } from '../utils/convergenceUtils';
-import { findHintPosition, getHighlightedCells, canUseHint } from '../utils/hintUtils';
+import { findHintPosition, getHighlightedCells, canUseHint, findConvergingIcons as findConvergingIconsUtil } from '../utils/hintUtils';
 import { audioManager } from '../../../../utils/audioManager';
 import logger from '../../../../utils/logger';
 import * as config from '../../../../utils/config';
@@ -36,13 +39,49 @@ const useBoardInteraction = () => {
   // Referencias para las celdas del tablero (DOM)
   const cellRefs = useRef<Record<string, HTMLElement>>({});
   
-  // Referencia para el intervalo de spawn
+  // Referencias para los temporizadores
   const spawnIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hintTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const animationTimersRef = useRef<NodeJS.Timeout[]>([]);
   
   // Estado para controlar alertas visuales
   const [showSpeedAlert, setShowSpeedAlert] = useState(false);
   const [speedMultiplier, setSpeedMultiplier] = useState(1);
   const [showPenaltyAlert, setShowPenaltyAlert] = useState(false);
+  
+  /**
+   * Detener todos los temporizadores
+   */
+  const stopTimers = useCallback(() => {
+    logger.info('Deteniendo todos los temporizadores', ' [' + status + ']');
+    
+    // Detener intervalo de spawn
+    if (spawnIntervalRef.current) {
+      clearInterval(spawnIntervalRef.current);
+      spawnIntervalRef.current = null;
+    }
+    
+    // Detener temporizador de pistas
+    if (hintTimerRef.current) {
+      clearTimeout(hintTimerRef.current);
+      hintTimerRef.current = null;
+    }
+    
+    // Detener temporizadores de animación
+    animationTimersRef.current.forEach(timer => clearTimeout(timer));
+    animationTimersRef.current = [];
+    
+    // Limpiar alertas visuales
+    setShowSpeedAlert(false);
+    setShowPenaltyAlert(false);
+  }, []);
+  
+  /**
+   * Agregar un temporizador a la lista de temporizadores de animación
+   */
+  const addAnimationTimer = useCallback((timer: NodeJS.Timeout) => {
+    animationTimersRef.current.push(timer);
+  }, []);
   
   /**
    * Registrar referencia para una celda
@@ -138,57 +177,8 @@ const useBoardInteraction = () => {
   const findConvergingIcons = useCallback((row: number, col: number) => {
     if (!board) return [];
     
-    const directions = [
-      { dr: -1, dc: 0 }, // arriba
-      { dr: 0, dc: 1 },  // derecha
-      { dr: 1, dc: 0 },  // abajo
-      { dr: 0, dc: -1 }  // izquierda
-    ];
-    
-    const convergingCells: { row: number; col: number; icon: string }[] = [];
-    const possibleConvergenceIcons: Record<string, { positions: { row: number; col: number }[]; directions: number }> = {};
-    
-    // Buscar iconos en las cuatro direcciones
-    for (let dirIndex = 0; dirIndex < directions.length; dirIndex++) {
-      const { dr, dc } = directions[dirIndex];
-      let r = row + dr;
-      let c = col + dc;
-      
-      // Buscar hasta encontrar un icono o salir del tablero
-      while (r >= 0 && r < boardSize && c >= 0 && c < boardSize) {
-        if (board[r][c] !== null) {
-          const icon = board[r][c]!;
-          
-          // Inicializar el objeto para este icono si no existe
-          if (!possibleConvergenceIcons[icon]) {
-            possibleConvergenceIcons[icon] = {
-              positions: [],
-              directions: 0
-            };
-          }
-          
-          // Añadir esta posición y dirección
-          possibleConvergenceIcons[icon].positions.push({ row: r, col: c });
-          possibleConvergenceIcons[icon].directions++;
-          
-          break;
-        }
-        r += dr;
-        c += dc;
-      }
-    }
-    
-    // Verificar qué iconos convergen desde al menos dos direcciones
-    for (const icon in possibleConvergenceIcons) {
-      if (possibleConvergenceIcons[icon].directions >= 2) {
-        // Este icono converge, añadir sus posiciones
-        possibleConvergenceIcons[icon].positions.forEach(pos => {
-          convergingCells.push({ ...pos, icon });
-        });
-      }
-    }
-    
-    return convergingCells;
+    // Utilizar la implementación mejorada de hintUtils
+    return findConvergingIconsUtil(board, row, col, boardSize);
   }, [board, boardSize]);
   
   /**
@@ -216,9 +206,12 @@ const useBoardInteraction = () => {
       });
       
       // Actualizar tablero con animación de eliminación
-      // Esto sería gestionado por el Redux store
+      dispatch(updateBoard(newBoard));
       
-      // Simular tiempo de animación
+      // Reproducir sonido de animación de eliminación
+      audioManager.play("convergingFound");
+      
+      // Tiempo para que se complete la animación (coincide con la duración en CSS)
       setTimeout(() => {
         // Eliminar los iconos marcados
         const finalBoard = newBoard.map(row => row.map(cell => 
@@ -226,13 +219,16 @@ const useBoardInteraction = () => {
         ));
         
         // Actualizar tablero final
-        // Esto sería gestionado por el Redux store
+        dispatch(updateBoard(finalBoard));
+        
+        // Actualizar el contador de iconos
+        dispatch(setIconCount(iconCount - convergingIcons.length));
         
         // Resolver con el número de iconos eliminados
         resolve(convergingIcons.length);
-      }, 300);
+      }, 500); // Aumentado de 300ms a 500ms para coincidir con la animación CSS
     });
-  }, [board]);
+  }, [board, dispatch, iconCount]);
   
   /**
    * Animar puntos ganados
@@ -254,14 +250,16 @@ const useBoardInteraction = () => {
     document.body.appendChild(pointsElement);
     
     // Animar y luego eliminar
-    setTimeout(() => {
+    const animateTimer = setTimeout(() => {
       pointsElement.classList.add('animate');
       
-      setTimeout(() => {
+      const removeTimer = setTimeout(() => {
         document.body.removeChild(pointsElement);
       }, 1000);
+      addAnimationTimer(removeTimer);
     }, 10);
-  }, []);
+    addAnimationTimer(animateTimer);
+  }, [addAnimationTimer]);
   
   /**
    * Animar celda con error
@@ -271,33 +269,36 @@ const useBoardInteraction = () => {
     if (!cellElement) return;
     
     cellElement.classList.add('error');
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       cellElement.classList.remove('error');
     }, 500);
-  }, [getCellElement]);
+    addAnimationTimer(timer);
+  }, [getCellElement, addAnimationTimer]);
   
   /**
    * Animar sacudida del tablero
    */
   const animateBoard = useCallback(() => {
-    const boardElement = document.querySelector('.game-board');
+    const boardElement = document.querySelector('.game-board-grid');
     if (!boardElement) return;
     
     boardElement.classList.add('shake');
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       boardElement.classList.remove('shake');
     }, 500);
-  }, []);
+    addAnimationTimer(timer);
+  }, [addAnimationTimer]);
   
   /**
    * Mostrar alerta de penalización
    */
   const showPenaltyAlertUI = useCallback(() => {
     setShowPenaltyAlert(true);
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setShowPenaltyAlert(false);
     }, 2000);
-  }, []);
+    addAnimationTimer(timer);
+  }, [addAnimationTimer]);
   
   /**
    * Mostrar alerta de aumento de velocidad
@@ -305,10 +306,11 @@ const useBoardInteraction = () => {
   const showSpeedAlertUI = useCallback((multiplier: number) => {
     setSpeedMultiplier(multiplier);
     setShowSpeedAlert(true);
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setShowSpeedAlert(false);
     }, 2000);
-  }, []);
+    addAnimationTimer(timer);
+  }, [addAnimationTimer]);
   
   /**
    * Penalizar al jugador por un clic erróneo
@@ -400,14 +402,18 @@ const useBoardInteraction = () => {
       // Obtener el elemento DOM de la celda objetivo
       const targetCell = getCellElement(row, col);
       
+      // Resaltar las celdas que tienen convergencia
+      dispatch(setHighlightedCells(convergingIcons.map(icon => ({ row: icon.row, col: icon.col }))));
+      
       // Eliminar los iconos convergentes
       removeConvergingIcons(convergingIcons, row, col)
         .then((removedCount) => {
           // Reproducir sonido de eliminación
           audioManager.play("removeIcon");
           
-          // Calcular y añadir puntos
-          const pointsEarned = removedCount * 10;
+          // Calcular y añadir puntos (multiplicador basado en nivel)
+          const currentLevel = store.getState().game.level;
+          const pointsEarned = removedCount * 10 * currentLevel;
           dispatch(incrementScore(pointsEarned));
           
           // Animar puntos ganados
@@ -415,8 +421,21 @@ const useBoardInteraction = () => {
             animatePointsEarned(targetCell, pointsEarned);
           }
           
-          // Verificar si no hay más movimientos válidos
-          if (!hasValidMoves()) {
+          // Limpiar resaltado después de un tiempo
+          setTimeout(() => {
+            dispatch(setHighlightedCells([]));
+          }, 500);
+          
+          // Verificar si no hay más movimientos válidos o si el tablero está vacío
+          const currentIconCount = store.getState().game.iconCount;
+          
+          if (currentIconCount === 0) {
+            // Tablero vacío, nivel completado
+            logger.info("¡Tablero vacío! Completando nivel...", ' [' + status + ']');
+            dispatch(setGameStatus('levelCompleted'));
+            audioManager.play('levelComplete');
+          } else if (!hasValidMoves()) {
+            // No hay movimientos válidos
             logger.info("No hay movimientos válidos. Completando nivel...", ' [' + status + ']');
             setTimeout(() => {
               dispatch(setGameStatus('levelCompleted'));
@@ -424,21 +443,41 @@ const useBoardInteraction = () => {
           }
         });
     } else {
-      // No hay convergencia, penalizar
-      audioManager.play("error");
-      penalize(row, col);
+      // No hay convergencia, reproducir sonido de error
+      audioManager.play("invalidMove");
+      
+      // Velocidad de penalización (opcional)
+      const MIN_SPAWN_RATE = 500; // Valor mínimo (más rápido) para el spawn rate
+      const APPLY_PENALTY = true; // Si queremos aplicar penalización
+      
+      if (APPLY_PENALTY) {
+        // Reducir el spawn rate (aumentar velocidad) como penalización
+        const newRate = Math.max(spawnRate * 0.9, MIN_SPAWN_RATE);
+        dispatch(setSpawnRate(newRate));
+        
+        // Mostrar alerta visual de penalización
+        setShowPenaltyAlert(true);
+        setTimeout(() => setShowPenaltyAlert(false), 1500);
+      }
     }
   }, [
-    status, board, dispatch, findConvergingIcons, 
-    getCellElement, removeConvergingIcons, 
-    animatePointsEarned, hasValidMoves, penalize
+    status, 
+    board, 
+    dispatch, 
+    findConvergingIcons, 
+    getCellElement, 
+    removeConvergingIcons,
+    animatePointsEarned,
+    hasValidMoves,
+    setShowPenaltyAlert,
+    spawnRate
   ]);
   
   /**
    * Mostrar una pista
    */
   const showHint = useCallback(() => {
-    if (!canUseHint(hintsRemaining, hintCooldown, status)) {
+    if (!canUseHint(hintsRemaining, hintCooldown)) {
       if (hintCooldown) {
         logger.info('showHint: pista en cooldown', ' [' + status + ']');
       } else if (hintsRemaining <= 0) {
@@ -448,7 +487,7 @@ const useBoardInteraction = () => {
     }
     
     // Buscar posición para la pista
-    const hintPosition = findHintPosition(board || [], boardSize, availableIcons);
+    const hintPosition = findHintPosition(board || [], boardSize);
     
     if (hintPosition) {
       // Resaltar la celda como pista
@@ -466,15 +505,18 @@ const useBoardInteraction = () => {
       dispatch(useHint());
       
       // Programar reinicio del cooldown
-      const hintTimer = setTimeout(() => {
-        dispatch(resetHintCooldown());
-      }, 5000); // 5 segundos de cooldown
+      if (hintTimerRef.current) {
+        clearTimeout(hintTimerRef.current);
+      }
       
-      return hintTimer;
+      hintTimerRef.current = setTimeout(() => {
+        dispatch(resetHintCooldown());
+        hintTimerRef.current = null;
+      }, 5000); // 5 segundos de cooldown
     } else {
       logger.warn('showHint: no se encontró una posición válida para la pista', ' [' + status + ']');
     }
-  }, [board, boardSize, availableIcons, hintsRemaining, hintCooldown, status, dispatch]);
+  }, [board, boardSize, hintsRemaining, hintCooldown, status, dispatch]);
   
   /**
    * Ajustar el tamaño visual del tablero
@@ -502,6 +544,19 @@ const useBoardInteraction = () => {
     });
   }, [boardSize]);
   
+  // Efecto para detener temporizadores cuando cambia el estado del juego
+  useEffect(() => {
+    // Si el juego no está en estado 'playing', detener los temporizadores
+    if (status !== 'playing') {
+      stopTimers();
+    }
+    
+    // Limpiar temporizadores al desmontar
+    return () => {
+      stopTimers();
+    };
+  }, [status, stopTimers]);
+  
   return {
     handleCellClick,
     registerCellRef,
@@ -513,7 +568,8 @@ const useBoardInteraction = () => {
     showSpeedAlert,
     speedMultiplier,
     showPenaltyAlert,
-    hasValidMoves
+    hasValidMoves,
+    stopTimers
   };
 };
 

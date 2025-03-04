@@ -19,7 +19,11 @@ import {
   setLevelTimeLimit,
   addTimeBonus,
   decrementTimeRemaining,
-  rechargeHint
+  rechargeHint,
+  GameDifficulty,
+  GamePlayMode,
+  setGameMode,
+  setPlayMode
 } from '../store/slices/gameSlice';
 import { RootState } from '../store';
 import { store } from '../store';
@@ -33,6 +37,7 @@ import {
   changeSpawnRate,
   configureBoardForLevel
 } from '../utils/boardUtils';
+import { useBoardInteraction } from '../components/game/GameBoard/hooks';
 
 // Crear un logger específico para este hook
 const logger = createLogger('useGameLogic');
@@ -787,19 +792,14 @@ const useGameLogic = () => {
     }
   }, [dispatch, addRandomIcon]);
 
-  // Detener los temporizadores
+  // Función para detener todos los temporizadores
   const stopTimers = useCallback(() => {
-    logger.info('Deteniendo temporizadores del juego');
+    logger.info('Deteniendo todos los temporizadores del juego');
     
-    // Limpiar todos los intervalos
-    if (gameTimerRef.current) {
-      clearInterval(gameTimerRef.current);
-      gameTimerRef.current = null;
-    }
-    
-    if (iconTimerRef.current) {
-      clearInterval(iconTimerRef.current);
-      iconTimerRef.current = null;
+    // Limpiar temporizadores principales
+    if (spawnTimerRef.current) {
+      clearInterval(spawnTimerRef.current);
+      spawnTimerRef.current = null;
     }
     
     if (speedIncreaseTimerRef.current) {
@@ -807,15 +807,29 @@ const useGameLogic = () => {
       speedIncreaseTimerRef.current = null;
     }
     
+    if (gameTimerRef.current) {
+      clearInterval(gameTimerRef.current);
+      gameTimerRef.current = null;
+    }
+    
     if (hintTimerRef.current) {
-      clearInterval(hintTimerRef.current);
+      clearTimeout(hintTimerRef.current);
       hintTimerRef.current = null;
     }
     
-    // Marcar que los temporizadores ya no están activos
+    if (iconTimerRef.current) {
+      clearInterval(iconTimerRef.current);
+      iconTimerRef.current = null;
+    }
+    
+    // No intentamos acceder directamente a useBoardInteraction desde aquí
+    // ya que esto crearía una dependencia circular.
+    // En su lugar, cada componente debe gestionar sus propios timers.
+    
+    // Marcar temporizadores como inactivos
     timersActiveRef.current = false;
     
-    logger.info('Temporizadores detenidos');
+    logger.debug('Todos los temporizadores del juego han sido detenidos');
   }, []);
 
   // Añadir función para buscar iconos convergentes
@@ -1204,7 +1218,61 @@ const useGameLogic = () => {
     showHint,
     resetCurrentLevel,
     advanceToNextLevel,
-    findConvergingIcons
+    findConvergingIcons,
+    // Nueva función para cambiar la configuración del juego
+    changeGameConfig: useCallback((difficulty: GameDifficulty, mode: GamePlayMode) => {
+      logger.info('Cambiando configuración del juego', { dificultad: difficulty, modo: mode });
+      
+      // Actualizar el modo y la dificultad en el estado
+      dispatch(setGameMode(difficulty));
+      dispatch(setPlayMode(mode));
+      
+      // Obtener la configuración para el nivel actual con esta dificultad y modo
+      const { level: currentLevel } = store.getState().game;
+      
+      // Obtener el conjunto de iconos para el nivel actual
+      const iconSet = config.getIconSetForLevel(currentLevel);
+      
+      // Obtener el tamaño del tablero para el nivel actual basado en la configuración
+      const boardSize = config.getBoardSizeForLevel(currentLevel);
+      
+      // Obtener la configuración completa de juego
+      const gameConfig = config.getGameConfig(difficulty, mode);
+      
+      // Detener temporizadores existentes
+      stopTimers();
+      
+      // Actualizar el estado según la nueva configuración
+      dispatch(setBoardSize(boardSize));
+      dispatch(setAvailableIcons(iconSet));
+      dispatch(setSpawnRate(gameConfig.initialSpawnRate));
+      
+      // Actualizar objetivos y límites según el modo de juego
+      if (mode === 'classic') {
+        dispatch(setLevelTarget({ 
+          score: gameConfig.initialScoreTarget || 1000,
+          occupation: gameConfig.initialOccupationTarget || 70
+        }));
+      } else if (mode === 'timed') {
+        dispatch(setLevelTimeLimit(gameConfig.initialTimeLimit || 120));
+      }
+      
+      // Reiniciar el tablero con la nueva configuración
+      initializeBoard(gameConfig.initialIcons || config.INITIAL_ICONS);
+      
+      // Reiniciar temporizadores con la nueva configuración
+      if (status === 'playing') {
+        startTimers();
+      }
+      
+      logger.info('Configuración de juego actualizada', {
+        dificultad: difficulty,
+        modo: mode,
+        nivel: currentLevel,
+        tamaño: boardSize,
+        iconos: iconSet.length
+      });
+    }, [dispatch, initializeBoard, startTimers, stopTimers, status])
   };
 }; // fin del hook
 

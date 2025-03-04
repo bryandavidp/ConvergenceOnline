@@ -9,10 +9,11 @@ import * as config from '../../../utils/config';
 import './GameModals.css';
 
 interface LevelCompleteModalProps {
-  isVisible: boolean;
+  isVisible?: boolean;
+  onContinue?: () => void;
 }
 
-const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible }) => {
+const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible = true, onContinue }) => {
   const dispatch = useDispatch();
   const { level, timer, score, boardSize } = useSelector((state: RootState) => state.game);
   const [isClosing, setIsClosing] = useState(false);
@@ -47,11 +48,14 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible }) =>
     
     setTimeout(() => {
       audioManager.play('levelTransition');
-      
-      // Usar la función avanzada de advanceToNextLevel
       advanceToNextLevel();
-    }, 300);
-  }, [advanceToNextLevel, level, score, timer]);
+      
+      // Llamar a la función onContinue si se proporcionó
+      if (onContinue) {
+        onContinue();
+      }
+    }, 500);
+  }, [level, score, timer, advanceToNextLevel, onContinue]);
   
   const handleRestart = useCallback(() => {
     setIsClosing(true);
@@ -110,9 +114,32 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible }) =>
   
   if (!isVisible) return null;
   
-  // Calcular estadísticas del nivel
-  const nextLevelSize = config.getLevelBoardSize(level + 1);
-  const nextLevelIconSet = config.getIconSetForLevel(level + 1).length;
+  // Información sobre el siguiente nivel
+  const renderNextLevelInfo = () => {
+    const nextLevel = level + 1;
+    
+    // Obtener el tamaño del tablero para el siguiente nivel
+    const nextBoardSize = config.getBoardSizeForLevel(nextLevel);
+    
+    // Obtener el conjunto de iconos para el siguiente nivel
+    const nextLevelIcons = config.getIconSetForLevel(nextLevel);
+    
+    return (
+      <div className="next-level-info">
+        <h3>Nivel {nextLevel}</h3>
+        <div className="level-details">
+          <div className="detail">
+            <span className="label">Tablero:</span>
+            <span className="value">{nextBoardSize}x{nextBoardSize}</span>
+          </div>
+          <div className="detail">
+            <span className="label">Iconos:</span>
+            <span className="value">{nextLevelIcons.join(' ')}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
   
   return (
     <div className={`game-modal level-complete ${isClosing ? 'closing' : ''}`}>
@@ -128,25 +155,7 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible }) =>
           </div>
         )}
         
-        <div className="next-level-info">
-          <h3>Próximo nivel: {level + 1}</h3>
-          <div className="level-details">
-            <div className="detail-item">
-              <span className="detail-label">Tablero:</span>
-              <span className="detail-value">{nextLevelSize}×{nextLevelSize}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Iconos:</span>
-              <span className="detail-value">{nextLevelIconSet} tipos</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Dificultad:</span>
-              <span className="detail-value">
-                {level < 5 ? 'Fácil' : level < 10 ? 'Media' : 'Difícil'}
-              </span>
-            </div>
-          </div>
-        </div>
+        {renderNextLevelInfo()}
         
         <div className="modal-buttons">
           <button className="modal-button primary" onClick={handleNextLevel}>
