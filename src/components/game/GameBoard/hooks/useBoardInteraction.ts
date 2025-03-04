@@ -198,8 +198,31 @@ const useBoardInteraction = () => {
       // Crear copia del tablero para modificación - optimizada con map más eficiente
       const newBoard = board.map(row => [...row]);
       
+      // Agrupar los iconos por tipo
+      const iconsByType: Record<string, { row: number; col: number; icon: string }[]> = {};
+      for (const icon of convergingIcons) {
+        if (!iconsByType[icon.icon]) {
+          iconsByType[icon.icon] = [];
+        }
+        iconsByType[icon.icon].push(icon);
+      }
+      
+      // Solo procesar grupos con al menos 2 iconos del mismo tipo
+      let totalIconsToRemove: { row: number; col: number; icon: string }[] = [];
+      for (const iconType in iconsByType) {
+        if (iconsByType[iconType].length >= 2) {
+          totalIconsToRemove = [...totalIconsToRemove, ...iconsByType[iconType]];
+        }
+      }
+      
+      // Si no hay nada que eliminar, salir
+      if (totalIconsToRemove.length === 0) {
+        resolve(0);
+        return;
+      }
+      
       // Marcar los iconos a eliminar
-      convergingIcons.forEach(({ row, col }) => {
+      totalIconsToRemove.forEach(({ row, col }) => {
         if (newBoard[row][col]) {
           newBoard[row][col] = newBoard[row][col] + '_removing';
         }
@@ -222,10 +245,10 @@ const useBoardInteraction = () => {
         dispatch(updateBoard(finalBoard));
         
         // Actualizar el contador de iconos
-        dispatch(setIconCount(iconCount - convergingIcons.length));
+        dispatch(setIconCount(iconCount - totalIconsToRemove.length));
         
         // Resolver con el número de iconos eliminados
-        resolve(convergingIcons.length);
+        resolve(totalIconsToRemove.length);
       }, 300); // Reducido para experiencia más rápida
       
       addAnimationTimer(removeTimer);

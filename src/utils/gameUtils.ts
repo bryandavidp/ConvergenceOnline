@@ -128,4 +128,213 @@ export const hasValidMoves = (board: (string | null)[][], boardSize: number): bo
 export const calculateBoardOccupation = (iconCount: number, boardSize: number): number => {
   const boardCapacity = boardSize * boardSize;
   return Math.round((iconCount / boardCapacity) * 100);
+};
+
+/**
+ * Calcula la velocidad inicial para un nivel específico según el modo de juego
+ */
+export const calculateInitialSpeedForLevel = (levelNum: number, mode: string, 
+  gameModesConfig: any, minSpawnRate: number = 300): number => {
+    
+  const modeConfig = mode.toUpperCase() === 'CLASSIC' 
+    ? gameModesConfig.CLASSIC
+    : mode.toUpperCase() === 'TIMED'
+      ? gameModesConfig.TIMED
+      : gameModesConfig.SURVIVAL;
+  
+  const baseSpeed = modeConfig.initialSpawnRate;
+  let levelReduction = 0;
+  
+  if (levelNum <= 2) {
+    levelReduction = 0;
+  } else if (levelNum <= 4) {
+    levelReduction = 0.15;
+  } else {
+    levelReduction = 0.25;
+  }
+  
+  return Math.round(Math.max(minSpawnRate, baseSpeed * (1 - levelReduction)));
+};
+
+/**
+ * Verifica si hay movimientos válidos en el tablero
+ */
+export const checkBoardForValidMoves = (
+  board: (string | null)[][],
+  size: number, 
+  availableIcons: string[]
+): boolean => {
+  if (!board || board.length === 0) return false;
+  
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      if (board[row][col] === null) {
+        if (isValidPlacement(board, row, col, size, availableIcons)) {
+          return true;
+        }
+      }
+    }
+  }
+  
+  return false;
+};
+
+/**
+ * Verifica si una celda podría generar una convergencia
+ */
+export const isValidPlacement = (
+  board: (string | null)[][], 
+  row: number, 
+  col: number, 
+  size: number,
+  availableIcons: string[]
+): boolean => {
+  const directions = [
+    { dr: -1, dc: 0 }, // arriba
+    { dr: 0, dc: 1 },  // derecha
+    { dr: 1, dc: 0 },  // abajo
+    { dr: 0, dc: -1 }  // izquierda
+  ];
+  
+  for (const icon of availableIcons) {
+    let convergingDirections = 0;
+    const iconsByDirection: Record<string, boolean> = {};
+    
+    for (const { dr, dc } of directions) {
+      let r = row + dr;
+      let c = col + dc;
+      
+      while (isValidCell(r, c, size)) {
+        if (board[r][c] !== null) {
+          if (board[r][c] === icon) {
+            const dirKey = `${dr},${dc}`;
+            iconsByDirection[dirKey] = true;
+            convergingDirections++;
+            
+            if (convergingDirections >= 2) {
+              return true;
+            }
+          }
+          break;
+        }
+        r += dr;
+        c += dc;
+      }
+    }
+  }
+  
+  return false;
+};
+
+/**
+ * Encuentra convergencias en un tablero (iconos iguales alineados)
+ */
+export const findConvergences = (
+  board: (string | null)[][], 
+  row: number, 
+  col: number, 
+  size: number
+): { hasConvergence: boolean; convergingCells: { row: number; col: number }[] } => {
+  if (!board[row][col] || typeof board[row][col] !== 'string') {
+    return { hasConvergence: false, convergingCells: [] };
+  }
+  
+  const icon = board[row][col];
+  if (icon.includes('_removing')) {
+    return { hasConvergence: false, convergingCells: [] };
+  }
+  
+  const directions = [
+    { dr: -1, dc: 0 }, // arriba
+    { dr: 0, dc: 1 },  // derecha
+    { dr: 1, dc: 0 },  // abajo
+    { dr: 0, dc: -1 }  // izquierda
+  ];
+  
+  const positions: { row: number; col: number }[] = [{ row, col }];
+  const iconMatches: { [direction: string]: { row: number; col: number }[] } = {};
+  
+  for (const { dr, dc } of directions) {
+    const dirKey = `${dr},${dc}`;
+    iconMatches[dirKey] = [];
+    
+    let r = row + dr;
+    let c = col + dc;
+    
+    while (isValidCell(r, c, size)) {
+      if (board[r][c] === icon) {
+        const match = { row: r, col: c };
+        iconMatches[dirKey].push(match);
+        positions.push(match);
+        break;
+      } else if (board[r][c] !== null) {
+        break;
+      }
+      r += dr;
+      c += dc;
+    }
+  }
+  
+  const hasConvergence = positions.length >= 3;
+  
+  return { 
+    hasConvergence, 
+    convergingCells: hasConvergence ? positions : [] 
+  };
+};
+
+/**
+ * Encuentra iconos que convergerían si se colocara un icono en una posición específica
+ */
+export const findConvergingIcons = (
+  board: (string | null)[][],
+  row: number, 
+  col: number, 
+  boardSize: number
+): { row: number; col: number }[] => {
+  if (board[row][col] !== null) {
+    return [];
+  }
+  
+  const iconsByType: { [icon: string]: { row: number; col: number }[] } = {};
+  
+  const directions = [
+    { dr: -1, dc: 0 }, // arriba
+    { dr: 1, dc: 0 },  // abajo
+    { dr: 0, dc: -1 }, // izquierda
+    { dr: 0, dc: 1 }   // derecha
+  ];
+  
+  // Buscar los primeros iconos en cada dirección
+  for (const { dr, dc } of directions) {
+    let r = row + dr;
+    let c = col + dc;
+    
+    while (isValidCell(r, c, boardSize)) {
+      const currentIcon = board[r][c];
+      if (currentIcon !== null) {
+        if (currentIcon.includes('_removing')) break;
+        
+        if (!iconsByType[currentIcon]) {
+          iconsByType[currentIcon] = [];
+        }
+        
+        iconsByType[currentIcon].push({ row: r, col: c });
+        break;
+      }
+      r += dr;
+      c += dc;
+    }
+  }
+  
+  // Recopilar todos los iconos de tipos que tienen al menos 2 del mismo tipo
+  const convergingIcons: { row: number; col: number }[] = [];
+  
+  for (const icon in iconsByType) {
+    if (iconsByType[icon].length >= 2) {
+      convergingIcons.push(...iconsByType[icon]);
+    }
+  }
+  
+  return convergingIcons;
 }; 

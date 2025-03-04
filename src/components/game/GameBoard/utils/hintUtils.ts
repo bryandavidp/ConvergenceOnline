@@ -89,25 +89,21 @@ export function findConvergingIcons(
     }
   }
   
-  // Encontrar el tipo de icono con más convergencias (al menos 2)
-  let bestIcon = '';
-  let maxCount = 1; // Necesitamos al menos 2 para convergencia
+  // CAMBIO: Devolver todos los grupos que tengan al menos 2 iconos
+  const allConvergingIcons: { row: number; col: number; icon: string }[] = [];
   
   for (const icon in iconsByType) {
-    if (iconsByType[icon].length > maxCount) {
-      maxCount = iconsByType[icon].length;
-      bestIcon = icon;
+    if (iconsByType[icon].length >= 2) {
+      allConvergingIcons.push(...iconsByType[icon]);
     }
   }
   
-  // Si encontramos convergencia, devolver los iconos
-  if (maxCount >= 2) {
-    logger.debug('Convergencia encontrada', { 
-      icon: bestIcon, 
-      cuenta: maxCount, 
-      posiciones: iconsByType[bestIcon] 
+  if (allConvergingIcons.length >= 2) {
+    logger.debug('Convergencias encontradas', { 
+      grupos: Object.keys(iconsByType).filter(icon => iconsByType[icon].length >= 2).length,
+      totalIconos: allConvergingIcons.length
     });
-    return iconsByType[bestIcon];
+    return allConvergingIcons;
   }
   
   // No hay convergencia

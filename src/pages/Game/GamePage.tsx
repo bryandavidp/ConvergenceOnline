@@ -93,7 +93,7 @@ const GamePage: React.FC = () => {
     if (status === 'playing') {
       // Evitar inicializaciones múltiples
       if (isInitializingRef.current) {
-        logger.warn('GamePage', 'Se intentó inicializar el tablero mientras ya hay una inicialización en curso');
+        logger.warn('GamePage', 'Se intentó inicializar el tablero mientras ya hay una inicialización en curso en el estado: ' + status + ' [' + currentPlayMode + ']');
         return;
       }
       
