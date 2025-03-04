@@ -187,10 +187,10 @@ export const checkValidMoves = (
     return true;
   }
   
-  // Si el tablero está casi lleno y no hay movimientos, considerar victoria
+  // Restaurar la lógica para considerar victoria con pocos iconos
   const occupationPercentage = (iconCount / totalCells) * 100;
-  if (!hasValidMoves && occupationPercentage > 80 && gameStatus === 'playing') {
-    logger.info(`Tablero casi lleno sin movimientos válidos, ocupación: ${occupationPercentage.toFixed(2)}%`, ' [' + gameStatus + ']');
+  if (!hasValidMoves && occupationPercentage <= 30 && gameStatus === 'playing') {
+    logger.info(`Tablero con pocos iconos sin movimientos válidos, ocupación: ${occupationPercentage.toFixed(1)}%`, ' [' + gameStatus + ']');
     return true;
   }
   

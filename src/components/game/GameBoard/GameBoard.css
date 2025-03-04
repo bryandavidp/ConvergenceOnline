@@ -1411,4 +1411,84 @@
 .value-display {
   font-weight: bold;
   color: #0066cc;
+}
+
+/* Estilos para los botones de control de velocidad paso a paso */
+.speed-step-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0;
+  gap: 8px;
+}
+
+.step-button {
+  flex: 1;
+  padding: 8px 10px;
+  background-color: #6c8af0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.step-button:hover {
+  background-color: #5277f7;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.step-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.toggle-button {
+  flex: 1.5;
+  padding: 8px 10px;
+  background-color: #f0ad4e;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.toggle-button.paused {
+  background-color: #5cb85c;
+}
+
+.toggle-button:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Ajustes responsivos para los controles de velocidad */
+@media (max-width: 480px) {
+  .speed-step-controls {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .step-button, .toggle-button {
+    width: 100%;
+    padding: 10px;
+  }
 } 

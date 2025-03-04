@@ -455,26 +455,46 @@ const useBoardInteraction = () => {
             animatePointsEarned(targetCell, pointsEarned);
           }
           
-          // Limpiar resaltado después de un breve tiempo
-          const clearTimer = setTimeout(() => {
-            dispatch(setHighlightedCells([]));
-          }, 300); // Reducido para experiencia más rápida
-          addAnimationTimer(clearTimer);
+          // Limpiar las celdas destacadas después de finalizar
+          dispatch(setHighlightedCells([]));
+          
+          // Verificar si el jugador ha eliminado todos los iconos requeridos para este nivel
+          const { score, levelScoreTarget, currentPlayMode } = store.getState().game;
+          if (score >= levelScoreTarget && currentPlayMode === 'classic') {
+            // Nivel completado por puntuación objetivo
+            dispatch(setGameStatus('levelCompleted'));
+            audioManager.play('levelComplete');
+          }
+          
+          // Eliminar el highlight instantáneamente, no después de un timeout
+          dispatch(setHighlightedCells([]));
           
           // Verificar si no hay más movimientos válidos o si el tablero está vacío
           const currentIconCount = store.getState().game.iconCount;
           
           if (currentIconCount === 0) {
-            // Tablero vacío, nivel completado
+            // Tablero vacío, nivel completado - INSTANTÁNEO
             logger.info("¡Tablero vacío! Completando nivel...", ' [' + status + ']');
-            setTimeout(() => dispatch(setGameStatus('levelCompleted')), 0);
+            dispatch(setGameStatus('levelCompleted'));
             audioManager.play('levelComplete');
           } else if (!hasValidMoves()) {
             // No hay movimientos válidos
-            logger.info("No hay movimientos válidos. Completando nivel...", ' [' + status + ']');
-            setTimeout(() => {
+            // Calcular el porcentaje de ocupación para determinar si se pasa al siguiente nivel
+            const totalCells = boardSize * boardSize;
+            const occupationPercentage = (currentIconCount / totalCells) * 100;
+            
+            // Si hay pocos iconos en el tablero, considerar nivel completado
+            if (occupationPercentage <= 30) {
+              // Nivel completado con pocos iconos - INSTANTÁNEO
+              logger.info(`Pocos iconos sin convergencias (${occupationPercentage.toFixed(1)}%). Nivel completado.`, ' [' + status + ']');
               dispatch(setGameStatus('levelCompleted'));
-            }, 300); // Reducido para experiencia más rápida
+              audioManager.play('levelComplete');
+            } else {
+              // Game over - INSTANTÁNEO
+              logger.info(`No hay movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`, ' [' + status + ']');
+              dispatch(setGameStatus('gameOver'));
+              audioManager.play('gameOver');
+            }
           }
         });
     } else {
@@ -583,6 +603,100 @@ const useBoardInteraction = () => {
     // están configuradas con CSS para adaptarse automáticamente
   }, [boardSize]);
   
+  // Añadir una función específica para detectar situaciones especiales como la de la imagen
+  const detectSpecialGameOverCases = useCallback(() => {
+    if (!board || board.length === 0) return;
+    
+    // Verificar el estado del tablero
+    const { iconCount, status } = store.getState().game;
+    
+    if (status !== 'playing') return;
+    
+    // Contar tipos de iconos diferentes en el tablero
+    const uniqueIcons = new Set<string>();
+    let singleIconCounts: Record<string, number> = {};
+    
+    for (let row = 0; row < boardSize; row++) {
+      for (let col = 0; col < boardSize; col++) {
+        const cell = board[row][col];
+        if (cell !== null) {
+          uniqueIcons.add(cell);
+          singleIconCounts[cell] = (singleIconCounts[cell] || 0) + 1;
+        }
+      }
+    }
+    
+    // Si hay muy pocos iconos y son todos diferentes, no hay convergencia posible
+    if (uniqueIcons.size >= 2 && uniqueIcons.size === iconCount && iconCount <= 3) {
+      // Verificar si hay algún icono con al menos 3 instancias (podría formar convergencia)
+      const hasConvergencePossibility = Object.values(singleIconCounts).some(count => count >= 3);
+      
+      if (!hasConvergencePossibility) {
+        logger.info('GameBoard', `Caso especial detectado: ${iconCount} iconos diferentes sin posibilidad de convergencia.`);
+        
+        // Determinar si completar nivel o game over según cantidad de iconos
+        if (iconCount <= 2) {
+          logger.info('GameBoard', 'Solo quedan 2 o menos iconos diferentes. Avanzando al siguiente nivel.');
+          dispatch(setGameStatus('levelCompleted'));
+        } else {
+          const totalCells = boardSize * boardSize;
+          const occupationPercentage = (iconCount / totalCells) * 100;
+          
+          if (occupationPercentage <= 30) {
+            logger.info('GameBoard', `Pocos iconos (${iconCount}) sin posibilidad de convergencia. Nivel completado.`);
+            dispatch(setGameStatus('levelCompleted'));
+          } else {
+            logger.info('GameBoard', `No hay convergencias posibles. Game over.`);
+            dispatch(setGameStatus('gameOver'));
+          }
+        }
+      }
+    }
+  }, [board, boardSize, dispatch]);
+  
+  // Verificación inmediata del estado del tablero
+  const checkBoardStateImmediately = useCallback(() => {
+    // Verificar si el juego está en curso
+    if (status !== 'playing' || !board) return;
+    
+    const hasMovesAvailable = hasValidMoves();
+    
+    if (!hasMovesAvailable) {
+      // Verificar casos especiales primero (tablero con pocos iconos)
+      const { iconCount } = store.getState().game;
+      const totalCells = boardSize * boardSize;
+      
+      // Contar tipos de iconos diferentes
+      const uniqueIcons = new Set<string>();
+      for (let row = 0; row < boardSize; row++) {
+        for (let col = 0; col < boardSize; col++) {
+          const cell = board[row][col];
+          if (cell !== null) {
+            uniqueIcons.add(cell);
+          }
+        }
+      }
+      
+      // Si hay 2 o menos iconos y todos son diferentes
+      if (iconCount <= 2 && uniqueIcons.size === iconCount) {
+        logger.info('GameBoard', `Detección inmediata: ${iconCount} iconos sin convergencia posible. Nivel completado.`);
+        dispatch(setGameStatus('levelCompleted'));
+        return;
+      }
+      
+      // Calcular ocupación para otros casos
+      const occupationPercentage = (iconCount / totalCells) * 100;
+      
+      if (occupationPercentage <= 30) {
+        logger.info('GameBoard', `Detección inmediata: Pocos iconos (${occupationPercentage.toFixed(1)}%) sin movimientos válidos. Nivel completado.`);
+        dispatch(setGameStatus('levelCompleted'));
+      } else {
+        logger.info('GameBoard', `Detección inmediata: Tablero sin movimientos válidos. Game over.`);
+        dispatch(setGameStatus('gameOver'));
+      }
+    }
+  }, [board, boardSize, status, hasValidMoves, dispatch]);
+  
   // Efecto para detener temporizadores cuando cambia el estado del juego
   useEffect(() => {
     // Si el juego no está en estado 'playing', detener los temporizadores
@@ -595,6 +709,31 @@ const useBoardInteraction = () => {
       stopTimers();
     };
   }, [status, stopTimers]);
+  
+  // Añadir un efecto para ejecutar la detección de casos especiales
+  useEffect(() => {
+    if (status === 'playing') {
+      const checkInterval = setInterval(() => {
+        detectSpecialGameOverCases();
+      }, 100); // Comprobar cada 100ms en lugar de 1500ms
+      
+      return () => {
+        clearInterval(checkInterval);
+      };
+    }
+  }, [status, detectSpecialGameOverCases]);
+  
+  // Añadir un efecto que verifique el estado después de cada actualización del tablero
+  useEffect(() => {
+    if (status === 'playing' && board) {
+      // Pequeño retraso para asegurar que el tablero esté actualizado
+      const timeoutId = setTimeout(() => {
+        checkBoardStateImmediately();
+      }, 0);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [board, status, checkBoardStateImmediately]);
   
   return {
     handleCellClick,

@@ -44,12 +44,12 @@ const logger = createLogger('useGameLogic');
 // Constantes de configuración del juego
 const MIN_SPAWN_RATE = 300; // Velocidad máxima (tiempo mínimo entre iconos)
 const INITIAL_SPAWN_RATE = 3000; // Velocidad inicial (tiempo entre iconos)
-const MAX_OCCUPATION_PERCENTAGE = 80; // Porcentaje máximo de ocupación del tablero
+const MAX_OCCUPATION_PERCENTAGE = 100; // Permitir que el tablero se llene completamente (era 80%)
 const INITIAL_ICONS = 5; // Número de iconos iniciales al comenzar el juego
 
 // Constantes para el manejo de fin de partida
-const OCCUPATION_THRESHOLD_GAME_OVER = 60; // % de ocupación para Game Over cuando no hay movimientos
-const OCCUPATION_THRESHOLD_NEXT_LEVEL = 30; // % de ocupación para pasar al siguiente nivel cuando no hay movimientos
+// const OCCUPATION_THRESHOLD_GAME_OVER = 60; // % de ocupación para Game Over cuando no hay movimientos
+// const OCCUPATION_THRESHOLD_NEXT_LEVEL = 30; // % de ocupación para pasar al siguiente nivel cuando no hay movimientos
 
 const useGameLogic = () => {
   const dispatch = useDispatch();
@@ -254,55 +254,50 @@ const useGameLogic = () => {
         return;
       }
       
+      // Verificar si hay movimientos válidos ANTES de añadir un icono
+      const hasMovesAvailable = hasValidMoves();
+      if (!hasMovesAvailable) {
+        const totalCells = currentBoardSize * currentBoardSize;
+        const occupationPercentage = (currentIconCount / totalCells) * 100;
+        
+        // Verificar si hay 2 o menos iconos en el tablero
+        if (currentIconCount <= 2) {
+          logger.info('Game', `Solo quedan ${currentIconCount} iconos sin movimientos válidos. Nivel completado.`);
+          dispatch(setGameStatus('levelCompleted'));
+          return; // Importante: prevenir la aparición del nuevo icono
+        }
+        // Si hay pocos iconos, pasar al siguiente nivel
+        else if (occupationPercentage <= 30) {
+          logger.info('Game', `Tablero con pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`);
+          dispatch(setGameStatus('levelCompleted'));
+          return; // Prevenir la aparición del nuevo icono
+        } 
+        // Si no, game over
+        else {
+          logger.info('Game', `Tablero sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`);
+          dispatch(setGameStatus('gameOver'));
+          return; // Prevenir la aparición del nuevo icono
+        }
+      }
+      
       const totalCells = currentBoardSize * currentBoardSize;
-      const maxIconsAllowed = Math.floor(totalCells * MAX_OCCUPATION_PERCENTAGE / 100);
+      const maxIconsAllowed = totalCells; // Permitir llenar todo el tablero
       
       if (currentIconCount >= maxIconsAllowed) {
         if (!hasValidMoves()) {
-          const ocupacionPorcentaje = (currentIconCount / totalCells) * 100;
-          
-          if (ocupacionPorcentaje > OCCUPATION_THRESHOLD_GAME_OVER) {
-            dispatch(setGameStatus('gameOver'));
-          }
+          // Si no hay movimientos válidos y estamos en el límite de iconos, es game over
+          dispatch(setGameStatus('gameOver'));
         }
         return;
       }
       
       const emptyCells: {row: number, col: number}[] = [];
       
-      if (totalCells > 100) {
-        let attempts = 0;
-        const maxAttempts = Math.min(50, totalCells / 2);
-        
-        while (emptyCells.length < 10 && attempts < maxAttempts) {
-          const randomRow = Math.floor(Math.random() * currentBoardSize);
-          const randomCol = Math.floor(Math.random() * currentBoardSize);
-          
-          if (currentBoard[randomRow][randomCol] === null) {
-            emptyCells.push({ row: randomRow, col: randomCol });
-          }
-          attempts++;
-        }
-        
-        if (emptyCells.length < 3) {
-          emptyCells.length = 0;
-          
-          for (let row = 0; row < currentBoardSize; row++) {
-            for (let col = 0; col < currentBoardSize; col++) {
-              if (currentBoard[row][col] === null) {
-                emptyCells.push({ row, col });
-                if (emptyCells.length >= 20) break;
-              }
-            }
-            if (emptyCells.length >= 20) break;
-          }
-        }
-      } else {
-        for (let row = 0; row < currentBoardSize; row++) {
-          for (let col = 0; col < currentBoardSize; col++) {
-            if (currentBoard[row][col] === null) {
-              emptyCells.push({ row, col });
-            }
+      // Simplificar la búsqueda de celdas vacías - buscar todas las celdas vacías
+      for (let row = 0; row < currentBoardSize; row++) {
+        for (let col = 0; col < currentBoardSize; col++) {
+          if (currentBoard[row][col] === null) {
+            emptyCells.push({ row, col });
           }
         }
       }
@@ -311,13 +306,21 @@ const useGameLogic = () => {
         const hasMovesLeft = hasValidMoves();
         
         if (!hasMovesLeft) {
-          const ocupacionPorcentaje = (currentIconCount / totalCells) * 100;
+          // Calcular el porcentaje de ocupación
+          const occupationPercentage = (currentIconCount / totalCells) * 100;
           
-          if (ocupacionPorcentaje > OCCUPATION_THRESHOLD_GAME_OVER) {
-            dispatch(setGameStatus('gameOver'));
-          } else {
+          // Si hay pocos iconos, pasar al siguiente nivel
+          if (occupationPercentage <= 30) {
             dispatch(setGameStatus('levelCompleted'));
+            logger.info(`Tablero con pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`);
+          } else {
+            // Si no, game over
+            dispatch(setGameStatus('gameOver'));
+            logger.info(`Tablero lleno sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`);
           }
+        } else {
+          // Si hay movimientos válidos, el juego continúa aunque el tablero esté lleno
+          return;
         }
         
         return;
@@ -337,12 +340,8 @@ const useGameLogic = () => {
       audioManager.play('newIcon');
       
       if (!hasValidMoves()) {
-        const newOcupacionPorcentaje = ((currentIconCount + 1) / totalCells) * 100;
-        
-        if (newOcupacionPorcentaje > OCCUPATION_THRESHOLD_GAME_OVER || 
-            currentPlayMode === 'survival') {
-          dispatch(setGameStatus('gameOver'));
-        }
+        // Si después de añadir un icono no hay movimientos válidos, es game over
+        dispatch(setGameStatus('gameOver'));
       }
     } finally {
       isSpawningRef.current = false;
@@ -375,6 +374,28 @@ const useGameLogic = () => {
     
     timerIntervalRef.current = setInterval(() => {
       dispatch(incrementTimer());
+      
+      // Manejar el modo contrareloj - decrementar el tiempo restante
+      if (currentPlayMode === 'timed') {
+        const { timeRemaining, status } = store.getState().game;
+        
+        if (status === 'playing' && timeRemaining > 0) {
+          // Decrementar el tiempo
+          const newTimeRemaining = timeRemaining - 1;
+          
+          // Actualizar el estado
+          store.dispatch({
+            type: 'game/decrementTimeRemaining'
+          });
+          
+          // Si el tiempo llega a cero, game over
+          if (newTimeRemaining === 0) {
+            dispatch(setGameStatus('gameOver'));
+            audioManager.play('gameOver');
+            logger.info('Game', 'Tiempo agotado en modo contrareloj - Game Over');
+          }
+        }
+      }
       
       if (currentPlayMode === 'survival' && !speedLimitReachedRef.current) {
         const currentTimer = store.getState().game.timer;
@@ -489,43 +510,68 @@ const useGameLogic = () => {
         
         dispatch(updateBoard(markingBoard));
         
-        setTimeout(() => {
-          const finalBoard = markingBoard.map(row => [...row]);
-          let removedCount = 0;
+        // Eliminar el setTimeout para que sea instantáneo
+        const finalBoard = markingBoard.map(row => [...row]);
+        let removedCount = 0;
+        
+        // Eliminar todos los iconos marcados
+        for (const cell of iconsToRemove) {
+          finalBoard[cell.row][cell.col] = null;
+          removedCount++;
+        }
+        
+        dispatch(updateBoard(finalBoard));
+        
+        const pointsEarned = removedCount * 10 * level;
+        dispatch(incrementScore(pointsEarned));
+        
+        const newIconCount = iconCount - removedCount;
+        dispatch(setIconCount(newIconCount));
+        
+        // Añadir tiempo adicional en el modo contrareloj
+        if (currentPlayMode === 'timed') {
+          // Añadir 3 segundos por cada icono removido, con un mínimo de 5 segundos
+          const timeBonus = Math.max(5, removedCount * 3);
           
-          // Eliminar todos los iconos marcados
-          for (const cell of iconsToRemove) {
-            finalBoard[cell.row][cell.col] = null;
-            removedCount++;
-          }
+          // Dispatch para añadir tiempo
+          dispatch({
+            type: 'game/addTimeBonus',
+            payload: timeBonus
+          });
           
-          dispatch(updateBoard(finalBoard));
+          // Mostrar feedback visual/auditivo
+          audioManager.play('timeBonus');
           
-          const pointsEarned = removedCount * 10 * level;
-          dispatch(incrementScore(pointsEarned));
+          logger.info('Game', `Bonus de tiempo añadido: +${timeBonus} segundos`);
+        }
+        
+        audioManager.play('removeIcon');
+        dispatch(setHighlightedCells([]));
+        
+        if (newIconCount === 0) {
+          // Si no quedan iconos en el tablero, se completa el nivel
+          dispatch(incrementScore(config.SCORE_VALUES.EMPTY_BOARD_BONUS));
+          dispatch(setGameStatus('levelCompleted'));
+          audioManager.play('levelComplete');
+        } else if (!hasValidMoves()) {
+          // Si no hay movimientos válidos, verificar si hay pocos iconos
+          const totalCells = boardSize * boardSize;
+          const occupationPercentage = (newIconCount / totalCells) * 100;
           
-          const newIconCount = iconCount - removedCount;
-          dispatch(setIconCount(newIconCount));
-          
-          audioManager.play('removeIcon');
-          dispatch(setHighlightedCells([]));
-          
-          if (newIconCount === 0) {
-            dispatch(incrementScore(config.SCORE_VALUES.EMPTY_BOARD_BONUS));
+          if (occupationPercentage <= 30) {
+            // Pocos iconos sin movimientos válidos, nivel completado
             dispatch(setGameStatus('levelCompleted'));
             audioManager.play('levelComplete');
-          } else if (!hasValidMoves()) {
-            const ocupacionPorcentaje = calculateBoardOccupation(newIconCount, boardSize);
-            
-            if (ocupacionPorcentaje < OCCUPATION_THRESHOLD_NEXT_LEVEL) {
-              dispatch(setGameStatus('levelCompleted'));
-            } else if (ocupacionPorcentaje > OCCUPATION_THRESHOLD_GAME_OVER || currentPlayMode === 'survival') {
-              dispatch(setGameStatus('gameOver'));
-            }
+            logger.info(`Pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`);
+          } else {
+            // Muchos iconos sin movimientos válidos, game over
+            dispatch(setGameStatus('gameOver'));
+            audioManager.play('gameOver');
+            logger.info(`No hay movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`);
           }
-          
-          isRemovingIconsRef.current = false;
-        }, 150);
+        }
+        
+        isRemovingIconsRef.current = false;
         
         return;
       }
@@ -649,6 +695,104 @@ const useGameLogic = () => {
       }, 50);
     }
   }, [spawnRate, status, addRandomIcon]);
+
+  // Efecto para verificar continuamente si hay movimientos válidos
+  useEffect(() => {
+    if (status === 'playing') {
+      // Crear un intervalo que verifique periódicamente si hay movimientos válidos
+      const checkMovesInterval = setInterval(() => {
+        const { 
+          status: gameStatus,
+          iconCount: currentIconCount,
+          boardSize: currentBoardSize 
+        } = store.getState().game;
+        
+        if (gameStatus !== 'playing') {
+          return;
+        }
+        
+        const hasMovesAvailable = hasValidMoves();
+        
+        if (!hasMovesAvailable) {
+          logger.info('Game', 'No se detectaron movimientos válidos, verificando fin de partida...');
+          
+          // Calcular el porcentaje de ocupación
+          const totalCells = currentBoardSize * currentBoardSize;
+          const occupationPercentage = (currentIconCount / totalCells) * 100;
+          
+          // Verificar si hay 2 o menos iconos en el tablero
+          // Esta es una condición específica para el caso mostrado en la imagen
+          if (currentIconCount <= 2) {
+            logger.info('Game', `Solo quedan ${currentIconCount} iconos sin movimientos válidos. Nivel completado.`);
+            dispatch(setGameStatus('levelCompleted'));
+          }
+          // Si hay pocos iconos, pasar al siguiente nivel
+          else if (occupationPercentage <= 30) {
+            logger.info('Game', `Tablero con pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`);
+            dispatch(setGameStatus('levelCompleted'));
+          } 
+          // Si no, game over
+          else {
+            logger.info('Game', `Tablero sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`);
+            dispatch(setGameStatus('gameOver'));
+          }
+        }
+      }, 200); // Verificar cada 200ms en lugar de 1000ms para mayor velocidad
+      
+      return () => {
+        clearInterval(checkMovesInterval);
+      };
+    }
+  }, [status, hasValidMoves, dispatch]);
+
+  // Efecto para verificar el estado después de cualquier cambio en el tablero
+  useEffect(() => {
+    // Verificar solo si el juego está en estado 'playing'
+    if (status === 'playing' && board && board.length > 0) {
+      // Usar un timeout inmediato para evitar bloquear el renderizado
+      const timeoutId = setTimeout(() => {
+        // Verificar si hay movimientos válidos
+        const hasMovesAvailable = hasValidMoves();
+        
+        // Si no hay movimientos disponibles, determinar qué hacer
+        if (!hasMovesAvailable) {
+          // Contar tipos únicos de iconos en el tablero
+          const uniqueIcons = new Set<string>();
+          let iconCount = 0;
+          
+          for (let row = 0; row < boardSize; row++) {
+            for (let col = 0; col < boardSize; col++) {
+              if (board[row][col] !== null) {
+                uniqueIcons.add(board[row][col] as string);
+                iconCount++;
+              }
+            }
+          }
+          
+          // Verificación super rápida para casos especiales (2 o menos iconos diferentes)
+          if (iconCount <= 2 && uniqueIcons.size === iconCount) {
+            logger.info('Game', `⚡ Detección rápida: ${iconCount} iconos diferentes sin convergencia posible. Nivel completado.`);
+            dispatch(setGameStatus('levelCompleted'));
+            return;
+          }
+          
+          // Para otros casos, calcular porcentaje de ocupación
+          const totalCells = boardSize * boardSize;
+          const occupationPercentage = (iconCount / totalCells) * 100;
+          
+          if (occupationPercentage <= 30) {
+            logger.info('Game', `⚡ Detección rápida: Pocos iconos (${occupationPercentage.toFixed(1)}%) sin movimientos válidos. Nivel completado.`);
+            dispatch(setGameStatus('levelCompleted'));
+          } else {
+            logger.info('Game', `⚡ Detección rápida: No hay movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`);
+            dispatch(setGameStatus('gameOver'));
+          }
+        }
+      }, 0);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [board, status, boardSize, hasValidMoves, dispatch]);
 
   // Cambiar configuración del juego
   const changeGameConfig = useCallback((difficulty: GameDifficulty, mode: GamePlayMode) => {

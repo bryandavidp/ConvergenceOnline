@@ -105,6 +105,11 @@ export function createAudioManager(): AudioManagerInstance {
   loadSound('levelTransition', '/assets/audio/positives/cartoon-sparkle.wav');
   loadSound('convergingFound', '/assets/audio/positives/bleep.wav');
   loadSound('start', '/assets/audio/positives/bleep.wav');
+  loadSound('pause', '/assets/audio/pops/pause.wav');
+  loadSound('resume', '/assets/audio/pops/resume.wav');
+  loadSound('invalid', '/assets/audio/negatives/error.wav');
+  loadSound('invalidMove', '/assets/audio/negatives/error.wav');
+  loadSound('timeBonus', '/assets/audio/positives/time-bonus.wav');
 
     // Música de fondo
     loadMusic('/assets/audio/level-music-2.mp3');

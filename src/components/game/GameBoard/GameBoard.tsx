@@ -166,6 +166,64 @@ const GameBoard: React.FC = () => {
     console.log(`Velocidad cambiada a ${multiplier}x (${newRate}ms)`);
   }, [dispatch, showSpeedAlertUI]);
   
+  // Función para avanzar o retroceder la velocidad paso a paso
+  const handleStepSpeed = useCallback((direction: 'increase' | 'decrease') => {
+    const baseRate = config.SPAWN_RATES.MEDIUM;
+    const currentMultiplier = Number((baseRate / spawnRate).toFixed(1));
+    
+    // Definir los incrementos para cambios de velocidad más suaves
+    const speedSteps = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4];
+    
+    // Encontrar el índice más cercano al multiplicador actual
+    let closestIndex = 0;
+    let minDiff = Math.abs(speedSteps[0] - currentMultiplier);
+    
+    for (let i = 1; i < speedSteps.length; i++) {
+      const diff = Math.abs(speedSteps[i] - currentMultiplier);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIndex = i;
+      }
+    }
+    
+    // Determinar el nuevo índice basado en la dirección
+    let newIndex;
+    if (direction === 'increase') {
+      newIndex = Math.min(closestIndex + 1, speedSteps.length - 1);
+    } else {
+      newIndex = Math.max(closestIndex - 1, 0);
+    }
+    
+    // Aplicar el nuevo multiplicador
+    const newMultiplier = speedSteps[newIndex];
+    handleSpeedChange(newMultiplier);
+    
+  }, [spawnRate, handleSpeedChange]);
+  
+  // Función para pausar/reanudar la generación de iconos
+  const [iconGenPaused, setIconGenPaused] = useState(false);
+  
+  const toggleIconGeneration = useCallback(() => {
+    const newState = !iconGenPaused;
+    setIconGenPaused(newState);
+    
+    // Si estamos pausando, guardamos la velocidad actual
+    if (newState) {
+      // Establecer una velocidad extremadamente lenta (prácticamente detenida)
+      const pausedRate = 100000; // 100 segundos entre iconos
+      dispatch(setSpawnRate(pausedRate));
+      audioManager.play("pause");
+    } else {
+      // Restaurar la velocidad basada en el multiplicador actual
+      const baseRate = config.SPAWN_RATES.MEDIUM;
+      const newRate = Math.round(baseRate / customSpeedMultiplier);
+      dispatch(setSpawnRate(newRate));
+      audioManager.play("resume");
+    }
+    
+    console.log(`Generación de iconos ${newState ? 'pausada' : 'reanudada'}`);
+  }, [iconGenPaused, dispatch, customSpeedMultiplier]);
+  
   // Función para pasar al siguiente nivel
   const handleNextLevel = useCallback(() => {
     // Aumentar el nivel actual
@@ -186,8 +244,8 @@ const GameBoard: React.FC = () => {
     return Number((baseRate / spawnRate).toFixed(1));
   }, [spawnRate]);
   
-  // Valores predefinidos de multiplicadores de velocidad
-  const speedPresets = [0.5, 0.75, 1, 1.5, 2, 3];
+  // Valores predefinidos de multiplicadores de velocidad (ampliados)
+  const speedPresets = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
   
   // Renderizar controles de desarrollo
   const renderDevControls = useCallback(() => {
@@ -195,12 +253,14 @@ const GameBoard: React.FC = () => {
     
     // Describir el impacto de cada velocidad
     const getSpeedDescription = (multiplier: number): string => {
+      if (multiplier <= 0.25) return "Ultra lento (debug detallado)";
       if (multiplier <= 0.5) return "Muy lento (para debug)";
       if (multiplier <= 0.75) return "Lento (principiantes)";
       if (multiplier <= 1.1) return "Normal (equilibrado)";
       if (multiplier <= 1.5) return "Rápido (intermedio)";
       if (multiplier <= 2.0) return "Muy rápido (avanzado)";
-      return "Extremo (expertos)";
+      if (multiplier <= 3.0) return "Extremo (expertos)";
+      return "Ultra rápido (imposible)";
     };
     
     // Convertir multiplicador a milisegundos
@@ -236,6 +296,23 @@ const GameBoard: React.FC = () => {
               <span className="speed-description">({getSpeedDescription(currentSpeedMultiplier)})</span>
             </label>
             <div className="speed-ms-display">Tiempo entre iconos: {getSpawnRateMs(currentSpeedMultiplier)}ms</div>
+            
+            {/* Control preciso de velocidad */}
+            <div className="speed-step-controls">
+              <button onClick={() => handleStepSpeed('decrease')} className="step-button">
+                <span>⏪</span> Más lento
+              </button>
+              <button 
+                onClick={toggleIconGeneration} 
+                className={`toggle-button ${iconGenPaused ? 'paused' : ''}`}
+              >
+                {iconGenPaused ? '▶️ Reanudar' : '⏸️ Pausar'}
+              </button>
+              <button onClick={() => handleStepSpeed('increase')} className="step-button">
+                Más rápido <span>⏩</span>
+              </button>
+            </div>
+            
             <div className="speed-buttons">
               {speedPresets.map(speed => (
                 <button 
@@ -250,9 +327,9 @@ const GameBoard: React.FC = () => {
             <div className="speed-slider">
               <input 
                 type="range" 
-                min="0.5" 
-                max="3" 
-                step="0.1" 
+                min="0.25" 
+                max="4" 
+                step="0.05" 
                 value={customSpeedMultiplier}
                 onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
               />
@@ -276,9 +353,12 @@ const GameBoard: React.FC = () => {
     level, 
     currentSpeedMultiplier, 
     customSpeedMultiplier,
+    iconGenPaused,
     handleBoardSizeChange, 
     handleShowHint, 
     handleSpeedChange,
+    handleStepSpeed,
+    toggleIconGeneration,
     handleNextLevel
   ]);
   
