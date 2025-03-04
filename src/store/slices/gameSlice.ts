@@ -133,41 +133,6 @@ const gameSlice = createSlice({
       if (newLevel > prevLevel) {
         state.canEmptyBoardBonus = true;
         state.hintsRemaining = config.HINT_SYSTEM.MAX_HINTS_PER_LEVEL;
-        
-        // Ajustar la velocidad para el nuevo nivel
-        const currentMode = state.currentPlayMode;
-        let newSpawnRate = state.spawnRate;
-        
-        if (currentMode === 'classic') {
-          // Velocidad gradual en clásico - Reducimos ms para que sea más rápido con cada nivel
-          const baseSpawnRate = config.GAME_MODE_CONFIG.CLASSIC.initialSpawnRate;
-          const reductionPerLevel = 300; // ms menos por nivel
-          
-          newSpawnRate = Math.max(
-            config.SPAWN_RATES.EXTREME,
-            baseSpawnRate - ((newLevel - 1) * reductionPerLevel)
-          );
-        } else if (currentMode === 'timed') {
-          // Velocidad moderada en contrarreloj
-          const baseSpawnRate = config.GAME_MODE_CONFIG.TIMED.initialSpawnRate;
-          const reductionPerLevel = 250; // ms menos por nivel
-          
-          newSpawnRate = Math.max(
-            config.SPAWN_RATES.FAST,
-            baseSpawnRate - ((newLevel - 1) * reductionPerLevel)
-          );
-        }
-        
-        // Actualizar el spawn rate solo si el nuevo es menor (más rápido)
-        if (newSpawnRate < state.spawnRate) {
-          state.spawnRate = newSpawnRate;
-          
-          // Actualizar el multiplicador de velocidad
-          const baseSpeed = config.SPAWN_RATES.MEDIUM;
-          state.speedMultiplier = parseFloat((baseSpeed / newSpawnRate).toFixed(1));
-          
-          logger.info('Game', `Velocidad ajustada para nivel ${newLevel}: ${newSpawnRate}ms (x${state.speedMultiplier})`);
-        }
       }
       
       logger.info('Game', `Nivel establecido a ${action.payload}`);
@@ -227,29 +192,70 @@ const gameSlice = createSlice({
     },
     
     setSpawnRate: (state, action: PayloadAction<number>) => {
-      state.spawnRate = action.payload;
-      // Actualizar el multiplicador de velocidad
-      const baseSpeed = config.SPAWN_RATES.MEDIUM;
-      state.speedMultiplier = parseFloat((baseSpeed / action.payload).toFixed(1));
-      logger.info('Game', `Velocidad de aparición ajustada a ${action.payload}ms (${state.speedMultiplier}x)`);
+      // Validar que el nuevo valor es razonable
+      const minRate = 300; // No permitir velocidades demasiado rápidas
+      const maxRate = 6000; // No permitir velocidades demasiado lentas
+      const validatedRate = Math.max(minRate, Math.min(maxRate, action.payload));
+      
+      // Comprobar si realmente hay un cambio significativo
+      if (Math.abs(state.spawnRate - validatedRate) < 50) {
+        // Cambio muy pequeño, probablemente no perceptible
+        logger.debug('Game', `Cambio de velocidad ignorado por ser muy pequeño: ${state.spawnRate}ms → ${validatedRate}ms`);
+        return;
+      }
+      
+      // Establecer la nueva velocidad de aparición
+      const oldRate = state.spawnRate;
+      state.spawnRate = validatedRate;
+      
+      // Actualizar el multiplicador de velocidad usando SPAWN_RATES.MEDIUM como base
+      // para mantener consistencia en todo el código
+      const baseSpeed = config.SPAWN_RATES.MEDIUM; // 2000ms
+      
+      // Calcular el multiplicador (un valor más pequeño significa aparición más rápida)
+      state.speedMultiplier = parseFloat((baseSpeed / validatedRate).toFixed(1));
+      
+      logger.info('Game', `Velocidad de aparición ajustada de ${oldRate}ms a ${validatedRate}ms (${state.speedMultiplier}x)`);
     },
     
     increaseSpeed: (state, action: PayloadAction<number>) => {
       // Incrementar velocidad (disminuir el tiempo entre apariciones)
       const speedIncrease = action.payload || 0.1;
-      const minRate = 200; // No permitir velocidades demasiado rápidas
+      const minRate = 300; // Límite mínimo ajustado para evitar velocidades imposibles
       const currentRate = state.spawnRate;
+      const baseSpeed = config.SPAWN_RATES.MEDIUM;
       
-      // Calcular nueva velocidad
-      const newRate = Math.max(minRate, Math.round(currentRate / (1 + speedIncrease)));
+      // Obtener la configuración del modo actual
+      const modeConfig = state.currentPlayMode.toUpperCase() === 'CLASSIC' 
+        ? config.GAME_MODES.CLASSIC 
+        : state.currentPlayMode.toUpperCase() === 'TIMED'
+          ? config.GAME_MODES.TIMED
+          : config.GAME_MODES.SURVIVAL;
       
-      state.spawnRate = newRate;
+      // Obtener el multiplicador máximo permitido para este modo
+      const maxMultiplier = modeConfig.maxSpeedMultiplier || config.MAX_SPEED_MULTIPLIER;
+      const maxSpeed = Math.max(minRate, Math.round(baseSpeed / maxMultiplier));
+      
+      // Calcular nueva velocidad (con reducción percentual)
+      let newRate = Math.round(currentRate * (1 - speedIncrease));
+      
+      // Aplicar límites
+      if (newRate < maxSpeed) {
+        newRate = maxSpeed;
+      }
+      
+      // Asegurar que hay un cambio mínimo perceptible
+      const minChange = 50; // Al menos 50ms de diferencia
+      if (Math.abs(currentRate - newRate) < minChange && currentRate > maxSpeed + minChange) {
+        state.spawnRate = currentRate - minChange;
+      } else {
+        state.spawnRate = newRate;
+      }
       
       // Actualizar el multiplicador de velocidad
-      const baseSpeed = config.SPAWN_RATES.MEDIUM;
-      state.speedMultiplier = parseFloat((baseSpeed / newRate).toFixed(1));
+      state.speedMultiplier = parseFloat((baseSpeed / state.spawnRate).toFixed(1));
       
-      logger.info('Game', `Velocidad incrementada a ${state.speedMultiplier}x (${newRate}ms)`);
+      logger.info('Game', `Velocidad incrementada a ${state.speedMultiplier}x (${state.spawnRate}ms)`);
     },
     
     setGameStatus: (state, action: PayloadAction<GameState['status']>) => {
@@ -275,13 +281,13 @@ const gameSlice = createSlice({
       // Configurar propiedades específicas según el modo de juego
       switch (action.payload) {
         case 'classic':
-          state.boardSize = 5; // Tamaño inicial para el modo clásico
+          state.boardSize = config.BOARD_SIZES[state.level - 1];
           state.spawnRate = config.SPAWN_RATES.SLOW;
-          state.levelScoreTarget = 1000 * state.level;
+          state.levelScoreTarget = config.GAME_MODE_CONFIG['CLASSIC'].initialScoreTarget * state.level;
           state.levelOccupationTarget = Math.max(30, 70 - (state.level * 3)); // Disminuye con los niveles
           break;
         case 'timed':
-          state.boardSize = 7; // Tamaño fijo para el modo contrarreloj
+          state.boardSize = config.BOARD_SIZES[state.level - 1];
           state.spawnRate = config.SPAWN_RATES.MEDIUM;
           state.timeRemaining = config.BASE_GAME_DURATION;
           state.levelTimeLimit = config.BASE_GAME_DURATION;

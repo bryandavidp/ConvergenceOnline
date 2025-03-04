@@ -370,6 +370,11 @@ const useBoardInteraction = () => {
     
     // Mostrar alerta de aumento de velocidad
     showSpeedAlertUI(currentSpeedMultiplier);
+    
+    // Registrar el cambio de velocidad
+    console.log(`Velocidad aumentada a ${currentSpeedMultiplier}x (${newSpawnRate}ms)`);
+    
+    return currentSpeedMultiplier; // Devolver el nuevo multiplicador para verificación
   }, [spawnRate, dispatch, showSpeedAlertUI]);
   
   /**
@@ -580,7 +585,8 @@ const useBoardInteraction = () => {
     speedMultiplier,
     showPenaltyAlert,
     hasValidMoves,
-    stopTimers
+    stopTimers,
+    showSpeedAlertUI
   };
 };
 

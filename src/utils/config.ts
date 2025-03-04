@@ -31,41 +31,69 @@ export const LEVEL_ICONS = [
 
 // Velocidades de aparición de iconos (en milisegundos)
 export const SPAWN_RATES = {
-  TUTORIAL: 5000,
-  VERY_SLOW: 4000,
-  SLOW: 3000,
-  MEDIUM: 2000,
-  FAST: 1500,
-  SUPER_FAST: 1000,
-  EXTREME: 800
+  TUTORIAL: 4500,     // Muy lento para principiantes
+  VERY_SLOW: 3500,    // Muy lento para nivel bajo
+  SLOW: 2500,         // Lento para nivel medio-bajo
+  MEDIUM: 2000,       // Velocidad equilibrada (corregido de 1000)
+  FAST: 1500,         // Rápido para nivel medio-alto
+  SUPER_FAST: 1000,   // Muy rápido para nivel alto
+  EXTREME: 750        // Extremadamente rápido para expertos
 };
 
 // Parámetros de configuración generales
 export const INITIAL_ICONS = 5;  // Número de iconos iniciales al comenzar
 export const MAX_LEVELS = 5;     // Máximo número de niveles
-export const PENALTY_ICONS = 3;  // Número de iconos que aparecen como penalización
+export const PENALTY_ICONS = 2;  // Número de iconos que aparecen como penalización (reducido de 3)
 
 // Configuración básica de velocidad
-export const INITIAL_SPAWN_RATE = 3000; // Tiempo inicial entre spawns (3 segundos)
-export const SPEED_INCREASE_TIME = 15000; // Aumentar velocidad cada 15 segundos
-export const MAX_SPEED_MULTIPLIER = 3; // Velocidad máxima (3x la inicial)
+export const INITIAL_SPAWN_RATE = 2500; // Tiempo inicial entre spawns (2.5 segundos, más jugable)
+export const SPEED_INCREASE_TIME = 20000; // Aumentar velocidad cada 20 segundos (aumentado de 15s)
+export const MAX_SPEED_MULTIPLIER = 2.5; // Velocidad máxima (2.5x la inicial, más razonable)
 
 // Configuración de modos de juego
 export const GAME_MODES = {
-  // Modo clásico (original)
-  CLASSIC: 'classic',
-  // Modo contrarreloj
-  TIMED: 'timed',
-  // Modo supervivencia
-  SURVIVAL: 'survival',
+  CLASSIC: {
+    name: 'classic',
+    initialSpawnRate: SPAWN_RATES.SLOW,       // 2500ms, más jugable
+    speedIncreaseTime: 25000,                 // Incremento más gradual: 25 segundos
+    maxSpeedMultiplier: 2,                    // Velocidad máxima reducida a 2x
+    speedIncreaseAmount: 0.1,                 // Incremento del 10% cada vez
+    iconVariety: 5,                           // Cantidad de iconos diferentes
+    baseScoreTarget: 1000                     // Puntuación objetivo base
+  },
+  TIMED: {
+    name: 'timed',
+    initialSpawnRate: SPAWN_RATES.MEDIUM,     // 2000ms, moderado
+    speedIncreaseTime: 20000,                 // Incremento cada 20 segundos
+    maxSpeedMultiplier: 2.2,                  // Velocidad máxima moderada
+    speedIncreaseAmount: 0.15,                // Incremento del 15% cada vez
+    iconVariety: 4,                           // Cantidad de iconos diferentes
+    initialTimeLimit: 120,                    // 2 minutos
+    timeBonusPerLevel: 30                     // Segundos añadidos al pasar nivel
+  },
+  SURVIVAL: {
+    name: 'survival',
+    initialSpawnRate: SPAWN_RATES.VERY_SLOW,  // 3500ms, inicio muy lento
+    speedIncreaseTime: 15000,                 // Incremento más rápido: 15 segundos
+    maxSpeedMultiplier: 3,                    // Velocidad máxima mayor: 3x
+    speedIncreaseAmount: 0.2,                 // Incremento del 20% cada vez (más agresivo)
+    iconVariety: 6,                           // Más variedad de iconos
+    specialIconProbability: 0.1               // 10% de probabilidad de icono especial
+  }
 };
+
+// Equivalencias para compatibilidad
+export const classic = GAME_MODES.CLASSIC;
+export const timed = GAME_MODES.TIMED;
+export const survival = GAME_MODES.SURVIVAL;
+export const normal = GAME_MODES.CLASSIC; // Alias para compatibilidad
 
 // Configuración por dificultad
 export const DIFFICULTY_LEVELS = {
   EASY: {
     name: 'easy',
-    initialSpawnRate: 4000,
-    speedIncreaseTime: 30000, // 30 segundos
+    initialSpawnRate: 3000,
+    speedIncreaseTime: 20000, // 30 segundos
     maxSpeedMultiplier: 2,
     penaltyIcons: 1,
     initialIcons: 4,
@@ -74,11 +102,11 @@ export const DIFFICULTY_LEVELS = {
   NORMAL: {
     name: 'normal',
     initialSpawnRate: 3000,
-    speedIncreaseTime: 20000, // 20 segundos
+    speedIncreaseTime: 15000, // 20 segundos
     maxSpeedMultiplier: 3,
-    penaltyIcons: 2,
+    penaltyIcons: 3,
     initialIcons: 5,
-    maxLevel: 4,
+    maxLevel: 5,
   },
   HARD: {
     name: 'hard',
@@ -104,14 +132,17 @@ export const DIFFICULTY_LEVELS = {
 export const GAME_MODE_CONFIG = {
   CLASSIC: {
     name: 'classic',
-    initialBoardSize: 5,
-    maxBoardSize: 10,
-    initialSpawnRate: SPAWN_RATES.SLOW,
+    initialBoardSize: 8,
+    maxBoardSize: 8,
+    initialSpawnRate: SPAWN_RATES.MEDIUM,
     initialScoreTarget: 1000,
     scoreTargetMultiplier: 1.5, // Multiplica el objetivo por nivel
     initialOccupationTarget: 70, // Porcentaje
     occupationDecreasePerLevel: 3, // Disminución del objetivo por nivel
     basePenalty: 1, // Iconos añadidos por error
+    // Compatibilidad con GAME_MODES
+    speedIncreaseTime: 20000,
+    maxSpeedMultiplier: 3,
   },
   TIMED: {
     name: 'timed',
@@ -121,6 +152,9 @@ export const GAME_MODE_CONFIG = {
     timeBonusPerLevel: 30, // Segundos añadidos al pasar de nivel
     comboBonusTime: 5, // Segundos añadidos por combo
     timeDecreasePerLevel: 10, // Segundos menos en cada nivel
+    // Compatibilidad con GAME_MODES
+    speedIncreaseTime: 15000,
+    maxSpeedMultiplier: 2.5,
   },
   SURVIVAL: {
     name: 'survival',
@@ -130,6 +164,8 @@ export const GAME_MODE_CONFIG = {
     specialIconProbability: 0.1, // 10% de probabilidad de icono especial
     specialIconInterval: 60, // Aparece aproximadamente cada 60 segundos
     maxSpeedMultiplier: 4, // Velocidad máxima x4
+    // Compatibilidad con GAME_MODES
+    speedIncreaseTime: 10000,
   }
 };
 
@@ -265,3 +301,79 @@ export function shuffleArray<T>(array: T[]): T[] {
 
 // Duración base del juego en segundos para modo temporizado
 export const BASE_GAME_DURATION = 120; // 2 minutos
+
+// Obtener el tamaño del tablero para un nivel específico (alias para compatibilidad)
+export function getLevelBoardSize(level: number): number {
+  return getBoardSizeForLevel(level);
+}
+
+// Obtener la velocidad de spawn para un nivel específico
+export function getLevelSpawnRate(level: number, gameMode: string = 'CLASSIC'): number {
+  return calculateSpawnRate(level, gameMode);
+}
+
+// Obtener el número de iconos diferentes para un nivel específico
+export function iconCountByLevel(level: number): number {
+  // A medida que aumenta el nivel, aumenta la variedad de iconos
+  const baseCount = 4; // Número base de iconos
+  const increase = Math.floor((level - 1) / 2); // Aumentar cada 2 niveles
+  
+  // El número de iconos aumenta con los niveles
+  const iconCount = baseCount + increase;
+  
+  // Limitar a un rango razonable
+  return Math.min(8, Math.max(3, iconCount));
+}
+
+// Obtener la configuración para un modo de juego específico
+export function getGameModeConfig(mode: string): any {
+  // Normalizar el nombre del modo (convertir a mayúsculas)
+  const normalizedMode = mode.toUpperCase();
+  
+  // Intentar obtener del objeto GAME_MODES
+  const modeConfig = GAME_MODES[normalizedMode as keyof typeof GAME_MODES];
+  
+  // Si no existe, usar el modo clásico como fallback
+  if (!modeConfig) {
+    console.warn(`Modo de juego '${mode}' no encontrado, usando modo clásico`);
+    return GAME_MODES.CLASSIC;
+  }
+  
+  return modeConfig;
+}
+
+// Calcular la velocidad de aparición de iconos según el nivel y modo de juego
+export function calculateSpawnRate(level: number, gameMode: string, currentSpawnRate?: number): number {
+  // Obtener configuración del modo de juego
+  const modeConfig = getGameModeConfig(gameMode);
+  
+  // Si estamos actualizando una velocidad existente (aumento gradual)
+  if (currentSpawnRate) {
+    // Reducir el tiempo (aumentar velocidad)
+    const reductionFactor = 0.9; // Reducción del 10%
+    
+    // Calcular nueva velocidad
+    const newSpawnRate = currentSpawnRate * reductionFactor;
+    
+    // Calcular el límite mínimo basado en el multiplicador máximo
+    const minSpawnRate = modeConfig.initialSpawnRate / modeConfig.maxSpeedMultiplier;
+    
+    // No permitir que baje del límite mínimo
+    return Math.max(minSpawnRate, newSpawnRate);
+  }
+  
+  // Si estamos calculando la velocidad inicial para un nivel
+  // A mayor nivel, menor tiempo entre spawns (más rápido)
+  const levelReduction = (level - 1) * 0.1; // 10% de reducción por nivel
+  const maxReduction = 0.6; // Máximo 60% de reducción
+  
+  // Aplicar la reducción, pero no exceder el máximo
+  const reduction = Math.min(maxReduction, levelReduction);
+  
+  // Calcular velocidad base para el nivel
+  const baseSpawnRate = modeConfig.initialSpawnRate * (1 - reduction);
+  
+  // Asegurar que no baje del mínimo permitido
+  const minSpawnRate = modeConfig.initialSpawnRate / modeConfig.maxSpeedMultiplier;
+  return Math.max(minSpawnRate, baseSpawnRate);
+}

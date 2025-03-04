@@ -23,7 +23,11 @@ const GameBoard: React.FC = () => {
     handleCellClick, 
     registerCellRef,
     showHint,
-    increaseSpeed
+    increaseSpeed,
+    showSpeedAlert,
+    speedMultiplier,
+    showPenaltyAlert,
+    showSpeedAlertUI
   } = useBoardInteraction();
   
   // Referencias para el tablero
@@ -144,15 +148,23 @@ const GameBoard: React.FC = () => {
   // Función para cambiar la velocidad del juego
   const handleSpeedChange = useCallback((multiplier: number) => {
     // Calcular nueva velocidad basada en el multiplicador
-    const baseRate = config.INITIAL_SPAWN_RATE || 3000;
-    const newRate = baseRate / multiplier;
+    const baseRate = config.SPAWN_RATES.MEDIUM; // Usar un valor consistente
+    const newRate = Math.round(baseRate / multiplier);
     
     // Actualizar estado local
     setCustomSpeedMultiplier(multiplier);
     
+    // Mostrar feedback visual al usuario
+    audioManager.play("speedUp");
+    
     // Actualizar el store
     dispatch(setSpawnRate(newRate));
-  }, [dispatch]);
+    
+    // Mostrar la alerta de cambio de velocidad
+    showSpeedAlertUI(multiplier);
+    
+    console.log(`Velocidad cambiada a ${multiplier}x (${newRate}ms)`);
+  }, [dispatch, showSpeedAlertUI]);
   
   // Función para pasar al siguiente nivel
   const handleNextLevel = useCallback(() => {
@@ -174,12 +186,27 @@ const GameBoard: React.FC = () => {
     return Number((baseRate / spawnRate).toFixed(1));
   }, [spawnRate]);
   
+  // Valores predefinidos de multiplicadores de velocidad
+  const speedPresets = [0.5, 0.75, 1, 1.5, 2, 3];
+  
   // Renderizar controles de desarrollo
   const renderDevControls = useCallback(() => {
     if (!showDevControls) return null;
     
-    // Valores predefinidos de multiplicadores de velocidad
-    const speedPresets = [0.5, 1, 1.5, 2, 3, 5];
+    // Describir el impacto de cada velocidad
+    const getSpeedDescription = (multiplier: number): string => {
+      if (multiplier <= 0.5) return "Muy lento (para debug)";
+      if (multiplier <= 0.75) return "Lento (principiantes)";
+      if (multiplier <= 1.1) return "Normal (equilibrado)";
+      if (multiplier <= 1.5) return "Rápido (intermedio)";
+      if (multiplier <= 2.0) return "Muy rápido (avanzado)";
+      return "Extremo (expertos)";
+    };
+    
+    // Convertir multiplicador a milisegundos
+    const getSpawnRateMs = (multiplier: number): number => {
+      return Math.round(config.SPAWN_RATES.MEDIUM / multiplier);
+    };
     
     return (
       <div className="dev-controls">
@@ -204,7 +231,11 @@ const GameBoard: React.FC = () => {
           </div>
           
           <div className="control-group">
-            <label>Velocidad: <span className="value-display">x{currentSpeedMultiplier}</span></label>
+            <label>
+              Velocidad: <span className="value-display">x{currentSpeedMultiplier}</span>
+              <span className="speed-description">({getSpeedDescription(currentSpeedMultiplier)})</span>
+            </label>
+            <div className="speed-ms-display">Tiempo entre iconos: {getSpawnRateMs(currentSpeedMultiplier)}ms</div>
             <div className="speed-buttons">
               {speedPresets.map(speed => (
                 <button 
@@ -220,7 +251,7 @@ const GameBoard: React.FC = () => {
               <input 
                 type="range" 
                 min="0.5" 
-                max="5" 
+                max="3" 
                 step="0.1" 
                 value={customSpeedMultiplier}
                 onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
@@ -292,34 +323,6 @@ const GameBoard: React.FC = () => {
     );
   }, [board, boardSize, cells, status]);
   
-  const [showSpeedAlert, setShowSpeedAlert] = useState(false);
-  const [speedValue, setSpeedValue] = useState(1.0);
-  
-  // Función para mostrar la alerta de velocidad
-  const showSpeedAlertMessage = useCallback((multiplier: number) => {
-    setSpeedValue(multiplier);
-    setShowSpeedAlert(true);
-    
-    // Ocultar después de 2 segundos
-    const timer = setTimeout(() => {
-      setShowSpeedAlert(false);
-    }, 2500);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  // Cada vez que cambia el spawnRate, mostrar la alerta si es una reducción significativa
-  useEffect(() => {
-    const baseRate = 3000; // valor base para cálculos
-    const currentMultiplier = parseFloat((baseRate / spawnRate).toFixed(1));
-    
-    // Solo mostrar si hay un cambio significativo (más del 10% de velocidad)
-    if (currentMultiplier > 1.1) {
-      showSpeedAlertMessage(currentMultiplier);
-      audioManager.play('speedUp');
-    }
-  }, [spawnRate, showSpeedAlertMessage]);
-  
   return (
     <div className="game-board-wrapper">
       {renderBoard()}
@@ -327,10 +330,25 @@ const GameBoard: React.FC = () => {
       {renderDevControls()}
       
       {/* Alerta de aumento de velocidad */}
-      <div className={`speed-alert ${showSpeedAlert ? 'visible' : ''}`}>
-        <span role="img" aria-label="velocidad">⚡</span> 
-        Velocidad: <strong>x{speedValue}</strong>
-      </div>
+      {showSpeedAlert && (
+        <div className="speed-alert visible">
+          <div className="speed-alert-content">
+            <span className="speed-icon">⚡</span>
+            <span className="speed-text">¡Velocidad aumentada!</span>
+            <span className="speed-value">x{speedMultiplier}</span>
+          </div>
+        </div>
+      )}
+      
+      {/* Alerta de penalización */}
+      {showPenaltyAlert && (
+        <div className="penalty-alert visible">
+          <div className="penalty-alert-content">
+            <span className="penalty-icon">⚠️</span>
+            <span className="penalty-text">¡Penalización! Velocidad aumentada</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
