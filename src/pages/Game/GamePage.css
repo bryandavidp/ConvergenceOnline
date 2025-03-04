@@ -13,6 +13,55 @@
   max-width: 100%;
 }
 
+/* Modo pantalla completa para móvil */
+.game-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  z-index: 1000;
+}
+
+/* Contenedor de todo el contenido del juego para móviles */
+.game-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Sección de información (30% superior) */
+.game-info-section {
+  flex: 0 0 30%;
+  max-height: 30%;
+  padding: 10px 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* Sección del tablero (70% inferior) */
+.game-board-section {
+  flex: 0 0 70%;
+  height: 70%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  background-color: #5d73e8;
+}
+
 .game-container {
   width: 100%;
   max-width: 800px;
@@ -31,9 +80,75 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
   border-bottom: 1px solid #eee;
+}
+
+/* Optimización de la cabecera para móviles */
+.game-fullscreen .game-header {
+  padding-bottom: 2px;
+  margin-bottom: 2px;
+  padding-top: 2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+/* Título más compacto en móvil */
+.game-fullscreen .game-header h1 {
+  font-size: 1.2rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* Botones más compactos en móvil */
+.game-fullscreen .control-button {
+  padding: 3px 8px;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+/* Reducir espacio en el HUD y elementos informativos */
+.game-fullscreen .game-info-section {
+  flex: 0 0 20%; /* Reducir de 30% a 20% */
+  max-height: 20%;
+  padding: 2px;
+}
+
+/* Aumentar el espacio para el tablero */
+.game-fullscreen .game-board-section {
+  flex: 0 0 80%; /* Aumentar de 70% a 80% */
+  height: 80%;
+}
+
+/* Optimizaciones para la sección de configuración */
+.game-fullscreen .config-section {
+  margin: 1px 0;
+  padding: 2px;
+}
+
+/* Optimización adicional para pantallas muy pequeñas */
+@media (max-width: 320px) {
+  .game-fullscreen .game-header h1 {
+    font-size: 1rem;
+  }
+  
+  .game-fullscreen .control-button {
+    padding: 2px 6px;
+    font-size: 0.7rem;
+  }
+  
+  .game-fullscreen .game-info-section {
+    flex: 0 0 18%;
+    max-height: 18%;
+  }
+  
+  .game-fullscreen .game-board-section {
+    flex: 0 0 82%;
+    height: 82%;
+  }
 }
 
 .game-header h1 {
@@ -41,6 +156,11 @@
   font-size: 2rem;
   color: #333;
   font-weight: 700;
+}
+
+/* Título más pequeño en móvil */
+.game-fullscreen .game-header h1 {
+  font-size: 1.5rem;
 }
 
 .game-controls {
@@ -58,21 +178,6 @@
   transition: all 0.2s;
 }
 
-.control-button.play {
-  background-color: #4caf50;
-  color: white;
-}
-
-.control-button.pause {
-  background-color: #ff9800;
-  color: white;
-}
-
-.control-button.restart {
-  background-color: #f44336;
-  color: white;
-}
-
 .control-button:hover {
   opacity: 0.9;
   transform: translateY(-2px);
@@ -88,10 +193,24 @@
   margin-top: 20px;
 }
 
-/* Estilos responsivos */
+/* Optimización de la sección de configuración para móvil */
+.config-section {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 5px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+}
+
+.game-fullscreen .config-section {
+  margin-bottom: 5px;
+  padding: 3px;
+}
+
+/* Optimizaciones generales para móviles */
 @media (max-width: 768px) {
   .game-container {
-    padding: 15px;
+    padding: 10px;
   }
   
   .game-header h1 {
@@ -102,17 +221,32 @@
     padding: 6px 12px;
     font-size: 0.9rem;
   }
+  
+  .game-board-container {
+    margin-top: 10px;
+    min-height: 300px;
+  }
 }
 
 @media (max-width: 480px) {
   .game-header {
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row; /* Mantener en fila para ahorrar espacio */
+    gap: 5px;
   }
   
   .game-controls {
-    width: 100%;
-    justify-content: center;
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .control-button {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+  }
+  
+  .config-section {
+    padding: 3px;
+    margin-bottom: 5px;
   }
 }
 
@@ -253,4 +387,19 @@
 .config-section > div {
   margin: 0 !important;
   width: 100%;
+}
+
+.control-button.play {
+  background-color: #4caf50;
+  color: white;
+}
+
+.control-button.pause {
+  background-color: #ff9800;
+  color: white;
+}
+
+.control-button.restart {
+  background-color: #f44336;
+  color: white;
 } 

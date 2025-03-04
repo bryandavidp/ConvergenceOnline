@@ -133,6 +133,41 @@ const gameSlice = createSlice({
       if (newLevel > prevLevel) {
         state.canEmptyBoardBonus = true;
         state.hintsRemaining = config.HINT_SYSTEM.MAX_HINTS_PER_LEVEL;
+        
+        // Ajustar la velocidad para el nuevo nivel
+        const currentMode = state.currentPlayMode;
+        let newSpawnRate = state.spawnRate;
+        
+        if (currentMode === 'classic') {
+          // Velocidad gradual en clásico - Reducimos ms para que sea más rápido con cada nivel
+          const baseSpawnRate = config.GAME_MODE_CONFIG.CLASSIC.initialSpawnRate;
+          const reductionPerLevel = 300; // ms menos por nivel
+          
+          newSpawnRate = Math.max(
+            config.SPAWN_RATES.EXTREME,
+            baseSpawnRate - ((newLevel - 1) * reductionPerLevel)
+          );
+        } else if (currentMode === 'timed') {
+          // Velocidad moderada en contrarreloj
+          const baseSpawnRate = config.GAME_MODE_CONFIG.TIMED.initialSpawnRate;
+          const reductionPerLevel = 250; // ms menos por nivel
+          
+          newSpawnRate = Math.max(
+            config.SPAWN_RATES.FAST,
+            baseSpawnRate - ((newLevel - 1) * reductionPerLevel)
+          );
+        }
+        
+        // Actualizar el spawn rate solo si el nuevo es menor (más rápido)
+        if (newSpawnRate < state.spawnRate) {
+          state.spawnRate = newSpawnRate;
+          
+          // Actualizar el multiplicador de velocidad
+          const baseSpeed = config.SPAWN_RATES.MEDIUM;
+          state.speedMultiplier = parseFloat((baseSpeed / newSpawnRate).toFixed(1));
+          
+          logger.info('Game', `Velocidad ajustada para nivel ${newLevel}: ${newSpawnRate}ms (x${state.speedMultiplier})`);
+        }
       }
       
       logger.info('Game', `Nivel establecido a ${action.payload}`);

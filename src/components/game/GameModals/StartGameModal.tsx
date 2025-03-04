@@ -18,12 +18,33 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   const [isClosing, setIsClosing] = useState(false);
   const [showDescription, setShowDescription] = useState<string | null>(null);
   
+  // Estados para la configuración
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(
+    localStorage.getItem('soundEnabled') !== 'false'
+  );
+  const [musicEnabled, setMusicEnabled] = useState<boolean>(
+    localStorage.getItem('musicEnabled') !== 'false'
+  );
+  const [showSettings, setShowSettings] = useState<boolean>(false);
+  
   useEffect(() => {
     // Reiniciar el estado de cierre cuando el modal vuelve a ser visible
     if (isVisible) {
       setIsClosing(false);
     }
-  }, [isVisible]);
+    
+    // Aplicar la configuración de sonido y música
+    // Solo actualizamos si el estado no coincide con el audioManager
+    if (audioManager.enabled !== soundEnabled) {
+      audioManager.toggleSound(); // Esto cambiará el estado en el audioManager
+    }
+    
+    if (audioManager.musicEnabled !== musicEnabled) {
+      audioManager.toggleMusic(); // Esto cambiará el estado en el audioManager
+    }
+    
+    // No necesitamos guardar en localStorage porque audioManager ya lo hace
+  }, [isVisible, soundEnabled, musicEnabled]);
   
   const handleStartGame = () => {
     // Mostrar animación de cierre
@@ -85,6 +106,28 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
     }
   };
   
+  // Maneja el cambio en la configuración de sonido
+  const toggleSound = () => {
+    // Actualizar el estado del componente
+    setSoundEnabled(!soundEnabled);
+    
+    // Reproducir un sonido al activar
+    if (!soundEnabled) {
+      audioManager.play('click');
+    }
+  };
+  
+  // Maneja el cambio en la configuración de música
+  const toggleMusic = () => {
+    setMusicEnabled(!musicEnabled);
+  };
+  
+  // Maneja mostrar/ocultar el panel de configuración
+  const toggleSettings = () => {
+    setShowSettings(!showSettings);
+    audioManager.play('click');
+  };
+  
   // Si el modal no es visible, no renderizar nada
   if (!isVisible && !isClosing) {
     return null;
@@ -93,90 +136,154 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   return (
     <div className={`game-modal start-game ${isVisible ? 'visible' : 'hidden'} ${isClosing ? 'closing' : ''}`}>
       <div className="modal-content">
-        <h1>Convergencia</h1>
-        <h2>Un juego de estrategia</h2>
-        
-        <div className="game-icon-preview">
-          {["🍎", "🍊", "🍇", "🍓", "🍐"].map((icon, index) => (
-            <div key={index} className="preview-icon" style={{ animationDelay: `${index * 0.2}s` }}>
-              {icon}
-            </div>
-          ))}
-        </div>
-        
-        <div className="form-group">
-          <div className="form-label">Selecciona un modo de juego:</div>
-          <div className="mode-options">
-            <div 
-              className={`game-option ${selectedMode === 'classic' ? 'active' : ''}`}
-              onClick={() => setSelectedMode('classic')}
-              onMouseEnter={() => toggleDescription('mode', 'classic')}
-              onMouseLeave={() => toggleDescription('mode', 'classic')}
-            >
-              🏆 Clásico
-            </div>
-            <div 
-              className={`game-option ${selectedMode === 'timed' ? 'active' : ''}`}
-              onClick={() => setSelectedMode('timed')}
-              onMouseEnter={() => toggleDescription('mode', 'timed')}
-              onMouseLeave={() => toggleDescription('mode', 'timed')}
-            >
-              ⏱️ Contrarreloj
-            </div>
-            <div 
-              className={`game-option ${selectedMode === 'survival' ? 'active' : ''}`}
-              onClick={() => setSelectedMode('survival')}
-              onMouseEnter={() => toggleDescription('mode', 'survival')}
-              onMouseLeave={() => toggleDescription('mode', 'survival')}
-            >
-              🔥 Supervivencia
-            </div>
+        <div className="start-game-header">
+          <h1>Convergencia</h1>
+          <h2>Un juego de estrategia</h2>
+          
+          <div className="game-icon-preview">
+            {["🍎", "🍊", "🍇", "🍓", "🍐"].map((icon, index) => (
+              <div key={index} className="preview-icon" style={{ animationDelay: `${index * 0.2}s` }}>
+                {icon}
+              </div>
+            ))}
           </div>
-          {showDescription && showDescription.match(/classic|timed|survival/) && (
-            <div className="option-description">
-              {getModeDescription(showDescription as GamePlayMode)}
+          
+          {/* Panel de configuraciones */}
+          <div className="game-settings-panel">
+            <button 
+              className={`setting-button ${showSettings ? 'active' : ''}`} 
+              onClick={toggleSettings}
+              aria-label="Configuración"
+            >
+              ⚙️
+            </button>
+            <button 
+              className={`setting-button ${soundEnabled ? 'active' : ''}`} 
+              onClick={toggleSound}
+              aria-label={soundEnabled ? "Desactivar sonidos" : "Activar sonidos"}
+            >
+              {soundEnabled ? '🔊' : '🔇'}
+            </button>
+            <button 
+              className={`setting-button ${musicEnabled ? 'active' : ''}`} 
+              onClick={toggleMusic}
+              aria-label={musicEnabled ? "Desactivar música" : "Activar música"}
+            >
+              {musicEnabled ? '🎵' : '🔇'}
+            </button>
+          </div>
+          
+          {/* Panel de configuración expandido */}
+          {showSettings && (
+            <div className="settings-panel">
+              <h3>Configuración</h3>
+              <div className="settings-options">
+                <div className="settings-option">
+                  <span>Música</span>
+                  <button 
+                    className={`setting-toggle ${musicEnabled ? 'active' : ''}`}
+                    onClick={toggleMusic}
+                  >
+                    {musicEnabled ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+                <div className="settings-option">
+                  <span>Sonidos</span>
+                  <button 
+                    className={`setting-toggle ${soundEnabled ? 'active' : ''}`}
+                    onClick={toggleSound}
+                  >
+                    {soundEnabled ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
         
-        <div className="form-group">
-          <div className="form-label">Selecciona la dificultad:</div>
-          <div className="difficulty-options">
-            <div 
-              className={`game-option ${selectedDifficulty === 'easy' ? 'active' : ''}`}
-              onClick={() => setSelectedDifficulty('easy')}
-              onMouseEnter={() => toggleDescription('difficulty', 'easy')}
-              onMouseLeave={() => toggleDescription('difficulty', 'easy')}
-            >
-              😊 Fácil
+        <div className="start-game-body">
+          <div className="form-group">
+            <div className="form-label">Selecciona un modo de juego:</div>
+            <div className="mode-options">
+              <div 
+                className={`game-option ${selectedMode === 'classic' ? 'active' : ''}`}
+                onClick={() => setSelectedMode('classic')}
+                onMouseEnter={() => toggleDescription('mode', 'classic')}
+                onMouseLeave={() => toggleDescription('mode', 'classic')}
+              >
+                <span className="option-icon">🏆</span>
+                <span>Clásico</span>
+              </div>
+              <div 
+                className={`game-option ${selectedMode === 'timed' ? 'active' : ''}`}
+                onClick={() => setSelectedMode('timed')}
+                onMouseEnter={() => toggleDescription('mode', 'timed')}
+                onMouseLeave={() => toggleDescription('mode', 'timed')}
+              >
+                <span className="option-icon">⏱️</span>
+                <span>Contrarreloj</span>
+              </div>
+              <div 
+                className={`game-option ${selectedMode === 'survival' ? 'active' : ''}`}
+                onClick={() => setSelectedMode('survival')}
+                onMouseEnter={() => toggleDescription('mode', 'survival')}
+                onMouseLeave={() => toggleDescription('mode', 'survival')}
+              >
+                <span className="option-icon">🔥</span>
+                <span>Supervivencia</span>
+              </div>
             </div>
-            <div 
-              className={`game-option ${selectedDifficulty === 'normal' ? 'active' : ''}`}
-              onClick={() => setSelectedDifficulty('normal')}
-              onMouseEnter={() => toggleDescription('difficulty', 'normal')}
-              onMouseLeave={() => toggleDescription('difficulty', 'normal')}
-            >
-              😐 Normal
-            </div>
-            <div 
-              className={`game-option ${selectedDifficulty === 'hard' ? 'active' : ''}`}
-              onClick={() => setSelectedDifficulty('hard')}
-              onMouseEnter={() => toggleDescription('difficulty', 'hard')}
-              onMouseLeave={() => toggleDescription('difficulty', 'hard')}
-            >
-              😈 Difícil
-            </div>
+            {showDescription && showDescription.match(/classic|timed|survival/) && (
+              <div className="option-description">
+                {getModeDescription(showDescription as GamePlayMode)}
+              </div>
+            )}
           </div>
-          {showDescription && showDescription.match(/easy|normal|hard|tutorial/) && (
-            <div className="option-description">
-              {getDifficultyDescription(showDescription as GameDifficulty)}
+          
+          <div className="form-group">
+            <div className="form-label">Selecciona la dificultad:</div>
+            <div className="difficulty-options">
+              <div 
+                className={`game-option ${selectedDifficulty === 'easy' ? 'active' : ''}`}
+                onClick={() => setSelectedDifficulty('easy')}
+                onMouseEnter={() => toggleDescription('difficulty', 'easy')}
+                onMouseLeave={() => toggleDescription('difficulty', 'easy')}
+              >
+                <span className="option-icon">😊</span>
+                <span>Fácil</span>
+              </div>
+              <div 
+                className={`game-option ${selectedDifficulty === 'normal' ? 'active' : ''}`}
+                onClick={() => setSelectedDifficulty('normal')}
+                onMouseEnter={() => toggleDescription('difficulty', 'normal')}
+                onMouseLeave={() => toggleDescription('difficulty', 'normal')}
+              >
+                <span className="option-icon">😐</span>
+                <span>Normal</span>
+              </div>
+              <div 
+                className={`game-option ${selectedDifficulty === 'hard' ? 'active' : ''}`}
+                onClick={() => setSelectedDifficulty('hard')}
+                onMouseEnter={() => toggleDescription('difficulty', 'hard')}
+                onMouseLeave={() => toggleDescription('difficulty', 'hard')}
+              >
+                <span className="option-icon">😈</span>
+                <span>Difícil</span>
+              </div>
             </div>
-          )}
+            {showDescription && showDescription.match(/easy|normal|hard|tutorial/) && (
+              <div className="option-description">
+                {getDifficultyDescription(showDescription as GameDifficulty)}
+              </div>
+            )}
+          </div>
         </div>
         
-        <button className="start-button" onClick={handleStartGame}>
-          ¡Jugar Ahora!
-        </button>
+        <div className="start-game-footer">
+          <button className="start-button" onClick={handleStartGame}>
+            ¡Jugar Ahora!
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -182,7 +182,7 @@ const useBoardInteraction = () => {
   }, [board, boardSize]);
   
   /**
-   * Eliminar iconos convergentes del tablero
+   * Eliminar iconos convergentes del tablero - versión optimizada para rendimiento
    */
   const removeConvergingIcons = useCallback((
     convergingIcons: { row: number; col: number; icon: string }[],
@@ -195,7 +195,7 @@ const useBoardInteraction = () => {
         return;
       }
       
-      // Crear copia del tablero para modificación
+      // Crear copia del tablero para modificación - optimizada con map más eficiente
       const newBoard = board.map(row => [...row]);
       
       // Marcar los iconos a eliminar
@@ -208,15 +208,15 @@ const useBoardInteraction = () => {
       // Actualizar tablero con animación de eliminación
       dispatch(updateBoard(newBoard));
       
-      // Reproducir sonido de animación de eliminación
-      audioManager.play("convergingFound");
+      // Reproducir sonido en segundo plano
+      setTimeout(() => audioManager.play("convergingFound"), 0);
       
-      // Tiempo para que se complete la animación (coincide con la duración en CSS)
-      setTimeout(() => {
-        // Eliminar los iconos marcados
-        const finalBoard = newBoard.map(row => row.map(cell => 
-          cell && cell.includes('_removing') ? null : cell
-        ));
+      // Tiempo reducido para que se complete la animación 
+      const removeTimer = setTimeout(() => {
+        // Eliminar los iconos marcados - optimizado
+        const finalBoard = newBoard.map(row => 
+          row.map(cell => cell && cell.includes('_removing') ? null : cell)
+        );
         
         // Actualizar tablero final
         dispatch(updateBoard(finalBoard));
@@ -226,9 +226,11 @@ const useBoardInteraction = () => {
         
         // Resolver con el número de iconos eliminados
         resolve(convergingIcons.length);
-      }, 500); // Aumentado de 300ms a 500ms para coincidir con la animación CSS
+      }, 300); // Reducido para experiencia más rápida
+      
+      addAnimationTimer(removeTimer);
     });
-  }, [board, dispatch, iconCount]);
+  }, [board, dispatch, iconCount, addAnimationTimer]);
   
   /**
    * Animar puntos ganados
@@ -371,7 +373,7 @@ const useBoardInteraction = () => {
   }, [spawnRate, dispatch, showSpeedAlertUI]);
   
   /**
-   * Manejar clic en una celda
+   * Manejar clic en una celda - optimizado para rendimiento competitivo
    */
   const handleCellClick = useCallback((row: number, col: number) => {
     // Verificar si el juego está en estado de juego
@@ -380,36 +382,40 @@ const useBoardInteraction = () => {
       return;
     }
     
-    // Limpiamos cualquier resaltado previo
-    dispatch(setHighlightedCells([]));
-    
-    // Reproducir sonido de clic
-    audioManager.play("click");
-    
-    // Verificar si la celda está vacía
+    // Mejora: Comprobar rápidamente si la celda está vacía antes de procesar más lógica
     if (!board || !board[row] || board[row][col] !== null) {
-      logger.debug('handleCellClick: celda no está vacía', ' [' + row + ', ' + col + '] ' + board[row][col]);
+      logger.debug('handleCellClick: celda no está vacía', ' [' + row + ', ' + col + '] ' + board?.[row]?.[col]);
       return;
     }
+    
+    // Optimización: Limpieza más eficiente del resaltado previo
+    if (highlightedCells.length > 0) {
+      dispatch(setHighlightedCells([]));
+    }
+    
+    // Sonido optimizado para menor latencia
+    setTimeout(() => audioManager.play("click"), 0);
     
     // Buscar iconos convergentes
     const convergingIcons = findConvergingIcons(row, col);
     
     if (convergingIcons.length > 0) {
       // Hay convergencia
-      audioManager.play("convergingFound");
+      setTimeout(() => audioManager.play("convergingFound"), 0);
       
       // Obtener el elemento DOM de la celda objetivo
       const targetCell = getCellElement(row, col);
       
       // Resaltar las celdas que tienen convergencia
-      dispatch(setHighlightedCells(convergingIcons.map(icon => ({ row: icon.row, col: icon.col }))));
+      if (convergingIcons.length > 0) {
+        dispatch(setHighlightedCells(convergingIcons.map(icon => ({ row: icon.row, col: icon.col }))));
+      }
       
-      // Eliminar los iconos convergentes
+      // Eliminar los iconos convergentes - tiempo optimizado
       removeConvergingIcons(convergingIcons, row, col)
         .then((removedCount) => {
-          // Reproducir sonido de eliminación
-          audioManager.play("removeIcon");
+          // Reproducir sonido de eliminación en segundo plano
+          setTimeout(() => audioManager.play("removeIcon"), 0);
           
           // Calcular y añadir puntos (multiplicador basado en nivel)
           const currentLevel = store.getState().game.level;
@@ -421,10 +427,11 @@ const useBoardInteraction = () => {
             animatePointsEarned(targetCell, pointsEarned);
           }
           
-          // Limpiar resaltado después de un tiempo
-          setTimeout(() => {
+          // Limpiar resaltado después de un breve tiempo
+          const clearTimer = setTimeout(() => {
             dispatch(setHighlightedCells([]));
-          }, 500);
+          }, 300); // Reducido para experiencia más rápida
+          addAnimationTimer(clearTimer);
           
           // Verificar si no hay más movimientos válidos o si el tablero está vacío
           const currentIconCount = store.getState().game.iconCount;
@@ -432,18 +439,18 @@ const useBoardInteraction = () => {
           if (currentIconCount === 0) {
             // Tablero vacío, nivel completado
             logger.info("¡Tablero vacío! Completando nivel...", ' [' + status + ']');
-            dispatch(setGameStatus('levelCompleted'));
+            setTimeout(() => dispatch(setGameStatus('levelCompleted')), 0);
             audioManager.play('levelComplete');
           } else if (!hasValidMoves()) {
             // No hay movimientos válidos
             logger.info("No hay movimientos válidos. Completando nivel...", ' [' + status + ']');
             setTimeout(() => {
               dispatch(setGameStatus('levelCompleted'));
-            }, 500);
+            }, 300); // Reducido para experiencia más rápida
           }
         });
     } else {
-      // No hay convergencia, reproducir sonido de error
+      // No hay convergencia, feedback inmediato
       audioManager.play("invalidMove");
       
       // Velocidad de penalización (opcional)
@@ -457,7 +464,8 @@ const useBoardInteraction = () => {
         
         // Mostrar alerta visual de penalización
         setShowPenaltyAlert(true);
-        setTimeout(() => setShowPenaltyAlert(false), 1500);
+        const penaltyTimer = setTimeout(() => setShowPenaltyAlert(false), 1000);
+        addAnimationTimer(penaltyTimer);
       }
     }
   }, [
@@ -470,7 +478,9 @@ const useBoardInteraction = () => {
     animatePointsEarned,
     hasValidMoves,
     setShowPenaltyAlert,
-    spawnRate
+    spawnRate,
+    highlightedCells,
+    addAnimationTimer
   ]);
   
   /**
@@ -534,14 +544,15 @@ const useBoardInteraction = () => {
     boardElement.style.width = `${size}px`;
     boardElement.style.height = `${size}px`;
     
-    // Ajustar tamaño de celdas
-    const cellSize = size / boardSize;
-    const cells = boardElement.querySelectorAll('.cell');
-    cells.forEach(cell => {
-      (cell as HTMLElement).style.width = `${cellSize}px`;
-      (cell as HTMLElement).style.height = `${cellSize}px`;
-      (cell as HTMLElement).style.fontSize = `${cellSize * 0.6}px`;
-    });
+    // Ajustar el grid según el tamaño del tablero
+    const gridElement = boardElement.querySelector('.game-board-grid');
+    if (gridElement) {
+      (gridElement as HTMLElement).style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
+      (gridElement as HTMLElement).style.gridTemplateRows = `repeat(${boardSize}, 1fr)`;
+    }
+    
+    // No necesitamos ajustar las celdas individualmente ya que 
+    // están configuradas con CSS para adaptarse automáticamente
   }, [boardSize]);
   
   // Efecto para detener temporizadores cuando cambia el estado del juego

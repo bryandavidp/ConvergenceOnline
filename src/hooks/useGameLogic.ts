@@ -64,6 +64,7 @@ const isSurvivalMode = () => {
   return state.currentPlayMode === 'survival';
 };
 
+// Hook principal
 const useGameLogic = () => {
   const dispatch = useDispatch();
   const { 
@@ -102,6 +103,11 @@ const useGameLogic = () => {
   
   // Referencia para controlar si estamos eliminando iconos
   const isRemovingIconsRef = useRef<boolean>(false);
+  
+  // Añadir estados para manejar las alertas
+  const [showSpeedAlert, setShowSpeedAlert] = useState<boolean>(false);
+  const [speedMultiplier, setSpeedMultiplier] = useState<number>(1);
+  const [animationTimers, setAnimationTimers] = useState<NodeJS.Timeout[]>([]);
   
   // Registrar referencia para una celda
   const registerCellRef = useCallback((row: number, col: number, element: HTMLElement | null) => {
@@ -434,6 +440,40 @@ const useGameLogic = () => {
     return positions;
   }, [boardSize, availableIcons, findConvergences]);
   
+  // Función para agregar un temporizador a la lista (definir antes de showSpeedAlertUI)
+  const addAnimationTimer = useCallback((timer: NodeJS.Timeout) => {
+    setAnimationTimers(prev => [...prev, timer]);
+  }, []);
+  
+  // Ahora definimos la función showSpeedAlertUI (antes de usarla)
+  const showSpeedAlertUI = useCallback((multiplier: number) => {
+    // Establecer el multiplicador de velocidad para mostrarlo
+    setSpeedMultiplier(multiplier);
+    // Mostrar la alerta
+    setShowSpeedAlert(true);
+    // Configurar un temporizador para ocultarla después de 2 segundos
+    const timer = setTimeout(() => {
+      setShowSpeedAlert(false);
+    }, 2000);
+    // Añadir el temporizador a la lista para limpiarlo si es necesario
+    addAnimationTimer(timer);
+    // Log del evento
+    logger.info('Mostrando alerta de velocidad', { multiplicador: multiplier });
+  }, [addAnimationTimer]);
+  
+  // Función para limpiar los temporizadores
+  const clearAnimationTimers = useCallback(() => {
+    animationTimers.forEach(timer => clearTimeout(timer));
+    setAnimationTimers([]);
+  }, [animationTimers]);
+  
+  // Limpiar los temporizadores al desmontar el componente
+  useEffect(() => {
+    return () => {
+      clearAnimationTimers();
+    };
+  }, [clearAnimationTimers]);
+  
   // Inicializar tablero con iconos iniciales
   const initializeBoard = useCallback((size: number = boardSize) => {
     logger.info('Inicializando tablero', { tamaño: size, modoJuego: currentPlayMode });
@@ -519,24 +559,51 @@ const useGameLogic = () => {
     let spawnRate = config.SPAWN_RATES.MEDIUM;
     
     if (currentPlayMode === 'classic') {
-      // Velocidad gradual en clásico
+      // Velocidad gradual en clásico - Reducimos ms para que sea más rápido con cada nivel
+      const baseSpawnRate = config.GAME_MODE_CONFIG.CLASSIC.initialSpawnRate;
+      const reductionPerLevel = 300; // ms menos por nivel (antes era 100, aumentamos el efecto)
+      
       spawnRate = Math.max(
         config.SPAWN_RATES.EXTREME,
-        config.GAME_MODE_CONFIG.CLASSIC.initialSpawnRate - ((level - 1) * 100)
+        baseSpawnRate - ((level - 1) * reductionPerLevel)
       );
+      
+      logger.info('Velocidad establecida para nivel', {
+        nivel: level,
+        velocidadBase: baseSpawnRate,
+        velocidadNivel: spawnRate
+      });
     } else if (currentPlayMode === 'timed') {
       // Velocidad moderada en contrarreloj
+      const baseSpawnRate = config.GAME_MODE_CONFIG.TIMED.initialSpawnRate;
+      const reductionPerLevel = 250; // ms menos por nivel (antes era 50, aumentamos el efecto)
+      
       spawnRate = Math.max(
         config.SPAWN_RATES.FAST,
-        config.GAME_MODE_CONFIG.TIMED.initialSpawnRate - ((level - 1) * 50)
+        baseSpawnRate - ((level - 1) * reductionPerLevel)
       );
     } else if (currentPlayMode === 'survival') {
       // Velocidad lenta inicialmente en supervivencia
       spawnRate = config.GAME_MODE_CONFIG.SURVIVAL.initialSpawnRate;
     }
     
-    // Actualizar spawn rate
+    // Actualizar spawn rate (velocidad de aparición de iconos)
     dispatch(setSpawnRate(spawnRate));
+    
+    // Si estamos más allá del nivel 1, mostrar la alerta de velocidad
+    if (level > 1) {
+      // Obtenemos el valor base para cálculo de multiplicador
+      const baseSpeed = config.SPAWN_RATES.MEDIUM;
+      // Calculamos el multiplicador de velocidad actual
+      const currentSpeedMultiplier = Number((baseSpeed / spawnRate).toFixed(1));
+      
+      // Llamamos a showSpeedAlertUI con un pequeño retraso para que sea visible después de la transición
+      setTimeout(() => {
+        showSpeedAlertUI(currentSpeedMultiplier);
+        // Reproducir sonido de cambio de velocidad
+        audioManager.play('speedUp');
+      }, 1000);
+    }
     
     logger.info('Tablero inicializado', { 
       tamaño: size,
@@ -544,7 +611,7 @@ const useGameLogic = () => {
     });
     
     return newBoard;
-  }, [dispatch, boardSize, currentPlayMode, availableIcons, level, findValidInitialPositions]);
+  }, [dispatch, boardSize, currentPlayMode, level, findValidInitialPositions, showSpeedAlertUI]);
   
   // Función auxiliar para encontrar posiciones alineadas
   const getAlignedPositions = useCallback((
@@ -692,6 +759,7 @@ const useGameLogic = () => {
   // Función de iniciar temporizadores definida antes del useEffect que la usa
   const startTimers = useCallback(() => {
     const currentSpawnRate = store.getState().game.spawnRate;
+    const currentDiff = store.getState().game.currentDifficulty;
     const currentMode = store.getState().game.currentPlayMode;
     
     // Evitar inicializar los temporizadores más de una vez
@@ -746,35 +814,91 @@ const useGameLogic = () => {
     }, currentSpawnRate);
     
     // 3. Temporizador para aumentar la velocidad
-    // Este temporizador es diferente según el modo de juego
+    // Este temporizador es diferente según el modo y dificultad del juego
     if (currentMode === 'classic' || currentMode === 'timed') {
-      // En modos clásico y contrarreloj, la velocidad aumenta gradualmente
-      const speedIncreaseInterval = currentMode === 'classic' 
-        ? SPAWN_RATE_INCREASE_INTERVAL // Usar la constante definida al inicio
-        : SPAWN_RATE_INCREASE_INTERVAL; // Se podría personalizar para el modo contrarreloj
+      // Obtenemos el intervalo según la dificultad (en segundos)
+      let speedIncreaseIntervalSeconds = 0;
+      
+      switch (currentDiff) {
+        case 'easy':
+          speedIncreaseIntervalSeconds = gameConfig.DIFFICULTY_CONFIG.easy.speedIncreaseInterval;
+          break;
+        case 'normal':
+          speedIncreaseIntervalSeconds = gameConfig.DIFFICULTY_CONFIG.normal.speedIncreaseInterval;
+          break;
+        case 'hard':
+          speedIncreaseIntervalSeconds = gameConfig.DIFFICULTY_CONFIG.hard.speedIncreaseInterval;
+          break;
+        default:
+          speedIncreaseIntervalSeconds = 20; // Valor por defecto
+      }
+      
+      // Convertimos a milisegundos
+      const speedIncreaseInterval = speedIncreaseIntervalSeconds * 1000;
+      
+      logger.info('Iniciando temporizador de aumento de velocidad', {
+        intervalo: speedIncreaseInterval,
+        dificultad: currentDiff,
+        modo: currentMode
+      });
       
       speedIncreaseTimerRef.current = setInterval(() => {
+        // Incrementamos la velocidad según la dificultad
+        let speedIncrease = 0.1; // Valor por defecto
+        
+        switch (currentDiff) {
+          case 'easy':
+            speedIncrease = 0.05; // 5% más rápido
+            break;
+          case 'normal':
+            speedIncrease = 0.1; // 10% más rápido
+            break;
+          case 'hard':
+            speedIncrease = 0.15; // 15% más rápido
+            break;
+        }
+        
         // Reducir el tiempo entre spawns (incrementar velocidad)
-        dispatch(increaseSpeed(0.1)); // Usar un argumento para el método
+        dispatch(increaseSpeed(speedIncrease)); 
         
         // Obtener el spawn rate actualizado
         const { spawnRate } = store.getState().game;
-        logger.info('Velocidad aumentada', { nuevoSpawnRate: spawnRate });
+        logger.info('Velocidad aumentada automáticamente', { nuevoSpawnRate: spawnRate });
         
-        // Si estamos mostrando efectos visuales, hacerlo
-        // (Implementación específica depende de la UI)
+        // Obtener el multiplicador de velocidad para la alerta
+        const baseSpeed = config.SPAWN_RATES.MEDIUM;
+        const currentSpeedMultiplier = Number((baseSpeed / spawnRate).toFixed(1));
+        
+        // Mostrar alerta de cambio de velocidad y reproducir sonido
+        showSpeedAlertUI(currentSpeedMultiplier);
+        audioManager.play('speedUp');
+        
       }, speedIncreaseInterval);
     } else if (currentMode === 'survival') {
       // En modo supervivencia, la velocidad aumenta más rápido con el tiempo
+      const survivalSpeedIncreaseInterval = 
+        gameConfig.DIFFICULTY_CONFIG[currentDiff].speedIncreaseInterval * 1000 / 2;
+      
       speedIncreaseTimerRef.current = setInterval(() => {
-        // Lógica especial para modo supervivencia
-        // Aumenta más rápido cuanto más tiempo pasa
-        dispatch(increaseSpeed(0.2)); // Mayor incremento en modo supervivencia
+        // Mayor incremento en modo supervivencia
+        const speedIncrease = currentDiff === 'hard' ? 0.25 : 
+                              currentDiff === 'normal' ? 0.2 : 0.15;
+        
+        dispatch(increaseSpeed(speedIncrease)); 
         
         // Obtener el spawn rate actualizado
         const { spawnRate } = store.getState().game;
         logger.info('Velocidad aumentada en modo supervivencia', { nuevoSpawnRate: spawnRate });
-      }, SPAWN_RATE_INCREASE_INTERVAL / 2); // Más frecuente en supervivencia
+        
+        // Obtener el multiplicador de velocidad para la alerta
+        const baseSpeed = config.SPAWN_RATES.MEDIUM;
+        const currentSpeedMultiplier = Number((baseSpeed / spawnRate).toFixed(1));
+        
+        // Mostrar alerta de cambio de velocidad y reproducir sonido
+        showSpeedAlertUI(currentSpeedMultiplier);
+        audioManager.play('speedUp');
+        
+      }, survivalSpeedIncreaseInterval);
     }
     
     // 4. Temporizador para recargar pistas (si están habilitadas)
@@ -790,7 +914,7 @@ const useGameLogic = () => {
         }
       }, HINT_RECHARGE_TIME);
     }
-  }, [dispatch, addRandomIcon]);
+  }, [dispatch, addRandomIcon, showSpeedAlertUI]);
 
   // Función para detener todos los temporizadores
   const stopTimers = useCallback(() => {
@@ -821,10 +945,6 @@ const useGameLogic = () => {
       clearInterval(iconTimerRef.current);
       iconTimerRef.current = null;
     }
-    
-    // No intentamos acceder directamente a useBoardInteraction desde aquí
-    // ya que esto crearía una dependencia circular.
-    // En su lugar, cada componente debe gestionar sus propios timers.
     
     // Marcar temporizadores como inactivos
     timersActiveRef.current = false;
@@ -1184,13 +1304,16 @@ const useGameLogic = () => {
   const advanceToNextLevel = useCallback(() => {
     logger.info('Avanzando al siguiente nivel', { nivelActual: level });
     
+    // Guardar el nivel para calcular la nueva velocidad
+    const nextLevel = level + 1;
+    
     // Incrementar nivel
-    dispatch(setLevel(level + 1));
+    dispatch(setLevel(nextLevel));
     
     // Detener temporizadores actuales
     stopTimers();
     
-    // Inicializar tablero para el nuevo nivel
+    // Inicializar tablero para el nuevo nivel con ajuste forzado de velocidad
     initializeBoard();
     
     // Recargar las pistas disponibles
@@ -1198,8 +1321,23 @@ const useGameLogic = () => {
     
     // Establecer estado a "jugando"
     dispatch(setGameStatus('playing'));
-  }, [dispatch, level, initializeBoard, stopTimers]);
+    
+    logger.info('Avance de nivel completado', { 
+      nuevoNivel: nextLevel
+    });
+    
+    // Reiniciar los temporizadores
+    startTimers();
+    
+    return true;
+  }, [dispatch, level, initializeBoard, stopTimers, startTimers]);
 
+  // Función para limpiar los temporizadores
+  const clearAnimationTimers = useCallback(() => {
+    animationTimers.forEach(timer => clearTimeout(timer));
+    setAnimationTimers([]);
+  }, [animationTimers]);
+  
   // Devolver funciones y estado necesarios
   return {
     board,

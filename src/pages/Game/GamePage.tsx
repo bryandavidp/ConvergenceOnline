@@ -31,10 +31,27 @@ const GamePage: React.FC = () => {
   
   // Estado para controlar la visualización del selector de configuración
   const [showConfig, setShowConfig] = useState<boolean>(true);
+  // Estado para detectar dispositivo móvil
+  const [isMobile, setIsMobile] = useState<boolean>(false);
   
   // Referencias a los elementos del tablero
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const boardElementRef = useRef<HTMLDivElement>(null);
+  
+  // Efecto para detectar dispositivo móvil
+  useEffect(() => {
+    const checkIsMobile = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkIsMobile);
+    };
+  }, []);
   
   // Efecto para inicializar el estado de juego
   useEffect(() => {
@@ -212,48 +229,93 @@ const GamePage: React.FC = () => {
   };
 
   return (
-    <div className="game-page">
-      <div className="game-container">
-        <div className="game-header">
-          <h1>Convergence</h1>
-          <div className="game-controls">
-            {status === 'playing' || status === 'paused' ? (
-              <button 
-                className={`control-button ${status === 'playing' ? 'pause' : 'play'}`}
-                onClick={handlePlayPauseClick}
-              >
-                {status === 'playing' ? 'Pausar' : 'Reanudar'}
-              </button>
-            ) : null}
+    <div className={`game-page ${isMobile ? 'game-fullscreen' : ''}`}>
+      {isMobile ? (
+        // Vista móvil optimizada con layout 30/70
+        <div className="game-content">
+          <div className="game-info-section">
+            <div className="game-header">
+              <h1>Convergence</h1>
+              <div className="game-controls">
+                {status === 'playing' || status === 'paused' ? (
+                  <button 
+                    className={`control-button ${status === 'playing' ? 'pause' : 'play'}`}
+                    onClick={handlePlayPauseClick}
+                  >
+                    {status === 'playing' ? 'Pausar' : 'Reanudar'}
+                  </button>
+                ) : null}
+                
+                <button 
+                  className="control-button restart"
+                  onClick={handleRestartClick}
+                >
+                  {status === 'playing' || status === 'paused' ? 'Reiniciar' : 'Inicio'}
+                </button>
+              </div>
+            </div>
             
-            <button 
-              className="control-button restart"
-              onClick={handleRestartClick}
-            >
-              {status === 'playing' || status === 'paused' ? 'Reiniciar' : 'Inicio'}
-            </button>
+            {/* Selector de configuración del juego - lo mostramos explícitamente según el estado */}
+            {showConfig && (
+              <div className="config-section">
+                <GameConfigSelector onApplyConfig={handleApplyConfig} />
+              </div>
+            )}
+            
+            {/* HUD en la sección de información */}
+            <GameHUD />
+          </div>
+          
+          <div className="game-board-section" ref={boardContainerRef}>
+            <div className="game-board-frame" ref={boardElementRef} style={{ width: '100%', height: '100%' }}>
+              <GameBoard />
+            </div>
           </div>
         </div>
-        
-        {/* Selector de configuración del juego - lo mostramos explícitamente según el estado */}
-        {showConfig && (
-          <div className="config-section">
-            <GameConfigSelector onApplyConfig={handleApplyConfig} />
+      ) : (
+        // Vista de escritorio original
+        <div className="game-container">
+          <div className="game-header">
+            <h1>Convergence</h1>
+            <div className="game-controls">
+              {status === 'playing' || status === 'paused' ? (
+                <button 
+                  className={`control-button ${status === 'playing' ? 'pause' : 'play'}`}
+                  onClick={handlePlayPauseClick}
+                >
+                  {status === 'playing' ? 'Pausar' : 'Reanudar'}
+                </button>
+              ) : null}
+              
+              <button 
+                className="control-button restart"
+                onClick={handleRestartClick}
+              >
+                {status === 'playing' || status === 'paused' ? 'Reiniciar' : 'Inicio'}
+              </button>
+            </div>
           </div>
-        )}
-        
-        <div className="game-board-container" ref={boardContainerRef}>
-          <GameHUD />
-          <div className="game-board-frame" ref={boardElementRef} style={{ width: '100%', height: '100%' }}>
-            <GameBoard />
+          
+          {/* Selector de configuración del juego - lo mostramos explícitamente según el estado */}
+          {showConfig && (
+            <div className="config-section">
+              <GameConfigSelector onApplyConfig={handleApplyConfig} />
+            </div>
+          )}
+          
+          <div className="game-board-container" ref={boardContainerRef}>
+            <GameHUD />
+            <div className="game-board-frame" ref={boardElementRef} style={{ width: '100%', height: '100%' }}>
+              <GameBoard />
+            </div>
           </div>
         </div>
-      </div>
+      )}
       
-      {/* Modales del juego */}
-      {status === 'startScreen' && <StartGameModal onStart={handleStartGame} />}
+      {/* Modales del juego - funcionan igual en ambas vistas */}
       {status === 'gameOver' && <GameOverModal onRestart={handleRestartClick} />}
       {status === 'levelCompleted' && <LevelCompleteModal onContinue={handleNextLevel} />}
+      {status === 'startScreen' && <StartGameModal onStart={handleStartGame} />}
     </div>
   );
 };

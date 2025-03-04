@@ -9,11 +9,26 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.hud-section {
+/* Versión móvil del HUD */
+.game-hud.mobile {
+  margin: 0 0 3px 0;
+  padding: 3px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 0;
+  box-shadow: none;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.hud-section, .hud-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 5px 10px;
+}
+
+/* Versión móvil de los items del HUD */
+.game-hud.mobile .hud-item {
+  padding: 1px 3px;
 }
 
 .hud-label {
@@ -24,26 +39,43 @@
   letter-spacing: 0.5px;
 }
 
+/* Etiquetas más pequeñas en móvil */
+.game-hud.mobile .hud-label {
+  font-size: 0.6rem;
+  margin-bottom: 1px;
+  letter-spacing: 0;
+}
+
 .hud-value {
   font-size: 1.2rem;
   font-weight: 700;
   color: #333;
 }
 
-.hud-value.score {
+/* Valores más pequeños en móvil */
+.game-hud.mobile .hud-value {
+  font-size: 0.9rem;
+}
+
+.hud-value.score, .hud-item.score .hud-value {
   color: #4caf50;
 }
 
-.hud-value.timer {
+.hud-value.timer, .hud-item.time .hud-value {
   color: #ff9800;
 }
 
-.hud-value.level {
+.hud-value.level, .hud-item.level .hud-value {
   color: #2196f3;
 }
 
-.hud-value.mode {
+.hud-value.mode, .hud-item.mode .hud-value {
   color: #9c27b0;
+}
+
+/* Estilo para el indicador de velocidad */
+.hud-item.speed .hud-value {
+  color: #e91e63;
 }
 
 /* Barra de ocupación */
@@ -173,18 +205,47 @@
 }
 
 /* Responsive */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .game-hud {
     flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
+    justify-content: space-around;
+    gap: 3px;
+    margin-bottom: 5px;
+    padding: 3px;
   }
   
-  .hud-section {
-    min-width: 80px;
+  .hud-section, .hud-item {
+    min-width: 55px;
+    padding: 2px 3px;
+  }
+  
+  .hud-label {
+    font-size: 0.6rem;
+    margin-bottom: 1px;
   }
   
   .hud-value {
-    font-size: 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-hud {
+    padding: 2px;
+    margin-bottom: 2px;
+  }
+  
+  .hud-section, .hud-item {
+    min-width: 45px;
+    padding: 1px;
+  }
+  
+  .hud-label {
+    font-size: 0.55rem;
+    margin-bottom: 0;
+  }
+  
+  .hud-value {
+    font-size: 0.8rem;
   }
 } 

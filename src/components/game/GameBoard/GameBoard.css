@@ -14,6 +14,26 @@
   --hint-disabled-color: #999;
   --hint-cooldown-color: #f57c00;
   --level-complete-color: #ffeb3b;
+  --icon-size-factor: calc(1.2 - 0.05 * (var(--board-size) - 5)); /* Factor que disminuye con tableros más grandes */
+}
+
+/* Ajuste automático del tamaño del icono basado en el tamaño del tablero */
+.game-board-grid {
+  --dynamic-icon-size: calc(3.5em * var(--icon-size-factor));
+  transition: grid-template-columns 0.3s ease, grid-template-rows 0.3s ease;
+}
+
+/* Aplicar el tamaño dinámico a los iconos */
+.board-cell .cell-content {
+  font-size: var(--dynamic-icon-size);
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", "EmojiOne Color", "Android Emoji", sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  transform-origin: center;
+  will-change: transform;
+  transition: transform 0.2s ease, font-size 0.3s ease;
+  /* Evitar que los emojis se vean pixelados */
+  filter: saturate(1.05);
 }
 
 /* Contenedor del tablero */
@@ -294,42 +314,93 @@
 
 /* Animaciones para aparición y desaparición de iconos */
 .board-cell.has-icon {
-  animation: icon-appear 0.4s ease-out forwards;
-}
-
-.board-cell.removing {
-  animation: icon-remove 0.5s ease-out forwards;
+  animation: cell-highlight 0.4s ease-out forwards;
   position: relative;
+  overflow: visible !important;
+  box-shadow: 0 0 6px rgba(93, 115, 232, 0.4);
 }
 
-/* Efecto de estallido cuando se elimina un icono */
-.board-cell.removing::after {
+/* Efecto de destello cuando aparece un icono */
+.board-cell.has-icon::after {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 100%;
-  height: 100%;
+  width: 120%;
+  height: 120%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%);
+  background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(122,139,254,0.3) 40%, rgba(255,255,255,0) 70%);
   transform: translate(-50%, -50%) scale(0);
   opacity: 0;
-  animation: burst-effect 0.5s ease-out forwards;
+  animation: appear-glow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   pointer-events: none;
+  z-index: -1;
 }
 
-@keyframes burst-effect {
+/* Animación de aparición con resplandor */
+@keyframes appear-glow {
   0% {
     transform: translate(-50%, -50%) scale(0);
     opacity: 0;
   }
-  50% {
-    transform: translate(-50%, -50%) scale(1.5);
-    opacity: 0.8;
+  40% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0.9;
   }
   100% {
-    transform: translate(-50%, -50%) scale(2);
+    transform: translate(-50%, -50%) scale(1.5);
     opacity: 0;
+  }
+}
+
+/* Animación para el elemento contenedor del icono */
+.board-cell.has-icon .cell-content {
+  animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  transform-origin: center;
+}
+
+@keyframes cell-highlight {
+  0% {
+    box-shadow: 0 0 0 2px rgba(122, 139, 254, 0.5);
+    background-color: #f0f0f0;
+  }
+  50% {
+    box-shadow: 0 0 8px 2px rgba(93, 115, 232, 0.7);
+    background-color: #f5f5f5;
+  }
+  100% {
+    box-shadow: 0 0 0 2px rgba(122, 139, 254, 0.5);
+    background-color: #f0f0f0;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-10deg);
+    filter: brightness(1.2);
+  }
+  30% {
+    opacity: 0.8;
+    transform: scale(0.7) rotate(5deg);
+    filter: brightness(1.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.3) rotate(8deg);
+    filter: brightness(1.4) saturate(1.3);
+  }
+  65% {
+    transform: scale(0.95) rotate(-3deg);
+    filter: brightness(1.1);
+  }
+  80% {
+    transform: scale(1.05) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
   }
 }
 
@@ -348,19 +419,98 @@
   }
 }
 
+/* Animación para eliminar iconos */
+.board-cell.removing {
+  animation: icon-remove 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Efecto de estallido cuando se elimina un icono */
+.board-cell.removing::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 120%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,215,0,0.6) 0%, rgba(255,255,255,0.6) 40%, rgba(255,255,255,0) 70%);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  animation: burst-effect 0.4s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Efecto de partículas al eliminar */
+.board-cell.removing::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140%;
+  height: 140%;
+  border-radius: 50%;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 5%),
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 5%),
+    radial-gradient(circle at 40% 70%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 5%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 5%);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  animation: particles-effect 0.4s cubic-bezier(0.1, 1, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes particles-effect {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes burst-effect {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+  40% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.8);
+    opacity: 0;
+  }
+}
+
 @keyframes icon-remove {
   0% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
   }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.2);
+  20% {
+    opacity: 0.9;
+    transform: scale(1.3) rotate(5deg);
+    filter: brightness(1.3);
     text-shadow: 0 0 15px rgba(255, 255, 255, 0.9), 0 0 10px rgba(255, 215, 0, 0.8);
+  }
+  30% {
+    transform: scale(1.2) rotate(0deg);
   }
   100% {
     opacity: 0;
-    transform: scale(0);
+    transform: scale(0) rotate(-5deg);
+    filter: brightness(2);
   }
 }
 
@@ -628,6 +778,10 @@
   overflow: hidden;
   position: relative;
   padding: 10px;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  perspective: 1000px;
+  will-change: transform;
 }
 
 .game-board-grid {
@@ -651,122 +805,550 @@
   align-items: center;
   background-color: #f0f0f0;
   border-radius: 8px;
-  font-size: 2rem;
+  font-size: 1.4rem; /* Reducido para mejor rendimiento */
   cursor: pointer;
   box-shadow: 0 0 0 2px rgba(122, 139, 254, 0.5);
-  transition: all 0.2s ease;
-  /* Asegurar que las celdas tengan un tamaño fijo */
+  transition: transform 0.1s cubic-bezier(0.2, 0, 0.1, 1), 
+              box-shadow 0.1s cubic-bezier(0.2, 0, 0.1, 1); /* Transiciones más rápidas */
+  /* Dimensiones */
   width: 100%;
   height: 100%;
   min-width: 30px;
   min-height: 30px;
   box-sizing: border-box;
   aspect-ratio: 1 / 1;
-  /* Asegurar que el contenido esté centrado */
+  /* Centrado */
   text-align: center;
   line-height: 1;
-  /* Evitar que el contenido deforme la celda */
+  /* Evitar desbordamiento */
   overflow: hidden;
+  padding: 4%; /* Reducido para mejor uso del espacio */
+  /* Textura sutil de fondo */
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.3) 0%, transparent 15%),
+    radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.3) 0%, transparent 15%);
+  /* Mejora de rendimiento */
+  will-change: transform, box-shadow;
+  -webkit-tap-highlight-color: transparent; /* Eliminar resaltado táctil en móviles */
+  touch-action: manipulation; /* Mejorar respuesta táctil */
+  user-select: none; /* Evitar selección de texto */
 }
 
-/* Estilos para los iconos dentro de las celdas */
-.board-cell > * {
-  display: block;
-  font-size: inherit;
-  line-height: 1;
-  /* Evitar que los iconos cambien el tamaño de la celda */
-  max-width: 100%;
-  max-height: 100%;
+/* Estilo específico para el contenedor del icono */
+.board-cell .cell-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 2em; /* Mejor tamaño para visualización rápida */
+  /* Optimizaciones de renderizado */
+  transform-origin: center;
+  position: relative;
+  z-index: 2;
+  /* Transición suave pero rápida */
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0.1, 1);
+  /* Evitar pixelación en emojis */
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  will-change: transform; /* Ayuda a la aceleración por hardware */
 }
 
-.board-cell:hover {
-  transform: scale(1.05);
+/* Optimizar animaciones para mejor rendimiento */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); } /* Reducido para ser más sutil */
+  100% { transform: scale(1); }
+}
+
+/* Celda resaltada - animación optimizada */
+.board-cell.highlighted {
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.7);
+  animation: pulse 0.8s infinite; /* Más rápido */
+  z-index: 3;
+}
+
+/* Optimizar respuesta de hover/toque */
+.board-cell:hover, .board-cell:active {
+  transform: scale(1.02); /* Respuesta más sutil */
   box-shadow: 0 0 0 2px #5d73e8;
   z-index: 2;
 }
 
-.board-cell.highlighted {
-  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.7);
-  animation: pulse 1s infinite;
-  z-index: 3;
+/* Optimizar respuesta en iconos */
+.board-cell:hover .cell-content, .board-cell:active .cell-content {
+  transform: scale(1.05); /* Más sutil */
 }
 
-/* Para celdas vacías, asegurar que mantienen su tamaño */
-.board-cell.empty {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(240, 240, 240, 0.7);
-}
-
-.empty-board-message {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
+/* Mejora para la respuesta táctil */
+.game-board-grid {
+  display: grid;
   width: 100%;
-  font-size: 1.2rem;
-  color: #666;
-  text-align: center;
-  padding: 20px;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1 / 1;
+  gap: 6px; /* Reducido para más espacio útil */
+  padding: 5px;
+  margin: 0 auto;
+  grid-auto-rows: 1fr;
+  grid-auto-columns: 1fr;
+  touch-action: manipulation;
+  will-change: transform;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-/* Estilos responsivos */
-@media (max-width: 768px) {
-  .game-board-grid {
-    gap: 6px;
-    padding: 8px;
+/* Animaciones de aparición/eliminación de iconos más rápidas */
+@keyframes pop-and-fade {
+  0% {
+    transform: scale(1) rotate(0deg);
+    filter: saturate(1);
   }
-  
-  .board-cell {
-    font-size: 1.6rem;
+  20% {
+    transform: scale(1.2) rotate(3deg);
+    filter: saturate(1.3) brightness(1.2);
   }
-  
-  .empty-board-message {
-    font-size: 1rem;
+  100% {
+    transform: scale(0) rotate(5deg);
+    filter: saturate(1.5) brightness(1.3);
   }
 }
 
+/* Clase especial para la animación de eliminación - más rápida */
+.board-cell.removing .cell-content {
+  animation: pop-and-fade 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  transform-origin: center;
+}
+
+/* Para pantallas táctiles pequeñas */
 @media (max-width: 480px) {
-  .game-board-grid {
-    gap: 4px;
-    padding: 5px;
-  }
-  
   .board-cell {
-    font-size: 1.2rem;
-    min-width: 24px;
-    min-height: 24px;
-  }
-}
-
-/* Animación de sacudida del tablero */
-.game-board-grid.shake {
-  animation: board-shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-  transform: translate3d(0, 0, 0);
-  perspective: 1000px;
-}
-
-@keyframes board-shake {
-  10%, 90% {
-    transform: translate3d(-1px, 0, 0);
+    font-size: 1rem;
+    padding: 2%;
+    border-radius: 4px;
   }
   
-  20%, 80% {
-    transform: translate3d(2px, 0, 0);
+  .game-board-grid {
+    gap: 2px; /* Aún más ajustado en móviles */
   }
+  
+  /* Aumenta el área táctil para mayor precisión */
+  .board-cell::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    z-index: 1;
+  }
+}
 
-  30%, 50%, 70% {
-    transform: translate3d(-4px, 0, 0);
+/* Mantener algunas animaciones clave y limpiar el resto del CSS no utilizado */
+@keyframes pop-and-fade {
+  0% {
+    transform: scale(1) rotate(0deg);
+    filter: saturate(1);
   }
+  20% {
+    transform: scale(1.3) rotate(5deg);
+    filter: saturate(1.5) brightness(1.3);
+  }
+  40% {
+    transform: scale(1.15) rotate(-5deg);
+  }
+  100% {
+    transform: scale(0) rotate(10deg);
+    filter: saturate(2) brightness(1.5);
+  }
+}
 
-  40%, 60% {
-    transform: translate3d(4px, 0, 0);
+/* Clase especial para la animación de eliminación */
+.board-cell.removing .cell-content {
+  animation: pop-and-fade 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  transform-origin: center;
+}
+
+/* Mejora general para el hover de celdas con contenido */
+.board-cell.has-icon:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 8px 2px rgba(93, 115, 232, 0.6);
+  z-index: 5;
+}
+
+/* Estilos para los controles de desarrollo */
+.dev-toggle-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.dev-toggle-btn:hover {
+  opacity: 1;
+}
+
+.dev-controls {
+  position: absolute;
+  bottom: 40px;
+  right: 10px;
+  width: 220px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 0.8rem;
+  z-index: 100;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.dev-controls-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: bold;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+.dev-controls-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.control-group label {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  margin-bottom: 2px;
+}
+
+.board-size-buttons {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.board-size-buttons button {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 3px;
+  color: white;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.board-size-buttons button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.board-size-buttons button.active {
+  background-color: #4caf50;
+  font-weight: bold;
+}
+
+.dev-controls .hint-button {
+  background-color: #2196F3;
+  border: none;
+  border-radius: 3px;
+  color: white;
+  padding: 5px 10px;
+  width: 100%;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dev-controls .hint-button:hover {
+  background-color: #1976D2;
+}
+
+/* Ajustes para móviles */
+@media (max-width: 480px) {
+  .dev-toggle-btn {
+    bottom: 5px;
+    right: 5px;
+    padding: 3px 6px;
+    font-size: 0.6rem;
   }
+  
+  .dev-controls {
+    width: 180px;
+    font-size: 0.7rem;
+    padding: 5px;
+    bottom: 30px;
+    right: 5px;
+  }
+  
+  .board-size-buttons button {
+    padding: 3px 6px;
+    font-size: 0.6rem;
+  }
+}
+
+/* Retroalimentación visual de clicks */
+.board-cell.clicking {
+  transform: scale(0.95) !important;
+  box-shadow: 0 0 0 2px #3f51b5 !important;
+  transition: transform 0.05s cubic-bezier(0.2, 0, 0.1, 1), 
+              box-shadow 0.05s cubic-bezier(0.2, 0, 0.1, 1) !important;
+}
+
+/* Optimizaciones para dispositivos táctiles */
+.touch-device .board-cell {
+  /* Reducir efectos de hover que pueden lentificar en dispositivos táctiles */
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0.1, 1),
+              box-shadow 0.12s cubic-bezier(0.2, 0, 0.1, 1);
+}
+
+.touch-device .board-cell:hover {
+  /* Desactivar hover en dispositivos táctiles para mejor rendimiento */
+  transform: none;
+  box-shadow: 0 0 0 2px rgba(122, 139, 254, 0.5);
+}
+
+.touch-device .board-cell:hover .cell-content {
+  /* Desactivar hover en el contenido en dispositivos táctiles */
+  transform: none;
+}
+
+.touch-device .board-cell:active {
+  /* Mejorar feedback táctil en dispositivos touch */
+  transform: scale(0.97);
+  box-shadow: 0 0 0 3px #5d73e8;
+}
+
+.touch-device .board-cell:active .cell-content {
+  /* Feedback táctil en el contenido */
+  transform: scale(0.95);
+}
+
+/* Estilos para feedback competitivo */
+@keyframes quick-highlight {
+  0% { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8); }
+  100% { box-shadow: 0 0 0 2px rgba(122, 139, 254, 0.5); }
+}
+
+/* Feedback visual mejorado para celdas clickeadas correctamente */
+.board-cell.has-icon {
+  transition: all 0.1s cubic-bezier(0.1, 0.7, 0.1, 1);
+}
+
+.board-cell.empty:active {
+  animation: quick-highlight 0.2s forwards;
+}
+
+/* Estilos para mostrar patrones potenciales - ayuda competitiva */
+.game-board-wrapper.competitive-mode .board-cell.empty:hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(93, 115, 232, 0.1);
+  border-radius: inherit;
+  z-index: 1;
+}
+
+/* Marcadores visuales sutiles para jugadores competitivos */
+.board-cell.potential-match {
+  box-shadow: 0 0 0 1px rgba(76, 175, 80, 0.4);
+}
+
+/* Reducir tiempos de animación para mejor fluidez */
+.board-cell.removing .cell-content {
+  animation-duration: 0.25s; /* Más rápido que el estándar */
+}
+
+.board-cell.highlighted {
+  animation-duration: 0.6s; /* Más rápido que el estándar */
+}
+
+/* Precargar transformaciones para mejorar rendimiento */
+.game-board-grid .board-cell {
+  transform: translate3d(0, 0, 0) scale(1);
+  will-change: transform, box-shadow;
+}
+
+/* Mejorar rendimiento de las animaciones */
+@media (prefers-reduced-motion: reduce) {
+  /* Reducir animaciones para usuarios que prefieren menos movimiento */
+  .board-cell {
+    transition: none !important;
+  }
+  
+  .board-cell:hover, 
+  .board-cell:active,
+  .board-cell.highlighted,
+  .board-cell.removing {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* Optimizar para altas tasas de refresco */
+@media (min-resolution: 1.3dppx) {
+  .board-cell .cell-content {
+    text-rendering: geometricPrecision;
+    font-smooth: always;
+  }
+}
+
+/* Estilos para los controles de velocidad */
+.speed-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.speed-buttons button {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 3px;
+  color: white;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  flex: 1;
+  min-width: 40px;
+}
+
+.speed-buttons button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.speed-buttons button.active {
+  background-color: #f44336;
+  font-weight: bold;
+}
+
+.speed-slider {
+  width: 100%;
+  padding: 5px 0;
+  margin-bottom: 10px;
+}
+
+.speed-slider input[type="range"] {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  height: 6px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.speed-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f44336;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+}
+
+.speed-slider input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f44336;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+}
+
+.value-display {
+  font-weight: bold;
+  color: #f44336;
+  margin-left: 5px;
+}
+
+/* Control actions */
+.control-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.dev-action-button {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.dev-action-button:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.dev-action-button:active {
+  transform: translateY(0);
+}
+
+.dev-action-button.hint-button {
+  background-color: #2196F3;
+}
+
+.dev-action-button.next-level-button {
+  background-color: #4CAF50;
+}
+
+/* Ajustes para móviles */
+@media (max-width: 480px) {
+  .control-actions {
+    gap: 5px;
+  }
+  
+  .dev-action-button {
+    padding: 6px;
+    font-size: 0.75rem;
+  }
+  
+  .speed-buttons button {
+    padding: 3px 5px;
+    font-size: 0.65rem;
+    min-width: 32px;
+  }
+}
+
+/* Mejorar estilos existentes */
+.dev-controls {
+  overflow-y: auto;
+  max-height: 80vh;
 } 
