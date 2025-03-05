@@ -95,21 +95,24 @@ export function createAudioManager(): AudioManagerInstance {
     loadSound('gameOver', '/assets/audio/pops/gameover.wav');
     loadSound('click', '/assets/audio/pops/click.wav');
 
-  // Sonidos específicos del juego
-  loadSound('newIcon', '/assets/audio/pops/pop-up.wav');
-  loadSound('removeIcon', '/assets/audio/pops/bubble-pop.wav');
-  loadSound('hint', '/assets/audio/pops/hint.wav');
-  loadSound('speedUp', '/assets/audio/speed-up.mp3');
-  loadSound('penalty', '/assets/audio/error.mp3');
-  loadSound('emptyBoard', '/assets/audio/pops/chime-up.wav');
-  loadSound('levelTransition', '/assets/audio/positives/cartoon-sparkle.wav');
-  loadSound('convergingFound', '/assets/audio/positives/bleep.wav');
-  loadSound('start', '/assets/audio/positives/bleep.wav');
-  loadSound('pause', '/assets/audio/pops/pause.wav');
-  loadSound('resume', '/assets/audio/pops/resume.wav');
-  loadSound('invalid', '/assets/audio/negatives/error.wav');
-  loadSound('invalidMove', '/assets/audio/negatives/error.wav');
-  loadSound('timeBonus', '/assets/audio/positives/time-bonus.wav');
+    // Sonidos específicos del juego
+    loadSound('newIcon', '/assets/audio/pops/pop-up.wav');
+    loadSound('removeIcon', '/assets/audio/pops/bubble-pop.wav');
+    loadSound('hint', '/assets/audio/pops/hint.wav');
+    loadSound('speedUp', '/assets/audio/speed-up.mp3');
+    loadSound('penalty', '/assets/audio/error.mp3');
+    loadSound('emptyBoard', '/assets/audio/pops/chime-up.wav');
+    loadSound('levelTransition', '/assets/audio/positives/cartoon-sparkle.wav');
+    
+    // Mejora del sonido de convergencia encontrada para hacerlo más satisfactorio
+    loadSound('convergingFound', '/assets/audio/positives/bell-up.wav');
+    
+    loadSound('start', '/assets/audio/positives/bleep.wav');
+    loadSound('pause', '/assets/audio/pops/pause.wav');
+    loadSound('resume', '/assets/audio/pops/resume.wav');
+    loadSound('invalid', '/assets/audio/negatives/error.wav');
+    loadSound('invalidMove', '/assets/audio/negatives/error.wav');
+    loadSound('timeBonus', '/assets/audio/positives/time-bonus.wav');
 
     // Música de fondo
     loadMusic('/assets/audio/level-music-2.mp3');
