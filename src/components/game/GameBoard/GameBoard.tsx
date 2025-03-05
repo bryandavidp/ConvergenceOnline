@@ -69,12 +69,39 @@ const GameBoard: React.FC = () => {
     const cellElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
     if (cellElement) {
       cellElement.classList.add('clicking');
-      setTimeout(() => cellElement.classList.remove('clicking'), 150);
+      
+      // Agregar efecto de ondas al hacer clic
+      const ripple = document.createElement('div');
+      ripple.className = 'click-ripple';
+      cellElement.appendChild(ripple);
+      
+      // Eliminar el ripple después de la animación
+      setTimeout(() => {
+        ripple.remove();
+        cellElement.classList.remove('clicking');
+      }, 600);
+      
+      // Verificar si la celda tiene un ícono y agregar efecto de brillo
+      const cellContent = board[row]?.[col];
+      if (cellContent) {
+        // Reproducir sonido de clic
+        audioManager.play('click');
+        
+        // Agregar efecto de brillo
+        const glow = document.createElement('div');
+        glow.className = 'match-glow';
+        cellElement.appendChild(glow);
+        
+        // Eliminar el brillo después de la animación
+        setTimeout(() => {
+          glow.remove();
+        }, 800);
+      }
     }
     
     // Llamar al manejador original
     handleCellClick(row, col);
-  }, [handleCellClick]);
+  }, [handleCellClick, board]);
   
   // Optimización: pre-calcular las celdas para reducir el tiempo de renderizado
   const cells = useMemo(() => {
@@ -103,7 +130,65 @@ const GameBoard: React.FC = () => {
             key={`cell-${row}-${col}`}
             className={cellClasses}
             onClick={() => handleCellClickOptimized(row, col)}
-            ref={(el) => registerCellRef(row, col, el)}
+            ref={(el) => {
+              registerCellRef(row, col, el);
+              
+              // Si la celda está marcada para eliminación, agregar efecto de estrellas
+              if (isRemoving && el) {
+                // Crear contenedor de estrellas si no existe
+                let starsContainer = el.querySelector('.celebration-stars') as HTMLDivElement | null;
+                if (!starsContainer) {
+                  starsContainer = document.createElement('div');
+                  starsContainer.className = 'celebration-stars';
+                  
+                  // Aseguramos que el contenedor esté correctamente posicionado
+                  starsContainer.style.position = 'absolute';
+                  starsContainer.style.top = '0';
+                  starsContainer.style.left = '0';
+                  starsContainer.style.width = '100%';
+                  starsContainer.style.height = '100%';
+                  starsContainer.style.overflow = 'visible';
+                  starsContainer.style.pointerEvents = 'none';
+                  
+                  el.appendChild(starsContainer);
+                  
+                  // Crear estrellas aleatorias
+                  const starCount = 5 + Math.floor(Math.random() * 5); // Entre 5 y 9 estrellas
+                  for (let i = 0; i < starCount; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'celebration-star';
+                    
+                    // Posición y dirección aleatorias - ajustadas para mejor alineación
+                    const tx = (Math.random() * 40 - 20) + 'px'; // Reducido el rango para mejor alineación
+                    const ty = (Math.random() * -40 - 10) + 'px'; // Reducido el rango para mejor alineación
+                    star.style.setProperty('--tx', tx);
+                    star.style.setProperty('--ty', ty);
+                    
+                    // Tamaño aleatorio
+                    const size = 3 + Math.random() * 5; // Entre 3px y 8px - ligeramente más pequeñas
+                    star.style.width = size + 'px';
+                    star.style.height = size + 'px';
+                    
+                    // Posición inicial centrada en la celda
+                    star.style.left = (45 + Math.random() * 10) + '%'; // Más centrado (45-55%)
+                    star.style.top = (45 + Math.random() * 10) + '%'; // Más centrado (45-55%)
+                    
+                    // Agregar estrella al contenedor
+                    starsContainer.appendChild(star);
+                  }
+                  
+                  // Agregar sonido festivo
+                  audioManager.play('positive');
+                  
+                  // Eliminar las estrellas después de la animación
+                  setTimeout(() => {
+                    if (starsContainer && starsContainer.parentNode) {
+                      starsContainer.remove();
+                    }
+                  }, 1500);
+                }
+              }
+            }}
             data-row={row}
             data-col={col}
           >
@@ -382,7 +467,7 @@ const GameBoard: React.FC = () => {
         <div className="empty-board-message">
           {status === 'startScreen' && 'Selecciona la configuración para comenzar'}
           {status === 'gameOver' && 'Juego terminado'}
-          {status === 'levelCompleted' && '¡Nivel completado!'}
+          {status === 'levelCompleted' && 'Nivel completado'}
           {status === 'paused' && 'Juego en pausa'}
           {!board || board.length === 0 ? 'Cargando tablero...' : ''}
         </div>

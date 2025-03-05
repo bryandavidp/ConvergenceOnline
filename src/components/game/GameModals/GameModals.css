@@ -1609,4 +1609,375 @@
 /* Ajuste de confeti cuando hay overflow */
 .content-overflow ~ .confetti-container .confetti {
   animation-duration: 2s !important;
+}
+
+/* Animación de puntos mejorada */
+.current-points.highlight {
+  color: #ffde59;
+  transform: scale(1.15);
+  text-shadow: 0 0 15px rgba(255, 222, 89, 0.7), 0 0 30px rgba(255, 222, 89, 0.4);
+  animation: numberPulse 0.15s ease-in-out;
+}
+
+@keyframes numberPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1.15); }
+}
+
+.bonus-value {
+  color: #64b5f6;
+  font-weight: bold;
+  font-size: 1.2rem;
+  text-shadow: 0 0 10px rgba(100, 181, 246, 0.8);
+  animation: pulsateGlow 1.2s infinite;
+}
+
+@keyframes pulsateGlow {
+  0% {
+    text-shadow: 0 0 5px rgba(100, 181, 246, 0.7);
+  }
+  50% {
+    text-shadow: 0 0 15px rgba(100, 181, 246, 0.9), 0 0 25px rgba(100, 181, 246, 0.4);
+    color: #90caf9;
+  }
+  100% {
+    text-shadow: 0 0 5px rgba(100, 181, 246, 0.7);
+  }
+}
+
+/* Efectos de celebración mejorados */
+.celebration-spark {
+  position: absolute;
+  border-radius: 50%;
+  background-color: #ffde59;
+  opacity: 0;
+}
+
+.celebration-spark.spark1 {
+  width: 3px;
+  height: 3px;
+  animation: sparkFly1 2s infinite;
+}
+
+.celebration-spark.spark2 {
+  width: 2px;
+  height: 2px;
+  animation: sparkFly2 2.5s infinite;
+}
+
+.celebration-spark.spark3 {
+  width: 4px;
+  height: 4px;
+  animation: sparkFly3 1.8s infinite;
+}
+
+.points-celebration-effects::before,
+.points-celebration-effects::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: radial-gradient(circle at center, rgba(255, 222, 89, 0.2) 0%, transparent 70%);
+  animation: radiateOut 1.5s infinite;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.points-celebration-effects::after {
+  animation-delay: 0.75s;
+}
+
+@keyframes radiateOut {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+.celebration-glow {
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  left: -10%;
+  top: -10%;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(255, 222, 89, 0.6) 0%, rgba(255, 222, 89, 0) 70%);
+  opacity: 0;
+  animation: glowPulse 2s infinite;
+}
+
+/* Resplandor cuando los números cambian */
+.reward-item.points-reward::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  background: transparent;
+  z-index: -1;
+  transition: all 0.3s ease;
+}
+
+.current-points.highlight ~ .reward-label {
+  color: #ffec9e;
+  transition: color 0.15s ease-in-out;
+}
+
+.current-points.highlight + .points-animation-container::before {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: #ffde59;
+  border-radius: 50%;
+  animation: particleBurst 1s ease-out;
+  opacity: 0;
+}
+
+@keyframes particleBurst {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(20);
+    opacity: 0;
+  }
+}
+
+/* Animación de puntos */
+.points-reward {
+  position: relative;
+  overflow: visible !important;
+}
+
+.points-animation-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 1.8rem;
+  margin-bottom: -0.2rem;
+}
+
+.current-points {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: white;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.current-points.highlight {
+  color: #ffde59;
+  transform: scale(1.1);
+  text-shadow: 0 0 15px rgba(255, 222, 89, 0.7);
+}
+
+.bonus-points {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  left: calc(100% + 8px);
+  opacity: 0;
+  animation: bonusAppear 0.5s forwards;
+}
+
+@keyframes bonusAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.8);
+  }
+  70% {
+    transform: translateY(-5px) scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.bonus-sign {
+  color: #64b5f6;
+  font-weight: bold;
+  margin-right: 1px;
+  font-size: 1.1rem;
+}
+
+.bonus-points.merging {
+  animation: bonusMerge 1s forwards;
+}
+
+@keyframes bonusMerge {
+  0% {
+    opacity: 1;
+    left: calc(100% + 8px);
+    transform: scale(1);
+  }
+  20% {
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    left: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* Efectos de celebración de puntos */
+.points-celebration-effects {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.celebration-spark {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background-color: #ffde59;
+  opacity: 0;
+}
+
+.celebration-spark.spark1 {
+  animation: sparkFly1 1.5s infinite;
+}
+
+.celebration-spark.spark2 {
+  animation: sparkFly2 2s infinite;
+}
+
+.celebration-spark.spark3 {
+  animation: sparkFly3 1.7s infinite;
+}
+
+@keyframes sparkFly1 {
+  0% {
+    opacity: 0;
+    left: 50%;
+    top: 50%;
+    transform: scale(1);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    left: -20px;
+    top: -10px;
+    transform: scale(0);
+  }
+}
+
+@keyframes sparkFly2 {
+  0% {
+    opacity: 0;
+    left: 50%;
+    top: 50%;
+    transform: scale(1);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    left: 120%;
+    top: -5px;
+    transform: scale(0);
+  }
+}
+
+@keyframes sparkFly3 {
+  0% {
+    opacity: 0;
+    left: 50%;
+    top: 50%;
+    transform: scale(1);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    left: 100%;
+    top: 150%;
+    transform: scale(0);
+  }
+}
+
+.celebration-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  border-radius: 20px;
+  background: radial-gradient(circle at center, rgba(255, 222, 89, 0.7) 0%, rgba(255, 222, 89, 0) 70%);
+  opacity: 0;
+  animation: glowPulse 2s infinite;
+}
+
+@keyframes glowPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* Ajustes responsivos para la animación de puntos */
+@media (max-width: 480px) {
+  .points-animation-container {
+    height: 1.5rem;
+  }
+  
+  .current-points {
+    font-size: 1.1rem;
+  }
+  
+  .bonus-sign {
+    font-size: 0.9rem;
+  }
+  
+  .bonus-value {
+    font-size: 1rem;
+  }
+}
+
+@media (max-height: 667px) {
+  .points-animation-container {
+    height: 1.3rem;
+  }
+  
+  .current-points {
+    font-size: 1rem;
+  }
+  
+  .bonus-sign {
+    font-size: 0.8rem;
+  }
+  
+  .bonus-value {
+    font-size: 0.9rem;
+  }
 } 

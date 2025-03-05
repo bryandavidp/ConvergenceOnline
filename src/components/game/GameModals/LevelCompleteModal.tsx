@@ -18,6 +18,9 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible = tru
   const [isClosing, setIsClosing] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [animationStage, setAnimationStage] = useState(0);
+  const [pointsAnimationStage, setPointsAnimationStage] = useState(0);
+  const [currentPoints, setCurrentPoints] = useState(0);
+  const [isHighlighted, setIsHighlighted] = useState(false);
   const confettiContainerRef = useRef<HTMLDivElement>(null);
   const modalContentRef = useRef<HTMLDivElement>(null);
   const featureContainerRef = useRef<HTMLDivElement>(null);
@@ -64,6 +67,62 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible = tru
     }
   }, [isVisible]);
   
+  // Inicia la animación de puntos
+  useEffect(() => {
+    if (isVisible && animationStage >= 1) {
+      // Iniciar con la puntuación actual del juego
+      setCurrentPoints(score - rewards.points);
+      
+      // Secuencia de animación de puntos
+      const timer1 = setTimeout(() => setPointsAnimationStage(1), 500); // Mostrar bonificación
+      const timer2 = setTimeout(() => setPointsAnimationStage(2), 1200); // Iniciar fusión
+      const timer3 = setTimeout(() => {
+        // Iniciar conteo
+        let startValue = score - rewards.points;
+        const endValue = score;
+        const duration = 1500; // ms
+        const frameRate = 24;
+        const totalFrames = Math.round(duration / (1000 / frameRate));
+        const increment = (endValue - startValue) / totalFrames;
+        let currentFrame = 0;
+        
+        const counterInterval = setInterval(() => {
+          currentFrame++;
+          const newValue = Math.round(startValue + (increment * currentFrame));
+          setCurrentPoints(newValue);
+          
+          // Reproducir sonido de incremento y activar highlight
+          if (currentFrame % 4 === 0) {
+            audioManager.play('coinCollect');
+            setIsHighlighted(true);
+            setTimeout(() => setIsHighlighted(false), 150);
+          }
+          
+          if (currentFrame >= totalFrames) {
+            clearInterval(counterInterval);
+            setPointsAnimationStage(3); // Animación completa
+            
+            // Sonido de finalización
+            audioManager.play('powerUp');
+            
+            // Destacar una última vez con más intensidad
+            setTimeout(() => {
+              setIsHighlighted(true);
+              setTimeout(() => setIsHighlighted(false), 300);
+            }, 200);
+          }
+        }, 1000 / frameRate);
+        
+      }, 1700); // Comenzar conteo
+      
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+      };
+    }
+  }, [isVisible, animationStage, rewards.points, score]);
+  
   useEffect(() => {
     if (isVisible) {
       // Reproducir sonido
@@ -78,6 +137,10 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible = tru
       const timer1 = setTimeout(() => setAnimationStage(1), 450);
       const timer2 = setTimeout(() => setAnimationStage(2), 900);
       const timer3 = setTimeout(() => setAnimationStage(3), 1350);
+      
+      // Reiniciar animación de puntos
+      setPointsAnimationStage(0);
+      setIsHighlighted(false);
       
       // Asegurar que el scroll esté en la parte superior
       if (modalContentRef.current) {
@@ -139,10 +202,30 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible = tru
         <h3>¡Bonificaciones!</h3>
         <div className="rewards-container">
           {rewards.points > 0 && (
-            <div className="reward-item" key="points">
+            <div className="reward-item points-reward" key="points">
               <div className="reward-icon points-icon">🏆</div>
               <div className="reward-details">
-                <span className="reward-value">+{rewards.points}</span>
+                <div className="points-animation-container">
+                  <span className={`current-points ${isHighlighted ? 'highlight' : ''}`}>{currentPoints.toLocaleString()}</span>
+                  
+                  {/* Bonificación con animación */}
+                  {pointsAnimationStage >= 1 && pointsAnimationStage < 3 && (
+                    <div className={`bonus-points ${pointsAnimationStage >= 2 ? 'merging' : ''}`}>
+                      <span className="bonus-sign">+</span>
+                      <span className="bonus-value">{rewards.points.toLocaleString()}</span>
+                    </div>
+                  )}
+                  
+                  {/* Destellos durante animación final */}
+                  {pointsAnimationStage === 3 && (
+                    <div className="points-celebration-effects">
+                      <div className="celebration-spark spark1"></div>
+                      <div className="celebration-spark spark2"></div>
+                      <div className="celebration-spark spark3"></div>
+                      <div className="celebration-glow"></div>
+                    </div>
+                  )}
+                </div>
                 <span className="reward-label">puntos</span>
               </div>
             </div>
@@ -243,4 +326,4 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible = tru
   );
 };
 
-export default LevelCompleteModal; 
+export default LevelCompleteModal;

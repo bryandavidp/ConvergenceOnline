@@ -4,23 +4,38 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
-  padding: 8px 12px;
-  background: linear-gradient(to right, rgba(248, 250, 252, 0.9), rgba(240, 244, 248, 0.9));
-  border-radius: 12px;
-  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 12px 15px;
+  background: radial-gradient(circle at center, rgba(97, 125, 255, 0.15) 0%, rgba(60, 80, 150, 0.1) 100%);
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   flex: 1;
-  border: 1px solid rgba(210, 220, 230, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efecto de brillo en el HUD */
+.game-hud::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+  animation: rotate 15s linear infinite;
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* Versión móvil del HUD */
 .game-hud.mobile {
   margin: 0;
-  padding: 6px 8px;
-  background: linear-gradient(to right, rgba(248, 250, 252, 0.95), rgba(240, 244, 248, 0.95));
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 8px 10px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 }
 
 .hud-section, .hud-item {
@@ -28,27 +43,28 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3px 8px;
+  padding: 5px 10px;
   flex: 1;
   position: relative;
   min-width: 0;
-  transition: all 0.25s ease;
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  z-index: 1;
 }
 
 .hud-item:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 
 /* Versión móvil de los items del HUD */
 .game-hud.mobile .hud-item {
-  padding: 2px 4px;
+  padding: 3px 5px;
 }
 
 .hud-label {
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: #5a6a7a;
-  margin-bottom: 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-align: center;
@@ -57,210 +73,207 @@
 
 /* Etiquetas más pequeñas en móvil */
 .game-hud.mobile .hud-label {
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   margin-bottom: 2px;
   letter-spacing: 0.3px;
 }
 
 .hud-value {
-  font-size: 1.2rem;
-  font-weight: 800;
+  font-size: 1.3rem;
+  font-weight: 700;
   text-align: center;
   line-height: 1.1;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 /* Valores más pequeños en móvil */
 .game-hud.mobile .hud-value {
-  font-size: 1rem;
+  font-size: 1.1rem;
 }
 
 /* Colores modernos para los diferentes valores */
 .hud-value.score, .hud-item.score .hud-value {
-  color: #0c893b;
-  text-shadow: 0 1px 2px rgba(12, 137, 59, 0.15);
+  color: #4cff9b;
+  text-shadow: 0 0 10px rgba(76, 255, 155, 0.5);
 }
 
 .hud-value.timer, .hud-item.time .hud-value {
-  color: #d07d00;
-  text-shadow: 0 1px 2px rgba(208, 125, 0, 0.15);
+  color: #ff9d4a;
+  text-shadow: 0 0 10px rgba(255, 157, 74, 0.5);
 }
 
 .hud-value.level, .hud-item.level .hud-value {
-  color: #1565c0;
-  text-shadow: 0 1px 2px rgba(21, 101, 192, 0.15);
+  color: #6399ff;
+  text-shadow: 0 0 10px rgba(99, 153, 255, 0.5);
 }
 
 .hud-value.mode, .hud-item.mode .hud-value {
-  color: #8e24aa;
-  text-shadow: 0 1px 2px rgba(142, 36, 170, 0.15);
+  color: #d687ff;
+  text-shadow: 0 0 10px rgba(214, 135, 255, 0.5);
 }
 
 /* Estilo para el indicador de velocidad */
 .hud-item.speed .hud-value {
-  color: #d32f2f;
-  text-shadow: 0 1px 2px rgba(211, 47, 47, 0.15);
+  color: #ffde59;
+  text-shadow: 0 0 10px rgba(255, 222, 89, 0.5);
 }
 
-/* Separadores entre elementos del HUD */
+/* Separador entre elementos del HUD */
 .hud-item:not(:last-child)::after {
   content: '';
   position: absolute;
   right: 0;
-  top: 15%;
-  height: 70%;
+  top: 25%;
+  height: 50%;
   width: 1px;
-  background: linear-gradient(to bottom, rgba(180, 190, 200, 0), rgba(180, 190, 200, 0.5), rgba(180, 190, 200, 0));
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
 }
 
-/* Animación suave para el valor de puntuación cuando cambia */
 @keyframes pulse-score {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1); }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
 }
 
 .score-change {
-  animation: pulse-score 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #4cff9b;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px 6px;
+  border-radius: 8px;
+  opacity: 0;
+  transform: translateY(-20px);
+  animation: score-float 1.5s forwards ease-out;
+  z-index: 10;
+  text-shadow: 0 0 8px rgba(76, 255, 155, 0.7);
 }
 
-/* Barra de ocupación con diseño mejorado */
+@keyframes score-float {
+  0% { opacity: 0; transform: translateY(0); }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-40px); }
+}
+
 .occupation {
   width: 100%;
+  margin-top: 8px;
+  position: relative;
 }
 
 .occupation-bar {
+  height: 8px;
   width: 100%;
-  height: 14px;
-  background: rgba(210, 220, 230, 0.3);
-  border-radius: 7px;
+  background: rgba(60, 80, 150, 0.3);
+  border-radius: 10px;
   overflow: hidden;
   position: relative;
-  margin-top: 0.25rem;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .occupation-fill {
   height: 100%;
-  background: linear-gradient(to right, #43a047, #66bb6a);
-  transition: width 0.3s ease, background 0.3s ease;
-  box-shadow: 0 0 10px rgba(67, 160, 71, 0.3);
+  width: 0%;
+  background: linear-gradient(to right, #63fdff, #52b3ff);
+  border-radius: 10px;
+  transition: width 0.5s ease, background 0.3s ease;
+  box-shadow: 0 0 10px rgba(99, 253, 255, 0.4);
 }
 
 .occupation-fill[data-status="warning"] {
-  background: linear-gradient(to right, #f57c00, #ffb74d);
-  box-shadow: 0 0 10px rgba(245, 124, 0, 0.3);
+  background: linear-gradient(to right, #ffeb3b, #ffc107);
+  box-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
 }
 
 .occupation-fill[data-status="critical"] {
-  background: linear-gradient(to right, #c62828, #ef5350);
-  box-shadow: 0 0 10px rgba(198, 40, 40, 0.3);
+  background: linear-gradient(to right, #ff5252, #d50000);
+  box-shadow: 0 0 10px rgba(255, 82, 82, 0.5);
+  animation: pulse 1s infinite alternate;
 }
 
 .occupation-text {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 0.7rem;
-  font-weight: bold;
-  color: white;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  bottom: 100%;
+  right: 0;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 2px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Controles del juego */
+/* Botones de control */
 .game-controls {
   display: flex;
+  gap: 10px;
   justify-content: center;
-  gap: 1.25rem;
-  margin-top: 0.75rem;
+  align-items: center;
+  margin-top: 5px;
 }
 
 .control-button {
-  width: 54px;
-  height: 54px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
+  background: linear-gradient(145deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
   border: none;
-  background: rgba(255, 255, 255, 0.15);
   color: white;
-  font-size: 1.3rem;
-  cursor: pointer;
+  font-size: 1.2rem;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   position: relative;
-  transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.control-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: 0.5s;
 }
 
 .control-button:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-3px);
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4);
+}
+
+.control-button:hover::before {
+  left: 100%;
 }
 
 .control-button:active {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .control-button.disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
-  box-shadow: none;
-}
-
-.hint-button {
-  background: linear-gradient(135deg, rgba(255, 179, 0, 0.7), rgba(255, 160, 0, 0.7));
-}
-
-.hint-button:hover {
-  background: linear-gradient(135deg, rgba(255, 179, 0, 0.85), rgba(255, 160, 0, 0.85));
-}
-
-.hint-count {
-  position: absolute;
-  bottom: -6px;
-  right: -6px;
-  background: #e53935;
-  color: white;
-  border-radius: 50%;
-  width: 22px;
-  height: 22px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  transform: none;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.reset-level-button {
-  background: linear-gradient(135deg, rgba(30, 136, 229, 0.7), rgba(13, 71, 161, 0.7));
+/* Animación para la rotación */
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.reset-level-button:hover {
-  background: linear-gradient(135deg, rgba(30, 136, 229, 0.85), rgba(13, 71, 161, 0.85));
-}
-
-.hint-button.cooldown {
-  animation: pulse 2s infinite;
-  cursor: wait;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 179, 0, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 12px rgba(255, 179, 0, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 179, 0, 0);
-  }
-}
-
-/* Optimizaciones para pantallas más pequeñas */
+/* Responsividad */
 @media (max-width: 480px) {
   .game-hud {
     padding: 6px 8px;
