@@ -333,13 +333,13 @@ export function generateDynamicLevel(level: number): LevelConfig {
       classic: [
         { 
           type: 'score', 
-          value: 1000 * level, 
-          description: `Alcanza ${1000 * level} puntos` 
+          value: 1500 * level, 
+          description: `Alcanza ${1500 * level} puntos` 
         },
         { 
           type: 'occupation', 
-          value: 15, 
-          description: 'Mantén ocupación menor al 15%' 
+          value: 5, 
+          description: 'Mantén ocupación menor al 5%' 
         }
       ],
       timed: [

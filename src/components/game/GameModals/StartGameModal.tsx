@@ -11,6 +11,51 @@ interface StartGameModalProps {
   onStart?: () => void;
 }
 
+// Componente para partículas en movimiento
+const ParticlesEffect: React.FC = () => {
+  return (
+    <div className="particles-container">
+      {[...Array(15)].map((_, i) => (
+        <div 
+          key={i} 
+          className="particle"
+          style={{
+            top: `${Math.random() * 100}%`,
+            left: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 5}s`,
+            animationDuration: `${6 + Math.random() * 10}s`,
+            width: `${3 + Math.random() * 3}px`,
+            height: `${3 + Math.random() * 3}px`,
+            opacity: 0.1 + Math.random() * 0.4,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// Componente para estrellas brillantes
+const StarsEffect: React.FC = () => {
+  return (
+    <div className="stars-container">
+      {[...Array(20)].map((_, i) => (
+        <div 
+          key={i} 
+          className="star"
+          style={{
+            top: `${Math.random() * 100}%`,
+            left: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 10}s`,
+            animationDuration: `${2 + Math.random() * 3}s`,
+            width: `${1 + Math.random() * 2}px`,
+            height: `${1 + Math.random() * 2}px`,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
 const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onStart }) => {
   const dispatch = useDispatch();
   // Recuperar preferencias guardadas o usar valores predeterminados
@@ -147,20 +192,100 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
     return null;
   }
   
+  // Descripción del modo de juego seleccionado
+  const getModeDescription = () => {
+    switch (selectedMode) {
+      case 'classic':
+        return 'Completa niveles a tu ritmo. Sin límite de tiempo.';
+      case 'timed':
+        return 'Completa niveles contrarreloj. ¡El tiempo es crucial!';
+      case 'survival':
+        return 'Sobrevive el mayor tiempo posible. Aumenta la dificultad progresivamente.';
+      default:
+        return '';
+    }
+  };
+  
+  // Descripción de la dificultad seleccionada
+  const getDifficultyDescription = () => {
+    switch (selectedDifficulty) {
+      case 'easy':
+        return 'Ritmo relajado. Ideal para principiantes.';
+      case 'normal':
+        return 'Equilibrio entre desafío y diversión.';
+      case 'hard':
+        return 'Mayor desafío y estrategia. Para jugadores experimentados.';
+      default:
+        return '';
+    }
+  };
+  
   return (
     <div className={`game-modal start-game ${isVisible ? 'visible' : 'hidden'} ${isClosing ? 'closing' : ''}`}>
+      {/* Efectos visuales de fondo */}
+      <ParticlesEffect />
+      <StarsEffect />
+      
+      {/* Decoración adicional con luces de neón */}
+      <div className="neon-glow top-left"></div>
+      <div className="neon-glow bottom-right"></div>
+      <div className="corner-decoration top-right"></div>
+      <div className="corner-decoration bottom-left"></div>
+      
       <div className="modal-content">
         <div className="start-game-header">
           <h1>Convergencia</h1>
           <h2>Un juego de estrategia</h2>
           
+          {/* Controles de configuración movidos al header */}
+          <div className="header-settings-container">
+            <div className="settings-buttons">
+              <button 
+                ref={settingsButtonRef}
+                className={`setting-button ${showSettings ? 'active' : ''}`} 
+                onClick={toggleSettings}
+                aria-label="Configuración"
+              >
+                ⚙️
+              </button>
+            </div>
+          </div>
+          
           <div className="game-icon-preview">
             {["🍎", "🍊", "🍇", "🍓", "🍐"].map((icon, index) => (
               <div key={index} className="preview-icon" style={{ animationDelay: `${index * 0.2}s` }}>
                 {icon}
+                <div className="icon-shine"></div>
               </div>
             ))}
           </div>
+          
+          {/* Panel de configuración expandido - ahora fuera de settings-container */}
+          {showSettings && (
+            <div className="settings-panel" ref={settingsPanelRef}>
+              <h3>Configuración</h3>
+              <div className="settings-options">
+                <div className="settings-option">
+                  <span>Efectos de sonido</span>
+                  <div 
+                    className={`setting-toggle ${soundEnabled ? 'active' : ''}`}
+                    onClick={toggleSound}
+                  >
+                    {soundEnabled ? 'ON' : 'OFF'}
+                  </div>
+                </div>
+                <div className="settings-option">
+                  <span>Música de fondo</span>
+                  <div 
+                    className={`setting-toggle ${musicEnabled ? 'active' : ''}`}
+                    onClick={toggleMusic}
+                  >
+                    {musicEnabled ? 'ON' : 'OFF'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         
         <div className="start-game-body">
@@ -173,6 +298,7 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
               >
                 <span className="option-icon">🏅</span>
                 <span>Clásico</span>
+                <div className="option-glow"></div>
               </div>
               <div 
                 className={`game-option ${selectedMode === 'timed' ? 'active' : ''}`}
@@ -180,6 +306,7 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
               >
                 <span className="option-icon">⏳</span>
                 <span>Contrarreloj</span>
+                <div className="option-glow"></div>
               </div>
               <div 
                 className={`game-option ${selectedMode === 'survival' ? 'active' : ''}`}
@@ -187,8 +314,12 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
               >
                 <span className="option-icon">🔥</span>
                 <span>Supervivencia</span>
+                <div className="option-glow"></div>
               </div>
             </div>
+            {selectedMode && (
+              <div className="mode-description">{getModeDescription()}</div>
+            )}
           </div>
           
           <div className="form-group">
@@ -200,6 +331,7 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
               >
                 <span className="option-icon">🌱</span>
                 <span>Fácil</span>
+                <div className="option-glow"></div>
               </div>
               <div 
                 className={`game-option ${selectedDifficulty === 'normal' ? 'active' : ''}`}
@@ -207,6 +339,7 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
               >
                 <span className="option-icon">🌟</span>
                 <span>Normal</span>
+                <div className="option-glow"></div>
               </div>
               <div 
                 className={`game-option ${selectedDifficulty === 'hard' ? 'active' : ''}`}
@@ -214,74 +347,25 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
               >
                 <span className="option-icon">🔮</span>
                 <span>Difícil</span>
+                <div className="option-glow"></div>
               </div>
             </div>
-          </div>
-          
-          {/* Panel de configuraciones movido debajo de la dificultad */}
-          <div className="settings-container">
-            <div className="settings-buttons">
-              <button 
-                ref={settingsButtonRef}
-                className={`setting-button ${showSettings ? 'active' : ''}`} 
-                onClick={toggleSettings}
-                aria-label="Configuración"
-              >
-                ⚙️
-              </button>
-              <button 
-                className={`setting-button ${soundEnabled ? 'active' : ''}`} 
-                onClick={toggleSound}
-                aria-label={soundEnabled ? "Desactivar sonidos" : "Activar sonidos"}
-              >
-                {soundEnabled ? '🔊' : '🔇'}
-              </button>
-              <button 
-                className={`setting-button ${musicEnabled ? 'active' : ''}`} 
-                onClick={toggleMusic}
-                aria-label={musicEnabled ? "Desactivar música" : "Activar música"}
-              >
-                {musicEnabled ? '🎵' : '🔇'}
-              </button>
-            </div>
-            
-            {/* Panel de configuración expandido */}
-            {showSettings && (
-              <div className="settings-panel" ref={settingsPanelRef}>
-                <h3>Configuración</h3>
-                <div className="settings-options">
-                  <div className="settings-option">
-                    <span>Música</span>
-                    <button 
-                      className={`setting-toggle ${musicEnabled ? 'active' : ''}`}
-                      onClick={toggleMusic}
-                    >
-                      {musicEnabled ? 'ON' : 'OFF'}
-                    </button>
-                  </div>
-                  <div className="settings-option">
-                    <span>Sonidos</span>
-                    <button 
-                      className={`setting-toggle ${soundEnabled ? 'active' : ''}`}
-                      onClick={toggleSound}
-                    >
-                      {soundEnabled ? 'ON' : 'OFF'}
-                    </button>
-                  </div>
-                </div>
-              </div>
+            {selectedDifficulty && (
+              <div className="difficulty-description">{getDifficultyDescription()}</div>
             )}
           </div>
-        </div>
-        
-        <div className="start-game-footer">
-          <button 
-            className="start-button" 
-            onClick={handleStartGame}
-            aria-label="Comenzar juego"
-          >
-            ¡JUGAR AHORA!
-          </button>
+          
+          {/* Botón de comenzar con estilo destacado para mejor visibilidad */}
+          <div className="fixed-start-button-container">
+            <button 
+              className="start-button"
+              onClick={handleStartGame}
+              aria-label="Iniciar juego"
+            >
+              ¡Comenzar!
+              <span className="button-energy"></span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

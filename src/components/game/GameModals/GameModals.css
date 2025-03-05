@@ -49,17 +49,46 @@
   animation: scaleIn 0.3s ease-out;
 }
 
-/* StartGame Modal - Diseño adaptativo mejorado */
+/* StartGame Modal - Rediseño con tema oscuro y efectos visuales */
 .start-game {
-  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  background: none;
   padding: 0;
   overflow: hidden;
+}
+
+.start-game::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(145deg, #2a3142 0%, #1c212e 100%);
+  background-image: 
+    radial-gradient(circle at 25px 25px, rgba(99, 102, 241, 0.15) 2%, transparent 0%),
+    radial-gradient(circle at 75px 75px, rgba(99, 102, 241, 0.15) 2%, transparent 0%);
+  background-size: 100px 100px;
+  z-index: -1;
+  animation: pulse-bg 15s infinite alternate;
+}
+
+@keyframes pulse-bg {
+  0% {
+    background-color: #2a3142;
+  }
+  50% {
+    background-color: #21283a;
+  }
+  100% {
+    background-color: #1c212e;
+  }
 }
 
 .start-game .modal-content {
   width: 100%;
   height: 100%;
   max-height: 100vh;
+  max-width: 100%;
   overflow: hidden;
   background: transparent;
   box-shadow: none;
@@ -68,88 +97,55 @@
   flex-direction: column;
   padding: 0;
   margin: 0;
-  animation: none;
-}
-
-/* Cabecera mejorada con mejor espaciado */
-.start-game-header {
-  padding: 12px 15px 5px;
-  text-align: center;
+  animation: fade-in 0.8s ease-out;
   position: relative;
-  flex-shrink: 0;
 }
 
-.start-game h1 {
-  color: #ffffff;
-  margin: 0 0 4px;
-  font-size: 2.5rem;
-  font-weight: 800;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.25);
-  letter-spacing: 1px;
-}
-
-.start-game h2 {
-  color: rgba(255, 255, 255, 0.95);
-  margin: 0 0 10px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-
-/* Previsualización de iconos - Mejor alineada */
-.game-icon-preview {
+.start-game-header {
+  text-align: center;
+  padding: 20px 20px 5px;
+  position: relative;
+  margin-bottom: 10px;
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 5px 0 10px;
+  flex-direction: column;
+  align-items: center;
 }
 
-.preview-icon {
-  font-size: 1.5rem;
+.start-game-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: linear-gradient(to bottom, rgba(97, 125, 255, 0.15), transparent);
+  pointer-events: none;
+}
+
+/* Contenedor de configuración en el header */
+.header-settings-container {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  z-index: 100;
+  margin: 0;
+  width: auto;
+}
+
+.settings-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* Estilos para el botón de configuración */
+.setting-button {
   width: 42px;
   height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  transform: rotate(-2deg);
-  animation: float 2s infinite alternate ease-in-out;
-}
-
-.preview-icon:nth-child(1) { animation-delay: 0s; }
-.preview-icon:nth-child(2) { animation-delay: 0.5s; }
-.preview-icon:nth-child(3) { animation-delay: 1s; }
-.preview-icon:nth-child(4) { animation-delay: 1.5s; }
-.preview-icon:nth-child(5) { animation-delay: 2s; }
-
-.preview-icon:nth-child(even) {
-  transform: rotate(2deg);
-}
-
-.preview-icon:hover {
-  transform: scale(1.15) rotate(0);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-}
-
-/* Panel de configuraciones - Posición ajustada */
-.game-settings-panel {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  display: flex;
-  gap: 12px;
-}
-
-.setting-button {
-  width: 40px;
-  height: 40px;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.2);
-  border: none;
+  background: linear-gradient(135deg, rgba(97, 125, 255, 0.3), rgba(97, 125, 255, 0.1));
+  border: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -158,151 +154,362 @@
   cursor: pointer;
   transition: all 0.25s;
   backdrop-filter: blur(5px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 8px rgba(97, 125, 255, 0.2);
 }
 
 .setting-button:hover, .setting-button:active {
-  background-color: rgba(255, 255, 255, 0.35);
+  background: linear-gradient(135deg, rgba(97, 125, 255, 0.5), rgba(97, 125, 255, 0.3));
   transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3), 0 0 12px rgba(97, 125, 255, 0.4);
 }
 
 .setting-button.active {
-  background-color: #ffffff;
-  color: #6366F1;
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, rgba(97, 125, 255, 0.8), rgba(97, 125, 255, 0.6));
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 15px rgba(97, 125, 255, 0.5);
 }
 
-/* Sección principal con opciones de juego - Mejor espaciado */
-.start-game-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  width: 100%;
-  padding: 5px 15px;
-  overflow: hidden;
-  max-height: none;
+/* Panel de configuración mejorado */
+.settings-panel {
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  background: linear-gradient(135deg, rgba(40, 50, 75, 0.95), rgba(30, 40, 65, 0.95));
+  border-radius: 12px;
+  padding: 15px;
+  width: 250px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(97, 125, 255, 0.3);
+  animation: fade-in 0.3s ease-out;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
-.start-game-body::-webkit-scrollbar {
+/* Ocultar el viejo contenedor de botón start */
+.start-button-container {
   display: none;
+  padding: 0;
+  margin: 0;
 }
 
-/* Formulario y opciones - Espaciado mejorado */
+.start-game h1 {
+  color: #ffffff;
+  margin: 0 0 4px;
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25), 0 0 8px rgba(97, 125, 255, 0.6);
+  letter-spacing: 1px;
+  animation: glow-pulse 3s infinite alternate;
+}
+
+@keyframes glow-pulse {
+  0% {
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25), 0 0 8px rgba(97, 125, 255, 0.6);
+  }
+  50% {
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25), 0 0 15px rgba(97, 125, 255, 0.9);
+  }
+  100% {
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25), 0 0 8px rgba(97, 125, 255, 0.6);
+  }
+}
+
+.start-game h2 {
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Previsualización de iconos - Más animada y brillante */
+.game-icon-preview {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 15px 0 20px;
+  perspective: 500px;
+}
+
+.preview-icon {
+  font-size: 1.7rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2), 
+              0 0 5px rgba(97, 125, 255, 0.2),
+              inset 0 0 5px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+  animation: float-3d 3s infinite ease-in-out;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  position: relative;
+  overflow: hidden;
+}
+
+.preview-icon::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.5) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  transform: scale(0);
+  animation: pulse-glow 6s infinite alternate;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+}
+
+.preview-icon:nth-child(1) { animation-delay: 0s; }
+.preview-icon:nth-child(2) { animation-delay: 0.5s; }
+.preview-icon:nth-child(3) { animation-delay: 1s; }
+.preview-icon:nth-child(4) { animation-delay: 1.5s; }
+.preview-icon:nth-child(5) { animation-delay: 2s; }
+
+@keyframes float-3d {
+  0% {
+    transform: translateY(0) rotate3d(1, 1, 1, 0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate3d(1, 1, 1, 5deg);
+  }
+  100% {
+    transform: translateY(0) rotate3d(1, 1, 1, 0deg);
+  }
+}
+
+.preview-icon:hover {
+  transform: scale(1.2) translateZ(20px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 
+              0 0 15px rgba(97, 125, 255, 0.4),
+              inset 0 0 10px rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  z-index: 10;
+}
+
+.preview-icon:hover::after {
+  opacity: 0.3;
+  transform: scale(1);
+}
+
+/* Formulario y opciones - Mejor diseño */
 .form-group {
-  margin-bottom: 10px;
-  background-color: rgba(255, 255, 255, 0.15);
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, rgba(45, 55, 75, 0.5), rgba(35, 45, 65, 0.5));
   border-radius: 16px;
-  padding: 10px;
+  padding: 15px;
   backdrop-filter: blur(8px);
-  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), 
+              inset 0 1px 1px rgba(255, 255, 255, 0.1);
   width: 100%;
   box-sizing: border-box;
+  border: 1px solid rgba(97, 125, 255, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.form-group::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(97, 125, 255, 0.5), transparent);
 }
 
 .form-group:hover {
-  background-color: rgba(255, 255, 255, 0.18);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2), 
+              0 0 15px rgba(97, 125, 255, 0.2),
+              inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  border-color: rgba(97, 125, 255, 0.3);
 }
 
 .form-label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   color: white;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.05rem;
   letter-spacing: 0.5px;
   text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  position: relative;
 }
 
-/* Opciones de juego y dificultad - Mejor alineación */
+.form-label::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(97, 125, 255, 0.7), transparent);
+  margin: 8px auto 0;
+}
+
+/* Opciones de juego y dificultad - Efecto de tarjetas */
 .mode-options, .difficulty-options {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-top: 5px;
+  gap: 12px;
+  margin-top: 10px;
   width: 100%;
 }
 
 .game-option {
-  padding: 8px 5px;
-  background-color: rgba(255, 255, 255, 0.25);
-  border: 2px solid transparent;
+  padding: 12px 5px;
+  background: linear-gradient(135deg, rgba(55, 65, 90, 0.4), rgba(40, 50, 75, 0.4));
+  border: 1px solid rgba(97, 125, 255, 0.15);
   border-radius: 14px;
   cursor: pointer;
-  transition: all 0.25s;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: white;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  height: 100%;
-  min-height: 65px;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  min-height: 75px;
   width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
 }
 
 .option-icon {
-  font-size: 1.5rem;
-  margin-bottom: 2px;
+  font-size: 1.8rem;
+  margin-bottom: 5px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+  transition: all 0.3s ease;
 }
 
 .game-option:hover, .game-option:active {
-  background-color: rgba(255, 255, 255, 0.35);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, rgba(97, 125, 255, 0.25), rgba(80, 110, 230, 0.15));
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(97, 125, 255, 0.2);
+  border-color: rgba(97, 125, 255, 0.3);
+}
+
+.game-option:hover .option-icon {
+  transform: scale(1.15);
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.4));
+}
+
+.game-option:active {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 }
 
 .game-option.active {
-  background-color: rgba(255, 255, 255, 0.95);
-  border-color: #ffffff;
-  color: #6366F1;
+  background: linear-gradient(135deg, rgba(97, 125, 255, 0.7), rgba(80, 110, 230, 0.5));
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 6px 15px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2), 0 0 20px rgba(97, 125, 255, 0.4);
+  transform: translateY(-3px);
 }
 
-/* Descripciones de opciones */
-.option-description {
-  background-color: rgba(255, 255, 255, 0.95);
-  border-left: 4px solid #ffffff;
-  padding: 15px;
-  margin-top: 15px;
-  text-align: left;
-  font-size: 0.9rem;
-  color: #4B5563;
-  border-radius: 10px;
-  line-height: 1.5;
-  animation: fadeIn 0.3s ease-out;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+.game-option.active .option-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
-/* Botón de inicio - Aspecto moderno */
+.game-option.active::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.5) 0%, transparent 70%);
+  opacity: 0;
+  animation: pulse-highlight 2s infinite;
+}
+
+@keyframes pulse-highlight {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+}
+
+/* Estilos para el botón de inicio - Moderno con efectos */
 .start-game-footer {
-  padding: 10px 15px 12px;
-  margin-top: 0;
-  flex-shrink: 0;
+  display: none; /* Ocultamos el footer ya que el botón se ha movido */
+}
+
+/* Contenedor del botón dentro del cuerpo del modal */
+.start-button-container {
+  display: none;
 }
 
 .start-button {
-  padding: 14px;
-  font-size: 1.1rem;
-  background: linear-gradient(45deg, #F87171, #EF4444);
+  padding: 15px;
+  font-size: 1.15rem;
+  background: linear-gradient(45deg, #617DFF, #4F65CC);
   color: white;
   border: none;
   border-radius: 30px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   font-weight: 700;
-  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.35);
+  box-shadow: 0 8px 25px rgba(97, 125, 255, 0.35);
   width: 100%;
   letter-spacing: 1px;
   position: relative;
   overflow: hidden;
   text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.start-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: translateX(-100%);
+  transition: all 0.3s;
 }
 
 .start-button::after {
@@ -313,16 +520,35 @@
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: button-shine 3s infinite;
+  animation: button-shine 6s infinite;
 }
 
 .start-button:hover, .start-button:active {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(239, 68, 68, 0.5);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(97, 125, 255, 0.5), 0 0 20px rgba(97, 125, 255, 0.3);
+  background: linear-gradient(45deg, #728aff, #5a75e6);
+}
+
+.start-button:hover::before {
+  transform: translateX(100%);
 }
 
 .start-button:hover::after {
-  animation: button-shine 2s infinite;
+  animation: button-shine 3s infinite;
+}
+
+.start-button:active {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(97, 125, 255, 0.4);
+}
+
+@keyframes button-shine {
+  0% {
+    left: -100%;
+  }
+  40%, 100% {
+    left: 100%;
+  }
 }
 
 /* Animaciones adicionales */
@@ -331,22 +557,89 @@
     transform: translateY(0) rotate(-5deg);
   }
   50% {
-    transform: translateY(-8px) rotate(0deg);
+    transform: translateY(-10px) rotate(0deg);
   }
   100% {
     transform: translateY(0) rotate(5deg);
   }
 }
 
-@keyframes button-shine {
+@keyframes fade-in {
   0% {
-    left: -100%;
-  }
-  50% {
-    left: 100%;
+    opacity: 0;
   }
   100% {
-    left: 100%;
+    opacity: 1;
+  }
+}
+
+/* Adaptaciones responsivas */
+@media (max-width: 480px) {
+  .start-game-header {
+    padding: 15px 15px 10px;
+  }
+  
+  .start-game h1 {
+    font-size: 2.2rem;
+  }
+  
+  .preview-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 1.5rem;
+  }
+  
+  .game-option {
+    min-height: 70px;
+    padding: 10px 5px;
+  }
+  
+  .option-icon {
+    font-size: 1.6rem;
+    margin-bottom: 3px;
+  }
+  
+  .form-group {
+    padding: 12px;
+    margin-bottom: 15px;
+  }
+  
+  /* Ya no usamos esta clase */
+  .start-button-container {
+    display: none;
+  }
+}
+
+/* Pantallas pequeñas */
+@media (max-height: 600px) {
+  .game-icon-preview {
+    margin: 5px 0 10px;
+  }
+  
+  .preview-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.4rem;
+  }
+  
+  .form-group {
+    margin-bottom: 10px;
+    padding: 10px;
+  }
+  
+  .form-label {
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+  }
+  
+  .game-option {
+    min-height: 65px;
+    padding: 8px 5px;
+  }
+  
+  /* Ya no usamos esta clase */
+  .start-button-container {
+    display: none;
   }
 }
 
@@ -1053,12 +1346,7 @@
 
 /* Estilo para el panel de configuración expandido */
 .settings-container {
-  margin: 8px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  position: relative;
+  display: none; /* Ya no lo usamos, lo hemos movido */
 }
 
 /* Botones de configuración alineados al centro */
@@ -1075,7 +1363,7 @@
   border-radius: 15px;
   padding: 15px;
   position: absolute;
-  top: 45px;
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -1980,4 +2268,592 @@
   .bonus-value {
     font-size: 0.9rem;
   }
+}
+
+/* Efectos de partículas para el fondo */
+.particles-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.particle {
+  position: absolute;
+  background: linear-gradient(135deg, rgba(97, 125, 255, 0.8), rgba(80, 110, 230, 0.5));
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particle-float 8s infinite linear;
+}
+
+@keyframes particle-float {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.4;
+  }
+  80% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(100px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Efecto de estrellas brillantes */
+.stars-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.star {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: star-twinkle infinite ease-in-out;
+}
+
+@keyframes star-twinkle {
+  0%, 100% {
+    opacity: 0.2;
+    box-shadow: 0 0 2px 1px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 4px 2px rgba(255, 255, 255, 0.4);
+  }
+}
+
+/* Efectos de luz de neón decorativos */
+.neon-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.3;
+  background: radial-gradient(circle at center, rgba(97, 125, 255, 0.6) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.neon-glow.top-left {
+  top: -100px;
+  left: -100px;
+  width: 300px;
+  height: 300px;
+  animation: pulse-glow-1 10s infinite alternate;
+}
+
+.neon-glow.bottom-right {
+  bottom: -100px;
+  right: -100px;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle at center, rgba(111, 97, 255, 0.6) 0%, transparent 70%);
+  animation: pulse-glow-2 12s infinite alternate;
+}
+
+@keyframes pulse-glow-1 {
+  0%, 100% {
+    opacity: 0.3;
+    width: 300px;
+    height: 300px;
+  }
+  50% {
+    opacity: 0.5;
+    width: 350px;
+    height: 350px;
+  }
+}
+
+@keyframes pulse-glow-2 {
+  0%, 100% {
+    opacity: 0.3;
+    width: 250px;
+    height: 250px;
+  }
+  50% {
+    opacity: 0.6;
+    width: 300px;
+    height: 300px;
+  }
+}
+
+/* Decoraciones de esquinas */
+.corner-decoration {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  background-image: 
+    radial-gradient(circle at 10% 10%, rgba(97, 125, 255, 0.05) 5%, transparent 5%),
+    radial-gradient(circle at 20% 20%, rgba(97, 125, 255, 0.05) 5%, transparent 5%),
+    radial-gradient(circle at 30% 30%, rgba(97, 125, 255, 0.05) 5%, transparent 5%),
+    radial-gradient(circle at 40% 40%, rgba(97, 125, 255, 0.05) 5%, transparent 5%),
+    radial-gradient(circle at 50% 50%, rgba(97, 125, 255, 0.05) 5%, transparent 5%);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.corner-decoration.top-right {
+  top: 0;
+  right: 0;
+  transform: rotate(90deg);
+}
+
+.corner-decoration.bottom-left {
+  bottom: 0;
+  left: 0;
+  transform: rotate(-90deg);
+}
+
+/* Efecto de brillo para los iconos */
+.icon-shine {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, transparent 60%);
+  opacity: 0;
+  transform: scale(0);
+  animation: icon-shine 5s infinite;
+  pointer-events: none;
+}
+
+@keyframes icon-shine {
+  0%, 90%, 100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  95% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+}
+
+/* Efecto de brillo para las opciones de juego */
+.option-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(97, 125, 255, 0.3) 0%, transparent 80%);
+  opacity: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.game-option:hover .option-glow {
+  opacity: 0.5;
+  animation: option-pulse 1.5s infinite alternate;
+}
+
+.game-option.active .option-glow {
+  opacity: 0.6;
+  animation: option-active-pulse 2s infinite alternate;
+}
+
+@keyframes option-pulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes option-active-pulse {
+  0%, 100% {
+    opacity: 0.4;
+    box-shadow: 0 0 10px rgba(97, 125, 255, 0.3);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 20px rgba(97, 125, 255, 0.6);
+  }
+}
+
+/* Descripciones de modo y dificultad */
+.mode-description,
+.difficulty-description {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: linear-gradient(135deg, rgba(55, 65, 90, 0.3), rgba(40, 50, 75, 0.3));
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  border-left: 2px solid rgba(97, 125, 255, 0.4);
+  backdrop-filter: blur(5px);
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Efecto de energía para el botón de inicio */
+.button-energy {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.1) 45%, 
+    rgba(255, 255, 255, 0.3) 50%, 
+    rgba(255, 255, 255, 0.1) 55%, 
+    transparent 100%);
+  transition: all 0.3s ease;
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+
+.start-button:hover .button-energy {
+  animation: energy-pulse 2s infinite;
+}
+
+@keyframes energy-pulse {
+  0% {
+    transform: translateX(-100%);
+  }
+  50%, 100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Mejoras en el panel de configuración */
+.settings-panel {
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  background: linear-gradient(135deg, rgba(40, 50, 75, 0.85), rgba(30, 40, 65, 0.85));
+  border-radius: 12px;
+  padding: 15px;
+  width: 250px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(97, 125, 255, 0.2);
+  animation: fade-in 0.3s ease-out;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.settings-panel h3 {
+  color: #ffffff;
+  margin: 0 0 15px;
+  font-size: 1.1rem;
+  text-align: center;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.settings-panel h3::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(97, 125, 255, 0.7), transparent);
+  margin: 8px auto 0;
+}
+
+.settings-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 5px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(55, 65, 90, 0.2), rgba(40, 50, 75, 0.2));
+  transition: all 0.3s ease;
+}
+
+.settings-option:hover {
+  background: linear-gradient(135deg, rgba(55, 65, 90, 0.3), rgba(40, 50, 75, 0.3));
+  transform: translateY(-2px);
+}
+
+.settings-option span {
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.setting-toggle {
+  padding: 5px 15px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(50, 60, 85, 0.8), rgba(35, 45, 70, 0.8));
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1px;
+}
+
+.setting-toggle:hover {
+  background: linear-gradient(135deg, rgba(60, 70, 95, 0.8), rgba(45, 55, 80, 0.8));
+  transform: translateY(-2px);
+}
+
+.setting-toggle.active {
+  background: linear-gradient(135deg, rgba(97, 125, 255, 0.8), rgba(80, 110, 230, 0.8));
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(97, 125, 255, 0.4), 0 0 5px rgba(97, 125, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Adaptaciones responsivas para los nuevos elementos */
+@media (max-width: 480px) {
+  .settings-panel {
+    width: 220px;
+    top: 50px;
+    right: 5px;
+    padding: 12px;
+  }
+  
+  .settings-panel h3 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+  }
+  
+  .settings-option {
+    padding: 6px 5px;
+  }
+  
+  .setting-toggle {
+    padding: 4px 12px;
+    font-size: 0.75rem;
+  }
+  
+  .mode-description,
+  .difficulty-description {
+    font-size: 0.8rem;
+    padding: 6px 8px;
+  }
+  
+  .neon-glow.top-left,
+  .neon-glow.bottom-right {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+/* Para pantallas pequeñas */
+@media (max-height: 600px) {
+  .settings-panel {
+    max-height: 150px;
+  }
+  
+  .mode-description,
+  .difficulty-description {
+    margin-top: 5px;
+    padding: 5px 8px;
+  }
+  
+  .corner-decoration {
+    width: 100px;
+    height: 100px;
+  }
 } 
+
+/* Estilos para el botón de comenzar fijo */
+.fixed-start-button-container {
+  position: relative;
+  width: 100%;
+  padding: 15px;
+  margin-top: 15px;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+.start-button {
+  padding: 15px;
+  font-size: 1.15rem;
+  background: linear-gradient(45deg, #617DFF, #4F65CC);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-weight: 700;
+  box-shadow: 0 8px 25px rgba(97, 125, 255, 0.35), 0 0 15px rgba(97, 125, 255, 0.2);
+  width: 100%;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 480px) {
+  .fixed-start-button-container {
+    padding: 10px;
+    margin-top: 10px;
+  }
+  
+  .start-button {
+    padding: 12px;
+    font-size: 1rem;
+  }
+  
+  .header-settings-container {
+    margin: 3px 0;
+  }
+}
+
+@media (max-height: 600px) {
+  .fixed-start-button-container {
+    padding: 8px;
+    margin-top: 8px;
+  }
+  
+  .start-button {
+    padding: 10px;
+    font-size: 0.95rem;
+  }
+  
+  .header-settings-container {
+    margin: 2px 0;
+  }
+}
+
+/* Media query específica para iPhone */
+@media screen and (max-width: 480px) and (max-height: 900px) {
+  .fixed-start-button-container {
+    position: relative;
+    padding: 12px;
+    margin-top: 10px;
+  }
+  
+  .start-button {
+    padding: 14px;
+  }
+  
+  .settings-panel {
+    max-height: 130px;
+  }
+}
+
+/* Sección principal con opciones de juego */
+.start-game-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 100%;
+  padding: 15px;
+  overflow: auto;
+  max-height: none;
+  scrollbar-width: none;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.start-game-body::-webkit-scrollbar {
+  display: none;
+}
+
+/* Fondo con estrellas espaciales para la sección del cuerpo */
+.start-game-body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 35% 45%, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    radial-gradient(circle at 55% 25%, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    radial-gradient(circle at 75% 65%, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 90% 20%, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 150px 150px;
+  z-index: -1;
+  opacity: 0.8;
+  pointer-events: none;
+  animation: stars-twinkle 8s infinite linear;
+}
+
+@keyframes stars-twinkle {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 480px) {
+  .start-button-container {
+    display: none;
+  }
+  
+  .header-settings-container {
+    top: 10px;
+    right: 10px;
+  }
+  
+  .setting-button {
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+  }
+  
+  .settings-panel {
+    top: 55px;
+    right: 5px;
+    width: 220px;
+    padding: 12px;
+    max-height: 180px;
+  }
+}
+
+@media (max-height: 600px) {
+  .start-button-container {
+    display: none;
+  }
+  
+  .settings-panel {
+    max-height: 150px;
+    padding: 10px;
+  }
+}
+
+/* Media query específica para iPhone */
+@media screen and (max-width: 480px) and (max-height: 900px) {
+  .settings-panel {
+    max-height: 130px;
+    top: 50px;
+    width: 200px;
+  }
+  
+  .setting-button {
+    width: 36px;
+    height: 36px;
+  }
+}
