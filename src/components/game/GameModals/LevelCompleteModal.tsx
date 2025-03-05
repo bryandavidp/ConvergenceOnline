@@ -1,11 +1,8 @@
-import React, { useEffect, useCallback, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useEffect, useState, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { RootState } from '../../../store';
-import { setGameStatus, setLevel } from '../../../store/slices/gameSlice';
 import { audioManager } from '../../../utils/audioManager';
-import logger from '../../../utils/logger';
-import useGameLogic from '../../../hooks/useGameLogic';
-import * as config from '../../../utils/config';
+import * as levelAdapter from '../../../utils/levelAdapter';
 import './GameModals.css';
 
 interface LevelCompleteModalProps {
@@ -13,161 +10,132 @@ interface LevelCompleteModalProps {
   onContinue?: () => void;
 }
 
+/**
+ * Modal que se muestra cuando se completa un nivel
+ */
 const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ isVisible = true, onContinue }) => {
-  const dispatch = useDispatch();
-  const { level, timer, score, boardSize } = useSelector((state: RootState) => state.game);
+  const { level, score, currentPlayMode, currentDifficulty } = useSelector((state: RootState) => state.game);
   const [isClosing, setIsClosing] = useState(false);
-  const { advanceToNextLevel, resetCurrentLevel } = useGameLogic();
+  const [showConfetti, setShowConfetti] = useState(false);
+  const confettiContainerRef = useRef<HTMLDivElement>(null);
   
-  // Verificar si se recibió el bonus por vaciar el tablero
-  const receivedEmptyBoardBonus = score % config.SCORE_VALUES.EMPTY_BOARD_BONUS === 0 && score > 0;
+  // Obtener información del siguiente nivel
+  const nextLevelInfo = levelAdapter.getNextLevelDisplay(
+    level,
+    currentPlayMode,
+    currentDifficulty
+  );
+  
+  // Obtener recompensas del nivel actual
+  const rewards = levelAdapter.getLevelRewards(
+    level,
+    currentPlayMode,
+    currentDifficulty
+  );
   
   useEffect(() => {
     if (isVisible) {
-      setIsClosing(false);
-      logger.info('LevelCompleteModal', 'Nivel completado mostrado', { 
-        level, 
-        timer, 
-        score,
-        boardSize,
-        bonusTableroVacío: receivedEmptyBoardBonus
-      });
       audioManager.play('levelComplete');
+      setShowConfetti(true);
       createConfetti();
     }
-  }, [isVisible, level, timer, score, boardSize, receivedEmptyBoardBonus]);
+  }, [isVisible]);
   
-  const handleNextLevel = useCallback(() => {
+  const handleContinue = () => {
     setIsClosing(true);
-    logger.info('LevelCompleteModal', 'Avanzando al siguiente nivel', { 
-      nivelActual: level,
-      siguienteNivel: level + 1,
-      puntuación: score,
-      tiempo: timer
-    });
-    
     setTimeout(() => {
-      audioManager.play('levelTransition');
-      advanceToNextLevel();
-      
-      // Llamar a la función onContinue si se proporcionó
-      if (onContinue) {
-        onContinue();
-      }
-    }, 500);
-  }, [level, score, timer, advanceToNextLevel, onContinue]);
-  
-  const handleRestart = useCallback(() => {
-    setIsClosing(true);
-    logger.info('LevelCompleteModal', 'Reiniciando juego en el mismo nivel');
-    
-    setTimeout(() => {
-      audioManager.play('start');
-      
-      // Usar la función de resetCurrentLevel para mantener la lógica consistente
-      resetCurrentLevel();
+      setIsClosing(false);
+      if (onContinue) onContinue();
     }, 300);
-  }, [resetCurrentLevel]);
-  
-  // Función para crear efecto de confeti
-  const createConfetti = () => {
-    const container = document.getElementById('confetti-container');
-    if (!container) {
-      logger.error('LevelCompleteModal', 'No se encontró el contenedor de confeti');
-      return;
-    }
-    
-    // Limpiar el contenedor antes de añadir nuevo confeti
-    container.innerHTML = '';
-    
-    // Colores vibrantes para el confeti
-    const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800', '#FF5722'];
-    
-    // Crear 150 piezas de confeti
-    for (let i = 0; i < 150; i++) {
-      const confetti = document.createElement('div');
-      confetti.className = 'confetti';
-      
-      // Posición aleatoria
-      confetti.style.left = `${Math.random() * 100}%`;
-      
-      // Color aleatorio
-      confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-      
-      // Retraso aleatorio para la animación
-      confetti.style.animationDelay = `${Math.random() * 3}s`;
-      
-      // Duración aleatoria para la animación
-      confetti.style.animationDuration = `${3 + Math.random() * 2}s`;
-      
-      // Tamaño aleatorio
-      const size = 5 + Math.random() * 10;
-      confetti.style.width = `${size}px`;
-      confetti.style.height = `${size * 1.5}px`;
-      
-      // Añadir al contenedor
-      container.appendChild(confetti);
-    }
-    
-    logger.info('LevelCompleteModal', 'Efecto de confeti creado con éxito');
   };
   
-  if (!isVisible) return null;
+  // Crear efecto de confeti
+  const createConfetti = () => {
+    if (!confettiContainerRef.current) return;
+    
+    const container = confettiContainerRef.current;
+    const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800', '#FF5722'];
+    
+    // Limpiar confeti existente
+    container.innerHTML = '';
+    
+    // Crear piezas de confeti
+    for (let i = 0; i < 100; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.left = `${Math.random() * 100}%`;
+      confetti.style.animationDelay = `${Math.random() * 3}s`;
+      confetti.style.animationDuration = `${Math.random() * 2 + 2}s`;
+      container.appendChild(confetti);
+    }
+  };
   
-  // Información sobre el siguiente nivel
+  // Renderizar información del siguiente nivel
   const renderNextLevelInfo = () => {
-    const nextLevel = level + 1;
-    
-    // Obtener el tamaño del tablero para el siguiente nivel
-    const nextBoardSize = config.getBoardSizeForLevel(nextLevel);
-    
-    // Obtener el conjunto de iconos para el siguiente nivel
-    const nextLevelIcons = config.getIconSetForLevel(nextLevel);
-    
     return (
       <div className="next-level-info">
-        <h3>Nivel {nextLevel}</h3>
+        <h3>Nivel {nextLevelInfo.level}</h3>
+        
         <div className="level-details">
-          <div className="detail">
-            <span className="label">Tablero:</span>
-            <span className="value">{nextBoardSize}x{nextBoardSize}</span>
+          <div className="detail-item">
+            <span className="detail-label">Tablero:</span>
+            <span className="detail-value">{nextLevelInfo.boardSize}x{nextLevelInfo.boardSize}</span>
           </div>
-          <div className="detail">
-            <span className="label">Iconos:</span>
-            <span className="value">{nextLevelIcons.join(' ')}</span>
+          
+          <div className="detail-item">
+            <span className="detail-label">Objetivos:</span>
+            <span className="detail-value">
+              {nextLevelInfo.objectives.map((obj, index) => (
+                <div key={index}>{obj}</div>
+              ))}
+            </span>
           </div>
+          
+          {nextLevelInfo.specialFeatures.length > 0 && (
+            <div className="detail-item">
+              <span className="detail-label">Características:</span>
+              <span className="detail-value">
+                {nextLevelInfo.specialFeatures.map((feature, index) => (
+                  <div key={index} className="bonus-badge">{feature}</div>
+                ))}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );
   };
   
   return (
-    <div className={`game-modal level-complete ${isClosing ? 'closing' : ''}`}>
+    <div className={`game-modal level-complete ${isVisible ? 'visible' : 'hidden'} ${isClosing ? 'closing' : ''}`}>
       <div className="modal-content">
         <h2>¡Nivel Completado!</h2>
-        <p>Has superado el nivel {level}</p>
-        <p>Tiempo: <span className="highlight">{timer} segundos</span></p>
-        <p>Puntuación: <span className="highlight">{score} puntos</span></p>
         
-        {receivedEmptyBoardBonus && (
+        {rewards.points > 0 && (
           <div className="bonus-badge">
-            ¡Bonus de tablero vacío! +{config.SCORE_VALUES.EMPTY_BOARD_BONUS} puntos
+            +{rewards.points} puntos de bonificación
+          </div>
+        )}
+        
+        {rewards.hints > 0 && (
+          <div className="bonus-badge">
+            +{rewards.hints} pista{rewards.hints !== 1 ? 's' : ''} adicional{rewards.hints !== 1 ? 'es' : ''}
           </div>
         )}
         
         {renderNextLevelInfo()}
         
         <div className="modal-buttons">
-          <button className="modal-button primary" onClick={handleNextLevel}>
-            Siguiente Nivel
-          </button>
-          <button className="modal-button secondary" onClick={handleRestart}>
-            Reintentar Nivel
+          <button className="modal-button primary" onClick={handleContinue}>
+            Continuar
           </button>
         </div>
-        
-        <div id="confetti-container" className="confetti-container"></div>
       </div>
+      
+      {showConfetti && (
+        <div className="confetti-container" ref={confettiContainerRef}></div>
+      )}
     </div>
   );
 };

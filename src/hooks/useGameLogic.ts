@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   incrementScore, 
@@ -19,11 +19,21 @@ import {
   GameDifficulty,
   GamePlayMode,
   setGameMode,
-  setPlayMode
+  setPlayMode,
+/*   changeBoardSize,
+  changeSpawnRate,
+  addScore, 
+  removeIcon, 
+  addIcon,  */
+  GameState, 
+/*   setScore, 
+  resetBoard, 
+  highlightCells, 
+  setHintCooldown */
 } from '../store/slices/gameSlice';
 import { RootState } from '../store';
 import { store } from '../store';
-import { createLogger } from '../utils/logUtils';
+import logger from '../utils/logger';
 import * as config from '../utils/config';
 import { 
   isValidCell, 
@@ -33,13 +43,15 @@ import {
   calculateInitialSpeedForLevel,
   checkBoardForValidMoves,
   findConvergences,
-  findConvergingIcons
+  findConvergingIcons,
+/*   getCellsInSpiral, 
+  areCellsAdjacent, 
+  getRandomEmptyCell */
 } from '../utils/gameUtils';
 import { audioManager } from '../utils/audioManager';
+import * as boardUtils from '../utils/boardUtils';
 import { adjustBoardVisuals } from '../utils/boardUtils';
-
-// Logger específico para este hook
-const logger = createLogger('useGameLogic');
+import * as levelAdapter from '../utils/levelAdapter';
 
 // Constantes de configuración del juego
 const MIN_SPAWN_RATE = 300; // Velocidad máxima (tiempo mínimo entre iconos)
@@ -61,11 +73,14 @@ const useGameLogic = () => {
     boardSize, 
     availableIcons,
     currentPlayMode,
+    currentDifficulty,
     score,
     level,
     highlightedCells,
     hintsRemaining,
-    hintCooldown
+    hintCooldown,
+    timeRemaining,
+    survivalTime
   } = useSelector((state: RootState) => state.game);
   
   // Referencias para temporizadores y estados del juego
@@ -79,6 +94,7 @@ const useGameLogic = () => {
   const timersActiveRef = useRef<boolean>(false);
   const isInitializedRef = useRef<boolean>(false);
   const lastSpawnRateRef = useRef<number | null>(null);
+  const timerRef = useRef<number>(0);
   
   // Función para registrar celda en el DOM (referencias)
   const registerCellRef = useCallback((row: number, col: number, element: HTMLElement | null) => {
@@ -100,7 +116,7 @@ const useGameLogic = () => {
     const boardArray = Array(boardSize).fill(null).map(() => Array(boardSize).fill(null));
     
     if (availableIcons.length < 4) {
-      logger.error('No hay suficientes iconos disponibles para crear un tablero inicial válido');
+      logger.error('No hay suficientes iconos disponibles para crear un tablero inicial válido', `Tamaño: ${boardSize}, Modo: ${currentPlayMode}`);
       return [];
     }
     
@@ -172,7 +188,7 @@ const useGameLogic = () => {
   
   // Inicializar tablero con iconos iniciales
   const initializeBoard = useCallback((size: number = boardSize) => {
-    logger.info('Inicializando tablero', { tamaño: size, modoJuego: currentPlayMode });
+    logger.info('Inicializando tablero', `Tamaño: ${size}, Modo: ${currentPlayMode}`);
     
     const newBoard = Array(size).fill(null).map(() => Array(size).fill(null));
     
@@ -312,11 +328,11 @@ const useGameLogic = () => {
           // Si hay pocos iconos, pasar al siguiente nivel
           if (occupationPercentage <= 30) {
             dispatch(setGameStatus('levelCompleted'));
-            logger.info(`Tablero con pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`);
+            logger.info(`Tablero con pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`, `Tamaño: ${currentBoardSize}, Modo: ${currentPlayMode}`);
           } else {
             // Si no, game over
             dispatch(setGameStatus('gameOver'));
-            logger.info(`Tablero lleno sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`);
+            logger.info(`Tablero lleno sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`, `Tamaño: ${currentBoardSize}, Modo: ${currentPlayMode}`);
           }
         } else {
           // Si hay movimientos válidos, el juego continúa aunque el tablero esté lleno
@@ -562,12 +578,12 @@ const useGameLogic = () => {
             // Pocos iconos sin movimientos válidos, nivel completado
             dispatch(setGameStatus('levelCompleted'));
             audioManager.play('levelComplete');
-            logger.info(`Pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`);
+            logger.info(`Pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`, `Tamaño: ${currentBoard}, Modo: ${currentPlayMode}`);
           } else {
             // Muchos iconos sin movimientos válidos, game over
             dispatch(setGameStatus('gameOver'));
             audioManager.play('gameOver');
-            logger.info(`No hay movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`);
+            logger.info(`No hay movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`, `Tamaño: ${currentBoard}, Modo: ${currentPlayMode}`);
           }
         }
         
@@ -826,6 +842,40 @@ const useGameLogic = () => {
     }
   }, [dispatch, initializeBoard, startTimers, stopTimers, status]);
 
+  // En la función checkLevelCompleted, reemplazar la lógica actual con el adaptador:
+  const checkLevelCompleted = () => {
+    if (status !== 'playing' || iconCount === 0) return false;
+    
+    // Usar el nuevo sistema de niveles a través del adaptador
+    return levelAdapter.isLevelCompleted(
+      level,
+      currentPlayMode,
+      score,
+      iconCount,
+      boardSize,
+      timeRemaining,
+      survivalTime,
+      timerRef.current // Pasar el timer actual para verificar tiempo mínimo de juego
+    );
+  };
+  
+  // En la función configureBoardForNewLevel, utilizar el nuevo sistema:
+  const configureBoardForNewLevel = () => {
+    logger.info(`Configurando tablero para nivel ${level}`, `Tamaño: ${boardSize}, Modo: ${currentPlayMode}`);
+    
+    // Obtener la configuración del nivel desde el nuevo sistema
+    const newBoardSize = levelAdapter.getBoardSizeForLevel(level);
+    const newSpawnRate = levelAdapter.getLevelSpawnRate(level, currentPlayMode, currentDifficulty);
+    const newIcons = levelAdapter.getIconSetForLevel(level);
+    
+    // Aplicar la configuración
+    dispatch(setBoardSize(newBoardSize));
+    dispatch(setSpawnRate(newSpawnRate));
+    dispatch(setAvailableIcons(newIcons));
+    
+    // Resto de la configuración existente...
+  };
+
   return {
     board,
     boardSize,
@@ -846,7 +896,9 @@ const useGameLogic = () => {
     findConvergingIcons: useCallback((row: number, col: number) => {
       return findConvergingIcons(board, row, col, boardSize);
     }, [board, boardSize]),
-    changeGameConfig
+    changeGameConfig,
+    checkLevelCompleted,
+    configureBoardForNewLevel
   };
 };
 

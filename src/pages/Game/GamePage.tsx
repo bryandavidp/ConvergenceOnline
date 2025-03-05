@@ -18,11 +18,13 @@ import {
   changeSpawnRate,
   adjustBoardVisuals
 } from '../../utils/boardUtils';
+import { initLevelSystem } from '../../utils/initLevelSystem';
+import * as levelAdapter from '../../utils/levelAdapter';
 import './GamePage.css';
 
 const GamePage: React.FC = () => {
   const dispatch = useDispatch();
-  const { status, level, boardSize, currentPlayMode, score, timer, spawnRate } = useSelector((state: RootState) => state.game);
+  const { status, level, boardSize, currentPlayMode, currentDifficulty, score, timer, spawnRate } = useSelector((state: RootState) => state.game);
   const { initializeBoard, stopTimers, startTimers, changeGameConfig } = useGameLogic();
   // Referencia para controlar las inicializaciones repetidas
   const isInitializingRef = useRef<boolean>(false);
@@ -192,6 +194,15 @@ const GamePage: React.FC = () => {
     }
   }, [level, boardSize, status, initializeBoard, stopTimers]);
   
+  // Inicializar el sistema de niveles al cargar la aplicación
+  useEffect(() => {
+    // Inicializar el sistema de niveles
+    const levelSystemInfo = initLevelSystem();
+    logger.info('GamePage', 'Sistema de niveles inicializado', levelSystemInfo);
+    
+    // Resto del código de inicialización existente...
+  }, []);
+  
   // Manejar cambio de dificultad y modo
   const handleApplyConfig = (difficulty: any, mode: any) => {
     logger.info('GamePage', `Aplicando configuración: ${difficulty}, ${mode}`);
@@ -223,9 +234,28 @@ const GamePage: React.FC = () => {
   };
 
   const handleNextLevel = () => {
-    stopTimers();
-    dispatch(setLevel(level + 1));
-    dispatch(setGameStatus('startScreen'));
+    const nextLevel = level + 1;
+    
+    // Usar el nuevo sistema de niveles para obtener la configuración
+    const nextLevelInfo = levelAdapter.getNextLevelDisplay(
+      level,
+      currentPlayMode,
+      currentDifficulty
+    );
+    
+    logger.info('GamePage', `Avanzando al nivel ${nextLevel}`, nextLevelInfo);
+    
+    // Actualizar el nivel
+    dispatch(setLevel(nextLevel));
+    
+    // Reiniciar el tablero para el nuevo nivel
+    initializeBoard();
+    
+    // Cambiar el estado del juego a 'playing'
+    dispatch(setGameStatus('playing'));
+    
+    // Reproducir sonido
+    audioManager.play('levelStart');
   };
 
   return (
