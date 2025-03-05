@@ -385,23 +385,20 @@ const GamePage: React.FC = () => {
         </div>
         
         {/* Modales del juego */}
-        {status === 'gameOver' && (
-          <GameOverModal
-            onRestart={handleRestartClick}
-          />
-        )}
+        <GameOverModal
+          isVisible={status === 'gameOver'}
+          onRestart={handleRestartClick}
+        />
         
-        {status === 'levelCompleted' && (
-          <LevelCompleteModal
-            onContinue={handleNextLevel}
-          />
-        )}
+        <LevelCompleteModal
+          isVisible={status === 'levelCompleted'}
+          onContinue={handleNextLevel}
+        />
         
-        {status === 'startScreen' && (
-          <StartGameModal
-            onStart={handleStartGame}
-          />
-        )}
+        <StartGameModal
+          isVisible={status === 'startScreen'}
+          onStart={handleStartGame}
+        />
       </div>
     </div>
   );
