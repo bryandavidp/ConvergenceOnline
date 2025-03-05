@@ -325,12 +325,12 @@ const GamePage: React.FC = () => {
           <GameHUD />
           
           {/* Puntuación máxima en una posición más natural */}
-          <div className="high-score-container">
+          {/* <div className="high-score-container">
             <div className="high-score-display">
               <span className="high-score-icon">🏆</span>
               <span className="high-score-value">{highScore}</span>
             </div>
-          </div>
+          </div> */}
           
           {/* Panel de control simplificado */}
           <div className="game-control-panel">
@@ -373,12 +373,6 @@ const GamePage: React.FC = () => {
             )}
           </div>
           
-          {/* Selector de configuración */}
-          {showConfig && (
-            <div className="config-section">
-              <GameConfigSelector onApplyConfig={handleApplyConfig} />
-            </div>
-          )}
         </div>
         
         {/* Sección del tablero del juego */}

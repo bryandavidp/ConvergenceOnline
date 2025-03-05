@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { setGameMode, setPlayMode, setGameStatus, GameDifficulty, GamePlayMode } from '../../../store/slices/gameSlice';
 import { audioManager } from '../../../utils/audioManager';
@@ -13,10 +13,14 @@ interface StartGameModalProps {
 
 const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onStart }) => {
   const dispatch = useDispatch();
-  const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>('normal');
-  const [selectedMode, setSelectedMode] = useState<GamePlayMode>('classic');
+  // Recuperar preferencias guardadas o usar valores predeterminados
+  const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>(
+    localStorage.getItem('gameDifficulty') as GameDifficulty || 'normal'
+  );
+  const [selectedMode, setSelectedMode] = useState<GamePlayMode>(
+    localStorage.getItem('gamePlayMode') as GamePlayMode || 'classic'
+  );
   const [isClosing, setIsClosing] = useState(false);
-  const [showDescription, setShowDescription] = useState<string | null>(null);
   
   // Estados para la configuración
   const [soundEnabled, setSoundEnabled] = useState<boolean>(
@@ -27,6 +31,10 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   );
   const [showSettings, setShowSettings] = useState<boolean>(false);
   
+  // Referencia para cerrar el panel de configuración al hacer clic fuera
+  const settingsPanelRef = useRef<HTMLDivElement>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  
   useEffect(() => {
     // Reiniciar el estado de cierre cuando el modal vuelve a ser visible
     if (isVisible) {
@@ -34,19 +42,39 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
     }
     
     // Aplicar la configuración de sonido y música
-    // Solo actualizamos si el estado no coincide con el audioManager
     if (audioManager.enabled !== soundEnabled) {
-      audioManager.toggleSound(); // Esto cambiará el estado en el audioManager
+      audioManager.toggleSound();
     }
     
     if (audioManager.musicEnabled !== musicEnabled) {
-      audioManager.toggleMusic(); // Esto cambiará el estado en el audioManager
+      audioManager.toggleMusic();
     }
-    
-    // No necesitamos guardar en localStorage porque audioManager ya lo hace
   }, [isVisible, soundEnabled, musicEnabled]);
   
+  // Efecto para cerrar la configuración al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showSettings && 
+          settingsPanelRef.current && 
+          settingsButtonRef.current &&
+          !settingsPanelRef.current.contains(event.target as Node) && 
+          !settingsButtonRef.current.contains(event.target as Node)) {
+        setShowSettings(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSettings]);
+  
   const handleStartGame = () => {
+    // Efectos visuales y auditivos al iniciar el juego
+    if (soundEnabled) {
+      audioManager.play('start');
+    }
+    
     // Mostrar animación de cierre
     setIsClosing(true);
     
@@ -66,9 +94,6 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
       // Cambiar el estado del juego a 'playing'
       dispatch(setGameStatus('playing'));
       
-      // Reproducir sonido de inicio
-      audioManager.play('start');
-      
       // Llamar a la función onStart si se proporcionó
       if (onStart) {
         onStart();
@@ -76,56 +101,45 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
     }, 500);
   };
   
-  const toggleDescription = (type: string, id: string) => {
-    if (showDescription === id) {
-      setShowDescription(null);
-    } else {
-      setShowDescription(id);
+  const handleModeSelect = (mode: GamePlayMode) => {
+    setSelectedMode(mode);
+    // Reproducir sonido de selección
+    if (soundEnabled) {
+      audioManager.play('select');
     }
   };
   
-  const getDifficultyDescription = (difficulty: GameDifficulty): string => {
-    switch (difficulty) {
-      case 'easy': return 'Ritmo lento, penalizaciones mínimas. Ideal para principiantes.';
-      case 'normal': return 'Equilibrio entre desafío y diversión. Recomendado para la mayoría de jugadores.';
-      case 'hard': return 'Mayor velocidad y penalizaciones. Para jugadores experimentados.';
-      case 'tutorial': return 'Modo de aprendizaje con instrucciones paso a paso.';
-      default: return '';
+  const handleDifficultySelect = (difficulty: GameDifficulty) => {
+    setSelectedDifficulty(difficulty);
+    // Reproducir sonido de selección
+    if (soundEnabled) {
+      audioManager.play('select');
     }
   };
   
-  const getModeDescription = (mode: GamePlayMode): string => {
-    switch (mode) {
-      case 'classic': 
-        return 'El tablero comienza pequeño y crece con los niveles. La velocidad aumenta progresivamente. Gana puntos eliminando iconos y avanza limpiando el tablero.';
-      case 'timed': 
-        return 'Contrarreloj con tiempo limitado por nivel. El tablero tiene tamaño fijo. Consigue tiempo extra haciendo combos. Pasa de nivel completando objetivos antes de que se acabe el tiempo.';
-      case 'survival': 
-        return 'Tablero grande con generación de iconos que acelera gradualmente. Incluye iconos especiales que limpian filas o columnas enteras. ¿Cuánto tiempo puedes sobrevivir?';
-      default: return '';
-    }
-  };
-  
-  // Maneja el cambio en la configuración de sonido
   const toggleSound = () => {
-    // Actualizar el estado del componente
-    setSoundEnabled(!soundEnabled);
-    
-    // Reproducir un sonido al activar
-    if (!soundEnabled) {
+    const newState = !soundEnabled;
+    setSoundEnabled(newState);
+    localStorage.setItem('soundEnabled', String(newState));
+    if (newState) {
       audioManager.play('click');
     }
   };
   
-  // Maneja el cambio en la configuración de música
   const toggleMusic = () => {
-    setMusicEnabled(!musicEnabled);
+    const newState = !musicEnabled;
+    setMusicEnabled(newState);
+    localStorage.setItem('musicEnabled', String(newState));
+    if (soundEnabled) {
+      audioManager.play('click');
+    }
   };
   
-  // Maneja mostrar/ocultar el panel de configuración
   const toggleSettings = () => {
     setShowSettings(!showSettings);
-    audioManager.play('click');
+    if (soundEnabled) {
+      audioManager.play('click');
+    }
   };
   
   // Si el modal no es visible, no renderizar nada
@@ -147,58 +161,6 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
               </div>
             ))}
           </div>
-          
-          {/* Panel de configuraciones */}
-          <div className="game-settings-panel">
-            <button 
-              className={`setting-button ${showSettings ? 'active' : ''}`} 
-              onClick={toggleSettings}
-              aria-label="Configuración"
-            >
-              ⚙️
-            </button>
-            <button 
-              className={`setting-button ${soundEnabled ? 'active' : ''}`} 
-              onClick={toggleSound}
-              aria-label={soundEnabled ? "Desactivar sonidos" : "Activar sonidos"}
-            >
-              {soundEnabled ? '🔊' : '🔇'}
-            </button>
-            <button 
-              className={`setting-button ${musicEnabled ? 'active' : ''}`} 
-              onClick={toggleMusic}
-              aria-label={musicEnabled ? "Desactivar música" : "Activar música"}
-            >
-              {musicEnabled ? '🎵' : '🔇'}
-            </button>
-          </div>
-          
-          {/* Panel de configuración expandido */}
-          {showSettings && (
-            <div className="settings-panel">
-              <h3>Configuración</h3>
-              <div className="settings-options">
-                <div className="settings-option">
-                  <span>Música</span>
-                  <button 
-                    className={`setting-toggle ${musicEnabled ? 'active' : ''}`}
-                    onClick={toggleMusic}
-                  >
-                    {musicEnabled ? 'ON' : 'OFF'}
-                  </button>
-                </div>
-                <div className="settings-option">
-                  <span>Sonidos</span>
-                  <button 
-                    className={`setting-toggle ${soundEnabled ? 'active' : ''}`}
-                    onClick={toggleSound}
-                  >
-                    {soundEnabled ? 'ON' : 'OFF'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
         
         <div className="start-game-body">
@@ -207,37 +169,26 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
             <div className="mode-options">
               <div 
                 className={`game-option ${selectedMode === 'classic' ? 'active' : ''}`}
-                onClick={() => setSelectedMode('classic')}
-                onMouseEnter={() => toggleDescription('mode', 'classic')}
-                onMouseLeave={() => toggleDescription('mode', 'classic')}
+                onClick={() => handleModeSelect('classic')}
               >
-                <span className="option-icon">🏆</span>
+                <span className="option-icon">🏅</span>
                 <span>Clásico</span>
               </div>
               <div 
                 className={`game-option ${selectedMode === 'timed' ? 'active' : ''}`}
-                onClick={() => setSelectedMode('timed')}
-                onMouseEnter={() => toggleDescription('mode', 'timed')}
-                onMouseLeave={() => toggleDescription('mode', 'timed')}
+                onClick={() => handleModeSelect('timed')}
               >
-                <span className="option-icon">⏱️</span>
+                <span className="option-icon">⏳</span>
                 <span>Contrarreloj</span>
               </div>
               <div 
                 className={`game-option ${selectedMode === 'survival' ? 'active' : ''}`}
-                onClick={() => setSelectedMode('survival')}
-                onMouseEnter={() => toggleDescription('mode', 'survival')}
-                onMouseLeave={() => toggleDescription('mode', 'survival')}
+                onClick={() => handleModeSelect('survival')}
               >
                 <span className="option-icon">🔥</span>
                 <span>Supervivencia</span>
               </div>
             </div>
-            {showDescription && showDescription.match(/classic|timed|survival/) && (
-              <div className="option-description">
-                {getModeDescription(showDescription as GamePlayMode)}
-              </div>
-            )}
           </div>
           
           <div className="form-group">
@@ -245,43 +196,91 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
             <div className="difficulty-options">
               <div 
                 className={`game-option ${selectedDifficulty === 'easy' ? 'active' : ''}`}
-                onClick={() => setSelectedDifficulty('easy')}
-                onMouseEnter={() => toggleDescription('difficulty', 'easy')}
-                onMouseLeave={() => toggleDescription('difficulty', 'easy')}
+                onClick={() => handleDifficultySelect('easy')}
               >
-                <span className="option-icon">😊</span>
+                <span className="option-icon">🌱</span>
                 <span>Fácil</span>
               </div>
               <div 
                 className={`game-option ${selectedDifficulty === 'normal' ? 'active' : ''}`}
-                onClick={() => setSelectedDifficulty('normal')}
-                onMouseEnter={() => toggleDescription('difficulty', 'normal')}
-                onMouseLeave={() => toggleDescription('difficulty', 'normal')}
+                onClick={() => handleDifficultySelect('normal')}
               >
-                <span className="option-icon">😐</span>
+                <span className="option-icon">🌟</span>
                 <span>Normal</span>
               </div>
               <div 
                 className={`game-option ${selectedDifficulty === 'hard' ? 'active' : ''}`}
-                onClick={() => setSelectedDifficulty('hard')}
-                onMouseEnter={() => toggleDescription('difficulty', 'hard')}
-                onMouseLeave={() => toggleDescription('difficulty', 'hard')}
+                onClick={() => handleDifficultySelect('hard')}
               >
-                <span className="option-icon">😈</span>
+                <span className="option-icon">🔮</span>
                 <span>Difícil</span>
               </div>
             </div>
-            {showDescription && showDescription.match(/easy|normal|hard|tutorial/) && (
-              <div className="option-description">
-                {getDifficultyDescription(showDescription as GameDifficulty)}
+          </div>
+          
+          {/* Panel de configuraciones movido debajo de la dificultad */}
+          <div className="settings-container">
+            <div className="settings-buttons">
+              <button 
+                ref={settingsButtonRef}
+                className={`setting-button ${showSettings ? 'active' : ''}`} 
+                onClick={toggleSettings}
+                aria-label="Configuración"
+              >
+                ⚙️
+              </button>
+              <button 
+                className={`setting-button ${soundEnabled ? 'active' : ''}`} 
+                onClick={toggleSound}
+                aria-label={soundEnabled ? "Desactivar sonidos" : "Activar sonidos"}
+              >
+                {soundEnabled ? '🔊' : '🔇'}
+              </button>
+              <button 
+                className={`setting-button ${musicEnabled ? 'active' : ''}`} 
+                onClick={toggleMusic}
+                aria-label={musicEnabled ? "Desactivar música" : "Activar música"}
+              >
+                {musicEnabled ? '🎵' : '🔇'}
+              </button>
+            </div>
+            
+            {/* Panel de configuración expandido */}
+            {showSettings && (
+              <div className="settings-panel" ref={settingsPanelRef}>
+                <h3>Configuración</h3>
+                <div className="settings-options">
+                  <div className="settings-option">
+                    <span>Música</span>
+                    <button 
+                      className={`setting-toggle ${musicEnabled ? 'active' : ''}`}
+                      onClick={toggleMusic}
+                    >
+                      {musicEnabled ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                  <div className="settings-option">
+                    <span>Sonidos</span>
+                    <button 
+                      className={`setting-toggle ${soundEnabled ? 'active' : ''}`}
+                      onClick={toggleSound}
+                    >
+                      {soundEnabled ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </div>
         
         <div className="start-game-footer">
-          <button className="start-button" onClick={handleStartGame}>
-            ¡Jugar Ahora!
+          <button 
+            className="start-button" 
+            onClick={handleStartGame}
+            aria-label="Comenzar juego"
+          >
+            ¡JUGAR AHORA!
           </button>
         </div>
       </div>
