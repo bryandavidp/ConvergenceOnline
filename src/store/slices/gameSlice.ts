@@ -27,6 +27,8 @@ export interface GameState {
   canEmptyBoardBonus: boolean;
   speedMultiplier: number;
   highlightedCells: {row: number, col: number}[];
+  // Preferencias de interfaz
+  darkMode: boolean;
   // Nuevas propiedades para los modos de juego
   // Modo contrarreloj
   timeRemaining: number; // Tiempo restante en segundos para el modo contrarreloj
@@ -66,11 +68,34 @@ const initialState: GameState = {
   specialIconsEnabled: false,
   levelScoreTarget: 1000, // Puntuación objetivo inicial
   levelOccupationTarget: 70, // Porcentaje de ocupación objetivo inicial
+  darkMode: false,
 };
+
+// Función para inicializar el estado del juego
+function initializeGameState(): GameState {
+  try {
+    // Intentar cargar el modo oscuro desde localStorage
+    const savedDarkMode = localStorage.getItem('darkMode');
+    const initialDarkMode = savedDarkMode ? savedDarkMode === 'true' : false;
+    
+    // Intentar cargar la puntuación máxima desde localStorage
+    const savedHighScore = localStorage.getItem('highScore');
+    const initialHighScore = savedHighScore ? parseInt(savedHighScore) : 0;
+    
+    return {
+      ...initialState,
+      darkMode: initialDarkMode,
+      highScore: initialHighScore
+    };
+  } catch (error) {
+    logger.error('Game', 'Error al inicializar el estado del juego:', error);
+    return initialState;
+  }
+}
 
 const gameSlice = createSlice({
   name: 'game',
-  initialState,
+  initialState: initializeGameState(),
   reducers: {
     incrementScore: (state, action: PayloadAction<number>) => {
       state.score += action.payload;
@@ -400,7 +425,17 @@ const gameSlice = createSlice({
         state.highScore = parseInt(savedHighScore, 10);
         logger.info('Game', `Puntuación máxima cargada: ${state.highScore}`);
       }
-    }
+    },
+    
+    // Toggle del modo oscuro
+    setDarkMode: (state, action: PayloadAction<boolean>) => {
+      state.darkMode = action.payload;
+      // Guardar preferencia en localStorage
+      localStorage.setItem('darkMode', action.payload.toString());
+    },
+  },
+  extraReducers: (builder) => {
+    // ... extra reducers existentes
   }
 });
 
@@ -467,7 +502,8 @@ export const {
   setLevelTimeLimit,
   addTimeBonus,
   setLevelTarget,
-  addIcon
+  addIcon,
+  setDarkMode
 } = gameSlice.actions;
 
 export default gameSlice.reducer;

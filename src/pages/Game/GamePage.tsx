@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { setGameStatus, setLevel } from '../../store/slices/gameSlice';
+import { setGameStatus, setLevel, setDarkMode } from '../../store/slices/gameSlice';
 import logger from '../../utils/logger';
 import useGameLogic from '../../hooks/useGameLogic';
 import GameBoard from '../../components/game/GameBoard/GameBoard';
@@ -22,9 +22,35 @@ import { initLevelSystem } from '../../utils/initLevelSystem';
 import * as levelAdapter from '../../utils/levelAdapter';
 import './GamePage.css';
 
+// Iconos para los botones
+const ICONS = {
+  RESTART: '🔄',
+  PAUSE: '⏸️',
+  PLAY: '▶️',
+  HINT: '💡',
+  DARK_MODE: '🌙',
+  LIGHT_MODE: '☀️',
+  SOUND_ON: '🔊',
+  SOUND_OFF: '🔇',
+  HOME: '🏠',
+  INFO: 'ℹ️',
+  SETTINGS: '⚙️'
+};
+
 const GamePage: React.FC = () => {
   const dispatch = useDispatch();
-  const { status, level, boardSize, currentPlayMode, currentDifficulty, score, timer, spawnRate } = useSelector((state: RootState) => state.game);
+  const { 
+    status, 
+    level, 
+    boardSize, 
+    currentPlayMode, 
+    currentDifficulty, 
+    score, 
+    timer, 
+    spawnRate,
+    darkMode,
+    highScore
+  } = useSelector((state: RootState) => state.game);
   const { initializeBoard, stopTimers, startTimers, changeGameConfig } = useGameLogic();
   // Referencia para controlar las inicializaciones repetidas
   const isInitializingRef = useRef<boolean>(false);
@@ -37,10 +63,21 @@ const GamePage: React.FC = () => {
   const [isMobile, setIsMobile] = useState<boolean>(false);
   // Estado para aplicar pantalla completa
   const [isFullscreen, setIsFullscreen] = useState<boolean>(true);
+  // Estado para mostrar panel de ayuda
+  const [showHelp, setShowHelp] = useState<boolean>(false);
   
   // Referencias a los elementos del tablero
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const boardElementRef = useRef<HTMLDivElement>(null);
+  
+  // Efecto para cambiar el tema oscuro/claro
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }, [darkMode]);
   
   // Efecto para detectar dispositivo móvil
   useEffect(() => {
@@ -260,18 +297,81 @@ const GamePage: React.FC = () => {
     audioManager.play('levelStart');
   };
 
+  // Nuevas funciones para los controles
+  const toggleDarkMode = () => {
+    dispatch(setDarkMode(!darkMode));
+    audioManager.play('click');
+  };
+  
+  const toggleHelp = () => {
+    setShowHelp(!showHelp);
+    audioManager.play('click');
+  };
+  
+  const toggleSound = () => {
+    audioManager.toggleSound();
+    audioManager.play('click');
+  };
+  
   // Determinar las clases del contenedor principal
-  const gamePageClasses = `game-page ${isFullscreen ? 'game-fullscreen' : ''}`;
+  const gamePageClasses = `game-page ${isFullscreen ? 'game-fullscreen' : ''} ${darkMode ? 'dark-mode' : 'light-mode'}`;
   
   return (
     <div className={gamePageClasses}>
       <div className="game-content">
-        {/* Resto del contenido existente */}
-        
         {/* Sección de información del juego */}
         <div className="game-info-section">
           {/* HUD del juego */}
           <GameHUD />
+          
+          {/* Puntuación máxima en una posición más natural */}
+          <div className="high-score-container">
+            <div className="high-score-display">
+              <span className="high-score-icon">🏆</span>
+              <span className="high-score-value">{highScore}</span>
+            </div>
+          </div>
+          
+          {/* Panel de control simplificado */}
+          <div className="game-control-panel">
+            <div className="control-buttons">
+              {status === 'playing' ? (
+                <button className="control-btn pause-btn" onClick={handlePlayPauseClick}>
+                  {ICONS.PAUSE}
+                </button>
+              ) : status === 'paused' ? (
+                <button className="control-btn play-btn" onClick={handlePlayPauseClick}>
+                  {ICONS.PLAY}
+                </button>
+              ) : null}
+              
+              <button className="control-btn restart-btn" onClick={handleRestartClick}>
+                {ICONS.RESTART}
+              </button>
+              
+              <button className="control-btn theme-btn" onClick={toggleDarkMode}>
+                {darkMode ? ICONS.LIGHT_MODE : ICONS.DARK_MODE}
+              </button>
+              
+              <button className="control-btn sound-btn" onClick={toggleSound}>
+                {audioManager.enabled ? ICONS.SOUND_ON : ICONS.SOUND_OFF}
+              </button>
+              
+              <button className="control-btn help-btn" onClick={toggleHelp}>
+                {ICONS.INFO}
+              </button>
+            </div>
+            
+            {showHelp && (
+              <div className="help-panel">
+                <h3>Cómo jugar</h3>
+                <p>👉 Haz clic en los iconos para seleccionarlos</p>
+                <p>👉 Cuando encuentres dos o más iguales, se eliminarán automáticamente</p>
+                <p>👉 Completa el nivel eliminando todos los iconos</p>
+                <button className="close-help-btn" onClick={toggleHelp}>Cerrar</button>
+              </div>
+            )}
+          </div>
           
           {/* Selector de configuración */}
           {showConfig && (
