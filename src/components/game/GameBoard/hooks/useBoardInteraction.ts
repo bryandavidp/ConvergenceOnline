@@ -10,13 +10,16 @@ import {
   setSpawnRate,
   setGameStatus,
   updateBoard,
-  setIconCount
+  setIconCount,
+  addIcon
 } from '../../../../store/slices/gameSlice';
 import { findConvergences } from '../utils/convergenceUtils';
 import { findHintPosition, getHighlightedCells, canUseHint, findConvergingIcons as findConvergingIconsUtil } from '../utils/hintUtils';
 import { audioManager } from '../../../../utils/audioManager';
 import logger from '../../../../utils/logger';
 import * as config from '../../../../utils/config';
+import * as levelAdapter from '../../../../utils/levelAdapter';
+import * as gameUtils from '../../../../utils/gameUtils';
 
 /**
  * Hook para gestionar la interacción con el tablero
@@ -501,6 +504,74 @@ const useBoardInteraction = () => {
       // No hay convergencia, feedback inmediato
       audioManager.play("invalidMove");
       
+      // Obtener la cantidad de iconos de penalización según el nivel actual
+      const currentLevel = store.getState().game.level;
+      
+      try {
+        // Número de iconos de penalización simplificado por nivel
+        const penaltyIconCount = Math.min(4, Math.max(1, Math.floor(currentLevel / 2)));
+        
+        if (penaltyIconCount > 0) {
+          logger.info('Interacción', `Aplicando penalización: añadiendo ${penaltyIconCount} iconos`);
+          
+          // Lista para almacenar las posiciones vacías
+          const emptyCells: { row: number, col: number }[] = [];
+          
+          // Encontrar todas las celdas vacías
+          for (let r = 0; r < boardSize; r++) {
+            for (let c = 0; c < boardSize; c++) {
+              if (board && board[r] && board[r][c] === null) {
+                emptyCells.push({ row: r, col: c });
+              }
+            }
+          }
+          
+          // Si hay celdas vacías disponibles
+          if (emptyCells.length > 0) {
+            // Mezclar el array para selección aleatoria
+            for (let i = emptyCells.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [emptyCells[i], emptyCells[j]] = [emptyCells[j], emptyCells[i]];
+            }
+            
+            // Colocar los iconos (limitar a la cantidad disponible de celdas)
+            const iconsToAdd = Math.min(penaltyIconCount, emptyCells.length);
+            
+            for (let i = 0; i < iconsToAdd; i++) {
+              const cell = emptyCells[i];
+              // Seleccionar un icono aleatorio
+              const randomIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
+              
+              // Añadir el icono al tablero
+              dispatch(addIcon({
+                row: cell.row,
+                col: cell.col,
+                icon: randomIcon,
+                isPenalty: true
+              }));
+              
+              // Animación visual
+              const cellElement = getCellElement(cell.row, cell.col);
+              if (cellElement) {
+                // Marcar como icono de penalización con una clase CSS
+                cellElement.classList.add('penalty-icon');
+                
+                // Eliminar la clase después de 3.5 segundos para terminar la animación
+                const animTimer = setTimeout(() => {
+                  cellElement.classList.remove('penalty-icon');
+                }, 3500);
+                
+                // Registrar el temporizador para limpiarlo si es necesario
+                addAnimationTimer(animTimer);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logger.error('Interacción', `Error al aplicar penalización: ${errorMessage}`);
+      }
+      
       // Velocidad de penalización (opcional)
       const MIN_SPAWN_RATE = 500; // Valor mínimo (más rápido) para el spawn rate
       const APPLY_PENALTY = true; // Si queremos aplicar penalización
@@ -528,7 +599,9 @@ const useBoardInteraction = () => {
     setShowPenaltyAlert,
     spawnRate,
     highlightedCells,
-    addAnimationTimer
+    addAnimationTimer,
+    boardSize,
+    availableIcons
   ]);
   
   /**
@@ -598,162 +671,28 @@ const useBoardInteraction = () => {
       (gridElement as HTMLElement).style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
       (gridElement as HTMLElement).style.gridTemplateRows = `repeat(${boardSize}, 1fr)`;
     }
-    
-    // No necesitamos ajustar las celdas individualmente ya que 
-    // están configuradas con CSS para adaptarse automáticamente
   }, [boardSize]);
   
-  // Añadir una función específica para detectar situaciones especiales como la de la imagen
-  const detectSpecialGameOverCases = useCallback(() => {
-    if (!board || board.length === 0) return;
-    
-    // Verificar el estado del tablero
-    const { iconCount, status } = store.getState().game;
-    
-    if (status !== 'playing') return;
-    
-    // Contar tipos de iconos diferentes en el tablero
-    const uniqueIcons = new Set<string>();
-    let singleIconCounts: Record<string, number> = {};
-    
-    for (let row = 0; row < boardSize; row++) {
-      for (let col = 0; col < boardSize; col++) {
-        // Comprobación de seguridad para evitar error "Cannot read properties of undefined"
-        if (!board || !board[row]) continue;
-        
-        const cell = board[row][col];
-        if (cell !== null) {
-          uniqueIcons.add(cell);
-          singleIconCounts[cell] = (singleIconCounts[cell] || 0) + 1;
-        }
-      }
-    }
-    
-    // Si hay muy pocos iconos y son todos diferentes, no hay convergencia posible
-    if (uniqueIcons.size >= 2 && uniqueIcons.size === iconCount && iconCount <= 3) {
-      // Verificar si hay algún icono con al menos 3 instancias (podría formar convergencia)
-      const hasConvergencePossibility = Object.values(singleIconCounts).some(count => count >= 3);
-      
-      if (!hasConvergencePossibility) {
-        logger.info('GameBoard', `Caso especial detectado: ${iconCount} iconos diferentes sin posibilidad de convergencia.`);
-        
-        // Determinar si completar nivel o game over según cantidad de iconos
-        if (iconCount <= 2) {
-          logger.info('GameBoard', 'Solo quedan 2 o menos iconos diferentes. Avanzando al siguiente nivel.');
-          dispatch(setGameStatus('levelCompleted'));
-        } else {
-          const totalCells = boardSize * boardSize;
-          const occupationPercentage = (iconCount / totalCells) * 100;
-          
-          if (occupationPercentage <= 30) {
-            logger.info('GameBoard', `Pocos iconos (${iconCount}) sin posibilidad de convergencia. Nivel completado.`);
-            dispatch(setGameStatus('levelCompleted'));
-          } else {
-            logger.info('GameBoard', `No hay convergencias posibles. Game over.`);
-            dispatch(setGameStatus('gameOver'));
-          }
-        }
-      }
-    }
-  }, [board, boardSize, dispatch]);
-  
-  // Verificación inmediata del estado del tablero
-  const checkBoardStateImmediately = useCallback(() => {
-    // Verificar si el juego está en curso
-    if (status !== 'playing' || !board) return;
-    
-    const hasMovesAvailable = hasValidMoves();
-    
-    if (!hasMovesAvailable) {
-      // Verificar casos especiales primero (tablero con pocos iconos)
-      const { iconCount } = store.getState().game;
-      const totalCells = boardSize * boardSize;
-      
-      // Contar tipos de iconos diferentes
-      const uniqueIcons = new Set<string>();
-      for (let row = 0; row < boardSize; row++) {
-        for (let col = 0; col < boardSize; col++) {
-          const cell = board[row][col];
-          if (cell !== null) {
-            uniqueIcons.add(cell);
-          }
-        }
-      }
-      
-      // Si hay 2 o menos iconos y todos son diferentes
-      if (iconCount <= 2 && uniqueIcons.size === iconCount) {
-        logger.info('GameBoard', `Detección inmediata: ${iconCount} iconos sin convergencia posible. Nivel completado.`);
-        dispatch(setGameStatus('levelCompleted'));
-        return;
-      }
-      
-      // Calcular ocupación para otros casos
-      const occupationPercentage = (iconCount / totalCells) * 100;
-      
-      if (occupationPercentage <= 5) {
-        //TODO: CORREGIR, no debe funcionar asi.
-        logger.info('GameBoard', `Detección inmediata: Pocos iconos (${occupationPercentage.toFixed(1)}%) sin movimientos válidos. Nivel completado.`);
-        dispatch(setGameStatus('levelCompleted'));
-      } else {
-        logger.info('GameBoard', `Detección inmediata: Tablero sin movimientos válidos. Game over.`);
-        dispatch(setGameStatus('gameOver'));
-      }
-    }
-  }, [board, boardSize, status, hasValidMoves, dispatch]);
-  
-  // Efecto para detener temporizadores cuando cambia el estado del juego
-  useEffect(() => {
-    // Si el juego no está en estado 'playing', detener los temporizadores
-    if (status !== 'playing') {
-      stopTimers();
-    }
-    
-    // Limpiar temporizadores al desmontar
-    return () => {
-      stopTimers();
-    };
-  }, [status, stopTimers]);
-  
-  // Añadir un efecto para ejecutar la detección de casos especiales
-  useEffect(() => {
-    if (status === 'playing') {
-      const checkInterval = setInterval(() => {
-        detectSpecialGameOverCases();
-      }, 100); // Comprobar cada 100ms en lugar de 1500ms
-      
-      return () => {
-        clearInterval(checkInterval);
-      };
-    }
-  }, [status, detectSpecialGameOverCases]);
-  
-  // Añadir un efecto que verifique el estado después de cada actualización del tablero
-  useEffect(() => {
-    if (status === 'playing' && board) {
-      // Pequeño retraso para asegurar que el tablero esté actualizado
-      const timeoutId = setTimeout(() => {
-        checkBoardStateImmediately();
-      }, 0);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [board, status, checkBoardStateImmediately]);
-  
   return {
-    handleCellClick,
+    stopTimers,
+    addAnimationTimer,
     registerCellRef,
     getCellElement,
-    showHint,
-    highlightedCells,
-    adjustBoardSize,
-    increaseSpeed,
-    showSpeedAlert,
-    speedMultiplier,
-    showPenaltyAlert,
     hasValidMoves,
-    stopTimers,
-    showSpeedAlertUI
+    findAdjacentSameIcons,
+    findConvergingIcons,
+    removeConvergingIcons,
+    animatePointsEarned,
+    animateErrorCell,
+    animateBoard,
+    showPenaltyAlertUI,
+    showSpeedAlertUI,
+    penalize,
+    increaseSpeed,
+    handleCellClick,
+    showHint,
+    adjustBoardSize
   };
 };
 
-export default useBoardInteraction; 
+export default useBoardInteraction;

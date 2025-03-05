@@ -355,4 +355,62 @@ export const findConvergingIcons = (
   }
   
   return convergingIcons;
+};
+
+/**
+ * Coloca iconos de penalización en el tablero cuando el usuario hace un clic incorrecto
+ * @param board El tablero actual
+ * @param size Tamaño del tablero
+ * @param availableIcons Iconos disponibles
+ * @param count Número de iconos a colocar
+ * @returns Un array con las posiciones donde se colocaron los iconos de penalización
+ */
+export const placePenaltyIcons = (
+  board: (string | null)[][], 
+  size: number, 
+  availableIcons: string[],
+  count: number
+): { row: number, col: number, icon: string }[] => {
+  // Si no hay iconos o el tablero es inválido, retornar un array vacío
+  if (!board || !board.length || !availableIcons || !availableIcons.length || count <= 0) {
+    return [];
+  }
+  
+  const placedIcons: { row: number, col: number, icon: string }[] = [];
+  const emptyCells: { row: number, col: number }[] = [];
+  
+  // Encontrar todas las celdas vacías
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      if (board[row] && board[row][col] === null) {
+        emptyCells.push({ row, col });
+      }
+    }
+  }
+  
+  // Si no hay celdas vacías, retornar array vacío
+  if (emptyCells.length === 0) {
+    return [];
+  }
+  
+  // Colocar la cantidad de iconos solicitada o tantos como haya celdas vacías disponibles
+  const iconsToPlace = Math.min(count, emptyCells.length);
+  
+  // Mezclar las celdas vacías para selección aleatoria
+  shuffleArray(emptyCells);
+  
+  // Colocar los iconos
+  for (let i = 0; i < iconsToPlace; i++) {
+    const cell = emptyCells[i];
+    const randomIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
+    
+    // No modificamos el tablero aquí, solo devolvemos las posiciones
+    placedIcons.push({
+      row: cell.row,
+      col: cell.col,
+      icon: randomIcon
+    });
+  }
+  
+  return placedIcons;
 }; 

@@ -1,5 +1,6 @@
 import { GameDifficulty, GamePlayMode } from '../store/slices/gameSlice';
 import * as levels from './levels';
+import logger from './logger';
 
 // Tipo de seguridad para acceder a las propiedades de los niveles
 type ModeKey = keyof typeof levels.PREDEFINED_LEVELS[0]['requirements'];
@@ -105,8 +106,23 @@ export function getLevelObjectives(
   playMode: GamePlayMode, 
   difficulty: GameDifficulty
 ): string[] {
-  const levelConfig = levels.getLevelConfig(level, playMode, difficulty);
-  return levelConfig.requirements[playMode].map(req => req.description);
+  try {
+    const levelConfig = levels.getLevelConfig(level, playMode, difficulty);
+    
+    if (levelConfig && levelConfig.requirements) {
+      const reqs = levelConfig.requirements[playMode as keyof typeof levelConfig.requirements];
+      
+      if (reqs && Array.isArray(reqs)) {
+        return reqs.map(req => req.description);
+      }
+    }
+    
+    // Si no hay requisitos válidos
+    return [];
+  } catch (error) {
+    logger.error('LevelAdapter', `Error al obtener objetivos de nivel: ${error}`);
+    return [];
+  }
 }
 
 /**
@@ -282,4 +298,36 @@ export function iconCountByLevel(level: number): number {
  */
 export function hasLevelSpecialFeatures(level: number, featureType: string): boolean {
   return levels.hasSpecialFeature(level, featureType);
+}
+
+/**
+ * Obtiene la configuración completa de un nivel
+ */
+export function getLevelConfig(
+  level: number,
+  playMode: GamePlayMode,
+  difficulty: GameDifficulty
+): any {
+  try {
+    return levels.getLevelConfig(level, playMode, difficulty);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error('LevelAdapter', `Error al obtener configuración de nivel: ${errorMessage}`);
+    
+    // Retornar una configuración básica en caso de error
+    return {
+      id: level,
+      boardSize: 8,
+      icons: ["🍎", "🍇", "🍊", "🍓"],
+      spawnRate: 2000,
+      speedMultiplier: 1.0,
+      penaltyIcons: Math.min(3, Math.max(1, level)),
+      requirements: {
+        classic: [{ type: 'score', value: 1000 * level, description: `Alcanza ${1000 * level} puntos` }],
+        timed: [{ type: 'time', value: 30 * level, description: `Sobrevive ${30 * level} segundos` }],
+        survival: [{ type: 'time', value: 120 * level, description: `Sobrevive ${2 * level} minutos` }],
+        zen: [{ type: 'time', value: 0, description: 'Juega sin presión' }]
+      }
+    };
+  }
 } 

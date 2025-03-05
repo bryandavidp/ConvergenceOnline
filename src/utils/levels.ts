@@ -26,6 +26,7 @@ export interface LevelConfig {
   icons: string[];
   spawnRate: number;
   speedMultiplier: number;
+  penaltyIcons: number; // Número de iconos a añadir como penalización por clic incorrecto
   requirements: {
     classic: LevelRequirement[];
     timed: LevelRequirement[];
@@ -82,6 +83,7 @@ export const PREDEFINED_LEVELS: LevelConfig[] = [
     icons: ["🍎", "🍇", "🍊", "🍓"],
     spawnRate: 2000,
     speedMultiplier: 1.0,
+    penaltyIcons: 1,
     requirements: {
       classic: [
         { type: 'score', value: 1000, description: 'Alcanza 1000 puntos' },
@@ -114,6 +116,7 @@ export const PREDEFINED_LEVELS: LevelConfig[] = [
     icons: ["🍎", "🍇", "🍊", "🍓", "🍉"],
     spawnRate: 1800,
     speedMultiplier: 1.1,
+    penaltyIcons: 2,
     requirements: {
       classic: [
         { type: 'score', value: 2000, description: 'Alcanza 2000 puntos' },
@@ -146,6 +149,7 @@ export const PREDEFINED_LEVELS: LevelConfig[] = [
     icons: ["🍎", "🍇", "🍊", "🍓", "🍉", "🍌"],
     spawnRate: 1600,
     speedMultiplier: 1.2,
+    penaltyIcons: 3,
     requirements: {
       classic: [
         { type: 'score', value: 3000, description: 'Alcanza 3000 puntos' },
@@ -188,6 +192,7 @@ export const PREDEFINED_LEVELS: LevelConfig[] = [
     icons: ["🍎", "🍇", "🍊", "🍓", "🍉", "🍌", "🍋"],
     spawnRate: 1400,
     speedMultiplier: 1.3,
+    penaltyIcons: 3,
     requirements: {
       classic: [
         { type: 'score', value: 4000, description: 'Alcanza 4000 puntos' },
@@ -240,6 +245,7 @@ export const PREDEFINED_LEVELS: LevelConfig[] = [
     icons: ["🍎", "🍇", "🍊", "🍓", "🍉", "🍌", "🍋", "🍍"],
     spawnRate: 1200,
     speedMultiplier: 1.4,
+    penaltyIcons: 4,
     requirements: {
       classic: [
         { type: 'score', value: 5000, description: 'Alcanza 5000 puntos' },
@@ -322,6 +328,7 @@ export function generateDynamicLevel(level: number): LevelConfig {
     }),
     spawnRate: Math.max(500, 2000 - (level * 100)),
     speedMultiplier: 1 + (level * 0.1),
+    penaltyIcons: Math.min(5, 1 + Math.floor(level / 2)),
     requirements: {
       classic: [
         { 

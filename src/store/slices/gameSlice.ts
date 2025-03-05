@@ -5,7 +5,7 @@ import * as config from '../../utils/config';
 
 // Definición de tipos para los modos de juego
 export type GameDifficulty = 'easy' | 'normal' | 'hard' | 'tutorial';
-export type GamePlayMode = 'classic' | 'timed' | 'survival';
+export type GamePlayMode = 'classic' | 'timed' | 'survival' | 'zen';
 
 export interface GameState {
   score: number;
@@ -333,6 +333,25 @@ const gameSlice = createSlice({
       state.highlightedCells = action.payload;
     },
     
+    addIcon: (state, action: PayloadAction<{row: number, col: number, icon: string, isPenalty?: boolean}>) => {
+      const { row, col, icon, isPenalty = false } = action.payload;
+      
+      // Verificar que la posición sea válida y esté vacía
+      if (row >= 0 && row < state.boardSize && col >= 0 && col < state.boardSize && state.board[row][col] === null) {
+        // Colocar el icono en el tablero
+        state.board[row][col] = icon;
+        // Incrementar el contador de iconos
+        state.iconCount += 1;
+        
+        // Log con información sobre el icono añadido
+        if (isPenalty) {
+          logger.info('Game', `Icono de penalización añadido en [${row},${col}]: ${icon}`);
+        } else {
+          logger.info('Game', `Icono añadido en [${row},${col}]: ${icon}`);
+        }
+      }
+    },
+    
     resetGame: (state, action: PayloadAction<{ difficulty?: GameState['currentDifficulty'], playMode?: GameState['currentPlayMode'] } | undefined>) => {
       const difficulty = action.payload?.difficulty || state.currentDifficulty;
       const playMode = action.payload?.playMode || state.currentPlayMode;
@@ -447,7 +466,8 @@ export const {
   loadHighScore,
   setLevelTimeLimit,
   addTimeBonus,
-  setLevelTarget
+  setLevelTarget,
+  addIcon
 } = gameSlice.actions;
 
 export default gameSlice.reducer;
