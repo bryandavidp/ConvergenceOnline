@@ -52,6 +52,10 @@ const useBoardInteraction = () => {
   const [speedMultiplier, setSpeedMultiplier] = useState(1);
   const [showPenaltyAlert, setShowPenaltyAlert] = useState(false);
   
+  // Referencia para controlar el debounce de clics
+  const isProcessingClickRef = useRef(false);
+  const lastClickedCellRef = useRef<string | null>(null);
+  
   /**
    * Detener todos los temporizadores
    */
@@ -407,6 +411,15 @@ const useBoardInteraction = () => {
    * Manejar clic en una celda - optimizado para rendimiento competitivo
    */
   const handleCellClick = useCallback((row: number, col: number) => {
+    // Crear un identificador único para esta celda
+    const cellId = `${row}-${col}`;
+    
+    // Verificar si ya estamos procesando un clic o si se hizo clic en la misma celda recientemente
+    if (isProcessingClickRef.current || lastClickedCellRef.current === cellId) {
+      logger.debug('Interacción', 'handleCellClick: ignorando clic porque ya se está procesando otro o es un multi-clic en la misma celda');
+      return;
+    }
+    
     // Verificar si el juego está en estado de juego
     if (status !== 'playing') {
       logger.debug('handleCellClick: ignorando clic porque el juego no está en estado "playing"', ' [' + status + ']');
@@ -418,6 +431,19 @@ const useBoardInteraction = () => {
       logger.debug('handleCellClick: celda no está vacía', ' [' + row + ', ' + col + '] ' + board?.[row]?.[col]);
       return;
     }
+    
+    // Activar el debounce
+    isProcessingClickRef.current = true;
+    lastClickedCellRef.current = cellId;
+    
+    // Desactivar el debounce después de un tiempo razonable (500ms)
+    const debounceTimer = setTimeout(() => {
+      isProcessingClickRef.current = false;
+      lastClickedCellRef.current = null;
+    }, 500);
+    
+    // Añadir el timer a la lista de timers para limpieza
+    addAnimationTimer(debounceTimer);
     
     // Optimización: Limpieza más eficiente del resaltado previo
     if (highlightedCells.length > 0) {
@@ -499,10 +525,26 @@ const useBoardInteraction = () => {
               audioManager.play('gameOver');
             }
           }
+          
+          // Nota: No liberamos el debounce aquí, se libera automáticamente después del tiempo establecido
+        })
+        .catch(error => {
+          // Liberar el debounce en caso de error
+          isProcessingClickRef.current = false;
+          lastClickedCellRef.current = null;
+          logger.error('Error al eliminar iconos convergentes:', error);
         });
     } else {
       // No hay convergencia, feedback inmediato
       audioManager.play("invalidMove");
+      
+      // Si no hay convergencia, liberar el debounce después de mostrar el error
+      // Esto permite que la animación de error se muestre pero evita múltiples clics
+      const errorDebounceTime = 300; // Tiempo suficiente para mostrar la animación de error
+      setTimeout(() => {
+        isProcessingClickRef.current = false;
+        lastClickedCellRef.current = null;
+      }, errorDebounceTime);
       
       // Obtener la cantidad de iconos de penalización según el nivel actual
       const currentLevel = store.getState().game.level;
@@ -586,6 +628,9 @@ const useBoardInteraction = () => {
         const penaltyTimer = setTimeout(() => setShowPenaltyAlert(false), 1000);
         addAnimationTimer(penaltyTimer);
       }
+      
+      // No hay convergencia, mostrar una animación de error
+      animateErrorCell(row, col);
     }
   }, [
     status, 
@@ -601,7 +646,8 @@ const useBoardInteraction = () => {
     highlightedCells,
     addAnimationTimer,
     boardSize,
-    availableIcons
+    availableIcons,
+    animateErrorCell
   ]);
   
   /**
