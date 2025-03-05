@@ -2798,15 +2798,13 @@
   animation: stars-twinkle 8s infinite linear;
 }
 
-@keyframes stars-twinkle {
-  0%, 100% {
+@keyframes stars-twinkle {  0%, 100% {
     opacity: 0.8;
   }
   50% {
     opacity: 0.5;
   }
 }
-
 /* Ajustes para pantallas pequeñas */
 @media (max-width: 480px) {
   .start-button-container {
@@ -2857,3 +2855,4 @@
     height: 36px;
   }
 }
+
