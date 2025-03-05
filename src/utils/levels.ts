@@ -80,14 +80,14 @@ export const PREDEFINED_LEVELS: LevelConfig[] = [
   {
     id: 1,
     boardSize: 5,
-    icons: ["🍎", "🍇", "🍊", "🍓"],
+    icons: ["🌶️", "🍌", "🍊", "🥑"],
     spawnRate: 2000,
     speedMultiplier: 1.0,
     penaltyIcons: 1,
     requirements: {
       classic: [
-        { type: 'score', value: 1000, description: 'Alcanza 1000 puntos' },
-        { type: 'occupation', value: 15, description: 'Mantén ocupación menor al 15%' }
+        { type: 'score', value: 1500, description: 'Alcanza 1500 puntos' },
+        { type: 'occupation', value: 5, description: 'Mantén ocupación menor al 5%' }
       ],
       timed: [
         { type: 'time', value: 30, description: 'Sobrevive 30 segundos' }
@@ -391,7 +391,7 @@ export function generateDynamicLevel(level: number): LevelConfig {
       type: 'specialIcon',
       enabled: true,
       config: {
-        probability: 0.05 + (level * 0.01),
+        probability: 0.7 + (level * 0.01),
         types: ['bomb', 'star']
       }
     };

@@ -158,9 +158,9 @@ export const GAME_MODE_CONFIG = {
   },
   SURVIVAL: {
     name: 'survival',
-    boardSize: 10, // Fijo y grande
+    boardSize: 8, // Fijo y grande
     initialSpawnRate: SPAWN_RATES.VERY_SLOW,
-    speedIncreaseInterval: 30, // Segundos entre aumento de velocidad
+    speedIncreaseInterval: 20, // Segundos entre aumento de velocidad
     specialIconProbability: 0.1, // 10% de probabilidad de icono especial
     specialIconInterval: 60, // Aparece aproximadamente cada 60 segundos
     maxSpeedMultiplier: 4, // Velocidad máxima x4

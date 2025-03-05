@@ -345,7 +345,7 @@ const gameSlice = createSlice({
           state.levelTimeLimit = config.BASE_GAME_DURATION;
           break;
         case 'survival':
-          state.boardSize = 10; // Tamaño grande fijo para supervivencia
+          state.boardSize = config.BOARD_SIZES[state.level - 1]; // Tamaño grande fijo para supervivencia
           state.spawnRate = config.SPAWN_RATES.VERY_SLOW; // Comienza lento
           state.specialIconsEnabled = true;
           state.survivalTime = 0;
