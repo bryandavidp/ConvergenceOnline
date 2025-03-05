@@ -6,11 +6,28 @@
   justify-content: center;
   min-height: 100vh;
   padding: 20px;
-  background-color: #5d73e8;
-  background-image: linear-gradient(135deg, #5d73e8 0%, #8492ea 100%);
+  background-color: #4a63e2;
+  background-image: linear-gradient(135deg, #4a63e2 0%, #7b8ce8 100%);
   overflow: hidden;
   margin: 0;
   max-width: 100%;
+  position: relative;
+}
+
+/* Efecto de patrón de fondo */
+.game-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.1) 2%, transparent 0%),
+    radial-gradient(circle at 75px 75px, rgba(255, 255, 255, 0.1) 2%, transparent 0%);
+  background-size: 100px 100px;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Modo pantalla completa para móvil */
@@ -34,32 +51,50 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
-/* Sección de información (30% superior) */
+/* Sección de información (25% superior) - reducida para más espacio del tablero */
 .game-info-section {
-  flex: 0 0 30%;
-  max-height: 30%;
-  padding: 10px 5px;
+  flex: 0 0 25%;
+  max-height: 25%;
+  padding: 12px 10px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   background-color: rgba(255, 255, 255, 0.9);
-  border-bottom: 1px solid rgba(0,0,0,0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 0 0 15px 15px;
+  transition: all 0.3s ease;
 }
 
-/* Sección del tablero (70% inferior) */
+/* Sección del tablero (75% inferior) - aumentada para darle más protagonismo */
 .game-board-section {
-  flex: 0 0 70%;
-  height: 70%;
+  flex: 0 0 75%;
+  height: 75%;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 0;
   margin: 0;
   overflow: hidden;
-  background-color: #5d73e8;
+  background-color: #4a63e2;
+  position: relative;
+}
+
+/* Efecto de brillo en el tablero */
+.game-board-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+  pointer-events: none;
 }
 
 .game-container {
@@ -68,11 +103,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  padding: 15px;
   margin-bottom: 20px;
+  transition: all 0.3s ease;
 }
 
 .game-header {
@@ -82,204 +118,202 @@
   align-items: center;
   margin-bottom: 10px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 /* Optimización de la cabecera para móviles */
 .game-fullscreen .game-header {
-  padding-bottom: 2px;
-  margin-bottom: 2px;
-  padding-top: 2px;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+  padding-top: 5px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 /* Título más compacto en móvil */
 .game-fullscreen .game-header h1 {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   margin: 0;
   padding: 0;
+  font-weight: 700;
+  color: #333;
 }
 
 /* Botones más compactos en móvil */
 .game-fullscreen .control-button {
-  padding: 3px 8px;
-  font-size: 0.8rem;
+  padding: 5px 10px;
+  font-size: 0.9rem;
   margin: 0;
-}
-
-/* Reducir espacio en el HUD y elementos informativos */
-.game-fullscreen .game-info-section {
-  flex: 0 0 20%; /* Reducir de 30% a 20% */
-  max-height: 20%;
-  padding: 2px;
-}
-
-/* Aumentar el espacio para el tablero */
-.game-fullscreen .game-board-section {
-  flex: 0 0 80%; /* Aumentar de 70% a 80% */
-  height: 80%;
-}
-
-/* Optimizaciones para la sección de configuración */
-.game-fullscreen .config-section {
-  margin: 1px 0;
-  padding: 2px;
-}
-
-/* Optimización adicional para pantallas muy pequeñas */
-@media (max-width: 320px) {
-  .game-fullscreen .game-header h1 {
-    font-size: 1rem;
-  }
-  
-  .game-fullscreen .control-button {
-    padding: 2px 6px;
-    font-size: 0.7rem;
-  }
-  
-  .game-fullscreen .game-info-section {
-    flex: 0 0 18%;
-    max-height: 18%;
-  }
-  
-  .game-fullscreen .game-board-section {
-    flex: 0 0 82%;
-    height: 82%;
-  }
-}
-
-.game-header h1 {
-  margin: 0;
-  font-size: 2rem;
-  color: #333;
-  font-weight: 700;
-}
-
-/* Título más pequeño en móvil */
-.game-fullscreen .game-header h1 {
-  font-size: 1.5rem;
-}
-
-.game-controls {
-  display: flex;
-  gap: 10px;
-}
-
-.control-button {
-  padding: 8px 16px;
+  border-radius: 20px;
+  background-color: #4a63e2;
+  color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 }
 
-.control-button:hover {
-  opacity: 0.9;
+.game-fullscreen .control-button:hover {
   transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
 }
 
+.game-fullscreen .control-button:active {
+  transform: translateY(0);
+}
+
+/* Contenedor del tablero con mejor sombreado */
 .game-board-container {
   width: 100%;
+  height: 100%;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
   position: relative;
-  min-height: 400px;
-  margin-top: 20px;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
-/* Optimización de la sección de configuración para móvil */
+/* ID específico del tablero - NO TOCAR TAMAÑOS */
+#game-board {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Sección de configuración más atractiva */
 .config-section {
   width: 100%;
-  margin-bottom: 10px;
+  margin: 8px 0;
+  padding: 8px 10px;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.game-fullscreen .config-section {
+  margin: 4px 0;
   padding: 5px;
-  background-color: rgba(255, 255, 255, 0.7);
   border-radius: 8px;
 }
 
-.game-fullscreen .config-section {
-  margin-bottom: 5px;
-  padding: 3px;
+/* Optimizaciones para tablets */
+@media (max-width: 1024px) {
+  .game-info-section {
+    flex: 0 0 22%;
+    max-height: 22%;
+    padding: 10px 8px;
+  }
+  
+  .game-board-section {
+    flex: 0 0 78%;
+    height: 78%;
+  }
+  
+  .config-section {
+    padding: 6px;
+    margin: 6px 0;
+  }
 }
 
-/* Optimizaciones generales para móviles */
+/* Optimizaciones para móviles horizontales */
 @media (max-width: 768px) {
-  .game-container {
-    padding: 10px;
+  .game-info-section {
+    flex: 0 0 20%;
+    max-height: 20%;
+    padding: 8px 5px;
+  }
+  
+  .game-board-section {
+    flex: 0 0 80%;
+    height: 80%;
+  }
+  
+  .config-section {
+    padding: 5px;
+    margin: 4px 0;
   }
   
   .game-header h1 {
-    font-size: 1.5rem;
-  }
-  
-  .control-button {
-    padding: 6px 12px;
-    font-size: 0.9rem;
-  }
-  
-  .game-board-container {
-    margin-top: 10px;
-    min-height: 300px;
+    font-size: 1.2rem;
   }
 }
 
+/* Optimizaciones para móviles pequeños */
 @media (max-width: 480px) {
-  .game-header {
-    flex-direction: row; /* Mantener en fila para ahorrar espacio */
-    gap: 5px;
+  .game-info-section {
+    flex: 0 0 18%;
+    max-height: 18%;
+    padding: 5px 3px;
   }
   
-  .game-controls {
-    display: flex;
-    justify-content: flex-end;
-  }
-  
-  .control-button {
-    padding: 4px 8px;
-    font-size: 0.8rem;
+  .game-board-section {
+    flex: 0 0 82%;
+    height: 82%;
   }
   
   .config-section {
     padding: 3px;
-    margin-bottom: 5px;
+    margin: 2px 0;
+  }
+  
+  .game-header h1 {
+    font-size: 1rem;
   }
 }
 
-/* Estilos para la página principal del juego */
-/* Removiendo duplicados para evitar conflictos */
-/* 
-.game-page {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  background-color: #5d73e8;
+/* Soporte para modo landscape en móviles */
+@media (max-height: 500px) and (orientation: landscape) {
+  .game-info-section {
+    flex: 0 0 15%;
+    max-height: 15%;
+    padding: 3px;
+  }
+  
+  .game-board-section {
+    flex: 0 0 85%;
+    height: 85%;
+  }
 }
-*/
 
-/* Barra superior del juego */
-/* Mantener solo una definición de game-header */
-/* 
-.game-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0.75rem;
-  background-color: #ffffff;
-  border-radius: 16px;
-  margin: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+/* Soporte para pantallas de alta resolución */
+@media (min-width: 1440px) {
+  .game-container {
+    max-width: 1000px;
+  }
 }
-*/
+
+/* Compatibilidad con navegadores */
+@supports not (backdrop-filter: blur(5px)) {
+  .config-section {
+    background-color: rgba(255, 255, 255, 0.95);
+  }
+}
+
+/* Soporte específico para Firefox */
+@-moz-document url-prefix() {
+  .game-info-section {
+    background-color: rgba(255, 255, 255, 0.95);
+  }
+}
+
+/* Soporte específico para Safari */
+@media not all and (min-resolution:.001dpcm) { 
+  @supports (-webkit-appearance:none) {
+    .game-page {
+      -webkit-font-smoothing: antialiased;
+    }
+  }
+}
+
+/* Soporte específico para IE / Edge */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  .game-page::before {
+    display: none;
+  }
+}
 
 /* Contenedor de estadísticas */
 .game-stats {

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store';
 import './GameHUD.css';
@@ -16,6 +16,12 @@ const GameHUD: React.FC = () => {
     spawnRate
   } = useSelector((state: RootState) => state.game);
   
+  // Estado para animaciones
+  const [animateScore, setAnimateScore] = useState(false);
+  const [animateLevel, setAnimateLevel] = useState(false);
+  const prevScore = useRef(score);
+  const prevLevel = useRef(level);
+  
   // Determinar si estamos en vista móvil
   const isMobile = useRef(window.innerWidth <= 768);
   useEffect(() => {
@@ -26,6 +32,25 @@ const GameHUD: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+  
+  // Efecto para detectar cambios de puntuación y nivel y animar
+  useEffect(() => {
+    if (prevScore.current !== score && prevScore.current > 0) {
+      setAnimateScore(true);
+      const timer = setTimeout(() => setAnimateScore(false), 300);
+      return () => clearTimeout(timer);
+    }
+    prevScore.current = score;
+  }, [score]);
+  
+  useEffect(() => {
+    if (prevLevel.current !== level && prevLevel.current > 0) {
+      setAnimateLevel(true);
+      const timer = setTimeout(() => setAnimateLevel(false), 300);
+      return () => clearTimeout(timer);
+    }
+    prevLevel.current = level;
+  }, [level]);
   
   // Formatear tiempo para mostrar minutos:segundos
   const formatTime = (seconds: number): string => {
@@ -57,17 +82,27 @@ const GameHUD: React.FC = () => {
     return `x${(speedPercentage / 100).toFixed(1)}`;
   };
   
+  // Obtener el nombre del modo para mostrar
+  const getModeName = () => {
+    switch(currentPlayMode) {
+      case 'classic': return 'Clásico';
+      case 'timed': return 'Tiempo';
+      case 'survival': return 'Superv.';
+      default: return 'Clásico';
+    }
+  };
+  
   // Renderizado condicional basado en el dispositivo
   return (
     <div className={`game-hud ${isMobile.current ? 'mobile' : ''}`}>
       <div className="hud-item score">
         <div className="hud-label">PUNTUACIÓN</div>
-        <div className="hud-value">{score}</div>
+        <div className={`hud-value ${animateScore ? 'score-change' : ''}`}>{score}</div>
       </div>
       
       <div className="hud-item level">
         <div className="hud-label">NIVEL</div>
-        <div className="hud-value">{level}</div>
+        <div className={`hud-value ${animateLevel ? 'score-change' : ''}`}>{level}</div>
       </div>
       
       <div className="hud-item time">
@@ -82,11 +117,7 @@ const GameHUD: React.FC = () => {
       
       <div className="hud-item mode">
         <div className="hud-label">MODO</div>
-        <div className="hud-value">
-          {currentPlayMode === 'classic' && 'Clásico'}
-          {currentPlayMode === 'timed' && 'Tiempo'}
-          {currentPlayMode === 'survival' && 'Superv.'}
-        </div>
+        <div className="hud-value">{getModeName()}</div>
       </div>
     </div>
   );

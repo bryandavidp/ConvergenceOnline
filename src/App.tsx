@@ -68,9 +68,16 @@ const App: React.FC = () => {
       <BrowserRouter>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
+            {/* Ruta del juego sin Layout */}
+            <Route path="game" element={
+              <ProtectedRoute>
+                <GamePage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Resto de rutas con Layout */}
             <Route path="/" element={<Layout />}>
               <Route index element={<HomePage />} />
-              <Route path="game" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
               <Route path="profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               <Route path="login" element={<LoginPage />} />
               <Route path="register" element={<RegisterPage />} />
