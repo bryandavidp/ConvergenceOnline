@@ -31,7 +31,7 @@ const BoardUI = forwardRef<HTMLDivElement, BoardUIProps>((props, ref) => {
   
   // Comprobar si una celda está resaltada
   const isCellHighlighted = useCallback((row: number, col: number): boolean => {
-    return highlightedCells.some(cell => cell.row === row && cell.col === col);
+    return highlightedCells.some((cell: { row: number, col: number }) => cell.row === row && cell.col === col);
   }, [highlightedCells]);
   
   // Renderizar el contenido del tablero

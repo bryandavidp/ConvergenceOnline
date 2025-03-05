@@ -691,7 +691,11 @@ const useBoardInteraction = () => {
     increaseSpeed,
     handleCellClick,
     showHint,
-    adjustBoardSize
+    adjustBoardSize,
+    showSpeedAlert,
+    speedMultiplier,
+    showPenaltyAlert,
+    highlightedCells
   };
 };
 

@@ -292,6 +292,22 @@ const gameSlice = createSlice({
         state.highlightedCells = [];
       }
       
+      // Si el juego ha terminado (gameOver), resetear contadores relevantes
+      if (action.payload === 'gameOver') {
+        // Resetear contadores pero mantener puntuación y nivel para mostrar en el modal
+        state.iconCount = 0;
+        state.spawnRate = initialState.spawnRate; 
+        state.speedMultiplier = initialState.speedMultiplier;
+        state.hintsRemaining = initialState.hintsRemaining;
+        state.hintCooldown = initialState.hintCooldown;
+        state.lastHintTime = initialState.lastHintTime;
+        state.canEmptyBoardBonus = initialState.canEmptyBoardBonus;
+        state.timeRemaining = initialState.timeRemaining;
+        state.survivalTime = initialState.survivalTime;
+        
+        logger.info('Game', 'Game Over: Contadores reseteados a valores iniciales');
+      }
+      
       logger.info('Game', `Estado del juego cambiado de ${prevStatus} a ${action.payload}`);
     },
     
@@ -301,10 +317,21 @@ const gameSlice = createSlice({
     },
     
     setPlayMode: (state, action: PayloadAction<GameState['currentPlayMode']>) => {
-      state.currentPlayMode = action.payload;
+      // Guardar el nuevo modo de juego para usarlo en el reseteo
+      const newPlayMode = action.payload;
+      
+      // Reiniciar el juego completamente con el nuevo modo
+      Object.assign(state, {
+        ...initialState,
+        highScore: state.highScore, // Mantener la puntuación máxima
+        darkMode: state.darkMode,   // Mantener preferencia de tema
+        currentPlayMode: newPlayMode,
+        currentDifficulty: state.currentDifficulty, // Mantener la dificultad actual
+        status: 'playing'
+      });
       
       // Configurar propiedades específicas según el modo de juego
-      switch (action.payload) {
+      switch (newPlayMode) {
         case 'classic':
           state.boardSize = config.BOARD_SIZES[state.level - 1];
           state.spawnRate = config.SPAWN_RATES.SLOW;
@@ -325,7 +352,7 @@ const gameSlice = createSlice({
           break;
       }
       
-      logger.info('Game', `Modo de juego establecido a ${action.payload}`, {
+      logger.info('Game', `Modo de juego establecido a ${newPlayMode}`, {
         boardSize: state.boardSize,
         spawnRate: state.spawnRate,
         timeRemaining: state.timeRemaining
@@ -381,18 +408,32 @@ const gameSlice = createSlice({
       const difficulty = action.payload?.difficulty || state.currentDifficulty;
       const playMode = action.payload?.playMode || state.currentPlayMode;
       
-      // Conservar la puntuación máxima
+      // Conservar la puntuación máxima y preferencias de usuario
       const highScore = state.highScore;
+      const darkMode = state.darkMode;
       
-      // Restablecer el estado
+      // Restablecer el estado completamente
       Object.assign(state, {
         ...initialState,
         highScore,
+        darkMode,
         currentDifficulty: difficulty,
         currentPlayMode: playMode,
         status: 'playing',
         hintsRemaining: config.HINT_SYSTEM.MAX_HINTS_PER_LEVEL,
-        canEmptyBoardBonus: true
+        canEmptyBoardBonus: true,
+        // Asegurar que estos contadores se reseteen explícitamente
+        score: 0,
+        level: 1,
+        timer: 0,
+        iconCount: 0,
+        spawnRate: initialState.spawnRate,
+        speedMultiplier: initialState.speedMultiplier,
+        hintCooldown: false,
+        lastHintTime: 0,
+        timeRemaining: initialState.timeRemaining,
+        survivalTime: 0,
+        highlightedCells: []
       });
       
       // Configurar propiedades específicas según el modo de juego
