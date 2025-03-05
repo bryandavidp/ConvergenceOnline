@@ -618,6 +618,9 @@ const useBoardInteraction = () => {
     
     for (let row = 0; row < boardSize; row++) {
       for (let col = 0; col < boardSize; col++) {
+        // Comprobación de seguridad para evitar error "Cannot read properties of undefined"
+        if (!board || !board[row]) continue;
+        
         const cell = board[row][col];
         if (cell !== null) {
           uniqueIcons.add(cell);
@@ -687,7 +690,8 @@ const useBoardInteraction = () => {
       // Calcular ocupación para otros casos
       const occupationPercentage = (iconCount / totalCells) * 100;
       
-      if (occupationPercentage <= 30) {
+      if (occupationPercentage <= 5) {
+        //TODO: CORREGIR, no debe funcionar asi.
         logger.info('GameBoard', `Detección inmediata: Pocos iconos (${occupationPercentage.toFixed(1)}%) sin movimientos válidos. Nivel completado.`);
         dispatch(setGameStatus('levelCompleted'));
       } else {

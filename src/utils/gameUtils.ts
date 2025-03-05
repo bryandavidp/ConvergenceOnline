@@ -164,14 +164,21 @@ export const checkBoardForValidMoves = (
   size: number, 
   availableIcons: string[]
 ): boolean => {
-  if (!board || board.length === 0) return false;
+  // Comprobaciones de seguridad
+  if (!board || !Array.isArray(board) || board.length === 0 || 
+      !availableIcons || availableIcons.length === 0 || size <= 0) {
+    return false;
+  }
   
   for (let row = 0; row < size; row++) {
     for (let col = 0; col < size; col++) {
-      if (board[row][col] === null) {
-        if (isValidPlacement(board, row, col, size, availableIcons)) {
-          return true;
-        }
+      // Verificar que la celda actual existe y está vacía
+      if (!board[row] || board[row][col] !== null) {
+        continue;
+      }
+      
+      if (isValidPlacement(board, row, col, size, availableIcons)) {
+        return true;
       }
     }
   }
@@ -189,6 +196,11 @@ export const isValidPlacement = (
   size: number,
   availableIcons: string[]
 ): boolean => {
+  // Comprobación de seguridad para evitar errores
+  if (!board || !availableIcons || availableIcons.length === 0 || size <= 0) {
+    return false;
+  }
+  
   const directions = [
     { dr: -1, dc: 0 }, // arriba
     { dr: 0, dc: 1 },  // derecha
@@ -205,6 +217,11 @@ export const isValidPlacement = (
       let c = col + dc;
       
       while (isValidCell(r, c, size)) {
+        // Comprobación adicional para evitar acceso a undefined
+        if (!board[r] || board[r][c] === undefined) {
+          break; // Salir del bucle si la fila no existe o la celda es undefined
+        }
+        
         if (board[r][c] !== null) {
           if (board[r][c] === icon) {
             const dirKey = `${dr},${dc}`;
@@ -217,6 +234,7 @@ export const isValidPlacement = (
           }
           break;
         }
+        
         r += dr;
         c += dc;
       }

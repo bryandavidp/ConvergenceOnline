@@ -1,4 +1,5 @@
 import { GameDifficulty, GamePlayMode } from '../store/slices/gameSlice';
+import { BASE_MODE_CONFIG } from './BASE_MODE_CONFIG';
 
 // Interfaces para la configuración de niveles
 export interface LevelRequirement {
@@ -29,11 +30,13 @@ export interface LevelConfig {
     classic: LevelRequirement[];
     timed: LevelRequirement[];
     survival: LevelRequirement[];
+    zen?: LevelRequirement[];
   };
   rewards: {
     classic?: LevelReward[];
     timed?: LevelReward[];
     survival?: LevelReward[];
+    zen?: LevelReward[];
   };
   specialFeatures?: {
     specialIcons?: SpecialFeature;
@@ -42,31 +45,6 @@ export interface LevelConfig {
     obstacles?: SpecialFeature;
   };
 }
-
-// Configuración base para los diferentes modos de juego
-export const BASE_MODE_CONFIG = {
-  classic: {
-    baseSpawnRate: 2000,
-    spawnRateDecrement: 100,
-    minSpawnRate: 500,
-    scoreMultiplier: 1,
-    baseScoreTarget: 1000
-  },
-  timed: {
-    baseSpawnRate: 1500,
-    spawnRateDecrement: 150,
-    minSpawnRate: 400,
-    scoreMultiplier: 1.2,
-    baseTimeTarget: 30
-  },
-  survival: {
-    baseSpawnRate: 1800,
-    spawnRateDecrement: 120,
-    minSpawnRate: 450,
-    scoreMultiplier: 0.8,
-    baseSurvivalTarget: 120
-  }
-};
 
 // Multiplicadores para las diferentes dificultades
 export const DIFFICULTY_MULTIPLIERS = {
@@ -114,11 +92,17 @@ export const PREDEFINED_LEVELS: LevelConfig[] = [
       ],
       survival: [
         { type: 'time', value: 120, description: 'Sobrevive 2 minutos' }
+      ],
+      zen: [
+        { type: 'time', value: 0, description: 'Juega sin presión' }
       ]
     },
     rewards: {
       classic: [
         { type: 'points', value: 500, description: 'Bonus de nivel' }
+      ],
+      zen: [
+        { type: 'points', value: 100, description: 'Bonus de zen' }
       ]
     }
   },
@@ -140,11 +124,17 @@ export const PREDEFINED_LEVELS: LevelConfig[] = [
       ],
       survival: [
         { type: 'time', value: 180, description: 'Sobrevive 3 minutos' }
+      ],
+      zen: [
+        { type: 'time', value: 0, description: 'Juega sin presión' }
       ]
     },
     rewards: {
       classic: [
         { type: 'points', value: 750, description: 'Bonus de nivel' }
+      ],
+      zen: [
+        { type: 'points', value: 150, description: 'Bonus de zen' }
       ]
     }
   },
@@ -166,11 +156,17 @@ export const PREDEFINED_LEVELS: LevelConfig[] = [
       ],
       survival: [
         { type: 'time', value: 240, description: 'Sobrevive 4 minutos' }
+      ],
+      zen: [
+        { type: 'time', value: 0, description: 'Juega sin presión' }
       ]
     },
     rewards: {
       classic: [
         { type: 'points', value: 1000, description: 'Bonus de nivel' }
+      ],
+      zen: [
+        { type: 'points', value: 200, description: 'Bonus de zen' }
       ]
     },
     specialFeatures: {
@@ -202,11 +198,18 @@ export const PREDEFINED_LEVELS: LevelConfig[] = [
       ],
       survival: [
         { type: 'time', value: 300, description: 'Sobrevive 5 minutos' }
+      ],
+      zen: [
+        { type: 'time', value: 0, description: 'Juega sin presión' }
       ]
     },
     rewards: {
       classic: [
         { type: 'points', value: 1500, description: 'Bonus de nivel' },
+        { type: 'hint', value: 1, description: 'Pista adicional' }
+      ],
+      zen: [
+        { type: 'points', value: 300, description: 'Bonus de zen' },
         { type: 'hint', value: 1, description: 'Pista adicional' }
       ]
     },
@@ -247,12 +250,19 @@ export const PREDEFINED_LEVELS: LevelConfig[] = [
       ],
       survival: [
         { type: 'time', value: 360, description: 'Sobrevive 6 minutos' }
+      ],
+      zen: [
+        { type: 'time', value: 0, description: 'Juega sin presión' }
       ]
     },
     rewards: {
       classic: [
         { type: 'points', value: 2000, description: 'Bonus de nivel' },
         { type: 'hint', value: 2, description: 'Pistas adicionales' }
+      ],
+      zen: [
+        { type: 'points', value: 400, description: 'Bonus de zen' },
+        { type: 'hint', value: 1, description: 'Pista adicional' }
       ]
     },
     specialFeatures: {
@@ -338,6 +348,13 @@ export function generateDynamicLevel(level: number): LevelConfig {
           value: 120 + (level * 60), 
           description: `Sobrevive ${(120 + (level * 60)) / 60} minutos` 
         }
+      ],
+      zen: [
+        { 
+          type: 'time', 
+          value: 0, 
+          description: 'Juega sin presión' 
+        }
       ]
     },
     rewards: {
@@ -346,6 +363,13 @@ export function generateDynamicLevel(level: number): LevelConfig {
           type: 'points', 
           value: 500 * level, 
           description: 'Bonus de nivel' 
+        }
+      ],
+      zen: [
+        {
+          type: 'points',
+          value: 100 * level,
+          description: 'Bonus de zen'
         }
       ]
     }
@@ -447,6 +471,25 @@ export function getLevelConfig(
   // Ajustar spawnRate según dificultad
   adjustedConfig.spawnRate = Math.round(adjustedConfig.spawnRate * difficultyMod.spawnRate);
   
+  // Asegurarse de que existen requisitos para el modo de juego seleccionado
+  // Si no existen, copiar los del modo clásico o crear unos básicos
+  if (!adjustedConfig.requirements[playMode] || adjustedConfig.requirements[playMode].length === 0) {
+    if (playMode === 'zen') {
+      // Para el modo zen, crear requisitos básicos sin objetivos específicos
+      adjustedConfig.requirements.zen = [
+        { type: 'time', value: 0, description: 'Juega sin presión' }
+      ];
+    } else if (adjustedConfig.requirements.classic) {
+      // Para otros modos, copiar los del clásico si existen
+      adjustedConfig.requirements[playMode] = [...adjustedConfig.requirements.classic];
+    } else {
+      // Si no hay requisitos clásicos, crear algo básico
+      adjustedConfig.requirements[playMode] = [
+        { type: 'score', value: 1000 * level, description: `Alcanza ${1000 * level} puntos` }
+      ];
+    }
+  }
+  
   // Ajustar requisitos según dificultad
   const modeRequirements = adjustedConfig.requirements[playMode];
   if (modeRequirements) {
@@ -455,8 +498,11 @@ export function getLevelConfig(
         req.value = Math.round(req.value * difficultyMod.scoreRequirement);
         req.description = `Alcanza ${req.value} puntos`;
       } else if (req.type === 'time') {
-        req.value = Math.round(req.value * difficultyMod.timeRequirement);
-        req.description = `Sobrevive ${req.value >= 60 ? `${Math.floor(req.value/60)} minuto${req.value >= 120 ? 's' : ''}` : ''}${req.value % 60 > 0 ? (req.value >= 60 ? ' y ' : '') + `${req.value % 60} segundo${req.value % 60 !== 1 ? 's' : ''}` : ''}`;
+        // Para el modo zen, no ajustar requisitos de tiempo
+        if (playMode !== 'zen') {
+          req.value = Math.round(req.value * difficultyMod.timeRequirement);
+          req.description = `Sobrevive ${req.value >= 60 ? `${Math.floor(req.value/60)} minuto${req.value >= 120 ? 's' : ''}` : ''}${req.value % 60 > 0 ? (req.value >= 60 ? ' y ' : '') + `${req.value % 60} segundo${req.value % 60 !== 1 ? 's' : ''}` : ''}`;
+        }
       }
     });
   }

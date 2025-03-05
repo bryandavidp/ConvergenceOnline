@@ -11,6 +11,38 @@ import * as levelAdapter from './levelAdapter';
 import * as levels from './levels';
 import logger from './logger';
 
+// Definición del tipo para BASE_MODE_CONFIG
+type ModeConfig = {
+  baseSpawnRate: number;
+  spawnRateDecrement: number;
+  minSpawnRate: number;
+  scoreMultiplier: number;
+  [key: string]: any;
+};
+
+type BaseModeConfigType = {
+  classic: ModeConfig;
+  timed: ModeConfig;
+  survival: ModeConfig;
+  zen: ModeConfig;
+  [key: string]: ModeConfig;
+};
+
+// Intentamos importar BASE_MODE_CONFIG, pero no bloqueamos si falla
+let BASE_MODE_CONFIG: BaseModeConfigType;
+try {
+  BASE_MODE_CONFIG = require('./BASE_MODE_CONFIG').BASE_MODE_CONFIG;
+} catch (error) {
+  // Si no podemos importar, definimos un objeto por defecto
+  BASE_MODE_CONFIG = {
+    classic: { baseSpawnRate: 2000, spawnRateDecrement: 100, minSpawnRate: 500, scoreMultiplier: 1 },
+    timed: { baseSpawnRate: 1500, spawnRateDecrement: 150, minSpawnRate: 400, scoreMultiplier: 1.2 },
+    survival: { baseSpawnRate: 1800, spawnRateDecrement: 120, minSpawnRate: 450, scoreMultiplier: 0.8 },
+    zen: { baseSpawnRate: 2500, spawnRateDecrement: 50, minSpawnRate: 600, scoreMultiplier: 0.5 }
+  };
+  logger.warn('LevelSystem', 'No se pudo importar BASE_MODE_CONFIG, usando valores por defecto');
+}
+
 /**
  * Migra la configuración existente al nuevo sistema de niveles
  */
@@ -23,7 +55,7 @@ export function migrateConfigToLevelSystem() {
     const boardSizes = config.BOARD_SIZES;
     
     // Verificar si ya existen niveles predefinidos
-    if (levels.PREDEFINED_LEVELS.length > 0) {
+    if (levels.PREDEFINED_LEVELS && levels.PREDEFINED_LEVELS.length > 0) {
       logger.info('LevelSystem', 'El sistema de niveles ya está inicializado');
       return;
     }
@@ -86,17 +118,30 @@ export function initCurrentLevel(
  * Inicializa todo el sistema de niveles
  */
 export function initLevelSystem() {
-  logger.info('LevelSystem', 'Inicializando sistema de niveles');
-  
-  // Inicializar adaptadores y migrar configuración
-  migrateConfigToLevelSystem();
-  
-  logger.info('LevelSystem', 'Sistema de niveles inicializado correctamente');
-  
-  // Devolver información sobre el sistema para debugging
-  return {
-    predefinedLevels: levels.PREDEFINED_LEVELS.length,
-    difficulties: Object.keys(levels.DIFFICULTY_MULTIPLIERS),
-    modes: Object.keys(levels.BASE_MODE_CONFIG)
-  };
+  try {
+    logger.info('LevelSystem', 'Inicializando sistema de niveles');
+    
+    // Inicializar adaptadores y migrar configuración
+    migrateConfigToLevelSystem();
+    
+    logger.info('LevelSystem', 'Sistema de niveles inicializado correctamente');
+    
+    // Devolver información sobre el sistema para debugging
+    return {
+      predefinedLevels: levels.PREDEFINED_LEVELS ? levels.PREDEFINED_LEVELS.length : 0,
+      difficulties: levels.DIFFICULTY_MULTIPLIERS ? Object.keys(levels.DIFFICULTY_MULTIPLIERS) : 
+                   ['easy', 'normal', 'hard', 'tutorial'],
+      modes: BASE_MODE_CONFIG ? Object.keys(BASE_MODE_CONFIG) : 
+             ['classic', 'timed', 'survival', 'zen']
+    };
+  } catch (error) {
+    logger.error('LevelSystem', `Error al inicializar sistema de niveles: ${error}`);
+    
+    // En caso de error grave, devolver un objeto con valores por defecto
+    return {
+      predefinedLevels: 0,
+      difficulties: ['easy', 'normal', 'hard', 'tutorial'],
+      modes: ['classic', 'timed', 'survival', 'zen']
+    };
+  }
 } 
