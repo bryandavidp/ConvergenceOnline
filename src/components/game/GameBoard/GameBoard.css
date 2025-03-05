@@ -359,7 +359,7 @@
   box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.3);
   opacity: 0;
   pointer-events: none;
-  animation: appear-glow-fixed 0.5s ease-out forwards;
+  animation: appear-glow-fixed 1.0s ease-out forwards; /* Aumentado a 1.0s */
   background: radial-gradient(circle at center, rgba(97, 125, 255, 0.15) 0%, transparent 70%);
 }
 
@@ -379,10 +379,10 @@
   }
 }
 
-/* Mejora adicional para la animación de aparición de iconos */
+/* Mejora adicional para la animación de aparición de iconos - DURACIÓN AUMENTADA */
 .board-cell.has-icon .cell-content {
-  animation: pop-in-new 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  -webkit-animation: pop-in-new 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: pop-in-new 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; /* Aumentado de 0.5s a 0.8s */
+  -webkit-animation: pop-in-new 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   transform-origin: center;
   -webkit-transform-origin: center;
   will-change: transform, opacity, filter;
@@ -398,7 +398,7 @@
   position: relative;
 }
 
-/* Efecto de brillo adicional para la aparición */
+/* Efecto de brillo adicional para la aparición - DURACIÓN AUMENTADA */
 .board-cell.has-icon .cell-content::after {
   content: '';
   position: absolute;
@@ -409,7 +409,7 @@
   background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, transparent 70%);
   opacity: 0;
   pointer-events: none;
-  animation: content-glow 0.5s ease-out forwards;
+  animation: content-glow 0.9s ease-out forwards; /* Aumentado de 0.5s a 0.9s */
   z-index: 2;
   border-radius: 50%;
 }
@@ -419,9 +419,17 @@
     opacity: 0;
     transform: scale(0.2);
   }
-  40% {
+  30% { /* Añadido paso intermedio para suavizar */
+    opacity: 0.3;
+    transform: scale(0.5);
+  }
+  50% {
     opacity: 0.7;
     transform: scale(0.8);
+  }
+  85% { /* Extendido para mantener visible más tiempo */
+    opacity: 0.3;
+    transform: scale(1.1);
   }
   100% {
     opacity: 0;
@@ -429,7 +437,7 @@
   }
 }
 
-/* Animación mejorada para aparición de iconos */
+/* Animación mejorada para aparición de iconos - DURACIÓN AUMENTADA */
 @keyframes pop-in-new {
   0% {
     opacity: 0;
@@ -441,12 +449,17 @@
     transform: scale(0.6) rotate(-8deg);
     filter: brightness(1.0) blur(1px) saturate(1.0);
   }
-  50% {
+  40% { /* Añadido paso intermedio para suavizar */
+    opacity: 0.8;
+    transform: scale(1.0) rotate(0deg);
+    filter: brightness(1.2) blur(0.5px) saturate(1.1);
+  }
+  60% {
     opacity: 1;
     transform: scale(1.4) rotate(5deg);
     filter: brightness(1.4) blur(0px) saturate(1.3);
   }
-  75% {
+  80% {
     transform: scale(0.9) rotate(-3deg);
     filter: brightness(1.2) saturate(1.1);
   }
@@ -467,7 +480,7 @@
   will-change: transform, opacity; /* Mejora rendimiento */
 }
 
-/* Efecto de estallido cuando se elimina un icono - CORREGIDO */
+/* Efecto de estallido cuando se elimina un icono - DURACIÓN AUMENTADA */
 .board-cell.removing::after {
   content: '';
   position: absolute;
@@ -480,18 +493,26 @@
   opacity: 0;
   z-index: 4;
   pointer-events: none;
-  animation: celebrate-pulse-fixed 0.8s ease-out forwards;
+  animation: celebrate-pulse-fixed 1.2s ease-out forwards; /* Aumentado de 0.8s a 1.2s */
 }
 
-/* Efecto corregido de pulso para celebración */
+/* Efecto corregido de pulso para celebración - DURACIÓN AUMENTADA */
 @keyframes celebrate-pulse-fixed {
   0% {
     opacity: 0;
     transform: scale(0.5);
   }
-  40% {
+  30% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  50% {
     opacity: 0.7;
     transform: scale(1.0);
+  }
+  80% { /* Extendido para mantener visible más tiempo */
+    opacity: 0.4;
+    transform: scale(1.1);
   }
   100% {
     opacity: 0;
@@ -499,7 +520,7 @@
   }
 }
 
-/* Efecto de partículas al eliminar - CORREGIDO */
+/* Efecto de partículas al eliminar - DURACIÓN AUMENTADA */
 .board-cell.removing::before {
   content: '';
   position: absolute;
@@ -512,24 +533,70 @@
     radial-gradient(circle at 20% 30%, rgba(0, 230, 118, 0.8) 0%, rgba(255, 255, 255, 0) 6%),
     radial-gradient(circle at 80% 20%, rgba(0, 230, 118, 0.8) 0%, rgba(255, 255, 255, 0) 6%),
     radial-gradient(circle at 40% 70%, rgba(0, 230, 118, 0.8) 0%, rgba(255, 255, 255, 0) 6%),
-    radial-gradient(circle at 70% 80%, rgba(0, 230, 118, 0.8) 0%, rgba(255, 255, 255, 0) 6%);
+    radial-gradient(circle at 70% 80%, rgba(0, 230, 118, 0.8) 0%, rgba(255, 255, 255, 0) 6%),
+    /* Nuevos puntos de luz adicionales */
+    radial-gradient(circle at 50% 20%, rgba(255, 222, 89, 0.8) 0%, rgba(255, 255, 255, 0) 8%),
+    radial-gradient(circle at 30% 50%, rgba(255, 222, 89, 0.8) 0%, rgba(255, 255, 255, 0) 8%);
   transform: translate(-50%, -50%) scale(0);
   opacity: 0;
-  animation: particles-effect-fixed 0.4s cubic-bezier(0.15, 0.95, 0.5, 1) forwards;
-  -webkit-animation: particles-effect-fixed 0.4s cubic-bezier(0.15, 0.95, 0.5, 1) forwards;
+  animation: particles-effect-fixed 0.9s cubic-bezier(0.15, 0.95, 0.5, 1) forwards;
+  -webkit-animation: particles-effect-fixed 0.9s cubic-bezier(0.15, 0.95, 0.5, 1) forwards;
   pointer-events: none;
-  will-change: transform, opacity; /* Optimiza rendimiento */
+  will-change: transform, opacity;
   z-index: 5;
 }
 
-/* Animación corregida para partículas */
+/* Añadimos un nuevo efecto posterior para destellos adicionales */
+.board-cell.removing .additional-sparkles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 6;
+  background-image: 
+    radial-gradient(circle at 30% 40%, rgba(255, 222, 89, 0.9) 0%, rgba(255, 255, 255, 0) 20%),
+    radial-gradient(circle at 70% 60%, rgba(255, 222, 89, 0.9) 0%, rgba(255, 255, 255, 0) 20%);
+  animation: sparkle-pulse 1.2s ease-out 0.3s forwards; /* Retrasado para que aparezca después */
+}
+
+@keyframes sparkle-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  40% {
+    opacity: 0.7;
+    transform: scale(0.8);
+  }
+  70% {
+    opacity: 0.5;
+    transform: scale(1.0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+}
+
+/* Animación corregida para partículas - DURACIÓN AUMENTADA */
 @keyframes particles-effect-fixed {
   0% {
     transform: translate(-50%, -50%) scale(0.2);
     opacity: 0;
   }
   30% {
+    opacity: 0.7;
+  }
+  60% { /* Añadido paso intermedio para mantener visible más tiempo */
     opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.0);
+  }
+  85% { /* Añadido paso intermedio para suavizar */
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.2);
   }
   100% {
     transform: translate(-50%, -50%) scale(1.4);
@@ -537,9 +604,9 @@
   }
 }
 
-/* Animación para la eliminación del icono - mejorada */
+/* Animación para la eliminación del icono - DURACIÓN AUMENTADA */
 .board-cell.removing .cell-content {
-  animation: remove-pop 0.6s ease-out forwards;
+  animation: remove-pop 1.0s ease-out forwards; /* Aumentado de 0.6s a 1.0s */
   transform-origin: center;
 }
 
@@ -554,6 +621,11 @@
     transform: scale(1.3) rotate(5deg);
     filter: brightness(1.5) saturate(1.5);
   }
+  60% { /* Añadido paso intermedio para mantener visible más tiempo */
+    opacity: 0.8;
+    transform: scale(1.0) rotate(0deg);
+    filter: brightness(1.7) saturate(1.7);
+  }
   100% {
     opacity: 0;
     transform: scale(0.2) rotate(-15deg);
@@ -564,11 +636,11 @@
 /* Estilos para dispositivos móviles */
 @media (max-width: 480px) {
   .board-cell.has-icon .cell-content {
-    animation-duration: 0.4s; /* Más rápido en móviles */
+    animation-duration: 0.7s; /* Aumentado de 0.4s a 0.7s, pero sigue siendo más rápido que en escritorio */
   }
   
   .board-cell.removing .cell-content {
-    animation-duration: 0.5s; /* Más rápido en móviles */
+    animation-duration: 0.8s; /* Aumentado de 0.5s a 0.8s, pero sigue siendo más rápido que en escritorio */
   }
   
   /* Optimizaciones para rendimiento en móviles */
@@ -578,10 +650,20 @@
       transform: scale(0) rotate(-5deg);
       filter: brightness(0.8);
     }
-    50% {
+    30% { /* Añadido paso intermedio */
+      opacity: 0.7;
+      transform: scale(0.8) rotate(0deg);
+      filter: brightness(1.0);
+    }
+    60% {
       opacity: 1;
       transform: scale(1.2) rotate(5deg);
       filter: brightness(1.2);
+    }
+    80% { /* Añadido paso intermedio */
+      opacity: 1;
+      transform: scale(0.9) rotate(0deg);
+      filter: brightness(1.1);
     }
     100% {
       opacity: 1;
@@ -1745,13 +1827,16 @@
     radial-gradient(circle at 20% 30%, rgba(0, 230, 118, 0.8) 0%, rgba(255, 255, 255, 0) 6%),
     radial-gradient(circle at 80% 20%, rgba(0, 230, 118, 0.8) 0%, rgba(255, 255, 255, 0) 6%),
     radial-gradient(circle at 40% 70%, rgba(0, 230, 118, 0.8) 0%, rgba(255, 255, 255, 0) 6%),
-    radial-gradient(circle at 70% 80%, rgba(0, 230, 118, 0.8) 0%, rgba(255, 255, 255, 0) 6%);
+    radial-gradient(circle at 70% 80%, rgba(0, 230, 118, 0.8) 0%, rgba(255, 255, 255, 0) 6%),
+    /* Nuevos puntos de luz adicionales */
+    radial-gradient(circle at 50% 20%, rgba(255, 222, 89, 0.8) 0%, rgba(255, 255, 255, 0) 8%),
+    radial-gradient(circle at 30% 50%, rgba(255, 222, 89, 0.8) 0%, rgba(255, 255, 255, 0) 8%);
   transform: translate(-50%, -50%) scale(0);
   opacity: 0;
   animation: particles-effect 0.4s cubic-bezier(0.15, 0.95, 0.5, 1) forwards;
   -webkit-animation: particles-effect 0.4s cubic-bezier(0.15, 0.95, 0.5, 1) forwards;
   pointer-events: none;
-  will-change: transform, opacity; /* Optimiza rendimiento */
+  will-change: transform, opacity;
   z-index: 5;
 }
 
@@ -1791,7 +1876,7 @@
   clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
   opacity: 0;
   transform-origin: center;
-  animation: star-float 1.5s ease-out forwards;
+  animation: star-float 2.5s ease-out forwards; /* Aumentado de 1.5s a 2.5s */
   filter: drop-shadow(0 0 2px rgba(255, 222, 89, 0.8));
 }
 
@@ -1800,9 +1885,17 @@
     opacity: 1;
     transform: scale(0) rotate(0deg);
   }
+  20% { /* Añadido paso intermedio para suavizar */
+    opacity: 1;
+    transform: scale(0.5) rotate(90deg) translate(calc(var(--tx) * 0.5), calc(var(--ty) * 0.5));
+  }
   50% {
     opacity: 0.8;
     transform: scale(1) rotate(180deg) translate(var(--tx), var(--ty));
+  }
+  80% { /* Añadido paso intermedio para mantener visible más tiempo */
+    opacity: 0.5;
+    transform: scale(0.7) rotate(270deg) translate(calc(var(--tx) * 1.5), calc(var(--ty) * 1.5));
   }
   100% {
     opacity: 0;
@@ -1826,7 +1919,7 @@
   }
 }
 
-/* Efecto de resplandor cuando se hace una coincidencia */
+/* Efecto de resplandor cuando se hace una coincidencia - DURACIÓN AUMENTADA */
 .match-glow {
   position: absolute;
   top: 0;
@@ -1837,8 +1930,8 @@
   box-shadow: 0 0 15px var(--match-glow-color), inset 0 0 10px var(--match-glow-color);
   pointer-events: none;
   opacity: 0;
-  z-index: 5;
-  animation: match-glow-pulse 0.8s ease-out forwards;
+  z-index: 4;
+  animation: match-glow-pulse 1.2s ease-out forwards; /* Aumentado de 0.8s a 1.2s */
 }
 
 @keyframes match-glow-pulse {
@@ -1846,9 +1939,17 @@
     opacity: 0;
     transform: scale(0.8);
   }
+  20% { /* Añadido paso intermedio */
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
   40% {
     opacity: 0.8;
     transform: scale(1.1);
+  }
+  70% { /* Añadido paso intermedio para mantener visible más tiempo */
+    opacity: 0.6;
+    transform: scale(1.3);
   }
   100% {
     opacity: 0;
@@ -1856,7 +1957,7 @@
   }
 }
 
-/* Efecto de ondas al hacer clic */
+/* Efecto de ondas al hacer clic - DURACIÓN AUMENTADA */
 .click-ripple {
   position: absolute;
   top: 0;
@@ -1864,17 +1965,21 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
   transform: scale(0);
   pointer-events: none;
   opacity: 0;
-  animation: ripple-effect 0.6s ease-out forwards;
+  animation: ripple-effect 0.8s ease-out forwards; /* Aumentado de 0.6s a 0.8s */
 }
 
 @keyframes ripple-effect {
   0% {
     transform: scale(0);
     opacity: 0.8;
+  }
+  50% { /* Añadido paso intermedio */
+    opacity: 0.6;
+    transform: scale(1.5);
   }
   100% {
     transform: scale(2.5);

@@ -75,11 +75,11 @@ const GameBoard: React.FC = () => {
       ripple.className = 'click-ripple';
       cellElement.appendChild(ripple);
       
-      // Eliminar el ripple después de la animación
+      // Eliminar el ripple después de la animación (más largo)
       setTimeout(() => {
         ripple.remove();
         cellElement.classList.remove('clicking');
-      }, 600);
+      }, 800); // Aumentado de 600ms a 800ms
       
       // Verificar si la celda tiene un ícono y agregar efecto de brillo
       const cellContent = board[row]?.[col];
@@ -92,10 +92,10 @@ const GameBoard: React.FC = () => {
         glow.className = 'match-glow';
         cellElement.appendChild(glow);
         
-        // Eliminar el brillo después de la animación
+        // Eliminar el brillo después de la animación (más largo)
         setTimeout(() => {
           glow.remove();
-        }, 800);
+        }, 1200); // Aumentado de 800ms a 1200ms
       }
     }
     
@@ -152,8 +152,13 @@ const GameBoard: React.FC = () => {
                   
                   el.appendChild(starsContainer);
                   
-                  // Crear estrellas aleatorias
-                  const starCount = 5 + Math.floor(Math.random() * 5); // Entre 5 y 9 estrellas
+                  // Agregar el efecto de destellos adicionales
+                  const additionalSparkles = document.createElement('div');
+                  additionalSparkles.className = 'additional-sparkles';
+                  el.appendChild(additionalSparkles);
+                  
+                  // Crear estrellas aleatorias (más estrellas)
+                  const starCount = 7 + Math.floor(Math.random() * 6); // Entre 7 y 12 estrellas (aumentado)
                   for (let i = 0; i < starCount; i++) {
                     const star = document.createElement('div');
                     star.className = 'celebration-star';
@@ -164,10 +169,14 @@ const GameBoard: React.FC = () => {
                     star.style.setProperty('--tx', tx);
                     star.style.setProperty('--ty', ty);
                     
-                    // Tamaño aleatorio
-                    const size = 3 + Math.random() * 5; // Entre 3px y 8px - ligeramente más pequeñas
+                    // Tamaño aleatorio (ligeramente más grandes)
+                    const size = 4 + Math.random() * 6; // Entre 4px y 10px - ligeramente más grandes
                     star.style.width = size + 'px';
                     star.style.height = size + 'px';
+                    
+                    // Agregar retraso aleatorio para que no todas aparezcan a la vez
+                    const delay = Math.random() * 0.8; // Entre 0 y 0.8 segundos de retraso
+                    star.style.animationDelay = delay + 's';
                     
                     // Posición inicial centrada en la celda
                     star.style.left = (45 + Math.random() * 10) + '%'; // Más centrado (45-55%)
@@ -180,12 +189,16 @@ const GameBoard: React.FC = () => {
                   // Agregar sonido festivo
                   audioManager.play('positive');
                   
-                  // Eliminar las estrellas después de la animación
+                  // Eliminar las estrellas después de la animación (más largo)
                   setTimeout(() => {
                     if (starsContainer && starsContainer.parentNode) {
                       starsContainer.remove();
                     }
-                  }, 1500);
+                    // Eliminar también los destellos adicionales
+                    if (additionalSparkles && additionalSparkles.parentNode) {
+                      additionalSparkles.remove();
+                    }
+                  }, 2800); // Aumentado de 1500ms a 2800ms para coincidir con la animación de 2.5s de las estrellas
                 }
               }
             }}
