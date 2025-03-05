@@ -5,7 +5,7 @@ import { setGameStatus, resetGame } from '../../../store/slices/gameSlice';
 import useGameLogic from '../../../hooks/useGameLogic';
 import { audioManager } from '../../../utils/audioManager';
 import { createLogger } from '../../../utils/logUtils';
-import * as gameConfig from '../../../config/gameConfig';
+import * as config from '../../../utils/config';
 import './GameControls.css';
 
 // Crear un logger específico para este componente
@@ -161,7 +161,7 @@ const GameControls: React.FC = () => {
   }, [isMusicMuted, isSoundMuted]);
   
   // Calcular velocidad para mostrar
-  const baseSpawnRate = gameConfig.SPAWN_RATES.MEDIUM; // Usamos el MEDIUM como base
+  const baseSpawnRate = config.SPAWN_RATES.MEDIUM; // Usamos el MEDIUM como base
   const speedMultiplier = baseSpawnRate / spawnRate;
   const speedDisplay = speedMultiplier.toFixed(1) + 'x';
   
