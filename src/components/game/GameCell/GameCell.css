@@ -36,7 +36,6 @@
 
 .game-cell.highlight {
   background-color: rgba(76, 175, 80, 0.3);
-  animation: pulse 1.5s infinite;
 }
 
 .game-cell.path {
@@ -48,23 +47,18 @@
 }
 
 .game-cell.hint-effect {
-  animation: hint-pulse 2s infinite;
 }
 
 .game-cell.pulse-effect {
-  animation: pulse 1.5s infinite;
 }
 
 .game-cell.shake-effect {
-  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
 }
 
 .game-cell.new-icon {
-  animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
 .game-cell.removing-icon {
-  animation: fade-out 0.3s ease-out forwards;
 }
 
 .game-cell.glow-effect::before {
@@ -77,78 +71,4 @@
   border-radius: 8px;
   background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
   z-index: -1;
-  animation: glow 1s ease-out;
 }
-
-@keyframes pop-in {
-  0% {
-    transform: scale(0.5);
-    opacity: 0;
-  }
-  70% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes fade-out {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(0.6);
-    opacity: 0;
-  }
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
-  }
-}
-
-@keyframes hint-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 15px rgba(33, 150, 243, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
-  }
-}
-
-@keyframes shake {
-  10%, 90% {
-    transform: translate3d(-1px, 0, 0);
-  }
-  20%, 80% {
-    transform: translate3d(2px, 0, 0);
-  }
-  30%, 50%, 70% {
-    transform: translate3d(-4px, 0, 0);
-  }
-  40%, 60% {
-    transform: translate3d(4px, 0, 0);
-  }
-}
-
-@keyframes glow {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-} 

@@ -200,7 +200,6 @@
   width: 200%;
   height: 200%;
   background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
-  animation: rotate 15s linear infinite;
   z-index: -1;
 }
 
@@ -208,7 +207,6 @@
   font-size: 1.3rem;
   color: #ffde59;
   filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.7));
-  animation: bounce 2s infinite;
 }
 
 .high-score-value {

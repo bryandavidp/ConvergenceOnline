@@ -80,7 +80,6 @@
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-white);
-  animation: pulse 2s infinite;
 }
 
 /* ============== TABLERO DE JUEGO ============== */
@@ -150,15 +149,9 @@
   z-index: 1;
 }
 
-.cell.hint {
-  animation: pulse 1.5s infinite;
-  background-color: var(--cell-hint);
-}
 
-.cell.error {
-  animation: shake 0.5s;
-  background-color: var(--cell-error);
-}
+
+
 
 /* ============== ANIMACIONES DE CELDAS ============== */
 
@@ -221,24 +214,6 @@
   40%, 80% { transform: translateX(5px); }
 }
 
-/* Aplicar animaciones a las celdas */
-.cell.new {
-  animation: cellAppear 0.5s ease-out;
-}
-
-.cell.removing {
-  animation: cellRemove 0.5s ease-in forwards;
-}
-
-.cell.hint {
-  animation: pulse 1.5s infinite;
-}
-
-.cell.error {
-  animation: shake 0.5s ease-in-out;
-  background-color: rgba(var(--color-error-rgb), 0.3);
-}
-
 /* ============== MENSAJE DE CONVERGENCIA ============== */
 
 .convergence-message {
@@ -253,7 +228,6 @@
   font-size: var(--text-lg);
   font-weight: var(--font-weight-bold);
   z-index: 2;
-  animation: fadeInOut 2s ease-in-out;
   pointer-events: none;
 }
 
@@ -369,27 +343,3 @@
     align-items: stretch;
   }
 }
-
-/* Soporte para preferencias de reducción de movimiento */
-@media (prefers-reduced-motion: reduce) {
-  .cell {
-    transition: none;
-  }
-  
-  .cell.new,
-  .cell.removing,
-  .cell.hint,
-  .cell.error {
-    animation: none;
-  }
-  
-  .cell.highlighted {
-    transform: none;
-    box-shadow: 0 0 0 3px var(--color-primary);
-  }
-  
-  .convergence-message {
-    animation: none;
-    opacity: 1;
-  }
-} 
