@@ -6,6 +6,7 @@ import './GameBoard.css';
 import { setHighlightedCells, setBoardSize, setSpawnRate, setLevel, setGameStatus } from '../../../store/slices/gameSlice';
 import * as config from '../../../utils/config';
 import { audioManager } from '../../../utils/audioManager';
+import FpsCounter from '../FpsCounter/FpsCounter';
 
 const GameBoard: React.FC = () => {
   const dispatch = useDispatch();
@@ -38,6 +39,9 @@ const GameBoard: React.FC = () => {
   
   // Estado para la velocidad personalizada
   const [customSpeedMultiplier, setCustomSpeedMultiplier] = useState(1);
+  
+  // Estado para mostrar/ocultar el contador de FPS
+  const [showFpsCounter, setShowFpsCounter] = useState<boolean>(true);
   
   // Verificar si una celda está resaltada - memoizada para evitar recálculos
   const isCellHighlighted = useCallback((row: number, col: number) => {
@@ -434,6 +438,18 @@ const GameBoard: React.FC = () => {
             </div>
           </div>
           
+          <div className="control-group">
+            <label>Herramientas de Diagnóstico:</label>
+            <div className="diagnostic-tools">
+              <button 
+                onClick={() => setShowFpsCounter(!showFpsCounter)}
+                className={showFpsCounter ? 'active' : ''}
+              >
+                {showFpsCounter ? 'Ocultar FPS' : 'Mostrar FPS'}
+              </button>
+            </div>
+          </div>
+          
           <div className="control-actions">
             <button onClick={handleShowHint} className="dev-action-button hint-button">
               Mostrar Pista
@@ -452,6 +468,7 @@ const GameBoard: React.FC = () => {
     currentSpeedMultiplier, 
     customSpeedMultiplier,
     iconGenPaused,
+    showFpsCounter,
     handleBoardSizeChange, 
     handleShowHint, 
     handleSpeedChange,
@@ -502,32 +519,35 @@ const GameBoard: React.FC = () => {
   }, [board, boardSize, cells, status]);
   
   return (
-    <div className="game-board-wrapper">
-      {renderBoard()}
-      {renderDevToggle()}
-      {renderDevControls()}
-      
-      {/* Alerta de aumento de velocidad */}
-      {showSpeedAlert && (
-        <div className="speed-alert visible">
-          <div className="speed-alert-content">
-            <span className="speed-icon">⚡</span>
-            <span className="speed-text">¡Velocidad aumentada!</span>
-            <span className="speed-value">x{speedMultiplier}</span>
+    <>
+      {showFpsCounter && <FpsCounter />}
+      <div className="game-board-wrapper">
+        {renderBoard()}
+        {renderDevToggle()}
+        {renderDevControls()}
+        
+        {/* Alerta de aumento de velocidad */}
+        {showSpeedAlert && (
+          <div className="speed-alert visible">
+            <div className="speed-alert-content">
+              <span className="speed-icon">⚡</span>
+              <span className="speed-text">¡Velocidad aumentada!</span>
+              <span className="speed-value">x{speedMultiplier}</span>
+            </div>
           </div>
-        </div>
-      )}
-      
-      {/* Alerta de penalización */}
-      {showPenaltyAlert && (
-        <div className="penalty-alert visible">
-          <div className="penalty-alert-content">
-            <span className="penalty-icon">⚠️</span>
-            <span className="penalty-text">¡Penalización! Velocidad aumentada</span>
+        )}
+        
+        {/* Alerta de penalización */}
+        {showPenaltyAlert && (
+          <div className="penalty-alert visible">
+            <div className="penalty-alert-content">
+              <span className="penalty-icon">⚠️</span>
+              <span className="penalty-text">¡Penalización! Velocidad aumentada</span>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 };
 

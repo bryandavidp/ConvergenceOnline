@@ -1,0 +1,87 @@
+.fps-counter {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #00FF00;
+  font-family: monospace;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  z-index: 9999;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 0, 0.3);
+  text-shadow: 0 0 2px rgba(0, 255, 0, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 60px;
+  text-align: center;
+}
+
+.fps-counter:hover {
+  background-color: rgba(0, 0, 0, 0.9);
+  transform: scale(1.05);
+  box-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
+}
+
+.fps-counter.detailed {
+  min-width: 100px;
+  width: auto;
+  text-align: left;
+  padding: 8px 10px;
+}
+
+.fps-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.fps-details div {
+  white-space: nowrap;
+}
+
+.fps-details div:first-child {
+  font-size: 13px;
+  margin-bottom: 2px;
+  font-weight: 700;
+  color: #00FF00;
+}
+
+.fps-details div:nth-child(2) {
+  color: #FF5555; /* Rojo para mínimo */
+}
+
+.fps-details div:nth-child(3) {
+  color: #55FF55; /* Verde brillante para máximo */
+}
+
+.fps-details div:nth-child(4) {
+  color: #FFFF55; /* Amarillo para promedio */
+}
+
+/* Asegurar que sea legible en dispositos de diferentes tamaños */
+@media (max-width: 768px) {
+  .fps-counter {
+    font-size: 12px;
+    padding: 3px 6px;
+  }
+  
+  .fps-details {
+    font-size: 11px;
+  }
+  
+  .fps-details div:first-child {
+    font-size: 12px;
+  }
+}
+
+/* Optimización para dispositivos de alta densidad de píxeles */
+@media (min-resolution: 2dppx) {
+  .fps-counter {
+    font-size: 13px;
+    padding: 3px 7px;
+  }
+} 

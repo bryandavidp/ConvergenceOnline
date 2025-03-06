@@ -2031,3 +2031,44 @@
   height: 0 !important;
   overflow: hidden !important;
 } 
+
+.diagnostic-tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 5px;
+}
+
+.diagnostic-tools button {
+  background-color: rgba(40, 40, 40, 0.9);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.diagnostic-tools button:hover {
+  background-color: rgba(50, 50, 50, 0.9);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.diagnostic-tools button.active {
+  background-color: rgba(0, 128, 0, 0.8);
+  border-color: rgba(0, 255, 0, 0.4);
+  box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+}
+
+/* Ajuste para dispositivos móviles */
+@media (max-width: 480px) {
+  .diagnostic-tools {
+    gap: 5px;
+  }
+  
+  .diagnostic-tools button {
+    padding: 4px 8px;
+    font-size: 0.65rem;
+  }
+}
