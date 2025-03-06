@@ -11,6 +11,7 @@ interface CellProps {
   isNew?: boolean;
   isRemoving?: boolean;
   isHighlighted?: boolean;
+  lowPerformanceMode?: boolean;
 }
 
 const Cell: React.FC<CellProps> = ({ 
@@ -20,9 +21,28 @@ const Cell: React.FC<CellProps> = ({
   onClick, 
   isNew = false,
   isRemoving = false,
-  isHighlighted = false
+  isHighlighted = false,
+  lowPerformanceMode = false
 }) => {
   const isLight = (row + col) % 2 === 0;
+  
+  if (lowPerformanceMode) {
+    return (
+      <div 
+        className={`cell ${isLight ? 'light' : 'dark'} ${isHighlighted ? 'highlight' : ''} ${isRemoving ? 'removing' : ''}`}
+        data-row={row}
+        data-col={col}
+        onClick={onClick}
+        style={{
+          opacity: isRemoving ? 0 : 1,
+          transform: isRemoving ? 'scale(0.8)' : 'scale(1)',
+          transition: 'opacity 0.5s ease, transform 0.5s ease'
+        }}
+      >
+        {icon}
+      </div>
+    );
+  }
   
   return (
     <motion.div 
@@ -30,15 +50,28 @@ const Cell: React.FC<CellProps> = ({
       data-row={row}
       data-col={col}
       onClick={onClick}
+      initial={false}
       animate={isRemoving ? { scale: 0, opacity: 0 } : { scale: 1, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      transition={{ 
+        type: 'tween',
+        duration: 0.4,
+        ease: "easeOut"
+      }}
+      style={{ 
+        willChange: 'transform, opacity',
+        transform: 'translateZ(0)'
+      }}
     >
       {icon && (
         <motion.span
           initial={isNew ? { scale: 0 } : { scale: 1 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          transition={{ 
+            type: 'tween', 
+            duration: 0.4,
+            ease: "easeOut"
+          }}
         >
           {icon}
         </motion.span>

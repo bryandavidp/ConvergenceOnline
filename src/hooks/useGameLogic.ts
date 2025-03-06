@@ -548,80 +548,7 @@ const useGameLogic = () => {
         audioManager.play('convergingFound');
         isRemovingIconsRef.current = true;
         
-        const currentBoard = board.map(row => [...row]);
-        dispatch(setHighlightedCells(iconsToRemove));
-        
-        // Marcar los iconos que se eliminarán
-        const markingBoard = currentBoard.map(row => [...row]);
-        for (const cell of iconsToRemove) {
-          const cellIcon = markingBoard[cell.row][cell.col];
-          if (cellIcon !== null) {
-            markingBoard[cell.row][cell.col] = `${cellIcon}_removing`;
-          }
-        }
-        
-        dispatch(updateBoard(markingBoard));
-        
-        // Eliminar el setTimeout para que sea instantáneo
-        const finalBoard = markingBoard.map(row => [...row]);
-        let removedCount = 0;
-        
-        // Eliminar todos los iconos marcados
-        for (const cell of iconsToRemove) {
-          finalBoard[cell.row][cell.col] = null;
-          removedCount++;
-        }
-        
-        dispatch(updateBoard(finalBoard));
-        
-        const pointsEarned = removedCount * 10 * level;
-        dispatch(incrementScore(pointsEarned));
-        
-        const newIconCount = iconCount - removedCount;
-        dispatch(setIconCount(newIconCount));
-        
-        // Añadir tiempo adicional en el modo contrareloj
-        if (currentPlayMode === 'timed') {
-          // Añadir 3 segundos por cada icono removido, con un mínimo de 5 segundos
-          const timeBonus = Math.max(5, removedCount * 3);
-          
-          // Dispatch para añadir tiempo
-          dispatch({
-            type: 'game/addTimeBonus',
-            payload: timeBonus
-          });
-          
-          // Mostrar feedback visual/auditivo
-          audioManager.play('timeBonus');
-          
-          logger.info('Game', `Bonus de tiempo añadido: +${timeBonus} segundos`);
-        }
-        
-        audioManager.play('removeIcon');
-        dispatch(setHighlightedCells([]));
-        
-        if (newIconCount === 0) {
-          // Si no quedan iconos en el tablero, se completa el nivel
-          dispatch(incrementScore(config.SCORE_VALUES.EMPTY_BOARD_BONUS));
-          dispatch(setGameStatus('levelCompleted'));
-          audioManager.play('levelComplete');
-        } else if (!hasValidMoves()) {
-          // Si no hay movimientos válidos, verificar si hay pocos iconos
-          const totalCells = boardSize * boardSize;
-          const occupationPercentage = (newIconCount / totalCells) * 100;
-          
-          if (occupationPercentage <= 30) {
-            // Pocos iconos sin movimientos válidos, nivel completado
-            dispatch(setGameStatus('levelCompleted'));
-            audioManager.play('levelComplete');
-            logger.info(`Pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`, `Tamaño: ${currentBoard}, Modo: ${currentPlayMode}`);
-          } else {
-            // Muchos iconos sin movimientos válidos, game over
-            dispatch(setGameStatus('gameOver'));
-            audioManager.play('gameOver');
-            logger.info(`No hay movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`, `Tamaño: ${currentBoard}, Modo: ${currentPlayMode}`);
-          }
-        }
+        removeConvergingIcons(iconsToRemove);
         
         isRemovingIconsRef.current = false;
         
@@ -648,6 +575,71 @@ const useGameLogic = () => {
     dispatch, 
     hasValidMoves
   ]);
+
+  // Función optimizada para eliminar iconos en convergencia
+  const removeConvergingIcons = useCallback((iconsToRemove: Array<{row: number, col: number}>) => {
+    if (iconsToRemove.length === 0) return;
+    
+    const currentBoard = board.map(row => [...row]);
+    dispatch(setHighlightedCells(iconsToRemove));
+    
+    // Procesamiento en lote: marcamos todos los iconos primero
+    const markingBoard = currentBoard.map(row => [...row]);
+    for (const cell of iconsToRemove) {
+      const cellIcon = markingBoard[cell.row][cell.col];
+      if (cellIcon !== null) {
+        markingBoard[cell.row][cell.col] = `${cellIcon}_removing`;
+      }
+    }
+    
+    // Actualizamos el board una sola vez con todos los iconos marcados
+    dispatch(updateBoard(markingBoard));
+    
+    // Utilizamos requestAnimationFrame para asegurarnos de que la actualización
+    // se sincronice con el ciclo de renderizado del navegador
+    requestAnimationFrame(() => {
+      // Realizamos la eliminación en lote después de un breve retraso
+      // para permitir que la animación se muestre
+      setTimeout(() => {
+        const finalBoard = markingBoard.map(row => [...row]);
+        let removedCount = 0;
+        
+        // Eliminar todos los iconos marcados
+        for (const cell of iconsToRemove) {
+          finalBoard[cell.row][cell.col] = null;
+          removedCount++;
+        }
+        
+        // Actualizar el tablero una sola vez con todos los iconos eliminados
+        dispatch(updateBoard(finalBoard));
+        
+        const pointsEarned = removedCount * 10 * level;
+        dispatch(incrementScore(pointsEarned));
+        
+        const newIconCount = iconCount - removedCount;
+        dispatch(setIconCount(newIconCount));
+        
+        // Añadir tiempo adicional en el modo contrareloj
+        if (currentPlayMode === 'timed') {
+          // Añadir 3 segundos por cada icono removido, con un mínimo de 5 segundos
+          const timeBonus = Math.max(5, removedCount * 3);
+          
+          // Dispatch para añadir tiempo
+          dispatch({
+            type: 'game/addTimeBonus',
+            payload: timeBonus
+          });
+          
+          // Mostrar feedback visual/auditivo
+          audioManager.play('timeBonus');
+          
+          logger.info('Game', `Bonus de tiempo añadido: +${timeBonus} segundos`);
+        }
+        
+        audioManager.play('removeIcon');
+      }, 50); // Reducido de posibles valores mayores a solo 50ms
+    });
+  }, [board, currentPlayMode, dispatch, iconCount, level]);
 
   // Ajustar el tamaño visual del tablero
   const adjustBoardSize = useCallback((container: HTMLElement, boardElement: HTMLElement) => {

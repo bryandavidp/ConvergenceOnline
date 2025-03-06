@@ -473,11 +473,110 @@
 /* Animación para eliminar iconos - CORREGIDA ALINEACIÓN */
 .board-cell.removing {
   background-color: rgba(255, 157, 74, 0.3);
-  box-shadow: 0 0 20px rgba(255, 157, 74, 0.8), 0 0 0 3px rgba(255, 157, 74, 0.5);
+  /* Removemos box-shadow complejo y usamos uno más simple */
+  box-shadow: 0 0 8px rgba(255, 157, 74, 0.5);
   border-color: rgba(255, 157, 74, 0.8);
   position: relative;
   overflow: visible !important;
-  will-change: transform, opacity; /* Mejora rendimiento */
+  will-change: transform, opacity; /* Indicamos al navegador que estas propiedades cambiarán */
+  transform: translateZ(0); /* Forzamos aceleración por hardware */
+}
+
+/* Optimización 2: Simplificar las animaciones de desaparición */
+@keyframes celebrate-pulse-fixed {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
+/* Optimización 3: Simplificar y reducir duración de la animación de eliminación */
+@keyframes remove-pop {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+/* Optimización 4: Soporte para reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .board-cell.removing,
+  .board-cell.has-icon,
+  .board-cell.highlighted {
+    animation: none !important;
+    transition: opacity 0.1s linear !important;
+  }
+  
+  .board-cell.removing {
+    opacity: 0 !important;
+  }
+  
+  .board-cell.removing::after,
+  .board-cell.removing::before,
+  .board-cell.has-icon::after {
+    display: none !important;
+  }
+}
+
+/* Optimización 5: Versión optimizada de animaciones para dispositivos más lentos */
+.performance-mode .board-cell.removing {
+  animation: simple-fade-out 0.6s forwards !important; /* Aumentado de 0.2s a 0.6s */
+  box-shadow: none !important;
+}
+
+.performance-mode .board-cell.has-icon .cell-content {
+  animation-duration: 0.5s !important; /* Aumentado de 0.2s a 0.5s */
+}
+
+@keyframes simple-fade-out {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(0); }
+}
+
+/* Mejora la animación de fade-out en modo de rendimiento bajo */
+@keyframes optimized-remove-pop {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 0.3;
+    transform: scale(0.7);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+/* Usar la nueva animación optimizada pero visible */
+.performance-mode .board-cell.removing .cell-content {
+  animation: optimized-remove-pop 0.7s ease-out forwards !important; /* Duración mejor visible */
+}
+
+/* Optimización 6: Ajuste para evitar recálculos de layout */
+.board-cell.has-icon .cell-content,
+.board-cell.removing .cell-content {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform, opacity;
 }
 
 /* Efecto de estallido cuando se elimina un icono - DURACIÓN AUMENTADA */
@@ -502,21 +601,13 @@
     opacity: 0;
     transform: scale(0.5);
   }
-  30% {
-    opacity: 0.4;
-    transform: scale(0.8);
-  }
   50% {
-    opacity: 0.7;
-    transform: scale(1.0);
-  }
-  80% { /* Extendido para mantener visible más tiempo */
     opacity: 0.4;
-    transform: scale(1.1);
+    transform: scale(1.0);
   }
   100% {
     opacity: 0;
-    transform: scale(1.2);
+    transform: scale(1.1);
   }
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { setGameMode, setPlayMode, setGameStatus, GameDifficulty, GamePlayMode } from '../../../store/slices/gameSlice';
 import { audioManager } from '../../../utils/audioManager';
@@ -11,11 +11,19 @@ interface StartGameModalProps {
   onStart?: () => void;
 }
 
-// Componente para partículas en movimiento
-const ParticlesEffect: React.FC = () => {
+// Optimizado: Componente para partículas en movimiento con límite reducido y memo
+const ParticlesEffect: React.FC<{lowPerformance?: boolean}> = memo(({lowPerformance = false}) => {
+  // Reducir cantidad de partículas en modo de bajo rendimiento
+  const particleCount = lowPerformance ? 5 : 15;
+  
+  // No renderizar nada si estamos en modo de muy bajo rendimiento
+  if (lowPerformance === true) {
+    return null;
+  }
+  
   return (
     <div className="particles-container">
-      {[...Array(15)].map((_, i) => (
+      {[...Array(particleCount)].map((_, i) => (
         <div 
           key={i} 
           className="particle"
@@ -23,38 +31,46 @@ const ParticlesEffect: React.FC = () => {
             top: `${Math.random() * 100}%`,
             left: `${Math.random() * 100}%`,
             animationDelay: `${Math.random() * 5}s`,
-            animationDuration: `${6 + Math.random() * 10}s`,
-            width: `${3 + Math.random() * 3}px`,
-            height: `${3 + Math.random() * 3}px`,
-            opacity: 0.1 + Math.random() * 0.4,
+            animationDuration: `${6 + Math.random() * 4}s`, // Duración reducida
+            width: `${2 + Math.random() * 2}px`, // Tamaño reducido
+            height: `${2 + Math.random() * 2}px`, // Tamaño reducido
+            opacity: 0.1 + Math.random() * 0.3, // Opacidad reducida
           }}
         />
       ))}
     </div>
   );
-};
+});
 
-// Componente para estrellas brillantes
-const StarsEffect: React.FC = () => {
+// Optimizado: Componente para estrellas brillantes con límite reducido y memo
+const StarsEffect: React.FC<{lowPerformance?: boolean}> = memo(({lowPerformance = false}) => {
+  // Reducir cantidad de estrellas en modo de bajo rendimiento
+  const starCount = lowPerformance ? 7 : 20;
+  
+  // No renderizar nada si estamos en modo de muy bajo rendimiento
+  if (lowPerformance === true) {
+    return null;
+  }
+  
   return (
     <div className="stars-container">
-      {[...Array(20)].map((_, i) => (
+      {[...Array(starCount)].map((_, i) => (
         <div 
           key={i} 
           className="star"
           style={{
             top: `${Math.random() * 100}%`,
             left: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 10}s`,
-            animationDuration: `${2 + Math.random() * 3}s`,
-            width: `${1 + Math.random() * 2}px`,
-            height: `${1 + Math.random() * 2}px`,
+            animationDelay: `${Math.random() * 5}s`, // Menor delay
+            animationDuration: `${1 + Math.random() * 2}s`, // Duración reducida
+            width: `${1 + Math.random() * 1}px`, // Tamaño reducido
+            height: `${1 + Math.random() * 1}px`, // Tamaño reducido
           }}
         />
       ))}
     </div>
   );
-};
+});
 
 const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onStart }) => {
   const dispatch = useDispatch();
@@ -79,6 +95,52 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   // Referencia para cerrar el panel de configuración al hacer clic fuera
   const settingsPanelRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  
+  // Estado para detección de rendimiento
+  const [lowPerformanceMode, setLowPerformanceMode] = useState<boolean>(false);
+  
+  // Detectar si el dispositivo es de baja potencia
+  useEffect(() => {
+    // Verificar primero si ya está activado a nivel global
+    if (document.documentElement.classList.contains('performance-mode')) {
+      setLowPerformanceMode(true);
+      return;
+    }
+    
+    // Estado para rastrear la activación
+    const activated = { value: false };
+    
+    // Detección de dispositivo móvil - menos restrictiva
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Si es dispositivo móvil o la ventana es pequeña (criterios menos restrictivos)
+    if (isMobile || window.innerWidth < 768 || window.innerHeight < 600) {
+      setLowPerformanceMode(true);
+      document.documentElement.classList.add('performance-mode');
+      activated.value = true;
+      console.log('StartGameModal: Activando modo de rendimiento por detección de dispositivo móvil o pantalla pequeña');
+      return;
+    }
+    
+    // Verificación de rendimiento inicial
+    const start = performance.now();
+    
+    // Crear un temporizador que se ejecute después de que el componente se haya renderizado
+    const checkPerformanceTimer = setTimeout(() => {
+      const end = performance.now();
+      const renderTime = end - start;
+      
+      // Si el tiempo de renderizado es alto, activar modo de bajo rendimiento
+      if (renderTime > 100 && !activated.value) {
+        setLowPerformanceMode(true);
+        document.documentElement.classList.add('performance-mode');
+        activated.value = true;
+        console.log(`StartGameModal: Activando modo de rendimiento por tiempo de renderizado lento: ${renderTime}ms`);
+      }
+    }, 500);
+    
+    return () => clearTimeout(checkPerformanceTimer);
+  }, []);
   
   useEffect(() => {
     // Reiniciar el estado de cierre cuando el modal vuelve a ser visible
@@ -221,10 +283,10 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   };
   
   return (
-    <div className={`game-modal start-game ${isVisible ? 'visible' : 'hidden'} ${isClosing ? 'closing' : ''}`}>
-      {/* Efectos visuales de fondo */}
-      <ParticlesEffect />
-      <StarsEffect />
+    <div className={`game-modal start-game ${isVisible ? 'visible' : 'hidden'} ${isClosing ? 'closing' : ''} ${lowPerformanceMode ? 'performance-mode' : ''}`}>
+      {/* Efectos visuales - solo mostrar si no estamos en modo de bajo rendimiento */}
+      <ParticlesEffect lowPerformance={lowPerformanceMode} />
+      <StarsEffect lowPerformance={lowPerformanceMode} />
       
       {/* Decoración adicional con luces de neón */}
       <div className="neon-glow top-left"></div>
@@ -372,4 +434,5 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   );
 };
 
-export default StartGameModal; 
+// Exportar componente memorizado para evitar renderizados innecesarios
+export default memo(StartGameModal); 

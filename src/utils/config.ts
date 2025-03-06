@@ -772,3 +772,18 @@ export function shuffleArray<T>(array: T[]): T[] {
   }
   return newArray;
 }
+
+// Configuración para el sistema de rendimiento del juego
+export const PERFORMANCE_CONFIG = {
+  // Establecer a true para forzar el modo de rendimiento bajo, útil para pruebas
+  FORCE_PERFORMANCE_MODE: false,
+  
+  // Establecer a true para forzar el modo de rendimiento alto, útil para pruebas
+  FORCE_HIGH_PERFORMANCE_MODE: false,
+  
+  // Umbral de FPS para activar el modo de rendimiento bajo
+  LOW_FPS_THRESHOLD: 40,
+  
+  // Umbral de FPS para activar el modo de rendimiento alto
+  CRITICAL_FPS_THRESHOLD: 20
+};

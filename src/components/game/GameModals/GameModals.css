@@ -38,7 +38,7 @@
 .modal-content {
   background-color: white;
   border-radius: 16px;
-  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 25px;
   text-align: center;
   width: 100%;
@@ -46,7 +46,13 @@
   overflow-y: auto;
   max-height: 90vh;
   position: relative;
-  animation: scaleIn 0.3s ease-out;
+  animation: simpleScaleIn 0.3s ease-out;
+}
+
+/* Versión más eficiente de animación de entrada */
+@keyframes simpleScaleIn {
+  0% { transform: scale(0.95); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 /* StartGame Modal - Rediseño con tema oscuro y efectos visuales */
@@ -56,6 +62,7 @@
   overflow: hidden;
 }
 
+/* Optimización 1: Simplificar animaciones de background */
 .start-game::before {
   content: '';
   position: absolute;
@@ -64,20 +71,20 @@
   right: 0;
   bottom: 0;
   background: linear-gradient(145deg, #2a3142 0%, #1c212e 100%);
-  background-image: 
-    radial-gradient(circle at 25px 25px, rgba(99, 102, 241, 0.15) 2%, transparent 0%),
-    radial-gradient(circle at 75px 75px, rgba(99, 102, 241, 0.15) 2%, transparent 0%);
+  /* Simplificamos el patrón de fondo para mejor rendimiento */
+  background-image: radial-gradient(circle at 25px 25px, rgba(99, 102, 241, 0.15) 2%, transparent 0%);
   background-size: 100px 100px;
   z-index: -1;
-  animation: pulse-bg 15s infinite alternate;
+  /* Animación más simple con menor frecuencia de actualización */
+  animation: simple-pulse-bg 20s infinite alternate;
+  transform: translateZ(0);
+  will-change: background-color;
 }
 
-@keyframes pulse-bg {
+/* Animación simplificada */
+@keyframes simple-pulse-bg {
   0% {
     background-color: #2a3142;
-  }
-  50% {
-    background-color: #21283a;
   }
   100% {
     background-color: #1c212e;
@@ -398,6 +405,8 @@
   width: 100%;
   position: relative;
   overflow: hidden;
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 .game-option::before {
@@ -415,6 +424,8 @@
   margin-bottom: 5px;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
 }
 
 .game-option:hover, .game-option:active {
@@ -482,72 +493,29 @@
 }
 
 .start-button {
-  padding: 15px;
-  font-size: 1.15rem;
-  background: linear-gradient(45deg, #617DFF, #4F65CC);
-  color: white;
-  border: none;
-  border-radius: 30px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  font-weight: 700;
-  box-shadow: 0 8px 25px rgba(97, 125, 255, 0.35);
-  width: 100%;
-  letter-spacing: 1px;
   position: relative;
+  padding: 15px 30px;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #617dff, #4e54c8);
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(78, 84, 200, 0.4);
+  transition: all 0.3s ease;
   overflow: hidden;
-  text-transform: uppercase;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  will-change: transform;
+  transform: translateZ(0);
 }
 
-.start-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transform: translateX(-100%);
-  transition: all 0.3s;
-}
-
-.start-button::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: button-shine 6s infinite;
-}
-
-.start-button:hover, .start-button:active {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 30px rgba(97, 125, 255, 0.5), 0 0 20px rgba(97, 125, 255, 0.3);
-  background: linear-gradient(45deg, #728aff, #5a75e6);
-}
-
-.start-button:hover::before {
-  transform: translateX(100%);
-}
-
-.start-button:hover::after {
-  animation: button-shine 3s infinite;
-}
-
-.start-button:active {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(97, 125, 255, 0.4);
-}
-
-@keyframes button-shine {
+/* Versión optimizada de la animación de brillo para el botón */
+@keyframes simplified-button-shine {
   0% {
-    left: -100%;
+    background-position: 0% 0%;
   }
-  40%, 100% {
-    left: 100%;
+  100% {
+    background-position: 100% 100%;
   }
 }
 
@@ -1625,7 +1593,7 @@
 
 @keyframes button-pulse {
   0% {
-    box-shadow: 0 5px 20px rgba(61, 73, 183, 0.4), 0 0 0 0 rgba(66, 133, 244, 0.7);
+    box-shadow: 0 5px 20px rgba(61, 73, 183, 0.4), 0 0 0 0 rgba(66, 133, 244, 0);
   }
   70% {
     box-shadow: 0 5px 20px rgba(61, 73, 183, 0.4), 0 0 0 15px rgba(66, 133, 244, 0);
@@ -1810,1626 +1778,242 @@
   }
 }
 
-/* Optimización para scroll cuando hay muchos elementos */
-.modal-content-inner::-webkit-scrollbar-thumb {
-  border-radius: 20px;
-  background-color: rgba(255, 255, 255, 0.25);
-}
-
-.modal-content-inner::-webkit-scrollbar-track {
-  margin: 5px 0;
-}
-
-.modal-content-inner:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.35);
-}
-
-/* Estilos específicos para cuando hay desbordamiento de contenido */
-.content-overflow .level-complete-title {
-  margin-bottom: 0.5rem;
-  font-size: 1.5rem;
-}
-
-.content-overflow .rewards-section,
-.content-overflow .next-level-info {
-  padding: 0.6rem;
-  margin-bottom: 0.5rem;
-}
-
-.content-overflow .rewards-section h3,
-.content-overflow .level-header h3 {
-  font-size: 1.1rem;
-  margin-bottom: 0.4rem;
-}
-
-.content-overflow .rewards-container {
-  gap: 0.5rem;
-}
-
-.content-overflow .reward-item {
-  padding: 0.4rem 0.6rem;
-}
-
-.content-overflow .reward-icon {
-  font-size: 1.4rem;
-  margin-right: 0.4rem;
-}
-
-.content-overflow .reward-value {
-  font-size: 1.1rem;
-}
-
-.content-overflow .level-details {
-  gap: 0.4rem;
-}
-
-.content-overflow .detail-item {
-  padding: 0.3rem 0.5rem;
-}
-
-.content-overflow .objectives-list {
-  gap: 0.3rem;
-}
-
-.content-overflow .objective-item {
-  padding: 0.2rem 0.4rem;
-}
-
-.content-overflow .objective-icon {
-  font-size: 0.9rem;
-}
-
-.content-overflow .objective-text {
-  font-size: 0.8rem;
-}
-
-/* Lista de características más compacta */
-.features-list.compact {
-  gap: 0.2rem;
-}
-
-.features-list.compact .feature-badge {
-  padding: 0.2rem 0.4rem;
-  font-size: 0.7rem;
-  max-width: calc(33.33% - 0.2rem);
-}
-
-/* Ajuste de confeti cuando hay overflow */
-.content-overflow ~ .confetti-container .confetti {
-  animation-duration: 2s !important;
-}
-
-/* Animación de puntos mejorada */
-.current-points.highlight {
-  color: #ffde59;
-  transform: scale(1.15);
-  text-shadow: 0 0 15px rgba(255, 222, 89, 0.7), 0 0 30px rgba(255, 222, 89, 0.4);
-  animation: numberPulse 0.15s ease-in-out;
-}
-
-@keyframes numberPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1.15); }
-}
-
-.bonus-value {
-  color: #64b5f6;
-  font-weight: bold;
-  font-size: 1.2rem;
-  text-shadow: 0 0 10px rgba(100, 181, 246, 0.8);
-  animation: pulsateGlow 1.2s infinite;
-}
-
-@keyframes pulsateGlow {
-  0% {
-    text-shadow: 0 0 5px rgba(100, 181, 246, 0.7);
+/* Optimización: Simplificar la animación float-3d para mejor rendimiento */
+@keyframes simple-float-3d {
+  0%, 100% {
+    transform: translateY(0);
   }
   50% {
-    text-shadow: 0 0 15px rgba(100, 181, 246, 0.9), 0 0 25px rgba(100, 181, 246, 0.4);
-    color: #90caf9;
-  }
-  100% {
-    text-shadow: 0 0 5px rgba(100, 181, 246, 0.7);
+    transform: translateY(-10px);
   }
 }
 
-/* Efectos de celebración mejorados */
-.celebration-spark {
-  position: absolute;
-  border-radius: 50%;
-  background-color: #ffde59;
-  opacity: 0;
+/* Aplicar animación simplificada a los iconos de vista previa en modo de rendimiento */
+.performance-mode .preview-icon {
+  animation: simple-float-3d 4s ease-in-out infinite !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+  border: none !important;
 }
 
-.celebration-spark.spark1 {
-  width: 3px;
-  height: 3px;
-  animation: sparkFly1 2s infinite;
+/* Desactivar efectos visuales costosos en modo de rendimiento */
+.performance-mode .preview-icon::after,
+.performance-mode .start-button::before,
+.performance-mode .start-button::after,
+.performance-mode .game-option::before,
+.performance-mode .start-game-header::after {
+  display: none !important;
 }
 
-.celebration-spark.spark2 {
-  width: 2px;
-  height: 2px;
-  animation: sparkFly2 2.5s infinite;
+/* Reducir número de partículas en modo de rendimiento */
+.performance-mode .particles-container {
+  opacity: 0.3;
 }
 
-.celebration-spark.spark3 {
-  width: 4px;
-  height: 4px;
-  animation: sparkFly3 1.8s infinite;
+.performance-mode .particles-container .particle {
+  animation-duration: 8s !important; /* Animación más lenta para menos actualización */
 }
 
-.points-celebration-effects::before,
-.points-celebration-effects::after {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  background: radial-gradient(circle at center, rgba(255, 222, 89, 0.2) 0%, transparent 70%);
-  animation: radiateOut 1.5s infinite;
-  border-radius: 50%;
-  opacity: 0;
+.performance-mode .stars-container {
+  opacity: 0.3;
 }
 
-.points-celebration-effects::after {
-  animation-delay: 0.75s;
+.performance-mode .stars-container .star {
+  animation-duration: 4s !important; /* Animación más lenta para menos actualización */
 }
 
-@keyframes radiateOut {
-  0% {
-    opacity: 0.8;
-    transform: scale(0.3);
+/* Acelerar transiciones en modo de rendimiento */
+.performance-mode .modal-content {
+  animation-duration: 0.2s !important;
+}
+
+.performance-mode .game-option:hover {
+  /* Usar filtro en lugar de transform para mejor rendimiento */
+  filter: brightness(1.2);
+  transform: none !important;
+}
+
+/* Forzar aceleración por hardware en elementos clave */
+.modal-content,
+.preview-icon,
+.start-button,
+.game-option {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Media query para dispositivos más lentos */
+@media (prefers-reduced-motion: reduce) {
+  .particles-container,
+  .stars-container {
+    display: none !important;
   }
-  100% {
-    opacity: 0;
-    transform: scale(2);
+  
+  .preview-icon,
+  .start-button,
+  .game-option {
+    animation: none !important;
+    transition: opacity 0.2s linear !important;
   }
-}
-
-.celebration-glow {
-  position: absolute;
-  width: 120%;
-  height: 120%;
-  left: -10%;
-  top: -10%;
-  border-radius: 50%;
-  background: radial-gradient(circle at center, rgba(255, 222, 89, 0.6) 0%, rgba(255, 222, 89, 0) 70%);
-  opacity: 0;
-  animation: glowPulse 2s infinite;
-}
-
-/* Resplandor cuando los números cambian */
-.reward-item.points-reward::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 14px;
-  background: transparent;
-  z-index: -1;
-  transition: all 0.3s ease;
-}
-
-.current-points.highlight ~ .reward-label {
-  color: #ffec9e;
-  transition: color 0.15s ease-in-out;
-}
-
-.current-points.highlight + .points-animation-container::before {
-  content: '';
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  background-color: #ffde59;
-  border-radius: 50%;
-  animation: particleBurst 1s ease-out;
-  opacity: 0;
-}
-
-@keyframes particleBurst {
-  0% {
-    transform: scale(0);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(20);
-    opacity: 0;
+  
+  .game-option:hover,
+  .start-button:hover {
+    filter: brightness(1.2);
+    transform: none !important;
   }
 }
 
-/* Animación de puntos */
-.points-reward {
+/* Optimización para opciones de juego */
+.game-option {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+/* Optimización para modo de rendimiento alto */
+.performance-mode-high .particles-container,
+.performance-mode-high .stars-container,
+.performance-mode-high .preview-icon::after,
+.performance-mode-high .preview-icon::before,
+.performance-mode-high .start-button::before,
+.performance-mode-high .start-button::after,
+.performance-mode-high .form-group::after,
+.performance-mode-high .form-label::after,
+.performance-mode-high .option-glow,
+.performance-mode-high .button-energy,
+.performance-mode-high .neon-glow,
+.performance-mode-high .corner-decoration,
+.performance-mode-high .icon-shine {
+  display: none !important;
+}
+
+/* Optimización para los paneles de configuración */
+.performance-mode .settings-panel {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
+  background: rgba(20, 25, 40, 0.95) !important;
+  backdrop-filter: none !important;
+}
+
+/* Optimización para elementos con hover */
+.performance-mode .game-option:hover,
+.performance-mode .start-button:hover,
+.performance-mode .setting-button:hover,
+.performance-mode .setting-toggle:hover {
+  transform: none !important;
+  filter: brightness(1.2);
+}
+
+/* Optimización para transiciones */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.1s !important;
+    transition-duration: 0.1s !important;
+  }
+  
+  .preview-icon,
+  .start-button,
+  .game-option {
+    animation: none !important;
+  }
+  
+  .game-option:hover,
+  .start-button:hover {
+    filter: brightness(1.2);
+    transform: none !important;
+  }
+}
+
+/* Optimización adicional para modo de alto rendimiento */
+.performance-mode-high * {
+  animation-duration: 0.35s !important; /* Aumentado de 0.1s a 0.35s */
+  transition-duration: 0.35s !important; /* Aumentado de 0.1s a 0.35s */
+}
+
+.performance-mode-high .preview-icon,
+.performance-mode-high .start-button,
+.performance-mode-high .game-option {
+  animation: none !important;
+}
+
+/* Mover iconos al frente para evitar recálculos cuando otras animaciones ocurren detrás */
+.option-icon, 
+.preview-icon,
+.setting-toggle {
   position: relative;
-  overflow: visible !important;
+  z-index: 2;
 }
 
-.points-animation-container {
-  display: flex;
-  align-items: center;
-  position: relative;
-  height: 1.8rem;
-  margin-bottom: -0.2rem;
+/* Eliminar transforms en modo de bajo rendimiento */
+.performance-mode .form-group:hover,
+.performance-mode .game-option:hover,
+.performance-mode .start-button:hover {
+  transform: none !important;
 }
 
-.current-points {
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: white;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-  letter-spacing: 1px;
-  transition: all 0.3s ease;
+/* Animaciones ajustadas para modo de rendimiento */
+.performance-mode .modal-content {
+  animation-duration: 0.4s !important; /* Aumentado de 0.2s a 0.4s */
 }
 
-.current-points.highlight {
-  color: #ffde59;
-  transform: scale(1.1);
-  text-shadow: 0 0 15px rgba(255, 222, 89, 0.7);
-}
-
-.bonus-points {
-  display: flex;
-  align-items: center;
-  position: absolute;
-  left: calc(100% + 8px);
-  opacity: 0;
-  animation: bonusAppear 0.5s forwards;
-}
-
-@keyframes bonusAppear {
+/* Animación de flotación para modo de rendimiento - mejor visibilidad */
+@keyframes simple-float-3d-visible {
   0% {
-    opacity: 0;
-    transform: translateY(10px) scale(0.8);
+    transform: translateY(0) scale(1);
   }
-  70% {
-    transform: translateY(-5px) scale(1.15);
+  50% {
+    transform: translateY(-10px) scale(1.05);
   }
   100% {
-    opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
-.bonus-sign {
-  color: #64b5f6;
-  font-weight: bold;
-  margin-right: 1px;
-  font-size: 1.1rem;
+/* Ajuste para flotación de iconos en modo de rendimiento */
+.performance-mode .preview-icon {
+  animation: simple-float-3d-visible 3s ease-in-out infinite !important; /* Ajustado a 3s */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important; /* Sombra mejorada */
+  border: none !important;
 }
 
-.bonus-points.merging {
-  animation: bonusMerge 1s forwards;
+/* Ajustes para las partículas y estrellas - más visibles */
+.performance-mode .particles-container {
+  opacity: 0.4; /* Aumentado de 0.3 a 0.4 */
 }
 
-@keyframes bonusMerge {
-  0% {
-    opacity: 1;
-    left: calc(100% + 8px);
-    transform: scale(1);
-  }
-  20% {
-    transform: scale(1.1);
-  }
-  100% {
-    opacity: 0;
-    left: 0;
-    transform: scale(0.8);
-  }
+.performance-mode .particles-container .particle {
+  animation-duration: 6s !important; /* Reducido de 8s a 6s para mejor visibilidad */
 }
 
-/* Efectos de celebración de puntos */
-.points-celebration-effects {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  left: 0;
-  top: 0;
-  pointer-events: none;
+.performance-mode .stars-container {
+  opacity: 0.4; /* Aumentado de 0.3 a 0.4 */
 }
 
-.celebration-spark {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background-color: #ffde59;
-  opacity: 0;
+.performance-mode .stars-container .star {
+  animation-duration: 3s !important; /* Reducido de 4s a 3s para mejor visibilidad */
 }
 
-.celebration-spark.spark1 {
-  animation: sparkFly1 1.5s infinite;
+/* Efectos hover mejorados para modo de rendimiento */
+.performance-mode .game-option:hover,
+.performance-mode .start-button:hover,
+.performance-mode .setting-button:hover,
+.performance-mode .setting-toggle:hover {
+  transform: scale(1.03) !important; /* Permitir un pequeño efecto de escala */
+  filter: brightness(1.2);
+  transition-duration: 0.4s !important; /* Transición más visible */
 }
 
-.celebration-spark.spark2 {
-  animation: sparkFly2 2s infinite;
+/* Modo de rendimiento alto - sobreescribir para hacerlo más visible */
+.performance-mode-high .preview-icon,
+.performance-mode-high .start-button,
+.performance-mode-high .game-option {
+  animation-duration: 0.35s !important; /* Aumentado de 0.1s a 0.35s */
+  transition-duration: 0.35s !important; /* Aumentado de 0.1s a 0.35s */
 }
 
-.celebration-spark.spark3 {
-  animation: sparkFly3 1.7s infinite;
-}
-
-@keyframes sparkFly1 {
-  0% {
-    opacity: 0;
-    left: 50%;
-    top: 50%;
-    transform: scale(1);
-  }
-  20% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    left: -20px;
-    top: -10px;
-    transform: scale(0);
-  }
-}
-
-@keyframes sparkFly2 {
-  0% {
-    opacity: 0;
-    left: 50%;
-    top: 50%;
-    transform: scale(1);
-  }
-  20% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    left: 120%;
-    top: -5px;
-    transform: scale(0);
-  }
-}
-
-@keyframes sparkFly3 {
-  0% {
-    opacity: 0;
-    left: 50%;
-    top: 50%;
-    transform: scale(1);
-  }
-  20% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    left: 100%;
-    top: 150%;
-    transform: scale(0);
-  }
-}
-
-.celebration-glow {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  left: 0;
-  top: 0;
-  border-radius: 20px;
-  background: radial-gradient(circle at center, rgba(255, 222, 89, 0.7) 0%, rgba(255, 222, 89, 0) 70%);
-  opacity: 0;
-  animation: glowPulse 2s infinite;
-}
-
-@keyframes glowPulse {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.2);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-}
-
-/* Ajustes responsivos para la animación de puntos */
-@media (max-width: 480px) {
-  .points-animation-container {
-    height: 1.5rem;
-  }
-  
-  .current-points {
-    font-size: 1.1rem;
-  }
-  
-  .bonus-sign {
-    font-size: 0.9rem;
-  }
-  
-  .bonus-value {
-    font-size: 1rem;
-  }
-}
-
-@media (max-height: 667px) {
-  .points-animation-container {
-    height: 1.3rem;
-  }
-  
-  .current-points {
-    font-size: 1rem;
-  }
-  
-  .bonus-sign {
-    font-size: 0.8rem;
-  }
-  
-  .bonus-value {
-    font-size: 0.9rem;
-  }
-}
-
-/* Efectos de partículas para el fondo */
-.particles-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.particle {
-  position: absolute;
-  background: linear-gradient(135deg, rgba(97, 125, 255, 0.8), rgba(80, 110, 230, 0.5));
-  border-radius: 50%;
-  pointer-events: none;
-  animation: particle-float 8s infinite linear;
-}
-
-@keyframes particle-float {
-  0% {
-    transform: translateY(0) translateX(0) rotate(0deg);
-    opacity: 0;
-  }
-  20% {
-    opacity: 0.4;
-  }
-  80% {
-    opacity: 0.2;
-  }
-  100% {
-    transform: translateY(-100vh) translateX(100px) rotate(360deg);
-    opacity: 0;
-  }
-}
-
-/* Efecto de estrellas brillantes */
-.stars-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.star {
-  position: absolute;
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
-  pointer-events: none;
-  animation: star-twinkle infinite ease-in-out;
-}
-
-@keyframes star-twinkle {
-  0%, 100% {
-    opacity: 0.2;
-    box-shadow: 0 0 2px 1px rgba(255, 255, 255, 0.1);
-  }
-  50% {
-    opacity: 0.8;
-    box-shadow: 0 0 4px 2px rgba(255, 255, 255, 0.4);
-  }
-}
-
-/* Efectos de luz de neón decorativos */
-.neon-glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(40px);
-  opacity: 0.3;
-  background: radial-gradient(circle at center, rgba(97, 125, 255, 0.6) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.neon-glow.top-left {
-  top: -100px;
-  left: -100px;
-  width: 300px;
-  height: 300px;
-  animation: pulse-glow-1 10s infinite alternate;
-}
-
-.neon-glow.bottom-right {
-  bottom: -100px;
-  right: -100px;
-  width: 250px;
-  height: 250px;
-  background: radial-gradient(circle at center, rgba(111, 97, 255, 0.6) 0%, transparent 70%);
-  animation: pulse-glow-2 12s infinite alternate;
-}
-
-@keyframes pulse-glow-1 {
-  0%, 100% {
-    opacity: 0.3;
-    width: 300px;
-    height: 300px;
-  }
-  50% {
-    opacity: 0.5;
-    width: 350px;
-    height: 350px;
-  }
-}
-
-@keyframes pulse-glow-2 {
-  0%, 100% {
-    opacity: 0.3;
-    width: 250px;
-    height: 250px;
-  }
-  50% {
-    opacity: 0.6;
-    width: 300px;
-    height: 300px;
-  }
-}
-
-/* Decoraciones de esquinas */
-.corner-decoration {
-  position: absolute;
-  width: 150px;
-  height: 150px;
-  background-image: 
-    radial-gradient(circle at 10% 10%, rgba(97, 125, 255, 0.05) 5%, transparent 5%),
-    radial-gradient(circle at 20% 20%, rgba(97, 125, 255, 0.05) 5%, transparent 5%),
-    radial-gradient(circle at 30% 30%, rgba(97, 125, 255, 0.05) 5%, transparent 5%),
-    radial-gradient(circle at 40% 40%, rgba(97, 125, 255, 0.05) 5%, transparent 5%),
-    radial-gradient(circle at 50% 50%, rgba(97, 125, 255, 0.05) 5%, transparent 5%);
-  background-size: 40px 40px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.corner-decoration.top-right {
-  top: 0;
-  right: 0;
-  transform: rotate(90deg);
-}
-
-.corner-decoration.bottom-left {
-  bottom: 0;
-  left: 0;
-  transform: rotate(-90deg);
-}
-
-/* Efecto de brillo para los iconos */
-.icon-shine {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, transparent 60%);
-  opacity: 0;
-  transform: scale(0);
-  animation: icon-shine 5s infinite;
-  pointer-events: none;
-}
-
-@keyframes icon-shine {
-  0%, 90%, 100% {
-    opacity: 0;
-    transform: scale(0);
-  }
-  95% {
-    opacity: 0.7;
-    transform: scale(1);
-  }
-}
-
-/* Efecto de brillo para las opciones de juego */
-.option-glow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at center, rgba(97, 125, 255, 0.3) 0%, transparent 80%);
-  opacity: 0;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.game-option:hover .option-glow {
-  opacity: 0.5;
-  animation: option-pulse 1.5s infinite alternate;
-}
-
-.game-option.active .option-glow {
-  opacity: 0.6;
-  animation: option-active-pulse 2s infinite alternate;
-}
-
-@keyframes option-pulse {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes option-active-pulse {
-  0%, 100% {
-    opacity: 0.4;
-    box-shadow: 0 0 10px rgba(97, 125, 255, 0.3);
-  }
-  50% {
-    opacity: 0.7;
-    box-shadow: 0 0 20px rgba(97, 125, 255, 0.6);
-  }
-}
-
-/* Descripciones de modo y dificultad */
-.mode-description,
-.difficulty-description {
-  margin-top: 10px;
-  padding: 8px 10px;
-  background: linear-gradient(135deg, rgba(55, 65, 90, 0.3), rgba(40, 50, 75, 0.3));
-  border-radius: 8px;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  border-left: 2px solid rgba(97, 125, 255, 0.4);
-  backdrop-filter: blur(5px);
-  animation: fade-in 0.3s ease-out;
-}
-
-/* Efecto de energía para el botón de inicio */
-.button-energy {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(255, 255, 255, 0.1) 45%, 
-    rgba(255, 255, 255, 0.3) 50%, 
-    rgba(255, 255, 255, 0.1) 55%, 
-    transparent 100%);
-  transition: all 0.3s ease;
-  transform: translateX(-100%);
-  pointer-events: none;
-}
-
-.start-button:hover .button-energy {
-  animation: energy-pulse 2s infinite;
-}
-
-@keyframes energy-pulse {
-  0% {
-    transform: translateX(-100%);
-  }
-  50%, 100% {
-    transform: translateX(100%);
-  }
-}
-
-/* Mejoras en el panel de configuración */
-.settings-panel {
-  position: absolute;
-  top: 60px;
-  right: 10px;
-  background: linear-gradient(135deg, rgba(40, 50, 75, 0.85), rgba(30, 40, 65, 0.85));
-  border-radius: 12px;
-  padding: 15px;
-  width: 250px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 0, 0, 0.2);
-  z-index: 100;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(97, 125, 255, 0.2);
-  animation: fade-in 0.3s ease-out;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.settings-panel h3 {
-  color: #ffffff;
-  margin: 0 0 15px;
-  font-size: 1.1rem;
-  text-align: center;
-  font-weight: 600;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  position: relative;
-}
-
-.settings-panel h3::after {
-  content: '';
-  display: block;
-  width: 40px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(97, 125, 255, 0.7), transparent);
-  margin: 8px auto 0;
-}
-
-.settings-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.settings-option {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 5px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, rgba(55, 65, 90, 0.2), rgba(40, 50, 75, 0.2));
-  transition: all 0.3s ease;
-}
-
-.settings-option:hover {
-  background: linear-gradient(135deg, rgba(55, 65, 90, 0.3), rgba(40, 50, 75, 0.3));
-  transform: translateY(-2px);
-}
-
-.settings-option span {
-  color: #ffffff;
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.setting-toggle {
-  padding: 5px 15px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(50, 60, 85, 0.8), rgba(35, 45, 70, 0.8));
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
-  letter-spacing: 1px;
-}
-
-.setting-toggle:hover {
-  background: linear-gradient(135deg, rgba(60, 70, 95, 0.8), rgba(45, 55, 80, 0.8));
-  transform: translateY(-2px);
-}
-
-.setting-toggle.active {
-  background: linear-gradient(135deg, rgba(97, 125, 255, 0.8), rgba(80, 110, 230, 0.8));
-  color: #ffffff;
-  box-shadow: 0 2px 10px rgba(97, 125, 255, 0.4), 0 0 5px rgba(97, 125, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-/* Adaptaciones responsivas para los nuevos elementos */
-@media (max-width: 480px) {
-  .settings-panel {
-    width: 220px;
-    top: 50px;
-    right: 5px;
-    padding: 12px;
-  }
-  
-  .settings-panel h3 {
-    font-size: 1rem;
-    margin-bottom: 10px;
-  }
-  
-  .settings-option {
-    padding: 6px 5px;
-  }
-  
-  .setting-toggle {
-    padding: 4px 12px;
-    font-size: 0.75rem;
-  }
-  
-  .mode-description,
-  .difficulty-description {
-    font-size: 0.8rem;
-    padding: 6px 8px;
-  }
-  
-  .neon-glow.top-left,
-  .neon-glow.bottom-right {
-    width: 200px;
-    height: 200px;
-  }
-}
-
-/* Para pantallas pequeñas */
-@media (max-height: 600px) {
-  .settings-panel {
-    max-height: 150px;
-  }
-  
-  .mode-description,
-  .difficulty-description {
-    margin-top: 5px;
-    padding: 5px 8px;
-  }
-  
-  .corner-decoration {
-    width: 100px;
-    height: 100px;
-  }
-} 
-
-/* Estilos para el botón de comenzar fijo */
-.fixed-start-button-container {
-  position: relative;
-  width: 100%;
-  padding: 15px;
-  margin-top: 15px;
-  z-index: 10;
-  box-sizing: border-box;
-}
-
-.start-button {
-  padding: 15px;
-  font-size: 1.15rem;
-  background: linear-gradient(45deg, #617DFF, #4F65CC);
-  color: white;
-  border: none;
-  border-radius: 30px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  font-weight: 700;
-  box-shadow: 0 8px 25px rgba(97, 125, 255, 0.35), 0 0 15px rgba(97, 125, 255, 0.2);
-  width: 100%;
-  letter-spacing: 1px;
-  position: relative;
-  overflow: hidden;
-  text-transform: uppercase;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-/* Ajustes para pantallas pequeñas */
-@media (max-width: 480px) {
-  .fixed-start-button-container {
-    padding: 10px;
-    margin-top: 10px;
-  }
-  
-  .start-button {
-    padding: 12px;
-    font-size: 1rem;
-  }
-  
-  .header-settings-container {
-    margin: 3px 0;
-  }
-}
-
-@media (max-height: 600px) {
-  .fixed-start-button-container {
-    padding: 8px;
-    margin-top: 8px;
-  }
-  
-  .start-button {
-    padding: 10px;
-    font-size: 0.95rem;
-  }
-  
-  .header-settings-container {
-    margin: 2px 0;
-  }
-}
-
-/* Media query específica para iPhone */
-@media screen and (max-width: 480px) and (max-height: 900px) {
-  .fixed-start-button-container {
-    position: relative;
-    padding: 12px;
-    margin-top: 10px;
-  }
-  
-  .start-button {
-    padding: 14px;
-  }
-  
-  .settings-panel {
-    max-height: 130px;
-  }
-}
-
-/* Sección principal con opciones de juego */
-.start-game-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  width: 100%;
-  padding: 15px;
-  overflow: auto;
-  max-height: none;
-  scrollbar-width: none;
-  position: relative;
-  box-sizing: border-box;
-}
-
-.start-game-body::-webkit-scrollbar {
-  display: none;
-}
-
-/* Fondo con estrellas espaciales para la sección del cuerpo */
-.start-game-body::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    radial-gradient(circle at 35% 45%, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    radial-gradient(circle at 55% 25%, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    radial-gradient(circle at 75% 65%, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    radial-gradient(circle at 90% 20%, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 150px 150px;
-  z-index: -1;
-  opacity: 0.8;
-  pointer-events: none;
-  animation: stars-twinkle 8s infinite linear;
-}
-
-@keyframes stars-twinkle {  0%, 100% {
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-/* Ajustes para pantallas pequeñas */
-@media (max-width: 480px) {
-  .start-button-container {
-    display: none;
-  }
-  
-  .header-settings-container {
-    top: 10px;
-    right: 10px;
-  }
-  
-  .setting-button {
-    width: 38px;
-    height: 38px;
-    font-size: 1.1rem;
-  }
-  
-  .settings-panel {
-    top: 55px;
-    right: 5px;
-    width: 220px;
-    padding: 12px;
-    max-height: 180px;
-  }
-}
-
-@media (max-height: 600px) {
-  .start-button-container {
-    display: none;
-  }
-  
-  .settings-panel {
-    max-height: 150px;
-    padding: 10px;
-  }
-}
-
-/* Media query específica para iPhone */
-@media screen and (max-width: 480px) and (max-height: 900px) {
-  .settings-panel {
-    max-height: 130px;
-    top: 50px;
-    width: 200px;
-  }
-  
-  .setting-button {
-    width: 36px;
-    height: 36px;
-  }
-}
-
-/* Game Over Modal - Rediseño con efectos visuales */
-.game-over-content {
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
-  background: linear-gradient(145deg, #2d2a42 0%, #1e1c2e 100%);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  position: relative;
-}
-
-.game-over-title {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.8rem;
-  color: #ff5959;
-  font-size: 1.8rem;
-  text-shadow: 0 2px 10px rgba(255, 89, 89, 0.5), 0 0 30px rgba(255, 89, 89, 0.3);
-  opacity: 0;
-  transform: translateY(-20px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
-  letter-spacing: 1px;
-  font-weight: bold;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.game-over-title.animated {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.game-over-icon {
-  margin-right: 0.6rem;
-  font-size: 1.8rem;
-  filter: drop-shadow(0 0 10px rgba(255, 89, 89, 0.7));
-  animation: shake 3s infinite;
-}
-
-@keyframes shake {
-  0%, 100% { transform: rotate(0deg); }
-  10% { transform: rotate(-5deg); }
-  20% { transform: rotate(5deg); }
-  30% { transform: rotate(-5deg); }
-  40% { transform: rotate(5deg); }
-  50% { transform: rotate(0deg); }
-}
-
-/* Sección de puntuación final */
-.final-score-section {
-  background: radial-gradient(circle at center, rgba(255, 97, 97, 0.15) 0%, rgba(150, 60, 60, 0.1) 100%);
-  border-radius: 16px;
-  padding: 0.8rem;
-  margin-bottom: 0.8rem;
-  opacity: 0;
-  transform: scale(0.9);
-  transition: opacity 0.5s ease, transform 0.5s ease;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  flex-shrink: 0;
-}
-
-.final-score-section::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
-  animation: rotate 15s linear infinite;
-  z-index: -1;
-}
-
-.final-score-section.animated {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.score-header {
-  margin-bottom: 0.6rem;
-  text-align: center;
-}
-
-.score-header h3 {
-  color: #ff9d4a;
-  margin-top: 0;
-  margin-bottom: 0.6rem;
-  text-align: center;
-  font-size: 1.3rem;
-  text-shadow: 0 2px 8px rgba(255, 157, 74, 0.4);
-  position: relative;
-}
-
-.score-header h3::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #ff9d4a, transparent);
-  border-radius: 3px;
-}
-
-.score-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 0;
-}
-
-.score-value-container {
-  position: relative;
-  margin-bottom: 0.8rem;
-}
-
-.score-value {
-  font-size: 3rem;
-  font-weight: bold;
-  color: white;
-  text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
-  transition: transform 0.2s, color 0.2s, text-shadow 0.2s;
-}
-
-.score-value.highlight {
-  color: #ffde59;
-  text-shadow: 0 0 20px rgba(255, 222, 89, 0.7);
-  transform: scale(1.05);
-}
-
-.score-effects {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-}
-
-.new-highscore-badge {
-  display: flex;
-  align-items: center;
-  background: linear-gradient(135deg, #ffb347, #ffcc33);
-  border-radius: 30px;
-  padding: 0.5rem 1rem;
-  box-shadow: 0 5px 15px rgba(255, 204, 51, 0.4);
-  margin-top: 0.5rem;
-  animation: pulse-badge 2s infinite;
-}
-
-@keyframes pulse-badge {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-.trophy-icon {
-  font-size: 1.4rem;
-  margin-right: 0.5rem;
-  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.7));
-}
-
-.highscore-text {
-  font-weight: bold;
-  color: #7d4614;
-  letter-spacing: 1px;
-}
-
-/* Sección de estadísticas */
-.game-stats {
-  background: linear-gradient(to bottom right, rgba(69, 90, 187, 0.15), rgba(39, 55, 120, 0.1));
-  border-radius: 16px;
-  padding: 0.8rem;
-  margin-bottom: 0.8rem;
-  opacity: 0;
-  transform: scale(0.9);
-  transition: opacity 0.5s ease, transform 0.5s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  flex-shrink: 0;
-}
-
-.game-stats::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), transparent);
-  pointer-events: none;
-}
-
-.game-stats.animated {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.stats-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.8rem;
-  position: relative;
-}
-
-.stats-header h3 {
-  color: #64b5f6;
-  margin: 0;
-  font-size: 1.3rem;
-  text-shadow: 0 2px 8px rgba(100, 181, 246, 0.4);
-}
-
-.stats-icon {
-  margin-left: 0.5rem;
-  font-size: 1.3rem;
-  filter: drop-shadow(0 0 5px rgba(100, 181, 246, 0.5));
-}
-
-.stats-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 0.6rem 0.8rem;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2), 0 0 20px rgba(97, 125, 255, 0.1);
-  position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.stat-item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(97, 125, 255, 0.15);
-}
-
-.stat-icon {
-  font-size: 1.6rem;
-  margin-right: 0.8rem;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
-}
-
-.level-icon {
-  color: #ffcc33;
-}
-
-.mode-icon {
-  color: #64b5f6;
-}
-
-.highscore-icon {
-  color: #ffde59;
-}
-
-.stat-details {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  color: #c5cae9;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.2rem;
-}
-
-.stat-value {
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: white;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-  letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-}
-
-.stat-value.new-record {
-  color: #ffde59;
-  text-shadow: 0 0 10px rgba(255, 222, 89, 0.5);
-}
-
-.new-record-badge {
-  background-color: #ff5959;
-  color: white;
-  font-size: 0.7rem;
-  padding: 0.1rem 0.4rem;
-  border-radius: 10px;
-  margin-left: 0.5rem;
-  animation: pulse-badge 2s infinite;
-}
-
-/* Botones del Game Over */
-.game-over-buttons {
-  position: absolute;
-  bottom: 20px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  padding: 0 1rem;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
-}
-
-.game-over-buttons.animated {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.game-over-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.8rem 1.2rem;
-  border-radius: 30px;
-  border: none;
-  font-weight: bold;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  min-width: 140px;
-}
-
-.restart-button {
-  background: linear-gradient(135deg, #5d73e8, #4a5fd0);
-  color: white;
-}
-
-.home-button {
-  background: linear-gradient(135deg, #455a64, #37474f);
-  color: white;
-}
-
-.game-over-button:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-}
-
-.game-over-button:active {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-}
-
-.button-icon {
-  margin-right: 0.5rem;
-  font-size: 1.1rem;
-}
-
-/* Efectos visuales para Game Over */
-.effects-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.game-over-particle {
-  position: absolute;
-  top: -20px;
-  animation: fall-particle 3s linear forwards;
-  transform-origin: center;
-  opacity: 0.8;
-  border-radius: 2px;
-  z-index: 1;
-}
-
-.star-particle {
-  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
-  animation: fall-star 3s linear forwards;
-}
-
-.game-over-pulse {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at center, rgba(255, 89, 89, 0.2) 0%, transparent 70%);
-  animation: pulse-background 4s infinite;
-  z-index: 0;
-}
-
-@keyframes fall-particle {
-  0% {
-    transform: translateY(-20px) rotate(0deg);
-    opacity: 0.8;
-  }
-  80% {
-    opacity: 0.6;
-  }
-  100% {
-    transform: translateY(calc(100vh + 20px)) rotate(360deg);
-    opacity: 0;
-  }
-}
-
-@keyframes fall-star {
-  0% {
-    transform: translateY(-20px) rotate(0deg) scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: translateY(50vh) rotate(180deg) scale(0.8);
-    opacity: 0.6;
-  }
-  100% {
-    transform: translateY(calc(100vh + 20px)) rotate(360deg) scale(0.5);
-    opacity: 0;
-  }
-}
-
-@keyframes pulse-background {
-  0%, 100% {
-    opacity: 0.2;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(1.1);
-  }
-}
-
-/* Adaptaciones responsivas para Game Over */
-@media (max-height: 800px) {
-  .game-over-title {
-    font-size: 1.6rem;
-    margin-bottom: 0.7rem;
-  }
-  
-  .game-over-icon {
-    font-size: 1.6rem;
-  }
-  
-  .score-value {
-    font-size: 2.5rem;
-  }
-  
-  .final-score-section, .game-stats {
-    padding: 0.7rem;
-    margin-bottom: 0.7rem;
-  }
-  
-  .stats-header h3, .score-header h3 {
-    font-size: 1.2rem;
-  }
-  
-  .stat-icon {
-    font-size: 1.4rem;
-  }
-  
-  .stat-value {
-    font-size: 1rem;
-  }
-  
-  .game-over-buttons {
-    bottom: 15px;
-  }
-  
-  .game-over-button {
-    padding: 0.6rem 1rem;
-    font-size: 0.95rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .game-over-title {
-    font-size: 1.5rem;
-  }
-  
-  .game-over-icon {
-    font-size: 1.5rem;
-  }
-  
-  .score-value {
-    font-size: 2.2rem;
-  }
-  
-  .new-highscore-badge {
-    padding: 0.4rem 0.8rem;
-  }
-  
-  .trophy-icon {
-    font-size: 1.2rem;
-  }
-  
-  .highscore-text {
-    font-size: 0.9rem;
-  }
-  
-  .stat-item {
-    padding: 0.5rem 0.7rem;
-  }
-  
-  .stat-icon {
-    font-size: 1.3rem;
-    margin-right: 0.6rem;
-  }
-  
-  .game-over-buttons {
-    flex-direction: column;
-    align-items: center;
-    gap: 0.7rem;
-    bottom: 15px;
-  }
-  
-  .game-over-button {
-    width: 80%;
-    max-width: 200px;
-  }
-}
-
-@media (max-height: 667px) {
-  .modal-content-inner {
-    margin-bottom: 100px;
-  }
-  
-  .game-over-title {
-    font-size: 1.4rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .game-over-icon {
-    font-size: 1.4rem;
-  }
-  
-  .final-score-section, .game-stats {
-    padding: 0.6rem;
-    margin-bottom: 0.6rem;
-  }
-  
-  .score-value {
-    font-size: 2rem;
-  }
-  
-  .stats-header, .score-header {
-    margin-bottom: 0.5rem;
-  }
-  
-  .stats-container {
-    gap: 0.6rem;
-  }
-  
-  .game-over-buttons {
-    bottom: 10px;
+/* Media query para dispositivos más lentos - duraciones ajustadas */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.3s !important; /* Aumentado de 0.1s a 0.3s */
+    transition-duration: 0.3s !important; /* Aumentado de 0.1s a 0.3s */
   }
 }
 

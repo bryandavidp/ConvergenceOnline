@@ -43,6 +43,15 @@ const GameBoard: React.FC = () => {
   // Estado para mostrar/ocultar el contador de FPS
   const [showFpsCounter, setShowFpsCounter] = useState<boolean>(true);
   
+  // Estado para detección de rendimiento
+  const [lowPerformanceMode, setLowPerformanceMode] = useState<boolean>(false);
+  
+  // Referencia para el control de notificaciones - corregida para permitir activación
+  const performanceActivatedRef = useRef<boolean>(false);
+  
+  // Umbral de FPS bajo el cual activamos el modo de bajo rendimiento
+  const LOW_FPS_THRESHOLD = 40;
+  
   // Verificar si una celda está resaltada - memoizada para evitar recálculos
   const isCellHighlighted = useCallback((row: number, col: number) => {
     return highlightedCells.some(cell => cell.row === row && cell.col === col);
@@ -126,7 +135,8 @@ const GameBoard: React.FC = () => {
           isCellHighlighted(row, col) ? 'highlighted' : '',
           isRemoving ? 'removing' : '',
           icon && !isRemoving ? 'has-icon' : '',
-          !icon ? 'empty' : ''
+          !icon ? 'empty' : '',
+          lowPerformanceMode ? 'performance-mode' : ''
         ].filter(Boolean).join(' ');
         
         cellsArray.push(
@@ -138,7 +148,7 @@ const GameBoard: React.FC = () => {
               registerCellRef(row, col, el);
               
               // Si la celda está marcada para eliminación, agregar efecto de estrellas
-              if (isRemoving && el) {
+              if (isRemoving && el && !lowPerformanceMode) {
                 // Crear contenedor de estrellas si no existe
                 let starsContainer = el.querySelector('.celebration-stars') as HTMLDivElement | null;
                 if (!starsContainer) {
@@ -216,7 +226,7 @@ const GameBoard: React.FC = () => {
     }
     
     return cellsArray;
-  }, [board, boardSize, status, processCellContent, isCellHighlighted, handleCellClickOptimized, registerCellRef]);
+  }, [board, boardSize, status, processCellContent, isCellHighlighted, handleCellClickOptimized, registerCellRef, lowPerformanceMode]);
   
   // Detección de eventos táctiles vs mouse
   useEffect(() => {
@@ -348,6 +358,40 @@ const GameBoard: React.FC = () => {
   
   // Valores predefinidos de multiplicadores de velocidad (ampliados)
   const speedPresets = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
+  
+  // Manejador para cuando se detecta una caída de rendimiento
+  const handlePerformanceDrop = useCallback((avgFps: number) => {
+    // Si ya activamos el modo, no volver a hacerlo
+    if (performanceActivatedRef.current) {
+      return;
+    }
+    
+    // Marcar como activado
+    performanceActivatedRef.current = true;
+    
+    console.log(`GameBoard: Detectada caída de rendimiento. FPS promedio: ${avgFps}`);
+    
+    // Activar el modo de bajo rendimiento (local)
+    setLowPerformanceMode(true);
+    
+    // Si el FPS es extremadamente bajo, activar el modo de rendimiento alto
+    if (avgFps < 20) {
+      // Añadir clase de rendimiento alto a nivel de documento
+      document.documentElement.classList.add('performance-mode');
+      document.documentElement.classList.add('performance-mode-high');
+      console.log(`GameBoard: Activando modo de rendimiento ALTO. FPS promedio: ${avgFps}`);
+    } else {
+      // Añadir clase a nivel de documento para que otros componentes respondan
+      document.documentElement.classList.add('performance-mode');
+    }
+    
+    // Aplicar clase al grid para mejorar rendimiento
+    setTimeout(() => {
+      if (gridRef.current) {
+        gridRef.current.classList.add('performance-mode');
+      }
+    }, 0);
+  }, []);
   
   // Renderizar controles de desarrollo
   const renderDevControls = useCallback(() => {
@@ -520,8 +564,8 @@ const GameBoard: React.FC = () => {
   
   return (
     <>
-      {showFpsCounter && <FpsCounter />}
-      <div className="game-board-wrapper">
+      {showFpsCounter && <FpsCounter onPerformanceDrop={handlePerformanceDrop} performanceThreshold={35} />}
+      <div className={`game-board-wrapper ${lowPerformanceMode ? 'performance-mode' : ''}`}>
         {renderBoard()}
         {renderDevToggle()}
         {renderDevControls()}
