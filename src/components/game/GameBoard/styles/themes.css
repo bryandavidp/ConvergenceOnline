@@ -1,0 +1,21 @@
+/* 
+ * GameBoard - Estilos de Temas
+ * Contiene los estilos para los diferentes temas (oscuro/claro)
+ */
+
+/* Tema oscuro para el tablero de juego */
+.dark-theme .game-board {
+  background-color: rgba(15, 23, 42, 0.8);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Celdas en tema oscuro */
+.dark-theme .cell.light {
+  background-color: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark-theme .cell.dark {
+  background-color: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+} 

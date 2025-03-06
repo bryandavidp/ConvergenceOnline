@@ -1,0 +1,124 @@
+/* 
+ * GameBoard - Estilos Responsive
+ * Contiene las media queries para adaptar el tablero a diferentes tamaños de pantalla
+ */
+
+/* Tablets pequeñas */
+@media (max-width: 768px) {
+  .game-board {
+    padding: 5px;
+    transform: scale(0.95);
+  }
+  
+  .board-controls {
+    flex-direction: column;
+    padding: 8px;
+  }
+  
+  .hint-button {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+  
+  .level-complete-indicator {
+    padding: 15px 25px;
+    font-size: 20px;
+  }
+}
+
+/* Móviles grandes */
+@media (max-width: 480px) {
+  .board-cell .cell-content {
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  :root {
+    --cell-size: 30px;
+    --icon-size: 20px;
+    --board-grid-gap: 2px;
+  }
+  
+  .game-board {
+    transform: scale(0.9);
+    padding: 5px;
+    margin: 0;
+  }
+  
+  .cell {
+    border-radius: 6px;
+  }
+  
+  .level-indicator, .icon-count-indicator {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+  
+  .hint-button {
+    font-size: 13px;
+    padding: 5px 10px;
+  }
+  
+  .hint-count {
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    font-size: 12px;
+  }
+  
+  .level-complete-indicator {
+    padding: 15px;
+    font-size: 18px;
+    width: 80%;
+  }
+}
+
+/* Ajustes para tamaños medios de pantalla */
+@media (min-width: 481px) {
+  .board-cell.has-icon:nth-child(n+100) .cell-content {
+    font-size: 0.9em;
+  }
+  
+  .board-cell.has-icon:nth-child(n+144) .cell-content {
+    font-size: 0.85em;
+  }
+}
+
+/* Móviles pequeños */
+@media (max-width: 360px) {
+  :root {
+    --cell-size: 26px;
+    --icon-size: 18px;
+    --board-grid-gap: 2px;
+  }
+  
+  .game-board {
+    transform: scale(0.85);
+  }
+  
+  .board-controls {
+    gap: 5px;
+  }
+  
+  .level-indicator, .icon-count-indicator {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}
+
+/* Ajustes para dispositivos de alta resolución */
+@media (min-resolution: 1.3dppx) {
+  .board-cell .cell-content {
+    will-change: transform;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translateZ(0);
+  }
+}
+
+/* Ajustes para tableros grandes */
+.game-board.large {
+  transform: scale(0.9);
+  margin: 0 auto;
+  padding: 0;
+} 

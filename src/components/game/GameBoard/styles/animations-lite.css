@@ -1,0 +1,187 @@
+/* 
+ * GameBoard - Animaciones (Reducidas)
+ * Contiene animaciones simplificadas para dispositivos con rendimiento limitado
+ */
+
+/* Animación para celdas que están siendo eliminadas (versión simplificada) */
+.board-cell.removing {
+  z-index: 10;
+  overflow: visible;
+}
+
+.board-cell.removing .cell-content {
+  animation: cellRemovingLite 0.5s ease-out forwards;
+  background-color: rgba(120, 200, 255, 0.3);
+}
+
+.board-cell.removing::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 70%);
+  opacity: 0;
+  z-index: 5;
+  animation: pulseOutLite 0.5s ease-out forwards;
+  pointer-events: none;
+}
+
+/* No se incluyen efectos adicionales para dispositivos de bajo rendimiento */
+
+/* Brillo de concordancia simplificado */
+.match-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(100, 200, 255, 0.4) 0%, rgba(100, 200, 255, 0) 70%);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  z-index: 5;
+  pointer-events: none;
+  animation: matchGlowLite 0.5s ease-out forwards;
+}
+
+/* Ondulación de clic simplificada */
+.click-ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.4);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 4;
+  animation: clickRippleLite 0.4s ease-out forwards;
+}
+
+/* Animación de sacudida del tablero simplificada */
+.game-board.shake {
+  animation: shakeBoardLite 0.4s ease-in-out both;
+}
+
+/* Definiciones de keyframes para animaciones simplificadas */
+@keyframes cellRemovingLite {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes pulseOutLite {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes matchGlowLite {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes clickRippleLite {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3);
+    opacity: 0;
+  }
+}
+
+@keyframes shakeBoardLite {
+  20%, 80% {
+    transform: translate3d(-2px, 0, 0);
+  }
+  40%, 60% {
+    transform: translate3d(2px, 0, 0);
+  }
+}
+
+@keyframes fadeInScaleLite {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes newIconLite {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes levelTransitionLite {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes pulseBorderLite {
+  0% {
+    border-color: rgba(100, 255, 100, 0.4);
+  }
+  100% {
+    border-color: rgba(100, 255, 100, 0.7);
+  }
+}
+
+/* Sobreescrituras para reducir animaciones */
+.level-complete-indicator {
+  animation: fadeInScaleLite 0.3s ease-out;
+}
+
+.cell.new-icon {
+  animation: newIconLite 0.3s ease-out;
+}
+
+.level-transition {
+  animation: levelTransitionLite 0.5s ease;
+}
+
+.board-cell.potential-match::after {
+  animation: pulseBorderLite 0.5s alternate infinite;
+} 

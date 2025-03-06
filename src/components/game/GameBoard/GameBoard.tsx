@@ -2,7 +2,8 @@ import React, { useCallback, useState, useMemo, useRef, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../../store';
 import useBoardInteraction from './hooks/useBoardInteraction';
-import './GameBoard.css';
+import useAnimationsLoader from './hooks/useAnimationsLoader';
+import './styles/index.css';
 import { setHighlightedCells, setBoardSize, setSpawnRate, setLevel, setGameStatus } from '../../../store/slices/gameSlice';
 import * as config from '../../../utils/config';
 import { audioManager } from '../../../utils/audioManager';
@@ -393,6 +394,14 @@ const GameBoard: React.FC = () => {
     }, 0);
   }, []);
   
+  // Hook para gestionar las animaciones según el rendimiento
+  const { 
+    useLiteAnimations, 
+    fps, 
+    setAnimationMode, 
+    isManualMode 
+  } = useAnimationsLoader(35); // 35 FPS como umbral
+  
   // Renderizar controles de desarrollo
   const renderDevControls = useCallback(() => {
     if (!showDevControls) return null;
@@ -494,6 +503,29 @@ const GameBoard: React.FC = () => {
             </div>
           </div>
           
+          <div className="control-group">
+            <label>Modo de animaciones</label>
+            <div className="speed-buttons">
+              <button 
+                className={!useLiteAnimations ? "active" : ""} 
+                onClick={() => setAnimationMode(false)}
+              >
+                Completas
+              </button>
+              <button 
+                className={useLiteAnimations ? "active" : ""} 
+                onClick={() => setAnimationMode(true)}
+              >
+                Reducidas
+              </button>
+            </div>
+            {fps && (
+              <div className="value-display">
+                FPS detectados: {fps}
+              </div>
+            )}
+          </div>
+          
           <div className="control-actions">
             <button onClick={handleShowHint} className="dev-action-button hint-button">
               Mostrar Pista
@@ -518,7 +550,11 @@ const GameBoard: React.FC = () => {
     handleSpeedChange,
     handleStepSpeed,
     toggleIconGeneration,
-    handleNextLevel
+    handleNextLevel,
+    useLiteAnimations,
+    fps,
+    setAnimationMode,
+    isManualMode
   ]);
   
   // Botón para mostrar/ocultar controles de desarrollo

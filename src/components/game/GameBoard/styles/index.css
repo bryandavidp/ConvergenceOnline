@@ -1,0 +1,24 @@
+/* GameBoard CSS modular system
+ * Este archivo importa todos los módulos CSS para el tablero de juego.
+ * Permite una gestión flexible de animaciones basada en rendimiento
+ */
+
+/* Estilos base */
+@import './base.css';
+@import './cells.css';
+@import './controls.css';
+
+/* Responsividad y temas */
+@import './responsive.css';
+@import './themes.css';
+
+/* Herramientas de desarrollo */
+@import './dev-tools.css';
+
+/* 
+ * Animaciones - Se carga condicionalmente en runtime
+ * Ya sea animations.css (completo) o animations-lite.css (reducido)
+ * basado en el rendimiento detectado del dispositivo
+ */
+
+/* La importación de animaciones se gestiona dinámicamente en el componente */ 
