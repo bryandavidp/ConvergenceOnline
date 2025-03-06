@@ -53,11 +53,11 @@ import * as boardUtils from '../utils/boardUtils';
 import { adjustBoardVisuals } from '../utils/boardUtils';
 import * as levelAdapter from '../utils/levelAdapter';
 
-// Constantes de configuración del juego
-const MIN_SPAWN_RATE = 300; // Velocidad máxima (tiempo mínimo entre iconos)
-const INITIAL_SPAWN_RATE = 3000; // Velocidad inicial (tiempo entre iconos)
-const MAX_OCCUPATION_PERCENTAGE = 100; // Permitir que el tablero se llene completamente (era 80%)
-const INITIAL_ICONS = 5; // Número de iconos iniciales al comenzar el juego
+// Constantes de configuración del juego - Obtenidas directamente de config.ts
+const MIN_SPAWN_RATE = config.MIN_SPAWN_RATE;
+const INITIAL_SPAWN_RATE = config.INITIAL_SPAWN_RATE;
+const MAX_OCCUPATION_PERCENTAGE = config.MAX_OCCUPATION_PERCENTAGE;
+const INITIAL_ICONS = config.INITIAL_ICONS;
 
 // Constantes para el manejo de fin de partida
 // const OCCUPATION_THRESHOLD_GAME_OVER = 60; // % de ocupación para Game Over cuando no hay movimientos
@@ -111,30 +111,49 @@ const useGameLogic = () => {
     return checkBoardForValidMoves(board, boardSize, availableIcons);
   }, [board, boardSize, availableIcons]);
   
-  // Encontrar posiciones iniciales válidas para el tablero
-  const findValidInitialPositions = useCallback(() => {
-    const boardArray = Array(boardSize).fill(null).map(() => Array(boardSize).fill(null));
+  // Inicializar tablero con iconos iniciales
+  const initializeBoard = useCallback((size: number = boardSize) => {
+    logger.info('Inicializando tablero', `Tamaño: ${size}, Modo: ${currentPlayMode}`);
     
-    if (availableIcons.length < 4) {
-      logger.error('No hay suficientes iconos disponibles para crear un tablero inicial válido', `Tamaño: ${boardSize}, Modo: ${currentPlayMode}`);
-      return [];
-    }
+    const newBoard = Array(size).fill(null).map(() => Array(size).fill(null));
     
+    // Obtener la cantidad de iconos iniciales según el modo de juego desde la configuración
+    const modeConfig = config.getGameModeConfig(currentPlayMode);
+    const difficultyConfig = config.getDifficultyConfig(currentDifficulty);
+    
+    // Priorizar initialIcons de modeConfig, luego initialIconCount de difficultyConfig, 
+    // finalmente caer al valor por defecto INITIAL_ICONS
+    let totalIcons = modeConfig?.initialIcons || 
+                     difficultyConfig?.initialIconCount || 
+                     config.INITIAL_ICONS;
+
+    console.log('totalIcons', totalIcons);
+    
+    // Limitar la cantidad de iconos iniciales a un porcentaje máximo del tablero
+    // totalIcons = Math.min(totalIcons, Math.floor(size * size * 0.4));
+    // console.log('totalIcons', totalIcons);
+    logger.info(`Inicializando tablero con ${totalIcons} iconos iniciales`, 
+              `Modo: ${currentPlayMode}, Dificultad: ${currentDifficulty}`);
+    
+    // Primero colocamos unos pocos iconos en posiciones estratégicas para garantizar
+    // que el jugador tenga al menos un movimiento válido disponible
     const shuffledIcons = shuffleArray([...availableIcons]);
     const icon1 = shuffledIcons[0];
-    const icon2 = shuffledIcons[1];
     
-    const positions: Array<{ row: number; col: number; icon: string }> = [];
+    // Colocar grupo inicial de 3 iconos iguales en forma de L o T
+    const centerRow = getRandomInt(2, size - 3);
+    const centerCol = getRandomInt(2, size - 3);
     
+    // Centro
+    newBoard[centerRow][centerCol] = icon1;
+    
+    // Dos posiciones adyacentes para formar la L o T
     const directions = [
       { dr: -1, dc: 0 }, // arriba
       { dr: 0, dc: 1 },  // derecha
       { dr: 1, dc: 0 },  // abajo
       { dr: 0, dc: -1 }  // izquierda
     ];
-    
-    const centerRow = getRandomInt(2, boardSize - 2);
-    const centerCol = getRandomInt(2, boardSize - 2);
     
     const dir1Index = getRandomInt(0, 4);
     let dir2Index = getRandomInt(0, 4);
@@ -143,77 +162,91 @@ const useGameLogic = () => {
     }
     
     const dir1 = directions[dir1Index];
-    const pos1Row = centerRow + dir1.dr;
-    const pos1Col = centerCol + dir1.dc;
-    positions.push({ row: pos1Row, col: pos1Col, icon: icon1 });
-    boardArray[pos1Row][pos1Col] = icon1;
+    newBoard[centerRow + dir1.dr][centerCol + dir1.dc] = icon1;
     
     const dir2 = directions[dir2Index];
-    const pos2Row = centerRow + dir2.dr;
-    const pos2Col = centerCol + dir2.dc;
-    positions.push({ row: pos2Row, col: pos2Col, icon: icon1 });
-    boardArray[pos2Row][pos2Col] = icon1;
+    newBoard[centerRow + dir2.dr][centerCol + dir2.dc] = icon1;
     
-    const centerPos = { row: centerRow, col: centerCol, icon: icon1 };
-    positions.push(centerPos);
-    boardArray[centerRow][centerCol] = icon1;
+    // Contamos cuántos iconos hemos colocado hasta ahora
+    let placedIcons = 3;
     
-    for (let i = 0; i < Math.min(8, boardSize); i++) {
-      let row, col;
-      let attempts = 0;
-      let validPosition = false;
+    // Añadir iconos aleatorios adicionales hasta alcanzar totalIcons
+    while (placedIcons < totalIcons) {
+      const row = getRandomInt(0, size);
+      const col = getRandomInt(0, size);
       
-      while (!validPosition && attempts < 20) {
-        row = getRandomInt(0, boardSize);
-        col = getRandomInt(0, boardSize);
-        attempts++;
+      // Solo colocamos en celdas vacías
+      if (newBoard[row][col] === null) {
+        // Elegir un icono aleatorio, evitando generar convergencias
+        let validIcon = false;
+        let attempts = 0;
         
-        if (boardArray[row][col] === null) {
-          boardArray[row][col] = icon2;
+        while (!validIcon && attempts < 10) {
+          const iconIndex = getRandomInt(0, availableIcons.length);
+          const icon = availableIcons[iconIndex];
           
-          const result = findConvergences(boardArray, row, col, boardSize);
+          // Probar si este icono causaría una convergencia
+          newBoard[row][col] = icon;
           
-          if (!result.hasConvergence) {
-            positions.push({ row, col, icon: icon2 });
-            validPosition = true;
-          } else {
-            boardArray[row][col] = null;
+          // Verificar manualmente si causaría una convergencia en lugar de usar findConvergences
+          let hasConvergence = false;
+          const directions = [
+            { dr: -1, dc: 0 }, // arriba
+            { dr: 0, dc: 1 },  // derecha
+            { dr: 1, dc: 0 },  // abajo
+            { dr: 0, dc: -1 }  // izquierda
+          ];
+          
+          // Revisar en cada dirección si hay 2+ iconos iguales consecutivos
+          for (const dir of directions) {
+            let count = 1; // El propio icono
+            
+            // Contar hacia adelante
+            let r = row + dir.dr;
+            let c = col + dir.dc;
+            while (isValidCell(r, c, size) && newBoard[r][c] === icon) {
+              count++;
+              r += dir.dr;
+              c += dir.dc;
+            }
+            
+            // Contar hacia atrás
+            r = row - dir.dr;
+            c = col - dir.dc;
+            while (isValidCell(r, c, size) && newBoard[r][c] === icon) {
+              count++;
+              r -= dir.dr;
+              c -= dir.dc;
+            }
+            
+            if (count >= 3) {
+              hasConvergence = true;
+              break;
+            }
           }
+          
+          if (!hasConvergence) {
+            validIcon = true;
+            placedIcons++;
+          } else {
+            // Si causa convergencia, eliminarlo y probar otro
+            newBoard[row][col] = null;
+          }
+          
+          attempts++;
         }
-      }
-    }
-    
-    return positions;
-  }, [boardSize, availableIcons]);
-  
-  // Inicializar tablero con iconos iniciales
-  const initializeBoard = useCallback((size: number = boardSize) => {
-    logger.info('Inicializando tablero', `Tamaño: ${size}, Modo: ${currentPlayMode}`);
-    
-    const newBoard = Array(size).fill(null).map(() => Array(size).fill(null));
-    
-    let totalIcons = INITIAL_ICONS;
-    
-    if (currentPlayMode === 'classic') {
-      totalIcons = 7;
-    } else if (currentPlayMode === 'timed') {
-      totalIcons = 10;
-    } else if (currentPlayMode === 'survival') {
-      totalIcons = 15;
-    }
-    
-    totalIcons = Math.min(totalIcons, Math.floor(size * size * 0.4));
-    
-    const validPositions = findValidInitialPositions();
-    
-    if (validPositions.length > 0) {
-      for (const { row, col, icon } of validPositions) {
-        newBoard[row][col] = icon;
+        
+        // Si después de varios intentos no encontramos un icono válido,
+        // dejamos la celda vacía y continuamos
+        if (!validIcon) {
+          newBoard[row][col] = null;
+        }
       }
     }
     
     dispatch(updateBoard(newBoard));
     
+    // Contar el número real de iconos colocados
     let actualIconCount = 0;
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
@@ -222,6 +255,9 @@ const useGameLogic = () => {
         }
       }
     }
+    
+    logger.info(`Tablero inicializado con ${actualIconCount} iconos`, 
+               `Objetivo: ${totalIcons}, Tamaño tablero: ${size}x${size}`);
     
     dispatch(setIconCount(actualIconCount));
     
@@ -252,7 +288,7 @@ const useGameLogic = () => {
     dispatch(setSpawnRate(initialSpawnRate));
     
     return newBoard;
-  }, [dispatch, boardSize, currentPlayMode, level, findValidInitialPositions]);
+  }, [dispatch, boardSize, currentPlayMode, level, currentDifficulty, availableIcons]);
   
   // Añadir un icono aleatorio al tablero
   const addRandomIcon = useCallback(() => {
@@ -835,7 +871,8 @@ const useGameLogic = () => {
       dispatch(setLevelTimeLimit(gameConfig.initialTimeLimit || 120));
     }
     
-    initializeBoard(gameConfig.initialIcons || config.INITIAL_ICONS);
+    // Inicializar el tablero con el tamaño actual
+    initializeBoard(boardSize);
     
     if (status === 'playing') {
       startTimers();
@@ -863,17 +900,61 @@ const useGameLogic = () => {
   const configureBoardForNewLevel = () => {
     logger.info(`Configurando tablero para nivel ${level}`, `Tamaño: ${boardSize}, Modo: ${currentPlayMode}`);
     
-    // Obtener la configuración del nivel desde el nuevo sistema
-    const newBoardSize = levelAdapter.getBoardSizeForLevel(level);
-    const newSpawnRate = levelAdapter.getLevelSpawnRate(level, currentPlayMode, currentDifficulty);
-    const newIcons = levelAdapter.getIconSetForLevel(level);
+    // Obtener la configuración del nivel utilizando valores centralizados de config.ts
+    const newBoardSize = config.getBoardSizeForLevel(level + 1);
+    const newSpawnRate = config.calculateSpawnRate(level + 1, currentPlayMode);
     
-    // Aplicar la configuración
+    // Determinar iconos adecuados para este nivel y dificultad
+    let newIcons: string[];
+    if (level + 1 <= config.LEVEL_ICONS.length) {
+      // Usar conjuntos predefinidos para niveles básicos
+      newIcons = config.getIconSetForLevel(level + 1);
+    } else {
+      // Para niveles avanzados, usar iconos basados en la dificultad
+      newIcons = config.getIconsForLevel(level + 1, currentDifficulty);
+    }
+    
+    // Aplicar la configuración al estado global
     dispatch(setBoardSize(newBoardSize));
     dispatch(setSpawnRate(newSpawnRate));
     dispatch(setAvailableIcons(newIcons));
     
-    // Resto de la configuración existente...
+    // Configurar nuevos objetivos según el modo de juego
+    if (currentPlayMode === 'classic') {
+      // En modo clásico, aumentar la puntuación objetivo y reducir el objetivo de ocupación
+      const baseScoreTarget = config.LEVEL_REQUIREMENTS.classic.baseScore;
+      const scoreMultiplier = config.LEVEL_REQUIREMENTS.classic.scoreMultiplier;
+      const newScoreTarget = Math.floor(baseScoreTarget * Math.pow(scoreMultiplier, level));
+      
+      const baseOccupation = config.LEVEL_REQUIREMENTS.classic.baseOccupation;
+      const occupationDecrease = config.LEVEL_REQUIREMENTS.classic.occupationDecrease;
+      // Limitar la ocupación mínima a 20%
+      const newOccupationTarget = Math.max(20, baseOccupation - (level * occupationDecrease));
+      
+      dispatch(setLevelTarget({
+        score: newScoreTarget,
+        occupation: newOccupationTarget
+      }));
+    } else if (currentPlayMode === 'timed') {
+      // En modo contrarreloj, reducir el tiempo disponible según el nivel
+      const baseTime = config.LEVEL_REQUIREMENTS.timed.baseTime;
+      const timeDecrease = config.LEVEL_REQUIREMENTS.timed.timeDecreasePerLevel;
+      // Limitar el tiempo mínimo a 30 segundos
+      const newTimeLimit = Math.max(30, baseTime - (level * timeDecrease));
+      
+      dispatch(setLevelTimeLimit(newTimeLimit));
+    }
+    
+    // Recargar pistas disponibles
+    dispatch(rechargeHint());
+    
+    // Imprimir información de depuración
+    logger.debug('Configuración de nuevo nivel aplicada', {
+      nivel: level + 1,
+      tamañoTablero: newBoardSize,
+      velocidad: newSpawnRate,
+      iconos: newIcons.length
+    } as unknown as string);
   };
 
   return {

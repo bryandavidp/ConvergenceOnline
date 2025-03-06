@@ -4,6 +4,8 @@ import { RootState } from '../../../../store';
 import '../GameBoard.css';
 import Cell from './Cell';
 import useBoardInteraction from '../hooks/useBoardInteraction';
+import * as config from '../../../../utils/config';
+import * as boardUtils from '../../../../utils/boardUtils';
 
 interface BoardUIProps {
   // Propiedades adicionales si son necesarias
@@ -33,6 +35,31 @@ const BoardUI = forwardRef<HTMLDivElement, BoardUIProps>((props, ref) => {
   const isCellHighlighted = useCallback((row: number, col: number): boolean => {
     return highlightedCells.some((cell: { row: number, col: number }) => cell.row === row && cell.col === col);
   }, [highlightedCells]);
+  
+  // Aplicar variables CSS para el tamaño de las celdas según la configuración
+  useEffect(() => {
+    // Obtener tamaño de celda basado en la configuración centralizada
+    const cellSize = config.CSS_VARIABLES.cellSizeFormula(boardSize);
+    
+    // Aplicar variables CSS
+    document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
+    document.documentElement.style.setProperty('--board-size', `${boardSize}`);
+    document.documentElement.style.setProperty('--cell-gap', `${config.DEFAULT_BOARD_CONFIG.cellMargin}px`);
+    
+    // También aplicar ajuste de tamaño del tablero
+    const boardContainer = document.querySelector('.board-container') as HTMLElement;
+    const boardElement = document.querySelector('.game-board') as HTMLElement;
+    
+    if (boardContainer && boardElement) {
+      // Usar la configuración centralizada
+      boardUtils.adjustBoardVisuals(boardContainer, boardElement, {
+        size: boardSize,
+        minCellSize: config.DEFAULT_BOARD_CONFIG.minCellSize,
+        maxCellSize: config.DEFAULT_BOARD_CONFIG.maxCellSize,
+        cellMargin: config.DEFAULT_BOARD_CONFIG.cellMargin
+      });
+    }
+  }, [boardSize]);
   
   // Renderizar el contenido del tablero
   const renderBoard = () => {

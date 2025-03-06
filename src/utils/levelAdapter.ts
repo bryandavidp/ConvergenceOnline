@@ -1,5 +1,6 @@
 import { GameDifficulty, GamePlayMode } from '../store/slices/gameSlice';
 import * as levels from './levels';
+import * as config from './config';
 import logger from './logger';
 
 // Tipo de seguridad para acceder a las propiedades de los niveles
@@ -36,7 +37,7 @@ export function isLevelCompleted(
     }
     
     // Para evitar completado prematuro, verificar que haya pasado al menos el tiempo mínimo
-    const minTimeToValidate = levels.minTimeToValidate;
+    const minTimeToValidate = config.MIN_TIME_TO_VALIDATE_LEVEL;
     const hasMinimumPlayTime = gameTimer !== undefined && gameTimer >= minTimeToValidate;
     
     // En modo clásico, se pueden cumplir varios criterios
@@ -195,8 +196,8 @@ export function getNextLevelDisplay(
     
     return {
       level: nextLevel,
-      boardSize: nextLevelConfig ? nextLevelConfig.boardSize : 5,
-      icons: nextLevelConfig ? nextLevelConfig.icons : ["🍎", "🍇", "🍊", "🍓"],
+      boardSize: nextLevelConfig ? nextLevelConfig.boardSize : config.BOARD_SIZE.SMALL,
+      icons: nextLevelConfig ? nextLevelConfig.icons : config.DEFAULT_BOARD_CONFIG.icons || ["🍎", "🍇", "🍊", "🍓"],
       objectives,
       rewards,
       specialFeatures
@@ -206,8 +207,8 @@ export function getNextLevelDisplay(
     // Devolver valores por defecto
     return {
       level: nextLevel,
-      boardSize: 5,
-      icons: ["🍎", "🍇", "🍊", "🍓"],
+      boardSize: config.BOARD_SIZE.SMALL,
+      icons: config.DEFAULT_BOARD_CONFIG.icons || ["🍎", "🍇", "🍊", "🍓"],
       objectives: [],
       rewards: [],
       specialFeatures: []
@@ -261,36 +262,35 @@ export function getLevelRewards(
 }
 
 /**
- * Compatibilidad con config.ts - Obtener el tamaño del tablero
+ * Obtener el tamaño del tablero para un nivel
  */
 export function getBoardSizeForLevel(level: number): number {
-  return levels.getLevelBoardSize(level);
+  // Usar directamente la configuración central
+  return config.getBoardSizeForLevel(level);
 }
 
 /**
- * Compatibilidad con config.ts - Obtener iconos para un nivel
+ * Obtener iconos para un nivel
  */
 export function getIconSetForLevel(level: number): string[] {
-  return levels.getLevelIcons(level);
+  // Usar directamente la configuración central
+  return config.getIconSetForLevel(level);
 }
 
 /**
- * Compatibilidad con config.ts - Obtener velocidad de spawn
+ * Obtener velocidad de spawn
  */
 export function getLevelSpawnRate(level: number, gameMode: string = 'classic', difficulty: string = 'normal'): number {
-  return levels.getLevelSpawnRate(
-    level, 
-    gameMode as GamePlayMode, 
-    difficulty as GameDifficulty
-  );
+  // Usar directamente la configuración central
+  return config.getLevelSpawnRate(level, gameMode);
 }
 
 /**
  * Calcula la cantidad de iconos diferentes para un nivel
  */
 export function iconCountByLevel(level: number): number {
-  const icons = levels.getLevelIcons(level);
-  return icons.length;
+  // Usar directamente la configuración central
+  return config.iconCountByLevel(level);
 }
 
 /**
@@ -309,24 +309,63 @@ export function getLevelConfig(
   difficulty: GameDifficulty
 ): any {
   try {
-    return levels.getLevelConfig(level, playMode, difficulty);
+    // Intentamos obtener la configuración del nivel desde el módulo de niveles
+    const levelConfig = levels.getLevelConfig(level, playMode, difficulty);
+    
+    // Aplicar configuraciones del archivo config.ts a la configuración del nivel
+    if (levelConfig) {
+      // Aplicar multiplicadores de dificultad
+      const difficultyMod = config.LEVEL_REQUIREMENT_MULTIPLIERS[difficulty];
+      
+      // Si hay multiplicadores definidos, ajustar la velocidad de spawn
+      if (difficultyMod) {
+        levelConfig.spawnRate = Math.round(levelConfig.spawnRate * difficultyMod.spawnRate);
+      }
+      
+      // Asegurar que todas las configuraciones tomen en cuenta los límites globales
+      levelConfig.spawnRate = Math.max(config.MIN_SPAWN_RATE, levelConfig.spawnRate);
+      
+      // Para los niveles superiores a la configuración predefinida, usar lógica de config.ts
+      if (level > config.MAX_LEVELS) {
+        levelConfig.boardSize = config.getBoardSizeForLevelV2(level);
+        levelConfig.icons = config.getIconsForLevel(level, difficulty);
+      }
+    }
+    
+    return levelConfig;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('LevelAdapter', `Error al obtener configuración de nivel: ${errorMessage}`);
     
-    // Retornar una configuración básica en caso de error
+    // Usar valores por defecto desde config.ts
     return {
       id: level,
-      boardSize: 8,
-      icons: ["🍎", "🍇", "🍊", "🍓"],
-      spawnRate: 2000,
+      boardSize: config.BOARD_SIZE.MEDIUM,
+      icons: config.DEFAULT_BOARD_CONFIG.icons || ["🍎", "🍇", "🍊", "🍓"],
+      spawnRate: config.SPAWN_RATES.MEDIUM,
       speedMultiplier: 1.0,
       penaltyIcons: Math.min(3, Math.max(1, level)),
       requirements: {
-        classic: [{ type: 'score', value: 1000 * level, description: `Alcanza ${1000 * level} puntos` }],
-        timed: [{ type: 'time', value: 30 * level, description: `Sobrevive ${30 * level} segundos` }],
-        survival: [{ type: 'time', value: 120 * level, description: `Sobrevive ${2 * level} minutos` }],
-        zen: [{ type: 'time', value: 0, description: 'Juega sin presión' }]
+        classic: [{ 
+          type: 'score', 
+          value: config.LEVEL_REQUIREMENTS.classic.baseScore * Math.pow(config.LEVEL_REQUIREMENTS.classic.scoreMultiplier, level-1), 
+          description: `Alcanza ${config.LEVEL_REQUIREMENTS.classic.baseScore * Math.pow(config.LEVEL_REQUIREMENTS.classic.scoreMultiplier, level-1)} puntos` 
+        }],
+        timed: [{ 
+          type: 'time', 
+          value: config.LEVEL_REQUIREMENTS.timed.baseTime - (level-1) * config.LEVEL_REQUIREMENTS.timed.timeDecreasePerLevel, 
+          description: `Sobrevive ${config.LEVEL_REQUIREMENTS.timed.baseTime - (level-1) * config.LEVEL_REQUIREMENTS.timed.timeDecreasePerLevel} segundos` 
+        }],
+        survival: [{ 
+          type: 'time', 
+          value: config.LEVEL_REQUIREMENTS.survival.baseTime + (level-1) * config.LEVEL_REQUIREMENTS.survival.timeIncreasePerLevel, 
+          description: `Sobrevive ${(config.LEVEL_REQUIREMENTS.survival.baseTime + (level-1) * config.LEVEL_REQUIREMENTS.survival.timeIncreasePerLevel)/60} minutos` 
+        }],
+        zen: [{ 
+          type: 'time', 
+          value: 0, 
+          description: 'Juega sin presión' 
+        }]
       }
     };
   }

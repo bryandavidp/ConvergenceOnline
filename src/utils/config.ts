@@ -86,8 +86,8 @@ export const DEFAULT_BOARD_CONFIG: BoardConfig = {
 // Configuración de tablero
 export const BOARD_SIZE: BoardSize = {
   SMALL: 6,
-  MEDIUM: 7,
-  LARGE: 8
+  MEDIUM: 8,
+  LARGE: 10
 };
 
 // Configuración de tamaños de tablero por nivel
@@ -97,6 +97,11 @@ export const BOARD_SIZES = [
   8, // Nivel 3: 8x8
   8, // Nivel 4: 8x8
   9, // Nivel 5: 9x9
+  9, // Nivel 6: 9x9
+  10, // Nivel 7: 10x10
+  10, // Nivel 8: 10x10
+  12, // Nivel 9: 12x12
+  12, // Nivel 10: 12x12
 ];
 
 // Conjuntos de iconos por nivel
@@ -182,15 +187,77 @@ export const SPAWN_RATES = {
   EXTREME: 750        // Extremadamente rápido para expertos
 };
 
-// Parámetros de configuración generales
-export const INITIAL_ICONS = 5;  // Número de iconos iniciales al comenzar
-export const MAX_LEVELS = 5;     // Máximo número de niveles
-export const PENALTY_ICONS = 2;  // Número de iconos que aparecen como penalización
+// Número de iconos iniciales (valor por defecto si no se especifica en el modo de juego)
+export const INITIAL_ICONS = 5;  
+// Máximo número de niveles
+export const MAX_LEVELS = 10;    
+// Número de iconos que aparecen como penalización
+export const PENALTY_ICONS = 2;  
+// Velocidad máxima (tiempo mínimo entre iconos)
+export const MIN_SPAWN_RATE = 300; 
+// Porcentaje máximo de ocupación del tablero
+export const MAX_OCCUPATION_PERCENTAGE = 95; 
+// Mínimo de celdas para considerar un movimiento válido
+export const MIN_CELLS_FOR_VALID_MOVE = 3; 
 
 // Configuración básica de velocidad
 export const INITIAL_SPAWN_RATE = 2500; // Tiempo inicial entre spawns (2.5 segundos)
 export const SPEED_INCREASE_TIME = 20000; // Aumentar velocidad cada 20 segundos
 export const MAX_SPEED_MULTIPLIER = 2.5; // Velocidad máxima (2.5x la inicial)
+
+// Configuración del tiempo mínimo de juego para validar nivel
+export const MIN_TIME_TO_VALIDATE_LEVEL = 5; // Segundos mínimos antes de validar completado del nivel
+
+// Configuración de niveles
+export const LEVEL_SCORE_MULTIPLIER = 1.5; // Cada nivel aumenta el objetivo de puntuación por este factor
+export const LEVEL_SPEED_INCREASE = 0.2; // Incremento de velocidad (0.2 = 20% más rápido por nivel)
+export const LEVEL_ICON_INCREASE = 1; // Iconos adicionales por nivel
+
+// Configuración de dificultad para validación de niveles
+export const LEVEL_REQUIREMENT_MULTIPLIERS = {
+  easy: {
+    spawnRate: 1.3,     // 30% más lento
+    scoreRequirement: 0.7, // 30% menos puntos requeridos
+    timeRequirement: 0.8   // 20% menos tiempo requerido
+  },
+  normal: {
+    spawnRate: 1.0,     // Velocidad estándar
+    scoreRequirement: 1.0, // Requisitos estándar
+    timeRequirement: 1.0   // Requisitos estándar
+  },
+  hard: {
+    spawnRate: 0.7,     // 30% más rápido
+    scoreRequirement: 1.3, // 30% más puntos requeridos
+    timeRequirement: 1.2   // 20% más tiempo requerido
+  },
+  tutorial: {
+    spawnRate: 2.0,     // 100% más lento (el doble de tiempo)
+    scoreRequirement: 0.5, // 50% menos puntos requeridos
+    timeRequirement: 0.5   // 50% menos tiempo requerido
+  }
+};
+
+// Objetivos de nivel por modo de juego
+export const LEVEL_REQUIREMENTS = {
+  classic: {
+    baseScore: 1000,             // Puntuación base para nivel 1
+    scoreMultiplier: 1.5,        // Multiplica por nivel
+    baseOccupation: 70,          // % ocupación objetivo nivel 1
+    occupationDecrease: 5        // Reduce % por nivel
+  },
+  timed: {
+    baseTime: 120,               // Tiempo inicial (segundos)
+    timeDecreasePerLevel: 10,    // Reducción de tiempo por nivel
+    timeBonusPerConvergence: 5   // Segundos añadidos por convergencia
+  },
+  survival: {
+    baseTime: 60,                // Tiempo mínimo para nivel 1 (segundos)
+    timeIncreasePerLevel: 30     // Segundos adicionales por nivel
+  },
+  zen: {
+    // Sin requisitos específicos
+  }
+};
 
 // Configuración de modos de juego original (versión básica)
 export const GAME_MODES = {
@@ -270,26 +337,29 @@ export const DIFFICULTY_LEVELS = {
   },
 };
 
-// Configuración específica para cada modo de juego
+// Configuración para modos de juego
 export const GAME_MODE_CONFIG = {
   CLASSIC: {
     name: 'classic',
-    initialBoardSize: 8,
-    maxBoardSize: 8,
-    initialSpawnRate: SPAWN_RATES.MEDIUM,
+    displayName: 'Clásico',
+    description: 'Alcanza objetivos de puntuación y ocupación para avanzar de nivel',
+    initialIcons: 45,
     initialScoreTarget: 1000,
-    scoreTargetMultiplier: 1.5, 
+    scoreTargetMultiplier: 1.5,
+    initialSpawnRate: SPAWN_RATES.MEDIUM,
     initialOccupationTarget: 70, 
-    occupationDecreasePerLevel: 3, 
+    occupationDecreasePerLevel: 0, 
     basePenalty: 1, 
     speedIncreaseTime: 20000,
     maxSpeedMultiplier: 3,
   },
   TIMED: {
     name: 'timed',
-    boardSize: 7, 
+    displayName: 'Contrarreloj',
+    description: 'Consigue la mayor puntuación posible antes de que se acabe el tiempo',
+    initialIcons: 25,
+    initialTimeLimit: 120,
     initialSpawnRate: SPAWN_RATES.MEDIUM,
-    initialTimeLimit: 120, 
     timeBonusPerLevel: 30, 
     comboBonusTime: 5, 
     timeDecreasePerLevel: 10, 
@@ -298,14 +368,28 @@ export const GAME_MODE_CONFIG = {
   },
   SURVIVAL: {
     name: 'survival',
-    boardSize: 8, 
+    displayName: 'Supervivencia',
+    description: 'Sobrevive el mayor tiempo posible sin llenar el tablero',
+    initialIcons: 35,
+    movesBeforeSpawn: 1,
     initialSpawnRate: SPAWN_RATES.VERY_SLOW,
     speedIncreaseInterval: 20, 
     specialIconProbability: 0.1, 
     specialIconInterval: 60, 
     maxSpeedMultiplier: 4, 
     speedIncreaseTime: 10000,
-  }
+  },
+  TUTORIAL: {
+    name: 'tutorial',
+    displayName: 'Tutorial',
+    description: 'Aprende a jugar con instrucciones paso a paso',
+    initialIcons: 6,
+    initialSpawnRate: 5000,
+    speedIncreaseTime: 60000, 
+    maxSpeedMultiplier: 1.5,
+    penaltyIcons: 0,
+    maxLevel: 1,
+  },
 };
 
 // Configuración de dificultad ampliada
@@ -317,7 +401,7 @@ export const DIFFICULTY_CONFIG: Record<GameMode, DifficultyConfig> = {
     minSpawnRate: 2000,             
     penaltyIcons: 1,                
     maxIconsOnBoard: 48,            
-    initialIconCount: 10,           
+    initialIconCount: 20,           
     maxLevel: 5                     
   },
   normal: {
@@ -326,8 +410,8 @@ export const DIFFICULTY_CONFIG: Record<GameMode, DifficultyConfig> = {
     speedIncreaseAmount: 250,       
     minSpawnRate: 1500,             
     penaltyIcons: 2,                
-    maxIconsOnBoard: 56,            
-    initialIconCount: 12,           
+    maxIconsOnBoard: 60,            
+    initialIconCount: 45,           
     maxLevel: 7                     
   },
   hard: {
@@ -337,7 +421,7 @@ export const DIFFICULTY_CONFIG: Record<GameMode, DifficultyConfig> = {
     minSpawnRate: 1000,             
     penaltyIcons: 3,                
     maxIconsOnBoard: 60,            
-    initialIconCount: 16,           
+    initialIconCount: 45,           
     maxLevel: 10                    
   },
   tutorial: {
@@ -658,7 +742,7 @@ export function calculateSpawnRate(level: number, gameMode: string, currentSpawn
 
 // Funcion para calcular puntuación
 export function calculateScore(convergedIcons: number, level: number, modeMultiplier: number = 1.0): number {
-  const baseScore = convergedIcons * 10 * level;
+  const baseScore = convergedIcons * SCORE_VALUES.BASE_CONVERGENCE * level;
   
   let comboMultiplier = 1.0;
   if (convergedIcons >= 4) comboMultiplier = 1.5;
