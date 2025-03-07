@@ -184,4 +184,99 @@
 
 .board-cell.potential-match::after {
   animation: pulseBorderLite 0.5s alternate infinite;
+}
+
+/* Versión lite de animación de puntos flotantes */
+.points-popup {
+  position: absolute;
+  color: #ffde00;
+  font-size: 1.6rem;
+  font-weight: 800;
+  pointer-events: none;
+  z-index: 100;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.3);
+  animation: floatingPointsLite 1s ease-out forwards;
+  white-space: nowrap;
+  will-change: transform, opacity;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Baloo 2', 'Arial Rounded MT Bold', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.points-popup::before {
+  display: none; /* Eliminamos efectos adicionales para mejorar rendimiento */
+}
+
+.points-popup::after {
+  display: none; /* Eliminamos efectos adicionales para mejorar rendimiento */
+}
+
+.points-popup .points-value {
+  position: relative;
+  animation: pulseNumberLite 0.3s ease-out;
+}
+
+.points-popup .points-value::before {
+  content: '+';
+  position: absolute;
+  left: -0.5em;
+  top: 0;
+  font-size: 0.8em;
+  font-weight: 900;
+  color: #ffd700; /* Color dorado sólido */
+  transform: rotateZ(-10deg);
+  opacity: 0.9;
+}
+
+/* Animación para puntos especiales (más de 50) */
+.points-popup.special {
+  color: #ff5722;
+  font-size: 1.8rem;
+}
+
+/* Animación para bonificaciones (tablero vacío) */
+.points-popup.bonus {
+  color: #8e24aa;
+  font-size: 2rem;
+}
+
+/* Las partículas se eliminan en la versión lite para mejorar rendimiento */
+.points-particle {
+  display: none;
+}
+
+/* Animación principal de flotación de puntos simplificada */
+@keyframes floatingPointsLite {
+  0% {
+    opacity: 0;
+    transform: translate(0, 5px) scale(0.8);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1.1);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(0, -30px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, -40px) scale(0.8);
+  }
+}
+
+/* Animación simplificada para pulsar el número */
+@keyframes pulseNumberLite {
+  0% {
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
 } 

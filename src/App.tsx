@@ -7,6 +7,8 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import LoadingSpinner from './components/ui/LoadingSpiner';
 import logger from './utils/logger';
+import { GameProvider } from './contexts/GameContext';
+import { NotificationProvider } from './components/game/GameNotifications/GameNotificationManager';
 
 const HomePage = lazy(() => import('./pages/Home/HomePage'));
 const GamePage = lazy(() => import('./pages/Game/GamePage'));
@@ -44,6 +46,15 @@ class ErrorBoundaryComponent extends React.Component<{ children: React.ReactNode
 // Flag para evitar múltiples verificaciones de autenticación
 let authCheckInitiated = false;
 
+// Componente que envuelve GamePage con GameProvider
+const GamePageWithProviders: React.FC = () => {
+  return (
+    <GameProvider>
+      <GamePage />
+    </GameProvider>
+  );
+};
+
 const App: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   
@@ -65,27 +76,29 @@ const App: React.FC = () => {
   
   return (
     <ErrorBoundaryComponent>
-      <BrowserRouter>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            {/* Ruta del juego sin Layout */}
-            <Route path="game" element={
-              <ProtectedRoute>
-                <GamePage />
-              </ProtectedRoute>
-            } />
-            
-            {/* Resto de rutas con Layout */}
-            <Route path="/" element={<Layout />}>
-              <Route index element={<HomePage />} />
-              <Route path="profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-              <Route path="login" element={<LoginPage />} />
-              <Route path="register" element={<RegisterPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
+      <NotificationProvider>
+        <BrowserRouter>
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              {/* Ruta del juego sin Layout pero con GameProvider */}
+              <Route path="game" element={
+                <ProtectedRoute>
+                  <GamePageWithProviders />
+                </ProtectedRoute>
+              } />
+              
+              {/* Resto de rutas con Layout */}
+              <Route path="/" element={<Layout />}>
+                <Route index element={<HomePage />} />
+                <Route path="profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                <Route path="login" element={<LoginPage />} />
+                <Route path="register" element={<RegisterPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </NotificationProvider>
     </ErrorBoundaryComponent>
   );
 };

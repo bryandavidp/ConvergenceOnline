@@ -1,438 +1,557 @@
-import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
-import { useDispatch } from 'react-redux';
-import { setGameMode, setPlayMode, setGameStatus, GameDifficulty, GamePlayMode } from '../../../store/slices/gameSlice';
-import { audioManager } from '../../../utils/audioManager';
-import logger from '../../../utils/logger';
-import * as config from '../../../utils/config';
+import React, { useState, useEffect, useRef } from 'react';
+import { useGameContext } from '../../../contexts/GameContext';
+import { GamePlayMode, GameDifficulty } from '../../../types/game';
+import { useGameSound } from '../../../hooks/useGameSound';
+import { useDarkMode } from '../../../hooks/useDarkMode';
+import { ICONS } from '../../../constants/icons';
 import './GameModals.css';
 
+// Propiedades del modal
 interface StartGameModalProps {
   isVisible?: boolean;
   onStart?: () => void;
 }
 
-// Optimizado: Componente para partículas en movimiento con límite reducido y memo
-const ParticlesEffect: React.FC<{lowPerformance?: boolean}> = memo(({lowPerformance = false}) => {
-  // Reducir cantidad de partículas en modo de bajo rendimiento
-  const particleCount = lowPerformance ? 5 : 15;
-  
-  // No renderizar nada si estamos en modo de muy bajo rendimiento
-  if (lowPerformance === true) {
-    return null;
-  }
-  
-  return (
-    <div className="particles-container">
-      {[...Array(particleCount)].map((_, i) => (
-        <div 
-          key={i} 
-          className="particle"
-          style={{
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 5}s`,
-            animationDuration: `${6 + Math.random() * 4}s`, // Duración reducida
-            width: `${2 + Math.random() * 2}px`, // Tamaño reducido
-            height: `${2 + Math.random() * 2}px`, // Tamaño reducido
-            opacity: 0.1 + Math.random() * 0.3, // Opacidad reducida
-          }}
-        />
-      ))}
-    </div>
-  );
-});
+// Definición de las pantallas del flujo
+type ScreenType = 'main' | 'play' | 'options' | 'credits';
 
-// Optimizado: Componente para estrellas brillantes con límite reducido y memo
-const StarsEffect: React.FC<{lowPerformance?: boolean}> = memo(({lowPerformance = false}) => {
-  // Reducir cantidad de estrellas en modo de bajo rendimiento
-  const starCount = lowPerformance ? 7 : 20;
-  
-  // No renderizar nada si estamos en modo de muy bajo rendimiento
-  if (lowPerformance === true) {
-    return null;
-  }
-  
-  return (
-    <div className="stars-container">
-      {[...Array(starCount)].map((_, i) => (
-        <div 
-          key={i} 
-          className="star"
-          style={{
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 5}s`, // Menor delay
-            animationDuration: `${1 + Math.random() * 2}s`, // Duración reducida
-            width: `${1 + Math.random() * 1}px`, // Tamaño reducido
-            height: `${1 + Math.random() * 1}px`, // Tamaño reducido
-          }}
-        />
-      ))}
-    </div>
-  );
-});
+// Tipos de modo de juego ampliados
+type ExtendedGameMode = GamePlayMode;
+
+// Íconos específicos para los modos de juego
+const MODE_ICONS = {
+  [GamePlayMode.CLASSIC]: '🎯',
+  [GamePlayMode.TIME_ATTACK]: '⏱️',
+  [GamePlayMode.SURVIVAL]: '🔄',
+  [GamePlayMode.ZEN]: '🧘',
+  [GamePlayMode.TUTORIAL]: '👨‍🏫',
+};
+
+// Íconos específicos para los niveles de dificultad
+const DIFFICULTY_ICONS = {
+  [GameDifficulty.EASY]: '😊',
+  [GameDifficulty.MEDIUM]: '😐',
+  [GameDifficulty.HARD]: '😰',
+};
+
+// Descripciones para los modos de juego
+const MODE_DESCRIPTIONS = {
+  [GamePlayMode.CLASSIC]: 'Juega a tu ritmo y completa todos los niveles.',
+  [GamePlayMode.TIME_ATTACK]: 'Acumula puntos antes que se acabe el tiempo.',
+  [GamePlayMode.SURVIVAL]: 'Sobrevive el mayor tiempo posible con dificultad creciente.',
+  [GamePlayMode.ZEN]: 'Modo relajado sin presión de tiempo ni objetivos específicos.',
+  [GamePlayMode.TUTORIAL]: 'Aprende los conceptos básicos del juego paso a paso.',
+};
+
+// Descripciones para los niveles de dificultad
+const DIFFICULTY_DESCRIPTIONS = {
+  [GameDifficulty.EASY]: 'Para principiantes. Tableros más pequeños y objetivos simples.',
+  [GameDifficulty.MEDIUM]: 'Desafío moderado con objetivos más exigentes.',
+  [GameDifficulty.HARD]: 'Para expertos. Tableros grandes con objetivos muy desafiantes.',
+};
+
+// Configuración inicial para animación de la entrada del modal
+const START_ANIMATIONS = {
+  title: { opacity: 0, transform: 'translateY(-20px)' },
+  options: { opacity: 0, transform: 'translateY(20px)' },
+  button: { opacity: 0, transform: 'scale(0.8)' },
+};
 
 const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onStart }) => {
-  const dispatch = useDispatch();
-  // Recuperar preferencias guardadas o usar valores predeterminados
-  const [selectedDifficulty, setSelectedDifficulty] = useState<GameDifficulty>(
-    localStorage.getItem('gameDifficulty') as GameDifficulty || 'normal'
-  );
-  const [selectedMode, setSelectedMode] = useState<GamePlayMode>(
-    localStorage.getItem('gamePlayMode') as GamePlayMode || 'classic'
-  );
+  // Referencias al contenido del modal y al tablero de juego
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  const { playSound } = useGameSound();
+  const { darkMode } = useDarkMode();
+  
+  // Estado del juego y configuración
+  const { 
+    gameMode, 
+    setGameMode, 
+    gameDifficulty, 
+    setGameDifficulty,
+    isSoundEnabled,
+    setIsSoundEnabled,
+    isMusicEnabled,
+    setIsMusicEnabled
+  } = useGameContext();
+  
+  // Estados locales para animaciones y UI
+  const [animations, setAnimations] = useState(START_ANIMATIONS);
+  const [showSettings, setShowSettings] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
+  const [selectedMode, setSelectedMode] = useState<ExtendedGameMode | null>(null);
+  const [configReady, setConfigReady] = useState(false);
   
-  // Estados para la configuración
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(
-    localStorage.getItem('soundEnabled') !== 'false'
-  );
-  const [musicEnabled, setMusicEnabled] = useState<boolean>(
-    localStorage.getItem('musicEnabled') !== 'false'
-  );
-  const [showSettings, setShowSettings] = useState<boolean>(false);
-  
-  // Referencia para cerrar el panel de configuración al hacer clic fuera
-  const settingsPanelRef = useRef<HTMLDivElement>(null);
-  const settingsButtonRef = useRef<HTMLButtonElement>(null);
-  
-  // Estado para detección de rendimiento
-  const [lowPerformanceMode, setLowPerformanceMode] = useState<boolean>(false);
-  
-  // Detectar si el dispositivo es de baja potencia
+  // Efecto para verificar si la configuración está lista para activar el botón Empezar
   useEffect(() => {
-    // Verificar primero si ya está activado a nivel global
-    if (document.documentElement.classList.contains('performance-mode')) {
-      setLowPerformanceMode(true);
-      return;
+    // Está listo si ha seleccionado:
+    // - Un modo Tutorial o Zen (no requieren dificultad)
+    // - O un modo normal + dificultad
+    if (
+      selectedMode === GamePlayMode.TUTORIAL || 
+      selectedMode === GamePlayMode.ZEN || 
+      (selectedMode && selectedMode !== GamePlayMode.TUTORIAL && selectedMode !== GamePlayMode.ZEN && gameDifficulty)
+    ) {
+      setConfigReady(true);
+    } else {
+      setConfigReady(false);
     }
-    
-    // Estado para rastrear la activación
-    const activated = { value: false };
-    
-    // Detección de dispositivo móvil - menos restrictiva
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    // Si es dispositivo móvil o la ventana es pequeña (criterios menos restrictivos)
-    if (isMobile || window.innerWidth < 768 || window.innerHeight < 600) {
-      setLowPerformanceMode(true);
-      document.documentElement.classList.add('performance-mode');
-      activated.value = true;
-      console.log('StartGameModal: Activando modo de rendimiento por detección de dispositivo móvil o pantalla pequeña');
-      return;
-    }
-    
-    // Verificación de rendimiento inicial
-    const start = performance.now();
-    
-    // Crear un temporizador que se ejecute después de que el componente se haya renderizado
-    const checkPerformanceTimer = setTimeout(() => {
-      const end = performance.now();
-      const renderTime = end - start;
-      
-      // Si el tiempo de renderizado es alto, activar modo de bajo rendimiento
-      if (renderTime > 100 && !activated.value) {
-        setLowPerformanceMode(true);
-        document.documentElement.classList.add('performance-mode');
-        activated.value = true;
-        console.log(`StartGameModal: Activando modo de rendimiento por tiempo de renderizado lento: ${renderTime}ms`);
-      }
-    }, 500);
-    
-    return () => clearTimeout(checkPerformanceTimer);
-  }, []);
+  }, [selectedMode, gameDifficulty]);
   
+  // Efecto para manejar la animación de entrada cuando el modal es visible
   useEffect(() => {
-    // Reiniciar el estado de cierre cuando el modal vuelve a ser visible
+    let animationTimeout: NodeJS.Timeout;
+    
     if (isVisible) {
+      setModalVisible(true);
       setIsClosing(false);
+      
+      // Animación secuencial para los elementos del modal
+      setTimeout(() => {
+        setAnimations(prev => ({
+          ...prev,
+          title: { opacity: 1, transform: 'translateY(0)' }
+        }));
+        
+        setTimeout(() => {
+          setAnimations(prev => ({
+            ...prev,
+            options: { opacity: 1, transform: 'translateY(0)' }
+          }));
+          
+          setTimeout(() => {
+            setAnimations(prev => ({
+              ...prev,
+              button: { opacity: 1, transform: 'scale(1)' }
+            }));
+          }, 200);
+        }, 200);
+      }, 100);
+    } else {
+      setIsClosing(true);
+      animationTimeout = setTimeout(() => {
+        setModalVisible(false);
+        setAnimations(START_ANIMATIONS);
+        // Resetear a la pantalla principal cuando se cierra el modal
+        setCurrentScreen('main');
+      }, 300);
     }
     
-    // Aplicar la configuración de sonido y música
-    if (audioManager.enabled !== soundEnabled) {
-      audioManager.toggleSound();
-    }
-    
-    if (audioManager.musicEnabled !== musicEnabled) {
-      audioManager.toggleMusic();
-    }
-  }, [isVisible, soundEnabled, musicEnabled]);
-  
-  // Efecto para cerrar la configuración al hacer clic fuera
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showSettings && 
-          settingsPanelRef.current && 
-          settingsButtonRef.current &&
-          !settingsPanelRef.current.contains(event.target as Node) && 
-          !settingsButtonRef.current.contains(event.target as Node)) {
-        setShowSettings(false);
+    return () => {
+      if (animationTimeout) {
+        clearTimeout(animationTimeout);
       }
     };
+  }, [isVisible, playSound]);
+  
+  // Navegar a otra pantalla
+  const navigateTo = (screen: ScreenType) => {
+    playSound('uiSelect');
+    setCurrentScreen(screen);
+  };
+  
+  // Cierra el modal al hacer clic fuera del contenido
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      modalContentRef.current && 
+      !modalContentRef.current.contains(event.target as Node) &&
+      !showSettings
+    ) {
+      playSound('uiClose');
+      // No cerramos automáticamente, solo mostramos feedback visual
+      const modalContent = modalContentRef.current;
+      modalContent.style.transform = 'scale(0.98)';
+      
+      setTimeout(() => {
+        if (modalContent) {
+          modalContent.style.transform = 'scale(1)';
+        }
+      }, 150);
+    }
+  };
+  
+  // Configura el listener para clicks fuera del modal
+  useEffect(() => {
+    if (isVisible) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
     
-    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showSettings]);
+  }, [isVisible, showSettings]);
   
+  // Inicia el juego con la configuración seleccionada
   const handleStartGame = () => {
-    // Efectos visuales y auditivos al iniciar el juego
-    if (soundEnabled) {
-      audioManager.play('start');
+    if (!configReady || !selectedMode) return;
+    
+    playSound('uiSelect');
+    
+    // Configurar el modo según la selección
+    if (selectedMode === GamePlayMode.TUTORIAL) {
+      // Iniciar tutorial
+      console.log("Iniciando tutorial");
+      setGameMode(GamePlayMode.TUTORIAL);
+      setGameDifficulty(GameDifficulty.EASY); // Dificultad fácil para tutorial
+    } else if (selectedMode === GamePlayMode.ZEN) {
+      // Iniciar modo zen
+      console.log("Iniciando modo Zen");
+      setGameMode(GamePlayMode.ZEN);
+      setGameDifficulty(GameDifficulty.EASY); // Default para el backend
+    } else {
+      // Modo normal
+      setGameMode(selectedMode);
     }
     
-    // Mostrar animación de cierre
-    setIsClosing(true);
+    // Añade la clase modal-active al elemento game-page
+    const gamePageElement = document.querySelector('.game-page');
+    if (gamePageElement) {
+      gamePageElement.classList.add('modal-active');
+    }
     
-    // Registrar inicio del juego
-    logger.info('StartGameModal', `Juego iniciado en modo: ${selectedMode}, dificultad: ${selectedDifficulty}`);
-    
-    // Esperar a que termine la animación antes de cambiar el estado
-    setTimeout(() => {
-      // Actualizar el estado global con la dificultad y modo seleccionados
-      dispatch(setGameMode(selectedDifficulty));
-      dispatch(setPlayMode(selectedMode));
-      
-      // Almacenar el modo de juego en localStorage para futuras referencias
-      localStorage.setItem('gamePlayMode', selectedMode);
-      localStorage.setItem('gameDifficulty', selectedDifficulty);
-      
-      // Cambiar el estado del juego a 'playing'
-      dispatch(setGameStatus('playing'));
-      
-      // Llamar a la función onStart si se proporcionó
-      if (onStart) {
-        onStart();
-      }
-    }, 500);
+    if (onStart) {
+      onStart();
+    }
   };
   
-  const handleModeSelect = (mode: GamePlayMode) => {
+  // Selecciona el modo de juego
+  const handleModeSelect = (mode: ExtendedGameMode) => {
+    playSound('uiTap');
     setSelectedMode(mode);
-    // Reproducir sonido de selección
-    if (soundEnabled) {
-      audioManager.play('select');
-    }
   };
   
+  // Selecciona el nivel de dificultad
   const handleDifficultySelect = (difficulty: GameDifficulty) => {
-    setSelectedDifficulty(difficulty);
-    // Reproducir sonido de selección
-    if (soundEnabled) {
-      audioManager.play('select');
+    if (difficulty !== gameDifficulty) {
+      playSound('uiTap');
+      setGameDifficulty(difficulty);
     }
   };
   
+  // Activa/desactiva el sonido
   const toggleSound = () => {
-    const newState = !soundEnabled;
-    setSoundEnabled(newState);
-    localStorage.setItem('soundEnabled', String(newState));
-    if (newState) {
-      audioManager.play('click');
-    }
+    playSound('uiTap');
+    setIsSoundEnabled(!isSoundEnabled);
   };
   
+  // Activa/desactiva la música
   const toggleMusic = () => {
-    const newState = !musicEnabled;
-    setMusicEnabled(newState);
-    localStorage.setItem('musicEnabled', String(newState));
-    if (soundEnabled) {
-      audioManager.play('click');
-    }
+    playSound('uiTap');
+    setIsMusicEnabled(!isMusicEnabled);
   };
   
+  // Muestra/oculta el panel de configuración
   const toggleSettings = () => {
+    playSound(showSettings ? 'uiClose' : 'uiOpen');
     setShowSettings(!showSettings);
-    if (soundEnabled) {
-      audioManager.play('click');
-    }
   };
   
-  // Si el modal no es visible, no renderizar nada
-  if (!isVisible && !isClosing) {
-    return null;
-  }
-  
-  // Descripción del modo de juego seleccionado
-  const getModeDescription = () => {
-    switch (selectedMode) {
-      case 'classic':
-        return 'Completa niveles a tu ritmo. Sin límite de tiempo.';
-      case 'timed':
-        return 'Completa niveles contrarreloj. ¡El tiempo es crucial!';
-      case 'survival':
-        return 'Sobrevive el mayor tiempo posible. Aumenta la dificultad progresivamente.';
-      default:
-        return '';
-    }
-  };
-  
-  // Descripción de la dificultad seleccionada
-  const getDifficultyDescription = () => {
-    switch (selectedDifficulty) {
-      case 'easy':
-        return 'Ritmo relajado. Ideal para principiantes.';
-      case 'normal':
-        return 'Equilibrio entre desafío y diversión.';
-      case 'hard':
-        return 'Mayor desafío y estrategia. Para jugadores experimentados.';
-      default:
-        return '';
-    }
-  };
-  
-  return (
-    <div className={`game-modal start-game ${isVisible ? 'visible' : 'hidden'} ${isClosing ? 'closing' : ''} ${lowPerformanceMode ? 'performance-mode' : ''}`}>
-      {/* Efectos visuales - solo mostrar si no estamos en modo de bajo rendimiento */}
-      <ParticlesEffect lowPerformance={lowPerformanceMode} />
-      <StarsEffect lowPerformance={lowPerformanceMode} />
-      
-      {/* Decoración adicional con luces de neón */}
-      <div className="neon-glow top-left"></div>
-      <div className="neon-glow bottom-right"></div>
-      <div className="corner-decoration top-right"></div>
-      <div className="corner-decoration bottom-left"></div>
-      
-      <div className="modal-content">
-        <div className="start-game-header">
-          <h1>Convergencia</h1>
-          <h2>Un juego de estrategia</h2>
+  // Renderiza la pantalla principal
+  const renderMainScreen = () => {
+    return (
+      <div className="main-screen">
+        <div 
+          className="logo-container"
+          style={{
+            transition: 'all 0.6s ease',
+            ...animations.title
+          }}
+        >
+          <h1 className="logo-text">Convergencia</h1>
+          <div className="logo-pulse"></div>
+        </div>
+        
+        <div 
+          className="main-buttons"
+          style={{
+            transition: 'all 0.5s ease',
+            transitionDelay: '0.3s',
+            ...animations.options
+          }}
+        >
+          <button 
+            className="main-button play-button"
+            onClick={() => navigateTo('play')}
+          >
+            JUGAR
+          </button>
           
-          {/* Controles de configuración movidos al header */}
-          <div className="header-settings-container">
-            <div className="settings-buttons">
-              <button 
-                ref={settingsButtonRef}
-                className={`setting-button ${showSettings ? 'active' : ''}`} 
-                onClick={toggleSettings}
-                aria-label="Configuración"
+          <button 
+            className="main-button options-button"
+            onClick={() => navigateTo('options')}
+          >
+            OPCIONES
+          </button>
+          
+          <button 
+            className="main-button credits-button"
+            onClick={() => navigateTo('credits')}
+          >
+            CRÉDITOS
+          </button>
+        </div>
+      </div>
+    );
+  };
+  
+  // Renderiza la pantalla de selección de modo de juego
+  const renderPlayScreen = () => {
+    return (
+      <div className="play-screen">
+        <div className="game-modes-container">
+          {/* Sección de modos de juego */}
+          <div className="game-section modes-section">
+            <h3 className="section-title">Modo de Juego</h3>
+            <div className="mode-options">
+              <div 
+                className={`game-option mode-option classic-mode ${selectedMode === GamePlayMode.CLASSIC ? 'active' : ''}`}
+                onClick={() => handleModeSelect(GamePlayMode.CLASSIC)}
               >
-                ⚙️
-              </button>
+                <span className="option-icon">{MODE_ICONS[GamePlayMode.CLASSIC]}</span>
+                <span>Clásico</span>
+              </div>
+              
+              <div 
+                className={`game-option mode-option time-mode ${selectedMode === GamePlayMode.TIME_ATTACK ? 'active' : ''}`}
+                onClick={() => handleModeSelect(GamePlayMode.TIME_ATTACK)}
+              >
+                <span className="option-icon">{MODE_ICONS[GamePlayMode.TIME_ATTACK]}</span>
+                <span>Contrarreloj</span>
+              </div>
+              
+              <div 
+                className={`game-option mode-option survival-mode ${selectedMode === GamePlayMode.SURVIVAL ? 'active' : ''}`}
+                onClick={() => handleModeSelect(GamePlayMode.SURVIVAL)}
+              >
+                <span className="option-icon">{MODE_ICONS[GamePlayMode.SURVIVAL]}</span>
+                <span>Supervivencia</span>
+              </div>
+              
+              <div 
+                className={`game-option mode-option zen-mode ${selectedMode === GamePlayMode.ZEN ? 'active' : ''}`}
+                onClick={() => handleModeSelect(GamePlayMode.ZEN)}
+              >
+                <span className="option-icon">{MODE_ICONS[GamePlayMode.ZEN]}</span>
+                <span>Zen</span>
+              </div>
+              
+              <div 
+                className={`game-option mode-option tutorial-mode ${selectedMode === GamePlayMode.TUTORIAL ? 'active' : ''}`}
+                onClick={() => handleModeSelect(GamePlayMode.TUTORIAL)}
+              >
+                <span className="option-icon">{MODE_ICONS[GamePlayMode.TUTORIAL]}</span>
+                <span>Tutorial (para nuevos jugadores)</span>
+              </div>
             </div>
           </div>
           
-          <div className="game-icon-preview">
-            {["🍎", "🍊", "🍇", "🍓", "🍐"].map((icon, index) => (
-              <div key={index} className="preview-icon" style={{ animationDelay: `${index * 0.2}s` }}>
-                {icon}
-                <div className="icon-shine"></div>
-              </div>
-            ))}
-          </div>
-          
-          {/* Panel de configuración expandido - ahora fuera de settings-container */}
-          {showSettings && (
-            <div className="settings-panel" ref={settingsPanelRef}>
-              <h3>Configuración</h3>
-              <div className="settings-options">
-                <div className="settings-option">
-                  <span>Efectos de sonido</span>
-                  <div 
-                    className={`setting-toggle ${soundEnabled ? 'active' : ''}`}
-                    onClick={toggleSound}
-                  >
-                    {soundEnabled ? 'ON' : 'OFF'}
-                  </div>
+          {/* Sección de dificultad - Solo visible si es necesario */}
+          {selectedMode && selectedMode !== GamePlayMode.TUTORIAL && selectedMode !== GamePlayMode.ZEN && (
+            <div className="game-section difficulty-section">
+              <h3 className="section-title">Dificultad</h3>
+              <div className="difficulty-options">
+                <div 
+                  className={`game-option difficulty-option easy-difficulty ${gameDifficulty === GameDifficulty.EASY ? 'active' : ''}`}
+                  onClick={() => handleDifficultySelect(GameDifficulty.EASY)}
+                >
+                  <span className="option-icon">{DIFFICULTY_ICONS[GameDifficulty.EASY]}</span>
+                  <span>Fácil</span>
                 </div>
-                <div className="settings-option">
-                  <span>Música de fondo</span>
-                  <div 
-                    className={`setting-toggle ${musicEnabled ? 'active' : ''}`}
-                    onClick={toggleMusic}
-                  >
-                    {musicEnabled ? 'ON' : 'OFF'}
-                  </div>
+                
+                <div 
+                  className={`game-option difficulty-option normal-difficulty ${gameDifficulty === GameDifficulty.MEDIUM ? 'active' : ''}`}
+                  onClick={() => handleDifficultySelect(GameDifficulty.MEDIUM)}
+                >
+                  <span className="option-icon">{DIFFICULTY_ICONS[GameDifficulty.MEDIUM]}</span>
+                  <span>Normal</span>
+                </div>
+                
+                <div 
+                  className={`game-option difficulty-option hard-difficulty ${gameDifficulty === GameDifficulty.HARD ? 'active' : ''}`}
+                  onClick={() => handleDifficultySelect(GameDifficulty.HARD)}
+                >
+                  <span className="option-icon">{DIFFICULTY_ICONS[GameDifficulty.HARD]}</span>
+                  <span>Difícil</span>
                 </div>
               </div>
             </div>
           )}
         </div>
         
-        <div className="start-game-body">
-          <div className="form-group">
-            <div className="form-label">Selecciona un modo de juego:</div>
-            <div className="mode-options">
-              <div 
-                className={`game-option ${selectedMode === 'classic' ? 'active' : ''}`}
-                onClick={() => handleModeSelect('classic')}
-              >
-                <span className="option-icon">🏅</span>
-                <span>Clásico</span>
-                <div className="option-glow"></div>
-              </div>
-              <div 
-                className={`game-option ${selectedMode === 'timed' ? 'active' : ''}`}
-                onClick={() => handleModeSelect('timed')}
-              >
-                <span className="option-icon">⏳</span>
-                <span>Contrarreloj</span>
-                <div className="option-glow"></div>
-              </div>
-              <div 
-                className={`game-option ${selectedMode === 'survival' ? 'active' : ''}`}
-                onClick={() => handleModeSelect('survival')}
-              >
-                <span className="option-icon">🔥</span>
-                <span>Supervivencia</span>
-                <div className="option-glow"></div>
-              </div>
-            </div>
-            {selectedMode && (
-              <div className="mode-description">{getModeDescription()}</div>
-            )}
-          </div>
-          
-          <div className="form-group">
-            <div className="form-label">Selecciona la dificultad:</div>
-            <div className="difficulty-options">
-              <div 
-                className={`game-option ${selectedDifficulty === 'easy' ? 'active' : ''}`}
-                onClick={() => handleDifficultySelect('easy')}
-              >
-                <span className="option-icon">🌱</span>
-                <span>Fácil</span>
-                <div className="option-glow"></div>
-              </div>
-              <div 
-                className={`game-option ${selectedDifficulty === 'normal' ? 'active' : ''}`}
-                onClick={() => handleDifficultySelect('normal')}
-              >
-                <span className="option-icon">🌟</span>
-                <span>Normal</span>
-                <div className="option-glow"></div>
-              </div>
-              <div 
-                className={`game-option ${selectedDifficulty === 'hard' ? 'active' : ''}`}
-                onClick={() => handleDifficultySelect('hard')}
-              >
-                <span className="option-icon">🔮</span>
-                <span>Difícil</span>
-                <div className="option-glow"></div>
-              </div>
-            </div>
-            {selectedDifficulty && (
-              <div className="difficulty-description">{getDifficultyDescription()}</div>
-            )}
-          </div>
-          
-          {/* Botón de comenzar con estilo destacado para mejor visibilidad */}
-          <div className="fixed-start-button-container">
+        <div className="fixed-start-button-container">
+          <button 
+            className={`start-button ${configReady ? 'active' : 'disabled'}`}
+            onClick={handleStartGame}
+            disabled={!configReady}
+          >
+            ¡EMPEZAR!
+          </button>
+        </div>
+      </div>
+    );
+  };
+  
+  // Renderiza la pantalla de opciones
+  const renderOptionsScreen = () => {
+    return (
+      <div className="options-screen">
+        <div className="screen-header">
+          <h2>Opciones</h2>
+          <button 
+            className="back-button"
+            onClick={() => navigateTo('main')}
+          >
+            ⬅️ Volver
+          </button>
+        </div>
+        
+        <div className="settings-content">
+          <div className="settings-option">
+            <span>Música</span>
             <button 
-              className="start-button"
-              onClick={handleStartGame}
-              aria-label="Iniciar juego"
+              className={`setting-toggle ${isMusicEnabled ? 'active' : ''}`}
+              onClick={toggleMusic}
             >
-              ¡Comenzar!
-              <span className="button-energy"></span>
+              {isMusicEnabled ? 'ON' : 'OFF'}
             </button>
           </div>
+          
+          <div className="settings-option">
+            <span>Sonido</span>
+            <button 
+              className={`setting-toggle ${isSoundEnabled ? 'active' : ''}`}
+              onClick={toggleSound}
+            >
+              {isSoundEnabled ? 'ON' : 'OFF'}
+            </button>
+          </div>
+          
+          <div className="settings-option">
+            <span>Notificaciones</span>
+            <div className="setting-checkbox">✓</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  // Renderiza la pantalla de créditos
+  const renderCreditsScreen = () => {
+    return (
+      <div className="credits-screen">
+        <div className="screen-header">
+          <h2>Créditos</h2>
+          <button 
+            className="back-button"
+            onClick={() => navigateTo('main')}
+          >
+            ⬅️ Volver
+          </button>
+        </div>
+        
+        <div className="credits-content">
+          <h3>Convergencia</h3>
+          <p>Diseñado y desarrollado por:</p>
+          <p className="credits-name">Equipo de Desarrollo</p>
+          
+          <h4>Programación</h4>
+          <p className="credits-name">Programador Principal</p>
+          
+          <h4>Diseño Gráfico</h4>
+          <p className="credits-name">Artista Principal</p>
+          
+          <h4>Música y Sonido</h4>
+          <p className="credits-name">Compositor</p>
+          
+          <h4>Agradecimientos Especiales</h4>
+          <p>A todos los que hicieron posible este juego</p>
+          
+          <div className="version-info">
+            <p>Versión 1.0.0</p>
+            <p>© 2023 Todos los derechos reservados</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  // Si el modal no está visible, no renderizamos nada
+  if (!modalVisible && !isVisible) {
+    return null;
+  }
+  
+  // Renderizar el contenido adecuado según la pantalla actual
+  const renderContent = () => {
+    switch(currentScreen) {
+      case 'play':
+        return renderPlayScreen();
+      case 'options':
+        return renderOptionsScreen();
+      case 'credits':
+        return renderCreditsScreen();
+      default:
+        return renderMainScreen();
+    }
+  };
+  
+  return (
+    <div className={`game-modal start-game ${modalVisible ? 'visible' : ''} ${isClosing ? 'closing' : ''}`}>
+      <div className="modal-content" ref={modalContentRef}>
+        {/* Cabecera del modal con título y botones de configuración */}
+        <div className="start-game-header">
+          <div className="header-settings-container">
+            <div className="settings-buttons">
+              <button 
+                className={`setting-button ${showSettings ? 'active' : ''}`} 
+                onClick={toggleSettings}
+              >
+                {ICONS.SETTINGS}
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Panel de configuración */}
+        {showSettings && (
+          <div className="settings-panel">
+            <div className="settings-option">
+              <span>Música</span>
+              <button 
+                className={`setting-toggle ${isMusicEnabled ? 'active' : ''}`}
+                onClick={toggleMusic}
+              >
+                {isMusicEnabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
+            
+            <div className="settings-option">
+              <span>Sonido</span>
+              <button 
+                className={`setting-toggle ${isSoundEnabled ? 'active' : ''}`}
+                onClick={toggleSound}
+              >
+                {isSoundEnabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
+            
+            <div className="settings-option">
+              <span>Notificaciones</span>
+              <div className="setting-checkbox">✓</div>
+            </div>
+          </div>
+        )}
+        
+        {/* Cuerpo del modal con el contenido según la pantalla actual */}
+        <div className="start-game-body">
+          {renderContent()}
         </div>
       </div>
     </div>
   );
 };
 
-// Exportar componente memorizado para evitar renderizados innecesarios
-export default memo(StartGameModal); 
+export default StartGameModal; 

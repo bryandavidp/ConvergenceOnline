@@ -12,6 +12,9 @@ import StartGameModal from '../../components/game/GameModals/StartGameModal';
 import GameConfigSelector from '../../components/game/GameConfig';
 import { audioManager } from '../../utils/audioManager';
 import * as config from '../../utils/config';
+import { useGameContext } from '../../contexts/GameContext';
+import { useGameSound } from '../../hooks/useGameSound';
+import { useDarkMode } from '../../hooks/useDarkMode';
 import {
   configureBoardForLevel,
   changeBoardSize,
@@ -51,6 +54,25 @@ const GamePage: React.FC = () => {
     darkMode,
     highScore
   } = useSelector((state: RootState) => state.game);
+  
+  // Usar GameContext para la integración con los modales
+  const { 
+    gameMode, 
+    setGameMode, 
+    gameDifficulty, 
+    setGameDifficulty, 
+    isSoundEnabled, 
+    setIsSoundEnabled,
+    isMusicEnabled,
+    setIsMusicEnabled,
+    gameState,
+    updateGameState
+  } = useGameContext();
+  
+  // Custom hooks para sonido y tema
+  const { playSound } = useGameSound();
+  const { darkMode: darkModeFromHook, toggleDarkMode: toggleDarkModeFromHook } = useDarkMode();
+  
   const { initializeBoard, stopTimers, startTimers, changeGameConfig } = useGameLogic();
   // Referencia para controlar las inicializaciones repetidas
   const isInitializingRef = useRef<boolean>(false);
@@ -69,15 +91,6 @@ const GamePage: React.FC = () => {
   // Referencias a los elementos del tablero
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const boardElementRef = useRef<HTMLDivElement>(null);
-  
-  // Efecto para cambiar el tema oscuro/claro
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-    }
-  }, [darkMode]);
   
   // Efecto para detectar dispositivo móvil
   useEffect(() => {
@@ -299,8 +312,8 @@ const GamePage: React.FC = () => {
 
   // Nuevas funciones para los controles
   const toggleDarkMode = () => {
+    toggleDarkModeFromHook();
     dispatch(setDarkMode(!darkMode));
-    audioManager.play('click');
   };
   
   const toggleHelp = () => {
@@ -309,13 +322,26 @@ const GamePage: React.FC = () => {
   };
   
   const toggleSound = () => {
+    setIsSoundEnabled(!isSoundEnabled);
     audioManager.toggleSound();
-    audioManager.play('click');
   };
   
   // Determinar las clases del contenedor principal
-  const gamePageClasses = `game-page ${isFullscreen ? 'game-fullscreen' : ''} ${darkMode ? 'dark-mode' : 'light-mode'}`;
+  const gamePageClasses = `game-page ${isFullscreen ? 'game-fullscreen' : ''} ${darkModeFromHook ? 'dark-mode' : 'light-mode'} ${status === 'playing' ? 'game-active' : ''}`;
   
+  // Asegurar que no se muestre el contenido del juego cuando no estamos jugando
+  useEffect(() => {
+    const gamePageElement = document.querySelector('.game-page');
+    
+    // Si el juego está en un estado que requiere un modal, aseguramos que modal-active esté activo
+    if (status === 'startScreen' || status === 'gameOver' || status === 'levelCompleted') {
+      gamePageElement?.classList.add('modal-active');
+    } else if (status === 'playing') {
+      // Si el juego está activo, quitamos la clase modal-active
+      gamePageElement?.classList.remove('modal-active');
+    }
+  }, [status]);
+
   return (
     <div className={gamePageClasses}>
       <div className="game-content">
@@ -350,11 +376,11 @@ const GamePage: React.FC = () => {
               </button>
               
               <button className="control-btn theme-btn" onClick={toggleDarkMode}>
-                {darkMode ? ICONS.LIGHT_MODE : ICONS.DARK_MODE}
+                {darkModeFromHook ? ICONS.LIGHT_MODE : ICONS.DARK_MODE}
               </button>
               
               <button className="control-btn sound-btn" onClick={toggleSound}>
-                {audioManager.enabled ? ICONS.SOUND_ON : ICONS.SOUND_OFF}
+                {isSoundEnabled ? ICONS.SOUND_ON : ICONS.SOUND_OFF}
               </button>
               
               <button className="control-btn help-btn" onClick={toggleHelp}>

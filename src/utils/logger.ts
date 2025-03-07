@@ -9,7 +9,7 @@ enum LogLevel {
 
 // Configuración del nivel de log
 // En producción, se podría cambiar a WARN o ERROR
-let currentLogLevel = LogLevel.NONE;
+let currentLogLevel = LogLevel.DEBUG;
 
 interface LogStyles {
   debug: string;

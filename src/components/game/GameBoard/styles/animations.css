@@ -327,4 +327,201 @@
   100% {
     transform: translate(-50%, -50%) rotate(360deg);
   }
+}
+
+/* Animación de puntos flotantes */
+.points-popup {
+  position: absolute;
+  color: #ffde00;
+  font-size: 1.8rem;
+  font-weight: 800;
+  pointer-events: none;
+  z-index: 100;
+  text-shadow: 0 0 10px rgba(255, 222, 0, 0.8),
+               0 0 20px rgba(255, 222, 0, 0.5),
+               0 2px 4px rgba(0, 0, 0, 0.7);
+  -webkit-text-stroke: 1.5px rgba(0, 0, 0, 0.3);
+  animation: floatingPointsFull 1.2s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  white-space: nowrap;
+  transform-origin: center;
+  will-change: transform, opacity;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Baloo 2', 'Arial Rounded MT Bold', sans-serif;
+  letter-spacing: -0.02em;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.points-popup::before {
+  content: '';
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  top: -25%;
+  left: -25%;
+  background: radial-gradient(circle, rgba(255, 222, 0, 0.4) 0%, rgba(255, 222, 0, 0) 70%);
+  z-index: -1;
+  opacity: 0.7;
+  border-radius: 50%;
+  animation: pulseGlowFull 1.2s ease-out forwards;
+}
+
+.points-popup::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%);
+  z-index: -1;
+  opacity: 0;
+  border-radius: 50%;
+  animation: flashGlowFull 0.5s ease-out forwards;
+}
+
+.points-popup .points-value {
+  position: relative;
+  transform: scale(1);
+  animation: pulseNumber 0.3s ease-out forwards;
+}
+
+.points-popup .points-value::before {
+  content: '+';
+  position: absolute;
+  left: -0.6em;
+  font-size: 0.8em;
+  top: 0;
+  background: linear-gradient(135deg, #fff200 20%, #ffa41b 80%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.5);
+  font-weight: 900;
+  transform: rotateZ(-12deg);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4));
+}
+
+/* Animación para puntos especiales (más de 50) */
+.points-popup.special {
+  color: #ff5722;
+  font-size: 2.2rem;
+  text-shadow: 0 0 10px rgba(255, 87, 34, 0.8),
+               0 0 20px rgba(255, 87, 34, 0.5),
+               0 2px 4px rgba(0, 0, 0, 0.7);
+  filter: drop-shadow(0 4px 10px rgba(255, 87, 34, 0.5));
+}
+
+.points-popup.special::before {
+  background: radial-gradient(circle, rgba(255, 87, 34, 0.4) 0%, rgba(255, 87, 34, 0) 70%);
+}
+
+/* Animación para bonificaciones (tablero vacío) */
+.points-popup.bonus {
+  color: #8e24aa;
+  font-size: 2.4rem;
+  text-shadow: 0 0 10px rgba(142, 36, 170, 0.8),
+               0 0 20px rgba(142, 36, 170, 0.5),
+               0 2px 4px rgba(0, 0, 0, 0.7);
+  filter: drop-shadow(0 4px 12px rgba(142, 36, 170, 0.6));
+}
+
+.points-popup.bonus::before {
+  background: radial-gradient(circle, rgba(142, 36, 170, 0.4) 0%, rgba(142, 36, 170, 0) 70%);
+}
+
+/* Animación de las partículas alrededor de los puntos */
+.points-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: rgba(255, 222, 0, 0.8);
+  box-shadow: 0 0 8px rgba(255, 222, 0, 0.6);
+  animation: particleFlyFull 1s ease-out forwards;
+  z-index: -1;
+}
+
+/* Animación principal de flotación de puntos */
+@keyframes floatingPointsFull {
+  0% {
+    opacity: 0;
+    transform: translate(0, 10px) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1.2);
+  }
+  30% {
+    transform: translate(0, -5px) scale(1.1);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(0, -35px) scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, -60px) scale(0.5);
+  }
+}
+
+/* Pulso del resplandor alrededor de los puntos */
+@keyframes pulseGlowFull {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+/* Destello inicial cuando aparecen los puntos */
+@keyframes flashGlowFull {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* Animación de partículas alrededor */
+@keyframes particleFlyFull {
+  0% {
+    opacity: 0.9;
+    transform: translate(0, 0) scale(0.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(
+      calc(cos(var(--angle)) * 50px),
+      calc(sin(var(--angle)) * 50px)
+    ) scale(0.5);
+  }
+}
+
+/* Animación para pulsar el número */
+@keyframes pulseNumber {
+  0% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
 } 

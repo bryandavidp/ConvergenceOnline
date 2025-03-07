@@ -20,6 +20,9 @@ import logger from '../../../../utils/logger';
 import * as config from '../../../../utils/config';
 import * as levelAdapter from '../../../../utils/levelAdapter';
 import * as gameUtils from '../../../../utils/gameUtils';
+import { useNotifications } from '../../GameNotifications/GameNotificationManager';
+import { animateCellError, animateBoardShake, increaseSpeedAsPenalty } from './helpers/errorHandler';
+import { addPenaltyIcons } from './helpers/penaltyManager';
 
 /**
  * Hook para gestionar la interacción con el tablero
@@ -39,13 +42,15 @@ const useBoardInteraction = () => {
     iconCount
   } = useSelector((state: RootState) => state.game);
   
+  const { addNotification } = useNotifications();
+  
   // Referencias para las celdas del tablero (DOM)
   const cellRefs = useRef<Record<string, HTMLElement>>({});
   
   // Referencias para los temporizadores
   const spawnIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const hintTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const animationTimersRef = useRef<NodeJS.Timeout[]>([]);
+  const animationTimers = useRef<NodeJS.Timeout[]>([]);
   
   // Estado para controlar alertas visuales
   const [showSpeedAlert, setShowSpeedAlert] = useState(false);
@@ -75,40 +80,142 @@ const useBoardInteraction = () => {
     }
     
     // Detener temporizadores de animación
-    animationTimersRef.current.forEach(timer => clearTimeout(timer));
-    animationTimersRef.current = [];
+    animationTimers.current.forEach(timer => clearTimeout(timer));
+    animationTimers.current = [];
     
     // Limpiar alertas visuales
-    setShowSpeedAlert(false);
     setShowPenaltyAlert(false);
+    setShowSpeedAlert(false);
   }, []);
   
   /**
-   * Agregar un temporizador a la lista de temporizadores de animación
+   * Registrar un temporizador de animación para limpieza
    */
   const addAnimationTimer = useCallback((timer: NodeJS.Timeout) => {
-    animationTimersRef.current.push(timer);
+    animationTimers.current.push(timer);
   }, []);
   
   /**
-   * Registrar referencia para una celda
+   * Obtener el elemento DOM para una celda específica
    */
-  const registerCellRef = useCallback((row: number, col: number, element: HTMLElement | null) => {
-    const key = `${row}-${col}`;
-    if (element) {
-      cellRefs.current[key] = element;
-    } else {
-      delete cellRefs.current[key];
+  const getCellElement = useCallback((row: number, col: number): HTMLElement | null => {
+    return cellRefs.current[`${row}-${col}`] || null;
+  }, []);
+  
+  /**
+   * Mostrar animación de puntos flotantes ganados sobre una celda
+   */
+  const showPointsEarned = useCallback((points: number, row?: number, col?: number) => {
+    // Si tenemos coordenadas de celda, mostrar animación en esa posición
+    if (row !== undefined && col !== undefined) {
+      // Obtener el elemento de la celda
+      const cellElement = getCellElement(row, col);
+      
+      if (cellElement) {
+        // Crear elemento de puntos flotantes
+        const pointsPopup = document.createElement('div');
+        pointsPopup.className = points > 50 ? 'points-popup special' : 'points-popup';
+        
+        // Añadir el valor de los puntos
+        const pointsValue = document.createElement('span');
+        pointsValue.className = 'points-value';
+        pointsValue.textContent = `${points}`;
+        pointsPopup.appendChild(pointsValue);
+        
+        // Posicionar el elemento en la celda
+        pointsPopup.style.top = '50%';
+        pointsPopup.style.left = '50%';
+        pointsPopup.style.transform = 'translate(-50%, -50%)';
+        
+        // Si tenemos version completa de animaciones, añadir partículas
+        if (!document.documentElement.classList.contains('performance-mode')) {
+          // Añadir partículas alrededor (solo versión completa)
+          for (let i = 0; i < 6; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'points-particle';
+            particle.style.setProperty('--angle', `${i * 60}deg`);
+            pointsPopup.appendChild(particle);
+          }
+        }
+        
+        // Añadir al DOM
+        cellElement.appendChild(pointsPopup);
+        
+        // Reproducir sonido
+        audioManager.play('points');
+        
+        // Eliminar después de que termine la animación
+        const removeTimer = setTimeout(() => {
+          if (pointsPopup && pointsPopup.parentNode) {
+            pointsPopup.parentNode.removeChild(pointsPopup);
+          }
+        }, 1500);
+        
+        // Registrar el temporizador
+        addAnimationTimer(removeTimer);
+      }
     }
-  }, []);
+    
+    // También usar el sistema de notificaciones para puntos importantes o si no tenemos coordenadas
+    if (points > 100 || row === undefined || col === undefined) {
+      addNotification({
+        message: '¡Puntos conseguidos!',
+        type: 'success',
+        icon: '🏆',
+        duration: 1500,
+        value: `+${points}`
+      });
+    }
+  }, [addNotification, getCellElement, addAnimationTimer]);
   
   /**
-   * Obtener el elemento DOM para una celda
+   * Mostrar notificación y animación de bonificación por tablero vacío
    */
-  const getCellElement = useCallback((row: number, col: number) => {
-    const key = `${row}-${col}`;
-    return cellRefs.current[key] || null;
-  }, []);
+  const showEmptyBoardBonus = useCallback(() => {
+    // Notificación estándar
+    addNotification({
+      message: '¡Tablero limpio!',
+      type: 'success',
+      icon: '🎉',
+      duration: 2000,
+      value: 'Bonificación'
+    });
+    
+    // Animación central para la bonificación
+    const gameBoard = document.querySelector('.game-board');
+    if (gameBoard) {
+      // Crear elemento de bonificación
+      const bonusPopup = document.createElement('div');
+      bonusPopup.className = 'points-popup bonus';
+      
+      // Añadir texto de bonificación
+      const bonusValue = document.createElement('span');
+      bonusValue.className = 'points-value';
+      bonusValue.textContent = '100';
+      bonusPopup.appendChild(bonusValue);
+      
+      // Posicionar en el centro del tablero
+      bonusPopup.style.top = '50%';
+      bonusPopup.style.left = '50%';
+      bonusPopup.style.transform = 'translate(-50%, -50%)';
+      
+      // Añadir al DOM
+      gameBoard.appendChild(bonusPopup);
+      
+      // Reproducir sonido de bonificación
+      audioManager.play('levelComplete');
+      
+      // Eliminar después de que termine la animación
+      const removeTimer = setTimeout(() => {
+        if (bonusPopup && bonusPopup.parentNode) {
+          bonusPopup.parentNode.removeChild(bonusPopup);
+        }
+      }, 2000);
+      
+      // Registrar el temporizador
+      addAnimationTimer(removeTimer);
+    }
+  }, [addNotification, addAnimationTimer]);
   
   /**
    * Verificar si hay movimientos válidos en el tablero
@@ -263,120 +370,111 @@ const useBoardInteraction = () => {
   }, [board, dispatch, iconCount, addAnimationTimer]);
   
   /**
-   * Animar puntos ganados
-   */
-  const animatePointsEarned = useCallback((targetElement: HTMLElement | null, points: number) => {
-    if (!targetElement) return;
-    
-    // Crear elemento de animación
-    const pointsElement = document.createElement('div');
-    pointsElement.className = 'points-animation';
-    pointsElement.textContent = `+${points}`;
-    
-    // Posicionar sobre la celda objetivo
-    const rect = targetElement.getBoundingClientRect();
-    pointsElement.style.left = `${rect.left + rect.width / 2}px`;
-    pointsElement.style.top = `${rect.top + rect.height / 2}px`;
-    
-    // Añadir al DOM
-    document.body.appendChild(pointsElement);
-    
-    // Animar y luego eliminar
-    const animateTimer = setTimeout(() => {
-      pointsElement.classList.add('animate');
-      
-      const removeTimer = setTimeout(() => {
-        document.body.removeChild(pointsElement);
-      }, 1000);
-      addAnimationTimer(removeTimer);
-    }, 10);
-    addAnimationTimer(animateTimer);
-  }, [addAnimationTimer]);
-  
-  /**
-   * Animar celda con error
-   */
-  const animateErrorCell = useCallback((row: number, col: number) => {
-    const cellElement = getCellElement(row, col);
-    if (!cellElement) return;
-    
-    cellElement.classList.add('error');
-    const timer = setTimeout(() => {
-      cellElement.classList.remove('error');
-    }, 500);
-    addAnimationTimer(timer);
-  }, [getCellElement, addAnimationTimer]);
-  
-  /**
-   * Animar sacudida del tablero
-   */
-  const animateBoard = useCallback(() => {
-    const boardElement = document.querySelector('.game-board-grid');
-    if (!boardElement) return;
-    
-    boardElement.classList.add('shake');
-    const timer = setTimeout(() => {
-      boardElement.classList.remove('shake');
-    }, 500);
-    addAnimationTimer(timer);
-  }, [addAnimationTimer]);
-  
-  /**
    * Mostrar alerta de penalización
    */
   const showPenaltyAlertUI = useCallback(() => {
+    // Usar el nuevo sistema de notificaciones en lugar de las alertas directas
+    addNotification({
+      message: '¡Penalización!',
+      type: 'error',
+      icon: '⚠️',
+      duration: 2000,
+      value: 'Velocidad aumentada'
+    });
+    
+    // Mantenemos el estado actual para compatibilidad, pero lo eliminaremos en el futuro
     setShowPenaltyAlert(true);
     const timer = setTimeout(() => {
       setShowPenaltyAlert(false);
     }, 2000);
     addAnimationTimer(timer);
-  }, [addAnimationTimer]);
+  }, [addNotification, addAnimationTimer]);
   
   /**
    * Mostrar alerta de aumento de velocidad
    */
   const showSpeedAlertUI = useCallback((multiplier: number) => {
+    // Usar el nuevo sistema de notificaciones con animación del valor
+    addNotification({
+      message: '¡Velocidad aumentada!',
+      type: 'warning',
+      icon: '⚡',
+      duration: 2500,
+      value: `x${multiplier}`,
+      animateValue: true
+    });
+    
+    // Mantenemos el estado actual para compatibilidad, pero lo eliminaremos en el futuro
     setSpeedMultiplier(multiplier);
     setShowSpeedAlert(true);
     const timer = setTimeout(() => {
       setShowSpeedAlert(false);
     }, 2000);
     addAnimationTimer(timer);
-  }, [addAnimationTimer]);
+  }, [addNotification, addAnimationTimer]);
+  
+  /**
+   * Limpiar las animaciones y temporizadores asociados
+   */
+  const cleanupEffects = useCallback(() => {
+    // Limpiar todas las celdas destacadas
+    dispatch(setHighlightedCells([]));
+    
+    // Detener cualquier animación en curso
+    animationTimers.current.forEach(clearTimeout);
+    animationTimers.current = [];
+    
+    // Reiniciar las alertas
+    setShowPenaltyAlert(false);
+    setShowSpeedAlert(false);
+  }, [dispatch]);
   
   /**
    * Penalizar al jugador por un clic erróneo
    */
   const penalize = useCallback((row: number, col: number) => {
-    // Destacar la celda como error y animar el tablero
-    animateErrorCell(row, col);
-    animateBoard();
+    // Obtener el elemento de la celda para la animación
+    const cellElement = getCellElement(row, col);
     
-    // Aumentar la velocidad como penalización
-    const baseSpeed = config.INITIAL_SPAWN_RATE;
-    const maxSpeedMultiplier = 3; // Asumir un valor por defecto
-    const minSpeed = baseSpeed / maxSpeedMultiplier;
+    // Animaciones visuales de error
+    animateCellError(cellElement, addAnimationTimer);
+    animateBoardShake(addAnimationTimer);
     
-    // Reducir el tiempo entre spawns (aumentar velocidad)
-    const newSpawnRate = Math.max(minSpeed, spawnRate * 0.95);
+    // Aumentar velocidad como penalización e informar al usuario
+    const newMultiplier = increaseSpeedAsPenalty(spawnRate, dispatch);
     
-    // Actualizar el intervalo de spawn
-    // Esto se manejaría con Redux y los efectos
-    dispatch(setSpawnRate(newSpawnRate));
+    // Asegurar que se muestra la notificación de penalización con un pequeño retraso
+    setTimeout(() => {
+      showPenaltyAlertUI();
+    }, 50);
     
-    // Mostrar alerta de penalización
-    showPenaltyAlertUI();
+    // Mostrar notificación del cambio de velocidad con un retraso mayor
+    setTimeout(() => {
+      showSpeedAlertUI(newMultiplier);
+    }, 200);
     
-    // Añadir iconos de penalización
-    // Esto se manejaría con acciones de Redux
-    const penaltyIcons = 2; // Asumir un valor por defecto
-    for (let i = 0; i < penaltyIcons; i++) {
-      setTimeout(() => {
-        // Aquí se añadirían los iconos de penalización
-        // dispatch(addRandomIcon());
-      }, i * 200);
-    }
-  }, [animateErrorCell, animateBoard, spawnRate, dispatch, showPenaltyAlertUI]);
+    // Añadir iconos de penalización al tablero
+    const currentLevel = store.getState().game.level;
+    addPenaltyIcons(
+      currentLevel,
+      board,
+      boardSize,
+      availableIcons,
+      dispatch,
+      getCellElement,
+      addAnimationTimer
+    );
+  }, [
+    dispatch, 
+    spawnRate, 
+    board, 
+    boardSize, 
+    availableIcons,
+    getCellElement,
+    addAnimationTimer,
+    showPenaltyAlertUI,
+    showSpeedAlertUI
+  ]);
   
   /**
    * Aumentar la velocidad del juego
@@ -398,8 +496,11 @@ const useBoardInteraction = () => {
     // Calcular y mostrar el multiplicador actual
     const currentSpeedMultiplier = Number((baseSpeed / newSpawnRate).toFixed(1));
     
-    // Mostrar alerta de aumento de velocidad
-    showSpeedAlertUI(currentSpeedMultiplier);
+    // Mostrar alerta de aumento de velocidad con un pequeño retraso
+    // para asegurar que el estado se actualice correctamente
+    setTimeout(() => {
+      showSpeedAlertUI(currentSpeedMultiplier);
+    }, 50);
     
     // Registrar el cambio de velocidad
     console.log(`Velocidad aumentada a ${currentSpeedMultiplier}x (${newSpawnRate}ms)`);
@@ -457,8 +558,31 @@ const useBoardInteraction = () => {
     const convergingIcons = findConvergingIcons(row, col);
     
     if (convergingIcons.length > 0) {
-      // Hay convergencia
-      setTimeout(() => audioManager.play("convergingFound"), 0);
+      // Hay convergencia, eliminar los iconos y actualizar la puntuación
+      removeConvergingIcons(convergingIcons, row, col);
+      
+      // Calcular puntos basados en el número de iconos y multiplicadores
+      const basePoints = convergingIcons.length * 10;
+      const pointsEarned = Math.ceil(basePoints);
+      
+      // Actualizar puntuación
+      dispatch(incrementScore(pointsEarned));
+      
+      // Mostrar animación de puntos ganados con el nuevo sistema
+      showPointsEarned(pointsEarned, row, col);
+      
+      // Verificar si el tablero está vacío para mostrar bonificación
+      setTimeout(() => {
+        const boardEmpty = board.flat().every(cell => cell === '');
+        if (boardEmpty) {
+          // Mostrar bonificación por tablero vacío
+          showEmptyBoardBonus();
+          
+          // Añadir puntos extra por tablero vacío
+          const emptyBoardBonus = 100;
+          dispatch(incrementScore(emptyBoardBonus));
+        }
+      }, 200);
       
       // Obtener el elemento DOM de la celda objetivo
       const targetCell = getCellElement(row, col);
@@ -468,72 +592,38 @@ const useBoardInteraction = () => {
         dispatch(setHighlightedCells(convergingIcons.map(icon => ({ row: icon.row, col: icon.col }))));
       }
       
-      // Eliminar los iconos convergentes - tiempo optimizado
-      removeConvergingIcons(convergingIcons, row, col)
-        .then((removedCount) => {
-          // Reproducir sonido de eliminación en segundo plano
-          setTimeout(() => audioManager.play("removeIcon"), 0);
-          
-          // Calcular y añadir puntos (multiplicador basado en nivel)
-          const currentLevel = store.getState().game.level;
-          const pointsEarned = removedCount * 10 * currentLevel;
-          dispatch(incrementScore(pointsEarned));
-          
-          // Animar puntos ganados
-          if (targetCell) {
-            animatePointsEarned(targetCell, pointsEarned);
-          }
-          
-          // Limpiar las celdas destacadas después de finalizar
-          dispatch(setHighlightedCells([]));
-          
-          // Verificar si el jugador ha eliminado todos los iconos requeridos para este nivel
-          const { score, levelScoreTarget, currentPlayMode } = store.getState().game;
-          if (score >= levelScoreTarget && currentPlayMode === 'classic') {
-            // Nivel completado por puntuación objetivo
-            dispatch(setGameStatus('levelCompleted'));
-            audioManager.play('levelComplete');
-          }
-          
-          // Eliminar el highlight instantáneamente, no después de un timeout
-          dispatch(setHighlightedCells([]));
-          
-          // Verificar si no hay más movimientos válidos o si el tablero está vacío
-          const currentIconCount = store.getState().game.iconCount;
-          
-          if (currentIconCount === 0) {
-            // Tablero vacío, nivel completado - INSTANTÁNEO
-            logger.info("¡Tablero vacío! Completando nivel...", ' [' + status + ']');
-            dispatch(setGameStatus('levelCompleted'));
-            audioManager.play('levelComplete');
-          } else if (!hasValidMoves()) {
-            // No hay movimientos válidos
-            // Calcular el porcentaje de ocupación para determinar si se pasa al siguiente nivel
-            const totalCells = boardSize * boardSize;
-            const occupationPercentage = (currentIconCount / totalCells) * 100;
-            
-            // Si hay pocos iconos en el tablero, considerar nivel completado
-            if (occupationPercentage <= 30) {
-              // Nivel completado con pocos iconos - INSTANTÁNEO
-              logger.info(`Pocos iconos sin convergencias (${occupationPercentage.toFixed(1)}%). Nivel completado.`, ' [' + status + ']');
-              dispatch(setGameStatus('levelCompleted'));
-              audioManager.play('levelComplete');
-            } else {
-              // Game over - INSTANTÁNEO
-              logger.info(`No hay movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`, ' [' + status + ']');
-              dispatch(setGameStatus('gameOver'));
-              audioManager.play('gameOver');
-            }
-          }
-          
-          // Nota: No liberamos el debounce aquí, se libera automáticamente después del tiempo establecido
-        })
-        .catch(error => {
-          // Liberar el debounce en caso de error
-          isProcessingClickRef.current = false;
-          lastClickedCellRef.current = null;
-          logger.error('Error al eliminar iconos convergentes:', error);
-        });
+      // Eliminar el highlight instantáneamente, no después de un timeout
+      dispatch(setHighlightedCells([]));
+      
+      // Verificar si no hay más movimientos válidos o si el tablero está vacío
+      const currentIconCount = store.getState().game.iconCount;
+      
+      if (currentIconCount === 0) {
+        // Tablero vacío, nivel completado - INSTANTÁNEO
+        logger.info("¡Tablero vacío! Completando nivel...", ' [' + status + ']');
+        dispatch(setGameStatus('levelCompleted'));
+        audioManager.play('levelComplete');
+      } else if (!hasValidMoves()) {
+        // No hay movimientos válidos
+        // Calcular el porcentaje de ocupación para determinar si se pasa al siguiente nivel
+        const totalCells = boardSize * boardSize;
+        const occupationPercentage = (currentIconCount / totalCells) * 100;
+        
+        // Si hay pocos iconos en el tablero, considerar nivel completado
+        if (occupationPercentage <= 30) {
+          // Nivel completado con pocos iconos - INSTANTÁNEO
+          logger.info(`Pocos iconos sin convergencias (${occupationPercentage.toFixed(1)}%). Nivel completado.`, ' [' + status + ']');
+          dispatch(setGameStatus('levelCompleted'));
+          audioManager.play('levelComplete');
+        } else {
+          // Game over - INSTANTÁNEO
+          logger.info(`No hay movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`, ' [' + status + ']');
+          dispatch(setGameStatus('gameOver'));
+          audioManager.play('gameOver');
+        }
+      }
+      
+      // Nota: No liberamos el debounce aquí, se libera automáticamente después del tiempo establecido
     } else {
       // No hay convergencia, feedback inmediato
       audioManager.play("invalidMove");
@@ -546,91 +636,8 @@ const useBoardInteraction = () => {
         lastClickedCellRef.current = null;
       }, errorDebounceTime);
       
-      // Obtener la cantidad de iconos de penalización según el nivel actual
-      const currentLevel = store.getState().game.level;
-      
-      try {
-        // Número de iconos de penalización simplificado por nivel
-        const penaltyIconCount = Math.min(4, Math.max(1, Math.floor(currentLevel / 2)));
-        
-        if (penaltyIconCount > 0) {
-          logger.info('Interacción', `Aplicando penalización: añadiendo ${penaltyIconCount} iconos`);
-          
-          // Lista para almacenar las posiciones vacías
-          const emptyCells: { row: number, col: number }[] = [];
-          
-          // Encontrar todas las celdas vacías
-          for (let r = 0; r < boardSize; r++) {
-            for (let c = 0; c < boardSize; c++) {
-              if (board && board[r] && board[r][c] === null) {
-                emptyCells.push({ row: r, col: c });
-              }
-            }
-          }
-          
-          // Si hay celdas vacías disponibles
-          if (emptyCells.length > 0) {
-            // Mezclar el array para selección aleatoria
-            for (let i = emptyCells.length - 1; i > 0; i--) {
-              const j = Math.floor(Math.random() * (i + 1));
-              [emptyCells[i], emptyCells[j]] = [emptyCells[j], emptyCells[i]];
-            }
-            
-            // Colocar los iconos (limitar a la cantidad disponible de celdas)
-            const iconsToAdd = Math.min(penaltyIconCount, emptyCells.length);
-            
-            for (let i = 0; i < iconsToAdd; i++) {
-              const cell = emptyCells[i];
-              // Seleccionar un icono aleatorio
-              const randomIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
-              
-              // Añadir el icono al tablero
-              dispatch(addIcon({
-                row: cell.row,
-                col: cell.col,
-                icon: randomIcon,
-                isPenalty: true
-              }));
-              
-              // Animación visual
-              const cellElement = getCellElement(cell.row, cell.col);
-              if (cellElement) {
-                // Marcar como icono de penalización con una clase CSS
-                cellElement.classList.add('penalty-icon');
-                
-                // Eliminar la clase después de 3.5 segundos para terminar la animación
-                const animTimer = setTimeout(() => {
-                  cellElement.classList.remove('penalty-icon');
-                }, 3500);
-                
-                // Registrar el temporizador para limpiarlo si es necesario
-                addAnimationTimer(animTimer);
-              }
-            }
-          }
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        logger.error('Interacción', `Error al aplicar penalización: ${errorMessage}`);
-      }
-      
-      // Velocidad de penalización (opcional)
-      const MIN_SPAWN_RATE = 500; // Valor mínimo (más rápido) para el spawn rate
-      const APPLY_PENALTY = true; // Si queremos aplicar penalización
-      
-      if (APPLY_PENALTY) {
-        // Reducir el spawn rate (aumentar velocidad) como penalización
-        const newRate = Math.max(spawnRate * 0.9, MIN_SPAWN_RATE);
-        dispatch(setSpawnRate(newRate));
-        
-        // Mostrar alerta visual de penalización
-        setShowPenaltyAlert(true);
-        const penaltyTimer = setTimeout(() => setShowPenaltyAlert(false), 1000);
-        addAnimationTimer(penaltyTimer);
-      }
-      
-      // No hay convergencia, mostrar una animación de error
-      animateErrorCell(row, col);
+      // Llamar a la función de penalización unificada - evitando duplicidad de código
+      penalize(row, col);
     }
   }, [
     status, 
@@ -639,7 +646,6 @@ const useBoardInteraction = () => {
     findConvergingIcons, 
     getCellElement, 
     removeConvergingIcons,
-    animatePointsEarned,
     hasValidMoves,
     setShowPenaltyAlert,
     spawnRate,
@@ -647,7 +653,9 @@ const useBoardInteraction = () => {
     addAnimationTimer,
     boardSize,
     availableIcons,
-    animateErrorCell
+    animateCellError,
+    animateBoardShake,
+    showPointsEarned
   ]);
   
   /**
@@ -719,6 +727,18 @@ const useBoardInteraction = () => {
     }
   }, [boardSize]);
   
+  /**
+   * Registrar referencia para una celda
+   */
+  const registerCellRef = useCallback((row: number, col: number, element: HTMLElement | null) => {
+    const key = `${row}-${col}`;
+    if (element) {
+      cellRefs.current[key] = element;
+    } else {
+      delete cellRefs.current[key];
+    }
+  }, []);
+  
   return {
     stopTimers,
     addAnimationTimer,
@@ -728,9 +748,6 @@ const useBoardInteraction = () => {
     findAdjacentSameIcons,
     findConvergingIcons,
     removeConvergingIcons,
-    animatePointsEarned,
-    animateErrorCell,
-    animateBoard,
     showPenaltyAlertUI,
     showSpeedAlertUI,
     penalize,
@@ -738,10 +755,12 @@ const useBoardInteraction = () => {
     handleCellClick,
     showHint,
     adjustBoardSize,
+    showPointsEarned,
+    showEmptyBoardBonus,
+    cleanupEffects,
     showSpeedAlert,
     speedMultiplier,
-    showPenaltyAlert,
-    highlightedCells
+    showPenaltyAlert
   };
 };
 

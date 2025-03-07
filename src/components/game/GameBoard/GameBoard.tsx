@@ -8,6 +8,7 @@ import { setHighlightedCells, setBoardSize, setSpawnRate, setLevel, setGameStatu
 import * as config from '../../../utils/config';
 import { audioManager } from '../../../utils/audioManager';
 import FpsCounter from '../FpsCounter/FpsCounter';
+import { NotificationProvider } from '../GameNotifications/GameNotificationManager';
 
 const GameBoard: React.FC = () => {
   const dispatch = useDispatch();
@@ -273,8 +274,11 @@ const GameBoard: React.FC = () => {
     // Actualizar el store
     dispatch(setSpawnRate(newRate));
     
-    // Mostrar la alerta de cambio de velocidad
-    showSpeedAlertUI(multiplier);
+    // Mostrar siempre la alerta de cambio de velocidad con un pequeño retraso
+    // para asegurar que se actualice después de que Redux haya procesado los cambios
+    setTimeout(() => {
+      showSpeedAlertUI(multiplier);
+    }, 50);
     
     console.log(`Velocidad cambiada a ${multiplier}x (${newRate}ms)`);
   }, [dispatch, showSpeedAlertUI]);
@@ -599,35 +603,14 @@ const GameBoard: React.FC = () => {
   }, [board, boardSize, cells, status]);
   
   return (
-    <>
+    <NotificationProvider>
       {showFpsCounter && <FpsCounter onPerformanceDrop={handlePerformanceDrop} performanceThreshold={35} />}
       <div className={`game-board-wrapper ${lowPerformanceMode ? 'performance-mode' : ''}`}>
         {renderBoard()}
         {renderDevToggle()}
         {renderDevControls()}
-        
-        {/* Alerta de aumento de velocidad */}
-        {showSpeedAlert && (
-          <div className="speed-alert visible">
-            <div className="speed-alert-content">
-              <span className="speed-icon">⚡</span>
-              <span className="speed-text">¡Velocidad aumentada!</span>
-              <span className="speed-value">x{speedMultiplier}</span>
-            </div>
-          </div>
-        )}
-        
-        {/* Alerta de penalización */}
-        {showPenaltyAlert && (
-          <div className="penalty-alert visible">
-            <div className="penalty-alert-content">
-              <span className="penalty-icon">⚠️</span>
-              <span className="penalty-text">¡Penalización! Velocidad aumentada</span>
-            </div>
-          </div>
-        )}
       </div>
-    </>
+    </NotificationProvider>
   );
 };
 
