@@ -561,18 +561,6 @@ const GameBoard: React.FC = () => {
     isManualMode
   ]);
   
-  // Botón para mostrar/ocultar controles de desarrollo
-  const renderDevToggle = useCallback(() => {
-    return (
-      <button 
-        className="dev-toggle-btn"
-        onClick={() => setShowDevControls(!showDevControls)}
-      >
-        {showDevControls ? 'Ocultar Controles' : 'Controles Dev'}
-      </button>
-    );
-  }, [showDevControls]);
-  
   // Renderizar el tablero como una grid
   const renderBoard = useCallback(() => {
     // Si el tablero está vacío o status no es 'playing', mostrar mensaje
@@ -607,8 +595,7 @@ const GameBoard: React.FC = () => {
       {showFpsCounter && <FpsCounter onPerformanceDrop={handlePerformanceDrop} performanceThreshold={35} />}
       <div className={`game-board-wrapper ${lowPerformanceMode ? 'performance-mode' : ''}`}>
         {renderBoard()}
-        {renderDevToggle()}
-        {renderDevControls()}
+        {showDevControls && renderDevControls()}
       </div>
     </NotificationProvider>
   );

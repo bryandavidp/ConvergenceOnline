@@ -443,17 +443,12 @@ const useBoardInteraction = () => {
     // Aumentar velocidad como penalización e informar al usuario
     const newMultiplier = increaseSpeedAsPenalty(spawnRate, dispatch);
     
-    // Asegurar que se muestra la notificación de penalización con un pequeño retraso
-    setTimeout(() => {
-      showPenaltyAlertUI();
-    }, 50);
-    
-    // Mostrar notificación del cambio de velocidad con un retraso mayor
+    // Mostrar solo la notificación del cambio de velocidad (quitamos la de penalización)
     setTimeout(() => {
       showSpeedAlertUI(newMultiplier);
     }, 200);
     
-    // Añadir iconos de penalización al tablero
+    // Añadir iconos de penalización al tablero con mejor animación visual
     const currentLevel = store.getState().game.level;
     addPenaltyIcons(
       currentLevel,
@@ -472,7 +467,6 @@ const useBoardInteraction = () => {
     availableIcons,
     getCellElement,
     addAnimationTimer,
-    showPenaltyAlertUI,
     showSpeedAlertUI
   ]);
   

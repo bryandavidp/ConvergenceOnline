@@ -279,4 +279,57 @@
   100% {
     transform: scale(1);
   }
+}
+
+/* Animación para celdas de penalización - versión lite dinámica */
+.board-cell.penalty-icon {
+  animation: penaltyShakeLite 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
+  transform-origin: center !important;
+  z-index: 100 !important;
+}
+
+.board-cell.penalty-icon .cell-content {
+  background-color: rgba(255, 30, 0, 0.5) !important;
+  box-shadow: 0 0 15px rgba(255, 30, 0, 0.7) !important;
+  border: 2px solid rgba(255, 50, 0, 0.7) !important;
+  animation: penaltyFlashLite 0.5s ease !important;
+}
+
+.board-cell.penalty-icon::before {
+  content: '⚠️' !important;
+  position: absolute !important;
+  top: -15px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  font-size: 1.4rem !important;
+  opacity: 0 !important;
+  animation: penaltyWarningLite 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+  z-index: 101 !important;
+  filter: drop-shadow(0 0 5px rgba(255, 80, 0, 0.5)) !important;
+  pointer-events: none !important;
+}
+
+/* Animación de sacudida más intensa pero optimizada */
+@keyframes penaltyShakeLite {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-6px) rotate(-1deg); }
+  40% { transform: translateX(6px) rotate(1deg); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+
+/* Animación simplificada de flash */
+@keyframes penaltyFlashLite {
+  0% { opacity: 0.7; }
+  30% { opacity: 1; }
+  100% { opacity: 0.9; }
+}
+
+/* Animación simplificada para el símbolo de advertencia */
+@keyframes penaltyWarningLite {
+  0% { opacity: 0; transform: translateX(-50%) translateY(5px) scale(0.7); }
+  40% { opacity: 1; transform: translateX(-50%) translateY(-5px) scale(1.1); }
+  80% { opacity: 1; transform: translateX(-50%) translateY(-5px); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-15px) scale(0.8); }
 } 

@@ -1,9 +1,10 @@
 import { Dispatch } from 'redux';
 import { addIcon } from '../../../../../store/slices/gameSlice';
 import logger from '../../../../../utils/logger';
+import { audioManager } from '../../../../../utils/audioManager';
 
 /**
- * Función para añadir iconos de penalización al tablero
+ * Función para añadir iconos de penalización al tablero con animaciones mejoradas
  * 
  * @param level - Nivel actual del juego
  * @param board - Estado actual del tablero
@@ -24,6 +25,9 @@ export const addPenaltyIcons = (
   addAnimationTimer: (timer: NodeJS.Timeout) => void
 ): number => {
   try {
+    // Reproducir sonido de penalización
+    audioManager.play("invalidMove");
+    
     // Número de iconos de penalización escalado por nivel
     const penaltyIconCount = Math.min(4, Math.max(1, Math.floor(level / 2)));
     
@@ -60,9 +64,13 @@ export const addPenaltyIcons = (
     const iconsToAdd = Math.min(penaltyIconCount, emptyCells.length);
     let addedCount = 0;
     
-    // Añadir los iconos al tablero
+    // Lista para almacenar referencias a las celdas y sus coordenadas
+    const cellsToAnimate: { element: HTMLElement, row: number, col: number }[] = [];
+    
+    // Añadir los iconos al tablero primero
     for (let i = 0; i < iconsToAdd; i++) {
       const cell = emptyCells[i];
+      
       // Seleccionar un icono aleatorio
       const randomIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
       
@@ -75,22 +83,56 @@ export const addPenaltyIcons = (
       }));
       
       addedCount++;
-      
-      // Aplicar efectos visuales a la celda
-      const cellElement = getCellElement(cell.row, cell.col);
-      if (cellElement) {
-        // Marcar como icono de penalización con una clase CSS
-        cellElement.classList.add('penalty-icon');
-        
-        // Eliminar la clase después de 3.5 segundos
-        const animTimer = setTimeout(() => {
-          cellElement.classList.remove('penalty-icon');
-        }, 3500);
-        
-        // Registrar el temporizador
-        addAnimationTimer(animTimer);
-      }
     }
+    
+    // Ahora aplicamos las animaciones con un pequeño retraso
+    // para asegurar que Redux haya actualizado el DOM
+    setTimeout(() => {
+      // Añadir efectos visuales a las celdas después de que se hayan creado los iconos
+      for (let i = 0; i < iconsToAdd; i++) {
+        const cell = emptyCells[i];
+        
+        // Crear un closure para mantener la referencia a la celda actual
+        const animateCellWithDelay = (cellIndex: number) => {
+          setTimeout(() => {
+            // Obtener la referencia al elemento DOM después de que el icono exista
+            const cellElement = getCellElement(cell.row, cell.col);
+            
+            if (cellElement) {
+              // Eliminar cualquier clase penalty-icon anterior por si acaso
+              cellElement.classList.remove('penalty-icon');
+              
+              // Forzar un reflow del DOM para asegurar que la clase se vuelva a aplicar
+              void cellElement.offsetWidth;
+              
+              // Añadir la clase para la animación
+              cellElement.classList.add('penalty-icon');
+              
+              // Reproducir un sonido adicional por cada icono (opcional)
+              if (cellIndex % 2 === 0) {
+                audioManager.play("invalidMove");
+              }
+              
+              // Log para confirmar que se aplicó la clase
+              logger.info('PenaltyManager', `Aplicando animación a celda [${cell.row},${cell.col}]`);
+              
+              // Eliminar la clase después para terminar la animación
+              const animTimer = setTimeout(() => {
+                cellElement.classList.remove('penalty-icon');
+              }, 1200); // Reducido de 3500ms a 1200ms para animaciones más cortas
+              
+              // Registrar el temporizador
+              addAnimationTimer(animTimer);
+            } else {
+              logger.warn('PenaltyManager', `No se encontró el elemento para la celda [${cell.row},${cell.col}]`);
+            }
+          }, cellIndex * 150); // Reducido de 250ms a 150ms para que aparezcan más rápido
+        };
+        
+        // Ejecutar la función con el índice actual
+        animateCellWithDelay(i);
+      }
+    }, 50); // Reducido de 100ms a 50ms para empezar las animaciones antes
     
     return addedCount;
   } catch (error) {

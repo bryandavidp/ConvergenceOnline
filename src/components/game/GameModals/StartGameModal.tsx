@@ -92,7 +92,7 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
     if (
       selectedMode === GamePlayMode.TUTORIAL || 
       selectedMode === GamePlayMode.ZEN || 
-      (selectedMode && selectedMode !== GamePlayMode.TUTORIAL && selectedMode !== GamePlayMode.ZEN && gameDifficulty)
+      (selectedMode && gameDifficulty)
     ) {
       setConfigReady(true);
     } else {

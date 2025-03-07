@@ -34,15 +34,18 @@ const GameNotificationManager: React.FC<GameNotificationManagerProps> = ({
     const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const newNotification = { ...notification, id };
     
-    setNotifications(prev => [...prev, newNotification]);
-    
-    // Si hay demasiadas notificaciones, eliminar las más antiguas
-    if (notifications.length > 3) {
-      removeNotification(notifications[0].id);
-    }
+    // Limitar a máximo 2 notificaciones
+    setNotifications(prev => {
+      // Si ya hay 2 o más notificaciones, eliminar la más antigua
+      if (prev.length >= 3) {
+        return [...prev.slice(1), newNotification];
+      }
+      // De lo contrario, añadir la nueva
+      return [...prev, newNotification];
+    });
     
     return id;
-  }, [notifications, removeNotification]);
+  }, []);
   
   return (
     <div className={`notification-manager ${position}`}>
@@ -52,7 +55,7 @@ const GameNotificationManager: React.FC<GameNotificationManagerProps> = ({
             message={notification.message}
             type={notification.type}
             icon={notification.icon}
-            duration={notification.duration || 3000}
+            duration={notification.duration || 2400}
             visible={true}
             onHide={() => removeNotification(notification.id)}
             value={notification.value}
@@ -95,16 +98,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const newNotification = { ...notification, id };
     
-    setNotifications(prev => [...prev, newNotification]);
-    
-    // Si hay demasiadas notificaciones, eliminar las más antiguas
-    if (notifications.length > 3) {
-      const oldestId = notifications[0].id;
-      setTimeout(() => removeNotification(oldestId), 100);
-    }
+    // Limitar a máximo 2 notificaciones
+    setNotifications(prev => {
+      // Si ya hay 2 o más notificaciones, eliminar la más antigua
+      if (prev.length >= 2) {
+        return [...prev.slice(1), newNotification];
+      }
+      // De lo contrario, añadir la nueva
+      return [...prev, newNotification];
+    });
     
     return id;
-  }, [notifications, removeNotification]);
+  }, []);
   
   return (
     <NotificationContext.Provider value={{ addNotification, removeNotification }}>

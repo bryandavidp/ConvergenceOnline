@@ -218,13 +218,16 @@
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-/* Estilos específicos para celdas con íconos de penalización */
+/* Estilos básicos para celdas con íconos de penalización - 
+   Las animaciones vienen de animations.css o animations-lite.css */
 .board-cell.penalty-icon {
-  z-index: 3;
-  cursor: pointer;
+  z-index: 10; /* Aumentado para asegurar que esté por encima de otros elementos */
+  position: relative; /* Necesario para posición absoluta de pseudoelementos */
+  will-change: transform; /* Optimización para animaciones */
 }
 
-.board-cell.penalty-icon .cell-content {
+/* Quitamos estos estilos para que no interfieran con las animaciones */
+/* .board-cell.penalty-icon .cell-content {
   background: linear-gradient(135deg, rgba(255, 51, 51, 0.4), rgba(204, 0, 0, 0.4));
   box-shadow: 0 0 15px rgba(255, 51, 51, 0.6);
   border: 2px solid rgba(255, 51, 51, 0.5);
@@ -244,4 +247,4 @@
   z-index: 3;
   filter: drop-shadow(0 0 5px rgba(255, 100, 100, 0.7));
   animation: rotateSlow 8s linear infinite;
-} 
+} */ 

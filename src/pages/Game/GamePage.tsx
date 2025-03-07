@@ -343,68 +343,23 @@ const GamePage: React.FC = () => {
   }, [status]);
 
   return (
-    <div className={gamePageClasses}>
-      <div className="game-content">
-        {/* Sección de información del juego */}
-        <div className="game-info-section">
-          {/* HUD del juego */}
+    <div className={`game-page ${darkModeFromHook ? 'dark-mode' : 'light-mode'}`}>
+      <div className="game-container">
+        {/* Selector de configuración */}
+        {showConfig && (
+          <div className="config-selector-container">
+            <GameConfigSelector onApplyConfig={handleApplyConfig} />
+          </div>
+        )}
+        
+        {/* Sección del HUD y tablero de juego */}
+        <div className="game-board-section">
+          {/* GameHUD en la parte superior */}
           <GameHUD />
           
-          {/* Puntuación máxima en una posición más natural */}
-          {/* <div className="high-score-container">
-            <div className="high-score-display">
-              <span className="high-score-icon">🏆</span>
-              <span className="high-score-value">{highScore}</span>
-            </div>
-          </div> */}
-          
-          {/* Panel de control simplificado */}
-          <div className="game-control-panel">
-            <div className="control-buttons">
-              {status === 'playing' ? (
-                <button className="control-btn pause-btn" onClick={handlePlayPauseClick}>
-                  {ICONS.PAUSE}
-                </button>
-              ) : status === 'paused' ? (
-                <button className="control-btn play-btn" onClick={handlePlayPauseClick}>
-                  {ICONS.PLAY}
-                </button>
-              ) : null}
-              
-              <button className="control-btn restart-btn" onClick={handleRestartClick}>
-                {ICONS.RESTART}
-              </button>
-              
-              <button className="control-btn theme-btn" onClick={toggleDarkMode}>
-                {darkModeFromHook ? ICONS.LIGHT_MODE : ICONS.DARK_MODE}
-              </button>
-              
-              <button className="control-btn sound-btn" onClick={toggleSound}>
-                {isSoundEnabled ? ICONS.SOUND_ON : ICONS.SOUND_OFF}
-              </button>
-              
-              <button className="control-btn help-btn" onClick={toggleHelp}>
-                {ICONS.INFO}
-              </button>
-            </div>
-            
-            {showHelp && (
-              <div className="help-panel">
-                <h3>Cómo jugar</h3>
-                <p>👉 Haz clic en los iconos para seleccionarlos</p>
-                <p>👉 Cuando encuentres dos o más iguales, se eliminarán automáticamente</p>
-                <p>👉 Completa el nivel eliminando todos los iconos</p>
-                <button className="close-help-btn" onClick={toggleHelp}>Cerrar</button>
-              </div>
-            )}
-          </div>
-          
-        </div>
-        
-        {/* Sección del tablero del juego */}
-        <div className="game-board-section">
-          <div ref={boardContainerRef} className="game-board-container">
-            <div ref={boardElementRef} id="game-board">
+          {/* Contenedor del tablero de juego */}
+          <div className="game-board-container">
+            <div id="game-board">
               <GameBoard />
             </div>
           </div>
