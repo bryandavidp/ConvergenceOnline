@@ -4,54 +4,48 @@
  */
 
 :root {
-  --cell-size: 45px;
+  --cell-size: 60px;
   --board-border-radius: 16px;
   --board-background: linear-gradient(135deg, rgba(40, 53, 80, 0.9) 0%, rgba(25, 32, 48, 0.95) 100%);
   --board-shadow: 0 10px 35px rgba(0, 0, 0, 0.3);
-  --cell-border: 2px solid rgba(255, 255, 255, 0.2);
+  --cell-border: rgba(120, 140, 240, 0.4);
   --cell-glow: 0 0 20px rgba(255, 215, 0, 0.7);
-  --icon-size: 32px;
+  --icon-size: 42px;
   --icon-hover-scale: 1.2;
   --transition-speed: 0.4s;
-  --icon-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+  --icon-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
   --board-grid-gap: 5px;
+  --board-padding: 10px;
+  --cell-background: rgba(60, 65, 120, 0.2);
+  --cell-empty-background: rgba(40, 45, 80, 0.15);
+  --cell-empty-border: rgba(100, 120, 255, 0.2);
 }
 
 /* Contenedor principal del tablero */
 .game-board-wrapper {
-  width: 100%;
-  height: 100%;
-  min-height: 300px;
+  position: relative;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(circle at center, rgba(255, 51, 102, 0.2) 0%, rgba(94, 53, 177, 0.15) 100%);
-  border-radius: 20px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-  position: relative;
-  overflow: visible;
-  padding: 15px;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-  perspective: 1000px;
-  will-change: transform;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  overflow: visible !important;
+  background-color: rgba(35, 40, 65, 0.3);
+  border: 1px solid rgba(100, 130, 255, 0.2);
+  will-change: transform, opacity;
+  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 /* Grilla del tablero */
 .game-board-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, var(--cell-size));
-  grid-template-rows: repeat(auto-fill, var(--cell-size));
   gap: var(--board-grid-gap);
+  width: 100%;
+  height: 100%;
+  padding: var(--board-padding);
+  box-sizing: border-box;
   position: relative;
-  z-index: 1;
-  padding: 15px;
-  border-radius: var(--board-border-radius);
-  background: var(--board-background);
-  box-shadow: var(--board-shadow);
-  will-change: transform;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  overflow: visible !important;
 }
 
 /* Tablero de juego */
@@ -64,9 +58,9 @@
   padding: 15px;
   margin: 0 auto;
   border-radius: 18px;
+  overflow: visible !important;
   transition: transform 0.5s ease;
   will-change: transform;
-  overflow: visible;
   background-color: rgba(40, 53, 80, 0.6);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
   border: 2px solid rgba(255, 255, 255, 0.2);
@@ -77,6 +71,8 @@
   display: flex;
   flex-direction: row;
   justify-content: center;
+  position: relative;
+  overflow: visible !important;
 }
 
 /* Contenedor del tablero */
@@ -94,6 +90,7 @@
   max-width: 100%;
   z-index: 0;
   border: 2px solid rgba(255, 255, 255, 0.2);
+  overflow: visible !important;
 }
 
 /* Mensaje de tablero vacío */

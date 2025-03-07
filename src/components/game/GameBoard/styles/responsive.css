@@ -3,11 +3,47 @@
  * Contiene las media queries para adaptar el tablero a diferentes tamaños de pantalla
  */
 
-/* Tablets pequeñas */
+/* Estilos específicos para diferentes tamaños de tablero */
+/* Tablero 5x5 */
+.game-board-grid[style*="repeat(5, 1fr)"] {
+  gap: min(5px, 2vmin);
+}
+
+/* Tablero 6x6 */
+.game-board-grid[style*="repeat(6, 1fr)"] {
+  gap: min(5px, 1.8vmin);
+}
+
+/* Tablero 7x7 */
+.game-board-grid[style*="repeat(7, 1fr)"] {
+  gap: min(5px, 1.5vmin);
+}
+
+/* Tablero 8x8 */
+.game-board-grid[style*="repeat(8, 1fr)"] {
+  gap: min(5px, 1.3vmin);
+}
+
+/* Tablero 9x9 */
+.game-board-grid[style*="repeat(9, 1fr)"] {
+  gap: min(4px, 1.2vmin);
+}
+
+/* Tablero 10x10 */
+.game-board-grid[style*="repeat(10, 1fr)"] {
+  gap: min(3px, 1vmin);
+}
+
+/* Tablets */
 @media (max-width: 768px) {
-  .game-board {
-    padding: 5px;
-    transform: scale(0.95);
+  .game-board-wrapper {
+    width: min(92vw, 92vh, 550px);
+    height: min(92vw, 92vh, 550px);
+    padding: 6px;
+  }
+  
+  .board-cell .cell-content {
+    font-size: clamp(0.7rem, 2.2vmin, 1.6rem);
   }
   
   .board-controls {
@@ -19,57 +55,106 @@
     font-size: 14px;
     padding: 6px 12px;
   }
-  
-  .level-complete-indicator {
-    padding: 15px 25px;
-    font-size: 20px;
-  }
 }
 
 /* Móviles grandes */
 @media (max-width: 480px) {
-  .board-cell .cell-content {
-    border-radius: 4px;
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  :root {
-    --cell-size: 30px;
-    --icon-size: 20px;
-    --board-grid-gap: 2px;
-  }
-  
-  .game-board {
-    transform: scale(0.9);
+  .game-board-wrapper {
+    width: min(90vw, 90vh, 450px);
+    height: min(90vw, 90vh, 450px);
     padding: 5px;
-    margin: 0;
+    border-radius: 15px;
   }
   
-  .cell {
+  .game-board-grid {
+    gap: min(4px, 1.2vmin);
+  }
+  
+  /* Ajustes específicos para tableros más grandes en móviles */
+  .game-board-grid[style*="repeat(8, 1fr)"],
+  .game-board-grid[style*="repeat(9, 1fr)"],
+  .game-board-grid[style*="repeat(10, 1fr)"] {
+    gap: min(3px, 0.8vmin);
+  }
+  
+  .board-cell .cell-content {
+    border-radius: 6px;
+    font-size: clamp(0.6rem, 2vmin, 1.4rem);
+  }
+  
+  .game-cell {
     border-radius: 6px;
   }
-  
-  .level-indicator, .icon-count-indicator {
-    font-size: 14px;
-    padding: 6px 10px;
+}
+
+/* Móviles pequeños */
+@media (max-width: 360px) {
+  .game-board-wrapper {
+    width: min(95vw, 95vh, 320px);
+    height: min(95vw, 95vh, 320px);
+    padding: 4px;
+    border-radius: 12px;
   }
   
-  .hint-button {
-    font-size: 13px;
-    padding: 5px 10px;
+  .game-board-grid {
+    gap: min(3px, 1vmin);
   }
   
-  .hint-count {
-    width: 20px;
-    height: 20px;
-    line-height: 20px;
-    font-size: 12px;
+  /* Ajustes específicos para tableros más grandes en móviles pequeños */
+  .game-board-grid[style*="repeat(7, 1fr)"],
+  .game-board-grid[style*="repeat(8, 1fr)"],
+  .game-board-grid[style*="repeat(9, 1fr)"],
+  .game-board-grid[style*="repeat(10, 1fr)"] {
+    gap: min(2px, 0.7vmin);
   }
   
-  .level-complete-indicator {
-    padding: 15px;
-    font-size: 18px;
-    width: 80%;
+  .board-cell .cell-content {
+    border-radius: 5px;
+    font-size: clamp(0.5rem, 1.8vmin, 1.2rem);
+  }
+  
+  .game-cell {
+    border-radius: 5px;
+  }
+}
+
+/* Móviles muy pequeños */
+@media (max-width: 320px) {
+  .game-board-wrapper {
+    width: 95vw;
+    height: 95vw;
+    padding: 3px;
+  }
+  
+  .game-board-grid {
+    gap: 2px;
+  }
+  
+  .game-cell {
+    border-radius: 4px;
+  }
+  
+  .board-cell .cell-content {
+    border-radius: 4px;
+    font-size: clamp(0.5rem, 1.5vmin, 1rem);
+  }
+}
+
+/* Ajustes para dispositivos de alta resolución */
+@media (min-resolution: 1.3dppx) {
+  .board-cell .cell-content {
+    will-change: transform;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translateZ(0);
+  }
+}
+
+/* Orientación landscape en móviles */
+@media (max-height: 500px) and (orientation: landscape) {
+  .game-board-wrapper {
+    width: min(80vh, 450px);
+    height: min(80vh, 450px);
   }
 }
 
@@ -81,38 +166,6 @@
   
   .board-cell.has-icon:nth-child(n+144) .cell-content {
     font-size: 0.85em;
-  }
-}
-
-/* Móviles pequeños */
-@media (max-width: 360px) {
-  :root {
-    --cell-size: 26px;
-    --icon-size: 18px;
-    --board-grid-gap: 2px;
-  }
-  
-  .game-board {
-    transform: scale(0.85);
-  }
-  
-  .board-controls {
-    gap: 5px;
-  }
-  
-  .level-indicator, .icon-count-indicator {
-    font-size: 12px;
-    padding: 4px 8px;
-  }
-}
-
-/* Ajustes para dispositivos de alta resolución */
-@media (min-resolution: 1.3dppx) {
-  .board-cell .cell-content {
-    will-change: transform;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    transform: translateZ(0);
   }
 }
 

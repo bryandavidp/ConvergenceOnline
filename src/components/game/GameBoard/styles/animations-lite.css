@@ -1,103 +1,96 @@
 /* 
  * GameBoard - Animaciones (Reducidas)
- * Contiene animaciones simplificadas para dispositivos con rendimiento limitado
+ * Contiene animaciones minimalistas para optimizar el rendimiento
  */
 
-/* Animación para celdas que están siendo eliminadas (versión simplificada) */
+/* Animación minimalista para celdas que se eliminan (fade + rotación) */
 .board-cell.removing {
-  z-index: 10;
-  overflow: visible;
+  animation: cellRemovingLite 0.4s ease-out forwards;
+  pointer-events: none;
+  z-index: 900 !important;
+  transform-origin: center;
 }
 
 .board-cell.removing .cell-content {
-  animation: cellRemovingLite 0.5s ease-out forwards;
-  background-color: rgba(120, 200, 255, 0.3);
+  animation: iconFadeOutLite 0.4s ease-out forwards;
+  transform-origin: center;
 }
 
-.board-cell.removing::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 70%);
-  opacity: 0;
-  z-index: 5;
-  animation: pulseOutLite 0.5s ease-out forwards;
-  pointer-events: none;
-}
-
-/* No se incluyen efectos adicionales para dispositivos de bajo rendimiento */
-
-/* Brillo de concordancia simplificado */
+/* Brillo de coincidencia simplificado */
 .match-glow {
   position: absolute;
   top: 50%;
   left: 50%;
   width: 80%;
   height: 80%;
+  transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(100, 200, 255, 0.4) 0%, rgba(100, 200, 255, 0) 70%);
-  transform: translate(-50%, -50%) scale(0);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
   opacity: 0;
-  z-index: 5;
-  pointer-events: none;
-  animation: matchGlowLite 0.5s ease-out forwards;
+  z-index: 500;
+  animation: matchGlowLite 0.5s ease-out;
 }
 
-/* Ondulación de clic simplificada */
+/* Efecto de clic minimalista */
 .click-ripple {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.4);
+  width: 100%;
+  height: 100%;
   transform: translate(-50%, -50%) scale(0);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 4;
-  animation: clickRippleLite 0.4s ease-out forwards;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+  z-index: 500;
+  animation: clickRippleLite 0.5s ease-out forwards;
 }
 
-/* Animación de sacudida del tablero simplificada */
+/* Sacudida del tablero */
 .game-board.shake {
-  animation: shakeBoardLite 0.4s ease-in-out both;
+  animation: shakeBoardLite 0.3s ease-in-out both;
 }
 
-/* Definiciones de keyframes para animaciones simplificadas */
+/* Definiciones de keyframes optimizadas para rendimiento */
 @keyframes cellRemovingLite {
   0% {
-    transform: scale(1);
+    transform: rotate(0deg) scale(1);
     opacity: 1;
   }
   100% {
-    transform: scale(0);
+    transform: rotate(90deg) scale(0);
     opacity: 0;
   }
 }
 
-@keyframes pulseOutLite {
+@keyframes iconFadeOutLite {
   0% {
-    transform: translate(-50%, -50%) scale(0.5);
-    opacity: 0.5;
+    transform: rotate(0deg);
+    opacity: 1;
   }
   100% {
-    transform: translate(-50%, -50%) scale(1.5);
+    transform: rotate(-90deg);
     opacity: 0;
   }
 }
 
 @keyframes matchGlowLite {
   0% {
-    transform: translate(-50%, -50%) scale(0);
     opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
   }
   50% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.3);
+  }
+}
+
+@keyframes clickRippleLite {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
     opacity: 0.5;
   }
   100% {
@@ -106,66 +99,62 @@
   }
 }
 
-@keyframes clickRippleLite {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0.6;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(3);
-    opacity: 0;
-  }
-}
-
 @keyframes shakeBoardLite {
-  20%, 80% {
-    transform: translate3d(-2px, 0, 0);
+  0%, 100% {
+    transform: translateX(0);
+  } 
+  25%, 75% {
+    transform: translateX(-3px);
   }
-  40%, 60% {
-    transform: translate3d(2px, 0, 0);
+  50% {
+    transform: translateX(3px);
   }
 }
 
 @keyframes fadeInScaleLite {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-@keyframes newIconLite {
-  0% {
     transform: scale(0.8);
-    opacity: 0.5;
   }
   100% {
+    opacity: 1;
     transform: scale(1);
-    opacity: 1;
   }
 }
 
-@keyframes levelTransitionLite {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-  100% {
-    opacity: 1;
-  }
+/* Puntos emergentes ultraligeros */
+.points-popup {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 1.3rem;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.6);
+  opacity: 0;
+  z-index: 2000 !important;
+  animation: floatingPointsLite 0.8s ease-out forwards;
+  pointer-events: none;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-@keyframes pulseBorderLite {
+@keyframes floatingPointsLite {
   0% {
-    border-color: rgba(100, 255, 100, 0.4);
+    transform: translate(-50%, -50%);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(-50%, -50%);
+    opacity: 1;
   }
   100% {
-    border-color: rgba(100, 255, 100, 0.7);
+    transform: translate(-50%, -100%);
+    opacity: 0;
   }
 }
 
@@ -174,8 +163,12 @@
   animation: fadeInScaleLite 0.3s ease-out;
 }
 
-.cell.new-icon {
-  animation: newIconLite 0.3s ease-out;
+.cell.new-icon, .board-cell.new-icon {
+  animation: cellAppearingLite 0.4s ease-out forwards;
+}
+
+.cell.new-icon .cell-content, .board-cell.new-icon .cell-content {
+  animation: iconSpinInLite 0.4s ease-out forwards;
 }
 
 .level-transition {
@@ -189,45 +182,63 @@
 /* Versión lite de animación de puntos flotantes */
 .points-popup {
   position: absolute;
-  color: #ffde00;
-  font-size: 1.6rem;
-  font-weight: 800;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 1.3rem;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+  opacity: 0;
+  z-index: 2000 !important;
+  animation: floatingPointsLite 1.2s ease-out forwards;
   pointer-events: none;
-  z-index: 100;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
-  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.3);
-  animation: floatingPointsLite 1s ease-out forwards;
-  white-space: nowrap;
-  will-change: transform, opacity;
+  width: 70px;
+  height: 70px;
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-family: 'Baloo 2', 'Arial Rounded MT Bold', sans-serif;
-  letter-spacing: -0.02em;
+  align-items: center;
+  overflow: visible !important;
+  transform-origin: center;
 }
 
 .points-popup::before {
-  display: none; /* Eliminamos efectos adicionales para mejorar rendimiento */
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 120%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  z-index: -1;
 }
 
 .points-popup::after {
-  display: none; /* Eliminamos efectos adicionales para mejorar rendimiento */
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 120%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 100, 255, 0.1) 0%, transparent 70%);
+  z-index: -1;
 }
 
 .points-popup .points-value {
   position: relative;
-  animation: pulseNumberLite 0.3s ease-out;
+  animation: pulseNumberLite 0.6s ease-out forwards;
 }
 
 .points-popup .points-value::before {
   content: '+';
   position: absolute;
-  left: -0.5em;
   top: 0;
+  left: -30%;
   font-size: 0.8em;
-  font-weight: 900;
-  color: #ffd700; /* Color dorado sólido */
-  transform: rotateZ(-10deg);
   opacity: 0.9;
 }
 
@@ -246,26 +257,6 @@
 /* Las partículas se eliminan en la versión lite para mejorar rendimiento */
 .points-particle {
   display: none;
-}
-
-/* Animación principal de flotación de puntos simplificada */
-@keyframes floatingPointsLite {
-  0% {
-    opacity: 0;
-    transform: translate(0, 5px) scale(0.8);
-  }
-  20% {
-    opacity: 1;
-    transform: translate(0, 0) scale(1.1);
-  }
-  80% {
-    opacity: 1;
-    transform: translate(0, -30px) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(0, -40px) scale(0.8);
-  }
 }
 
 /* Animación simplificada para pulsar el número */
@@ -332,4 +323,111 @@
   40% { opacity: 1; transform: translateX(-50%) translateY(-5px) scale(1.1); }
   80% { opacity: 1; transform: translateX(-50%) translateY(-5px); }
   100% { opacity: 0; transform: translateX(-50%) translateY(-15px) scale(0.8); }
+}
+
+/* Añadimos efectos de anillo simplificados para la version ligera */
+@keyframes ringExpandLite {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0.4;
+  }
+  90% {
+    transform: translate(-50%, -50%) scale(0.15);
+    opacity: 0.2;
+  }
+  95% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes newIconLite {
+  0% {
+    transform: rotate(-15deg) scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes levelTransitionLite {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes pulseBorderLite {
+  0% {
+    border-color: rgba(100, 255, 100, 0.4);
+  }
+  100% {
+    border-color: rgba(100, 255, 100, 0.7);
+  }
+}
+
+/* Animación para iconos que aparecen (versión lite) */
+.board-cell.appearing {
+  animation: cellAppearingLite 0.4s ease-out forwards;
+  z-index: 800 !important;
+  transform-origin: center;
+}
+
+.board-cell.appearing .cell-content {
+  animation: iconSpinInLite 0.4s ease-out forwards;
+  transform-origin: center;
+}
+
+@keyframes cellAppearingLite {
+  0% {
+    transform: rotate(-15deg) scale(0);
+    opacity: 0;
+  }
+  80% {
+    transform: rotate(5deg) scale(1.05);
+    opacity: 0.9;
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes iconSpinInLite {
+  0% {
+    transform: rotate(15deg);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Clase para animación secuencial (versión lite) */
+.board-cell.sequence-appearing {
+  animation: cellAppearingLite var(--appear-duration, 0.4s) ease-out forwards;
+  animation-delay: calc(var(--sequence-index, 0) * var(--sequence-delay, 0.03s));
+  opacity: 0;
+}
+
+.board-cell.sequence-appearing .cell-content {
+  animation: iconSpinInLite var(--appear-duration, 0.4s) ease-out forwards;
+  animation-delay: calc(var(--sequence-index, 0) * var(--sequence-delay, 0.03s));
+  opacity: 0;
 } 

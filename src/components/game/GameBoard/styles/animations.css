@@ -1,75 +1,185 @@
 /* 
  * GameBoard - Animaciones (Completas)
- * Contiene todas las animaciones para dispositivos con buen rendimiento
+ * Contiene animaciones esenciales optimizadas para rendimiento
  */
 
-/* Animación para celdas que están siendo eliminadas */
+/* Animación para celdas que están siendo eliminadas (efecto de giro y desvanecimiento) */
 .board-cell.removing {
-  z-index: 10;
-  overflow: visible;
+  animation: cellRemovingFull 0.5s ease-out forwards;
+  pointer-events: none;
+  z-index: 900 !important;
+  transform-origin: center;
+  overflow: visible !important;
 }
 
 .board-cell.removing .cell-content {
-  animation: cellRemovingFull 0.8s ease-out forwards;
-  background-color: rgba(120, 200, 255, 0.3);
-  box-shadow: 0 0 20px rgba(120, 200, 255, 0.5);
+  animation: iconSpinOutFull 0.5s ease-out forwards;
+  transform-origin: center;
+  z-index: 901 !important;
+  overflow: visible !important;
 }
 
-.board-cell.removing::before {
-  content: '';
+/* Eliminados los pseudo-elementos adicionales que consumen rendimiento */
+
+/* Brillo de concordancia */
+.match-glow {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 80%;
+  height: 80%;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0%, transparent 70%);
   opacity: 0;
-  z-index: 5;
-  animation: pulseOutFull 0.8s ease-out forwards;
+  z-index: 500;
+  animation: matchGlowFull 0.6s ease-out;
   pointer-events: none;
 }
 
-.board-cell.removing::after {
-  content: '';
+/* Efecto de clic */
+.click-ripple {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  border: 2px solid rgba(120, 200, 255, 0.7);
-  opacity: 0;
-  z-index: 4;
-  animation: ringExpandFull 0.8s ease-out forwards;
-  pointer-events: none;
-}
-
-.board-cell.removing .additional-sparkles {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, transparent 70%);
+  z-index: 500;
+  animation: clickRippleFull 0.6s ease-out forwards;
   pointer-events: none;
-  z-index: 6;
 }
 
-.board-cell.removing .additional-sparkles::before,
-.board-cell.removing .additional-sparkles::after {
-  content: '';
+/* Sacudida del tablero */
+.game-board.shake {
+  animation: shakeBoard 0.4s ease-in-out both;
+}
+
+/* Keyframes optimizados */
+@keyframes cellRemovingFull {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+    filter: brightness(1.2);
+  }
+  50% {
+    transform: rotate(180deg) scale(0.6);
+    opacity: 0.5;
+    filter: brightness(1.5);
+  }
+  100% {
+    transform: rotate(360deg) scale(0);
+    opacity: 0;
+    filter: brightness(0);
+  }
+}
+
+@keyframes iconSpinOutFull {
+  0% {
+    transform: rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: rotate(-90deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: rotate(-180deg);
+    opacity: 0;
+  }
+}
+
+@keyframes matchGlowFull {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  40% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+}
+
+@keyframes clickRippleFull {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes shakeBoard {
+  0%, 100% {
+    transform: translateX(0);
+  } 
+  20%, 60% {
+    transform: translateX(-5px);
+  }
+  40%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Puntos emergentes simplificados */
+.points-popup {
   position: absolute;
-  top: 50%;
+  top: 30%;
   left: 50%;
-  width: 4px;
-  height: 4px;
-  background-color: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
   transform: translate(-50%, -50%);
-  animation: particleExplosionFull 0.6s ease-out forwards;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
   opacity: 0;
+  z-index: 2000 !important;
+  animation: floatingPointsFull 1s ease-out forwards;
+  pointer-events: none;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: visible !important;
+  transform-origin: center;
+}
+
+@keyframes floatingPointsFull {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+  }
+  10% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+  }
+  80% {
+    transform: translate(-50%, -120%) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -150%) scale(0.8);
+    opacity: 0;
+  }
 }
 
 /* Estrellas de celebración */
@@ -97,38 +207,6 @@
   animation: floatingStar 2.5s ease-out forwards;
 }
 
-/* Brillo de concordancia */
-.match-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(100, 200, 255, 0.7) 0%, rgba(100, 200, 255, 0) 70%);
-  transform: translate(-50%, -50%) scale(0);
-  opacity: 0;
-  z-index: 5;
-  pointer-events: none;
-  animation: matchGlowFull 0.7s ease-out forwards;
-}
-
-/* Ondulación de clic */
-.click-ripple {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.4);
-  transform: translate(-50%, -50%) scale(0);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 4;
-  animation: clickRippleFull 0.6s ease-out forwards;
-}
-
 /* Brillo de nivel completado */
 .level-complete-glow {
   position: absolute;
@@ -143,60 +221,14 @@
   pointer-events: none;
 }
 
-/* Animación de sacudida del tablero */
-.game-board.shake {
-  animation: shakeBoard 0.5s cubic-bezier(.36,.07,.19,.97) both;
-}
-
-/* Definiciones de keyframes para animaciones completas */
-@keyframes cellRemovingFull {
+@keyframes levelCompleteGlow {
   0% {
-    transform: scale(1);
-    opacity: 1;
-    filter: brightness(1);
-  }
-  20% {
-    transform: scale(1.2);
-    opacity: 0.9;
-    filter: brightness(1.5);
+    opacity: 0.3;
+    transform: scale(0.9);
   }
   100% {
-    transform: scale(0);
-    opacity: 0;
-    filter: brightness(2);
-  }
-}
-
-@keyframes pulseOutFull {
-  0% {
-    transform: translate(-50%, -50%) scale(0.5);
-    opacity: 0.8;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(2);
-    opacity: 0;
-  }
-}
-
-@keyframes ringExpandFull {
-  0% {
-    transform: translate(-50%, -50%) scale(0.5);
     opacity: 0.7;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.5);
-    opacity: 0;
-  }
-}
-
-@keyframes particleExplosionFull {
-  0% {
-    transform: translate(-50%, -50%);
-    opacity: 0.8;
-  }
-  100% {
-    transform: translate(calc(-50% + var(--random-x, 0px)), calc(-50% + var(--random-y, 0px)));
-    opacity: 0;
+    transform: scale(1.1);
   }
 }
 
@@ -214,82 +246,6 @@
   100% {
     transform: translate(var(--end-x, 0), var(--end-y, -150px)) scale(0);
     opacity: 0;
-  }
-}
-
-@keyframes matchGlowFull {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0;
-  }
-  50% {
-    opacity: 0.7;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.5);
-    opacity: 0;
-  }
-}
-
-@keyframes clickRippleFull {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0.8;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(5);
-    opacity: 0;
-  }
-}
-
-@keyframes levelCompleteGlow {
-  0% {
-    opacity: 0.3;
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 0.7;
-    transform: scale(1.1);
-  }
-}
-
-@keyframes shakeBoard {
-  10%, 90% {
-    transform: translate3d(-1px, 0, 0);
-  }
-  20%, 80% {
-    transform: translate3d(2px, 0, 0);
-  }
-  30%, 50%, 70% {
-    transform: translate3d(-4px, 0, 0);
-  }
-  40%, 60% {
-    transform: translate3d(4px, 0, 0);
-  }
-}
-
-@keyframes fadeInScale {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-@keyframes newIcon {
-  0% {
-    transform: scale(0.5);
-    opacity: 0.5;
-  }
-  70% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
   }
 }
 
@@ -327,80 +283,6 @@
   100% {
     transform: translate(-50%, -50%) rotate(360deg);
   }
-}
-
-/* Animación de puntos flotantes */
-.points-popup {
-  position: absolute;
-  color: #ffde00;
-  font-size: 1.8rem;
-  font-weight: 800;
-  pointer-events: none;
-  z-index: 100;
-  text-shadow: 0 0 10px rgba(255, 222, 0, 0.8),
-               0 0 20px rgba(255, 222, 0, 0.5),
-               0 2px 4px rgba(0, 0, 0, 0.7);
-  -webkit-text-stroke: 1.5px rgba(0, 0, 0, 0.3);
-  animation: floatingPointsFull 1.2s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
-  white-space: nowrap;
-  transform-origin: center;
-  will-change: transform, opacity;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Baloo 2', 'Arial Rounded MT Bold', sans-serif;
-  letter-spacing: -0.02em;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-}
-
-.points-popup::before {
-  content: '';
-  position: absolute;
-  width: 150%;
-  height: 150%;
-  top: -25%;
-  left: -25%;
-  background: radial-gradient(circle, rgba(255, 222, 0, 0.4) 0%, rgba(255, 222, 0, 0) 70%);
-  z-index: -1;
-  opacity: 0.7;
-  border-radius: 50%;
-  animation: pulseGlowFull 1.2s ease-out forwards;
-}
-
-.points-popup::after {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%);
-  z-index: -1;
-  opacity: 0;
-  border-radius: 50%;
-  animation: flashGlowFull 0.5s ease-out forwards;
-}
-
-.points-popup .points-value {
-  position: relative;
-  transform: scale(1);
-  animation: pulseNumber 0.3s ease-out forwards;
-}
-
-.points-popup .points-value::before {
-  content: '+';
-  position: absolute;
-  left: -0.6em;
-  font-size: 0.8em;
-  top: 0;
-  background: linear-gradient(135deg, #fff200 20%, #ffa41b 80%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: none;
-  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.5);
-  font-weight: 900;
-  transform: rotateZ(-12deg);
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.4));
 }
 
 /* Animación para puntos especiales (más de 50) */
@@ -441,61 +323,6 @@
   box-shadow: 0 0 8px rgba(255, 222, 0, 0.6);
   animation: particleFlyFull 1s ease-out forwards;
   z-index: -1;
-}
-
-/* Animación principal de flotación de puntos */
-@keyframes floatingPointsFull {
-  0% {
-    opacity: 0;
-    transform: translate(0, 10px) scale(0.6);
-  }
-  15% {
-    opacity: 1;
-    transform: translate(0, 0) scale(1.2);
-  }
-  30% {
-    transform: translate(0, -5px) scale(1.1);
-  }
-  70% {
-    opacity: 1;
-    transform: translate(0, -35px) scale(0.9);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(0, -60px) scale(0.5);
-  }
-}
-
-/* Pulso del resplandor alrededor de los puntos */
-@keyframes pulseGlowFull {
-  0% {
-    opacity: 0.8;
-    transform: scale(0.5);
-  }
-  50% {
-    opacity: 0.3;
-    transform: scale(1.5);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(2);
-  }
-}
-
-/* Destello inicial cuando aparecen los puntos */
-@keyframes flashGlowFull {
-  0% {
-    opacity: 0.9;
-    transform: scale(0.1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(0.8);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.5);
-  }
 }
 
 /* Animación de partículas alrededor */
@@ -612,4 +439,80 @@
 @keyframes penaltyRadialFull {
   0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0.3); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1.7); }
+}
+
+/* Animación para iconos que aparecen en secuencia */
+.board-cell.appearing {
+  animation: cellAppearingFull 0.5s ease-out forwards;
+  z-index: 800 !important;
+  transform-origin: center;
+}
+
+.board-cell.appearing .cell-content {
+  animation: iconSpinInFull 0.5s ease-out forwards;
+  transform-origin: center;
+  z-index: 801 !important;
+}
+
+@keyframes cellAppearingFull {
+  0% {
+    transform: rotate(-30deg) scale(0);
+    opacity: 0;
+    filter: brightness(1.5);
+  }
+  60% {
+    transform: rotate(15deg) scale(1.1);
+    opacity: 0.9;
+    filter: brightness(1.2);
+  }
+  80% {
+    transform: rotate(-5deg) scale(0.95);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+@keyframes iconSpinInFull {
+  0% {
+    transform: rotate(30deg) scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: rotate(-15deg) scale(1.2);
+    opacity: 0.8;
+  }
+  80% {
+    transform: rotate(5deg) scale(0.95);
+    opacity: 0.9;
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Clase para animación secuencial */
+.board-cell.sequence-appearing {
+  animation: cellAppearingFull var(--appear-duration, 0.5s) ease-out forwards;
+  animation-delay: calc(var(--sequence-index, 0) * var(--sequence-delay, 0.05s));
+  opacity: 0;
+}
+
+.board-cell.sequence-appearing .cell-content {
+  animation: iconSpinInFull var(--appear-duration, 0.5s) ease-out forwards;
+  animation-delay: calc(var(--sequence-index, 0) * var(--sequence-delay, 0.05s));
+  opacity: 0;
+}
+
+/* Aplicar animación a iconos nuevos */
+.cell.new-icon, .board-cell.new-icon {
+  animation: cellAppearingFull 0.5s ease-out forwards;
+}
+
+.cell.new-icon .cell-content, .board-cell.new-icon .cell-content {
+  animation: iconSpinInFull 0.5s ease-out forwards;
 } 
