@@ -52,7 +52,7 @@ const initialState: GameState = {
   highScore: 0,
   level: 1,
   timer: 0,
-  board: [],
+  board: Array(8).fill(null).map(() => Array(8).fill(null)), // Inicializar como matriz 8x8 vacía
   status: 'startScreen',
   error: null,
   spawnRate: 3000, // Tiempo entre generación de iconos en ms
@@ -95,14 +95,29 @@ function initializeGameState(): GameState {
     const savedHighScore = localStorage.getItem('highScore');
     const initialHighScore = savedHighScore ? parseInt(savedHighScore) : 0;
     
+    // Crear un tablero vacío inicializado con el tamaño por defecto
+    const emptyBoard = Array(initialState.boardSize).fill(null).map(() => 
+      Array(initialState.boardSize).fill(null)
+    );
+    
     return {
       ...initialState,
       darkMode: initialDarkMode,
-      highScore: initialHighScore
+      highScore: initialHighScore,
+      board: emptyBoard // Asegurar que el tablero esté correctamente inicializado
     };
   } catch (error) {
     logger.error('Game', 'Error al inicializar el estado del juego:', error);
-    return initialState;
+    
+    // Incluso en caso de error, asegurar que el tablero esté inicializado
+    const emptyBoard = Array(initialState.boardSize).fill(null).map(() => 
+      Array(initialState.boardSize).fill(null)
+    );
+    
+    return {
+      ...initialState,
+      board: emptyBoard
+    };
   }
 }
 
@@ -484,6 +499,9 @@ const gameSlice = createSlice({
       console.log(`Cambiando de ${state.currentPlayMode} a ${newPlayMode}`);
       console.log("**********************************************************");
       
+      // Crear un tablero vacío inicializado con el tamaño actual
+      const emptyBoard = Array(state.boardSize).fill(null).map(() => Array(state.boardSize).fill(null));
+      
       // Reiniciar el juego completamente con el nuevo modo
       Object.assign(state, {
         ...initialState,
@@ -491,7 +509,9 @@ const gameSlice = createSlice({
         darkMode: state.darkMode,   // Mantener preferencia de tema
         currentPlayMode: newPlayMode,
         currentDifficulty: state.currentDifficulty, // Mantener la dificultad actual
-        status: 'playing'
+        board: emptyBoard, // Establecer un tablero vacío pero inicializado
+        boardSize: state.boardSize, // Mantener el tamaño del tablero
+        status: 'startScreen' // Cambiar a startScreen en lugar de playing
       });
       
       // Actualizar los iconos disponibles para el nivel 1 y la dificultad actual

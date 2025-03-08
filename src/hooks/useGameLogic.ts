@@ -1212,6 +1212,7 @@ const useGameLogic = () => {
 
   // Cambiar configuración del juego
   const changeGameConfig = useCallback((difficulty: GameDifficulty, mode: GamePlayMode) => {
+    // Corregido: setGameMode maneja la dificultad y setPlayMode maneja el modo
     dispatch(setGameMode(difficulty));
     dispatch(setPlayMode(mode));
     
@@ -1241,6 +1242,8 @@ const useGameLogic = () => {
     if (status === 'playing') {
       startTimers();
     }
+    
+    logger.info('Game', `Configuración cambiada: Dificultad=${difficulty}, Modo=${mode}, Tablero=${boardSize}x${boardSize}`);
   }, [dispatch, initializeBoard, startTimers, stopTimers, status]);
 
   // En la función checkLevelCompleted, reemplazar la lógica actual con el adaptador:

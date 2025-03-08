@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useGameContext } from '../../../contexts/GameContext';
 import { GamePlayMode, GameDifficulty } from '../../../types/game';
 import { useGameSound } from '../../../hooks/useGameSound';
 import { useDarkMode } from '../../../hooks/useDarkMode';
+import useGameLogic from '../../../hooks/useGameLogic';
 import { ICONS } from '../../../constants/icons';
 import { RootState } from '../../../store';
 import './GameModals.css';
@@ -97,6 +98,7 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   const modalContentRef = useRef<HTMLDivElement>(null);
   const { playSound } = useGameSound();
   const { darkMode } = useDarkMode();
+  const dispatch = useDispatch();
   
   // Obtenemos la puntuación máxima para determinar si es un nuevo jugador
   const { highScore } = useSelector((state: RootState) => state.game);
@@ -113,6 +115,9 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
     isMusicEnabled,
     setIsMusicEnabled
   } = useGameContext();
+  
+  // Obtener la función changeGameConfig de useGameLogic
+  const { changeGameConfig } = useGameLogic();
   
   // Estados locales para animaciones y UI
   const [animations, setAnimations] = useState(START_ANIMATIONS);
@@ -231,20 +236,63 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
     
     playSound('uiSelect');
     
+    // Función para convertir el enum GameDifficulty a string para Redux
+    const convertDifficultyToReduxFormat = (difficulty: GameDifficulty): 'easy' | 'normal' | 'hard' | 'tutorial' => {
+      switch (difficulty) {
+        case GameDifficulty.VERY_EASY:
+        case GameDifficulty.EASY:
+          return 'easy';
+        case GameDifficulty.MEDIUM:
+          return 'normal';
+        case GameDifficulty.HARD:
+        case GameDifficulty.VERY_HARD:
+          return 'hard';
+        default:
+          return 'normal';
+      }
+    };
+    
+    // Función para convertir el enum GamePlayMode a string para Redux
+    const convertModeToReduxFormat = (mode: GamePlayMode): 'classic' | 'timed' | 'survival' | 'zen' => {
+      switch (mode) {
+        case GamePlayMode.CLASSIC:
+          return 'classic';
+        case GamePlayMode.TIME_ATTACK:
+          return 'timed';
+        case GamePlayMode.SURVIVAL:
+          return 'survival';
+        case GamePlayMode.ZEN:
+          return 'zen';
+        case GamePlayMode.TUTORIAL:
+          return 'classic'; // El tutorial usa el modo clásico en el backend
+        default:
+          return 'classic';
+      }
+    };
+    
     // Configurar el modo según la selección
     if (selectedMode === GamePlayMode.TUTORIAL) {
       // Iniciar tutorial
       console.log("Iniciando tutorial");
       setGameMode(GamePlayMode.TUTORIAL);
       setGameDifficulty(GameDifficulty.EASY); // Dificultad fácil para tutorial
+      // Actualizar también el estado Redux
+      changeGameConfig('tutorial', 'classic');
     } else if (selectedMode === GamePlayMode.ZEN) {
       // Iniciar modo zen
       console.log("Iniciando modo Zen");
       setGameMode(GamePlayMode.ZEN);
       setGameDifficulty(GameDifficulty.EASY); // Default para el backend
+      // Actualizar también el estado Redux
+      changeGameConfig('easy', 'zen');
     } else {
       // Modo normal
       setGameMode(selectedMode);
+      // Actualizar también el estado Redux
+      changeGameConfig(
+        convertDifficultyToReduxFormat(gameDifficulty),
+        convertModeToReduxFormat(selectedMode)
+      );
     }
     
     // Cerrar el modal con animación
