@@ -19,7 +19,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const location = useLocation();
 
   if (loading) {
-    return <div className="loading-spinner">Cargando...</div>;
+    // Mostrar un spinner minimalista para evitar cambios bruscos de UI
+    return <div className="loading-spinner-minimal">Cargando...</div>;
   }
 
   if (requireAuth && !isAuthenticated) {
@@ -28,8 +29,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!requireAuth && isAuthenticated) {
-    // Redirigir a home si no se requiere autenticación y el usuario ya está autenticado
-    return <Navigate to="/" replace />;
+    // Redirigir directamente a /game si no se requiere autenticación (ej. login, register)
+    // y el usuario ya está autenticado
+    return <Navigate to="/game" replace />;
   }
 
   return <>{children}</>;

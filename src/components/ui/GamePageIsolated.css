@@ -1,0 +1,64 @@
+/* Estilos específicos para la página de juego aislada */
+.game-page-isolated {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: linear-gradient(145deg, #161b2b 0%, #0a0e1a 100%);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-page-isolated::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 25px 25px, rgba(255, 217, 0, 0.1) 2%, transparent 0%),
+    radial-gradient(circle at 75px 75px, rgba(255, 51, 102, 0.1) 2%, transparent 0%);
+  background-size: 100px 100px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+/* Resetear todos los estilos básicos para evitar influencias externas */
+.game-page-isolated * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Asegurar que los modales se muestren correctamente */
+.game-page-isolated .game-modal {
+  position: fixed;
+  z-index: 2000;
+}
+
+/* Prevenir scroll en dispositivos móviles */
+@media (max-width: 768px) {
+  .game-page-isolated {
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevenir gestos de navegación que puedan causar scroll */
+  .game-page-isolated {
+    touch-action: none;
+  }
+}
+
+/* Soporte específico para Safari */
+@supports (-webkit-touch-callout: none) {
+  .game-page-isolated {
+    height: -webkit-fill-available;
+  }
+} 

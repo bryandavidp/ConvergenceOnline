@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGameContext } from '../../../contexts/GameContext';
 import { useGameSound } from '../../../hooks/useGameSound';
 import { ICONS } from '../../../constants/icons';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store';
 import './GameModals.css';
 
 interface LevelCompleteModalProps {
@@ -26,6 +28,7 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
   rewards = ['monedas', 'gemas', 'vidas']
 }) => {
   const { gameState } = useGameContext();
+  const { score, level, comboCount, comboMultiplier } = useSelector((state: RootState) => state.game);
   const { playSound } = useGameSound();
   const modalContentRef = useRef<HTMLDivElement>(null);
   const confettiContainerRef = useRef<HTMLDivElement>(null);
@@ -160,7 +163,7 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
   // Renderiza las recompensas del nivel
   const renderRewards = () => {
     return rewards.map((reward, index) => (
-      <div key={index} className="reward-item">
+      <div key={index} className="reward-badge">
         <span className="reward-icon">{getFeatureIcon(reward)}</span>
         <span className="reward-name">{reward}</span>
       </div>
@@ -181,72 +184,114 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
     return icons[feature.toLowerCase()] || '🎁';
   };
   
+  // Función para obtener la clase de estilo según el nivel de combo
+  const getComboClass = () => {
+    if (comboMultiplier >= 5.0) return 'combo-legendary-text';
+    if (comboMultiplier >= 3.0) return 'combo-epic-text';
+    if (comboMultiplier >= 2.0) return 'combo-rare-text';
+    if (comboMultiplier >= 1.5) return 'combo-uncommon-text';
+    return 'combo-basic-text';
+  };
+  
+  // Función para obtener color según nivel de combo
+  const getComboColor = () => {
+    if (comboMultiplier >= 5.0) return '#FFD700'; // Dorado para legendario
+    if (comboMultiplier >= 3.0) return '#FF00FF'; // Magenta para épico
+    if (comboMultiplier >= 2.0) return '#9932CC'; // Púrpura para raro
+    if (comboMultiplier >= 1.5) return '#1E90FF'; // Azul para poco común
+    return '#FFFFFF'; // Blanco para básico
+  };
+  
   // Si el modal no está visible, no renderizamos nada
   if (!modalVisible && !isVisible) {
     return null;
   }
   
   return (
-    <div className={`game-modal ${modalVisible ? 'visible' : ''} ${isClosing ? 'closing' : ''}`}>
+    <div className={`game-modal fullscreen-modal ${modalVisible ? 'visible' : ''} ${isClosing ? 'closing' : ''}`}>
       {showConfetti && (
         <div ref={confettiContainerRef} className="confetti-container">
           {createConfetti()}
         </div>
       )}
       
-      <div className="modal-content level-complete-content" ref={modalContentRef}>
+      <div className="modal-content level-complete-content compact-content level-compact" ref={modalContentRef}>
         <div 
-          className="level-complete-header"
+          className="level-header-stars-container"
           style={{
             transition: 'all 0.6s ease',
             ...animations.title
           }}
         >
-          <h1>¡Nivel Completado!</h1>
-          <h2>¡Excelente trabajo!</h2>
-        </div>
-        
-        <div 
-          className="stars-container"
-          style={{
-            transition: 'all 0.5s ease',
-            transitionDelay: '0.2s',
-            ...animations.stars
-          }}
-        >
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div 
-              key={i} 
-              className={`level-star ${i < stars ? 'earned' : 'missed'}`}
-            >
-              {ICONS.STAR}
-            </div>
-          ))}
-        </div>
-        
-        <div className="modal-content-inner">
-          <div 
-            className="score-container"
-            style={{
-              transition: 'all 0.5s ease',
-              transitionDelay: '0.4s',
-              ...animations.content
-            }}
-          >
-            <span className="coin-icon">{ICONS.COIN}</span>
-            <span className="score-value">{gameState.score}</span>
+          <div className="level-complete-header compact-header">
+            <h1>¡Nivel Completado!</h1>
+            <h2>¡Excelente trabajo!</h2>
           </div>
           
           <div 
-            className="rewards-section"
+            className="stars-container compact-stars"
             style={{
               transition: 'all 0.5s ease',
-              transitionDelay: '0.4s',
-              ...animations.content
+              transitionDelay: '0.2s',
+              ...animations.stars
             }}
           >
-            <h3>Recompensas</h3>
-            <div className="rewards-list">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div 
+                key={i} 
+                className={`level-star ${i < stars ? 'earned' : 'missed'}`}
+              >
+                {ICONS.STAR}
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div 
+          className="compact-body"
+          style={{
+            transition: 'all 0.5s ease',
+            transitionDelay: '0.4s',
+            ...animations.content
+          }}
+        >
+          <div className="main-stats">
+            <div className="score-highlight">
+              <div className="score-icon">{ICONS.COIN}</div>
+              <div className="score-details">
+                <div className="score-label">Puntuación</div>
+                <div className="score-value">{score}</div>
+              </div>
+            </div>
+            
+            <div className="compact-stats-grid">
+              <div className="compact-stat-item">
+                <div className="compact-stat-icon">🏆</div>
+                <div className="compact-stat-value">{level}</div>
+                <div className="compact-stat-label">Nivel</div>
+              </div>
+              
+              <div className="compact-stat-item">
+                <div className="compact-stat-icon">🔥</div>
+                <div className={`compact-stat-value ${getComboClass()}`} style={{ color: getComboColor() }}>
+                  {comboCount}
+                </div>
+                <div className="compact-stat-label">
+                  Combo ({comboMultiplier.toFixed(1)}x)
+                </div>
+              </div>
+              
+              <div className="compact-stat-item">
+                <div className="compact-stat-icon">⭐</div>
+                <div className="compact-stat-value">+{Math.floor(score * 0.1)}</div>
+                <div className="compact-stat-label">EXP</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="rewards-container">
+            <h3 className="rewards-title">Recompensas</h3>
+            <div className="rewards-grid">
               {renderRewards()}
             </div>
           </div>

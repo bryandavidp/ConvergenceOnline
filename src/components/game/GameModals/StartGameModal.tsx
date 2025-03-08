@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { useGameContext } from '../../../contexts/GameContext';
 import { GamePlayMode, GameDifficulty } from '../../../types/game';
 import { useGameSound } from '../../../hooks/useGameSound';
 import { useDarkMode } from '../../../hooks/useDarkMode';
 import { ICONS } from '../../../constants/icons';
+import { RootState } from '../../../store';
 import './GameModals.css';
+import { FaInfoCircle, FaLock } from 'react-icons/fa';
 
 // Propiedades del modal
 interface StartGameModalProps {
@@ -29,9 +32,11 @@ const MODE_ICONS = {
 
 // Íconos específicos para los niveles de dificultad
 const DIFFICULTY_ICONS = {
+  [GameDifficulty.VERY_EASY]: '😄',
   [GameDifficulty.EASY]: '😊',
   [GameDifficulty.MEDIUM]: '😐',
   [GameDifficulty.HARD]: '😰',
+  [GameDifficulty.VERY_HARD]: '😱',
 };
 
 // Descripciones para los modos de juego
@@ -45,9 +50,11 @@ const MODE_DESCRIPTIONS = {
 
 // Descripciones para los niveles de dificultad
 const DIFFICULTY_DESCRIPTIONS = {
+  [GameDifficulty.VERY_EASY]: 'Extremadamente sencillo. Ideal para principiantes absolutos.',
   [GameDifficulty.EASY]: 'Para principiantes. Tableros más pequeños y objetivos simples.',
   [GameDifficulty.MEDIUM]: 'Desafío moderado con objetivos más exigentes.',
   [GameDifficulty.HARD]: 'Para expertos. Tableros grandes con objetivos muy desafiantes.',
+  [GameDifficulty.VERY_HARD]: 'Dificultad extrema. Solo para los más hábiles.',
 };
 
 // Configuración inicial para animación de la entrada del modal
@@ -57,11 +64,43 @@ const START_ANIMATIONS = {
   button: { opacity: 0, transform: 'scale(0.8)' },
 };
 
+// Función para obtener la descripción del modo de juego
+const getModeDescription = (mode: GamePlayMode | null) => {
+  if (!mode) return <p></p>;
+  
+  if (mode === GamePlayMode.TUTORIAL) {
+    return (
+      <div className="tutorial-description">
+        <p>{MODE_DESCRIPTIONS[mode]}</p>
+        <p className="tutorial-difficulty-note">El tutorial siempre usa dificultad fácil para una mejor experiencia de aprendizaje.</p>
+      </div>
+    );
+  }
+  return <p>{MODE_DESCRIPTIONS[mode]}</p>;
+};
+
+// Función para obtener la descripción de la dificultad
+const getDifficultyDescription = (difficulty: GameDifficulty | null): string => {
+  if (!difficulty) return "";
+  
+  const descriptions: Record<string, string> = {
+    [GameDifficulty.EASY]: "Dificultad fácil: Ritmo más lento, ideal para principiantes.",
+    [GameDifficulty.MEDIUM]: "Dificultad normal: Equilibrado para la mayoría de jugadores.",
+    [GameDifficulty.HARD]: "Dificultad difícil: Más rápido y desafiante para jugadores experimentados."
+  };
+  
+  return descriptions[difficulty] || "";
+};
+
 const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onStart }) => {
   // Referencias al contenido del modal y al tablero de juego
   const modalContentRef = useRef<HTMLDivElement>(null);
   const { playSound } = useGameSound();
   const { darkMode } = useDarkMode();
+  
+  // Obtenemos la puntuación máxima para determinar si es un nuevo jugador
+  const { highScore } = useSelector((state: RootState) => state.game);
+  const isNewPlayer = highScore <= 0;
   
   // Estado del juego y configuración
   const { 
@@ -81,8 +120,9 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   const [modalVisible, setModalVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
-  const [selectedMode, setSelectedMode] = useState<ExtendedGameMode | null>(null);
-  const [configReady, setConfigReady] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<ExtendedGameMode | null>(isNewPlayer ? GamePlayMode.TUTORIAL : null);
+  const [configReady, setConfigReady] = useState(isNewPlayer);
+  const [enableTutorial, setEnableTutorial] = useState(isNewPlayer);
   
   // Efecto para verificar si la configuración está lista para activar el botón Empezar
   useEffect(() => {
@@ -229,10 +269,18 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   const handleModeSelect = (mode: ExtendedGameMode) => {
     playSound('uiTap');
     setSelectedMode(mode);
+    
+    // Si se selecciona el tutorial, establecer dificultad a fácil
+    if (mode === GamePlayMode.TUTORIAL) {
+      setGameDifficulty(GameDifficulty.EASY);
+    }
   };
   
   // Selecciona el nivel de dificultad
   const handleDifficultySelect = (difficulty: GameDifficulty) => {
+    // No cambiar la dificultad si estamos en modo tutorial
+    if (selectedMode === GamePlayMode.TUTORIAL) return;
+    
     if (difficulty !== gameDifficulty) {
       playSound('uiTap');
       setGameDifficulty(difficulty);
@@ -305,98 +353,168 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
     );
   };
   
-  // Renderiza la pantalla de selección de modo de juego
+  // Renderiza la pantalla de selección de juego
   const renderPlayScreen = () => {
     return (
-      <div className="play-screen">
-        <div className="game-modes-container">
-          {/* Sección de modos de juego */}
-          <div className="game-section modes-section">
-            <h3 className="section-title">Modo de Juego</h3>
-            <div className="mode-options">
-              <div 
-                className={`game-option mode-option classic-mode ${selectedMode === GamePlayMode.CLASSIC ? 'active' : ''}`}
-                onClick={() => handleModeSelect(GamePlayMode.CLASSIC)}
-              >
-                <span className="option-icon">{MODE_ICONS[GamePlayMode.CLASSIC]}</span>
-                <span>Clásico</span>
-              </div>
-              
-              <div 
-                className={`game-option mode-option time-mode ${selectedMode === GamePlayMode.TIME_ATTACK ? 'active' : ''}`}
-                onClick={() => handleModeSelect(GamePlayMode.TIME_ATTACK)}
-              >
-                <span className="option-icon">{MODE_ICONS[GamePlayMode.TIME_ATTACK]}</span>
-                <span>Contrarreloj</span>
-              </div>
-              
-              <div 
-                className={`game-option mode-option survival-mode ${selectedMode === GamePlayMode.SURVIVAL ? 'active' : ''}`}
-                onClick={() => handleModeSelect(GamePlayMode.SURVIVAL)}
-              >
-                <span className="option-icon">{MODE_ICONS[GamePlayMode.SURVIVAL]}</span>
-                <span>Supervivencia</span>
-              </div>
-              
-              <div 
-                className={`game-option mode-option zen-mode ${selectedMode === GamePlayMode.ZEN ? 'active' : ''}`}
-                onClick={() => handleModeSelect(GamePlayMode.ZEN)}
-              >
-                <span className="option-icon">{MODE_ICONS[GamePlayMode.ZEN]}</span>
-                <span>Zen</span>
-              </div>
-              
-              <div 
-                className={`game-option mode-option tutorial-mode ${selectedMode === GamePlayMode.TUTORIAL ? 'active' : ''}`}
-                onClick={() => handleModeSelect(GamePlayMode.TUTORIAL)}
-              >
-                <span className="option-icon">{MODE_ICONS[GamePlayMode.TUTORIAL]}</span>
-                <span>Tutorial (para nuevos jugadores)</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Sección de dificultad - Solo visible si es necesario */}
-          {selectedMode && selectedMode !== GamePlayMode.TUTORIAL && selectedMode !== GamePlayMode.ZEN && (
-            <div className="game-section difficulty-section">
-              <h3 className="section-title">Dificultad</h3>
-              <div className="difficulty-options">
-                <div 
-                  className={`game-option difficulty-option easy-difficulty ${gameDifficulty === GameDifficulty.EASY ? 'active' : ''}`}
-                  onClick={() => handleDifficultySelect(GameDifficulty.EASY)}
-                >
-                  <span className="option-icon">{DIFFICULTY_ICONS[GameDifficulty.EASY]}</span>
-                  <span>Fácil</span>
-                </div>
-                
-                <div 
-                  className={`game-option difficulty-option normal-difficulty ${gameDifficulty === GameDifficulty.MEDIUM ? 'active' : ''}`}
-                  onClick={() => handleDifficultySelect(GameDifficulty.MEDIUM)}
-                >
-                  <span className="option-icon">{DIFFICULTY_ICONS[GameDifficulty.MEDIUM]}</span>
-                  <span>Normal</span>
-                </div>
-                
-                <div 
-                  className={`game-option difficulty-option hard-difficulty ${gameDifficulty === GameDifficulty.HARD ? 'active' : ''}`}
-                  onClick={() => handleDifficultySelect(GameDifficulty.HARD)}
-                >
-                  <span className="option-icon">{DIFFICULTY_ICONS[GameDifficulty.HARD]}</span>
-                  <span>Difícil</span>
-                </div>
-              </div>
-            </div>
-          )}
+      <div className="play-screen responsive-screen">
+        <div className="screen-header">
+          <button className="back-button" onClick={() => navigateTo('main')}>
+            {ICONS.HOME}
+          </button>
+          <h2>Selecciona el modo de juego</h2>
         </div>
         
-        <div className="fixed-start-button-container">
+        {/* Botón de empezar movido a la parte superior */}
+        <div className="top-start-button-container">
           <button 
             className={`start-button ${configReady ? 'active' : 'disabled'}`}
             onClick={handleStartGame}
             disabled={!configReady}
           >
+            <div className="button-energy"></div>
             ¡EMPEZAR!
           </button>
+        </div>
+        
+        <div className="game-selection-container">
+          <div className="game-modes-container">
+            {/* Tutorial destacado para nuevos jugadores */}
+            {isNewPlayer && (
+              <div className="tutorial-highlight-container">
+                <div className="tutorial-message">
+                  <FaInfoCircle className="info-icon" />
+                  <span>Te recomendamos completar el tutorial primero para aprender a jugar</span>
+                </div>
+                <div 
+                  className={`game-option ${selectedMode === GamePlayMode.TUTORIAL ? 'selected' : ''} tutorial-option`}
+                  onClick={() => handleModeSelect(GamePlayMode.TUTORIAL)}
+                >
+                  <div className="game-option-name">
+                    <img 
+                      src={MODE_ICONS[GamePlayMode.TUTORIAL]} 
+                      alt={GamePlayMode.TUTORIAL} 
+                      className="mode-icon"
+                    />
+                    <span>{GamePlayMode.TUTORIAL}</span>
+                  </div>
+                  <div className="game-option-description">
+                    {getModeDescription(selectedMode)}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div className="modes-and-difficulty-flex">
+              <div className="modes-section">
+                <h3 className="section-title">Modo de juego</h3>
+                <div className={`modes-grid ${isNewPlayer ? 'modes-locked' : ''}`}>
+                  <div 
+                    className={`game-option classic ${selectedMode === GamePlayMode.CLASSIC ? 'active' : ''} ${isNewPlayer ? 'locked' : ''}`}
+                    onClick={() => !isNewPlayer && handleModeSelect(GamePlayMode.CLASSIC)}
+                  >
+                    <div className="option-icon-background">{MODE_ICONS[GamePlayMode.CLASSIC]}</div>
+                    <h4>Clásico</h4>
+                    {isNewPlayer && <div className="locked-overlay"><span>🔒</span></div>}
+                  </div>
+                  <div 
+                    className={`game-option timed ${selectedMode === GamePlayMode.TIME_ATTACK ? 'active' : ''} ${isNewPlayer ? 'locked' : ''}`}
+                    onClick={() => !isNewPlayer && handleModeSelect(GamePlayMode.TIME_ATTACK)}
+                  >
+                    <div className="option-icon-background">{MODE_ICONS[GamePlayMode.TIME_ATTACK]}</div>
+                    <h4>Contrarreloj</h4>
+                    {isNewPlayer && <div className="locked-overlay"><span>🔒</span></div>}
+                  </div>
+                  <div 
+                    className={`game-option survival ${selectedMode === GamePlayMode.SURVIVAL ? 'active' : ''} ${isNewPlayer ? 'locked' : ''}`}
+                    onClick={() => !isNewPlayer && handleModeSelect(GamePlayMode.SURVIVAL)}
+                  >
+                    <div className="option-icon-background">{MODE_ICONS[GamePlayMode.SURVIVAL]}</div>
+                    <h4>Supervivencia</h4>
+                    {isNewPlayer && <div className="locked-overlay"><span>🔒</span></div>}
+                  </div>
+                  <div 
+                    className={`game-option zen ${selectedMode === GamePlayMode.ZEN ? 'active' : ''} ${isNewPlayer ? 'locked' : ''}`}
+                    onClick={() => !isNewPlayer && handleModeSelect(GamePlayMode.ZEN)}
+                  >
+                    <div className="option-icon-background">{MODE_ICONS[GamePlayMode.ZEN]}</div>
+                    <h4>Zen</h4>
+                    {isNewPlayer && <div className="locked-overlay"><span>🔒</span></div>}
+                  </div>
+                </div>
+                
+                {!isNewPlayer && (
+                  <div className="mode-description">
+                    {getModeDescription(selectedMode)}
+                  </div>
+                )}
+              </div>
+              
+              <div className="difficulty-section">
+                <h3 className="section-title">Dificultad</h3>
+                <div className={`difficulty-slider ${selectedMode === GamePlayMode.TUTORIAL ? 'disabled' : ''}`}>
+                  <div 
+                    className={`difficulty-option very-easy ${gameDifficulty === GameDifficulty.VERY_EASY ? 'active' : ''} ${selectedMode === GamePlayMode.TUTORIAL ? 'disabled' : ''}`}
+                    onClick={() => selectedMode !== GamePlayMode.TUTORIAL && handleDifficultySelect(GameDifficulty.VERY_EASY)}
+                    title="Muy Fácil"
+                  >
+                    <div className="difficulty-icon">{DIFFICULTY_ICONS[GameDifficulty.VERY_EASY]}</div>
+                  </div>
+                  <div 
+                    className={`difficulty-option easy ${gameDifficulty === GameDifficulty.EASY ? 'active' : ''} ${selectedMode === GamePlayMode.TUTORIAL ? 'disabled' : ''}`}
+                    onClick={() => selectedMode !== GamePlayMode.TUTORIAL && handleDifficultySelect(GameDifficulty.EASY)}
+                    title="Fácil"
+                  >
+                    <div className="difficulty-icon">{DIFFICULTY_ICONS[GameDifficulty.EASY]}</div>
+                  </div>
+                  <div 
+                    className={`difficulty-option normal ${gameDifficulty === GameDifficulty.MEDIUM ? 'active' : ''} ${selectedMode === GamePlayMode.TUTORIAL ? 'disabled' : ''}`}
+                    onClick={() => selectedMode !== GamePlayMode.TUTORIAL && handleDifficultySelect(GameDifficulty.MEDIUM)}
+                    title="Normal"
+                  >
+                    <div className="difficulty-icon">{DIFFICULTY_ICONS[GameDifficulty.MEDIUM]}</div>
+                  </div>
+                  <div 
+                    className={`difficulty-option hard ${gameDifficulty === GameDifficulty.HARD ? 'active' : ''} ${selectedMode === GamePlayMode.TUTORIAL ? 'disabled' : ''}`}
+                    onClick={() => selectedMode !== GamePlayMode.TUTORIAL && handleDifficultySelect(GameDifficulty.HARD)}
+                    title="Difícil"
+                  >
+                    <div className="difficulty-icon">{DIFFICULTY_ICONS[GameDifficulty.HARD]}</div>
+                  </div>
+                  <div 
+                    className={`difficulty-option very-hard ${gameDifficulty === GameDifficulty.VERY_HARD ? 'active' : ''} ${selectedMode === GamePlayMode.TUTORIAL ? 'disabled' : ''}`}
+                    onClick={() => selectedMode !== GamePlayMode.TUTORIAL && handleDifficultySelect(GameDifficulty.VERY_HARD)}
+                    title="Muy Difícil"
+                  >
+                    <div className="difficulty-icon">{DIFFICULTY_ICONS[GameDifficulty.VERY_HARD]}</div>
+                  </div>
+                </div>
+                
+                <div className="difficulty-description">
+                  {selectedMode === GamePlayMode.TUTORIAL 
+                    ? "El tutorial siempre usa la dificultad fácil para una mejor experiencia de aprendizaje." 
+                    : getDifficultyDescription(gameDifficulty)}
+                </div>
+              </div>
+            </div>
+            
+            <div className="tutorial-container">
+              <div 
+                className="tutorial-option"
+                onClick={() => setEnableTutorial(!enableTutorial)}
+              >
+                <input 
+                  type="checkbox"
+                  className="tutorial-checkbox"
+                  checked={enableTutorial}
+                  onChange={(e) => setEnableTutorial(e.target.checked)}
+                />
+                <div className="tutorial-text">
+                  <h3>Tutorial</h3>
+                  <p>Activar tutorial para nuevos jugadores</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

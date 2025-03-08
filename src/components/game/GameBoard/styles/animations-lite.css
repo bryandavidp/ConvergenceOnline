@@ -28,20 +28,152 @@
   /* Animación eliminada */
 }
 
-/* Popup de puntos */
+/* Popup de puntos - Versión simplificada */
 .points-popup {
   position: absolute;
   top: -30px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   font-weight: bold;
   color: white;
   text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
   white-space: nowrap;
   pointer-events: none;
   z-index: 1000;
-  opacity: 0; /* Oculto por defecto */
+  animation: pointsFloatLite 1.2s ease-out forwards;
+}
+
+/* Versiones especiales menos intensivas */
+.points-popup.special,
+.points-popup.super-special {
+  filter: none;
+  animation: pointsFloatLite 1.2s ease-out forwards;
+}
+
+/* Valor de los puntos */
+.points-value {
+  font-size: 22px;
+  font-weight: bold;
+  color: #FFFFFF;
+  margin-bottom: 3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  transform: scale(1);
+  animation: none;
+}
+
+/* Versiones simplificadas del valor de puntos */
+.points-popup.special .points-value,
+.points-popup.super-special .points-value {
+  font-size: 24px;
+  animation: fadeInLite 0.3s ease-in;
+}
+
+/* Combo popup lite */
+.combo-popup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 3px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  box-shadow: none;
+  animation: fadeInLite 0.3s ease-in forwards;
+  animation-delay: 0.1s;
+}
+
+/* Estilos de combo simplificados */
+.combo-popup.combo-uncommon,
+.combo-popup.combo-rare,
+.combo-popup.combo-epic,
+.combo-popup.combo-legendary {
+  background: rgba(0, 0, 0, 0.8);
+  box-shadow: none;
+  border: none;
+}
+
+/* Texto del combo */
+.combo-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+/* No partículas en lite mode */
+.points-particle {
+  display: none;
+}
+
+/* Celda con ícono de penalización */
+.board-cell.penalty-icon {
+  /* Versión optimizada para rendimiento */
+  animation: penaltyPopErrorLite 0.3s ease-out both;
+  transform-origin: center;
+  border: 1px solid rgba(255, 0, 0, 0.6);
+  z-index: 10;
+}
+
+/* La transición de salida se define en cells.css */
+.board-cell.penalty-fade-out {
+  transition: border-color 0.4s ease-out;
+  border-color: transparent;
+}
+
+.board-cell.penalty-fade-out .cell-content {
+  transition: color 0.4s ease-out;
+  color: inherit;
+}
+
+.board-cell.penalty-icon .cell-content {
+  color: rgba(255, 0, 0, 0.8);
+}
+
+.board-cell.penalty-icon::before {
+  display: none;
+}
+
+/* Celdas que aparecen */
+.board-cell.appearing,
+.board-cell.sequence-appearing {
+  /* Sin animación */
+}
+
+.board-cell.appearing .cell-content,
+.board-cell.sequence-appearing .cell-content {
+  /* Sin animación */
+}
+
+/* Versiones simplicadas de las animaciones */
+@keyframes pointsFloatLite {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, -10px);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -60px);
+  }
+}
+
+@keyframes fadeInLite {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 /* Indicador de nivel completado */
@@ -84,53 +216,182 @@
   display: none;
 }
 
-/* Popup especial/bonus */
-.points-popup.special,
-.points-popup.bonus {
-  /* Sin animaciones adicionales */
+/* Versión simplificada para puntos flotantes sin fondo */
+.points-popup.clean-style {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+  animation: pointsFloatLite 1.5s ease-out forwards;
+  font-family: Arial, sans-serif;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* Línea de combo simplificada */
+.combo-line {
+  margin-bottom: 4px;
+  font-weight: bold;
+  font-size: 18px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Línea de cálculo simplificada */
+.combo-calculation-line {
+  font-weight: bold;
+  font-size: 16px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Elementos específicos simplificados */
+.combo-number {
+  font-weight: bold;
+}
+
+.combo-separator {
+  margin: 0 4px;
+  color: white;
+}
+
+.combo-total-points {
+  font-weight: bold;
+  font-size: 20px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Versión simplificada de las animaciones */
+@keyframes fadeInScaleLite {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInSlideRightLite {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes sumAnimationLite {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* animations-lite.css - versión para dispositivos de bajo rendimiento */
+
+/* Nuevo estilo para el display compacto de combo - versión lite */
+.combo-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-weight: bold;
   font-size: 22px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  line-height: 1.1;
+  padding: 3px 6px;
 }
 
-/* Partículas de puntos */
-.points-particle {
-  display: none;
+/* Estilos para los puntos - versión lite */
+.points-text {
+  font-weight: bold;
+  font-size: 26px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
-/* Celda con ícono de penalización */
-.board-cell.penalty-icon {
-  /* Versión optimizada para rendimiento */
-  animation: penaltyPopErrorLite 0.3s ease-out both;
-  transform-origin: center;
-  border: 1px solid rgba(255, 0, 0, 0.6);
-  z-index: 10;
+/* Estilos para el multiplicador - versión lite */
+.multiplier-text {
+  font-weight: bold;
+  margin-left: 3px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
-/* La transición de salida se define en cells.css */
-.board-cell.penalty-fade-out {
-  transition: border-color 0.4s ease-out;
-  border-color: transparent;
+/* Estilos para el contador de combo - versión lite */
+.combo-count {
+  font-size: 18px;
+  opacity: 0;
+  font-weight: bold;
+  margin-left: 2px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
-.board-cell.penalty-fade-out .cell-content {
-  transition: color 0.4s ease-out;
-  color: inherit;
+/* Estilos simplificados para el nuevo formato de display de puntos y combo */
+.base-points-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.board-cell.penalty-icon .cell-content {
-  color: rgba(255, 0, 0, 0.8);
+.result-display {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
 }
 
-.board-cell.penalty-icon::before {
-  display: none;
+.base-points-text {
+  font-weight: bold;
+  font-size: 26px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
-/* Celdas que aparecen */
-.board-cell.appearing,
-.board-cell.sequence-appearing {
-  /* Sin animación */
+.result-text {
+  font-weight: bold;
+  font-size: 28px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
-.board-cell.appearing .cell-content,
-.board-cell.sequence-appearing .cell-content {
-  /* Sin animación */
+/* Animación simplificada de aparición del resultado */
+@keyframes resultAppearLite {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Animación simplificada de desaparición del display inicial */
+@keyframes resultFadeOutLite {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 } 

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { store } from '../../store';
-import { setGameStatus, setLevel, setDarkMode, setHighlightedCells, incrementScore, resetGame, setAvailableIcons } from '../../store/slices/gameSlice';
+import { setGameStatus, setLevel, setDarkMode, setHighlightedCells, incrementScore, resetGame, setAvailableIcons, resetCombo } from '../../store/slices/gameSlice';
 import logger from '../../utils/logger';
 import useGameLogic from '../../hooks/useGameLogic';
 import GameBoard from '../../components/game/GameBoard/GameBoard';
@@ -10,7 +10,6 @@ import GameHUD from '../../components/game/GameHUD/GameHUD';
 import GameOverModal from '../../components/game/GameModals/GameOverModal';
 import LevelCompleteModal from '../../components/game/GameModals/LevelCompleteModal';
 import StartGameModal from '../../components/game/GameModals/StartGameModal';
-import GameConfigSelector from '../../components/game/GameConfig';
 import { audioManager } from '../../utils/audioManager';
 import * as config from '../../utils/config';
 import { useGameContext } from '../../contexts/GameContext';
@@ -18,13 +17,13 @@ import { useGameSound } from '../../hooks/useGameSound';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import {
   configureBoardForLevel,
-  changeBoardSize,
-  changeSpawnRate,
   adjustBoardVisuals
 } from '../../utils/boardUtils';
 import { initLevelSystem } from '../../utils/initLevelSystem';
 import * as levelAdapter from '../../utils/levelAdapter';
 import './GamePage.css';
+import PauseModal from '../../components/game/GameModals/PauseModal';
+import { useNavigate } from 'react-router-dom';
 
 // Iconos para los botones
 const ICONS = {
@@ -43,17 +42,19 @@ const ICONS = {
 
 const GamePage: React.FC = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const gameComponentRef = useRef<HTMLDivElement>(null);
   const { 
     status, 
     level, 
     boardSize, 
     currentPlayMode, 
-    currentDifficulty, 
-    score, 
-    timer, 
-    spawnRate,
+    currentDifficulty,
+    score,
+    highScore,
     darkMode,
-    highScore
+    timer,
+    spawnRate
   } = useSelector((state: RootState) => state.game);
   
   // Usar GameContext para la integración con los modales
@@ -251,35 +252,38 @@ const GamePage: React.FC = () => {
   
   // Manejadores para los botones de control
   const handlePlayPauseClick = () => {
+    console.log("\n**********************************************************");
+    console.log("INICIO DEL FLUJO: ALTERNAR ESTADO PAUSA/JUEGO");
+    console.log(`Estado actual: ${status}`);
+    console.log("**********************************************************");
+    
     if (status === 'playing') {
-      console.log("\n**********************************************************");
-      console.log("INICIO DEL FLUJO: PAUSAR JUEGO");
-      console.log(`Nivel: ${level}, Modo: ${currentPlayMode}`);
-      console.log("**********************************************************");
-      
+      // Pausar el juego - solo cambiamos el estado y detenemos temporizadores
       dispatch(setGameStatus('paused'));
-      console.log("Fase 1: Estado cambiado a 'paused'");
-      
       stopTimers();
-      console.log("Fase 2: Temporizadores detenidos");
       
-      console.log("**********************************************************\n");
-      console.log("FIN DEL FLUJO: JUEGO PAUSADO CORRECTAMENTE");
+      // Resetear el combo cuando se pausa el juego para evitar que se quede congelado
+      dispatch(resetCombo());
+      
+      audioManager.play("pause");
+      console.log("Juego pausado y temporizadores detenidos");
     } else if (status === 'paused') {
-      console.log("\n**********************************************************");
-      console.log("INICIO DEL FLUJO: REANUDAR JUEGO");
-      console.log(`Nivel: ${level}, Modo: ${currentPlayMode}`);
-      console.log("**********************************************************");
-      
+      // Reanudar el juego - restaurar el estado y reiniciar temporizadores
       dispatch(setGameStatus('playing'));
-      console.log("Fase 1: Estado cambiado a 'playing'");
       
-      startTimers(true);
-      console.log("Fase 2: Temporizadores iniciados (forzado)");
+      // Aseguramos que el combo esté reseteado al reanudar
+      dispatch(resetCombo());
       
-      console.log("**********************************************************\n");
-      console.log("FIN DEL FLUJO: JUEGO REANUDADO CORRECTAMENTE");
+      // Iniciar los temporizadores después de un breve momento
+      setTimeout(() => {
+        startTimers(true);
+      }, 100);
+      
+      audioManager.play("play");
+      console.log("Juego reanudado y temporizadores iniciados");
     }
+    
+    console.log("**********************************************************\n");
   };
 
   const handleRestartClick = () => {
@@ -368,6 +372,10 @@ const GamePage: React.FC = () => {
       dispatch(setAvailableIcons(level1Icons));
       console.log(`Iconos para nivel 1: ${level1Icons.join(', ')}`);
       
+      // Resetear combos al iniciar un nuevo juego
+      console.log("[COMBO] Reseteando sistema de combos al iniciar un nuevo juego");
+      dispatch(resetCombo());
+      
       // Esperar un breve momento antes de iniciar
       setTimeout(() => {
         logger.info('GamePage', 'Iniciando juego...');
@@ -452,6 +460,10 @@ const GamePage: React.FC = () => {
     stopTimers();
     console.log("Fase 3: Temporizadores detenidos");
     
+    // Paso 4: Resetear el sistema de combos para el nuevo nivel
+    console.log("[COMBO] Reseteando sistema de combos para el nuevo nivel");
+    dispatch(resetCombo());
+
     // Obtener configuración para el siguiente nivel
     const nextLevelInfo = levelAdapter.getNextLevelDisplay(
       level,
@@ -596,6 +608,14 @@ const GamePage: React.FC = () => {
     audioManager.toggleSound();
   };
   
+  // Añadimos la función toggleSettings para mostrar/ocultar la configuración
+  const toggleSettings = () => {
+    // Puedes implementar esto para mostrar opciones de configuración
+    // Por ahora, simplemente cerramos el modal de pausa y mostramos un mensaje
+    dispatch(setGameStatus('playing'));
+    console.log('Configuración de juego');
+  };
+  
   // Determinar las clases del contenedor principal
   const gamePageClasses = `game-page ${isFullscreen ? 'game-fullscreen' : ''} ${darkModeFromHook ? 'dark-mode' : 'light-mode'} ${status === 'playing' ? 'game-active' : ''}`;
   
@@ -686,6 +706,9 @@ const GamePage: React.FC = () => {
     // Mostrar modal de game over
     console.log("Fase 5: Preparando para mostrar resultados");
     
+    // Resetear combos al perder
+    dispatch(resetCombo());
+    
     console.log("**********************************************************\n");
     console.log("FIN DEL FLUJO: GAME OVER COMPLETADO");
   }, [dispatch, score, highScore, level, currentPlayMode, stopTimers]);
@@ -729,19 +752,47 @@ const GamePage: React.FC = () => {
     localStorage.setItem('gameState', JSON.stringify(store.getState().game));
     console.log("Fase 5: Datos del juego guardados");
     
+    // Resetear combos al completar nivel
+    dispatch(resetCombo());
+    
     console.log("**********************************************************\n");
     console.log("FIN DEL FLUJO: NIVEL COMPLETADO CON ÉXITO");
   }, [dispatch, level, currentPlayMode, score, stopTimers]);
 
+  // Efecto para prevenir scroll en iOS y otros dispositivos móviles
+  useEffect(() => {
+    // Crear una función para manejar el evento touchmove
+    const preventScroll = (e: TouchEvent) => {
+      if (gameComponentRef.current && gameComponentRef.current.contains(e.target as Node)) {
+        e.preventDefault();
+      }
+    };
+    
+    // Añadir listener con opciones passive: false para poder prevenir el comportamiento por defecto
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+    
+    // Deshabilitar el bouncing del scroll en iOS
+    document.documentElement.style.overscrollBehavior = 'none';
+    document.body.style.overscrollBehavior = 'none';
+    
+    // Añadir clase específica para la página del juego
+    document.body.classList.add('in-game-page');
+    
+    return () => {
+      // Limpiar al desmontar
+      document.removeEventListener('touchmove', preventScroll);
+      document.documentElement.style.overscrollBehavior = '';
+      document.body.style.overscrollBehavior = '';
+      document.body.classList.remove('in-game-page');
+    };
+  }, []);
+
   return (
-    <div className={`game-page ${darkModeFromHook ? 'dark-mode' : 'light-mode'}`}>
+    <div 
+      className={`game-page ${darkModeFromHook ? 'dark-mode' : 'light-mode'}`} 
+      ref={gameComponentRef}
+    >
       <div className="game-container">
-        {/* Selector de configuración */}
-        {showConfig && (
-          <div className="config-selector-container">
-            <GameConfigSelector onApplyConfig={handleApplyConfig} />
-          </div>
-        )}
         
         {/* Sección del HUD y tablero de juego */}
         <div className="game-board-section">
@@ -765,6 +816,16 @@ const GamePage: React.FC = () => {
         <LevelCompleteModal
           isVisible={status === 'levelCompleted'}
           onContinue={handleNextLevel}
+          stars={3}
+          rewards={['monedas', 'gemas', 'vidas']}
+        />
+        
+        <PauseModal
+          isVisible={status === 'paused'}
+          onResume={handlePlayPauseClick}
+          onRestart={handleRestartClick}
+          onExit={() => navigate('/')}
+          onSettings={toggleSettings}
         />
         
         <StartGameModal

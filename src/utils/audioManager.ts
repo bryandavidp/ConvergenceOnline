@@ -53,14 +53,28 @@ export function createAudioManager(): AudioManagerInstance {
 
   // Función para obtener una URL de sonido por defecto
   function getDefaultSoundUrl(name: string): string {
-    // Usar un sonido base por categoría
-    if (name.includes('success') || name.includes('level') || name.includes('converging')) {
-      return 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'; // Sonido corto vacío
-    } else if (name.includes('error') || name.includes('penalty')) {
-      return 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'; // Sonido corto vacío
-    } else {
-      return 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'; // Sonido corto vacío
-    }
+    const basePath = process.env.PUBLIC_URL || '';
+    
+    // Mapeo de nombres de sonidos a URLs
+    const soundUrls: Record<string, string> = {
+      click: `${basePath}/sounds/click.mp3`,
+      invalidMove: `${basePath}/sounds/error.mp3`,
+      success: `${basePath}/sounds/success.mp3`,
+      levelComplete: `${basePath}/sounds/level_complete.mp3`,
+      gameOver: `${basePath}/sounds/game_over.mp3`,
+      startLevel: `${basePath}/sounds/start_level.mp3`,
+      hint: `${basePath}/sounds/hint.mp3`,
+      newIcon: `${basePath}/sounds/new_icon.mp3`,
+      removeIcon: `${basePath}/sounds/remove_icon.mp3`,
+      timeBonus: `${basePath}/sounds/time_bonus.mp3`,
+      buttonClick: `${basePath}/sounds/button_click.mp3`,
+      // Añadir sonidos para el sistema de combos
+      comboSmall: `${basePath}/sounds/success.mp3`,      // Reutilizar el sonido de success
+      comboMedium: `${basePath}/sounds/success.mp3`,     // Reutilizar el sonido de success
+      comboLarge: `${basePath}/sounds/level_complete.mp3` // Reutilizar el sonido de level_complete
+    };
+    
+    return soundUrls[name] || `${basePath}/sounds/${name}.mp3`;
   }
 
   // Función para cargar música

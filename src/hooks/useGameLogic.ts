@@ -21,6 +21,8 @@ import {
   setGameMode,
   setPlayMode,
   addIcon,
+  incrementCombo,
+  resetCombo,
 /*   changeBoardSize,
   changeSpawnRate,
   addScore, 
@@ -53,6 +55,7 @@ import { audioManager } from '../utils/audioManager';
 import * as boardUtils from '../utils/boardUtils';
 import { adjustBoardVisuals } from '../utils/boardUtils';
 import * as levelAdapter from '../utils/levelAdapter';
+import { useNotifications } from '../components/game/GameNotifications/GameNotificationManager';
 
 // Constantes de configuración del juego - Obtenidas directamente de config.ts
 const MIN_SPAWN_RATE = config.MIN_SPAWN_RATE;
@@ -83,6 +86,9 @@ const useGameLogic = () => {
     timeRemaining,
     survivalTime
   } = useSelector((state: RootState) => state.game);
+  
+  // Obtener funciones de notificación
+  const { addNotification } = useNotifications();
   
   // Referencias para temporizadores y estados del juego
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -117,46 +123,76 @@ const useGameLogic = () => {
   
   // Verificar si una celda específica causaría una convergencia
   const checkCellForConvergence = (board: (string | null)[][], row: number, col: number): boolean => {
-    const size = board.length;
-    const icon = board[row][col];
+    // Solo verificar celdas vacías
+    if (board[row][col] !== null) {
+      console.log(`[CONVERGENCE] La celda [${row},${col}] no está vacía, saltando verificación`);
+      return false;
+    }
     
-    if (icon === null) return false;
+    // Mapeo para rastrear iconos por tipo
+    const iconCounts: { [key: string]: {count: number, positions: {row: number, col: number}[]} } = {};
     
+    // Buscar iconos en las cuatro direcciones
     const directions = [
-      { dr: -1, dc: 0 }, // arriba
-      { dr: 0, dc: 1 },  // derecha
-      { dr: 1, dc: 0 },  // abajo
-      { dr: 0, dc: -1 }  // izquierda
+      { dr: -1, dc: 0, name: 'arriba' }, 
+      { dr: 1, dc: 0, name: 'abajo' }, 
+      { dr: 0, dc: -1, name: 'izquierda' }, 
+      { dr: 0, dc: 1, name: 'derecha' }
     ];
     
-    // Revisar en cada dirección si hay 2+ iconos iguales consecutivos
-    for (const dir of directions) {
-      let count = 1; // El propio icono
+    // Iteramos por cada dirección para encontrar el primer icono
+    directions.forEach(({ dr, dc, name }) => {
+      let r = row + dr;
+      let c = col + dc;
       
-      // Contar hacia adelante
-      let r = row + dir.dr;
-      let c = col + dir.dc;
-      while (isValidCell(r, c, size) && board[r][c] === icon) {
-        count++;
-        r += dir.dr;
-        c += dir.dc;
+      // Avanzar en esta dirección hasta encontrar un icono o salir del tablero
+      while (r >= 0 && r < boardSize && c >= 0 && c < boardSize) {
+        const currentCell = board[r][c];
+        
+        // Si encontramos un icono
+        if (currentCell !== null && !currentCell.includes('_removing')) {
+          // Rastrear este icono
+          if (!iconCounts[currentCell]) {
+            iconCounts[currentCell] = { count: 0, positions: [] };
+          }
+          
+          iconCounts[currentCell].count++;
+          iconCounts[currentCell].positions.push({row: r, col: c});
+          
+          // Solo queremos el primer icono en esta dirección
+          break;
+        }
+        
+        // Avanzar en la dirección
+        r += dr;
+        c += dc;
       }
-      
-      // Contar hacia atrás
-      r = row - dir.dr;
-      c = col - dir.dc;
-      while (isValidCell(r, c, size) && board[r][c] === icon) {
-        count++;
-        r -= dir.dr;
-        c -= dir.dc;
-      }
-      
-      if (count >= 3) {
-        return true; // Hay convergencia
+    });
+    
+    // Verificar si hay al menos un tipo de icono con 2 o más ocurrencias
+    let convergencePossible = false;
+    let convergenceIcons = [];
+    
+    for (const icon in iconCounts) {
+      if (iconCounts[icon].count >= 2) {
+        convergencePossible = true;
+        convergenceIcons.push({ 
+          icon, 
+          count: iconCounts[icon].count,
+          positions: iconCounts[icon].positions
+        });
       }
     }
     
-    return false; // No hay convergencia
+    // Log detallado sobre la convergencia encontrada (solo si hay posibilidad)
+    if (convergencePossible) {
+      console.log(`[CONVERGENCE] Convergencia posible en celda [${row},${col}]:`);
+      convergenceIcons.forEach(item => {
+        console.log(`[CONVERGENCE] - Icono ${item.icon}: ${item.count} ocurrencias en posiciones: ${JSON.stringify(item.positions)}`);
+      });
+    }
+    
+    return convergencePossible;
   };
   
   // Inicializar tablero con iconos iniciales
@@ -439,6 +475,29 @@ const useGameLogic = () => {
     isInitializedRef.current = true;
     console.log("Fase 11: Tablero marcado como inicializado");
     
+    // Mejorar función para establecer la ventana de tiempo de combo según la dificultad
+    const updateComboTimeWindow = () => {
+      const gameState = store.getState().game;
+      const difficulty = gameState.currentDifficulty;
+      
+      // Obtener la ventana de tiempo apropiada desde la configuración
+      const timeWindow = config.COMBO_SYSTEM.TIME_WINDOWS[difficulty] || config.COMBO_SYSTEM.TIME_WINDOWS.normal;
+      
+      console.log(`[COMBO CONFIG] Actualizando ventana de tiempo de combo para dificultad ${difficulty}: ${timeWindow}ms`);
+      
+      // Asegurar que se actualice la ventana de tiempo
+      dispatch({ type: 'game/setComboTimeWindow', payload: timeWindow });
+      
+      // Verificar que se actualizó correctamente
+      setTimeout(() => {
+        const updatedState = store.getState().game;
+        console.log(`[COMBO CONFIG] Verificación: La ventana de tiempo actual es ${updatedState.comboTimeWindow}ms`);
+      }, 0);
+    };
+
+    // Actualizar la ventana de tiempo para combos según la dificultad actual
+    updateComboTimeWindow();
+
     console.log("**********************************************************\n");
     console.log(`FIN DEL FLUJO: TABLERO INICIALIZADO CORRECTAMENTE PARA NIVEL ${currentLevel}`);
     
@@ -447,19 +506,18 @@ const useGameLogic = () => {
   
   // Añadir un icono aleatorio al tablero
   const addRandomIcon = useCallback(() => {
-    console.log("\n**********************************************************");
-    console.log("INICIO DEL FLUJO: AÑADIR ICONO ALEATORIO");
+    // console.log("\n**********************************************************");
+    // console.log("INICIO DEL FLUJO: AÑADIR ICONO ALEATORIO");
     // Obtenemos el estado actual directamente del store para asegurar valores actualizados
     const gameState = store.getState().game;
-    console.log(`Nivel: ${gameState.level}, Modo: ${gameState.currentPlayMode}`);
-    console.log(`Contador de iconos actual: ${gameState.iconCount}`);
-    console.log(`Período de gracia: ${levelTransitionGraceRef.current}`);
-    console.log("**********************************************************");
+    // console.log(`Nivel: ${gameState.level}, Modo: ${gameState.currentPlayMode}`);
+    // console.log(`Contador de iconos actual: ${gameState.iconCount}`);
+    // console.log(`Período de gracia: ${levelTransitionGraceRef.current}`);
+    // console.log("**********************************************************");
     
     // Si ya estamos en proceso de añadir un icono, evitar la recursión
     if (isSpawningRef.current) {
-      console.log("Saltando spawn porque ya hay uno en proceso");
-      console.log("**********************************************************\n");
+      console.log("Saltando spawn porque ya hay uno en proceso...");
       return;
     }
     
@@ -803,91 +861,6 @@ const useGameLogic = () => {
     };
   }, [dispatch, addRandomIcon, stopTimers]);
 
-  // Manejar clic en una celda del tablero
-  const handleIconClick = useCallback((row: number, col: number) => {
-    if (status !== 'playing' || isRemovingIconsRef.current) {
-      return;
-    }
-    
-    audioManager.play('click');
-    dispatch(setHighlightedCells([]));
-    
-    if (board[row][col] === null) {
-      // Obtener todos los iconos en las cuatro direcciones
-      const directIcons: { row: number; col: number; icon: string }[] = [];
-      const directions = [
-        { dr: -1, dc: 0 }, // arriba
-        { dr: 1, dc: 0 },  // abajo
-        { dr: 0, dc: -1 }, // izquierda
-        { dr: 0, dc: 1 }   // derecha
-      ];
-      
-      // Buscar los primeros iconos en cada dirección
-      for (const { dr, dc } of directions) {
-        let r = row + dr;
-        let c = col + dc;
-        
-        while (r >= 0 && r < boardSize && c >= 0 && c < boardSize) {
-          if (board[r][c] !== null) {
-            const icon = board[r][c] as string;
-            if (!icon.includes('_removing')) {
-              directIcons.push({ row: r, col: c, icon });
-            }
-            break;
-          }
-          r += dr;
-          c += dc;
-        }
-      }
-      
-      // Agrupar por tipo de icono
-      const iconsByType: { [iconType: string]: { row: number; col: number }[] } = {};
-      for (const item of directIcons) {
-        if (!iconsByType[item.icon]) {
-          iconsByType[item.icon] = [];
-        }
-        iconsByType[item.icon].push({ row: item.row, col: item.col });
-      }
-      
-      // Recopilar todos los grupos de iconos con 2 o más del mismo tipo
-      const iconsToRemove: { row: number; col: number }[] = [];
-      for (const icon in iconsByType) {
-        if (iconsByType[icon].length >= 2) {
-          iconsToRemove.push(...iconsByType[icon]);
-        }
-      }
-      
-      if (iconsToRemove.length >= 2) {
-        audioManager.play('convergingFound');
-        isRemovingIconsRef.current = true;
-        
-        removeConvergingIcons(iconsToRemove);
-        
-        isRemovingIconsRef.current = false;
-        
-        return;
-      }
-    }
-    
-    audioManager.play('invalid');
-    
-    const emptyCell = { row, col };
-    dispatch(setHighlightedCells([emptyCell]));
-    
-    setTimeout(() => {
-      dispatch(setHighlightedCells([]));
-    }, 300);
-    
-  }, [
-    board, 
-    status, 
-    boardSize, 
-    iconCount, 
-    level, 
-    currentPlayMode,
-    dispatch, 
-    hasValidMoves
-  ]);
 
   // Función optimizada para eliminar iconos en convergencia
   const removeConvergingIcons = useCallback((iconsToRemove: Array<{row: number, col: number}>) => {
@@ -926,8 +899,133 @@ const useGameLogic = () => {
         // Actualizar el tablero una sola vez con todos los iconos eliminados
         dispatch(updateBoard(finalBoard));
         
-        const pointsEarned = removedCount * 10 * level;
-        dispatch(incrementScore(pointsEarned));
+        // ---------- NUEVA LÓGICA DE COMBOS MEJORADA ----------
+        // Obtenemos el estado actual para verificar el combo
+        const { comboTimestamp, comboTimeWindow, comboMultiplier, comboCount } = store.getState().game;
+        const currentTime = Date.now();
+        
+        console.log("\n[COMBO DEBUG] ===== Inicio de análisis de combo =====");
+        console.log(`[COMBO DEBUG] Iconos eliminados: ${removedCount}`);
+        console.log(`[COMBO DEBUG] Estado actual: Combo: ${comboCount}, Multiplicador: ${comboMultiplier.toFixed(1)}x`);
+        console.log(`[COMBO DEBUG] Timestamp actual: ${currentTime}`);
+        console.log(`[COMBO DEBUG] Timestamp última eliminación: ${comboTimestamp}`);
+        console.log(`[COMBO DEBUG] Ventana de tiempo: ${comboTimeWindow}ms`);
+        
+        // FIX: Asegurarse de que el cálculo de tiempo transcurrido se haga correctamente
+        // Solo calcular el tiempo transcurrido si el timestamp anterior no es 0
+        const elapsedTime = comboTimestamp === 0 ? 0 : currentTime - comboTimestamp;
+        console.log(`[COMBO DEBUG] Tiempo transcurrido: ${elapsedTime}ms`);
+        console.log(`[COMBO DEBUG] ¿Dentro de ventana de tiempo?: ${elapsedTime <= comboTimeWindow ? 'SÍ' : 'NO'}`);
+        
+        // FIX: Lógica mejorada para el primer combo y combos subsecuentes
+        if (comboTimestamp === 0 || comboCount === 0) {
+          console.log(`[COMBO DEBUG] Primer combo detectado, iniciando secuencia`);
+          dispatch(incrementCombo());
+        }
+        // Verificar si estamos dentro de la ventana de combo
+        else if (elapsedTime <= comboTimeWindow) {
+          // Incrementar combo si estamos dentro de la ventana de tiempo
+          console.log(`[COMBO DEBUG] Tiempo dentro de ventana, incrementando combo`);
+          dispatch(incrementCombo());
+        } else {
+          // Reiniciar combo si ha pasado demasiado tiempo
+          console.log(`[COMBO DEBUG] Tiempo fuera de ventana, reiniciando combo`);
+          dispatch(resetCombo());
+          // Y comenzar un nuevo combo
+          setTimeout(() => {
+            console.log(`[COMBO DEBUG] Iniciando nuevo combo después del reset`);
+            dispatch(incrementCombo());
+          }, 0);
+        }
+        
+        // Obtener el multiplicador actualizado después del incremento/reseteo
+        const updatedState = store.getState().game;
+        const activeMultiplier = updatedState.comboMultiplier;
+        
+        // Aplicar el multiplicador de combo a los puntos base
+        const basePoints = removedCount * 10 * level;
+        const pointsWithCombo = Math.floor(basePoints * activeMultiplier);
+        
+        // Primero asegurarnos que se actualice lastComboPoints con el valor correcto
+        // y luego enviar los puntos base al incrementCombo
+        dispatch(incrementCombo(basePoints));
+        
+        // Mostrar información detallada sobre los puntos
+        console.log(`[COMBO DEBUG] Puntos base: ${basePoints} (${removedCount} iconos × 10 × nivel ${level})`);
+        console.log(`[COMBO DEBUG] Multiplicador aplicado: ${activeMultiplier.toFixed(1)}x`);
+        console.log(`[COMBO DEBUG] Puntos finales con combo: ${pointsWithCombo}`);
+        
+        // Incrementar la puntuación con el nuevo multiplicador
+        dispatch(incrementScore(pointsWithCombo));
+        
+        // Mostrar animación de puntos pasando los puntos base, no lastComboPoints
+        // ya que lastComboPoints podría estar desactualizado en este momento
+        showPointsEarned(basePoints, iconsToRemove[0].row, iconsToRemove[0].col);
+        
+        // Verificar si se alcanzaron hitos importantes
+        console.log(`[COMBO DEBUG] Combo actual: ${updatedState.comboCount}, verificando hitos`);
+        
+        // Bonificaciones por hitos de combo importantes
+        if (updatedState.comboCount === 10) {
+          // Bonus por alcanzar 10 combos
+          const bonus = config.COMBO_SYSTEM.MILESTONE_BONUSES[10];
+          dispatch(incrementScore(bonus));
+          console.log(`[COMBO DEBUG] ¡HITO! Combo x10 alcanzado. +${bonus} puntos extra`);
+          /* addNotification({
+            message: '¡COMBO x10!',
+            type: 'success',
+            duration: 2000,
+            value: `+${bonus} puntos`
+          }); */
+        } else if (updatedState.comboCount === 20) {
+          // Bonus mayor por alcanzar 20 combos
+          const bonus = config.COMBO_SYSTEM.MILESTONE_BONUSES[20];
+          dispatch(incrementScore(bonus));
+          console.log(`[COMBO DEBUG] ¡HITO! Combo x20 alcanzado. +${bonus} puntos extra`);
+          /* addNotification({
+            message: '¡COMBO x20!',
+            type: 'success',
+            duration: 2000,
+            value: `+${bonus} puntos`
+          }); */
+        } else if (updatedState.comboCount === 30) {
+          // Bonus mayor por alcanzar 30 combos
+          const bonus = config.COMBO_SYSTEM.MILESTONE_BONUSES[30];
+          dispatch(incrementScore(bonus));
+          console.log(`[COMBO DEBUG] ¡HITO! Combo x30 alcanzado. +${bonus} puntos extra`);
+          /* addNotification({
+            message: '¡COMBO x30!',
+            type: 'success',
+            duration: 2000,
+            value: `+${bonus} puntos`
+          }); */
+        }
+        
+        // Mostrar notificación de combo si es relevante
+        if (activeMultiplier > 1.0) {
+          console.log(`[COMBO DEBUG] Mostrar notificación de combo: x${updatedState.comboCount} (${activeMultiplier.toFixed(1)}x)`);
+          /* addNotification({
+            message: `¡COMBO x${updatedState.comboCount}!`,
+            type: 'success',
+            duration: 1500,
+            value: `x${activeMultiplier.toFixed(1)}`
+          }); */
+          
+          // Reproducir sonido de combo según el nivel
+          if (activeMultiplier >= 5.0) {
+            audioManager.play('comboLarge');
+            console.log(`[COMBO DEBUG] Reproduciendo sonido: comboLarge`);
+          } else if (activeMultiplier >= 3.0) {
+            audioManager.play('comboMedium');
+            console.log(`[COMBO DEBUG] Reproduciendo sonido: comboMedium`);
+          } else if (activeMultiplier >= 1.5) {
+            audioManager.play('comboSmall');
+            console.log(`[COMBO DEBUG] Reproduciendo sonido: comboSmall`);
+          }
+        }
+        
+        console.log(`[COMBO DEBUG] ===== Fin de análisis de combo =====\n`);
+        // ---------- FIN NUEVA LÓGICA DE COMBOS MEJORADA ----------
         
         const newIconCount = iconCount - removedCount;
         dispatch(setIconCount(newIconCount));
@@ -946,13 +1044,17 @@ const useGameLogic = () => {
           // Mostrar feedback visual/auditivo
           audioManager.play('timeBonus');
           
-          logger.info('Game', `Bonus de tiempo añadido: +${timeBonus} segundos`);
+          console.log(`Bonus de tiempo añadido: +${timeBonus} segundos`);
         }
         
         audioManager.play('removeIcon');
-      }, 50); // Reducido de posibles valores mayores a solo 50ms
+
+        // Animación de puntos - NOTA: No necesitamos calcular los puntos aquí, 
+        // ya que la función showPointsEarned va a usar lastComboPoints
+        showPointsEarned(basePoints, iconsToRemove[0].row, iconsToRemove[0].col);
+      }, 50);
     });
-  }, [board, currentPlayMode, dispatch, iconCount, level]);
+  }, [board, dispatch, iconCount, currentPlayMode, level]);
 
   // Ajustar el tamaño visual del tablero
   const adjustBoardSize = useCallback((container: HTMLElement, boardElement: HTMLElement) => {
@@ -1299,6 +1401,25 @@ const useGameLogic = () => {
     return true;
   }, [dispatch, stopTimers]);
 
+  // Obtener la función showPointsEarned del componente de tablero
+  const showPointsEarned = useCallback((points: number, row?: number, col?: number) => {
+    // Implementación básica para mostrar puntos si no podemos acceder a la del GameBoard
+    const { comboCount, comboMultiplier, lastComboPoints } = store.getState().game;
+    const hasActiveCombo = comboCount >= 3;
+    
+    // Usar el sistema de notificaciones para mostrar puntos, pero no para combos
+    if (!hasActiveCombo) {
+      addNotification({
+        message: '¡Puntos!',
+        type: 'success',
+        icon: '💰',
+        duration: 1000,
+        value: `+${points}`
+      });
+    }
+    // Los combos ya no muestran notificaciones
+  }, [addNotification]);
+
   return {
     board,
     boardSize,
@@ -1308,7 +1429,6 @@ const useGameLogic = () => {
     score,
     highlightedCells,
     initializeBoard,
-    handleIconClick,
     adjustBoardSize,
     stopTimers,
     startTimers,

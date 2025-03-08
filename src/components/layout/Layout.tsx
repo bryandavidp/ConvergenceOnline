@@ -16,13 +16,28 @@ const Layout: React.FC = () => {
     logger.component.render('Layout');
     logger.debug('Layout', 'Estado de autenticación:', { isAuthenticated, user });
     
+    // Asegurarnos de que el scroll funciona normalmente en el Layout
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.height = '';
+    document.body.style.width = '';
+    
+    // Marcar que estamos fuera de la página del juego
+    document.body.classList.remove('in-game-page');
+    
     return () => {
       logger.component.unmount('Layout');
+      
+      // Al desmontar, limpiar cualquier estilo que hayamos añadido
+      // No resetear aquí overflow y position, ya que la próxima ruta podría necesitar configurar sus propios valores
     };
   }, [isAuthenticated, user]);
 
   useEffect(() => {
     logger.info('Layout', 'Ruta cambiada', { pathname: location.pathname });
+    
+    // Asegurarnos de que el scroll vuelve arriba en cada cambio de ruta
+    window.scrollTo(0, 0);
   }, [location.pathname]);
 
   const handleLogout = async () => {
@@ -60,7 +75,9 @@ const Layout: React.FC = () => {
         </nav>
       </header>
       <main className="app-main">
-        <Outlet />
+        <div className="outlet-wrapper">
+          <Outlet />
+        </div>
       </main>
       <footer className="app-footer">
         <p>© {new Date().getFullYear()} Convergence Online - Todos los derechos reservados</p>

@@ -1,0 +1,92 @@
+/* ComboTimer-lite.css - Versión simplificada para dispositivos de bajo rendimiento */
+
+/* .combo-timer-container {
+  position: fixed;
+  top: 75px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 15px;
+  color: white;
+  z-index: 100;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  max-width: 280px;
+  width: auto;
+  min-width: 180px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+} */
+
+/* Icono del combo */
+.combo-timer-icon {
+  font-size: 20px;
+  margin-right: 8px;
+}
+
+/* Sección principal con texto y barra */
+.combo-timer-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Texto del combo */
+.combo-timer-text {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  text-transform: uppercase;
+}
+
+/* Multiplicador de combo */
+.combo-timer-multiplier {
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+/* Contenedor de la barra de tiempo */
+.combo-timer-bar-container {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+/* Barra de tiempo */
+.combo-timer-bar {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(to right, #AAA, #FFF);
+}
+
+/* Contador del combo */
+.combo-timer-counter {
+  font-size: 18px;
+  font-weight: bold;
+  margin-left: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 8px;
+  border-radius: 8px;
+  min-width: 36px;
+  text-align: center;
+}
+
+/* Variantes de color según el nivel de combo */
+.combo-timer-container.combo-uncommon .combo-timer-bar {
+  background: linear-gradient(to right, #0066CC, #1E90FF);
+}
+
+.combo-timer-container.combo-rare .combo-timer-bar {
+  background: linear-gradient(to right, #8A2BE2, #9932CC);
+}
+
+.combo-timer-container.combo-epic .combo-timer-bar {
+  background: linear-gradient(to right, #FF00FF, #FF69B4);
+}
+
+.combo-timer-container.combo-legendary .combo-timer-bar {
+  background: linear-gradient(to right, #FFD700, #FF8C00);
+} 

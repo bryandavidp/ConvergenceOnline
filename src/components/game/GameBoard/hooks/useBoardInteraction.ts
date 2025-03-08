@@ -11,7 +11,10 @@ import {
   setGameStatus,
   updateBoard,
   setIconCount,
-  addIcon
+  addIcon,
+  incrementCombo,
+  resetCombo,
+  setComboTimeWindow
 } from '../../../../store/slices/gameSlice';
 import { findConvergences } from '../utils/convergenceUtils';
 import { findHintPosition, getHighlightedCells, canUseHint, findConvergingIcons as findConvergingIconsUtil } from '../utils/hintUtils';
@@ -39,7 +42,13 @@ const useBoardInteraction = () => {
     hintCooldown,
     score,
     spawnRate,
-    iconCount
+    iconCount,
+    comboCount,
+    comboMultiplier,
+    comboTimestamp,
+    comboTimeWindow,
+    level,
+    lastComboPoints
   } = useSelector((state: RootState) => state.game);
   
   const { addNotification } = useNotifications();
@@ -106,58 +115,204 @@ const useBoardInteraction = () => {
    * Mostrar animación de puntos flotantes ganados sobre una celda
    */
   const showPointsEarned = useCallback((points: number, row?: number, col?: number) => {
-    // Si tenemos coordenadas de celda, mostrar animación en esa posición
-    if (row !== undefined && col !== undefined) {
-      // Obtener el elemento de la celda
-      const cellElement = getCellElement(row, col);
+    // Obtener información de combo del estado
+    const { comboCount, comboMultiplier, lastComboPoints } = store.getState().game;
+    const hasActiveCombo = comboCount >= 3;
+    const comboMultiplierText = comboMultiplier.toFixed(1);
+    
+    // Verificar que tenemos coordenadas válidas
+    if (row === undefined || col === undefined) {
+      // Si no tenemos coordenadas, mostrar notificación para puntos
+      addNotification({
+        message: '¡Puntos conseguidos!',
+        type: 'success',
+        icon: '🏆',
+        duration: 1500,
+        value: `+${points}`
+      });
       
-      if (cellElement) {
-        // Crear elemento de puntos flotantes
-        const pointsPopup = document.createElement('div');
-        pointsPopup.className = points > 50 ? 'points-popup special' : 'points-popup';
-        
-        // Añadir el valor de los puntos
-        const pointsValue = document.createElement('span');
-        pointsValue.className = 'points-value';
-        pointsValue.textContent = `${points}`;
-        pointsPopup.appendChild(pointsValue);
-        
-        // Posicionar el elemento en la celda
-        pointsPopup.style.top = '50%';
-        pointsPopup.style.left = '50%';
-        pointsPopup.style.transform = 'translate(-50%, -50%)';
-        
-        // Si tenemos version completa de animaciones, añadir partículas
-        if (!document.documentElement.classList.contains('performance-mode')) {
-          // Añadir partículas alrededor (solo versión completa)
-          for (let i = 0; i < 6; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'points-particle';
-            particle.style.setProperty('--angle', `${i * 60}deg`);
-            pointsPopup.appendChild(particle);
-          }
-        }
-        
-        // Añadir al DOM
-        cellElement.appendChild(pointsPopup);
-        
-        // Reproducir sonido
-        audioManager.play('points');
-        
-        // Eliminar después de que termine la animación
-        const removeTimer = setTimeout(() => {
-          if (pointsPopup && pointsPopup.parentNode) {
-            pointsPopup.parentNode.removeChild(pointsPopup);
-          }
-        }, 1500);
-        
-        // Registrar el temporizador
-        addAnimationTimer(removeTimer);
+      return;
+    }
+    
+    // Obtener elemento de la celda
+    const cellElement = getCellElement(row, col);
+    
+    if (!cellElement) return;
+    
+    // Crear elemento de puntos flotantes
+    const pointsPopup = document.createElement('div');
+    
+    // Nueva clase sin fondos
+    pointsPopup.className = 'points-popup clean-style';
+    
+    // Determinar color basado en el nivel de combo
+    let comboColor = '#FFFFFF';
+    let comboClass = '';
+    
+    if (hasActiveCombo) {
+      if (comboMultiplier >= 5.0) {
+        comboColor = '#FFD700'; // Dorado para legendario
+        comboClass = 'combo-legendary-text';
+      } else if (comboMultiplier >= 3.0) {
+        comboColor = '#FF00FF'; // Magenta para épico
+        comboClass = 'combo-epic-text';
+      } else if (comboMultiplier >= 2.0) {
+        comboColor = '#9932CC'; // Púrpura para raro
+        comboClass = 'combo-rare-text';
+      } else if (comboMultiplier >= 1.5) {
+        comboColor = '#1E90FF'; // Azul para poco común
+        comboClass = 'combo-uncommon-text';
+      } else {
+        comboColor = '#FFFFFF'; // Blanco para básico
+        comboClass = 'combo-basic-text';
       }
     }
     
-    // También usar el sistema de notificaciones para puntos importantes o si no tenemos coordenadas
-    if (points > 100 || row === undefined || col === undefined) {
+    // Verificar si estamos en modo rendimiento
+    const isPerformanceMode = document.documentElement.classList.contains('performance-mode');
+    
+    // Crear elementos secuenciales
+    if (hasActiveCombo) {
+      // Nuevo formato: primero muestra puntos base, luego se fusiona con el multiplicador
+      const compactDisplay = document.createElement('div');
+      compactDisplay.className = `combo-display ${comboClass}`;
+      
+      // Fase 1: Mostrar los puntos base
+      const basePointsDisplay = document.createElement('div');
+      basePointsDisplay.className = 'base-points-display';
+      
+      const basePointsText = document.createElement('span');
+      basePointsText.className = 'base-points-text';
+      basePointsText.textContent = `+${points}`;
+      basePointsText.style.color = comboColor;
+      
+      const multiplierText = document.createElement('span');
+      multiplierText.className = 'multiplier-text';
+      multiplierText.textContent = ` x${comboMultiplierText}`;
+      multiplierText.style.color = comboColor;
+      
+      // Aplicar animación
+      if (isPerformanceMode) {
+        basePointsText.style.animation = 'fadeInScaleLite 0.15s ease-out forwards';
+        multiplierText.style.animation = 'fadeInSlideRightLite 0.15s ease-out forwards';
+        multiplierText.style.animationDelay = '0.1s';
+      } else {
+        basePointsText.style.animation = 'fadeInScale 0.2s ease-out forwards';
+        multiplierText.style.animation = 'fadeInSlideRight 0.2s ease-out forwards';
+        multiplierText.style.animationDelay = '0.15s';
+      }
+      
+      // Añadir al display inicial
+      basePointsDisplay.appendChild(basePointsText);
+      basePointsDisplay.appendChild(multiplierText);
+      compactDisplay.appendChild(basePointsDisplay);
+      
+      // Fase 2: Display del resultado final (aparecerá mediante animación)
+      const resultDisplay = document.createElement('div');
+      resultDisplay.className = 'result-display';
+      resultDisplay.style.opacity = '0';
+      
+      // Asegurar que calculamos correctamente los puntos totales (puntos base * multiplicador)
+      const totalPoints = Math.floor(points * comboMultiplier);
+      
+      const resultText = document.createElement('span');
+      resultText.className = 'result-text';
+      resultText.textContent = `+${totalPoints}`;
+      resultText.style.color = comboColor;
+      
+      // Animación de resultado
+      if (isPerformanceMode) {
+        resultDisplay.style.animation = 'resultAppearLite 0.3s ease-out forwards';
+        resultDisplay.style.animationDelay = '0.6s';
+      } else {
+        resultDisplay.style.animation = 'resultAppear 0.4s ease-out forwards';
+        resultDisplay.style.animationDelay = '0.7s';
+      }
+      
+      // Añadir contador de combo
+      const comboCountDisplay = document.createElement('span');
+      comboCountDisplay.className = 'combo-count';
+      comboCountDisplay.textContent = ` (${comboCount})`;
+      comboCountDisplay.style.color = comboColor;
+      
+      // Añadir elementos finales
+      resultDisplay.appendChild(resultText);
+      resultDisplay.appendChild(comboCountDisplay);
+      compactDisplay.appendChild(resultDisplay);
+      
+      // Animar la salida del display inicial
+      setTimeout(() => {
+        if (basePointsDisplay) {
+          basePointsDisplay.style.animation = isPerformanceMode ? 
+            'resultFadeOutLite 0.2s ease-out forwards' : 
+            'resultFadeOut 0.3s ease-out forwards';
+        }
+      }, isPerformanceMode ? 550 : 650);
+      
+      pointsPopup.appendChild(compactDisplay);
+    } else {
+      // Si no hay combo, solo mostrar los puntos de manera simple
+      const pointsValue = document.createElement('span');
+      pointsValue.className = 'points-value';
+      pointsValue.textContent = `+${points}`;
+      
+      if (isPerformanceMode) {
+        pointsValue.style.animation = 'fadeInScaleLite 0.2s ease-out forwards';
+      } else {
+        pointsValue.style.animation = 'fadeInScale 0.3s ease-out forwards';
+      }
+      
+      pointsPopup.appendChild(pointsValue);
+    }
+    
+    // Posicionar el elemento en la celda
+    pointsPopup.style.top = '50%';
+    pointsPopup.style.left = '50%';
+    pointsPopup.style.transform = 'translate(-50%, -50%)';
+    
+    // Si tenemos version completa de animaciones, añadir partículas
+    if (!isPerformanceMode) {
+      // Añadir partículas alrededor (solo versión completa)
+      for (let i = 0; i < 6; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'points-particle';
+        particle.style.setProperty('--angle', `${i * 60}deg`);
+        pointsPopup.appendChild(particle);
+      }
+    }
+    
+    // Añadir al DOM
+    cellElement.appendChild(pointsPopup);
+    
+    // Reproducir sonido
+    if (hasActiveCombo) {
+      // Reproducir sonido según nivel de combo
+      if (comboMultiplier >= 5.0) {
+        audioManager.play('comboLarge');
+      } else if (comboMultiplier >= 3.0) {
+        audioManager.play('comboMedium');
+      } else if (comboMultiplier >= 1.5) {
+        audioManager.play('comboSmall');
+      } else {
+        audioManager.play('points');
+      }
+    } else {
+      audioManager.play('points');
+    }
+    
+    // Eliminar después de que termine la animación
+    const removeTimer = setTimeout(() => {
+      if (pointsPopup && pointsPopup.parentNode) {
+        pointsPopup.parentNode.removeChild(pointsPopup);
+      }
+    }, 1500); // Tiempo ajustado para ver completamente la animación
+    
+    // Registrar el temporizador
+    addAnimationTimer(removeTimer);
+    
+    // También usar el sistema de notificaciones para puntos importantes
+    if (points > 100) {
+      // Mostramos notificación solo para puntos importantes, no para combos
       addNotification({
         message: '¡Puntos conseguidos!',
         type: 'success',
@@ -166,7 +321,7 @@ const useBoardInteraction = () => {
         value: `+${points}`
       });
     }
-  }, [addNotification, getCellElement, addAnimationTimer]);
+  }, [getCellElement, addAnimationTimer, addNotification]);
   
   /**
    * Mostrar notificación y animación de bonificación por tablero vacío
@@ -296,7 +451,7 @@ const useBoardInteraction = () => {
   }, [board, boardSize]);
   
   /**
-   * Eliminar iconos convergentes del tablero - versión optimizada para rendimiento
+   * Eliminar iconos convergentes y gestionar el sistema de combos
    */
   const removeConvergingIcons = useCallback((
     convergingIcons: { row: number; col: number; icon: string }[],
@@ -385,13 +540,125 @@ const useBoardInteraction = () => {
         // Actualizar el contador de iconos solo con los que realmente se eliminaron
         dispatch(setIconCount(iconCount - actualIconsRemoved));
         
+        // ---------- INICIO SISTEMA DE COMBOS ----------
+        // Obtenemos el estado actual para verificar el combo
+        const { comboTimestamp, comboTimeWindow, comboMultiplier, comboCount, status } = store.getState().game;
+        const currentTime = Date.now();
+        
+        // Si el juego no está en estado 'playing', no actualizar combos
+        if (status !== 'playing') {
+          console.log(`[COMBO DEBUG] Juego no está en estado 'playing' (${status}). No se actualizan combos.`);
+          resolve(actualIconsRemoved);
+          return;
+        }
+        
+        console.log("\n[COMBO DEBUG] ===== Inicio de análisis de combo =====");
+        console.log(`[COMBO DEBUG] Iconos eliminados: ${actualIconsRemoved}`);
+        console.log(`[COMBO DEBUG] Estado actual: Combo: ${comboCount}, Multiplicador: ${comboMultiplier.toFixed(1)}x`);
+        console.log(`[COMBO DEBUG] Timestamp actual: ${currentTime}`);
+        console.log(`[COMBO DEBUG] Timestamp última eliminación: ${comboTimestamp}`);
+        console.log(`[COMBO DEBUG] Ventana de tiempo: ${comboTimeWindow}ms`);
+        
+        // Verificar si hay iconos eliminados (podría no haber ninguno si todos eran nuevos)
+        if (actualIconsRemoved === 0) {
+          console.log(`[COMBO DEBUG] No se eliminaron iconos reales, saltando incremento de combo`);
+          resolve(0);
+          return;
+        }
+        
+        // Calcular el tiempo transcurrido desde la última eliminación
+        const elapsedTime = comboTimestamp === 0 ? 0 : currentTime - comboTimestamp;
+        console.log(`[COMBO DEBUG] Tiempo transcurrido: ${elapsedTime}ms`);
+        console.log(`[COMBO DEBUG] ¿Dentro de ventana de tiempo?: ${elapsedTime <= comboTimeWindow ? 'SÍ' : 'NO'}`);
+        
+        // Lógica para incrementar o resetear el combo
+        if (comboTimestamp === 0 || comboCount === 0) {
+          console.log(`[COMBO DEBUG] Primer combo detectado, iniciando secuencia`);
+          dispatch(incrementCombo());
+        }
+        // Verificar si estamos dentro de la ventana de combo
+        else if (elapsedTime <= comboTimeWindow) {
+          // Incrementar combo si estamos dentro de la ventana de tiempo
+          console.log(`[COMBO DEBUG] Tiempo dentro de ventana, incrementando combo`);
+          dispatch(incrementCombo());
+        } else {
+          // Reiniciar combo si ha pasado demasiado tiempo
+          console.log(`[COMBO DEBUG] Tiempo fuera de ventana, reiniciando combo`);
+          dispatch(resetCombo());
+          // Y comenzar un nuevo combo
+          setTimeout(() => {
+            console.log(`[COMBO DEBUG] Iniciando nuevo combo después del reset`);
+            dispatch(incrementCombo());
+          }, 0);
+        }
+        
+        // Obtener el multiplicador actualizado después del incremento/reseteo
+        const updatedState = store.getState().game;
+        const activeMultiplier = updatedState.comboMultiplier;
+        
+        // Aplicar el multiplicador de combo a los puntos base
+        const basePoints = actualIconsRemoved * 10 * level;
+        const pointsWithCombo = Math.floor(basePoints * activeMultiplier);
+        
+        // Mostrar información detallada sobre los puntos
+        console.log(`[COMBO DEBUG] Puntos base: ${basePoints} (${actualIconsRemoved} iconos × 10 × nivel ${level})`);
+        console.log(`[COMBO DEBUG] Multiplicador aplicado: ${activeMultiplier.toFixed(1)}x`);
+        console.log(`[COMBO DEBUG] Puntos finales con combo: ${pointsWithCombo}`);
+        
+        // Incrementar la puntuación con el nuevo multiplicador (reemplaza al incrementScore anterior)
+        dispatch(incrementScore(pointsWithCombo));
+        
+        // Verificar si se alcanzaron hitos importantes
+        console.log(`[COMBO DEBUG] Combo actual: ${updatedState.comboCount}, verificando hitos`);
+        
+        // Bonificaciones por hitos de combo importantes
+        if (updatedState.comboCount === 10) {
+          // Bonus por alcanzar 10 combos
+          const bonus = config.COMBO_SYSTEM.MILESTONE_BONUSES[10];
+          dispatch(incrementScore(bonus));
+          console.log(`[COMBO DEBUG] ¡HITO! Combo x10 alcanzado. +${bonus} puntos extra`);
+          // Notificación de combo eliminada
+        } else if (updatedState.comboCount === 20) {
+          // Bonus mayor por alcanzar 20 combos
+          const bonus = config.COMBO_SYSTEM.MILESTONE_BONUSES[20];
+          dispatch(incrementScore(bonus));
+          console.log(`[COMBO DEBUG] ¡HITO! Combo x20 alcanzado. +${bonus} puntos extra`);
+          // Notificación de combo eliminada
+        } else if (updatedState.comboCount === 30) {
+          // Bonus mayor por alcanzar 30 combos
+          const bonus = config.COMBO_SYSTEM.MILESTONE_BONUSES[30];
+          dispatch(incrementScore(bonus));
+          console.log(`[COMBO DEBUG] ¡HITO! Combo x30 alcanzado. +${bonus} puntos extra`);
+          // Notificación de combo eliminada
+        }
+        
+        // Ya no mostramos notificación de combo, solo reproducimos sonido
+        if (activeMultiplier > 1.0) {
+          console.log(`[COMBO DEBUG] Combo activo: x${updatedState.comboCount} (${activeMultiplier.toFixed(1)}x)`);
+          
+          // Reproducir sonido de combo según el nivel
+          if (activeMultiplier >= 5.0) {
+            audioManager.play('comboLarge');
+            console.log(`[COMBO DEBUG] Reproduciendo sonido: comboLarge`);
+          } else if (activeMultiplier >= 3.0) {
+            audioManager.play('comboMedium');
+            console.log(`[COMBO DEBUG] Reproduciendo sonido: comboMedium`);
+          } else if (activeMultiplier >= 1.5) {
+            audioManager.play('comboSmall');
+            console.log(`[COMBO DEBUG] Reproduciendo sonido: comboSmall`);
+          }
+        }
+        
+        console.log(`[COMBO DEBUG] ===== Fin de análisis de combo =====\n`);
+        // ---------- FIN SISTEMA DE COMBOS ----------
+        
         // Resolver con el número de iconos eliminados realmente
         resolve(actualIconsRemoved);
       }, 300); // Reducido para experiencia más rápida
       
       addAnimationTimer(removeTimer);
     });
-  }, [board, dispatch, iconCount, addAnimationTimer, getCellElement]);
+  }, [board, dispatch, iconCount, addAnimationTimer, getCellElement, level]);
   
   /**
    * Mostrar alerta de penalización
@@ -577,17 +844,12 @@ const useBoardInteraction = () => {
     
     if (convergingIcons.length > 0) {
       // Hay convergencia, eliminar los iconos y actualizar la puntuación
+      // La gestión completa de puntuación y combos se maneja dentro de removeConvergingIcons
       removeConvergingIcons(convergingIcons, row, col);
       
-      // Calcular puntos basados en el número de iconos y multiplicadores
-      const basePoints = convergingIcons.length * 10;
-      const pointsEarned = Math.ceil(basePoints);
-      
-      // Actualizar puntuación
-      dispatch(incrementScore(pointsEarned));
-      
       // Mostrar animación de puntos ganados con el nuevo sistema
-      showPointsEarned(pointsEarned, row, col);
+      // Este valor será solo visual, la puntuación real se calcula en removeConvergingIcons
+      showPointsEarned(convergingIcons.length * 10, row, col);
       
       // Verificar si el tablero está vacío para mostrar bonificación
       setTimeout(() => {
@@ -757,6 +1019,32 @@ const useBoardInteraction = () => {
     }
   }, []);
   
+  /**
+   * Actualizar la ventana de tiempo de combo según la dificultad actual
+   */
+  const updateComboTimeWindow = useCallback(() => {
+    const gameState = store.getState().game;
+    const difficulty = gameState.currentDifficulty;
+    
+    // Obtener la ventana de tiempo apropiada desde la configuración
+    const timeWindow = config.COMBO_SYSTEM.TIME_WINDOWS[difficulty] || config.COMBO_SYSTEM.TIME_WINDOWS.normal;
+    
+    console.log(`[COMBO CONFIG] Actualizando ventana de tiempo de combo para dificultad ${difficulty}: ${timeWindow}ms`);
+    dispatch(setComboTimeWindow(timeWindow));
+    
+    // Verificar que se actualizó correctamente
+    setTimeout(() => {
+      const updatedState = store.getState().game;
+      console.log(`[COMBO CONFIG] Verificación: La ventana de tiempo actual es ${updatedState.comboTimeWindow}ms`);
+    }, 0);
+  }, [dispatch]);
+
+  // Inicializar la ventana de tiempo de combo cuando el componente se monta
+  useEffect(() => {
+    console.log('[COMBO CONFIG] Inicializando ventana de tiempo de combo');
+    updateComboTimeWindow();
+  }, [updateComboTimeWindow]);
+
   return {
     stopTimers,
     addAnimationTimer,
@@ -778,7 +1066,8 @@ const useBoardInteraction = () => {
     cleanupEffects,
     showSpeedAlert,
     speedMultiplier,
-    showPenaltyAlert
+    showPenaltyAlert,
+    updateComboTimeWindow
   };
 };
 

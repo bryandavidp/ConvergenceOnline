@@ -85,7 +85,7 @@ export const DEFAULT_BOARD_CONFIG: BoardConfig = {
 
 // Configuración de tablero
 export const BOARD_SIZE: BoardSize = {
-  SMALL: 6,
+  SMALL: 8,
   MEDIUM: 8,
   LARGE: 10
 };
@@ -794,4 +794,40 @@ export const PERFORMANCE_CONFIG = {
   
   // Umbral de FPS para activar el modo de rendimiento alto
   CRITICAL_FPS_THRESHOLD: 20
+};
+
+// Configuración del sistema de combos
+export const COMBO_SYSTEM = {
+  // Ventana de tiempo para combos por dificultad (ms) - AUMENTADA SIGNIFICATIVAMENTE
+  TIME_WINDOWS: {
+    easy: 8000,      // 8 segundos para dificultad fácil
+    normal: 120000,    // 6 segundos para dificultad normal (era 4000)
+    hard: 4500,      // 4.5 segundos para dificultad difícil (era 3000)
+    tutorial: 10000  // 10 segundos para el tutorial (era 6000)
+  },
+  
+  // Multiplicadores según número de combos
+  MULTIPLIERS: [
+    { threshold: 3, multiplier: 1.5 },   // Primeros 3 combos: x1.5
+    { threshold: 6, multiplier: 2.0 },   // 6+ combos: x2.0
+    { threshold: 10, multiplier: 3.0 },  // 10+ combos: x3.0
+    { threshold: 15, multiplier: 5.0 },  // 15+ combos: x5.0
+    { threshold: 20, multiplier: 8.0 }   // 20+ combos: x8.0
+  ],
+  
+  // Bonificaciones por alcanzar ciertos hitos de combo
+  MILESTONE_BONUSES: {
+    10: 500,  // 500 puntos extra por llegar a 10 combos
+    20: 1000, // 1000 puntos extra por llegar a 20 combos
+    30: 2000  // 2000 puntos extra por llegar a 30 combos
+  },
+  
+  // Colores para los diferentes niveles de combo
+  COLORS: {
+    basic: 'rgba(60, 60, 60, 0.7)',
+    uncommon: 'rgba(30, 144, 255, 0.7)',
+    rare: 'rgba(138, 43, 226, 0.7)',
+    epic: 'rgba(255, 127, 0, 0.7)',
+    legendary: 'rgba(255, 215, 0, 0.7)'
+  }
 };

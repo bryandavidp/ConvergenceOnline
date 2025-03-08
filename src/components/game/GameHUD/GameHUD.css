@@ -640,4 +640,30 @@ input:checked + .toggle-slider:before {
   .max-score-value {
     font-size: 1rem;
   }
+}
+
+/* Estilos para el contenedor del ComboTimer */
+.combo-timer-wrapper {
+  width: 95%;
+  margin: 5px auto 10px;
+  display: flex;
+  justify-content: center;
+  min-height: 50px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .combo-timer-wrapper {
+    width: 98%;
+    margin: 5px auto 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .combo-timer-wrapper {
+    min-height: 45px;
+    margin: 3px auto 5px;
+  }
 } 

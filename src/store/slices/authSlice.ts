@@ -28,8 +28,6 @@ export const checkAuth = createAsyncThunk<User | null>(
     try {
       const user = localStorage.getItem('user');
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       if (user) {
         const userData = JSON.parse(user) as User;
         logger.info('Auth', 'Usuario autenticado encontrado', userData);
@@ -40,7 +38,7 @@ export const checkAuth = createAsyncThunk<User | null>(
       return null;
     } catch (error) {
       logger.error('Auth', 'Error al verificar autenticación', error);
-      return rejectWithValue('Error al verificar autenticación');
+      return rejectWithValue(null);
     }
   }
 );

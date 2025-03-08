@@ -18,10 +18,10 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { loading, error } = useSelector((state: RootState) => state.auth);
 
-  // Obtener la ruta de origen o usar '/' por defecto
-  const from = (location.state as LocationState)?.from?.pathname || '/';
+  // Obtener la ruta de origen o usar 'game' por defecto (para ir directo al juego tras login)
+  const from = (location.state as LocationState)?.from?.pathname || '/game';
 
   useEffect(() => {
     logger.component.mount('LoginPage');
@@ -33,13 +33,7 @@ const LoginPage: React.FC = () => {
     };
   }, [from]);
 
-  // Redireccionar si ya está autenticado
-  useEffect(() => {
-    if (isAuthenticated) {
-      logger.info('LoginPage', 'Usuario ya autenticado, redirigiendo a', from);
-      navigate(from, { replace: true });
-    }
-  }, [isAuthenticated, navigate, from]);
+  // Nota: Eliminamos el useEffect de redirección ya que ahora se maneja en ProtectedRoute
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

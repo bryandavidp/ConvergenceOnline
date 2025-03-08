@@ -7,9 +7,11 @@ export enum GamePlayMode {
 }
 
 export enum GameDifficulty {
+  VERY_EASY = 'Muy Fácil',
   EASY = 'Fácil',
   MEDIUM = 'Normal',
-  HARD = 'Difícil'
+  HARD = 'Difícil',
+  VERY_HARD = 'Muy Difícil'
 }
 
 export interface GameState {

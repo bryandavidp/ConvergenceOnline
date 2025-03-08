@@ -27,6 +27,12 @@ export interface GameState {
   canEmptyBoardBonus: boolean;
   speedMultiplier: number;
   highlightedCells: {row: number, col: number}[];
+  // Sistema de combos
+  comboCount: number;         // Número actual de combos consecutivos
+  comboMultiplier: number;    // Multiplicador actual basado en el contador de combos
+  comboTimestamp: number;     // Timestamp de la última eliminación para calcular ventana de combo
+  comboTimeWindow: number;    // Ventana de tiempo para considerar combos consecutivos (en ms)
+  lastComboPoints: number;     // Nuevo campo para almacenar los últimos puntos calculados con el combo
   // Preferencias de interfaz
   darkMode: boolean;
   // Nuevas propiedades para los modos de juego
@@ -62,6 +68,12 @@ const initialState: GameState = {
   canEmptyBoardBonus: true,
   speedMultiplier: 1,
   highlightedCells: [],
+  // Sistema de combos
+  comboCount: 0,
+  comboMultiplier: 1.0,
+  comboTimestamp: 0,
+  comboTimeWindow: 2500, // 2.5 segundos por defecto
+  lastComboPoints: 0, // Inicializar en cero
   // Valores iniciales para las nuevas propiedades
   timeRemaining: config.BASE_GAME_DURATION, // 3 minutos por defecto
   levelTimeLimit: config.BASE_GAME_DURATION,
@@ -654,6 +666,68 @@ const gameSlice = createSlice({
       // Guardar preferencia en localStorage
       localStorage.setItem('darkMode', action.payload.toString());
     },
+    
+    incrementCombo: (state, action: PayloadAction<number | undefined>) => {
+      // Puntos base para esta eliminación (opcional)
+      const basePoints = action.payload || 0;
+      
+      // Guardar valores anteriores para debug
+      const prevCount = state.comboCount;
+      const prevMultiplier = state.comboMultiplier;
+      
+      // Incrementar contador de combos
+      state.comboCount += 1;
+      
+      // Actualizar multiplicador basado en contador
+      if (state.comboCount >= 15) {
+        state.comboMultiplier = 5.0;
+      } else if (state.comboCount >= 10) {
+        state.comboMultiplier = 3.0;
+      } else if (state.comboCount >= 6) {
+        state.comboMultiplier = 2.0;
+      } else if (state.comboCount >= 3) {
+        state.comboMultiplier = 1.5;
+      } else {
+        state.comboMultiplier = 1.0;
+      }
+      
+      // Actualizar timestamp con la hora actual
+      const currentTime = Date.now();
+      state.comboTimestamp = currentTime;
+      
+      // Calcular puntos ganados con el multiplicador (si se proporcionaron puntos base)
+      const pointsWithMultiplier = basePoints > 0 ? Math.floor(basePoints * state.comboMultiplier) : 0;
+      state.lastComboPoints = pointsWithMultiplier; // Guardar en el estado en lugar de retornarlo
+      
+      console.log(`[COMBO] Incrementado de ${prevCount} a ${state.comboCount}`);
+      console.log(`[COMBO] Multiplicador actualizado de ${prevMultiplier.toFixed(1)}x a ${state.comboMultiplier.toFixed(1)}x`);
+      console.log(`[COMBO] Timestamp actualizado: ${state.comboTimestamp} (${new Date(currentTime).toISOString()})`);
+      
+      if (basePoints > 0) {
+        console.log(`[COMBO] Puntos base: ${basePoints}, Con multiplicador: ${pointsWithMultiplier}`);
+      }
+    },
+
+    resetCombo: (state) => {
+      // Solo logear si hay un combo activo
+      if (state.comboCount > 0) {
+        console.log(`[COMBO] Reset completo - Era: ${state.comboCount}x con multiplicador ${state.comboMultiplier.toFixed(1)}x`);
+      }
+      
+      // Resetear todos los valores del combo
+      state.comboCount = 0;
+      state.comboMultiplier = 1.0;
+      state.comboTimestamp = 0; // También reseteamos el timestamp para evitar cálculos erróneos
+      
+      console.log(`[COMBO] Estado después del reset: Combo ${state.comboCount}, Mult ${state.comboMultiplier.toFixed(1)}x, TS: ${state.comboTimestamp}`);
+    },
+
+    // Añadir este nuevo reducer
+    setComboTimeWindow: (state, action: PayloadAction<number>) => {
+      const oldValue = state.comboTimeWindow;
+      state.comboTimeWindow = action.payload;
+      console.log(`[COMBO CONFIG] Ventana de tiempo de combo actualizada: ${oldValue}ms → ${action.payload}ms`);
+    },
   },
   extraReducers: (builder) => {
     // ... extra reducers existentes
@@ -724,7 +798,10 @@ export const {
   addTimeBonus,
   setLevelTarget,
   addIcon,
-  setDarkMode
+  setDarkMode,
+  incrementCombo,
+  resetCombo,
+  setComboTimeWindow,
 } = gameSlice.actions;
 
 export default gameSlice.reducer;

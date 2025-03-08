@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGameContext } from '../../../contexts/GameContext';
 import { useGameSound } from '../../../hooks/useGameSound';
 import { ICONS } from '../../../constants/icons';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store';
 import './GameModals.css';
 
 interface GameOverModalProps {
@@ -18,6 +20,7 @@ const GAME_OVER_ANIMATIONS = {
 
 const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRestart }) => {
   const { gameState } = useGameContext();
+  const { score, level, comboCount, comboMultiplier, highScore } = useSelector((state: RootState) => state.game);
   const { playSound } = useGameSound();
   const modalContentRef = useRef<HTMLDivElement>(null);
   
@@ -25,6 +28,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
   const [animations, setAnimations] = useState(GAME_OVER_ANIMATIONS);
   const [modalVisible, setModalVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [isNewHighScore, setIsNewHighScore] = useState(false);
   
   // Efecto para manejar la animación de entrada cuando el modal es visible
   useEffect(() => {
@@ -33,6 +37,9 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
     if (isVisible) {
       setModalVisible(true);
       setIsClosing(false);
+      
+      // Verificar si hay nuevo récord
+      setIsNewHighScore(score > highScore);
       
       // Reproducir sonido de game over
       playSound('gameOver');
@@ -71,7 +78,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
         clearTimeout(animationTimeout);
       }
     };
-  }, [isVisible, playSound]);
+  }, [isVisible, playSound, score, highScore]);
   
   const handleRestartClick = () => {
     playSound('uiSelect');
@@ -92,46 +99,95 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
     }, 300);
   };
   
+  // Función para obtener la clase de estilo según el nivel de combo
+  const getComboClass = () => {
+    if (comboMultiplier >= 5.0) return 'combo-legendary-text';
+    if (comboMultiplier >= 3.0) return 'combo-epic-text';
+    if (comboMultiplier >= 2.0) return 'combo-rare-text';
+    if (comboMultiplier >= 1.5) return 'combo-uncommon-text';
+    return 'combo-basic-text';
+  };
+  
+  // Función para obtener color según nivel de combo
+  const getComboColor = () => {
+    if (comboMultiplier >= 5.0) return '#FFD700'; // Dorado para legendario
+    if (comboMultiplier >= 3.0) return '#FF00FF'; // Magenta para épico
+    if (comboMultiplier >= 2.0) return '#9932CC'; // Púrpura para raro
+    if (comboMultiplier >= 1.5) return '#1E90FF'; // Azul para poco común
+    return '#FFFFFF'; // Blanco para básico
+  };
+  
   // Si el modal no está visible, no renderizamos nada
   if (!modalVisible && !isVisible) {
     return null;
   }
   
   return (
-    <div className={`game-modal ${modalVisible ? 'visible' : ''} ${isClosing ? 'closing' : ''}`}>
-      <div className="modal-content game-over-content" ref={modalContentRef}>
+    <div className={`game-modal fullscreen-modal ${modalVisible ? 'visible' : ''} ${isClosing ? 'closing' : ''}`}>
+      <div className="modal-content game-over-content compact-content" ref={modalContentRef}>
         <div 
-          className="game-over-header"
+          className="game-over-header compact-header"
           style={{
             transition: 'all 0.6s ease',
             ...animations.title
           }}
         >
           <h1>¡Juego Terminado!</h1>
-          <h2>No te preocupes, ¡inténtalo de nuevo!</h2>
+          <h2>{isNewHighScore ? '¡Nuevo récord!' : 'No te preocupes, ¡inténtalo de nuevo!'}</h2>
         </div>
         
         <div 
-          className="game-over-body"
+          className="game-over-body compact-body"
           style={{
             transition: 'all 0.5s ease',
             transitionDelay: '0.2s',
             ...animations.content
           }}
         >
-          <div className="score-container">
-            <div className="final-score">
-              <span className="coin-icon">{ICONS.COIN}</span>
-              <span className="score-value">{gameState.score}</span>
+          <div className="main-stats">
+            <div className="record-score-container">
+              <div className="record-badge">
+                <div className="record-icon">👑</div>
+                <div className="record-value">{highScore}</div>
+              </div>
+              <div className="current-score">
+                <div className="score-label">Puntuación</div>
+                <div className={`score-value ${isNewHighScore ? 'new-high-score' : ''}`}>
+                  {score}
+                </div>
+              </div>
             </div>
-            <div className="level-reached">
-              <span className="level-text">Nivel alcanzado:</span>
-              <span className="level-value">{gameState.level}</span>
+            
+            <div className="compact-stats-grid">
+              <div className="compact-stat-item">
+                <div className="compact-stat-icon">🏆</div>
+                <div className="compact-stat-value">{level}</div>
+                <div className="compact-stat-label">Nivel</div>
+              </div>
+              
+              <div className="compact-stat-item">
+                <div className="compact-stat-icon">🔥</div>
+                <div className={`compact-stat-value ${getComboClass()}`} style={{ color: getComboColor() }}>
+                  {comboCount}
+                </div>
+                <div className="compact-stat-label">
+                  Combo ({comboMultiplier.toFixed(1)}x)
+                </div>
+              </div>
+              
+              <div className="compact-stat-item">
+                <div className="compact-stat-icon">⭐</div>
+                <div className="compact-stat-value">+{Math.floor(score * 0.1)}</div>
+                <div className="compact-stat-label">EXP</div>
+              </div>
             </div>
           </div>
           
-          <div className="game-over-message">
-            <p>¡Has hecho un gran esfuerzo! Practica y mejora tu estrategia para obtener una puntuación más alta.</p>
+          <div className="game-over-message compact-message">
+            <p>{isNewHighScore 
+              ? '¡Increíble! Has superado tu mejor puntuación. ¿Puedes ir aún más lejos?' 
+              : '¡Has hecho un gran esfuerzo! Practica y mejora tu estrategia para obtener una puntuación más alta.'}
+            </p>
           </div>
         </div>
         

@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../../store';
 import { setGameStatus } from '../../../store/slices/gameSlice';
+import ComboTimer from '../ComboTimer/ComboTimer';
 import './GameHUD.css';
 
 const GameHUD: React.FC = () => {
@@ -192,6 +193,11 @@ const GameHUD: React.FC = () => {
           <div className="hud-label">MODO</div>
           <div className="hud-value">{getModeName()}</div>
         </div>
+      </div>
+      
+      {/* Contenedor para el ComboTimer */}
+      <div className="combo-timer-wrapper">
+        <ComboTimer />
       </div>
 
       {/* Modal de configuración */}
