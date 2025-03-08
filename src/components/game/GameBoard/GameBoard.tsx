@@ -147,13 +147,20 @@ const GameBoard: React.FC = () => {
           cellClasses += ' new-icon';
           currentNewIconCells.add(cellKey);
           
-          // Eliminar la clase después de la animación
+          // Mantener la clase new-icon durante más tiempo para proteger el icono
+          // de ser eliminado durante operaciones de eliminación de convergencias
+          const protectionDuration = lowPerformanceMode ? 1500 : 2000; // Tiempo suficiente para cualquier animación
+          
           const timerId = setTimeout(() => {
             const cellElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
             if (cellElement) {
+              // Eliminar la clase new-icon de forma segura
               cellElement.classList.remove('new-icon');
+              
+              // Log para depuración
+              console.log(`GameBoard: Eliminada protección de icono nuevo en [${row},${col}]`);
             }
-          }, lowPerformanceMode ? 300 : 450);
+          }, protectionDuration);
           
           // Guardar referencia al Set actualizado
           newIconCells.current = currentNewIconCells;
@@ -531,14 +538,22 @@ const GameBoard: React.FC = () => {
   // Renderizar el tablero como una grid
   const renderBoard = useCallback(() => {
     // Si el tablero está vacío o status no es 'playing', mostrar mensaje
-    if (!board || board.length === 0 || (status !== 'playing' && status !== 'paused')) {
+    if (!board || board.length === 0) {
+      return (
+        <div className="empty-board-message">
+          Cargando tablero...
+        </div>
+      );
+    }
+    
+    // Mostrar mensajes según el estado del juego
+    if (status !== 'playing' && status !== 'paused') {
       return (
         <div className="empty-board-message">
           {status === 'startScreen' && 'Selecciona la configuración para comenzar'}
           {status === 'gameOver' && 'Juego terminado'}
           {status === 'levelCompleted' && 'Nivel completado'}
-          {status === 'paused' && 'Juego en pausa'}
-          {!board || board.length === 0 ? 'Cargando tablero...' : ''}
+          {status === 'idle' && 'Inicializando...'}
         </div>
       );
     }

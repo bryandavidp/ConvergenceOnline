@@ -207,15 +207,22 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
       setGameMode(selectedMode);
     }
     
-    // Añade la clase modal-active al elemento game-page
-    const gamePageElement = document.querySelector('.game-page');
-    if (gamePageElement) {
-      gamePageElement.classList.add('modal-active');
-    }
+    // Cerrar el modal con animación
+    setIsClosing(true);
     
-    if (onStart) {
-      onStart();
-    }
+    // Esperar a que termine la animación antes de iniciar el juego
+    setTimeout(() => {
+      // Llamar al callback de inicio
+      if (onStart) {
+        onStart();
+      }
+      
+      // Añade la clase modal-active al elemento game-page
+      const gamePageElement = document.querySelector('.game-page');
+      if (gamePageElement) {
+        gamePageElement.classList.add('modal-active');
+      }
+    }, 500);
   };
   
   // Selecciona el modo de juego

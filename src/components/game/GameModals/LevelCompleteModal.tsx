@@ -130,20 +130,31 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
   const handleContinue = () => {
     playSound('uiSelect');
     
+    // Mostrar un mensaje de carga mientras se prepara el nivel
+    setAnimations({
+      ...animations,
+      title: { opacity: 0, transform: 'translateY(-20px)' },
+      content: { opacity: 0, transform: 'translateY(20px)' }
+    });
+    
     // Minimizamos el modal
     setIsClosing(true);
     
-    // Quitamos la clase modal-active para permitir ver el tablero de juego
-    const gamePageElement = document.querySelector('.game-page');
-    if (gamePageElement) {
-      gamePageElement.classList.remove('modal-active');
-    }
-    
+    // Esperar a que termine la animación antes de continuar
     setTimeout(() => {
-      if (onContinue) {
-        onContinue();
+      // Quitamos la clase modal-active para permitir ver el tablero de juego
+      const gamePageElement = document.querySelector('.game-page');
+      if (gamePageElement) {
+        gamePageElement.classList.remove('modal-active');
       }
-    }, 300);
+      
+      // Llamar al callback de continuar DESPUÉS de quitar el modal
+      setTimeout(() => {
+        if (onContinue) {
+          onContinue();
+        }
+      }, 200); // Pequeño retraso para asegurar que la transición visual sea suave
+    }, 500);
   };
   
   // Renderiza las recompensas del nivel

@@ -335,10 +335,16 @@ const useBoardInteraction = () => {
         return;
       }
       
-      // Marcar los iconos a eliminar
+      // Marcar los iconos a eliminar, pero verificar si son nuevos primero
       totalIconsToRemove.forEach(({ row, col }) => {
         if (newBoard[row][col]) {
-          newBoard[row][col] = newBoard[row][col] + '_removing';
+          // Obtener el elemento DOM de la celda para verificar si es un icono nuevo
+          const cellElement = getCellElement(row, col);
+          
+          // Solo marcar para eliminación si no es un icono nuevo
+          if (!cellElement || !cellElement.classList.contains('new-icon')) {
+            newBoard[row][col] = newBoard[row][col] + '_removing';
+          }
         }
       });
       
@@ -350,24 +356,42 @@ const useBoardInteraction = () => {
       
       // Tiempo reducido para que se complete la animación 
       const removeTimer = setTimeout(() => {
-        // Eliminar los iconos marcados - optimizado
+        // Crear nueva versión del tablero sin modificar los iconos nuevos
         const finalBoard = newBoard.map(row => 
-          row.map(cell => cell && cell.includes('_removing') ? null : cell)
+          row.map(cell => {
+            // Solo eliminar si está marcado para eliminación
+            if (cell && cell.includes('_removing')) {
+              return null;
+            }
+            return cell;
+          })
         );
+        
+        // Contar cuántos iconos se eliminaron realmente
+        let actualIconsRemoved = 0;
+        for (let r = 0; r < newBoard.length; r++) {
+          for (let c = 0; c < newBoard[r].length; c++) {
+            const oldCell = newBoard[r][c];
+            const newCell = finalBoard[r][c];
+            if (oldCell && oldCell.includes('_removing') && newCell === null) {
+              actualIconsRemoved++;
+            }
+          }
+        }
         
         // Actualizar tablero final
         dispatch(updateBoard(finalBoard));
         
-        // Actualizar el contador de iconos
-        dispatch(setIconCount(iconCount - totalIconsToRemove.length));
+        // Actualizar el contador de iconos solo con los que realmente se eliminaron
+        dispatch(setIconCount(iconCount - actualIconsRemoved));
         
-        // Resolver con el número de iconos eliminados
-        resolve(totalIconsToRemove.length);
+        // Resolver con el número de iconos eliminados realmente
+        resolve(actualIconsRemoved);
       }, 300); // Reducido para experiencia más rápida
       
       addAnimationTimer(removeTimer);
     });
-  }, [board, dispatch, iconCount, addAnimationTimer]);
+  }, [board, dispatch, iconCount, addAnimationTimer, getCellElement]);
   
   /**
    * Mostrar alerta de penalización

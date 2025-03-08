@@ -2,8 +2,8 @@
 // Configuración unificada del juego Convergence Online
 
 // Dimensiones y visuales
-export const BOARD_MIN_SIZE = 5;
-export const BOARD_MAX_SIZE = 12;
+export const BOARD_MIN_SIZE = 8;
+export const BOARD_MAX_SIZE = 10;
 export const DEFAULT_BOARD_SIZE = 8;
 
 // Tipos para la configuración del juego
@@ -124,6 +124,7 @@ export const ICON_SETS: Record<string, string[]> = {
   fruits: ["🍎", "🍇", "🍊", "🍓", "🍉", "🍌", "🍍", "🥝"],
   animals: ["🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼"],
   faces: ["😀", "😎", "🤔", "😍", "😴", "🤯", "😱", "🥳"],
+  numbers: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
   
   // Sets intermedios
   sports: ["⚽", "🏀", "🏈", "⚾", "🎾", "🏐", "🏉", "🎱"],
@@ -138,7 +139,8 @@ export const ICON_SETS: Record<string, string[]> = {
   // Sets muy difíciles (formas y colores similares)
   flowers: ["🌸", "🌹", "🌺", "🌻", "🌼", "🌷", "💐", "🪷"],
   hearts: ["❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍"],
-  music: ["🎵", "🎶", "🎼", "🎤", "🎧", "🎷", "🎸", "🎹"]
+  music: ["🎼", "🎤", "🎧", "🎷", "🎸", "🎹"], /* "🎵", "🎶",  */
+  crazy: ["🥱", "😏", "🫠", "😭", "🤯", "🥵", "🥶", "🤢"]
 };
 
 // Mapeo de conjuntos de iconos por nivel y dificultad
@@ -157,7 +159,10 @@ export const LEVEL_ICON_SETS: Record<GameMode, Record<number, string[]>> = {
     4: ["tools", "vehicles", "symbols"],
     5: ["flowers", "sports", "geometric"],
     6: ["hearts", "tools", "weather"],
-    7: ["music", "symbols", "faces"]
+    7: ["music", "symbols", "faces"],
+    8: ["geometric", "flowers", "hearts"],
+    9: ["fruits", "symbols", "faces"],
+    10: ["animals", "geometric", "faces"]
   },
   hard: {
     1: ["fruits", "animals", "faces", "sports"],
@@ -286,7 +291,7 @@ export const GAME_MODES = {
     speedIncreaseTime: 15000,                 
     maxSpeedMultiplier: 3,                    
     speedIncreaseAmount: 0.2,                 
-    iconVariety: 6,                           
+    iconVariety: 4,                           
     specialIconProbability: 0.1               
   }
 };
@@ -370,7 +375,7 @@ export const GAME_MODE_CONFIG = {
     name: 'survival',
     displayName: 'Supervivencia',
     description: 'Sobrevive el mayor tiempo posible sin llenar el tablero',
-    initialIcons: 35,
+    initialIcons: 50,
     movesBeforeSpawn: 1,
     initialSpawnRate: SPAWN_RATES.VERY_SLOW,
     speedIncreaseInterval: 20, 
@@ -585,8 +590,8 @@ export function getIconSetForLevel(level: number): string[] {
   if (adjustedLevel >= 0 && adjustedLevel < LEVEL_ICONS.length) {
     return LEVEL_ICONS[adjustedLevel];
   }
-  
-  return ["🍎", "🍇", "🍊", "🍓"];
+  // 🥱😏🫠😭🤯🥵🥶🤢
+  return ["🐱", "🥱", "😏", "🫠", "😭", "🤯", "🥵", "🥶", "🤢"];
 }
 
 // Obtener tamaño del tablero para un nivel específico
@@ -667,6 +672,9 @@ export function getIconsForLevel(level: number, difficulty: GameMode): string[] 
     if (allIcons.length < 8) {
       allIcons = [...allIcons, ...allIcons.slice(0, 8 - allIcons.length)];
     }
+
+    //reduce the number to the proper number of icons for the level
+    allIcons = allIcons.slice(0, iconCountByLevel(level));
     
     return shuffleArray([...allIcons]);
   } catch (error) {

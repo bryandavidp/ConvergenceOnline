@@ -17,7 +17,8 @@ export function isLevelCompleted(
   boardSize: number,
   timeRemaining?: number,
   survivalTime?: number,
-  gameTimer?: number
+  gameTimer?: number,
+  hasMovesAvailable?: boolean
 ): boolean {
   // Para el modo zen, nunca se completa automáticamente
   if (playMode === 'zen') {
@@ -40,6 +41,31 @@ export function isLevelCompleted(
     const minTimeToValidate = config.MIN_TIME_TO_VALIDATE_LEVEL;
     const hasMinimumPlayTime = gameTimer !== undefined && gameTimer >= minTimeToValidate;
     
+    // Calcular el porcentaje de ocupación del tablero
+    const totalCells = boardSize * boardSize;
+    const occupationPercentage = (iconCount / totalCells) * 100;
+    
+    // NUEVA LÓGICA: Si no hay movimientos válidos y hay pocos iconos, completar nivel
+    if (hasMovesAvailable === false) {
+      logger.info('LevelAdapter', `No hay movimientos válidos. Ocupación: ${occupationPercentage.toFixed(1)}%, Iconos: ${iconCount}`);
+      
+      // Si hay 2 o menos iconos, completar nivel
+      if (iconCount <= 2) {
+        logger.info('LevelAdapter', `Solo quedan ${iconCount} iconos sin movimientos válidos. Nivel completado.`);
+        return true;
+      }
+      
+      // Si hay pocos iconos (menos del 30% del tablero ocupado), completar nivel
+      if (occupationPercentage <= 30) {
+        logger.info('LevelAdapter', `Pocos iconos sin movimientos (${occupationPercentage.toFixed(1)}%). Nivel completado.`);
+        return true;
+      }
+      
+      // Si no se cumplen las condiciones anteriores, seguir jugando
+      // hasta que el tablero esté completamente lleno (Game Over) o se cumpla otro criterio
+      logger.info('LevelAdapter', `No hay movimientos pero los iconos son muchos (${occupationPercentage.toFixed(1)}%). Continuando juego.`);
+    }
+    
     // En modo clásico, se pueden cumplir varios criterios
     if (playMode === 'classic') {
       // Verificar requisitos disponibles
@@ -51,50 +77,33 @@ export function isLevelCompleted(
       // Verificar puntuación (este criterio siempre es válido)
       const scoreReq = classicRequirements.find(req => req.type === 'score');
       if (scoreReq && score >= scoreReq.value) {
+        logger.info('LevelAdapter', `Nivel completado por puntuación: ${score}/${scoreReq.value}`);
         return true;
       }
       
       // Criterio por ocupación: solo válido después de tiempo mínimo de juego
       if (hasMinimumPlayTime) {
-        const totalCells = boardSize * boardSize;
-        const occupationPercentage = (iconCount / totalCells) * 100;
-        
-        // El tablero está completamente vacío
-        if (iconCount === 0) {
-          return true;
-        }
-        
-        // Verificar requisito de ocupación
         const occupationReq = classicRequirements.find(req => req.type === 'occupation');
         if (occupationReq && occupationPercentage <= occupationReq.value) {
+          logger.info('LevelAdapter', `Nivel completado por ocupación: ${occupationPercentage.toFixed(1)}%/${occupationReq.value}%`);
           return true;
         }
       }
-    }
-    
-    // En modo contrarreloj
-    if (playMode === 'timed' && timeRemaining !== undefined) {
-      // El nivel se completa cuando se llega a 0 y el jugador sigue vivo
-      return timeRemaining <= 0;
-    }
-    
-    // En modo supervivencia
-    if (playMode === 'survival' && survivalTime !== undefined) {
-      const survivalRequirements = levelConfig.requirements.survival;
-      if (!survivalRequirements || !Array.isArray(survivalRequirements)) {
-        return false;
-      }
-      
-      const timeReq = survivalRequirements.find(req => req.type === 'time');
-      if (timeReq && survivalTime >= timeReq.value) {
+    } 
+    // En modo contrarreloj, completado si se acaba el tiempo
+    else if (playMode === 'timed') {
+      if (timeRemaining !== undefined && timeRemaining <= 0) {
         return true;
       }
+    } 
+    // En modo supervivencia, no hay completado automático
+    else if (playMode === 'survival') {
+      return false;
     }
     
     return false;
   } catch (error) {
-    // En caso de error, no completar el nivel
-    console.error("Error al verificar nivel completado:", error);
+    logger.error('LevelAdapter', 'Error verificando completado de nivel:', error);
     return false;
   }
 }

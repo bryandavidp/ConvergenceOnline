@@ -54,7 +54,8 @@ const initialState: GameState = {
   currentDifficulty: 'normal',
   currentPlayMode: 'classic',
   boardSize: 8,
-  availableIcons: ["🍎", "🍇", "🍊", "🍓"],
+  // Usar la configuración centralizada para los iconos del nivel 1
+  availableIcons: config.getIconSetForLevel(1),
   hintsRemaining: 3,
   hintCooldown: false,
   lastHintTime: 0,
@@ -108,24 +109,55 @@ const gameSlice = createSlice({
     },
     
     updateBoard: (state, action: PayloadAction<(string | null)[][]>) => {
-      state.board = action.payload;
-      logger.debug('Game', 'Tablero actualizado');
+      // Crear una copia del nuevo tablero
+      const newBoard = action.payload;
       
-      // Verificar si el tablero está vacío para la bonificación
-      if (state.canEmptyBoardBonus) {
+      // Proteger iconos recién añadidos solo si estamos en estado de juego activo o pausado
+      if (state.status === 'playing' || state.status === 'paused') {
+        for (let i = 0; i < state.boardSize; i++) {
+          for (let j = 0; j < state.boardSize; j++) {
+            // Si la celda actual tiene un icono y la nueva está vacía,
+            // verificar si debemos preservar el icono actual (puede ser un icono recién añadido)
+            const currentCellValue = state.board[i][j];
+            const newCellValue = newBoard[i][j];
+            
+            // Si el icono actual no está marcado para eliminar pero el nuevo tablero lo eliminaría,
+            // esto podría ser un icono recién añadido que debe preservarse
+            if (currentCellValue && 
+                !currentCellValue.includes('_removing') && 
+                newCellValue === null) {
+              // Esta situación puede ocurrir cuando un icono aleatorio aparece justo cuando
+              // se está eliminando una convergencia
+              logger.debug('Game', `Preservando icono en [${i},${j}]: ${currentCellValue}`);
+              newBoard[i][j] = currentCellValue;
+            }
+          }
+        }
+      }
+      
+      // Siempre actualizar el tablero, independientemente del estado
+      state.board = newBoard;
+      logger.debug('Game', `Tablero actualizado (Estado: ${state.status})`);
+      
+      // Verificar si el tablero está vacío para la bonificación, solo si estamos jugando
+      if (state.canEmptyBoardBonus && state.status === 'playing') {
         let isEmpty = true;
+        let iconCount = 0;
+        
         for (let i = 0; i < state.boardSize; i++) {
           for (let j = 0; j < state.boardSize; j++) {
             if (state.board[i][j] !== null) {
               isEmpty = false;
-              break;
+              iconCount++;
             }
           }
-          if (!isEmpty) break;
         }
         
+        // Actualizar el conteo de iconos para que esté sincronizado con el estado real del tablero
+        state.iconCount = iconCount;
+        
         // Si el tablero está vacío, dar la bonificación
-        if (isEmpty && state.iconCount === 0) {
+        if (isEmpty && iconCount === 0) {
           state.score += config.SCORE_VALUES.EMPTY_BOARD_BONUS;
           state.canEmptyBoardBonus = false; // Solo una vez por nivel
           logger.info('Game', `¡Bonificación de tablero vacío! +${config.SCORE_VALUES.EMPTY_BOARD_BONUS} puntos`);
@@ -150,17 +182,95 @@ const gameSlice = createSlice({
     
     setLevel: (state, action: PayloadAction<number>) => {
       const newLevel = action.payload;
-      const prevLevel = state.level;
       
+      console.log("\n**********************************************************");
+      console.log("INICIO DEL FLUJO: CAMBIO DE NIVEL");
+      console.log(`Cambiando de nivel ${state.level} a nivel ${newLevel}`);
+      console.log(`Modo: ${state.currentPlayMode}, Dificultad: ${state.currentDifficulty}`);
+      console.log("**********************************************************");
+      
+      // Establecer el nuevo nivel
       state.level = newLevel;
+      console.log("Fase 1: Nivel actualizado en el estado");
       
-      // Si avanzamos de nivel, reiniciar las bonificaciones y pistas
-      if (newLevel > prevLevel) {
-        state.canEmptyBoardBonus = true;
-        state.hintsRemaining = config.HINT_SYSTEM.MAX_HINTS_PER_LEVEL;
+      // Actualizar los iconos disponibles para este nivel y dificultad
+      const newIcons = config.getIconsForLevel(newLevel, state.currentDifficulty);
+      state.availableIcons = newIcons;
+      console.log(`Fase 2: Iconos actualizados para nivel ${newLevel}: ${newIcons.slice(0, 8).join(', ')}${newIcons.length > 8 ? '...' : ''}`);
+      
+      // Reiniciar bonificaciones y pistas
+      state.canEmptyBoardBonus = true;
+      state.hintsRemaining = config.HINT_SYSTEM.MAX_HINTS_PER_LEVEL;
+      console.log("Fase 3: Bonificaciones y pistas reiniciadas");
+      
+      // Reiniciar contador de iconos para nuevo nivel (tablero vacío)
+      state.iconCount = 0;
+      
+      // Establecer el tamaño del tablero según el nivel
+      if (config.BOARD_SIZES.length >= newLevel) {
+        state.boardSize = config.BOARD_SIZES[newLevel - 1];
+        console.log(`Fase 4: Tablero redimensionado a ${state.boardSize}x${state.boardSize}`);
       }
       
-      logger.info('Game', `Nivel establecido a ${action.payload}`);
+      // Ajustar la velocidad según el nivel y modo de juego
+      let newSpawnRate = 0;
+      if (state.currentPlayMode === 'classic') {
+        // Modo clásico: Cada nivel es un 10% más rápido
+        newSpawnRate = Math.max(
+          config.MIN_SPAWN_RATE,
+          config.SPAWN_RATES.SLOW - ((newLevel - 1) * 150)
+        );
+      } else if (state.currentPlayMode === 'timed') {
+        // Modo contrarreloj: Cada nivel es un 15% más rápido
+        newSpawnRate = Math.max(
+          config.MIN_SPAWN_RATE, 
+          config.SPAWN_RATES.MEDIUM - ((newLevel - 1) * 200)
+        );
+      } else if (state.currentPlayMode === 'survival') {
+        // Modo supervivencia: Comienza más lento pero acelera durante el juego
+        newSpawnRate = Math.max(
+          config.MIN_SPAWN_RATE,
+          config.SPAWN_RATES.VERY_SLOW - ((newLevel - 1) * 100)
+        );
+      } else {
+        // Modo zen o cualquier otro: Mantener velocidad consistente
+        newSpawnRate = config.SPAWN_RATES.SLOW;
+      }
+      
+      // Actualizar velocidad de spawn
+      state.spawnRate = newSpawnRate;
+      state.speedMultiplier = Number((config.INITIAL_SPAWN_RATE / newSpawnRate).toFixed(1));
+      console.log(`Fase 5: Velocidad de spawn ajustada a ${newSpawnRate}ms (multiplicador: ${state.speedMultiplier}x)`);
+      
+      // Ajustar objetivos según el modo de juego
+      if (state.currentPlayMode === 'classic') {
+        state.levelScoreTarget = config.LEVEL_REQUIREMENTS.classic.baseScore * 
+                               Math.pow(config.LEVEL_REQUIREMENTS.classic.scoreMultiplier, newLevel - 1);
+        state.levelOccupationTarget = Math.max(
+          30, 
+          config.LEVEL_REQUIREMENTS.classic.baseOccupation - 
+          (newLevel * config.LEVEL_REQUIREMENTS.classic.occupationDecrease)
+        );
+        console.log(`Fase 6: Objetivos establecidos - Puntuación: ${state.levelScoreTarget}, Ocupación: ${state.levelOccupationTarget}%`);
+      } else if (state.currentPlayMode === 'timed') {
+        const timeLimit = config.LEVEL_REQUIREMENTS.timed.baseTime - 
+                           (newLevel - 1) * config.LEVEL_REQUIREMENTS.timed.timeDecreasePerLevel;
+        state.timeRemaining = Math.max(30, timeLimit);
+        state.levelTimeLimit = Math.max(30, timeLimit);
+        console.log(`Fase 6: Tiempo establecido para el nivel: ${state.timeRemaining} segundos`);
+      } else {
+        console.log(`Fase 6: Sin objetivos específicos para el modo ${state.currentPlayMode}`);
+      }
+      
+      // Crear tablero vacío para el nuevo nivel
+      state.board = Array(state.boardSize).fill(null).map(() => Array(state.boardSize).fill(null));
+      console.log(`Fase 7: Tablero vacío creado (${state.boardSize}x${state.boardSize})`);
+      
+      // Limpiar las celdas resaltadas
+      state.highlightedCells = [];
+      
+      console.log("**********************************************************\n");
+      console.log(`FIN DEL FLUJO: NIVEL ${newLevel} CONFIGURADO CORRECTAMENTE`);
     },
     
     incrementTimer: (state) => {
@@ -284,41 +394,83 @@ const gameSlice = createSlice({
     },
     
     setGameStatus: (state, action: PayloadAction<GameState['status']>) => {
-      const prevStatus = state.status;
-      state.status = action.payload;
+      const oldStatus = state.status;
+      const newStatus = action.payload;
       
-      // Limpiar las celdas resaltadas al cambiar estado
-      if (action.payload !== 'playing') {
-        state.highlightedCells = [];
-      }
+      console.log("\n**********************************************************");
+      console.log("INICIO DEL FLUJO: CAMBIO DE ESTADO DEL JUEGO");
+      console.log(`Cambiando de ${oldStatus} a ${newStatus}`);
+      console.log(`Nivel: ${state.level}, Modo: ${state.currentPlayMode}`);
+      console.log("**********************************************************");
       
-      // Si el juego ha terminado (gameOver), resetear contadores relevantes
-      if (action.payload === 'gameOver') {
-        // Resetear contadores pero mantener puntuación y nivel para mostrar en el modal
-        state.iconCount = 0;
-        state.spawnRate = initialState.spawnRate; 
-        state.speedMultiplier = initialState.speedMultiplier;
-        state.hintsRemaining = initialState.hintsRemaining;
-        state.hintCooldown = initialState.hintCooldown;
-        state.lastHintTime = initialState.lastHintTime;
-        state.canEmptyBoardBonus = initialState.canEmptyBoardBonus;
-        state.timeRemaining = initialState.timeRemaining;
-        state.survivalTime = initialState.survivalTime;
+      // Actualizar el estado del juego
+      state.status = newStatus;
+      
+      // Manejar lógica específica para cada transición de estado
+      if (newStatus === 'playing') {
+        if (oldStatus === 'paused') {
+          console.log("Fase 1: Reanudando juego desde pausa");
+        } else {
+          console.log("Fase 1: Iniciando nuevo juego");
+        }
         
-        logger.info('Game', 'Game Over: Contadores reseteados a valores iniciales');
+        console.log("Fase 2: Asegurando estado correcto para el juego");
+      }
+      else if (newStatus === 'paused') {
+        console.log("Fase 1: Juego pausado");
+      }
+      else if (newStatus === 'gameOver') {
+        console.log("Fase 1: Juego terminado (Game Over)");
+        
+        console.log("Fase 2: Configurando estado de Game Over");
+        
+        // Resetear highlightedCells
+        state.highlightedCells = [];
+        console.log("Fase 3: Celdas resaltadas limpiadas");
+      }
+      else if (newStatus === 'levelCompleted') {
+        console.log("Fase 1: Nivel completado");
+        console.log("Fase 2: Preparando transición al siguiente nivel");
+      }
+      else if (newStatus === 'startScreen') {
+        console.log("Fase 1: Volviendo a pantalla inicial");
+        console.log("Fase 2: Reiniciando estados para nueva partida");
       }
       
-      logger.info('Game', `Estado del juego cambiado de ${prevStatus} a ${action.payload}`);
+      console.log("**********************************************************\n");
+      console.log(`FIN DEL FLUJO: ESTADO DEL JUEGO CAMBIADO A ${newStatus}`);
     },
     
     setGameMode: (state, action: PayloadAction<GameState['currentDifficulty']>) => {
-      state.currentDifficulty = action.payload;
-      logger.info('Game', `Dificultad de juego establecida a ${action.payload}`);
+      const previousDifficulty = state.currentDifficulty;
+      const newDifficulty = action.payload;
+      
+      console.log("\n**********************************************************");
+      console.log("INICIO DEL FLUJO: CAMBIO DE DIFICULTAD");
+      console.log(`Cambiando de ${previousDifficulty} a ${newDifficulty}`);
+      console.log("**********************************************************");
+      
+      state.currentDifficulty = newDifficulty;
+      
+      // Actualizar los iconos disponibles para el nivel actual y la nueva dificultad
+      state.availableIcons = config.getIconsForLevel(state.level, newDifficulty);
+      
+      console.log(`Iconos configurados para nivel ${state.level} y dificultad ${newDifficulty}`);
+      console.log(`Iconos: ${state.availableIcons.slice(0, 8).join(', ')}${state.availableIcons.length > 8 ? '...' : ''}`);
+      console.log("**********************************************************\n");
+      console.log(`FIN DEL FLUJO: DIFICULTAD CAMBIADA A ${newDifficulty}`);
+      
+      logger.info('Game', `Dificultad de juego establecida a ${newDifficulty}`);
     },
     
     setPlayMode: (state, action: PayloadAction<GameState['currentPlayMode']>) => {
       // Guardar el nuevo modo de juego para usarlo en el reseteo
       const newPlayMode = action.payload;
+      
+      console.log("\n**********************************************************");
+      console.log("INICIO DEL FLUJO: CAMBIO DE MODO DE JUEGO");
+      console.log(`Cambiando de ${state.currentPlayMode} a ${newPlayMode}`);
+      console.log("**********************************************************");
       
       // Reiniciar el juego completamente con el nuevo modo
       Object.assign(state, {
@@ -330,33 +482,15 @@ const gameSlice = createSlice({
         status: 'playing'
       });
       
-      // Configurar propiedades específicas según el modo de juego
-      switch (newPlayMode) {
-        case 'classic':
-          state.boardSize = config.BOARD_SIZES[state.level - 1];
-          state.spawnRate = config.SPAWN_RATES.SLOW;
-          state.levelScoreTarget = config.GAME_MODE_CONFIG['CLASSIC'].initialScoreTarget * state.level;
-          state.levelOccupationTarget = Math.max(30, 70 - (state.level * 3)); // Disminuye con los niveles
-          break;
-        case 'timed':
-          state.boardSize = config.BOARD_SIZES[state.level - 1];
-          state.spawnRate = config.SPAWN_RATES.MEDIUM;
-          state.timeRemaining = config.BASE_GAME_DURATION;
-          state.levelTimeLimit = config.BASE_GAME_DURATION;
-          break;
-        case 'survival':
-          state.boardSize = config.BOARD_SIZES[state.level - 1]; // Tamaño grande fijo para supervivencia
-          state.spawnRate = config.SPAWN_RATES.VERY_SLOW; // Comienza lento
-          state.specialIconsEnabled = true;
-          state.survivalTime = 0;
-          break;
-      }
+      // Actualizar los iconos disponibles para el nivel 1 y la dificultad actual
+      state.availableIcons = config.getIconsForLevel(1, state.currentDifficulty);
       
-      logger.info('Game', `Modo de juego establecido a ${newPlayMode}`, {
-        boardSize: state.boardSize,
-        spawnRate: state.spawnRate,
-        timeRemaining: state.timeRemaining
-      });
+      console.log(`Iconos configurados para nivel 1 y dificultad ${state.currentDifficulty}`);
+      console.log(`Iconos: ${state.availableIcons.slice(0, 8).join(', ')}${state.availableIcons.length > 8 ? '...' : ''}`);
+      console.log("**********************************************************\n");
+      console.log(`FIN DEL FLUJO: MODO DE JUEGO CAMBIADO A ${newPlayMode}`);
+      
+      logger.info('Game', `Modo de juego establecido a ${newPlayMode}`);
     },
     
     useHint: (state) => {
@@ -399,8 +533,11 @@ const gameSlice = createSlice({
         if (isPenalty) {
           logger.info('Game', `Icono de penalización añadido en [${row},${col}]: ${icon}`);
         } else {
-          logger.info('Game', `Icono añadido en [${row},${col}]: ${icon}`);
+          logger.info('Game', `Icono aleatorio añadido en [${row},${col}]: ${icon}`);
         }
+      } else {
+        // Si la celda no está vacía, registrar el evento como error
+        logger.warn('Game', `No se pudo añadir icono en [${row},${col}] porque la celda no está vacía o es inválida.`);
       }
     },
     
@@ -408,9 +545,44 @@ const gameSlice = createSlice({
       const difficulty = action.payload?.difficulty || state.currentDifficulty;
       const playMode = action.payload?.playMode || state.currentPlayMode;
       
+      console.log("\n**********************************************************");
+      console.log("INICIO DEL FLUJO: REINICIO DEL JUEGO");
+      console.log(`Dificultad: ${difficulty}, Modo: ${playMode}`);
+      console.log("**********************************************************");
+      
       // Conservar la puntuación máxima y preferencias de usuario
       const highScore = state.highScore;
       const darkMode = state.darkMode;
+      
+      // Determinar el tamaño inicial del tablero según el modo de juego
+      let initialBoardSize = config.DEFAULT_BOARD_SIZE;
+      let initialSpawnRate = config.SPAWN_RATES.MEDIUM;
+      
+      // Configurar tamaño del tablero y spawn rate según el modo de juego
+      switch (playMode) {
+        case 'classic':
+          initialBoardSize = config.BOARD_SIZE.SMALL;
+          initialSpawnRate = config.SPAWN_RATES.SLOW;
+          break;
+        case 'timed':
+          initialBoardSize = config.BOARD_SIZE.MEDIUM;
+          initialSpawnRate = config.SPAWN_RATES.MEDIUM;
+          break;
+        case 'survival':
+          initialBoardSize = config.BOARD_SIZE.LARGE;
+          initialSpawnRate = config.SPAWN_RATES.VERY_SLOW;
+          break;
+        case 'zen':
+          initialBoardSize = config.BOARD_SIZE.MEDIUM;
+          initialSpawnRate = config.SPAWN_RATES.VERY_SLOW;
+          break;
+      }
+      
+      console.log(`Fase 1: Tamaño de tablero: ${initialBoardSize}x${initialBoardSize}, Velocidad: ${initialSpawnRate}ms`);
+      
+      // Obtener los iconos para el nivel 1 y la dificultad seleccionada
+      const initialIcons = config.getIconsForLevel(1, difficulty);
+      console.log(`Fase 2: Iconos configurados: ${initialIcons.slice(0, 8).join(', ')}${initialIcons.length > 8 ? '...' : ''}`);
       
       // Restablecer el estado completamente
       Object.assign(state, {
@@ -419,45 +591,53 @@ const gameSlice = createSlice({
         darkMode,
         currentDifficulty: difficulty,
         currentPlayMode: playMode,
-        status: 'playing',
+        status: 'startScreen', // Cambiar a pantalla de inicio en lugar de playing
         hintsRemaining: config.HINT_SYSTEM.MAX_HINTS_PER_LEVEL,
         canEmptyBoardBonus: true,
-        // Asegurar que estos contadores se reseteen explícitamente
         score: 0,
         level: 1,
         timer: 0,
         iconCount: 0,
-        spawnRate: initialState.spawnRate,
-        speedMultiplier: initialState.speedMultiplier,
+        board: Array(initialBoardSize).fill(null).map(() => Array(initialBoardSize).fill(null)),
+        boardSize: initialBoardSize,
+        spawnRate: initialSpawnRate,
+        speedMultiplier: 1.0,
         hintCooldown: false,
         lastHintTime: 0,
-        timeRemaining: initialState.timeRemaining,
+        timeRemaining: config.GAME_MODE_CONFIG.TIMED.initialTimeLimit,
         survivalTime: 0,
-        highlightedCells: []
+        highlightedCells: [],
+        availableIcons: initialIcons
       });
+      
+      console.log("Fase 3: Estado del juego reiniciado");
       
       // Configurar propiedades específicas según el modo de juego
       switch (playMode) {
         case 'classic':
-          state.boardSize = 5; // Tamaño inicial para el modo clásico
-          state.spawnRate = config.SPAWN_RATES.SLOW;
-          state.levelScoreTarget = 1000;
-          state.levelOccupationTarget = 70;
+          state.levelScoreTarget = config.LEVEL_REQUIREMENTS.classic.baseScore;
+          state.levelOccupationTarget = config.LEVEL_REQUIREMENTS.classic.baseOccupation;
+          console.log(`Fase 4: Objetivos establecidos - Puntuación: ${state.levelScoreTarget}, Ocupación: ${state.levelOccupationTarget}%`);
           break;
         case 'timed':
-          state.boardSize = 7; // Tamaño fijo para el modo contrarreloj
-          state.spawnRate = config.SPAWN_RATES.MEDIUM;
-          state.timeRemaining = config.BASE_GAME_DURATION;
-          state.levelTimeLimit = config.BASE_GAME_DURATION;
+          state.timeRemaining = config.LEVEL_REQUIREMENTS.timed.baseTime;
+          state.levelTimeLimit = config.LEVEL_REQUIREMENTS.timed.baseTime;
+          console.log(`Fase 4: Tiempo establecido: ${state.timeRemaining} segundos`);
           break;
         case 'survival':
-          state.boardSize = 10; // Tamaño grande fijo para supervivencia
-          state.spawnRate = config.SPAWN_RATES.VERY_SLOW; // Comienza lento
-          state.specialIconsEnabled = true;
+          state.survivalTime = 0;
+          state.specialIconsEnabled = false;
+          console.log("Fase 4: Modo supervivencia configurado");
+          break;
+        case 'zen':
+          console.log("Fase 4: Modo zen configurado - sin límites ni objetivos");
           break;
       }
       
-      logger.info('Game', `Juego reiniciado en modo ${playMode}, dificultad ${difficulty}`);
+      console.log("**********************************************************\n");
+      console.log("FIN DEL FLUJO: JUEGO REINICIADO CORRECTAMENTE");
+      
+      logger.info('Game', `Juego reiniciado con modo ${playMode} y dificultad ${difficulty}`);
     },
     
     loadHighScore: (state) => {

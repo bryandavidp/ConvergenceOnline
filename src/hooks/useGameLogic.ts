@@ -20,6 +20,7 @@ import {
   GamePlayMode,
   setGameMode,
   setPlayMode,
+  addIcon,
 /*   changeBoardSize,
   changeSpawnRate,
   addScore, 
@@ -96,6 +97,9 @@ const useGameLogic = () => {
   const lastSpawnRateRef = useRef<number | null>(null);
   const timerRef = useRef<number>(0);
   
+  // Añadir un nuevo ref para rastrear un período de gracia después de cambiar de nivel
+  const levelTransitionGraceRef = useRef<number>(0);
+  
   // Función para registrar celda en el DOM (referencias)
   const registerCellRef = useCallback((row: number, col: number, element: HTMLElement | null) => {
     const key = `${row}-${col}`;
@@ -111,38 +115,122 @@ const useGameLogic = () => {
     return checkBoardForValidMoves(board, boardSize, availableIcons);
   }, [board, boardSize, availableIcons]);
   
-  // Inicializar tablero con iconos iniciales
-  const initializeBoard = useCallback((size: number = boardSize) => {
-    logger.info('Inicializando tablero', `Tamaño: ${size}, Modo: ${currentPlayMode}`);
+  // Verificar si una celda específica causaría una convergencia
+  const checkCellForConvergence = (board: (string | null)[][], row: number, col: number): boolean => {
+    const size = board.length;
+    const icon = board[row][col];
     
-    const newBoard = Array(size).fill(null).map(() => Array(size).fill(null));
+    if (icon === null) return false;
+    
+    const directions = [
+      { dr: -1, dc: 0 }, // arriba
+      { dr: 0, dc: 1 },  // derecha
+      { dr: 1, dc: 0 },  // abajo
+      { dr: 0, dc: -1 }  // izquierda
+    ];
+    
+    // Revisar en cada dirección si hay 2+ iconos iguales consecutivos
+    for (const dir of directions) {
+      let count = 1; // El propio icono
+      
+      // Contar hacia adelante
+      let r = row + dir.dr;
+      let c = col + dir.dc;
+      while (isValidCell(r, c, size) && board[r][c] === icon) {
+        count++;
+        r += dir.dr;
+        c += dir.dc;
+      }
+      
+      // Contar hacia atrás
+      r = row - dir.dr;
+      c = col - dir.dc;
+      while (isValidCell(r, c, size) && board[r][c] === icon) {
+        count++;
+        r -= dir.dr;
+        c -= dir.dc;
+      }
+      
+      if (count >= 3) {
+        return true; // Hay convergencia
+      }
+    }
+    
+    return false; // No hay convergencia
+  };
+  
+  // Inicializar tablero con iconos iniciales
+  const initializeBoard = useCallback((size?: number) => {
+    // Obtener el estado actual del juego
+    const gameState = store.getState().game;
+    const currentLevel = gameState.level;
+    const currentMode = gameState.currentPlayMode;
+    const currentStatus = gameState.status;
+    const actualSize = size || gameState.boardSize;
+    
+    // IMPORTANTE: Usar siempre la configuración centralizada para obtener los iconos
+    // Esto garantiza consistencia entre nivel 1 y demás niveles
+    let iconsForLevel: string[];
+    
+    if (currentLevel <= config.LEVEL_ICONS.length) {
+      // Usar conjuntos predefinidos para niveles básicos
+      iconsForLevel = config.getIconSetForLevel(currentLevel);
+    } else {
+      // Para niveles avanzados, usar iconos basados en la dificultad
+      iconsForLevel = config.getIconsForLevel(currentLevel, currentDifficulty);
+    }
+    
+    // Actualizar los iconos en el estado global para garantizar que
+    // todas las partes del juego usen los mismos iconos para este nivel
+    dispatch(setAvailableIcons(iconsForLevel));
+    
+    console.log("\n**********************************************************");
+    console.log("INICIO DEL FLUJO: INICIALIZAR TABLERO");
+    console.log(`Tamaño: ${actualSize}, Nivel: ${currentLevel}, Modo: ${currentMode}`);
+    console.log(`Estado: ${currentStatus}, Dificultad: ${currentDifficulty}`);
+    console.log(`Iconos para nivel ${currentLevel}: ${iconsForLevel.join(', ')}`);
+    console.log("**********************************************************");
+    
+    logger.info('Inicializando tablero', `Tamaño: ${actualSize}, Modo: ${currentMode}, Nivel: ${currentLevel}`);
+    
+    const newBoard = Array(actualSize).fill(null).map(() => Array(actualSize).fill(null));
     
     // Obtener la cantidad de iconos iniciales según el modo de juego desde la configuración
-    const modeConfig = config.getGameModeConfig(currentPlayMode);
+    const modeConfig = config.getGameModeConfig(currentMode);
     const difficultyConfig = config.getDifficultyConfig(currentDifficulty);
     
     // Priorizar initialIcons de modeConfig, luego initialIconCount de difficultyConfig, 
     // finalmente caer al valor por defecto INITIAL_ICONS
     let totalIcons = modeConfig?.initialIcons || 
-                     difficultyConfig?.initialIconCount || 
-                     config.INITIAL_ICONS;
+                   difficultyConfig?.initialIconCount || 
+                   config.INITIAL_ICONS;
 
-    console.log('totalIcons', totalIcons);
+    // Ajustar totalIcons según el nivel
+    if (currentLevel > 1) {
+      // Para niveles superiores a 1, reducir ligeramente la cantidad de iconos iniciales
+      // para dar al jugador más espacio para empezar
+      totalIcons = Math.max(3, Math.floor(totalIcons * 0.8));
+    }
+    
+    console.log(`Fase 1: Calculados ${totalIcons} iconos iniciales para nivel ${currentLevel}`);
     
     // Limitar la cantidad de iconos iniciales a un porcentaje máximo del tablero
-    // totalIcons = Math.min(totalIcons, Math.floor(size * size * 0.4));
-    // console.log('totalIcons', totalIcons);
+    const maxInitialIcons = Math.floor(actualSize * actualSize * 0.5); // Máximo 50% del tablero
+    totalIcons = Math.min(totalIcons, maxInitialIcons);
+    
     logger.info(`Inicializando tablero con ${totalIcons} iconos iniciales`, 
-              `Modo: ${currentPlayMode}, Dificultad: ${currentDifficulty}`);
+              `Modo: ${currentMode}, Dificultad: ${currentDifficulty}, Nivel: ${currentLevel}`);
     
     // Primero colocamos unos pocos iconos en posiciones estratégicas para garantizar
     // que el jugador tenga al menos un movimiento válido disponible
-    const shuffledIcons = shuffleArray([...availableIcons]);
+    const shuffledIcons = shuffleArray([...iconsForLevel]);
     const icon1 = shuffledIcons[0];
     
+    console.log("Fase 2: Colocando iconos iniciales garantizados");
+    
     // Colocar grupo inicial de 3 iconos iguales en forma de L o T
-    const centerRow = getRandomInt(2, size - 3);
-    const centerCol = getRandomInt(2, size - 3);
+    const centerRow = getRandomInt(2, actualSize - 3);
+    const centerCol = getRandomInt(2, actualSize - 3);
     
     // Centro
     newBoard[centerRow][centerCol] = icon1;
@@ -170,10 +258,54 @@ const useGameLogic = () => {
     // Contamos cuántos iconos hemos colocado hasta ahora
     let placedIcons = 3;
     
+    console.log(`Fase 3: Grupo inicial garantizado colocado (${placedIcons} iconos)`);
+    
+    // Colocar otro grupo garantizado con un icono diferente para asegurar variedad
+    if (shuffledIcons.length > 1 && totalIcons >= 6) {
+      const icon2 = shuffledIcons[1];
+      let placed = false;
+      
+      // Intentar varias veces para encontrar una ubicación válida
+      for (let attempt = 0; attempt < 10 && !placed; attempt++) {
+        const row = getRandomInt(2, actualSize - 3);
+        const col = getRandomInt(2, actualSize - 3);
+        
+        // Verificar que no esté demasiado cerca del primer grupo
+        if (Math.abs(row - centerRow) + Math.abs(col - centerCol) >= 4) {
+          // Centro del segundo grupo
+          newBoard[row][col] = icon2;
+          
+          // Dos posiciones adyacentes
+          const dir1Index = getRandomInt(0, 4);
+          let dir2Index = getRandomInt(0, 4);
+          while (Math.abs(dir1Index - dir2Index) === 2) {
+            dir2Index = getRandomInt(0, 4);
+          }
+          
+          const dir1 = directions[dir1Index];
+          newBoard[row + dir1.dr][col + dir1.dc] = icon2;
+          
+          const dir2 = directions[dir2Index];
+          newBoard[row + dir2.dr][col + dir2.dc] = icon2;
+          
+          placedIcons += 3;
+          placed = true;
+        }
+      }
+      
+      if (placed) {
+        console.log(`Fase 4: Segundo grupo garantizado colocado (total: ${placedIcons} iconos)`);
+      }
+    }
+    
     // Añadir iconos aleatorios adicionales hasta alcanzar totalIcons
-    while (placedIcons < totalIcons) {
-      const row = getRandomInt(0, size);
-      const col = getRandomInt(0, size);
+    console.log(`Fase 5: Colocando iconos aleatorios adicionales hasta ${totalIcons}`);
+    let maxAttempts = totalIcons * 5; // Limitar número máximo de intentos
+    
+    while (placedIcons < totalIcons && maxAttempts > 0) {
+      maxAttempts--;
+      const row = getRandomInt(0, actualSize);
+      const col = getRandomInt(0, actualSize);
       
       // Solo colocamos en celdas vacías
       if (newBoard[row][col] === null) {
@@ -182,74 +314,84 @@ const useGameLogic = () => {
         let attempts = 0;
         
         while (!validIcon && attempts < 10) {
-          const iconIndex = getRandomInt(0, availableIcons.length);
-          const icon = availableIcons[iconIndex];
+          const iconIndex = getRandomInt(0, iconsForLevel.length);
+          const icon = iconsForLevel[iconIndex];
           
           // Probar si este icono causaría una convergencia
           newBoard[row][col] = icon;
           
-          // Verificar manualmente si causaría una convergencia en lugar de usar findConvergences
-          let hasConvergence = false;
-          const directions = [
-            { dr: -1, dc: 0 }, // arriba
-            { dr: 0, dc: 1 },  // derecha
-            { dr: 1, dc: 0 },  // abajo
-            { dr: 0, dc: -1 }  // izquierda
-          ];
-          
-          // Revisar en cada dirección si hay 2+ iconos iguales consecutivos
-          for (const dir of directions) {
-            let count = 1; // El propio icono
-            
-            // Contar hacia adelante
-            let r = row + dir.dr;
-            let c = col + dir.dc;
-            while (isValidCell(r, c, size) && newBoard[r][c] === icon) {
-              count++;
-              r += dir.dr;
-              c += dir.dc;
-            }
-            
-            // Contar hacia atrás
-            r = row - dir.dr;
-            c = col - dir.dc;
-            while (isValidCell(r, c, size) && newBoard[r][c] === icon) {
-              count++;
-              r -= dir.dr;
-              c -= dir.dc;
-            }
-            
-            if (count >= 3) {
-              hasConvergence = true;
-              break;
-            }
-          }
+          // Verificar manualmente si causaría una convergencia
+          const hasConvergence = checkCellForConvergence(newBoard, row, col);
           
           if (!hasConvergence) {
             validIcon = true;
             placedIcons++;
           } else {
-            // Si causa convergencia, eliminarlo y probar otro
+            // Si causa convergencia, vaciar la celda y probar otro icono
             newBoard[row][col] = null;
           }
           
           attempts++;
         }
         
-        // Si después de varios intentos no encontramos un icono válido,
-        // dejamos la celda vacía y continuamos
+        // Si no encontramos un icono válido después de varios intentos, dejamos la celda vacía
         if (!validIcon) {
           newBoard[row][col] = null;
         }
       }
     }
     
-    dispatch(updateBoard(newBoard));
+    // Verificar que haya al menos un movimiento válido
+    const hasMovesAvailable = checkBoardForValidMoves(newBoard, actualSize, iconsForLevel);
+    console.log(`Fase 6: Verificación de movimientos válidos: ${hasMovesAvailable ? 'OK' : 'Sin movimientos'}`);
+    
+    if (!hasMovesAvailable) {
+      console.log("ADVERTENCIA: Tablero inicializado sin movimientos válidos. Corrigiendo...");
+      
+      // Forzar al menos un movimiento válido
+      // Buscar una celda vacía
+      let emptyCellFound = false;
+      for (let row = 0; row < actualSize && !emptyCellFound; row++) {
+        for (let col = 0; col < actualSize && !emptyCellFound; col++) {
+          if (newBoard[row][col] === null) {
+            // Encontrar una celda adyacente con un icono
+            for (const dir of directions) {
+              const newRow = row + dir.dr;
+              const newCol = col + dir.dc;
+              
+              if (newRow >= 0 && newRow < actualSize && newCol >= 0 && newCol < actualSize && 
+                  newBoard[newRow][newCol] !== null) {
+                // Colocar el mismo icono en otra celda adyacente para crear un movimiento válido
+                const icon = newBoard[newRow][newCol];
+                
+                for (const dir2 of directions) {
+                  if (dir.dr !== dir2.dr || dir.dc !== dir2.dc) { // Dirección diferente
+                    const targetRow = row + dir2.dr;
+                    const targetCol = col + dir2.dc;
+                    
+                    if (targetRow >= 0 && targetRow < actualSize && targetCol >= 0 && targetCol < actualSize && 
+                        newBoard[targetRow][targetCol] === null) {
+                      // Colocar el mismo icono
+                      newBoard[targetRow][targetCol] = icon;
+                      emptyCellFound = true;
+                      console.log(`Fase 7: Corrección aplicada, movimiento válido creado en [${row},${col}]`);
+                      break;
+                    }
+                  }
+                }
+                
+                if (emptyCellFound) break;
+              }
+            }
+          }
+        }
+      }
+    }
     
     // Contar el número real de iconos colocados
     let actualIconCount = 0;
-    for (let r = 0; r < size; r++) {
-      for (let c = 0; c < size; c++) {
+    for (let r = 0; r < actualSize; r++) {
+      for (let c = 0; c < actualSize; c++) {
         if (newBoard[r][c] !== null) {
           actualIconCount++;
         }
@@ -257,42 +399,72 @@ const useGameLogic = () => {
     }
     
     logger.info(`Tablero inicializado con ${actualIconCount} iconos`, 
-               `Objetivo: ${totalIcons}, Tamaño tablero: ${size}x${size}`);
+               `Objetivo: ${totalIcons}, Tamaño tablero: ${actualSize}x${actualSize}, Nivel: ${currentLevel}`);
+    console.log(`Fase 8: Tablero final con ${actualIconCount}/${totalIcons} iconos (${(actualIconCount/(actualSize*actualSize)*100).toFixed(1)}% ocupación)`);
     
+    // Asegurarse de que el tablero se actualiza en el estado
+    dispatch(updateBoard(newBoard));
+    console.log("Fase 9: Tablero actualizado en el estado global");
+    
+    // Actualizar el conteo de iconos en el estado
     dispatch(setIconCount(actualIconCount));
     
-    if (currentPlayMode === 'classic') {
+    // Configurar objetivos de nivel según el modo de juego
+    if (currentMode === 'classic') {
       const scoreTarget = config.GAME_MODE_CONFIG.CLASSIC.initialScoreTarget * 
-                         Math.pow(config.GAME_MODE_CONFIG.CLASSIC.scoreTargetMultiplier, level - 1);
+                         Math.pow(config.GAME_MODE_CONFIG.CLASSIC.scoreTargetMultiplier, currentLevel - 1);
       
       const occupationTarget = Math.max(
         30, 
         config.GAME_MODE_CONFIG.CLASSIC.initialOccupationTarget - 
-        (level * config.GAME_MODE_CONFIG.CLASSIC.occupationDecreasePerLevel)
+        (currentLevel * config.GAME_MODE_CONFIG.CLASSIC.occupationDecreasePerLevel)
       );
       
       dispatch(setLevelTarget({
         score: Math.round(scoreTarget),
         occupation: Math.round(occupationTarget)
       }));
-    } else if (currentPlayMode === 'timed') {
+    } else if (currentMode === 'timed') {
       const timeLimit = config.GAME_MODE_CONFIG.TIMED.initialTimeLimit - 
-                       (level - 1) * config.GAME_MODE_CONFIG.TIMED.timeDecreasePerLevel;
+                       (currentLevel - 1) * config.GAME_MODE_CONFIG.TIMED.timeDecreasePerLevel;
       
       dispatch(setLevelTimeLimit(Math.max(30, timeLimit)));
     }
     
-    isInitializedRef.current = true;
-    
-    const initialSpawnRate = calculateInitialSpeedForLevel(level, currentPlayMode, config.GAME_MODES, MIN_SPAWN_RATE);
+    const initialSpawnRate = calculateInitialSpeedForLevel(currentLevel, currentMode, config.GAME_MODES, MIN_SPAWN_RATE);
     dispatch(setSpawnRate(initialSpawnRate));
+    console.log(`Fase 10: SpawnRate configurado a ${initialSpawnRate}ms para nivel ${currentLevel}`);
+    
+    // Marcar la inicialización como completada (siempre se marca como verdadero)
+    isInitializedRef.current = true;
+    console.log("Fase 11: Tablero marcado como inicializado");
+    
+    console.log("**********************************************************\n");
+    console.log(`FIN DEL FLUJO: TABLERO INICIALIZADO CORRECTAMENTE PARA NIVEL ${currentLevel}`);
     
     return newBoard;
-  }, [dispatch, boardSize, currentPlayMode, level, currentDifficulty, availableIcons]);
+  }, [dispatch]);
   
   // Añadir un icono aleatorio al tablero
   const addRandomIcon = useCallback(() => {
+    console.log("\n**********************************************************");
+    console.log("INICIO DEL FLUJO: AÑADIR ICONO ALEATORIO");
+    // Obtenemos el estado actual directamente del store para asegurar valores actualizados
+    const gameState = store.getState().game;
+    console.log(`Nivel: ${gameState.level}, Modo: ${gameState.currentPlayMode}`);
+    console.log(`Contador de iconos actual: ${gameState.iconCount}`);
+    console.log(`Período de gracia: ${levelTransitionGraceRef.current}`);
+    console.log("**********************************************************");
+    
+    // Si ya estamos en proceso de añadir un icono, evitar la recursión
+    if (isSpawningRef.current) {
+      console.log("Saltando spawn porque ya hay uno en proceso");
+      console.log("**********************************************************\n");
+      return;
+    }
+    
     isSpawningRef.current = true;
+    console.log("Fase 1: Marcando estado de spawning como activo");
     
     try {
       const { 
@@ -300,49 +472,85 @@ const useGameLogic = () => {
         status: gameStatus,
         iconCount: currentIconCount,
         boardSize: currentBoardSize,
+        level: currentLevel,
+        availableIcons: currentAvailableIcons
       } = store.getState().game;
       
-      if (gameStatus !== 'playing' || !currentBoard || !currentBoard.length) {
+      // Verificar que el estado sea válido
+      if (gameStatus !== 'playing') {
+        console.log(`Cancelando spawn: estado=${gameStatus} no es 'playing'`);
+        console.log("**********************************************************\n");
+        isSpawningRef.current = false;
         return;
       }
       
-      // Verificar si hay movimientos válidos ANTES de añadir un icono
-      const hasMovesAvailable = hasValidMoves();
-      if (!hasMovesAvailable) {
-        const totalCells = currentBoardSize * currentBoardSize;
-        const occupationPercentage = (currentIconCount / totalCells) * 100;
-        
-        // Verificar si hay 2 o menos iconos en el tablero
-        if (currentIconCount <= 2) {
-          logger.info('Game', `Solo quedan ${currentIconCount} iconos sin movimientos válidos. Nivel completado.`);
-          dispatch(setGameStatus('levelCompleted'));
-          return; // Importante: prevenir la aparición del nuevo icono
-        }
-        // Si hay pocos iconos, pasar al siguiente nivel
-        else if (occupationPercentage <= 30) {
-          logger.info('Game', `Tablero con pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`);
-          dispatch(setGameStatus('levelCompleted'));
-          return; // Prevenir la aparición del nuevo icono
-        } 
-        // Si no, game over
-        else {
-          logger.info('Game', `Tablero sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`);
-          dispatch(setGameStatus('gameOver'));
-          return; // Prevenir la aparición del nuevo icono
-        }
+      // Verificar que el tablero sea válido
+      if (!currentBoard || !currentBoard.length) {
+        console.log(`Cancelando spawn: tablero no es válido`);
+        console.log("**********************************************************\n");
+        isSpawningRef.current = false;
+        return;
       }
       
+      console.log(`Fase 2: Estado y tablero verificados (válidos)`);
+      
+      // Calcular el tamaño total del tablero y la ocupación actual
       const totalCells = currentBoardSize * currentBoardSize;
-      const maxIconsAllowed = totalCells; // Permitir llenar todo el tablero
+      const occupationPercentage = (currentIconCount / totalCells) * 100;
       
-      if (currentIconCount >= maxIconsAllowed) {
-        if (!hasValidMoves()) {
-          // Si no hay movimientos válidos y estamos en el límite de iconos, es game over
+      // Comprobar si el tablero está lleno
+      const isBoardFull = currentIconCount >= totalCells;
+      
+      // Si estamos en el período de gracia después de un cambio de nivel,
+      // no verificar condiciones de finalización para evitar game over prematuro
+      if (levelTransitionGraceRef.current > 0) {
+        levelTransitionGraceRef.current--;
+        console.log(`Fase 3: En período de gracia (${levelTransitionGraceRef.current} restantes), omitiendo verificaciones de fin de juego`);
+      } else {
+        // LÓGICA PARA GAME OVER: 
+        // Solo si el tablero está COMPLETAMENTE LLENO
+        if (isBoardFull) {
+          console.log(`Fase 3: Tablero 100% lleno (${currentIconCount}/${totalCells}) - Game Over`);
           dispatch(setGameStatus('gameOver'));
+          console.log("**********************************************************\n");
+          isSpawningRef.current = false;
+          return;
         }
-        return;
+        
+        // LÓGICA PARA COMPLETAR NIVEL:
+        // Si no hay movimientos válidos Y (hay pocos iconos O solo quedan 2)
+        const hasMovesAvailable = hasValidMoves();
+        if (!hasMovesAvailable) {
+          console.log("Fase 3: No hay movimientos válidos disponibles, comprobando condiciones para completar nivel");
+          
+          // Verificar si hay 2 o menos iconos en el tablero
+          if (currentIconCount <= 2) {
+            console.log("Fase 4: Solo quedan 2 o menos iconos sin movimientos válidos - Nivel completado");
+            logger.info('Game', `Solo quedan ${currentIconCount} iconos sin movimientos válidos. Nivel completado.`);
+            dispatch(setGameStatus('levelCompleted'));
+            console.log("**********************************************************\n");
+            isSpawningRef.current = false;
+            return; // Importante: prevenir la aparición del nuevo icono
+          }
+          // Si hay pocos iconos (menos del 30% del tablero ocupado), pasar al siguiente nivel
+          else if (occupationPercentage <= 5) {
+            console.log(`Fase 4: Pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%) - Nivel completado`);
+            logger.info('Game', `Tablero con pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`);
+            dispatch(setGameStatus('levelCompleted'));
+            console.log("**********************************************************\n");
+            isSpawningRef.current = false;
+            return; // Prevenir la aparición del nuevo icono
+          }
+          // Si no se cumplen las condiciones para completar nivel, 
+          // continuar jugando (el jugador deberá esperar a que se llene el tablero)
+          else {
+            console.log(`Fase 4: No hay movimientos válidos pero el tablero no está lleno (${occupationPercentage.toFixed(1)}%) - Continuando juego`);
+          }
+        }
       }
       
+      // Si llegamos aquí, buscamos celdas vacías para colocar un nuevo icono
+      console.log("Fase 4: Buscando celdas vacías para colocar nuevo icono");
       const emptyCells: {row: number, col: number}[] = [];
       
       // Simplificar la búsqueda de celdas vacías - buscar todas las celdas vacías
@@ -354,81 +562,167 @@ const useGameLogic = () => {
         }
       }
       
+      console.log(`Celdas vacías encontradas: ${emptyCells.length}`);
+      
+      // Si no hay celdas vacías, el tablero está lleno
       if (emptyCells.length === 0) {
-        const hasMovesLeft = hasValidMoves();
+        console.log("Fase 5: No hay celdas vacías disponibles - Tablero lleno");
         
-        if (!hasMovesLeft) {
-          // Calcular el porcentaje de ocupación
-          const occupationPercentage = (currentIconCount / totalCells) * 100;
-          
-          // Si hay pocos iconos, pasar al siguiente nivel
-          if (occupationPercentage <= 30) {
-            dispatch(setGameStatus('levelCompleted'));
-            logger.info(`Tablero con pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`, `Tamaño: ${currentBoardSize}, Modo: ${currentPlayMode}`);
-          } else {
-            // Si no, game over
-            dispatch(setGameStatus('gameOver'));
-            logger.info(`Tablero lleno sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`, `Tamaño: ${currentBoardSize}, Modo: ${currentPlayMode}`);
-          }
+        // Si estamos en período de gracia, no verificar condiciones de finalización
+        if (levelTransitionGraceRef.current > 0) {
+          console.log("En período de gracia, omitiendo verificación de Game Over por tablero lleno");
         } else {
-          // Si hay movimientos válidos, el juego continúa aunque el tablero esté lleno
-          return;
+          // GAME OVER si el tablero está lleno
+          console.log("Fase 6: Tablero completamente lleno - Game Over");
+          dispatch(setGameStatus('gameOver'));
         }
         
+        console.log("**********************************************************\n");
+        isSpawningRef.current = false;
         return;
       }
       
+      // Colocar un nuevo icono en una celda vacía aleatoria
+      console.log("Fase 5: Seleccionando celda aleatoria y colocando icono");
       const randomIndex = Math.floor(Math.random() * emptyCells.length);
       const { row, col } = emptyCells[randomIndex];
       
-      const randomIcon = availableIcons[Math.floor(Math.random() * availableIcons.length)];
+      // Usar los iconos disponibles actuales del estado global en lugar de la variable del ámbito
+      const randomIcon = currentAvailableIcons[Math.floor(Math.random() * currentAvailableIcons.length)];
+      console.log(`Icono elegido: ${randomIcon} en posición [${row},${col}]`);
       
+      // Usar el método addIcon para añadir un icono individual sin afectar al resto del tablero
+      dispatch(addIcon({
+        row,
+        col,
+        icon: randomIcon,
+        isPenalty: false
+      }));
+      
+      // Como respaldo, también actualizamos el tablero completo si es necesario
       const updatedBoard = currentBoard.map(r => [...r]);
-      updatedBoard[row][col] = randomIcon;
+      if (updatedBoard[row][col] === null) {
+        updatedBoard[row][col] = randomIcon;
+        // Solo enviamos updateBoard si realmente necesitamos actualizar
+        if (JSON.stringify(updatedBoard) !== JSON.stringify(currentBoard)) {
+          dispatch(updateBoard(updatedBoard));
+        }
+      }
       
-      dispatch(updateBoard(updatedBoard));
-      dispatch(setIconCount(currentIconCount + 1));
-      
+      // Reproducir sonido de nuevo icono
       audioManager.play('newIcon');
-      
-      if (!hasValidMoves()) {
-        // Si después de añadir un icono no hay movimientos válidos, es game over
+
+      // Después de añadir un icono, verificar si se ha llenado el tablero
+      const newIconCount = currentIconCount + 1;
+      if (newIconCount >= totalCells && levelTransitionGraceRef.current <= 0) {
+        // Si el tablero está lleno después de añadir el nuevo icono, es Game Over
+        console.log("Fase 6: Tablero completamente lleno después de añadir icono - Game Over");
         dispatch(setGameStatus('gameOver'));
       }
+
+      // Registrar el éxito de la operación
+      logger.debug('Game', `Icono aleatorio añadido exitosamente en [${row},${col}]: ${randomIcon}`);
+      console.log(`Fase 7: Icono añadido correctamente. Nuevo contador: ${store.getState().game.iconCount}`);
+      
+    } catch (error) {
+      console.error('Error al añadir icono aleatorio:', error);
     } finally {
       isSpawningRef.current = false;
+      console.log("Fase final: Estado de spawning restablecido");
+      console.log("**********************************************************\n");
     }
-  }, [dispatch, hasValidMoves, currentPlayMode, availableIcons]);
+  }, [dispatch, hasValidMoves]);
 
   // Detener todos los temporizadores del juego
   const stopTimers = useCallback(() => {
+    console.log("\n**********************************************************");
+    console.log("INICIO DEL FLUJO: DETENER TEMPORIZADORES");
+    console.log(`Estado: ${status}, Temporizadores activos: ${timersActiveRef.current ? 'Sí' : 'No'}`);
+    console.log("**********************************************************");
+    
+    logger.info('Deteniendo todos los temporizadores', ' [' + status + ']');
+    
+    // Detener intervalo de spawn
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
+      console.log("Fase 1: Temporizador de tiempo de juego detenido");
     }
     
+    // Detener temporizador de pistas
     if (iconTimerIntervalRef.current) {
       clearInterval(iconTimerIntervalRef.current);
       iconTimerIntervalRef.current = null;
+      console.log("Fase 2: Temporizador de spawn de iconos detenido");
     }
     
+    // Marcar que los temporizadores están inactivos
     timersActiveRef.current = false;
-  }, []);
+    console.log("Fase 3: Referencias de temporizadores reiniciadas");
+    
+    console.log("**********************************************************\n");
+    console.log("FIN DEL FLUJO: TEMPORIZADORES DETENIDOS CORRECTAMENTE");
+  }, [status]);
 
   // Iniciar los temporizadores del juego
-  const startTimers = useCallback(() => {
-    if (timersActiveRef.current) {
+  const startTimers = useCallback((forceStart = false) => {
+    // Obtener el estado más reciente del store para garantizar datos actualizados
+    const {
+      level: currentLevel,
+      spawnRate: currentSpawnRate,
+      currentPlayMode: currentMode,
+      status: currentStatus
+    } = store.getState().game;
+    
+    console.log("\n**********************************************************");
+    console.log("INICIO DEL FLUJO: INICIAR TEMPORIZADORES");
+    console.log(`Nivel: ${currentLevel}, SpawnRate: ${currentSpawnRate}ms, Modo: ${currentMode}`);
+    console.log(`Forzar inicio: ${forceStart ? 'Sí' : 'No'}, Temporizadores activos: ${timersActiveRef.current ? 'Sí' : 'No'}`);
+    console.log(`Estado actual del juego: ${currentStatus}`);
+    console.log("**********************************************************");
+    
+    // Verificar si el juego está en estado válido para iniciar temporizadores
+    if (currentStatus !== 'playing') {
+      logger.debug('GameLogic', `No se inician temporizadores porque el juego no está en estado playing (${currentStatus})`);
+      console.log(`Temporizadores no iniciados - Estado inválido: ${currentStatus}`);
+      console.log("**********************************************************\n");
       return;
     }
     
-    timersActiveRef.current = true;
-    lastSpawnRateRef.current = spawnRate;
+    // Si ya hay temporizadores activos y no se fuerza el inicio, salimos para evitar duplicados
+    if (timersActiveRef.current && !forceStart) {
+      logger.debug('GameLogic', 'No se inician temporizadores porque ya hay temporizadores activos');
+      console.log("Temporizadores ya activos - CANCELANDO INICIO");
+      console.log("**********************************************************\n");
+      return;
+    }
     
+    // Si hay temporizadores activos y se fuerza el inicio, primero detenerlos
+    if (timersActiveRef.current && forceStart) {
+      logger.info('GameLogic', 'Forzando reinicio de temporizadores');
+      console.log("Fase 1: Deteniendo temporizadores existentes (reinicio forzado)");
+      stopTimers();
+    }
+    
+    logger.info('GameLogic', `Iniciando temporizadores. SpawnRate: ${currentSpawnRate}ms, Nivel: ${currentLevel}`);
+    
+    // Marcar que los temporizadores están activos
+    timersActiveRef.current = true;
+    lastSpawnRateRef.current = currentSpawnRate;
+    console.log("Fase 2: Referencias de temporizadores establecidas");
+    
+    // Temporizador para incrementar el tiempo de juego
     timerIntervalRef.current = setInterval(() => {
+      // Verificar que el juego siga activo
+      const gameStatus = store.getState().game.status;
+      if (gameStatus !== 'playing') {
+        return;
+      }
+      
       dispatch(incrementTimer());
       
       // Manejar el modo contrareloj - decrementar el tiempo restante
-      if (currentPlayMode === 'timed') {
+      if (currentMode === 'timed') {
         const { timeRemaining, status } = store.getState().game;
         
         if (status === 'playing' && timeRemaining > 0) {
@@ -444,12 +738,22 @@ const useGameLogic = () => {
           if (newTimeRemaining === 0) {
             dispatch(setGameStatus('gameOver'));
             audioManager.play('gameOver');
+            console.log("\n");
+            console.log("\n**********************************************************");
+            console.log("INICIO DEL FLUJO: GAME OVER POR TIEMPO AGOTADO");
+            console.log(`Nivel: ${currentLevel}, Modo: ${currentMode}`);
+            console.log("**********************************************************");
+            console.log("Tiempo agotado en modo contrareloj");
+            console.log("**********************************************************\n");
             logger.info('Game', 'Tiempo agotado en modo contrareloj - Game Over');
+            console.log("\n");
+
           }
         }
       }
       
-      if (currentPlayMode === 'survival' && !speedLimitReachedRef.current) {
+      // Manejar el modo supervivencia - aumentar velocidad con el tiempo
+      if (currentMode === 'survival' && !speedLimitReachedRef.current) {
         const currentTimer = store.getState().game.timer;
         
         const newSpawnRate = Math.max(
@@ -461,34 +765,43 @@ const useGameLogic = () => {
           speedLimitReachedRef.current = true;
         }
         
-        if (Math.abs(newSpawnRate - spawnRate) > 50) {
+        if (Math.abs(newSpawnRate - currentSpawnRate) > 50) {
           dispatch(setSpawnRate(newSpawnRate));
         }
       }
     }, 1000);
+    console.log("Fase 3: Temporizador de tiempo de juego iniciado");
     
+    // Temporizador para añadir iconos aleatorios al tablero
     iconTimerIntervalRef.current = setInterval(() => {
-      if (isSpawningRef.current) {
-        return;
-      }
-      
+      // Verificar que el juego siga activo
       const gameStatus = store.getState().game.status;
       if (gameStatus !== 'playing') {
         return;
       }
       
+      // Evitar añadir iconos si ya se está procesando uno
+      if (isSpawningRef.current) {
+        logger.debug('GameLogic', 'Saltando adición de icono porque ya hay uno en proceso');
+        return;
+      }
+      
+      // Añadir un icono aleatorio al tablero
       addRandomIcon();
-    }, spawnRate);
+      
+      // Log para depuración
+      logger.debug('GameLogic', `Intervalo de spawn activado (${currentSpawnRate}ms)`);
+    }, currentSpawnRate);
+    console.log("Fase 4: Temporizador de spawn de iconos iniciado (cada " + currentSpawnRate + "ms)");
     
+    console.log("**********************************************************");
+    console.log("FIN DEL FLUJO: TEMPORIZADORES INICIADOS CORRECTAMENTE");
+    console.log("\n");
     return () => {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-      }
-      if (iconTimerIntervalRef.current) {
-        clearInterval(iconTimerIntervalRef.current);
-      }
+      // Limpiar temporizadores al desmontar
+      stopTimers();
     };
-  }, [spawnRate, currentPlayMode, dispatch, addRandomIcon]);
+  }, [dispatch, addRandomIcon, stopTimers]);
 
   // Manejar clic en una celda del tablero
   const handleIconClick = useCallback((row: number, col: number) => {
@@ -740,103 +1053,60 @@ const useGameLogic = () => {
     }
   }, [spawnRate, status, addRandomIcon]);
 
-  // Efecto para verificar continuamente si hay movimientos válidos
+  // Efecto para detección de tablero lleno o sin movimientos válidos
   useEffect(() => {
-    if (status === 'playing') {
-      // Crear un intervalo que verifique periódicamente si hay movimientos válidos
-      const checkMovesInterval = setInterval(() => {
-        const { 
-          status: gameStatus,
-          iconCount: currentIconCount,
-          boardSize: currentBoardSize 
-        } = store.getState().game;
+    // Solo comprobar cuando el juego está activo y hay iconos en el tablero
+    if (status !== 'playing' || !board || board.length === 0 || iconCount === 0) {
+      return;
+    }
+
+    // Evitar múltiples evaluaciones por ciclo
+    const timeoutId = setTimeout(() => {
+      // Si está cambiando de nivel, no evaluar
+      if (store.getState().game.status !== 'playing') {
+        return;
+      }
+
+      // Verificar si hay movimientos válidos en el tablero
+      const hasMovesAvailable = hasValidMoves();
+
+      if (!hasMovesAvailable) {
+        // Optimización: usar Set para contar iconos únicos
+        const uniqueIcons = new Set<string>();
+        let iconCount = 0;
         
-        if (gameStatus !== 'playing') {
+        for (let row = 0; row < boardSize; row++) {
+          for (let col = 0; col < boardSize; col++) {
+            if (board[row][col] !== null) {
+              uniqueIcons.add(board[row][col] as string);
+              iconCount++;
+            }
+          }
+        }
+        
+        // Verificación super rápida para casos especiales (2 o menos iconos diferentes)
+        if (iconCount <= 2 && uniqueIcons.size === iconCount) {
+          logger.info('Game', `⚡ Detección rápida: ${iconCount} iconos diferentes sin convergencia posible. Nivel completado.`);
+          dispatch(setGameStatus('levelCompleted'));
           return;
         }
         
-        const hasMovesAvailable = hasValidMoves();
+        // Para otros casos, calcular porcentaje de ocupación
+        const totalCells = boardSize * boardSize;
+        const occupationPercentage = (iconCount / totalCells) * 100;
         
-        if (!hasMovesAvailable) {
-          logger.info('Game', 'No se detectaron movimientos válidos, verificando fin de partida...');
-          
-          // Calcular el porcentaje de ocupación
-          const totalCells = currentBoardSize * currentBoardSize;
-          const occupationPercentage = (currentIconCount / totalCells) * 100;
-          
-          // Verificar si hay 2 o menos iconos en el tablero
-          // Esta es una condición específica para el caso mostrado en la imagen
-          if (currentIconCount <= 2) {
-            logger.info('Game', `Solo quedan ${currentIconCount} iconos sin movimientos válidos. Nivel completado.`);
-            dispatch(setGameStatus('levelCompleted'));
-          }
-          // Si hay pocos iconos, pasar al siguiente nivel
-          else if (occupationPercentage <= 30) {
-            logger.info('Game', `Tablero con pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`);
-            dispatch(setGameStatus('levelCompleted'));
-          } 
-          // Si no, game over
-          else {
-            logger.info('Game', `Tablero sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`);
-            dispatch(setGameStatus('gameOver'));
-          }
+        if (occupationPercentage <= 30) {
+          logger.info('Game', `⚡ Detección rápida: Pocos iconos (${occupationPercentage.toFixed(1)}%) sin movimientos válidos. Nivel completado.`);
+          dispatch(setGameStatus('levelCompleted'));
+        } else {
+          logger.info('Game', `⚡ Detección rápida: No hay movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`);
+          dispatch(setGameStatus('gameOver'));
         }
-      }, 200); // Verificar cada 200ms en lugar de 1000ms para mayor velocidad
-      
-      return () => {
-        clearInterval(checkMovesInterval);
-      };
-    }
-  }, [status, hasValidMoves, dispatch]);
-
-  // Efecto para verificar el estado después de cualquier cambio en el tablero
-  useEffect(() => {
-    // Verificar solo si el juego está en estado 'playing'
-    if (status === 'playing' && board && board.length > 0) {
-      // Usar un timeout inmediato para evitar bloquear el renderizado
-      const timeoutId = setTimeout(() => {
-        // Verificar si hay movimientos válidos
-        const hasMovesAvailable = hasValidMoves();
-        
-        // Si no hay movimientos disponibles, determinar qué hacer
-        if (!hasMovesAvailable) {
-          // Contar tipos únicos de iconos en el tablero
-          const uniqueIcons = new Set<string>();
-          let iconCount = 0;
-          
-          for (let row = 0; row < boardSize; row++) {
-            for (let col = 0; col < boardSize; col++) {
-              if (board[row][col] !== null) {
-                uniqueIcons.add(board[row][col] as string);
-                iconCount++;
-              }
-            }
-          }
-          
-          // Verificación super rápida para casos especiales (2 o menos iconos diferentes)
-          if (iconCount <= 2 && uniqueIcons.size === iconCount) {
-            logger.info('Game', `⚡ Detección rápida: ${iconCount} iconos diferentes sin convergencia posible. Nivel completado.`);
-            dispatch(setGameStatus('levelCompleted'));
-            return;
-          }
-          
-          // Para otros casos, calcular porcentaje de ocupación
-          const totalCells = boardSize * boardSize;
-          const occupationPercentage = (iconCount / totalCells) * 100;
-          
-          if (occupationPercentage <= 30) {
-            logger.info('Game', `⚡ Detección rápida: Pocos iconos (${occupationPercentage.toFixed(1)}%) sin movimientos válidos. Nivel completado.`);
-            dispatch(setGameStatus('levelCompleted'));
-          } else {
-            logger.info('Game', `⚡ Detección rápida: No hay movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`);
-            dispatch(setGameStatus('gameOver'));
-          }
-        }
-      }, 0);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [board, status, boardSize, hasValidMoves, dispatch]);
+      }
+    }, 100); // Usar un pequeño retraso para permitir que otras operaciones se completen
+    
+    return () => clearTimeout(timeoutId);
+  }, [board, status, boardSize, hasValidMoves, dispatch, iconCount]);
 
   // Cambiar configuración del juego
   const changeGameConfig = useCallback((difficulty: GameDifficulty, mode: GamePlayMode) => {
@@ -875,6 +1145,9 @@ const useGameLogic = () => {
   const checkLevelCompleted = () => {
     if (status !== 'playing' || iconCount === 0) return false;
     
+    // Comprobar si hay movimientos válidos disponibles
+    const movesAvailable = hasValidMoves();
+    
     // Usar el nuevo sistema de niveles a través del adaptador
     return levelAdapter.isLevelCompleted(
       level,
@@ -884,7 +1157,8 @@ const useGameLogic = () => {
       boardSize,
       timeRemaining,
       survivalTime,
-      timerRef.current // Pasar el timer actual para verificar tiempo mínimo de juego
+      timerRef.current, // Pasar el timer actual para verificar tiempo mínimo de juego
+      movesAvailable  // Pasar si hay movimientos disponibles
     );
   };
   
@@ -949,6 +1223,82 @@ const useGameLogic = () => {
     } as unknown as string);
   };
 
+  /**
+   * Reinicia completamente todos los sistemas del juego para un nuevo nivel
+   */
+  const resetSystemsForNewLevel = useCallback(() => {
+    // Obtener el estado más reciente del store para asegurar valores actualizados
+    const gameState = store.getState().game;
+    const currentLevel = gameState.level;
+    const currentMode = gameState.currentPlayMode;
+    const currentSpawnRate = gameState.spawnRate;
+    const currentIconCount = gameState.iconCount;
+    
+    console.log("\n**********************************************************");
+    console.log("INICIO DEL FLUJO: REINICIAR SISTEMAS PARA NUEVO NIVEL");
+    console.log(`Nivel actual: ${currentLevel}, Modo: ${currentMode}`);
+    console.log(`SpawnRate: ${currentSpawnRate}ms, Iconos en tablero: ${currentIconCount}`);
+    console.log("**********************************************************");
+    
+    // Detener todos los temporizadores primero
+    stopTimers();
+    console.log("Fase 1: Temporizadores detenidos");
+    
+    // Reiniciar las referencias del sistema
+    isSpawningRef.current = false;
+    isRemovingIconsRef.current = false;
+    speedLimitReachedRef.current = false;
+    timersActiveRef.current = false;
+    lastSpawnRateRef.current = 0;
+    console.log("Fase 2: Referencias de estado reiniciadas");
+    
+    // Limpiar intervalos residuales si existieran
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    if (iconTimerIntervalRef.current) {
+      clearInterval(iconTimerIntervalRef.current);
+      iconTimerIntervalRef.current = null;
+    }
+    console.log("Fase 3: Intervalos residuales limpiados");
+    
+    console.log(`Fase 4: Estado actual obtenido: nivel=${currentLevel}, spawnRate=${currentSpawnRate}ms`);
+    
+    // Asegurarse de que el último spawnRate esté actualizado
+    lastSpawnRateRef.current = currentSpawnRate;
+    console.log(`Fase 5: SpawnRate actualizado a ${lastSpawnRateRef.current}ms`);
+    
+    // Reiniciar el tiempo de conteo si es necesario
+    if (currentMode !== 'survival') {
+      timerRef.current = 0;
+      console.log("Fase 6: Tiempo de juego reiniciado a 0");
+    } else {
+      console.log("Fase 6: Manteniendo tiempo de supervivencia (modo survival)");
+    }
+    
+    // Limpiar cualquier celda resaltada
+    dispatch(setHighlightedCells([]));
+    console.log("Fase 7: Celdas resaltadas limpiadas");
+    
+    // Establecer un período de gracia más largo para el nivel 2 y superiores
+    // para evitar verificaciones de game over inmediatas después de un cambio de nivel
+    const graceSpawns = currentLevel >= 2 ? 5 : 3; // Mayor período de gracia para niveles superiores
+    levelTransitionGraceRef.current = graceSpawns;
+    console.log(`Fase 8: Período de gracia establecido para los próximos ${graceSpawns} iconos`);
+    
+    // Verificar consistencia del estado
+    if (gameState.status !== 'paused' && gameState.status !== 'levelCompleted') {
+      console.log(`ADVERTENCIA: Estado inesperado (${gameState.status}) durante reinicio de sistemas`);
+    }
+    
+    logger.info('GameLogic', `Sistemas de juego reiniciados para nuevo nivel ${currentLevel}`);
+    console.log("**********************************************************\n");
+    console.log("FIN DEL FLUJO: SISTEMAS REINICIADOS CORRECTAMENTE");
+    
+    return true;
+  }, [dispatch, stopTimers]);
+
   return {
     board,
     boardSize,
@@ -966,6 +1316,7 @@ const useGameLogic = () => {
     showHint,
     resetCurrentLevel,
     advanceToNextLevel,
+    resetSystemsForNewLevel,
     findConvergingIcons: useCallback((row: number, col: number) => {
       return findConvergingIcons(board, row, col, boardSize);
     }, [board, boardSize]),
