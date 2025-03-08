@@ -3,8 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../../store';
 import { setGameStatus } from '../../../store/slices/gameSlice';
 import { useGameSound } from '../../../hooks/useGameSound';
-import { ICONS } from '../../../constants/icons';
-import './GameModals.css';
+import './PauseModal.css';
 
 interface PauseModalProps {
   isVisible?: boolean;
@@ -36,6 +35,36 @@ const PauseModal: React.FC<PauseModalProps> = ({
   const [animations, setAnimations] = useState(PAUSE_ANIMATIONS);
   const [modalVisible, setModalVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  
+  // Establecer la variable CSS --vh para altura real del viewport
+  useEffect(() => {
+    // Función para establecer la altura real del viewport
+    const setViewportHeight = () => {
+      // El viewport height real en píxeles
+      const vh = window.innerHeight * 0.01;
+      // Establecer la variable CSS --vh
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    // Establecer la altura inicialmente
+    setViewportHeight();
+
+    // Actualizar la altura cuando cambie el tamaño de la ventana
+    window.addEventListener('resize', setViewportHeight);
+    
+    // Para dispositivos móviles, actualizar también al cambiar la orientación
+    window.addEventListener('orientationchange', setViewportHeight);
+    
+    // Actualizar después de cargar completamente (para iOS Safari)
+    window.addEventListener('load', setViewportHeight);
+    
+    // Limpiar los event listeners al desmontar
+    return () => {
+      window.removeEventListener('resize', setViewportHeight);
+      window.removeEventListener('orientationchange', setViewportHeight);
+      window.removeEventListener('load', setViewportHeight);
+    };
+  }, []);
   
   // Efecto para manejar la animación de entrada cuando el modal es visible
   useEffect(() => {
@@ -160,9 +189,9 @@ const PauseModal: React.FC<PauseModalProps> = ({
   
   return (
     <div className={`game-modal fullscreen-modal ${modalVisible ? 'visible' : ''} ${isClosing ? 'closing' : ''}`}>
-      <div className="modal-content pause-content compact-content" ref={modalContentRef}>
+      <div className="modal-content pause-content" ref={modalContentRef}>
         <div 
-          className="pause-header compact-header"
+          className="pause-header"
           style={{
             transition: 'all 0.6s ease',
             ...animations.title
@@ -173,7 +202,7 @@ const PauseModal: React.FC<PauseModalProps> = ({
         </div>
         
         <div 
-          className="pause-body compact-body"
+          className="pause-body"
           style={{
             transition: 'all 0.5s ease',
             transitionDelay: '0.2s',
@@ -220,7 +249,7 @@ const PauseModal: React.FC<PauseModalProps> = ({
             className="pause-button resume-button"
             onClick={handleResume}
           >
-            {ICONS.PLAY} Reanudar
+            ▶️ Reanudar
           </button>
           
           <div className="secondary-buttons">
@@ -228,21 +257,21 @@ const PauseModal: React.FC<PauseModalProps> = ({
               className="pause-button secondary restart-button"
               onClick={handleRestart}
             >
-              {ICONS.RESTART} Reiniciar
+              🔄 Reiniciar
             </button>
             
             <button 
               className="pause-button secondary settings-button"
               onClick={handleSettings}
             >
-              {ICONS.SETTINGS} Ajustes
+              ⚙️ Ajustes
             </button>
             
             <button 
               className="pause-button secondary exit-button"
               onClick={handleExit}
             >
-              {ICONS.HOME} Salir
+              🏠 Salir
             </button>
           </div>
         </div>

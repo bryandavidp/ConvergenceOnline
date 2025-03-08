@@ -7,7 +7,7 @@ import { useDarkMode } from '../../../hooks/useDarkMode';
 import useGameLogic from '../../../hooks/useGameLogic';
 import { ICONS } from '../../../constants/icons';
 import { RootState } from '../../../store';
-import './GameModals.css';
+import './StartGameModal.css';
 import { FaInfoCircle, FaLock } from 'react-icons/fa';
 
 // Propiedades del modal
@@ -68,7 +68,7 @@ const START_ANIMATIONS = {
 // Función para obtener la descripción del modo de juego
 const getModeDescription = (mode: GamePlayMode | null) => {
   if (!mode) return <p></p>;
-  
+
   if (mode === GamePlayMode.TUTORIAL) {
     return (
       <div className="tutorial-description">
@@ -82,15 +82,70 @@ const getModeDescription = (mode: GamePlayMode | null) => {
 
 // Función para obtener la descripción de la dificultad
 const getDifficultyDescription = (difficulty: GameDifficulty | null): string => {
-  if (!difficulty) return "";
-  
-  const descriptions: Record<string, string> = {
-    [GameDifficulty.EASY]: "Dificultad fácil: Ritmo más lento, ideal para principiantes.",
-    [GameDifficulty.MEDIUM]: "Dificultad normal: Equilibrado para la mayoría de jugadores.",
-    [GameDifficulty.HARD]: "Dificultad difícil: Más rápido y desafiante para jugadores experimentados."
-  };
-  
-  return descriptions[difficulty] || "";
+  switch (difficulty) {
+    case GameDifficulty.VERY_EASY:
+      return "Ideal para principiantes o niños pequeños. Tiempo generoso y cartas sencillas.";
+    case GameDifficulty.EASY:
+      return "Un desafío ligero con tiempo suficiente para encontrar las coincidencias.";
+    case GameDifficulty.MEDIUM:
+      return "El equilibrio perfecto entre desafío y diversión. Recomendado para la mayoría de jugadores.";
+    case GameDifficulty.HARD:
+      return "Para jugadores experimentados. Requiere buena memoria y decisiones rápidas.";
+    case GameDifficulty.VERY_HARD:
+      return "El máximo desafío. Límites de tiempo estrictos y patrones complejos.";
+    default:
+      return "Selecciona una dificultad para ver su descripción";
+  }
+};
+
+// Función para obtener una descripción unificada basada en el modo y dificultad
+const getUnifiedDescription = (mode: GamePlayMode | null, difficulty: GameDifficulty | null): string => {
+  if (!mode || !difficulty) {
+    return "Selecciona un modo de juego y una dificultad para comenzar.";
+  }
+
+  // Descripción base según el modo
+  let baseDescription = "";
+  switch (mode) {
+    case GamePlayMode.CLASSIC:
+      baseDescription = "Encuentra todas las parejas de cartas en el menor tiempo posible.";
+      break;
+    case GamePlayMode.TIME_ATTACK:
+      baseDescription = "Una carrera contra el reloj para encontrar todas las parejas antes de que el tiempo se agote.";
+      break;
+    case GamePlayMode.SURVIVAL:
+      baseDescription = "El juego continúa con niveles cada vez más difíciles hasta que se acaben tus vidas.";
+      break;
+    case GamePlayMode.ZEN:
+      baseDescription = "Juega sin presión de tiempo, perfecto para relajarse y disfrutar del juego.";
+      break;
+    case GamePlayMode.TUTORIAL:
+      return "Aprende los conceptos básicos del juego con instrucciones paso a paso.";
+    default:
+      baseDescription = "";
+  }
+
+  // Añadir detalles según la dificultad
+  let difficultyInfo = "";
+  switch (difficulty) {
+    case GameDifficulty.VERY_EASY:
+      difficultyInfo = " Con cartas sencillas y tiempo generoso.";
+      break;
+    case GameDifficulty.EASY:
+      difficultyInfo = " Con tiempo suficiente para principiantes.";
+      break;
+    case GameDifficulty.MEDIUM:
+      difficultyInfo = " Con un nivel de desafío equilibrado.";
+      break;
+    case GameDifficulty.HARD:
+      difficultyInfo = " Con un tiempo limitado para un buen desafío.";
+      break;
+    case GameDifficulty.VERY_HARD:
+      difficultyInfo = " Con el máximo nivel de dificultad para expertos.";
+      break;
+  }
+
+  return baseDescription + difficultyInfo;
 };
 
 const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onStart }) => {
@@ -99,26 +154,26 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   const { playSound } = useGameSound();
   const { darkMode } = useDarkMode();
   const dispatch = useDispatch();
-  
+
   // Obtenemos la puntuación máxima para determinar si es un nuevo jugador
   const { highScore } = useSelector((state: RootState) => state.game);
   const isNewPlayer = highScore <= 0;
-  
+
   // Estado del juego y configuración
-  const { 
-    gameMode, 
-    setGameMode, 
-    gameDifficulty, 
+  const {
+    gameMode,
+    setGameMode,
+    gameDifficulty,
     setGameDifficulty,
     isSoundEnabled,
     setIsSoundEnabled,
     isMusicEnabled,
     setIsMusicEnabled
   } = useGameContext();
-  
+
   // Obtener la función changeGameConfig de useGameLogic
   const { changeGameConfig } = useGameLogic();
-  
+
   // Estados locales para animaciones y UI
   const [animations, setAnimations] = useState(START_ANIMATIONS);
   const [showSettings, setShowSettings] = useState(false);
@@ -128,15 +183,45 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   const [selectedMode, setSelectedMode] = useState<ExtendedGameMode | null>(isNewPlayer ? GamePlayMode.TUTORIAL : null);
   const [configReady, setConfigReady] = useState(isNewPlayer);
   const [enableTutorial, setEnableTutorial] = useState(isNewPlayer);
-  
+
+  // Establecer la variable CSS --vh para altura real del viewport
+  useEffect(() => {
+    // Función para establecer la altura real del viewport
+    const setViewportHeight = () => {
+      // El viewport height real en píxeles
+      const vh = window.innerHeight * 0.01;
+      // Establecer la variable CSS --vh
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    // Establecer la altura inicialmente
+    setViewportHeight();
+
+    // Actualizar la altura cuando cambie el tamaño de la ventana
+    window.addEventListener('resize', setViewportHeight);
+
+    // Para dispositivos móviles, actualizar también al cambiar la orientación
+    window.addEventListener('orientationchange', setViewportHeight);
+
+    // Actualizar después de cargar completamente (para iOS Safari)
+    window.addEventListener('load', setViewportHeight);
+
+    // Limpiar los event listeners al desmontar
+    return () => {
+      window.removeEventListener('resize', setViewportHeight);
+      window.removeEventListener('orientationchange', setViewportHeight);
+      window.removeEventListener('load', setViewportHeight);
+    };
+  }, []);
+
   // Efecto para verificar si la configuración está lista para activar el botón Empezar
   useEffect(() => {
     // Está listo si ha seleccionado:
     // - Un modo Tutorial o Zen (no requieren dificultad)
     // - O un modo normal + dificultad
     if (
-      selectedMode === GamePlayMode.TUTORIAL || 
-      selectedMode === GamePlayMode.ZEN || 
+      selectedMode === GamePlayMode.TUTORIAL ||
+      selectedMode === GamePlayMode.ZEN ||
       (selectedMode && gameDifficulty)
     ) {
       setConfigReady(true);
@@ -144,28 +229,28 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
       setConfigReady(false);
     }
   }, [selectedMode, gameDifficulty]);
-  
+
   // Efecto para manejar la animación de entrada cuando el modal es visible
   useEffect(() => {
     let animationTimeout: NodeJS.Timeout;
-    
+
     if (isVisible) {
       setModalVisible(true);
       setIsClosing(false);
-      
+
       // Animación secuencial para los elementos del modal
       setTimeout(() => {
         setAnimations(prev => ({
           ...prev,
           title: { opacity: 1, transform: 'translateY(0)' }
         }));
-        
+
         setTimeout(() => {
           setAnimations(prev => ({
             ...prev,
             options: { opacity: 1, transform: 'translateY(0)' }
           }));
-          
+
           setTimeout(() => {
             setAnimations(prev => ({
               ...prev,
@@ -183,24 +268,24 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
         setCurrentScreen('main');
       }, 300);
     }
-    
+
     return () => {
       if (animationTimeout) {
         clearTimeout(animationTimeout);
       }
     };
   }, [isVisible, playSound]);
-  
+
   // Navegar a otra pantalla
   const navigateTo = (screen: ScreenType) => {
     playSound('uiSelect');
     setCurrentScreen(screen);
   };
-  
+
   // Cierra el modal al hacer clic fuera del contenido
   const handleClickOutside = (event: MouseEvent) => {
     if (
-      modalContentRef.current && 
+      modalContentRef.current &&
       !modalContentRef.current.contains(event.target as Node) &&
       !showSettings
     ) {
@@ -208,7 +293,7 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
       // No cerramos automáticamente, solo mostramos feedback visual
       const modalContent = modalContentRef.current;
       modalContent.style.transform = 'scale(0.98)';
-      
+
       setTimeout(() => {
         if (modalContent) {
           modalContent.style.transform = 'scale(1)';
@@ -216,7 +301,7 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
       }, 150);
     }
   };
-  
+
   // Configura el listener para clicks fuera del modal
   useEffect(() => {
     if (isVisible) {
@@ -224,18 +309,18 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
     }
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isVisible, showSettings]);
-  
+
   // Inicia el juego con la configuración seleccionada
   const handleStartGame = () => {
     if (!configReady || !selectedMode) return;
-    
+
     playSound('uiSelect');
-    
+
     // Función para convertir el enum GameDifficulty a string para Redux
     const convertDifficultyToReduxFormat = (difficulty: GameDifficulty): 'easy' | 'normal' | 'hard' | 'tutorial' => {
       switch (difficulty) {
@@ -251,7 +336,7 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
           return 'normal';
       }
     };
-    
+
     // Función para convertir el enum GamePlayMode a string para Redux
     const convertModeToReduxFormat = (mode: GamePlayMode): 'classic' | 'timed' | 'survival' | 'zen' => {
       switch (mode) {
@@ -269,7 +354,7 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
           return 'classic';
       }
     };
-    
+
     // Configurar el modo según la selección
     if (selectedMode === GamePlayMode.TUTORIAL) {
       // Iniciar tutorial
@@ -294,17 +379,17 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
         convertModeToReduxFormat(selectedMode)
       );
     }
-    
+
     // Cerrar el modal con animación
     setIsClosing(true);
-    
+
     // Esperar a que termine la animación antes de iniciar el juego
     setTimeout(() => {
       // Llamar al callback de inicio
       if (onStart) {
         onStart();
       }
-      
+
       // Añade la clase modal-active al elemento game-page
       const gamePageElement = document.querySelector('.game-page');
       if (gamePageElement) {
@@ -312,52 +397,52 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
       }
     }, 500);
   };
-  
+
   // Selecciona el modo de juego
   const handleModeSelect = (mode: ExtendedGameMode) => {
     playSound('uiTap');
     setSelectedMode(mode);
-    
+
     // Si se selecciona el tutorial, establecer dificultad a fácil
     if (mode === GamePlayMode.TUTORIAL) {
       setGameDifficulty(GameDifficulty.EASY);
     }
   };
-  
+
   // Selecciona el nivel de dificultad
   const handleDifficultySelect = (difficulty: GameDifficulty) => {
     // No cambiar la dificultad si estamos en modo tutorial
     if (selectedMode === GamePlayMode.TUTORIAL) return;
-    
+
     if (difficulty !== gameDifficulty) {
       playSound('uiTap');
       setGameDifficulty(difficulty);
     }
   };
-  
+
   // Activa/desactiva el sonido
   const toggleSound = () => {
     playSound('uiTap');
     setIsSoundEnabled(!isSoundEnabled);
   };
-  
+
   // Activa/desactiva la música
   const toggleMusic = () => {
     playSound('uiTap');
     setIsMusicEnabled(!isMusicEnabled);
   };
-  
+
   // Muestra/oculta el panel de configuración
   const toggleSettings = () => {
     playSound(showSettings ? 'uiClose' : 'uiOpen');
     setShowSettings(!showSettings);
   };
-  
+
   // Renderiza la pantalla principal
   const renderMainScreen = () => {
     return (
       <div className="main-screen">
-        <div 
+        <div
           className="logo-container"
           style={{
             transition: 'all 0.6s ease',
@@ -367,8 +452,8 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
           <h1 className="logo-text">Convergencia</h1>
           <div className="logo-pulse"></div>
         </div>
-        
-        <div 
+
+        <div
           className="main-buttons"
           style={{
             transition: 'all 0.5s ease',
@@ -376,21 +461,21 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
             ...animations.options
           }}
         >
-          <button 
+          <button
             className="main-button play-button"
             onClick={() => navigateTo('play')}
           >
             JUGAR
           </button>
-          
-          <button 
+
+          <button
             className="main-button options-button"
             onClick={() => navigateTo('options')}
           >
             OPCIONES
           </button>
-          
-          <button 
+
+          <button
             className="main-button credits-button"
             onClick={() => navigateTo('credits')}
           >
@@ -400,209 +485,170 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
       </div>
     );
   };
-  
+
   // Renderiza la pantalla de selección de juego
   const renderPlayScreen = () => {
     return (
-      <div className="play-screen responsive-screen">
-        <div className="screen-header">
+      <div className="play-screen">
+        {/* Cabecera con navegación */}
+        <div className="game-header">
           <button className="back-button" onClick={() => navigateTo('main')}>
-            {ICONS.HOME}
+            🏠
           </button>
-          <h2>Selecciona el modo de juego</h2>
-        </div>
-        
-        {/* Botón de empezar movido a la parte superior */}
-        <div className="top-start-button-container">
-          <button 
-            className={`start-button ${configReady ? 'active' : 'disabled'}`}
-            onClick={handleStartGame}
-            disabled={!configReady}
-          >
-            <div className="button-energy"></div>
-            ¡EMPEZAR!
-          </button>
+          <h2 className="header-title">Selecciona el modo de juego</h2>
+          {/* Eliminado el botón de configuración */}
+          <div className="header-spacer"></div> {/* Espacio para mantener centrado el título */}
         </div>
         
         <div className="game-selection-container">
-          <div className="game-modes-container">
-            {/* Tutorial destacado para nuevos jugadores */}
-            {isNewPlayer && (
-              <div className="tutorial-highlight-container">
-                <div className="tutorial-message">
-                  <FaInfoCircle className="info-icon" />
-                  <span>Te recomendamos completar el tutorial primero para aprender a jugar</span>
-                </div>
-                <div 
-                  className={`game-option ${selectedMode === GamePlayMode.TUTORIAL ? 'selected' : ''} tutorial-option`}
-                  onClick={() => handleModeSelect(GamePlayMode.TUTORIAL)}
-                >
-                  <div className="game-option-name">
-                    <img 
-                      src={MODE_ICONS[GamePlayMode.TUTORIAL]} 
-                      alt={GamePlayMode.TUTORIAL} 
-                      className="mode-icon"
-                    />
-                    <span>{GamePlayMode.TUTORIAL}</span>
-                  </div>
-                  <div className="game-option-description">
-                    {getModeDescription(selectedMode)}
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <div className="modes-and-difficulty-flex">
-              <div className="modes-section">
-                <h3 className="section-title">Modo de juego</h3>
-                <div className={`modes-grid ${isNewPlayer ? 'modes-locked' : ''}`}>
-                  <div 
-                    className={`game-option classic ${selectedMode === GamePlayMode.CLASSIC ? 'active' : ''} ${isNewPlayer ? 'locked' : ''}`}
-                    onClick={() => !isNewPlayer && handleModeSelect(GamePlayMode.CLASSIC)}
-                  >
-                    <div className="option-icon-background">{MODE_ICONS[GamePlayMode.CLASSIC]}</div>
-                    <h4>Clásico</h4>
-                    {isNewPlayer && <div className="locked-overlay"><span>🔒</span></div>}
-                  </div>
-                  <div 
-                    className={`game-option timed ${selectedMode === GamePlayMode.TIME_ATTACK ? 'active' : ''} ${isNewPlayer ? 'locked' : ''}`}
-                    onClick={() => !isNewPlayer && handleModeSelect(GamePlayMode.TIME_ATTACK)}
-                  >
-                    <div className="option-icon-background">{MODE_ICONS[GamePlayMode.TIME_ATTACK]}</div>
-                    <h4>Contrarreloj</h4>
-                    {isNewPlayer && <div className="locked-overlay"><span>🔒</span></div>}
-                  </div>
-                  <div 
-                    className={`game-option survival ${selectedMode === GamePlayMode.SURVIVAL ? 'active' : ''} ${isNewPlayer ? 'locked' : ''}`}
-                    onClick={() => !isNewPlayer && handleModeSelect(GamePlayMode.SURVIVAL)}
-                  >
-                    <div className="option-icon-background">{MODE_ICONS[GamePlayMode.SURVIVAL]}</div>
-                    <h4>Supervivencia</h4>
-                    {isNewPlayer && <div className="locked-overlay"><span>🔒</span></div>}
-                  </div>
-                  <div 
-                    className={`game-option zen ${selectedMode === GamePlayMode.ZEN ? 'active' : ''} ${isNewPlayer ? 'locked' : ''}`}
-                    onClick={() => !isNewPlayer && handleModeSelect(GamePlayMode.ZEN)}
-                  >
-                    <div className="option-icon-background">{MODE_ICONS[GamePlayMode.ZEN]}</div>
-                    <h4>Zen</h4>
-                    {isNewPlayer && <div className="locked-overlay"><span>🔒</span></div>}
-                  </div>
-                </div>
-                
-                {!isNewPlayer && (
-                  <div className="mode-description">
-                    {getModeDescription(selectedMode)}
-                  </div>
-                )}
-              </div>
-              
-              <div className="difficulty-section">
-                <h3 className="section-title">Dificultad</h3>
-                <div className={`difficulty-slider ${selectedMode === GamePlayMode.TUTORIAL ? 'disabled' : ''}`}>
-                  <div 
-                    className={`difficulty-option very-easy ${gameDifficulty === GameDifficulty.VERY_EASY ? 'active' : ''} ${selectedMode === GamePlayMode.TUTORIAL ? 'disabled' : ''}`}
-                    onClick={() => selectedMode !== GamePlayMode.TUTORIAL && handleDifficultySelect(GameDifficulty.VERY_EASY)}
-                    title="Muy Fácil"
-                  >
-                    <div className="difficulty-icon">{DIFFICULTY_ICONS[GameDifficulty.VERY_EASY]}</div>
-                  </div>
-                  <div 
-                    className={`difficulty-option easy ${gameDifficulty === GameDifficulty.EASY ? 'active' : ''} ${selectedMode === GamePlayMode.TUTORIAL ? 'disabled' : ''}`}
-                    onClick={() => selectedMode !== GamePlayMode.TUTORIAL && handleDifficultySelect(GameDifficulty.EASY)}
-                    title="Fácil"
-                  >
-                    <div className="difficulty-icon">{DIFFICULTY_ICONS[GameDifficulty.EASY]}</div>
-                  </div>
-                  <div 
-                    className={`difficulty-option normal ${gameDifficulty === GameDifficulty.MEDIUM ? 'active' : ''} ${selectedMode === GamePlayMode.TUTORIAL ? 'disabled' : ''}`}
-                    onClick={() => selectedMode !== GamePlayMode.TUTORIAL && handleDifficultySelect(GameDifficulty.MEDIUM)}
-                    title="Normal"
-                  >
-                    <div className="difficulty-icon">{DIFFICULTY_ICONS[GameDifficulty.MEDIUM]}</div>
-                  </div>
-                  <div 
-                    className={`difficulty-option hard ${gameDifficulty === GameDifficulty.HARD ? 'active' : ''} ${selectedMode === GamePlayMode.TUTORIAL ? 'disabled' : ''}`}
-                    onClick={() => selectedMode !== GamePlayMode.TUTORIAL && handleDifficultySelect(GameDifficulty.HARD)}
-                    title="Difícil"
-                  >
-                    <div className="difficulty-icon">{DIFFICULTY_ICONS[GameDifficulty.HARD]}</div>
-                  </div>
-                  <div 
-                    className={`difficulty-option very-hard ${gameDifficulty === GameDifficulty.VERY_HARD ? 'active' : ''} ${selectedMode === GamePlayMode.TUTORIAL ? 'disabled' : ''}`}
-                    onClick={() => selectedMode !== GamePlayMode.TUTORIAL && handleDifficultySelect(GameDifficulty.VERY_HARD)}
-                    title="Muy Difícil"
-                  >
-                    <div className="difficulty-icon">{DIFFICULTY_ICONS[GameDifficulty.VERY_HARD]}</div>
-                  </div>
-                </div>
-                
-                <div className="difficulty-description">
-                  {selectedMode === GamePlayMode.TUTORIAL 
-                    ? "El tutorial siempre usa la dificultad fácil para una mejor experiencia de aprendizaje." 
-                    : getDifficultyDescription(gameDifficulty)}
-                </div>
-              </div>
-            </div>
-            
-            <div className="tutorial-container">
+          {/* Sección de modos de juego */}
+          <div className="modes-section">
+            <h3 className="section-title">Modo de juego</h3>
+            <div className="modes-grid">
               <div 
-                className="tutorial-option"
-                onClick={() => setEnableTutorial(!enableTutorial)}
+                className={`game-option tutorial ${selectedMode === GamePlayMode.TUTORIAL ? 'active' : ''}`}
+                onClick={() => handleModeSelect(GamePlayMode.TUTORIAL)}
+                data-mode="Tutorial"
               >
-                <input 
-                  type="checkbox"
-                  className="tutorial-checkbox"
-                  checked={enableTutorial}
-                  onChange={(e) => setEnableTutorial(e.target.checked)}
-                />
-                <div className="tutorial-text">
-                  <h3>Tutorial</h3>
-                  <p>Activar tutorial para nuevos jugadores</p>
-                </div>
+                <span className="recommended-badge">Recomendado</span>
+              </div>
+              <div 
+                className={`game-option classic ${selectedMode === GamePlayMode.CLASSIC ? 'active' : ''}`}
+                onClick={() => handleModeSelect(GamePlayMode.CLASSIC)}
+                data-mode="Clásico"
+              >
+              </div>
+              <div 
+                className={`game-option timed ${selectedMode === GamePlayMode.TIME_ATTACK ? 'active' : ''}`}
+                onClick={() => handleModeSelect(GamePlayMode.TIME_ATTACK)}
+                data-mode="Contrarreloj"
+              >
+              </div>
+              <div 
+                className={`game-option survival ${selectedMode === GamePlayMode.SURVIVAL ? 'active' : ''}`}
+                onClick={() => handleModeSelect(GamePlayMode.SURVIVAL)}
+                data-mode="Supervivencia"
+              >
+              </div>
+              <div 
+                className={`game-option zen ${selectedMode === GamePlayMode.ZEN ? 'active' : ''}`}
+                onClick={() => handleModeSelect(GamePlayMode.ZEN)}
+                data-mode="Zen"
+              >
               </div>
             </div>
+          </div>
+          
+          {/* Sección de dificultad */}
+          <div className="difficulty-section">
+            <h3 className="section-title">Dificultad</h3>
+            <div className="difficulty-options">
+              <div 
+                className={`difficulty-option very-easy ${gameDifficulty === GameDifficulty.VERY_EASY ? 'active' : ''}`}
+                onClick={() => handleDifficultySelect(GameDifficulty.VERY_EASY)}
+              >
+                <div className="difficulty-emoji">😄</div>
+                <div>Muy Fácil</div>
+              </div>
+              <div 
+                className={`difficulty-option easy ${gameDifficulty === GameDifficulty.EASY ? 'active' : ''}`}
+                onClick={() => handleDifficultySelect(GameDifficulty.EASY)}
+              >
+                <div className="difficulty-emoji">😊</div>
+                <div>Fácil</div>
+              </div>
+              <div 
+                className={`difficulty-option normal ${gameDifficulty === GameDifficulty.MEDIUM ? 'active' : ''}`}
+                onClick={() => handleDifficultySelect(GameDifficulty.MEDIUM)}
+              >
+                <div className="difficulty-emoji">😐</div>
+                <div>Normal</div>
+              </div>
+              <div 
+                className={`difficulty-option hard ${gameDifficulty === GameDifficulty.HARD ? 'active' : ''}`}
+                onClick={() => handleDifficultySelect(GameDifficulty.HARD)}
+              >
+                <div className="difficulty-emoji">😥</div>
+                <div>Difícil</div>
+              </div>
+              <div 
+                className={`difficulty-option very-hard ${gameDifficulty === GameDifficulty.VERY_HARD ? 'active' : ''}`}
+                onClick={() => handleDifficultySelect(GameDifficulty.VERY_HARD)}
+              >
+                <div className="difficulty-emoji">😱</div>
+                <div>Muy Difícil</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Descripción del modo seleccionado */}
+          {selectedMode && (
+            <div className="description-section">
+              {gameDifficulty && (
+                <div className="unified-description-container">
+                  <div className="mode-title">
+                    {selectedMode === GamePlayMode.TUTORIAL ? 'Modo Tutorial' :
+                      selectedMode === GamePlayMode.CLASSIC ? 'Modo Clásico' :
+                        selectedMode === GamePlayMode.TIME_ATTACK ? 'Modo Contrarreloj' :
+                          selectedMode === GamePlayMode.SURVIVAL ? 'Modo Supervivencia' :
+                            selectedMode === GamePlayMode.ZEN ? 'Modo Zen' : ''}
+                  </div>
+                  <div>{getUnifiedDescription(selectedMode, gameDifficulty)}</div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Contenedor para botón EMPEZAR */}
+          <div className="fixed-start-button-container">
+            <button 
+              className={`start-button ${selectedMode && gameDifficulty ? 'active' : 'disabled'}`}
+              onClick={handleStartGame}
+              disabled={!selectedMode || !gameDifficulty}
+            >
+              ¡EMPEZAR!
+            </button>
           </div>
         </div>
       </div>
     );
   };
-  
+
   // Renderiza la pantalla de opciones
   const renderOptionsScreen = () => {
     return (
       <div className="options-screen">
         <div className="screen-header">
           <h2>Opciones</h2>
-          <button 
+          <button
             className="back-button"
             onClick={() => navigateTo('main')}
           >
             ⬅️ Volver
           </button>
         </div>
-        
+
         <div className="settings-content">
           <div className="settings-option">
             <span>Música</span>
-            <button 
+            <button
               className={`setting-toggle ${isMusicEnabled ? 'active' : ''}`}
               onClick={toggleMusic}
             >
               {isMusicEnabled ? 'ON' : 'OFF'}
             </button>
           </div>
-          
+
           <div className="settings-option">
             <span>Sonido</span>
-            <button 
+            <button
               className={`setting-toggle ${isSoundEnabled ? 'active' : ''}`}
               onClick={toggleSound}
             >
               {isSoundEnabled ? 'ON' : 'OFF'}
             </button>
           </div>
-          
+
           <div className="settings-option">
             <span>Notificaciones</span>
             <div className="setting-checkbox">✓</div>
@@ -611,38 +657,38 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
       </div>
     );
   };
-  
+
   // Renderiza la pantalla de créditos
   const renderCreditsScreen = () => {
     return (
       <div className="credits-screen">
         <div className="screen-header">
           <h2>Créditos</h2>
-          <button 
+          <button
             className="back-button"
             onClick={() => navigateTo('main')}
           >
             ⬅️ Volver
           </button>
         </div>
-        
+
         <div className="credits-content">
           <h3>Convergencia</h3>
           <p>Diseñado y desarrollado por:</p>
           <p className="credits-name">Equipo de Desarrollo</p>
-          
+
           <h4>Programación</h4>
           <p className="credits-name">Programador Principal</p>
-          
+
           <h4>Diseño Gráfico</h4>
           <p className="credits-name">Artista Principal</p>
-          
+
           <h4>Música y Sonido</h4>
           <p className="credits-name">Compositor</p>
-          
+
           <h4>Agradecimientos Especiales</h4>
           <p>A todos los que hicieron posible este juego</p>
-          
+
           <div className="version-info">
             <p>Versión 1.0.0</p>
             <p>© 2023 Todos los derechos reservados</p>
@@ -651,15 +697,15 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
       </div>
     );
   };
-  
+
   // Si el modal no está visible, no renderizamos nada
   if (!modalVisible && !isVisible) {
     return null;
   }
-  
+
   // Renderizar el contenido adecuado según la pantalla actual
   const renderContent = () => {
-    switch(currentScreen) {
+    switch (currentScreen) {
       case 'play':
         return renderPlayScreen();
       case 'options':
@@ -670,56 +716,15 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
         return renderMainScreen();
     }
   };
-  
+
   return (
-    <div className={`game-modal start-game ${modalVisible ? 'visible' : ''} ${isClosing ? 'closing' : ''}`}>
+    <div className={`game-modal-start start-game ${modalVisible ? 'visible' : ''} ${isClosing ? 'closing' : ''}`}>
       <div className="modal-content" ref={modalContentRef}>
-        {/* Cabecera del modal con título y botones de configuración */}
-        <div className="start-game-header">
-          <div className="header-settings-container">
-            <div className="settings-buttons">
-              <button 
-                className={`setting-button ${showSettings ? 'active' : ''}`} 
-                onClick={toggleSettings}
-              >
-                {ICONS.SETTINGS}
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        {/* Panel de configuración */}
-        {showSettings && (
-          <div className="settings-panel">
-            <div className="settings-option">
-              <span>Música</span>
-              <button 
-                className={`setting-toggle ${isMusicEnabled ? 'active' : ''}`}
-                onClick={toggleMusic}
-              >
-                {isMusicEnabled ? 'ON' : 'OFF'}
-              </button>
-            </div>
-            
-            <div className="settings-option">
-              <span>Sonido</span>
-              <button 
-                className={`setting-toggle ${isSoundEnabled ? 'active' : ''}`}
-                onClick={toggleSound}
-              >
-                {isSoundEnabled ? 'ON' : 'OFF'}
-              </button>
-            </div>
-            
-            <div className="settings-option">
-              <span>Notificaciones</span>
-              <div className="setting-checkbox">✓</div>
-            </div>
-          </div>
-        )}
-        
-        {/* Cuerpo del modal con el contenido según la pantalla actual */}
-        <div className="start-game-body">
+        {/* Eliminamos completamente la cabecera del modal y el panel de configuración
+            Todo se gestiona dentro de cada pantalla específica */}
+
+        {/* Contenido principal */}
+        <div className={`start-game-body ${currentScreen}`}>
           {renderContent()}
         </div>
       </div>
@@ -727,4 +732,5 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   );
 };
 
+// Re-exportar el componente
 export default StartGameModal; 

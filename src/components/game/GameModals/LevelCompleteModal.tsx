@@ -4,7 +4,7 @@ import { useGameSound } from '../../../hooks/useGameSound';
 import { ICONS } from '../../../constants/icons';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store';
-import './GameModals.css';
+import './LevelCompleteModal.css';
 
 interface LevelCompleteModalProps {
   isVisible?: boolean;
@@ -38,6 +38,36 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
   const [modalVisible, setModalVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  
+  // Establecer la variable CSS --vh para altura real del viewport
+  useEffect(() => {
+    // Función para establecer la altura real del viewport
+    const setViewportHeight = () => {
+      // El viewport height real en píxeles
+      const vh = window.innerHeight * 0.01;
+      // Establecer la variable CSS --vh
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    // Establecer la altura inicialmente
+    setViewportHeight();
+
+    // Actualizar la altura cuando cambie el tamaño de la ventana
+    window.addEventListener('resize', setViewportHeight);
+    
+    // Para dispositivos móviles, actualizar también al cambiar la orientación
+    window.addEventListener('orientationchange', setViewportHeight);
+    
+    // Actualizar después de cargar completamente (para iOS Safari)
+    window.addEventListener('load', setViewportHeight);
+    
+    // Limpiar los event listeners al desmontar
+    return () => {
+      window.removeEventListener('resize', setViewportHeight);
+      window.removeEventListener('orientationchange', setViewportHeight);
+      window.removeEventListener('load', setViewportHeight);
+    };
+  }, []);
   
   // Efecto para manejar la animación de entrada cuando el modal es visible
   useEffect(() => {
@@ -173,12 +203,12 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
   // Obtiene un ícono para cada tipo de recompensa
   const getFeatureIcon = (feature: string): string => {
     const icons: Record<string, string> = {
-      'monedas': ICONS.COIN,
+      'monedas': '💰',
       'gemas': '💎',
-      'vidas': ICONS.HEART,
-      'energia': ICONS.ENERGY,
+      'vidas': '❤️',
+      'energia': '⚡',
       'poderes': '🔮',
-      'llave': ICONS.KEY,
+      'llave': '🔑',
     };
     
     return icons[feature.toLowerCase()] || '🎁';
@@ -215,21 +245,21 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
         </div>
       )}
       
-      <div className="modal-content level-complete-content compact-content level-compact" ref={modalContentRef}>
-        <div 
-          className="level-header-stars-container"
-          style={{
-            transition: 'all 0.6s ease',
-            ...animations.title
-          }}
-        >
-          <div className="level-complete-header compact-header">
+      <div className="modal-content level-complete-content" ref={modalContentRef}>
+        <div className="level-header-stars-container">
+          <div 
+            className="level-complete-header"
+            style={{
+              transition: 'all 0.6s ease',
+              ...animations.title
+            }}
+          >
             <h1>¡Nivel Completado!</h1>
             <h2>¡Excelente trabajo!</h2>
           </div>
           
           <div 
-            className="stars-container compact-stars"
+            className="stars-container"
             style={{
               transition: 'all 0.5s ease',
               transitionDelay: '0.2s',
@@ -241,7 +271,7 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
                 key={i} 
                 className={`level-star ${i < stars ? 'earned' : 'missed'}`}
               >
-                {ICONS.STAR}
+                ⭐
               </div>
             ))}
           </div>
@@ -257,7 +287,7 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
         >
           <div className="main-stats">
             <div className="score-highlight">
-              <div className="score-icon">{ICONS.COIN}</div>
+              <div className="score-icon">💰</div>
               <div className="score-details">
                 <div className="score-label">Puntuación</div>
                 <div className="score-value">{score}</div>
@@ -309,7 +339,7 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
             className="pulse-button next-level-button"
             onClick={handleContinue}
           >
-            {ICONS.NEXT} Siguiente Nivel
+            ▶️ Siguiente Nivel
           </button>
         </div>
       </div>

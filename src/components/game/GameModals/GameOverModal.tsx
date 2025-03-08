@@ -4,7 +4,7 @@ import { useGameSound } from '../../../hooks/useGameSound';
 import { ICONS } from '../../../constants/icons';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store';
-import './GameModals.css';
+import './GameOverModal.css';
 
 interface GameOverModalProps {
   isVisible?: boolean;
@@ -29,6 +29,36 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
   const [modalVisible, setModalVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isNewHighScore, setIsNewHighScore] = useState(false);
+  
+  // Establecer la variable CSS --vh para altura real del viewport
+  useEffect(() => {
+    // Función para establecer la altura real del viewport
+    const setViewportHeight = () => {
+      // El viewport height real en píxeles
+      const vh = window.innerHeight * 0.01;
+      // Establecer la variable CSS --vh
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    // Establecer la altura inicialmente
+    setViewportHeight();
+
+    // Actualizar la altura cuando cambie el tamaño de la ventana
+    window.addEventListener('resize', setViewportHeight);
+    
+    // Para dispositivos móviles, actualizar también al cambiar la orientación
+    window.addEventListener('orientationchange', setViewportHeight);
+    
+    // Actualizar después de cargar completamente (para iOS Safari)
+    window.addEventListener('load', setViewportHeight);
+    
+    // Limpiar los event listeners al desmontar
+    return () => {
+      window.removeEventListener('resize', setViewportHeight);
+      window.removeEventListener('orientationchange', setViewportHeight);
+      window.removeEventListener('load', setViewportHeight);
+    };
+  }, []);
   
   // Efecto para manejar la animación de entrada cuando el modal es visible
   useEffect(() => {
@@ -124,9 +154,9 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
   
   return (
     <div className={`game-modal fullscreen-modal ${modalVisible ? 'visible' : ''} ${isClosing ? 'closing' : ''}`}>
-      <div className="modal-content game-over-content compact-content" ref={modalContentRef}>
+      <div className="modal-content game-over-content" ref={modalContentRef}>
         <div 
-          className="game-over-header compact-header"
+          className="game-over-header"
           style={{
             transition: 'all 0.6s ease',
             ...animations.title
@@ -137,7 +167,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
         </div>
         
         <div 
-          className="game-over-body compact-body"
+          className="game-over-body"
           style={{
             transition: 'all 0.5s ease',
             transitionDelay: '0.2s',
@@ -183,7 +213,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
             </div>
           </div>
           
-          <div className="game-over-message compact-message">
+          <div className="game-over-message">
             <p>{isNewHighScore 
               ? '¡Increíble! Has superado tu mejor puntuación. ¿Puedes ir aún más lejos?' 
               : '¡Has hecho un gran esfuerzo! Practica y mejora tu estrategia para obtener una puntuación más alta.'}
@@ -201,7 +231,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
               ...animations.button
             }}
           >
-            {ICONS.RESTART} Jugar de nuevo
+            <span>🔄</span> Jugar de nuevo
           </button>
         </div>
       </div>
