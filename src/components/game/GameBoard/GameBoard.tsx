@@ -36,6 +36,9 @@ const GameBoard: React.FC = () => {
   // Referencias para el tablero
   const gridRef = useRef<HTMLDivElement>(null);
   
+  // Rastreamos las celdas que son nuevas (para animación)
+  const newIconCells = useRef<Set<string>>(new Set<string>());
+  
   // Estado para mostrar/ocultar los controles de desarrollo
   const [showDevControls, setShowDevControls] = useState(false);
   
@@ -78,40 +81,14 @@ const GameBoard: React.FC = () => {
     };
   }, []);
   
-  // Manejadores de eventos optimizados
+  // Manejadores de eventos optimizados - sin animaciones
   const handleCellClickOptimized = useCallback((row: number, col: number) => {
-    // Añadir visual feedback inmediato antes de procesar la lógica
-    const cellElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-    if (cellElement) {
-      cellElement.classList.add('clicking');
-      
-      // Agregar efecto de ondas al hacer clic
-      const ripple = document.createElement('div');
-      ripple.className = 'click-ripple';
-      cellElement.appendChild(ripple);
-      
-      // Eliminar el ripple después de la animación (más largo)
-      setTimeout(() => {
-        ripple.remove();
-        cellElement.classList.remove('clicking');
-      }, 800); // Aumentado de 600ms a 800ms
-      
-      // Verificar si la celda tiene un ícono y agregar efecto de brillo
-      const cellContent = board[row]?.[col];
-      if (cellContent) {
-        // Reproducir sonido de clic
-        audioManager.play('click');
-        
-        // Agregar efecto de brillo
-        const glow = document.createElement('div');
-        glow.className = 'match-glow';
-        cellElement.appendChild(glow);
-        
-        // Eliminar el brillo después de la animación (más largo)
-        setTimeout(() => {
-          glow.remove();
-        }, 1200); // Aumentado de 800ms a 1200ms
-      }
+    // Verificar si la celda tiene un ícono
+    const cellContent = board[row]?.[col];
+    
+    // Solo reproducir sonido si hay un icono
+    if (cellContent) {
+      audioManager.play('click');
     }
     
     // Llamar al manejador original
@@ -126,20 +103,61 @@ const GameBoard: React.FC = () => {
     
     const cellsArray = [];
     
+    // Optimización: En modo de bajo rendimiento, simplificar las celdas vacías
+    const shouldRenderEmptyCells = !lowPerformanceMode || boardSize <= 6;
+    
     for (let row = 0; row < boardSize; row++) {
       for (let col = 0; col < boardSize; col++) {
         const cellContent = board[row] ? board[row][col] : null;
+        
+        // Optimización: En dispositivos de bajo rendimiento y tableros grandes, solo renderizar celdas con contenido
+        if (!cellContent && !shouldRenderEmptyCells) {
+          // Usar una representación mínima para celdas vacías
+          cellsArray.push(
+            <div
+              key={`cell-${row}-${col}`}
+              className="board-cell empty performance-mode"
+              onClick={() => handleCellClickOptimized(row, col)}
+              data-row={row}
+              data-col={col}
+            />
+          );
+          continue;
+        }
+        
         const { icon, isRemoving } = processCellContent(cellContent);
         
-        // Determinar clases para la celda
-        const cellClasses = [
-          'board-cell',
-          isCellHighlighted(row, col) ? 'highlighted' : '',
-          isRemoving ? 'removing' : '',
-          icon && !isRemoving ? 'has-icon' : '',
-          !icon ? 'empty' : '',
-          lowPerformanceMode ? 'performance-mode' : ''
-        ].filter(Boolean).join(' ');
+        // Optimización: reducir el número de clases aplicadas
+        let cellClasses = 'board-cell';
+        
+        if (isCellHighlighted(row, col)) cellClasses += ' highlighted';
+        if (isRemoving) cellClasses += ' removing';
+        if (icon && !isRemoving) cellClasses += ' has-icon';
+        if (!icon) cellClasses += ' empty';
+        if (lowPerformanceMode) cellClasses += ' performance-mode';
+        
+        // Detectar si es un icono recién añadido
+        const cellKey = `${row}-${col}`;
+        // Garantizar que siempre hay un Set válido
+        const currentNewIconCells = newIconCells.current || new Set<string>();
+        const isNewIcon = icon && !isRemoving && !currentNewIconCells.has(cellKey);
+        
+        // Si es un icono nuevo, añadir la clase new-icon
+        if (isNewIcon && icon) {
+          cellClasses += ' new-icon';
+          currentNewIconCells.add(cellKey);
+          
+          // Eliminar la clase después de la animación
+          const timerId = setTimeout(() => {
+            const cellElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            if (cellElement) {
+              cellElement.classList.remove('new-icon');
+            }
+          }, lowPerformanceMode ? 300 : 450);
+          
+          // Guardar referencia al Set actualizado
+          newIconCells.current = currentNewIconCells;
+        }
         
         cellsArray.push(
           <div
@@ -149,74 +167,9 @@ const GameBoard: React.FC = () => {
             ref={(el) => {
               registerCellRef(row, col, el);
               
-              // Si la celda está marcada para eliminación, agregar efecto de estrellas
-              if (isRemoving && el && !lowPerformanceMode) {
-                // Crear contenedor de estrellas si no existe
-                let starsContainer = el.querySelector('.celebration-stars') as HTMLDivElement | null;
-                if (!starsContainer) {
-                  starsContainer = document.createElement('div');
-                  starsContainer.className = 'celebration-stars';
-                  
-                  // Aseguramos que el contenedor esté correctamente posicionado
-                  starsContainer.style.position = 'absolute';
-                  starsContainer.style.top = '0';
-                  starsContainer.style.left = '0';
-                  starsContainer.style.width = '100%';
-                  starsContainer.style.height = '100%';
-                  starsContainer.style.overflow = 'visible';
-                  starsContainer.style.pointerEvents = 'none';
-                  
-                  el.appendChild(starsContainer);
-                  
-                  // Agregar el efecto de destellos adicionales
-                  const additionalSparkles = document.createElement('div');
-                  additionalSparkles.className = 'additional-sparkles';
-                  el.appendChild(additionalSparkles);
-                  
-                  // Crear estrellas aleatorias (más estrellas)
-                  const starCount = 7 + Math.floor(Math.random() * 6); // Entre 7 y 12 estrellas (aumentado)
-                  for (let i = 0; i < starCount; i++) {
-                    const star = document.createElement('div');
-                    star.className = 'celebration-star';
-                    
-                    // Posición y dirección aleatorias - ajustadas para mejor alineación
-                    const tx = (Math.random() * 40 - 20) + 'px'; // Reducido el rango para mejor alineación
-                    const ty = (Math.random() * -40 - 10) + 'px'; // Reducido el rango para mejor alineación
-                    star.style.setProperty('--tx', tx);
-                    star.style.setProperty('--ty', ty);
-                    
-                    // Tamaño aleatorio (ligeramente más grandes)
-                    const size = 4 + Math.random() * 6; // Entre 4px y 10px - ligeramente más grandes
-                    star.style.width = size + 'px';
-                    star.style.height = size + 'px';
-                    
-                    // Agregar retraso aleatorio para que no todas aparezcan a la vez
-                    const delay = Math.random() * 0.8; // Entre 0 y 0.8 segundos de retraso
-                    star.style.animationDelay = delay + 's';
-                    
-                    // Posición inicial centrada en la celda
-                    star.style.left = (45 + Math.random() * 10) + '%'; // Más centrado (45-55%)
-                    star.style.top = (45 + Math.random() * 10) + '%'; // Más centrado (45-55%)
-                    
-                    // Agregar estrella al contenedor
-                    starsContainer.appendChild(star);
-                  }
-                  
-                  // Agregar sonido festivo
-                  audioManager.play('positive');
-                  
-                  // Eliminar las estrellas después de la animación (más largo)
-                  setTimeout(() => {
-                    if (starsContainer && starsContainer.parentNode) {
-                      starsContainer.remove();
-                    }
-                    // Eliminar también los destellos adicionales
-                    if (additionalSparkles && additionalSparkles.parentNode) {
-                      additionalSparkles.remove();
-                    }
-                  }, 2800); // Aumentado de 1500ms a 2800ms para coincidir con la animación de 2.5s de las estrellas
-                }
-              }
+              // Eliminamos los efectos de animación para mejor rendimiento
+              // Ya no creamos estrellas ni efectos visuales
+              
             }}
             data-row={row}
             data-col={col}
@@ -247,6 +200,20 @@ const GameBoard: React.FC = () => {
         grid.removeEventListener('touchstart', touchStartHandler);
       };
     }
+  }, []);
+  
+  // Asegurar que el Set de newIconCells existe al iniciar el componente
+  useEffect(() => {
+    if (!newIconCells.current) {
+      newIconCells.current = new Set<string>();
+    }
+    
+    // Limpiar al desmontar
+    return () => {
+      if (newIconCells.current) {
+        newIconCells.current.clear();
+      }
+    };
   }, []);
   
   // Función para cambiar el tamaño del tablero (para desarrollo)

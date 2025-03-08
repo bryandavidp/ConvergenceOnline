@@ -3,233 +3,591 @@
  * Contiene los estilos para las celdas del tablero y sus estados
  */
 
-/* Celda básica */
+/* Estilos de celdas optimizados para rendimiento
+ * Incluye animaciones eficientes para celdas que se eliminan
+ */
+
+/* Base para todas las celdas */
 .cell {
-  width: var(--cell-size);
-  height: var(--cell-size);
-  border-radius: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-  cursor: pointer;
-  user-select: none;
-  overflow: visible !important;
-  box-sizing: border-box;
-  background-color: rgba(255, 255, 255, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Celda del tablero */
-.board-cell {
-  position: relative;
-  border-radius: 8px;
-  overflow: visible !important;
-  cursor: pointer;
-  transition: transform 0.15s ease-out, opacity 0.15s ease;
-  will-change: transform;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-/* Contenido de la celda (iconos) */
-.board-cell .cell-content {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(100, 120, 255, 0.3);
+  background-color: rgba(50, 60, 100, 0.2);
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: transform 0.2s ease-out;
-  will-change: transform;
-  overflow: visible !important;
+  position: relative;
+  user-select: none;
+  /* Optimizado para móviles: eliminado hover states */
 }
 
-/* Hover y active para celdas */
-.board-cell:hover, .board-cell:active {
-  transform: translateY(-3px);
-  z-index: 2;
+/* Estilos específicos de las celdas del tablero */
+.board-cell {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  /* Eliminamos sombras y efectos para mayor rendimiento */
+  background-color: rgba(30, 40, 80, 0.1);
+  border: 1px solid rgba(100, 140, 255, 0.2);
+  /* Desactivar Transform para prevenir creación de capas de composición */
 }
 
-.board-cell:hover .cell-content, .board-cell:active .cell-content {
-  transform: scale(1.08);
-  background-color: rgba(255, 255, 255, 0.25);
+/* Contenido de la celda (icono) */
+.board-cell .cell-content {
+  font-size: 1.8rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  /* Eliminamos transform para dispositivos móviles */
+  position: relative;
+  z-index: 5;
 }
 
-/* Estados de las celdas */
+/* Optimización móvil: Deshabilitamos hover states en dispositivos touch */
+@media (hover: hover) {
+  .board-cell:hover, .board-cell:active {
+    background-color: rgba(40, 50, 100, 0.3);
+    border-color: rgba(100, 140, 255, 0.3);
+  }
+  
+  .board-cell:hover .cell-content, .board-cell:active .cell-content {
+    transform: scale(1.05);
+    transition: transform 0.15s ease;
+  }
+}
+
+/* Variantes de celdas */
 .cell.light {
-  background-color: rgba(255, 153, 51, 0.2);
-  border: 2px solid rgba(255, 215, 0, 0.3);
+  background-color: rgba(60, 70, 120, 0.15);
 }
 
 .cell.dark {
-  background-color: rgba(77, 77, 255, 0.2);
-  border: 2px solid rgba(77, 77, 255, 0.3);
+  background-color: rgba(30, 40, 80, 0.2);
 }
 
-.cell:hover {
-  background-color: rgba(255, 51, 102, 0.3);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-}
-
+/* Estados simplificados para celdas */
 .cell.hint {
   background-color: rgba(255, 255, 0, 0.4);
-  box-shadow: 0 0 15px rgba(255, 255, 0, 0.6);
-  border: 2px solid rgba(255, 255, 0, 0.5);
+  border-color: rgba(255, 255, 0, 0.5);
 }
 
 .cell.hint-target {
-  background-color: rgba(0, 255, 0, 0.4);
-  box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
-  border: 2px solid rgba(0, 255, 0, 0.5);
+  border: 2px solid rgba(0, 255, 0, 0.7);
 }
 
 .cell.error {
   background-color: rgba(255, 0, 0, 0.4);
-  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
-  border: 2px solid rgba(255, 0, 0, 0.5);
+  border-color: rgba(255, 0, 0, 0.5);
 }
 
+/* Eliminamos animación para new-icon */
 .cell.new-icon {
-  animation: newIcon 0.6s ease-out;
+  /* Eliminada animación */
 }
 
-.cell.removed {
+/* 
+ * Animación para celdas que se eliminan - compresión con pop
+ * 
+ * Efecto en dos partes:
+ * 1. Compresión rápida hacia el centro (escala reducida)
+ * 2. Pequeño "pop" al final (ligero rebote antes de desaparecer)
+ *
+ * La animación es eficiente porque:
+ * - Solo modifica transform y opacity (propiedades optimizadas)
+ * - Duración corta (350ms versión completa, 250ms versión lite)url(about:blank#blocked)
+ * - No crea elementos DOM adicionales
+ * - Se desactiva automáticamente en modo de alto rendimiento
+ */
+.cell.removed,
+.board-cell.removing {
+  animation: cellCompressionPop 0.35s ease-in forwards;
+  transform-origin: center;
+  /* No usar will-change para evitar crear capas de composición innecesarias */
+  pointer-events: none;
+}
+
+/* Performance-mode aplicará una versión más simple */
+.performance-mode .cell.removed,
+.performance-mode .board-cell.removing {
+  animation: cellCompressionPopLite 0.25s ease-in forwards;
+}
+
+/* Desactivar completamente en modo de alto rendimiento */
+.performance-mode-high .cell.removed,
+.performance-mode-high .board-cell.removing {
   opacity: 0;
+  animation: none;
 }
 
-/* Celdas con íconos */
+/* Keyframes para la versión completa: compresión con pop */
+@keyframes cellCompressionPop {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.3);
+    opacity: 0.7;
+  }
+  85% {
+    transform: scale(0.15);
+    opacity: 0.5;
+  }
+  90% {
+    transform: scale(0.2);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+/* Keyframes para la versión lite: más rápida y simple */
+@keyframes cellCompressionPopLite {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(0.2);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+/* Celdas con íconos - versión optimizada */
 .board-cell.has-icon {
   background: rgba(60, 70, 120, 0.2);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* 
+ * Animación para iconos de penalización
+ * 
+ * Efecto en dos partes:
+ * 1. Compresión con rebote para llamar la atención
+ * 2. Borde rojo pulsante que indica error
+ *
+ * La animación es eficiente porque:
+ * - Solo modifica transform, opacity y border-color (propiedades optimizadas)
+ * - Duración corta (400ms versión completa, 300ms versión lite)
+ * - No crea elementos DOM adicionales
+ * - Se adapta automáticamente al rendimiento del dispositivo
+ * - El borde desaparece automáticamente después de 2 segundos
+ */
+.board-cell.penalty-icon {
+  z-index: 10;
+  position: relative;
+  animation: penaltyPopError 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  -webkit-animation: penaltyPopError 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  transform-origin: center;
+  -webkit-transform-origin: center;
+  border: 2px solid rgba(255, 50, 50, 0.8);
+}
+
+/* Transición suave cuando se elimina la clase penalty-icon */
+.board-cell.penalty-fade-out {
+  transition: border-color 0.5s ease-out;
+  -webkit-transition: border-color 0.5s ease-out;
+  border-color: transparent;
+}
+
+.board-cell.penalty-fade-out .cell-content {
+  transition: color 0.5s ease-out;
+  -webkit-transition: color 0.5s ease-out;
+  color: inherit; /* Volver al color normal */
+}
+
+.board-cell.penalty-icon .cell-content {
+  color: rgba(255, 50, 50, 1);
+  animation: penaltyContentPulse 0.6s ease forwards;
+  -webkit-animation: penaltyContentPulse 0.6s ease forwards;
+}
+
+/* Performance-mode aplicará una versión más simple */
+.performance-mode .board-cell.penalty-icon {
+  animation: penaltyPopErrorLite 0.3s ease-out both;
+  -webkit-animation: penaltyPopErrorLite 0.3s ease-out both;
+  border: 1px solid rgba(255, 0, 0, 0.6);
+}
+
+.performance-mode .board-cell.penalty-icon .cell-content {
+  animation: none;
+  -webkit-animation: none;
+  color: rgba(255, 0, 0, 0.8);
+}
+
+/* Desactivar completamente en modo de alto rendimiento */
+.performance-mode-high .board-cell.penalty-icon {
+  border-color: rgba(255, 0, 0, 0.5);
+  animation: none;
+  -webkit-animation: none;
+}
+
+/* Keyframes para la versión completa: compresión con pop y error */
+@keyframes penaltyPopError {
+  0% {
+    transform: scale(0.5);
+    -webkit-transform: scale(0.5);
+    border-color: rgba(255, 0, 0, 0.2);
+  }
+  40% {
+    transform: scale(1.08);
+    -webkit-transform: scale(1.08);
+    border-color: rgba(255, 0, 0, 0.8);
+  }
+  60% {
+    transform: scale(0.96);
+    -webkit-transform: scale(0.96);
+    border-color: rgba(255, 0, 0, 0.6);
+  }
+  80% {
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    border-color: rgba(255, 0, 0, 0.7);
+  }
+  100% {
+    transform: scale(1);
+    -webkit-transform: scale(1);
+    border-color: rgba(255, 0, 0, 0.5);
+  }
+}
+
+/* Para Safari y navegadores WebKit */
+@-webkit-keyframes penaltyPopError {
+  0% { -webkit-transform: scale(0.5); border-color: rgba(255, 0, 0, 0.2); }
+  40% { -webkit-transform: scale(1.08); border-color: rgba(255, 0, 0, 0.8); }
+  60% { -webkit-transform: scale(0.96); border-color: rgba(255, 0, 0, 0.6); }
+  80% { -webkit-transform: scale(1.02); border-color: rgba(255, 0, 0, 0.7); }
+  100% { -webkit-transform: scale(1); border-color: rgba(255, 0, 0, 0.5); }
+}
+
+/* Animación para el contenido del icono */
+@keyframes penaltyContentPulse {
+  0% {
+    transform: scale(0.7);
+    -webkit-transform: scale(0.7);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.15);
+    -webkit-transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    -webkit-transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Para Safari y navegadores WebKit */
+@-webkit-keyframes penaltyContentPulse {
+  0% { -webkit-transform: scale(0.7); opacity: 0.5; }
+  50% { -webkit-transform: scale(1.15); opacity: 1; }
+  100% { -webkit-transform: scale(1); opacity: 1; }
+}
+
+/* Keyframes para la versión lite: más simple y rápida */
+@keyframes penaltyPopErrorLite {
+  0% {
+    transform: scale(0.6);
+    -webkit-transform: scale(0.6);
+    border-color: rgba(255, 0, 0, 0.2);
+  }
+  50% {
+    transform: scale(1.05);
+    -webkit-transform: scale(1.05);
+    border-color: rgba(255, 0, 0, 0.7);
+  }
+  100% {
+    transform: scale(1);
+    -webkit-transform: scale(1);
+    border-color: rgba(255, 0, 0, 0.5);
+  }
+}
+
+/* Para Safari y navegadores WebKit */
+@-webkit-keyframes penaltyPopErrorLite {
+  0% { -webkit-transform: scale(0.6); border-color: rgba(255, 0, 0, 0.2); }
+  50% { -webkit-transform: scale(1.05); border-color: rgba(255, 0, 0, 0.7); }
+  100% { -webkit-transform: scale(1); border-color: rgba(255, 0, 0, 0.5); }
 }
 
 .board-cell.has-icon .cell-content {
-  transform: scale(1.1); /* Hacer iconos un poco más grandes */
+  /* Escala optimizada para móviles */
+  font-size: 2rem;
 }
 
-/* Celda destacada */
+/* Celda resaltada */
 .board-cell.highlighted {
-  z-index: 3;
+  background-color: rgba(100, 200, 255, 0.3);
+  border-color: rgba(100, 200, 255, 0.5);
 }
 
 .board-cell.highlighted .cell-content {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.4), rgba(255, 140, 0, 0.4));
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
-  transform: scale(1.1);
-  border: 2px solid rgba(255, 215, 0, 0.5);
+  /* Sin efectos de glow para mejor rendimiento */
+  filter: none;
 }
 
-/* Celda con efecto de brillo */
+/* Celda con brillo */
 .cell.glow-effect {
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
-  z-index: 3;
+  /* Eliminamos efectos costosos */
+  background-color: rgba(100, 255, 100, 0.3);
+  border-color: rgba(100, 255, 100, 0.5);
 }
 
-/* Celda con concordancia potencial */
+/* Celda con coincidencia potencial */
 .board-cell.potential-match {
-  z-index: 4;
+  border-color: rgba(100, 255, 100, 0.6);
 }
 
-.board-cell.potential-match::after {
-  content: '';
-  position: absolute;
-  top: -5px;
-  left: -5px;
-  right: -5px;
-  bottom: -5px;
-  border: 3px solid rgba(0, 255, 0, 0.7);
-  border-radius: 15px;
-  animation: pulseBorder 1.5s infinite;
-}
-
-/* Celda con clic */
+/* Celda con clic - sin animaciones */
 .board-cell.clicking {
-  transform: scale(0.95);
-  opacity: 0.9;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0.95;
+  /* Sin transiciones */
 }
 
-/* Estilos básicos para celdas con íconos de penalización - 
-   Las animaciones vienen de animations.css o animations-lite.css */
-.board-cell.penalty-icon {
-  z-index: 10; /* Aumentado para asegurar que esté por encima de otros elementos */
-  position: relative; /* Necesario para posición absoluta de pseudoelementos */
-  will-change: transform; /* Optimización para animaciones */
+/* Modo de alto rendimiento - bloquea TODAS las animaciones y efectos visuales */
+.performance-mode,
+.performance-mode * {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+  /* Evitar capas de composición */
+  will-change: auto !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
-/* Quitamos estos estilos para que no interfieran con las animaciones */
-/* .board-cell.penalty-icon .cell-content {
-  background: linear-gradient(135deg, rgba(255, 51, 51, 0.4), rgba(204, 0, 0, 0.4));
-  box-shadow: 0 0 15px rgba(255, 51, 51, 0.6);
-  border: 2px solid rgba(255, 51, 51, 0.5);
+/* Performance-mode-high - versión para dispositivos realmente limitados */
+.performance-mode-high .board-cell,
+.performance-mode-high .cell {
+  border-width: 1px !important;
+  border-radius: 4px !important;
 }
 
-.board-cell.penalty-icon::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 70%;
-  height: 70%;
-  transform: translate(-50%, -50%);
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-  z-index: 3;
-  filter: drop-shadow(0 0 5px rgba(255, 100, 100, 0.7));
-  animation: rotateSlow 8s linear infinite;
-} */
+.performance-mode-high .board-cell .cell-content {
+  font-size: 1.5rem !important;
+}
 
-/* Celdas vacías - mejor marcadas */
+/* Celdas vacías optimizadas */
 .cell.empty, .board-cell:not(.has-icon) {
   background: rgba(40, 45, 80, 0.15);
   border: 1px dashed rgba(100, 120, 255, 0.2);
-  box-shadow: inset 0 0 10px rgba(30, 40, 100, 0.1);
 }
 
-/* Estilo mejorado al pasar el cursor */
-.board-cell:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 5;
-}
-
-.board-cell:hover .cell-content {
-  transform: scale(1.15);
-}
-
-/* Contenido de la celda para diferentes tamaños de tablero */
-/* Para tableros 5x5 */
+/* Optimizaciones específicas para tamaños de tablero */
 .game-board-grid[style*="repeat(5, 1fr)"] .board-cell .cell-content {
-  font-size: clamp(1.3rem, 4.5vmin, 2.8rem);
+  font-size: 2.2rem;
 }
 
-/* Para tableros 6x6 */
 .game-board-grid[style*="repeat(6, 1fr)"] .board-cell .cell-content {
-  font-size: clamp(1.2rem, 4vmin, 2.5rem);
+  font-size: 1.8rem;
 }
 
-/* Para tableros 7x7 */
 .game-board-grid[style*="repeat(7, 1fr)"] .board-cell .cell-content {
-  font-size: clamp(1.1rem, 3.5vmin, 2.2rem);
+  font-size: 1.7rem;
 }
 
-/* Para tableros 8x8 */
 .game-board-grid[style*="repeat(8, 1fr)"] .board-cell .cell-content {
-  font-size: clamp(1rem, 3vmin, 2rem);
+  font-size: 1.5rem;
 }
 
-/* Para tableros 9x9 */
 .game-board-grid[style*="repeat(9, 1fr)"] .board-cell .cell-content {
-  font-size: clamp(0.9rem, 2.8vmin, 1.8rem);
+  font-size: 1.3rem;
 }
 
-/* Para tableros 10x10 */
 .game-board-grid[style*="repeat(10, 1fr)"] .board-cell .cell-content {
-  font-size: clamp(0.8rem, 2.5vmin, 1.6rem);
+  font-size: 1.1rem;
+}
+
+/* Optimizaciones móviles específicas */
+@media (max-width: 768px) {
+  .board-cell {
+    border-radius: 4px;
+    border-width: 1px;
+  }
+  
+  .board-cell .cell-content {
+    font-size: 90%;
+  }
+}
+
+/* Optimizaciones para iPhone */
+@media screen and (-webkit-min-device-pixel-ratio: 2) {
+  .board-cell {
+    /* Safari en iPhone tiene problemas con bordes finos */
+    border-width: 0.5px;
+  }
+  
+  .cell-content {
+    /* Prevenir problemas de pixelación en dispositivos de alta densidad */
+    transform: translateZ(0);
+  }
+}
+
+/* Optimizaciones para dispositivos móviles */
+@media (max-width: 768px) {
+  .board-cell.penalty-icon {
+    animation-duration: 0.3s;
+    -webkit-animation-duration: 0.3s;
+  }
+  
+  .performance-mode .board-cell.penalty-icon {
+    animation-duration: 0.25s;
+    -webkit-animation-duration: 0.25s;
+  }
+}
+
+/* 
+ * Animación para iconos nuevos que aparecen en el tablero
+ * 
+ * Efecto suave de aparecer y crecer:
+ * 1. Empieza con opacidad 0 y escala pequeña
+ * 2. Transición suave a estado normal
+ *
+ * La animación es eficiente porque:
+ * - Solo modifica transform y opacity (propiedades optimizadas)
+ * - Duración corta (400ms versión completa, 250ms versión lite)
+ * - No crea elementos DOM adicionales
+ * - No interfiere con otras animaciones
+ */
+.board-cell.new-icon {
+  z-index: 5;
+  animation: newIconAppear 0.4s ease-out forwards;
+  -webkit-animation: newIconAppear 0.4s ease-out forwards;
+}
+
+.board-cell.new-icon .cell-content {
+  animation: newIconContentAppear 0.4s ease-out forwards;
+  -webkit-animation: newIconContentAppear 0.4s ease-out forwards;
+}
+
+/* Performance-mode aplicará una versión más simple */
+.performance-mode .board-cell.new-icon {
+  animation: newIconAppearLite 0.25s ease-out forwards;
+  -webkit-animation: newIconAppearLite 0.25s ease-out forwards;
+}
+
+.performance-mode .board-cell.new-icon .cell-content {
+  animation: newIconContentAppearLite 0.25s ease-out forwards;
+  -webkit-animation: newIconContentAppearLite 0.25s ease-out forwards;
+}
+
+/* Desactivar completamente en modo de alto rendimiento */
+.performance-mode-high .board-cell.new-icon,
+.performance-mode-high .board-cell.new-icon .cell-content {
+  animation: none;
+  -webkit-animation: none;
+}
+
+/* Keyframes para la versión completa: aparecer con pequeño rebote */
+@keyframes newIconAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@-webkit-keyframes newIconAppear {
+  0% { opacity: 0; -webkit-transform: scale(0.6); }
+  70% { opacity: 1; -webkit-transform: scale(1.05); }
+  100% { opacity: 1; -webkit-transform: scale(1); }
+}
+
+@keyframes newIconContentAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(5px);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.1) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@-webkit-keyframes newIconContentAppear {
+  0% { opacity: 0; -webkit-transform: scale(0.7) translateY(5px); }
+  70% { opacity: 1; -webkit-transform: scale(1.1) translateY(0); }
+  100% { opacity: 1; -webkit-transform: scale(1) translateY(0); }
+}
+
+/* Keyframes para la versión lite: más simple y directa */
+@keyframes newIconAppearLite {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@-webkit-keyframes newIconAppearLite {
+  0% { opacity: 0; -webkit-transform: scale(0.8); }
+  100% { opacity: 1; -webkit-transform: scale(1); }
+}
+
+@keyframes newIconContentAppearLite {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@-webkit-keyframes newIconContentAppearLite {
+  0% { opacity: 0; -webkit-transform: scale(0.8); }
+  100% { opacity: 1; -webkit-transform: scale(1); }
+}
+
+/* Importante: Evitar conflictos con otras animaciones */
+.board-cell.new-icon.penalty-icon {
+  /* Si tiene ambas clases, priorizar la animación de error */
+  animation: none;
+  -webkit-animation: none;
+}
+
+.board-cell.new-icon.penalty-icon .cell-content {
+  /* Si tiene ambas clases, priorizar la animación de error */
+  animation: none;
+  -webkit-animation: none;
+}
+
+/* Eliminar animaciones anteriores para new-icon */
+.cell.new-icon {
+  /* Sin animación */
 } 

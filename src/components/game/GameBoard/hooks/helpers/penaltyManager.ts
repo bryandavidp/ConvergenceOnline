@@ -4,7 +4,7 @@ import logger from '../../../../../utils/logger';
 import { audioManager } from '../../../../../utils/audioManager';
 
 /**
- * Función para añadir iconos de penalización al tablero con animaciones mejoradas
+ * Función para añadir iconos de penalización al tablero con animaciones optimizadas
  * 
  * @param level - Nivel actual del juego
  * @param board - Estado actual del tablero
@@ -64,10 +64,7 @@ export const addPenaltyIcons = (
     const iconsToAdd = Math.min(penaltyIconCount, emptyCells.length);
     let addedCount = 0;
     
-    // Lista para almacenar referencias a las celdas y sus coordenadas
-    const cellsToAnimate: { element: HTMLElement, row: number, col: number }[] = [];
-    
-    // Añadir los iconos al tablero primero
+    // Añadir los iconos al tablero con una sola iteración
     for (let i = 0; i < iconsToAdd; i++) {
       const cell = emptyCells[i];
       
@@ -83,56 +80,40 @@ export const addPenaltyIcons = (
       }));
       
       addedCount++;
-    }
-    
-    // Ahora aplicamos las animaciones con un pequeño retraso
-    // para asegurar que Redux haya actualizado el DOM
-    setTimeout(() => {
-      // Añadir efectos visuales a las celdas después de que se hayan creado los iconos
-      for (let i = 0; i < iconsToAdd; i++) {
-        const cell = emptyCells[i];
+      
+      // Aplicar animación con pequeño retraso para asegurar que el DOM se actualice
+      setTimeout(() => {
+        const cellElement = getCellElement(cell.row, cell.col);
         
-        // Crear un closure para mantener la referencia a la celda actual
-        const animateCellWithDelay = (cellIndex: number) => {
-          setTimeout(() => {
-            // Obtener la referencia al elemento DOM después de que el icono exista
-            const cellElement = getCellElement(cell.row, cell.col);
+        if (cellElement) {
+          // Asegurarnos de que la celda tiene la clase penalty-icon
+          cellElement.classList.add('penalty-icon');
+          
+          // Añadir un temporizador para eliminar la clase después de que finalice la animación
+          const cleanupTimer = setTimeout(() => {
+            // Eliminar la clase penalty-icon después de que la animación haya terminado
+            // para que el borde desaparezca
+            cellElement.classList.remove('penalty-icon');
             
-            if (cellElement) {
-              // Eliminar cualquier clase penalty-icon anterior por si acaso
-              cellElement.classList.remove('penalty-icon');
-              
-              // Forzar un reflow del DOM para asegurar que la clase se vuelva a aplicar
-              void cellElement.offsetWidth;
-              
-              // Añadir la clase para la animación
-              cellElement.classList.add('penalty-icon');
-              
-              // Reproducir un sonido adicional por cada icono (opcional)
-              if (cellIndex % 2 === 0) {
-                audioManager.play("invalidMove");
-              }
-              
-              // Log para confirmar que se aplicó la clase
-              logger.info('PenaltyManager', `Aplicando animación a celda [${cell.row},${cell.col}]`);
-              
-              // Eliminar la clase después para terminar la animación
-              const animTimer = setTimeout(() => {
-                cellElement.classList.remove('penalty-icon');
-              }, 1200); // Reducido de 3500ms a 1200ms para animaciones más cortas
-              
-              // Registrar el temporizador
-              addAnimationTimer(animTimer);
-            } else {
-              logger.warn('PenaltyManager', `No se encontró el elemento para la celda [${cell.row},${cell.col}]`);
-            }
-          }, cellIndex * 150); // Reducido de 250ms a 150ms para que aparezcan más rápido
-        };
-        
-        // Ejecutar la función con el índice actual
-        animateCellWithDelay(i);
-      }
-    }, 50); // Reducido de 100ms a 50ms para empezar las animaciones antes
+            // Agregamos una clase transitoria para una salida suave
+            cellElement.classList.add('penalty-fade-out');
+            
+            // Eliminamos la clase de transición después de completarse
+            const fadeOutTimer = setTimeout(() => {
+              cellElement.classList.remove('penalty-fade-out');
+            }, 500); // 500ms para la transición
+            
+            // Registrar también este temporizador
+            addAnimationTimer(fadeOutTimer);
+            
+            logger.info('PenaltyManager', `Animación de penalización completada: [${cell.row},${cell.col}]`);
+          }, 2000); // Mantenemos el borde durante 2 segundos
+          
+          // Registrar el temporizador para limpieza
+          addAnimationTimer(cleanupTimer);
+        }
+      }, 50 * i); // Pequeño retraso escalonado para evitar que todas aparezcan exactamente al mismo tiempo
+    }
     
     return addedCount;
   } catch (error) {
