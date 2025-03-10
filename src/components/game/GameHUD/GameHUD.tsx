@@ -1,9 +1,34 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../../store';
-import { setGameStatus } from '../../../store/slices/gameSlice';
+import { setGameStatus, resetCombo } from '../../../store/slices/gameSlice';
 import ComboTimer from '../ComboTimer/ComboTimer';
 import './GameHUD.css';
+
+// Mapa de emojis para los niveles de dificultad
+const DIFFICULTY_EMOJIS = {
+  'tutorial': '🔰',
+  'easy': '😊',
+  'normal': '😐',
+  'hard': '😱'
+};
+
+// Mapa de nombres para los modos de juego
+const MODE_NAMES = {
+  'classic': 'Clásico',
+  'timed': 'Tiempo',
+  'survival': 'Superv.',
+  'zen': 'Zen',
+  'tutorial': 'Tutorial'
+};
+
+// Mapa de nombres para las dificultades
+const DIFFICULTY_NAMES = {
+  'tutorial': 'Tutorial',
+  'easy': 'Fácil',
+  'normal': 'Normal',
+  'hard': 'Difícil'
+};
 
 const GameHUD: React.FC = () => {
   const dispatch = useDispatch();
@@ -17,7 +42,11 @@ const GameHUD: React.FC = () => {
     currentPlayMode,
     status,
     spawnRate,
-    highScore
+    highScore,
+    levelScoreTarget,
+    levelOccupationTarget,
+    iconCount,
+    boardSize
   } = useSelector((state: RootState) => state.game);
   
   // Estado para animaciones
@@ -67,24 +96,32 @@ const GameHUD: React.FC = () => {
   
   // Formatear tiempo para mostrar minutos:segundos
   const formatTime = (seconds: number): string => {
+    if (typeof seconds !== 'number' || isNaN(seconds)) {
+      return '0:00';
+    }
     const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
   // Determinar qué tiempo mostrar según el modo de juego
   const getDisplayTime = () => {
-    if (currentPlayMode === 'timed') {
+    if (currentPlayMode === 'timed' && typeof timeRemaining === 'number') {
       return formatTime(timeRemaining);
-    } else if (currentPlayMode === 'survival') {
+    } else if (currentPlayMode === 'survival' && typeof survivalTime === 'number') {
       return formatTime(survivalTime);
-    } else {
+    } else if (typeof timer === 'number') {
       return formatTime(timer);
     }
+    return '0:00';
   };
   
   // Calcular velocidad como porcentaje inverso (más bajo = más rápido)
   const getSpeedValue = () => {
+    if (typeof spawnRate !== 'number' || spawnRate <= 0) {
+      return 'x1.0';
+    }
+    
     // Base: Inicio en 3000ms (valor típico), más rápido aproxima a 1000ms
     const baseRate = 3000; 
     const minRate = 1000;
@@ -97,12 +134,32 @@ const GameHUD: React.FC = () => {
   
   // Obtener el nombre del modo para mostrar
   const getModeName = () => {
-    switch(currentPlayMode) {
-      case 'classic': return 'Clásico';
-      case 'timed': return 'Tiempo';
-      case 'survival': return 'Superv.';
-      default: return 'Clásico';
+    return MODE_NAMES[currentPlayMode] || 'Clásico';
+  };
+
+  // Calcular progreso según el modo de juego
+  const getProgress = () => {
+    if (currentPlayMode === 'classic' && levelScoreTarget > 0) {
+      const scoreProgress = Math.min(100, Math.round((score / levelScoreTarget) * 100));
+      return `${scoreProgress}%`;
+    } else if (currentPlayMode === 'timed') {
+      return getDisplayTime(); // En modo tiempo, mostramos el tiempo restante
+    } else if (currentPlayMode === 'zen' || currentPlayMode === 'tutorial') {
+      // Para zen y tutorial calculamos ocupación del tablero
+      const totalCells = boardSize * boardSize;
+      if (totalCells > 0 && typeof iconCount === 'number') {
+        const occupationPercentage = Math.round((iconCount / totalCells) * 100);
+        return `${occupationPercentage}%`;
+      }
     }
+    return '0%';
+  };
+
+  // Obtener el emoji y nombre de la dificultad
+  const getDifficultyDisplay = () => {
+    const emoji = DIFFICULTY_EMOJIS[currentDifficulty] || '😐';
+    const name = DIFFICULTY_NAMES[currentDifficulty] || 'Normal';
+    return `${emoji} ${name}`;
   };
 
   // Manejadores para los botones
@@ -115,9 +172,9 @@ const GameHUD: React.FC = () => {
   };
 
   const handleRestart = () => {
-    // Implementar reinicio del juego
+    // Reiniciar el juego: volver a la pantalla de inicio y resetear el combo
+    dispatch(resetCombo());
     dispatch(setGameStatus('startScreen'));
-    // Aquí podrías resetear otros estados del juego si es necesario
   };
 
   const toggleDevControls = () => {
@@ -136,7 +193,7 @@ const GameHUD: React.FC = () => {
         {/* Puntuación máxima en esquina superior izquierda */}
         <div className="max-score-container">
           <div className="max-score-label">MÁXIMA</div>
-          <div className="max-score-value">{highScore || 33340}</div>
+          <div className="max-score-value">{highScore || 0}</div>
         </div>
 
         {/* Botones en esquina superior derecha */}
@@ -171,27 +228,37 @@ const GameHUD: React.FC = () => {
       <div className={`game-hud ${isMobile.current ? 'mobile' : ''}`}>
         <div className="hud-item score">
           <div className="hud-label">PUNTUACIÓN</div>
-          <div className={`hud-value ${animateScore ? 'score-change' : ''}`}>{score || 620}</div>
+          <div className={`hud-value ${animateScore ? 'score-change' : ''}`}>{score || 0}</div>
         </div>
         
         <div className="hud-item level">
           <div className="hud-label">NIVEL</div>
-          <div className={`hud-value ${animateLevel ? 'score-change' : ''}`}>{level || 2}</div>
+          <div className={`hud-value ${animateLevel ? 'score-change' : ''}`}>{level || 1}</div>
         </div>
         
         <div className="hud-item time">
           <div className="hud-label">TIEMPO</div>
-          <div className="hud-value">{getDisplayTime() || '1:08'}</div>
+          <div className="hud-value">{getDisplayTime()}</div>
         </div>
         
         <div className="hud-item speed">
           <div className="hud-label">VELOCIDAD</div>
-          <div className="hud-value">{getSpeedValue() || 'x1.2'}</div>
+          <div className="hud-value">{getSpeedValue()}</div>
         </div>
         
         <div className="hud-item mode">
           <div className="hud-label">MODO</div>
           <div className="hud-value">{getModeName()}</div>
+        </div>
+        
+        <div className="hud-item difficulty">
+          <div className="hud-label">DIFICULTAD</div>
+          <div className="hud-value">{getDifficultyDisplay()}</div>
+        </div>
+        
+        <div className="hud-item progress">
+          <div className="hud-label">PROGRESO</div>
+          <div className="hud-value">{getProgress()}</div>
         </div>
       </div>
       

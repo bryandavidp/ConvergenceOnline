@@ -5,7 +5,7 @@ import * as config from '../../utils/config';
 
 // Definición de tipos para los modos de juego
 export type GameDifficulty = 'easy' | 'normal' | 'hard' | 'tutorial';
-export type GamePlayMode = 'classic' | 'timed' | 'survival' | 'zen';
+export type GamePlayMode = 'classic' | 'timed' | 'survival' | 'zen' | 'tutorial';
 
 export interface GameState {
   score: number;
@@ -45,6 +45,8 @@ export interface GameState {
   // Objetivos por nivel
   levelScoreTarget: number; // Puntuación objetivo para pasar de nivel en modo clásico
   levelOccupationTarget: number; // Porcentaje de ocupación objetivo para el nivel en modo clásico
+  // Nueva propiedad para almacenar el motivo de fin de juego o nivel completado
+  gameEndReason: string;
 }
 
 const initialState: GameState = {
@@ -82,6 +84,8 @@ const initialState: GameState = {
   levelScoreTarget: 1000, // Puntuación objetivo inicial
   levelOccupationTarget: 70, // Porcentaje de ocupación objetivo inicial
   darkMode: false,
+  // Nueva propiedad para almacenar el motivo de fin de juego o nivel completado
+  gameEndReason: '',
 };
 
 // Función para inicializar el estado del juego
@@ -241,7 +245,10 @@ const gameSlice = createSlice({
       
       // Ajustar la velocidad según el nivel y modo de juego
       let newSpawnRate = 0;
-      if (state.currentPlayMode === 'classic') {
+      if (state.currentPlayMode === 'tutorial') {
+        // Modo tutorial: Siempre muy lento para facilitar el aprendizaje
+        newSpawnRate = config.SPAWN_RATES.VERY_SLOW;
+      } else if (state.currentPlayMode === 'classic') {
         // Modo clásico: Cada nivel es un 10% más rápido
         newSpawnRate = Math.max(
           config.MIN_SPAWN_RATE,
@@ -430,6 +437,12 @@ const gameSlice = createSlice({
       console.log(`Nivel: ${state.level}, Modo: ${state.currentPlayMode}`);
       console.log("**********************************************************");
       
+      // Si estamos cambiando a un estado diferente que no sea gameOver o levelCompleted
+      // Reseteamos el motivo
+      if (newStatus !== 'gameOver' && newStatus !== 'levelCompleted') {
+        state.gameEndReason = '';
+      }
+      
       // Actualizar el estado del juego
       state.status = newStatus;
       
@@ -477,10 +490,48 @@ const gameSlice = createSlice({
       console.log(`Cambiando de ${previousDifficulty} a ${newDifficulty}`);
       console.log("**********************************************************");
       
+      // Actualizar la dificultad en el estado
       state.currentDifficulty = newDifficulty;
       
       // Actualizar los iconos disponibles para el nivel actual y la nueva dificultad
       state.availableIcons = config.getIconsForLevel(state.level, newDifficulty);
+      
+      // Obtener configuración específica de la dificultad
+      const difficultyConfig = config.getDifficultyConfig(newDifficulty);
+      if (difficultyConfig) {
+        // Aplicar la velocidad de generación de iconos específica de la dificultad
+        state.spawnRate = difficultyConfig.spawnRate;
+        console.log(`SpawnRate actualizado según dificultad: ${difficultyConfig.spawnRate}ms`);
+        
+        // Actualizar la ventana de tiempo para combos
+        if (config.COMBO_SYSTEM && config.COMBO_SYSTEM.TIME_WINDOWS) {
+          const comboTimeWindow = config.COMBO_SYSTEM.TIME_WINDOWS[newDifficulty] || 
+                                 config.COMBO_SYSTEM.TIME_WINDOWS.normal;
+          state.comboTimeWindow = comboTimeWindow;
+          console.log(`Ventana de tiempo para combos actualizada: ${comboTimeWindow}ms`);
+        }
+        
+        // Ajustar objetivos de nivel según la dificultad
+        const difficultyMod = config.LEVEL_REQUIREMENT_MULTIPLIERS[newDifficulty] || 
+                             config.LEVEL_REQUIREMENT_MULTIPLIERS.normal;
+        
+        // Ajustar objetivos de puntuación si estamos en modo clásico
+        if (state.currentPlayMode === 'classic') {
+          const baseScoreTarget = state.levelScoreTarget;
+          const adjustedScoreTarget = Math.round(baseScoreTarget * difficultyMod.scoreRequirement);
+          state.levelScoreTarget = adjustedScoreTarget;
+          console.log(`Objetivo de puntuación ajustado: ${baseScoreTarget} → ${adjustedScoreTarget}`);
+        }
+        
+        // Ajustar tiempos si estamos en modo contrarreloj
+        if (state.currentPlayMode === 'timed') {
+          const baseTimeLimit = state.levelTimeLimit;
+          const adjustedTimeLimit = Math.round(baseTimeLimit * difficultyMod.timeRequirement);
+          state.levelTimeLimit = adjustedTimeLimit;
+          state.timeRemaining = adjustedTimeLimit;
+          console.log(`Tiempo límite ajustado: ${baseTimeLimit}s → ${adjustedTimeLimit}s`);
+        }
+      }
       
       console.log(`Iconos configurados para nivel ${state.level} y dificultad ${newDifficulty}`);
       console.log(`Iconos: ${state.availableIcons.slice(0, 8).join(', ')}${state.availableIcons.length > 8 ? '...' : ''}`);
@@ -491,37 +542,44 @@ const gameSlice = createSlice({
     },
     
     setPlayMode: (state, action: PayloadAction<GameState['currentPlayMode']>) => {
-      // Guardar el nuevo modo de juego para usarlo en el reseteo
+      const previousMode = state.currentPlayMode;
       const newPlayMode = action.payload;
       
       console.log("\n**********************************************************");
       console.log("INICIO DEL FLUJO: CAMBIO DE MODO DE JUEGO");
-      console.log(`Cambiando de ${state.currentPlayMode} a ${newPlayMode}`);
+      console.log(`Cambiando de ${previousMode} a ${newPlayMode}`);
       console.log("**********************************************************");
       
-      // Crear un tablero vacío inicializado con el tamaño actual
-      const emptyBoard = Array(state.boardSize).fill(null).map(() => Array(state.boardSize).fill(null));
+      // Actualizar solo el modo de juego, mantener el resto del estado intacto
+      state.currentPlayMode = newPlayMode;
       
-      // Reiniciar el juego completamente con el nuevo modo
-      Object.assign(state, {
-        ...initialState,
-        highScore: state.highScore, // Mantener la puntuación máxima
-        darkMode: state.darkMode,   // Mantener preferencia de tema
-        currentPlayMode: newPlayMode,
-        currentDifficulty: state.currentDifficulty, // Mantener la dificultad actual
-        board: emptyBoard, // Establecer un tablero vacío pero inicializado
-        boardSize: state.boardSize, // Mantener el tamaño del tablero
-        status: 'startScreen' // Cambiar a startScreen en lugar de playing
-      });
+      // Actualizar los iconos disponibles para el nivel y dificultad actuales
+      state.availableIcons = config.getIconsForLevel(state.level, state.currentDifficulty);
       
-      // Actualizar los iconos disponibles para el nivel 1 y la dificultad actual
-      state.availableIcons = config.getIconsForLevel(1, state.currentDifficulty);
-      
-      console.log(`Iconos configurados para nivel 1 y dificultad ${state.currentDifficulty}`);
+      console.log(`Iconos configurados para nivel ${state.level} y dificultad ${state.currentDifficulty}`);
       console.log(`Iconos: ${state.availableIcons.slice(0, 8).join(', ')}${state.availableIcons.length > 8 ? '...' : ''}`);
       console.log("**********************************************************\n");
-      console.log(`FIN DEL FLUJO: MODO DE JUEGO CAMBIADO A ${newPlayMode}`);
       
+      // Obtener configuración específica del modo para actualizar parámetros relacionados
+      const modeConfig = config.getGameModeConfig(newPlayMode);
+      if (modeConfig) {
+        console.log(`Aplicando configuración específica para modo ${newPlayMode}:`);
+        
+        if (newPlayMode === 'classic') {
+          // Configurar objetivos base para el modo clásico
+          state.levelScoreTarget = modeConfig.initialScoreTarget || config.LEVEL_REQUIREMENTS.classic.baseScore;
+          state.levelOccupationTarget = modeConfig.initialOccupationTarget || config.LEVEL_REQUIREMENTS.classic.baseOccupation;
+          console.log(`- Objetivo de puntuación base: ${state.levelScoreTarget}`);
+          console.log(`- Objetivo de ocupación base: ${state.levelOccupationTarget}%`);
+        } else if (newPlayMode === 'timed') {
+          // Configurar tiempo límite para el modo contrarreloj
+          state.levelTimeLimit = modeConfig.initialTimeLimit || config.LEVEL_REQUIREMENTS.timed.baseTime;
+          state.timeRemaining = state.levelTimeLimit;
+          console.log(`- Tiempo límite inicial: ${state.levelTimeLimit}s`);
+        }
+      }
+      
+      console.log(`FIN DEL FLUJO: MODO DE JUEGO CAMBIADO A ${newPlayMode}`);
       logger.info('Game', `Modo de juego establecido a ${newPlayMode}`);
     },
     
@@ -592,6 +650,10 @@ const gameSlice = createSlice({
       
       // Configurar tamaño del tablero y spawn rate según el modo de juego
       switch (playMode) {
+        case 'tutorial':
+          initialBoardSize = config.BOARD_SIZE.SMALL;
+          initialSpawnRate = config.SPAWN_RATES.VERY_SLOW; // Más lento para el tutorial
+          break;
         case 'classic':
           initialBoardSize = config.BOARD_SIZE.SMALL;
           initialSpawnRate = config.SPAWN_RATES.SLOW;
@@ -646,6 +708,13 @@ const gameSlice = createSlice({
       
       // Configurar propiedades específicas según el modo de juego
       switch (playMode) {
+        case 'tutorial':
+          // Configurar objetivos más simples para el tutorial
+          state.levelScoreTarget = Math.floor(config.LEVEL_REQUIREMENTS.classic.baseScore * 0.5);
+          state.levelOccupationTarget = 40; // 40% de ocupación objetivo (más fácil)
+          // Ventana de combo más amplia para el tutorial
+          state.comboTimeWindow = 10000; // 10 segundos
+          break;
         case 'classic':
           state.levelScoreTarget = config.LEVEL_REQUIREMENTS.classic.baseScore;
           state.levelOccupationTarget = config.LEVEL_REQUIREMENTS.classic.baseOccupation;
@@ -748,6 +817,11 @@ const gameSlice = createSlice({
       state.comboTimeWindow = action.payload;
       console.log(`[COMBO CONFIG] Ventana de tiempo de combo actualizada: ${oldValue}ms → ${action.payload}ms`);
     },
+    
+    // Nuevo reducer para establecer el motivo de fin de juego
+    setGameEndReason: (state, action: PayloadAction<string>) => {
+      state.gameEndReason = action.payload;
+    },
   },
   extraReducers: (builder) => {
     // ... extra reducers existentes
@@ -822,6 +896,7 @@ export const {
   incrementCombo,
   resetCombo,
   setComboTimeWindow,
+  setGameEndReason,
 } = gameSlice.actions;
 
 export default gameSlice.reducer;

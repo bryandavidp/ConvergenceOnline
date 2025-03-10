@@ -23,21 +23,14 @@ import {
   addIcon,
   incrementCombo,
   resetCombo,
-/*   changeBoardSize,
-  changeSpawnRate,
-  addScore, 
-  removeIcon, 
-  addIcon,  */
-  GameState, 
-/*   setScore, 
-  resetBoard, 
-  highlightCells, 
-  setHintCooldown */
+  GameState,
+  setGameEndReason,
 } from '../store/slices/gameSlice';
 import { RootState } from '../store';
 import { store } from '../store';
 import logger from '../utils/logger';
 import * as config from '../utils/config';
+import { GameMode } from '../utils/config';
 import { 
   isValidCell, 
   getRandomInt, 
@@ -47,15 +40,13 @@ import {
   checkBoardForValidMoves,
   findConvergences,
   findConvergingIcons,
-/*   getCellsInSpiral, 
-  areCellsAdjacent, 
-  getRandomEmptyCell */
 } from '../utils/gameUtils';
 import { audioManager } from '../utils/audioManager';
 import * as boardUtils from '../utils/boardUtils';
 import { adjustBoardVisuals } from '../utils/boardUtils';
 import * as levelAdapter from '../utils/levelAdapter';
 import { useNotifications } from '../components/game/GameNotifications/GameNotificationManager';
+import { NotificationType } from '../components/game/GameNotifications/GameNotification';
 
 // Constantes de configuración del juego - Obtenidas directamente de config.ts
 const MIN_SPAWN_RATE = config.MIN_SPAWN_RATE;
@@ -102,6 +93,8 @@ const useGameLogic = () => {
   const isInitializedRef = useRef<boolean>(false);
   const lastSpawnRateRef = useRef<number | null>(null);
   const timerRef = useRef<number>(0);
+  // Nueva referencia para el sistema de aumento de velocidad
+  const lastSpeedIncreaseTimeRef = useRef<number>(0);
   
   // Añadir un nuevo ref para rastrear un período de gracia después de cambiar de nivel
   const levelTransitionGraceRef = useRef<number>(0);
@@ -195,71 +188,92 @@ const useGameLogic = () => {
     return convergencePossible;
   };
   
-  // Inicializar tablero con iconos iniciales
-  const initializeBoard = useCallback((size?: number) => {
-    // Obtener el estado actual del juego
-    const gameState = store.getState().game;
-    const currentLevel = gameState.level;
-    const currentMode = gameState.currentPlayMode;
-    const currentStatus = gameState.status;
-    const actualSize = size || gameState.boardSize;
-    
-    // IMPORTANTE: Usar siempre la configuración centralizada para obtener los iconos
-    // Esto garantiza consistencia entre nivel 1 y demás niveles
-    let iconsForLevel: string[];
-    
-    if (currentLevel <= config.LEVEL_ICONS.length) {
-      // Usar conjuntos predefinidos para niveles básicos
-      iconsForLevel = config.getIconSetForLevel(currentLevel);
-    } else {
-      // Para niveles avanzados, usar iconos basados en la dificultad
-      iconsForLevel = config.getIconsForLevel(currentLevel, currentDifficulty);
-    }
-    
-    // Actualizar los iconos en el estado global para garantizar que
-    // todas las partes del juego usen los mismos iconos para este nivel
-    dispatch(setAvailableIcons(iconsForLevel));
+  // Función para inicializar el tablero con iconos
+  const initializeBoard = useCallback((
+    size = boardSize,
+    forceInitialization = false,
+    levelOverride?: number
+  ) => {
+    // Obtener valores actuales del estado
+    const { 
+      currentDifficulty, 
+      currentPlayMode, 
+      level,
+      boardSize: currentBoardSize 
+    } = store.getState().game;
+
+    // Determinar el nivel objetivo
+    const targetLevel = levelOverride !== undefined ? levelOverride : level;
     
     console.log("\n**********************************************************");
     console.log("INICIO DEL FLUJO: INICIALIZAR TABLERO");
-    console.log(`Tamaño: ${actualSize}, Nivel: ${currentLevel}, Modo: ${currentMode}`);
-    console.log(`Estado: ${currentStatus}, Dificultad: ${currentDifficulty}`);
-    console.log(`Iconos para nivel ${currentLevel}: ${iconsForLevel.join(', ')}`);
+    console.log(`Tamaño: ${size}, Nivel: ${targetLevel}, Modo: ${currentPlayMode}`);
+    console.log(`Estado: ${status}, Dificultad: ${currentDifficulty}`);
+    
+    // Obtener los iconos disponibles para el nivel
+    const availableIcons = store.getState().game.availableIcons;
+    console.log(`Iconos para nivel ${targetLevel}: ${availableIcons.join(', ').substring(0, 100)}${availableIcons.length > 10 ? '...' : ''}`);
     console.log("**********************************************************");
+
+    // Si el nivel no es válido o no estamos forzando la inicialización
+    if (targetLevel <= 0 || (!forceInitialization && isInitializedRef.current && currentBoardSize === size)) {
+      console.log(`ADVERTENCIA: Tablero ya inicializado o condiciones no válidas para inicialización`);
+      return board;
+    }
+
+    // Marcar el tablero como no inicializado durante el proceso
+    isInitializedRef.current = false;
     
-    logger.info('Inicializando tablero', `Tamaño: ${actualSize}, Modo: ${currentMode}, Nivel: ${currentLevel}`);
+    // Configuración específica para el nivel
+    // Tamaño real del tablero
+    const actualSize = size || config.getLevelBoardSize(targetLevel);
     
-    const newBoard = Array(actualSize).fill(null).map(() => Array(actualSize).fill(null));
+    // Crear un nuevo tablero vacío
+    const newBoard: (string | null)[][] = Array(actualSize).fill(null).map(() => Array(actualSize).fill(null));
     
-    // Obtener la cantidad de iconos iniciales según el modo de juego desde la configuración
-    const modeConfig = config.getGameModeConfig(currentMode);
+    // Obtener la configuración de dificultad
     const difficultyConfig = config.getDifficultyConfig(currentDifficulty);
     
-    // Priorizar initialIcons de modeConfig, luego initialIconCount de difficultyConfig, 
-    // finalmente caer al valor por defecto INITIAL_ICONS
-    let totalIcons = modeConfig?.initialIcons || 
-                   difficultyConfig?.initialIconCount || 
-                   config.INITIAL_ICONS;
-
-    // Ajustar totalIcons según el nivel
-    if (currentLevel > 1) {
-      // Para niveles superiores a 1, reducir ligeramente la cantidad de iconos iniciales
-      // para dar al jugador más espacio para empezar
-      totalIcons = Math.max(3, Math.floor(totalIcons * 0.8));
+    // Calcular cuántos iconos iniciales poner según la dificultad
+    let totalIcons: number;
+    
+    // Si la dificultad tiene configuración específica de iconos iniciales, usarla
+    if (difficultyConfig && difficultyConfig.initialIconCount !== undefined) {
+      totalIcons = difficultyConfig.initialIconCount;
+      console.log(`Usando initialIconCount de dificultad ${currentDifficulty}: ${totalIcons} iconos`);
+    } else {
+      // Si no, usar un valor calculado basado en el tamaño del tablero y nivel
+      const baseIconCount = Math.floor(actualSize * actualSize * 0.33); // 33% del tablero
+      totalIcons = Math.max(12, baseIconCount);
+      console.log(`Calculando iconos iniciales: ${totalIcons} (33% del tablero)`);
     }
     
-    console.log(`Fase 1: Calculados ${totalIcons} iconos iniciales para nivel ${currentLevel}`);
+    // Para nivel 2 y superiores, asegurarnos de que se coloquen suficientes iconos
+    if (targetLevel >= 2) {
+      // Aumentar el número de iconos iniciales en un 25% para niveles superiores
+      const levelMultiplier = 1 + (targetLevel - 1) * 0.1; // Incremento del 10% por nivel
+      totalIcons = Math.min(
+        Math.floor(totalIcons * levelMultiplier), 
+        Math.floor(actualSize * actualSize * 0.5) // Máximo 50% del tablero
+      );
+      console.log(`Nivel ${targetLevel}: Ajustando iconos iniciales a ${totalIcons} (incremento nivel ${levelMultiplier.toFixed(1)}x)`);
+    }
+    
+    console.log(`Fase 1: Calculados ${totalIcons} iconos iniciales para nivel ${targetLevel}`);
     
     // Limitar la cantidad de iconos iniciales a un porcentaje máximo del tablero
     const maxInitialIcons = Math.floor(actualSize * actualSize * 0.5); // Máximo 50% del tablero
-    totalIcons = Math.min(totalIcons, maxInitialIcons);
+    if (totalIcons > maxInitialIcons) {
+      console.log(`Limitando iconos: ${totalIcons} > ${maxInitialIcons} (50% del tablero)`);
+      totalIcons = maxInitialIcons;
+    }
     
     logger.info(`Inicializando tablero con ${totalIcons} iconos iniciales`, 
-              `Modo: ${currentMode}, Dificultad: ${currentDifficulty}, Nivel: ${currentLevel}`);
+               `Modo: ${currentPlayMode}, Dificultad: ${currentDifficulty}, Nivel: ${targetLevel}`);
     
     // Primero colocamos unos pocos iconos en posiciones estratégicas para garantizar
     // que el jugador tenga al menos un movimiento válido disponible
-    const shuffledIcons = shuffleArray([...iconsForLevel]);
+    const shuffledIcons = shuffleArray([...availableIcons]);
     const icon1 = shuffledIcons[0];
     
     console.log("Fase 2: Colocando iconos iniciales garantizados");
@@ -350,8 +364,8 @@ const useGameLogic = () => {
         let attempts = 0;
         
         while (!validIcon && attempts < 10) {
-          const iconIndex = getRandomInt(0, iconsForLevel.length);
-          const icon = iconsForLevel[iconIndex];
+          const iconIndex = getRandomInt(0, availableIcons.length);
+          const icon = availableIcons[iconIndex];
           
           // Probar si este icono causaría una convergencia
           newBoard[row][col] = icon;
@@ -378,7 +392,7 @@ const useGameLogic = () => {
     }
     
     // Verificar que haya al menos un movimiento válido
-    const hasMovesAvailable = checkBoardForValidMoves(newBoard, actualSize, iconsForLevel);
+    const hasMovesAvailable = checkBoardForValidMoves(newBoard, actualSize, availableIcons);
     console.log(`Fase 6: Verificación de movimientos válidos: ${hasMovesAvailable ? 'OK' : 'Sin movimientos'}`);
     
     if (!hasMovesAvailable) {
@@ -435,7 +449,7 @@ const useGameLogic = () => {
     }
     
     logger.info(`Tablero inicializado con ${actualIconCount} iconos`, 
-               `Objetivo: ${totalIcons}, Tamaño tablero: ${actualSize}x${actualSize}, Nivel: ${currentLevel}`);
+               `Objetivo: ${totalIcons}, Tamaño tablero: ${actualSize}x${actualSize}, Nivel: ${targetLevel}`);
     console.log(`Fase 8: Tablero final con ${actualIconCount}/${totalIcons} iconos (${(actualIconCount/(actualSize*actualSize)*100).toFixed(1)}% ocupación)`);
     
     // Asegurarse de que el tablero se actualiza en el estado
@@ -446,34 +460,58 @@ const useGameLogic = () => {
     dispatch(setIconCount(actualIconCount));
     
     // Configurar objetivos de nivel según el modo de juego
-    if (currentMode === 'classic') {
+    if (currentPlayMode === 'classic') {
       const scoreTarget = config.GAME_MODE_CONFIG.CLASSIC.initialScoreTarget * 
-                         Math.pow(config.GAME_MODE_CONFIG.CLASSIC.scoreTargetMultiplier, currentLevel - 1);
+                         Math.pow(config.GAME_MODE_CONFIG.CLASSIC.scoreTargetMultiplier, targetLevel - 1);
       
       const occupationTarget = Math.max(
         30, 
         config.GAME_MODE_CONFIG.CLASSIC.initialOccupationTarget - 
-        (currentLevel * config.GAME_MODE_CONFIG.CLASSIC.occupationDecreasePerLevel)
+        (targetLevel * config.GAME_MODE_CONFIG.CLASSIC.occupationDecreasePerLevel)
       );
       
       dispatch(setLevelTarget({
         score: Math.round(scoreTarget),
         occupation: Math.round(occupationTarget)
       }));
-    } else if (currentMode === 'timed') {
+    } else if (currentPlayMode === 'timed') {
       const timeLimit = config.GAME_MODE_CONFIG.TIMED.initialTimeLimit - 
-                       (currentLevel - 1) * config.GAME_MODE_CONFIG.TIMED.timeDecreasePerLevel;
+                       (targetLevel - 1) * config.GAME_MODE_CONFIG.TIMED.timeDecreasePerLevel;
       
       dispatch(setLevelTimeLimit(Math.max(30, timeLimit)));
     }
     
-    const initialSpawnRate = calculateInitialSpeedForLevel(currentLevel, currentMode, config.GAME_MODES, MIN_SPAWN_RATE);
+    const initialSpawnRate = calculateInitialSpeedForLevel(targetLevel, currentPlayMode, config.GAME_MODES, MIN_SPAWN_RATE);
     dispatch(setSpawnRate(initialSpawnRate));
-    console.log(`Fase 10: SpawnRate configurado a ${initialSpawnRate}ms para nivel ${currentLevel}`);
+    console.log(`Fase 10: SpawnRate configurado a ${initialSpawnRate}ms para nivel ${targetLevel}`);
     
     // Marcar la inicialización como completada (siempre se marca como verdadero)
     isInitializedRef.current = true;
     console.log("Fase 11: Tablero marcado como inicializado");
+    
+    // Actualizamos la velocidad basada en la dificultad actual
+    const updateSpawnRateFromDifficulty = () => {
+      const currentState = store.getState().game;
+      const difficulty = currentState.currentDifficulty;
+      const difficultyConfig = config.getDifficultyConfig(difficulty as GameMode);
+      
+      if (difficultyConfig) {
+        // Si hay una configuración específica de dificultad, la usamos directamente
+        console.log(`Aplicando configuración específica de dificultad ${difficulty}: spawnRate=${difficultyConfig.spawnRate}ms`);
+        dispatch(setSpawnRate(difficultyConfig.spawnRate));
+        
+        // Verificar que se haya aplicado correctamente
+        setTimeout(() => {
+          const updatedState = store.getState().game;
+          console.log(`[SPAWN RATE] Verificación: El spawn rate actual es ${updatedState.spawnRate}ms`);
+        }, 0);
+      } else {
+        console.log(`No se encontró configuración específica para dificultad ${difficulty}, manteniendo spawnRate=${initialSpawnRate}ms`);
+      }
+    };
+    
+    // Llamar a la función de actualización de velocidad
+    updateSpawnRateFromDifficulty();
     
     // Mejorar función para establecer la ventana de tiempo de combo según la dificultad
     const updateComboTimeWindow = () => {
@@ -499,7 +537,7 @@ const useGameLogic = () => {
     updateComboTimeWindow();
 
     console.log("**********************************************************\n");
-    console.log(`FIN DEL FLUJO: TABLERO INICIALIZADO CORRECTAMENTE PARA NIVEL ${currentLevel}`);
+    console.log(`FIN DEL FLUJO: TABLERO INICIALIZADO CORRECTAMENTE PARA NIVEL ${targetLevel}`);
     
     return newBoard;
   }, [dispatch]);
@@ -569,6 +607,10 @@ const useGameLogic = () => {
         // Solo si el tablero está COMPLETAMENTE LLENO
         if (isBoardFull) {
           console.log(`Fase 3: Tablero 100% lleno (${currentIconCount}/${totalCells}) - Game Over`);
+          // Establecer el motivo del game over
+          const spawnRateSeconds = (store.getState().game.spawnRate / 1000).toFixed(1);
+          const difficultyName = store.getState().game.currentDifficulty;
+          dispatch(setGameEndReason(`El tablero está completamente lleno. No hay espacio para más iconos. Dificultad: ${difficultyName}, Velocidad: ${spawnRateSeconds}s/icono.`));
           dispatch(setGameStatus('gameOver'));
           console.log("**********************************************************\n");
           isSpawningRef.current = false;
@@ -585,6 +627,8 @@ const useGameLogic = () => {
           if (currentIconCount <= 2) {
             console.log("Fase 4: Solo quedan 2 o menos iconos sin movimientos válidos - Nivel completado");
             logger.info('Game', `Solo quedan ${currentIconCount} iconos sin movimientos válidos. Nivel completado.`);
+            // Establecer el motivo del nivel completado
+            dispatch(setGameEndReason(`¡Has eliminado casi todos los iconos! Solo quedan ${currentIconCount} iconos sin posibilidad de convergencia.`));
             dispatch(setGameStatus('levelCompleted'));
             console.log("**********************************************************\n");
             isSpawningRef.current = false;
@@ -594,6 +638,8 @@ const useGameLogic = () => {
           else if (occupationPercentage <= 5) {
             console.log(`Fase 4: Pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%) - Nivel completado`);
             logger.info('Game', `Tablero con pocos iconos sin movimientos válidos (${occupationPercentage.toFixed(1)}%). Nivel completado.`);
+            // Establecer el motivo del nivel completado
+            dispatch(setGameEndReason(`¡Has despejado gran parte del tablero! Solo queda un ${occupationPercentage.toFixed(1)}% de ocupación sin movimientos válidos.`));
             dispatch(setGameStatus('levelCompleted'));
             console.log("**********************************************************\n");
             isSpawningRef.current = false;
@@ -632,6 +678,10 @@ const useGameLogic = () => {
         } else {
           // GAME OVER si el tablero está lleno
           console.log("Fase 6: Tablero completamente lleno - Game Over");
+          // Establecer el motivo del game over
+          const spawnRateSeconds = (store.getState().game.spawnRate / 1000).toFixed(1);
+          const difficultyName = store.getState().game.currentDifficulty;
+          dispatch(setGameEndReason(`El tablero está completamente lleno. No hay espacio para más iconos. Dificultad: ${difficultyName}, Velocidad: ${spawnRateSeconds}s/icono.`));
           dispatch(setGameStatus('gameOver'));
         }
         
@@ -675,6 +725,10 @@ const useGameLogic = () => {
       if (newIconCount >= totalCells && levelTransitionGraceRef.current <= 0) {
         // Si el tablero está lleno después de añadir el nuevo icono, es Game Over
         console.log("Fase 6: Tablero completamente lleno después de añadir icono - Game Over");
+        // Establecer el motivo del game over
+        const spawnRateSeconds = (store.getState().game.spawnRate / 1000).toFixed(1);
+        const difficultyName = store.getState().game.currentDifficulty;
+        dispatch(setGameEndReason(`El tablero está completamente lleno después de añadir icono. No hay espacio para más iconos. Dificultad: ${difficultyName}, Velocidad: ${spawnRateSeconds}s/icono.`));
         dispatch(setGameStatus('gameOver'));
       }
 
@@ -729,7 +783,8 @@ const useGameLogic = () => {
       level: currentLevel,
       spawnRate: currentSpawnRate,
       currentPlayMode: currentMode,
-      status: currentStatus
+      status: currentStatus,
+      timer: currentTimer
     } = store.getState().game;
     
     console.log("\n**********************************************************");
@@ -767,6 +822,11 @@ const useGameLogic = () => {
     // Marcar que los temporizadores están activos
     timersActiveRef.current = true;
     lastSpawnRateRef.current = currentSpawnRate;
+    
+    // Reiniciar el tiempo para el incremento de velocidad
+    lastSpeedIncreaseTimeRef.current = currentTimer;
+    console.log(`Reiniciando contador de incremento de velocidad en tiempo: ${currentTimer}s`);
+    
     console.log("Fase 2: Referencias de temporizadores establecidas");
     
     // Temporizador para incrementar el tiempo de juego
@@ -778,6 +838,9 @@ const useGameLogic = () => {
       }
       
       dispatch(incrementTimer());
+      
+      // Añadir aquí: Verificar si es momento de incrementar la velocidad
+      handleSpeedIncrease();
       
       // Manejar el modo contrareloj - decrementar el tiempo restante
       if (currentMode === 'timed') {
@@ -805,7 +868,6 @@ const useGameLogic = () => {
             console.log("**********************************************************\n");
             logger.info('Game', 'Tiempo agotado en modo contrareloj - Game Over');
             console.log("\n");
-
           }
         }
       }
@@ -859,7 +921,7 @@ const useGameLogic = () => {
       // Limpiar temporizadores al desmontar
       stopTimers();
     };
-  }, [dispatch, addRandomIcon, stopTimers]);
+  }, [dispatch, stopTimers, addRandomIcon]);
 
 
   // Función optimizada para eliminar iconos en convergencia
@@ -1186,22 +1248,48 @@ const useGameLogic = () => {
           }
         }
         
+        // Obtener el modo de juego actual
+        const { currentPlayMode } = store.getState().game;
+        const totalCells = boardSize * boardSize;
+        const occupationPercentage = (iconCount / totalCells) * 100;
+        
+        logger.info('Game', `Evaluación de fin de nivel: Modo ${currentPlayMode}, ${iconCount} iconos (${occupationPercentage.toFixed(1)}%), ${uniqueIcons.size} tipos diferentes`);
+        
+        // Evitar detección rápida en modo supervivencia
+        if (currentPlayMode === 'survival') {
+          logger.info('Game', `En modo supervivencia no se completa el nivel automáticamente con la detección rápida`);
+          // Sólo completar nivel en supervivencia si el tablero está completamente vacío
+          if (iconCount === 0) {
+            dispatch(setGameStatus('levelCompleted'));
+          }
+          return;
+        }
+        
         // Verificación super rápida para casos especiales (2 o menos iconos diferentes)
         if (iconCount <= 2 && uniqueIcons.size === iconCount) {
           logger.info('Game', `⚡ Detección rápida: ${iconCount} iconos diferentes sin convergencia posible. Nivel completado.`);
+          
+          // Establecer el motivo del nivel completado
+          dispatch(setGameEndReason(`¡Has eliminado casi todos los iconos! Solo quedan ${iconCount} iconos sin posibilidad de convergencia.`));
           dispatch(setGameStatus('levelCompleted'));
           return;
         }
         
         // Para otros casos, calcular porcentaje de ocupación
-        const totalCells = boardSize * boardSize;
-        const occupationPercentage = (iconCount / totalCells) * 100;
-        
-        if (occupationPercentage <= 30) {
+        if (occupationPercentage <= 10) {
           logger.info('Game', `⚡ Detección rápida: Pocos iconos (${occupationPercentage.toFixed(1)}%) sin movimientos válidos. Nivel completado.`);
+          
+          // Establecer el motivo del nivel completado
+          dispatch(setGameEndReason(`¡Has despejado gran parte del tablero! Solo queda un ${occupationPercentage.toFixed(1)}% de ocupación sin movimientos válidos.`));
           dispatch(setGameStatus('levelCompleted'));
         } else {
           logger.info('Game', `⚡ Detección rápida: No hay movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`);
+          
+          // Establecer el motivo del game over
+          const spawnRateSeconds = (store.getState().game.spawnRate / 1000).toFixed(1);
+          const difficultyName = store.getState().game.currentDifficulty;
+          const modeName = store.getState().game.currentPlayMode;
+          dispatch(setGameEndReason(`No hay movimientos válidos disponibles con ${occupationPercentage.toFixed(1)}% de ocupación del tablero. Modo: ${modeName}, Dificultad: ${difficultyName}, Velocidad: ${spawnRateSeconds}s/icono.`));
           dispatch(setGameStatus('gameOver'));
         }
       }
@@ -1212,39 +1300,124 @@ const useGameLogic = () => {
 
   // Cambiar configuración del juego
   const changeGameConfig = useCallback((difficulty: GameDifficulty, mode: GamePlayMode) => {
-    // Corregido: setGameMode maneja la dificultad y setPlayMode maneja el modo
+    // Registrar el cambio de configuración
+    console.log("\n**********************************************************");
+    console.log("INICIO DEL FLUJO: CAMBIO DE CONFIGURACIÓN DEL JUEGO");
+    console.log(`Cambiando a dificultad: ${difficulty}, modo: ${mode}`);
+    console.log("**********************************************************");
+    
+    // Detener temporizadores para evitar conflictos durante el cambio
+    stopTimers();
+    
+    // Limpiar estado y referencias para evitar inconsistencias
+    isInitializedRef.current = false;
+    
+    // Actualizar el estado de Redux con la nueva configuración
     dispatch(setGameMode(difficulty));
     dispatch(setPlayMode(mode));
     
-    const { level: currentLevel } = store.getState().game;
-    const iconSet = config.getIconSetForLevel(currentLevel);
-    const boardSize = config.getBoardSizeForLevel(currentLevel);
-    const gameConfig = config.getGameConfig(difficulty, mode);
+    // Sincronizar todo el estado para evitar referencias a configuraciones antiguas
+    const syncGameState = () => {
+      const { level: currentLevel, status } = store.getState().game;
+      
+      // Configurar iconos para el nivel actual
+      const iconSet = config.getIconSetForLevel(currentLevel);
+      dispatch(setAvailableIcons(iconSet));
+      
+      // Configurar tamaño del tablero
+      const boardSize = config.getBoardSizeForLevel(currentLevel);
+      dispatch(setBoardSize(boardSize));
+      
+      // Aplicar configuración de dificultad
+      const difficultyConfig = config.getDifficultyConfig(difficulty as GameMode);
+      if (difficultyConfig) {
+        console.log(`Aplicando configuración de dificultad ${difficulty}:`);
+        console.log(`- SpawnRate: ${difficultyConfig.spawnRate}ms`);
+        console.log(`- Íconos iniciales: ${difficultyConfig.initialIconCount}`);
+        console.log(`- Penalización: ${difficultyConfig.penaltyIcons} íconos`);
+        
+        // Aplicar velocidad de spawn según la dificultad
+        dispatch(setSpawnRate(difficultyConfig.spawnRate));
+      }
+      
+      // Obtener la configuración completa combinada
+      const gameConfig = config.getGameConfig(difficulty, mode);
+      
+      // Configurar objetivos específicos según el modo
+      if (mode === 'classic') {
+        // Configurar objetivos de puntuación y ocupación para el modo clásico
+        const scoreTarget = Math.round(gameConfig.initialScoreTarget * 
+                        Math.pow(gameConfig.scoreTargetMultiplier || 1.5, currentLevel - 1));
+        
+        // Ajustar los objetivos según la dificultad
+        const difficultyMod = config.LEVEL_REQUIREMENT_MULTIPLIERS[difficulty as GameMode] || 
+                             config.LEVEL_REQUIREMENT_MULTIPLIERS.normal;
+        
+        const adjustedScoreTarget = Math.round(scoreTarget * difficultyMod.scoreRequirement);
+        
+        const occupationTarget = Math.max(
+          30, 
+          gameConfig.initialOccupationTarget - 
+          (currentLevel * (gameConfig.occupationDecreasePerLevel || 0))
+        );
+        
+        console.log(`Configurando objetivos para nivel ${currentLevel}:`);
+        console.log(`- Puntuación objetivo: ${adjustedScoreTarget} puntos`);
+        console.log(`- Ocupación objetivo: ${Math.round(occupationTarget)}%`);
+        
+        dispatch(setLevelTarget({
+          score: adjustedScoreTarget,
+          occupation: Math.round(occupationTarget)
+        }));
+      } else if (mode === 'timed') {
+        // Configuración específica para modo contrarreloj
+        let timeLimit = gameConfig.initialTimeLimit - 
+                       (currentLevel - 1) * (gameConfig.timeDecreasePerLevel || 10);
+                       
+        // Ajustar tiempo según dificultad
+        const difficultyMod = config.LEVEL_REQUIREMENT_MULTIPLIERS[difficulty as GameMode] || 
+                             config.LEVEL_REQUIREMENT_MULTIPLIERS.normal;
+        
+        timeLimit = Math.round(timeLimit * difficultyMod.timeRequirement);
+        
+        console.log(`Configurando tiempo límite para nivel ${currentLevel}: ${timeLimit} segundos`);
+        dispatch(setLevelTimeLimit(Math.max(30, timeLimit)));
+      }
+      
+      // Configurar ventana de tiempo para los combos según la dificultad
+      const comboTimeWindow = config.COMBO_SYSTEM.TIME_WINDOWS[difficulty as GameMode] || 
+                             config.COMBO_SYSTEM.TIME_WINDOWS.normal;
+      
+      console.log(`Configurando ventana de tiempo para combos: ${comboTimeWindow}ms`);
+      dispatch({ type: 'game/setComboTimeWindow', payload: comboTimeWindow });
+      
+      // Inicializar un nuevo tablero con los ajustes actualizados
+      initializeBoard(boardSize, true);
+      
+      // Verificar que toda la configuración se haya aplicado correctamente
+      setTimeout(() => {
+        const updatedState = store.getState().game;
+        console.log("Verificación de configuración aplicada:");
+        console.log(`- Dificultad: ${updatedState.currentDifficulty}`);
+        console.log(`- Modo: ${updatedState.currentPlayMode}`);
+        console.log(`- SpawnRate: ${updatedState.spawnRate}ms`);
+        console.log(`- Ventana de combo: ${updatedState.comboTimeWindow}ms`);
+      }, 50);
+      
+      // Reiniciar temporizadores si el juego estaba en progreso
+      if (status === 'playing') {
+        startTimers(true);
+      }
+    };
     
-    stopTimers();
+    // Ejecutar sincronización después de un pequeño retraso para permitir 
+    // que las actualizaciones del estado de Redux se completen
+    setTimeout(syncGameState, 50);
     
-    dispatch(setBoardSize(boardSize));
-    dispatch(setAvailableIcons(iconSet));
-    dispatch(setSpawnRate(gameConfig.initialSpawnRate));
+    console.log("**********************************************************");
+    console.log("FIN DEL FLUJO: CONFIGURACIÓN DEL JUEGO ACTUALIZADA");
     
-    if (mode === 'classic') {
-      dispatch(setLevelTarget({ 
-        score: gameConfig.initialScoreTarget || 1000,
-        occupation: gameConfig.initialOccupationTarget || 70
-      }));
-    } else if (mode === 'timed') {
-      dispatch(setLevelTimeLimit(gameConfig.initialTimeLimit || 120));
-    }
-    
-    // Inicializar el tablero con el tamaño actual
-    initializeBoard(boardSize);
-    
-    if (status === 'playing') {
-      startTimers();
-    }
-    
-    logger.info('Game', `Configuración cambiada: Dificultad=${difficulty}, Modo=${mode}, Tablero=${boardSize}x${boardSize}`);
-  }, [dispatch, initializeBoard, startTimers, stopTimers, status]);
+  }, [dispatch, stopTimers, initializeBoard, startTimers]);
 
   // En la función checkLevelCompleted, reemplazar la lógica actual con el adaptador:
   const checkLevelCompleted = () => {
@@ -1332,32 +1505,25 @@ const useGameLogic = () => {
    * Reinicia completamente todos los sistemas del juego para un nuevo nivel
    */
   const resetSystemsForNewLevel = useCallback(() => {
-    // Obtener el estado más reciente del store para asegurar valores actualizados
-    const gameState = store.getState().game;
-    const currentLevel = gameState.level;
-    const currentMode = gameState.currentPlayMode;
-    const currentSpawnRate = gameState.spawnRate;
-    const currentIconCount = gameState.iconCount;
+    const { level, currentPlayMode, spawnRate, iconCount } = store.getState().game;
     
     console.log("\n**********************************************************");
     console.log("INICIO DEL FLUJO: REINICIAR SISTEMAS PARA NUEVO NIVEL");
-    console.log(`Nivel actual: ${currentLevel}, Modo: ${currentMode}`);
-    console.log(`SpawnRate: ${currentSpawnRate}ms, Iconos en tablero: ${currentIconCount}`);
+    console.log(`Nivel actual: ${level}, Modo: ${currentPlayMode}`);
+    console.log(`SpawnRate: ${spawnRate}ms, Iconos en tablero: ${iconCount}`);
     console.log("**********************************************************");
     
-    // Detener todos los temporizadores primero
+    // Detener temporizadores si están activos
     stopTimers();
     console.log("Fase 1: Temporizadores detenidos");
     
-    // Reiniciar las referencias del sistema
-    isSpawningRef.current = false;
+    // Reiniciar referencias
     isRemovingIconsRef.current = false;
+    isSpawningRef.current = false;
     speedLimitReachedRef.current = false;
-    timersActiveRef.current = false;
-    lastSpawnRateRef.current = 0;
     console.log("Fase 2: Referencias de estado reiniciadas");
     
-    // Limpiar intervalos residuales si existieran
+    // Limpiar cualquier intervalo residual
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
@@ -1368,36 +1534,31 @@ const useGameLogic = () => {
     }
     console.log("Fase 3: Intervalos residuales limpiados");
     
+    // Obtener estado actual para aplicar configuraciones específicas del nivel
+    const { level: currentLevel, spawnRate: currentSpawnRate } = store.getState().game;
     console.log(`Fase 4: Estado actual obtenido: nivel=${currentLevel}, spawnRate=${currentSpawnRate}ms`);
     
-    // Asegurarse de que el último spawnRate esté actualizado
-    lastSpawnRateRef.current = currentSpawnRate;
-    console.log(`Fase 5: SpawnRate actualizado a ${lastSpawnRateRef.current}ms`);
+    // Actualizar el spawn rate para el nuevo nivel
+    dispatch(setSpawnRate(currentSpawnRate));
+    console.log(`Fase 5: SpawnRate actualizado a ${currentSpawnRate}ms`);
     
-    // Reiniciar el tiempo de conteo si es necesario
-    if (currentMode !== 'survival') {
-      timerRef.current = 0;
-      console.log("Fase 6: Tiempo de juego reiniciado a 0");
-    } else {
-      console.log("Fase 6: Manteniendo tiempo de supervivencia (modo survival)");
+    // Reiniciar el contador de incremento de velocidad
+    lastSpeedIncreaseTimeRef.current = 0;
+    console.log(`Fase 6: Contador de incremento de velocidad reiniciado`);
+    
+    // Mantener el tiempo transcurrido en modo supervivencia
+    if (currentPlayMode === 'survival') {
+      console.log(`Fase 7: Manteniendo tiempo de supervivencia (modo ${currentPlayMode})`);
     }
     
-    // Limpiar cualquier celda resaltada
+    // Limpiar celdas resaltadas
     dispatch(setHighlightedCells([]));
-    console.log("Fase 7: Celdas resaltadas limpiadas");
+    console.log("Fase 8: Celdas resaltadas limpiadas");
     
-    // Establecer un período de gracia más largo para el nivel 2 y superiores
-    // para evitar verificaciones de game over inmediatas después de un cambio de nivel
-    const graceSpawns = currentLevel >= 2 ? 5 : 3; // Mayor período de gracia para niveles superiores
-    levelTransitionGraceRef.current = graceSpawns;
-    console.log(`Fase 8: Período de gracia establecido para los próximos ${graceSpawns} iconos`);
+    // Establecer período de gracia para evitar game over inmediato
+    levelTransitionGraceRef.current = 3;
+    console.log(`Fase 9: Período de gracia establecido para los próximos ${levelTransitionGraceRef.current} iconos`);
     
-    // Verificar consistencia del estado
-    if (gameState.status !== 'paused' && gameState.status !== 'levelCompleted') {
-      console.log(`ADVERTENCIA: Estado inesperado (${gameState.status}) durante reinicio de sistemas`);
-    }
-    
-    logger.info('GameLogic', `Sistemas de juego reiniciados para nuevo nivel ${currentLevel}`);
     console.log("**********************************************************\n");
     console.log("FIN DEL FLUJO: SISTEMAS REINICIADOS CORRECTAMENTE");
     
@@ -1423,6 +1584,64 @@ const useGameLogic = () => {
     // Los combos ya no muestran notificaciones
   }, [addNotification]);
 
+  // Añadir una nueva función para manejar el incremento automático de velocidad
+  const handleSpeedIncrease = useCallback(() => {
+    // Obtener estado actual del juego
+    const gameState = store.getState().game;
+    const { 
+      currentPlayMode, 
+      currentDifficulty, 
+      spawnRate, 
+      timer, 
+      status 
+    } = gameState;
+    
+    // Solo aplicar en estado playing
+    if (status !== 'playing') {
+      return;
+    }
+    
+    // Obtener configuración de dificultad actual
+    const difficultyConfig = config.DIFFICULTY_CONFIG[currentDifficulty as GameMode];
+    
+    // Si no hay configuración, no hacer nada
+    if (!difficultyConfig) {
+      return;
+    }
+    
+    // Calcular si es momento de incrementar la velocidad
+    const currentTime = timer;
+    const speedIncreaseInterval = difficultyConfig.speedIncreaseInterval;
+    
+    // Verificar si pasó suficiente tiempo desde el último incremento
+    if (currentTime - lastSpeedIncreaseTimeRef.current >= speedIncreaseInterval) {
+      // Calcular nueva velocidad
+      const speedIncreaseAmount = difficultyConfig.speedIncreaseAmount;
+      const minSpawnRate = difficultyConfig.minSpawnRate;
+      
+      // Reducir el spawn rate (más rápido) pero no menor que el mínimo
+      const newSpawnRate = Math.max(minSpawnRate, spawnRate - speedIncreaseAmount);
+      
+      // Si hay un cambio en la velocidad, actualizarlo
+      if (newSpawnRate < spawnRate) {
+        logger.info('GameLogic', `Incremento automático de velocidad: ${spawnRate}ms → ${newSpawnRate}ms`);
+        dispatch(setSpawnRate(newSpawnRate));
+        
+        // Mostrar notificación al jugador
+        if (addNotification) {
+          addNotification({
+            message: `¡Velocidad aumentada! (${(newSpawnRate/1000).toFixed(1)}s)`,
+            type: 'info',
+            duration: 2000
+          });
+        }
+        
+        // Actualizar el tiempo del último incremento
+        lastSpeedIncreaseTimeRef.current = currentTime;
+      }
+    }
+  }, [dispatch, addNotification]);
+  
   return {
     board,
     boardSize,
@@ -1445,7 +1664,8 @@ const useGameLogic = () => {
     }, [board, boardSize]),
     changeGameConfig,
     checkLevelCompleted,
-    configureBoardForNewLevel
+    configureBoardForNewLevel,
+    handleSpeedIncrease, // Exportamos la función por si se quiere usar manualmente
   };
 };
 

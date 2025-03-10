@@ -28,7 +28,16 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
   rewards = ['monedas', 'gemas', 'vidas']
 }) => {
   const { gameState } = useGameContext();
-  const { score, level, comboCount, comboMultiplier } = useSelector((state: RootState) => state.game);
+  const { 
+    score, 
+    level, 
+    comboCount, 
+    comboMultiplier, 
+    gameEndReason, 
+    currentPlayMode, 
+    currentDifficulty,
+    spawnRate
+  } = useSelector((state: RootState) => state.game);
   const { playSound } = useGameSound();
   const modalContentRef = useRef<HTMLDivElement>(null);
   const confettiContainerRef = useRef<HTMLDivElement>(null);
@@ -232,6 +241,34 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
     return '#FFFFFF'; // Blanco para básico
   };
   
+  // Función para obtener el nombre del modo de juego en español
+  const getPlayModeName = (mode: string): string => {
+    const modeNames: {[key: string]: string} = {
+      'classic': 'Clásico',
+      'timed': 'Contrarreloj',
+      'survival': 'Supervivencia',
+      'zen': 'Zen',
+      'tutorial': 'Tutorial'
+    };
+    return modeNames[mode] || mode;
+  };
+  
+  // Función para obtener el nombre de la dificultad en español
+  const getDifficultyName = (difficulty: string): string => {
+    const difficultyNames: {[key: string]: string} = {
+      'easy': 'Fácil',
+      'normal': 'Normal',
+      'hard': 'Difícil',
+      'tutorial': 'Tutorial'
+    };
+    return difficultyNames[difficulty] || difficulty;
+  };
+  
+  // Función para formatear la velocidad de spawn
+  const formatSpawnRate = (rate: number): string => {
+    return (rate / 1000).toFixed(1) + 's';
+  };
+  
   // Si el modal no está visible, no renderizamos nada
   if (!modalVisible && !isVisible) {
     return null;
@@ -256,6 +293,33 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
           >
             <h1>¡Nivel Completado!</h1>
             <h2>¡Excelente trabajo!</h2>
+            
+            {/* Mostrar el motivo de nivel completado */}
+            {gameEndReason && (
+              <div className="level-end-reason">
+                <p>{gameEndReason}</p>
+              </div>
+            )}
+            
+            {/* Nueva sección para mostrar el modo, dificultad y velocidad */}
+            <div className="game-session-info">
+              <div className="info-pill">
+                <span className="info-label">🎮 Modo:</span>
+                <span className="info-value">{getPlayModeName(currentPlayMode)}</span>
+              </div>
+              <div className="info-pill">
+                <span className="info-label">🏆 Nivel:</span>
+                <span className="info-value">{level}</span>
+              </div>
+              <div className="info-pill">
+                <span className="info-label">🔥 Dificultad:</span>
+                <span className="info-value">{getDifficultyName(currentDifficulty)}</span>
+              </div>
+              <div className="info-pill">
+                <span className="info-label">⚡ Velocidad:</span>
+                <span className="info-value">{formatSpawnRate(spawnRate)}/icon</span>
+              </div>
+            </div>
           </div>
           
           <div 

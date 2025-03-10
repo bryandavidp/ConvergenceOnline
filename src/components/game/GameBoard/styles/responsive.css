@@ -124,6 +124,9 @@
     width: 95vw;
     height: 95vw;
     padding: 3px;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 90vh;
   }
   
   .game-board-grid {
@@ -137,6 +140,16 @@
   .board-cell .cell-content {
     border-radius: 4px;
     font-size: clamp(0.5rem, 1.5vmin, 1rem);
+  }
+  
+  /* Ajustes específicos para pantallas muy estrechas */
+  .game-board-grid[style*="repeat(5, 1fr)"],
+  .game-board-grid[style*="repeat(6, 1fr)"],
+  .game-board-grid[style*="repeat(7, 1fr)"],
+  .game-board-grid[style*="repeat(8, 1fr)"],
+  .game-board-grid[style*="repeat(9, 1fr)"],
+  .game-board-grid[style*="repeat(10, 1fr)"] {
+    gap: 1px;
   }
 }
 
@@ -174,4 +187,4 @@
   transform: scale(0.9);
   margin: 0 auto;
   padding: 0;
-} 
+}

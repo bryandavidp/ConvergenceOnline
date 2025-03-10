@@ -2,6 +2,8 @@ import { GameDifficulty, GamePlayMode } from '../store/slices/gameSlice';
 import * as levels from './levels';
 import * as config from './config';
 import logger from './logger';
+import { store } from '../store';
+import { setGameEndReason } from '../store/slices/gameSlice';
 
 // Tipo de seguridad para acceder a las propiedades de los niveles
 type ModeKey = keyof typeof levels.PREDEFINED_LEVELS[0]['requirements'];
@@ -52,12 +54,14 @@ export function isLevelCompleted(
       // Si hay 2 o menos iconos, completar nivel
       if (iconCount <= 2) {
         logger.info('LevelAdapter', `Solo quedan ${iconCount} iconos sin movimientos válidos. Nivel completado.`);
+        store.dispatch(setGameEndReason(`¡Casi has limpiado el tablero! Solo quedan ${iconCount} iconos sin posibilidad de movimientos.`));
         return true;
       }
       
       // Si hay pocos iconos (menos del 30% del tablero ocupado), completar nivel
       if (occupationPercentage <= 30) {
         logger.info('LevelAdapter', `Pocos iconos sin movimientos (${occupationPercentage.toFixed(1)}%). Nivel completado.`);
+        store.dispatch(setGameEndReason(`¡Has despejado gran parte del tablero! Solo queda un ${occupationPercentage.toFixed(1)}% de ocupación sin movimientos disponibles.`));
         return true;
       }
       
@@ -78,6 +82,8 @@ export function isLevelCompleted(
       const scoreReq = classicRequirements.find(req => req.type === 'score');
       if (scoreReq && score >= scoreReq.value) {
         logger.info('LevelAdapter', `Nivel completado por puntuación: ${score}/${scoreReq.value}`);
+        const spawnRateSeconds = (store.getState().game.spawnRate / 1000).toFixed(1);
+        store.dispatch(setGameEndReason(`¡Has alcanzado la puntuación objetivo de ${scoreReq.value} puntos! Velocidad de aparición: ${spawnRateSeconds}s por icono.`));
         return true;
       }
       
@@ -86,6 +92,8 @@ export function isLevelCompleted(
         const occupationReq = classicRequirements.find(req => req.type === 'occupation');
         if (occupationReq && occupationPercentage <= occupationReq.value) {
           logger.info('LevelAdapter', `Nivel completado por ocupación: ${occupationPercentage.toFixed(1)}%/${occupationReq.value}%`);
+          const spawnRateSeconds = (store.getState().game.spawnRate / 1000).toFixed(1);
+          store.dispatch(setGameEndReason(`¡Has despejado el tablero por debajo del ${occupationReq.value}% de ocupación requerido! Ocupación actual: ${occupationPercentage.toFixed(1)}%. Velocidad de aparición: ${spawnRateSeconds}s por icono.`));
           return true;
         }
       }
@@ -93,11 +101,31 @@ export function isLevelCompleted(
     // En modo contrarreloj, completado si se acaba el tiempo
     else if (playMode === 'timed') {
       if (timeRemaining !== undefined && timeRemaining <= 0) {
+        store.dispatch(setGameEndReason(`¡Se ha agotado el tiempo! Has conseguido ${score} puntos en el tiempo límite.`));
         return true;
       }
     } 
-    // En modo supervivencia, no hay completado automático
+    // En modo supervivencia, no hay completado automático excepto casos específicos
     else if (playMode === 'survival') {
+      logger.info('LevelAdapter', `Verificación de nivel en modo supervivencia. Nivel: ${level}, Iconos: ${iconCount}, ¿Sin movimientos?: ${!hasMovesAvailable}`);
+      
+      // CORREGIR: En modo supervivencia nunca debe completarse automáticamente excepto si no hay iconos en el tablero o no hay movimientos
+      if (iconCount <= 0) {
+        logger.info('LevelAdapter', `Tablero completamente vacío en modo supervivencia. Nivel completado.`);
+        const spawnRateSeconds = (store.getState().game.spawnRate / 1000).toFixed(1);
+        store.dispatch(setGameEndReason(`¡Increíble! Has limpiado completamente el tablero eliminando todos los iconos. Velocidad de aparición: ${spawnRateSeconds}s por icono.`));
+        return true;
+      }
+      
+      // Si no hay más movimientos y muy pocos iconos (1-2), considerar completado
+      if (!hasMovesAvailable && iconCount <= 2) {
+        logger.info('LevelAdapter', `No hay movimientos y quedan muy pocos iconos (${iconCount}). Nivel supervivencia completado.`);
+        const spawnRateSeconds = (store.getState().game.spawnRate / 1000).toFixed(1);
+        store.dispatch(setGameEndReason(`¡Excelente estrategia! Quedan solo ${iconCount} iconos sin posibilidad de movimientos. Velocidad de aparición: ${spawnRateSeconds}s por icono.`));
+        return true;
+      }
+      
+      // Para cualquier otro caso, no completar nivel
       return false;
     }
     

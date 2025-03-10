@@ -515,14 +515,14 @@ export const AVAILABLE_ICONS = [
   '🍌', '🍉', '🍑', '🍒', '🍍',
   '🥝', '🥑', '🥕', '🌽', '🍅', 
   '🫐', '🍆', '🥔', '🥦', '🥭',
-  '🐶', '🐱', '🐭', '🐹',
+  '🐶', '🐱', '🐭', '🐹', '🐰',
   '⭐', '💫', '🔥', '🌈', '🌪️',
   '⚽', '🏀', '🏉', '🎱', '🏓',
   '🚗', '🏎️', '🚓', '🚑', '✈️'
 ];
 
 // Configuración de modos de juego ampliada
-export const GAME_MODES_EXTENDED: Record<string, GameModeConfig> = {
+/* export const GAME_MODES_EXTENDED: Record<string, GameModeConfig> = {
   normal: {
     name: "Normal",
     description: "Juego clásico con dificultad progresiva. Los iconos aparecen a un ritmo constante que aumenta con el tiempo.",
@@ -552,7 +552,7 @@ export const GAME_MODES_EXTENDED: Record<string, GameModeConfig> = {
     iconDiversity: 1.5,
     specialFeatures: ["Velocidad extrema", "Mayor diversidad de iconos", "Multiplicador de puntuación x2"]
   }
-};
+}; */
 
 // Direcciones para verificar convergencias
 export const CONVERGENCE_DIRECTIONS: ConvergenceDirection[] = [
@@ -679,7 +679,7 @@ export function getIconsForLevel(level: number, difficulty: GameMode): string[] 
     return shuffleArray([...allIcons]);
   } catch (error) {
     console.error('Error al obtener iconos para el nivel', error);
-    return ["😀", "😎", "🤔", "😍", "😴", "🤯", "😱", "🥳"];
+    return ["😀", "😎", "🤔", "😍", "😴"];
   }
 }
 
@@ -800,9 +800,9 @@ export const PERFORMANCE_CONFIG = {
 export const COMBO_SYSTEM = {
   // Ventana de tiempo para combos por dificultad (ms) - AUMENTADA SIGNIFICATIVAMENTE
   TIME_WINDOWS: {
-    easy: 8000,      // 8 segundos para dificultad fácil
-    normal: 120000,    // 6 segundos para dificultad normal (era 4000)
-    hard: 4500,      // 4.5 segundos para dificultad difícil (era 3000)
+    easy: 5000,      // 8 segundos para dificultad fácil
+    normal: 3500,    // 6 segundos para dificultad normal (era 4000)
+    hard: 2500,      // 4.5 segundos para dificultad difícil (era 3000)
     tutorial: 10000  // 10 segundos para el tutorial (era 6000)
   },
   
@@ -812,7 +812,8 @@ export const COMBO_SYSTEM = {
     { threshold: 6, multiplier: 2.0 },   // 6+ combos: x2.0
     { threshold: 10, multiplier: 3.0 },  // 10+ combos: x3.0
     { threshold: 15, multiplier: 5.0 },  // 15+ combos: x5.0
-    { threshold: 20, multiplier: 8.0 }   // 20+ combos: x8.0
+    { threshold: 20, multiplier: 8.0 },   // 20+ combos: x8.0
+    { threshold: 30, multiplier: 10.0 }   // 30+ combos: x10.0
   ],
   
   // Bonificaciones por alcanzar ciertos hitos de combo

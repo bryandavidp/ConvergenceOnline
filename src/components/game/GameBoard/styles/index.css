@@ -70,8 +70,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(0.8rem, 2.5vmin, 1.8rem);
+  font-size: clamp(0.7rem, 2.2vmin, 1.6rem);
   border-radius: 8px;
   overflow: visible; /* Permitir que las animaciones y efectos se extiendan */
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  will-change: transform;
+  -webkit-font-smoothing: antialiased;
 } 
