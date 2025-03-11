@@ -1,16 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store';
 import { audioManager } from '../../../utils/audioManager';
 import './ComboTimer.css';
 
-// Importación condicional del CSS según el modo de rendimiento
-// Se cargará automáticamente cuando se necesite
-import './ComboTimer-lite.css';
-
 /**
- * Componente que muestra el tiempo restante del combo actual
- * con una animación llamativa y divertida
+ * Componente que muestra un indicador de combo rediseñado con
+ * el multiplicador prominente en el centro y el icono como fondo
  */
 const ComboTimer: React.FC = () => {
   // Obtenemos los datos del combo desde el estado
@@ -28,63 +24,85 @@ const ComboTimer: React.FC = () => {
   // Referencia para el intervalo de actualización
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Detectar si estamos en modo de rendimiento bajo
-  const isPerformanceMode = document.documentElement.classList.contains('performance-mode');
+  // Detectar si estamos en modo de rendimiento bajo (con fallback seguro)
+  const isPerformanceMode = typeof document !== 'undefined' && 
+    document.documentElement.classList.contains('performance-mode');
   
-  // Determinar la clase del combo según el multiplicador
-  let comboClass = 'combo-basic';
-  if (comboMultiplier >= 5.0) comboClass = 'combo-legendary';
-  else if (comboMultiplier >= 3.0) comboClass = 'combo-epic';
-  else if (comboMultiplier >= 2.0) comboClass = 'combo-rare';
-  else if (comboMultiplier >= 1.5) comboClass = 'combo-uncommon';
+  // Determinar la clase y el icono del combo según el multiplicador
+  const comboLevel = useMemo(() => {
+    if (!comboMultiplier || comboMultiplier < 1.5) return { class: 'combo-basic', icon: '🔄' };
+    if (comboMultiplier >= 5.0) return { class: 'combo-legendary', icon: '✨' };
+    if (comboMultiplier >= 3.0) return { class: 'combo-epic', icon: '🔥' };
+    if (comboMultiplier >= 2.0) return { class: 'combo-rare', icon: '💫' };
+    return { class: 'combo-uncommon', icon: '⚡' };
+  }, [comboMultiplier]);
   
-  // Texto para el indicador según el nivel del combo
-  const getComboText = () => {
-    if (comboMultiplier >= 5.0) return '¡LEGENDARIO!';
-    if (comboMultiplier >= 3.0) return '¡ÉPICO!';
-    if (comboMultiplier >= 2.0) return '¡RARO!';
-    if (comboMultiplier >= 1.5) return '¡COMBO!';
-    return 'COMBO';
+  // Calcular el estilo del temporizador usando la variable CSS --angle para el conic-gradient
+  const timerStyle = useMemo(() => {
+    // Convertir el porcentaje a grados para el gradiente cónico (360deg = círculo completo)
+    const angleInDegrees = Math.floor((timePercentage / 100) * 360);
+    
+    return {
+      '--angle': `${angleInDegrees}deg`
+    } as React.CSSProperties;
+  }, [timePercentage]);
+  
+  // Formatea el multiplicador para mostrarlo con precisión y sin decimales innecesarios
+  const formatMultiplier = (value: number): string => {
+    if (!value || value < 1) return 'x1.0';
+    
+    // Si es un número entero o el decimal es .0, mostrar sin decimales
+    if (value % 1 === 0 || (value * 10) % 10 === 0) {
+      return `x${Math.floor(value)}`;
+    }
+    
+    // En caso contrario, mostrar con un decimal
+    return `x${value.toFixed(1)}`;
   };
   
-  // Seleccionar el icono según el nivel del combo
-  const getComboIcon = () => {
-    if (comboMultiplier >= 5.0) return '✨';
-    if (comboMultiplier >= 3.0) return '🔥';
-    if (comboMultiplier >= 2.0) return '💫';
-    if (comboMultiplier >= 1.5) return '⚡';
-    return '🔥';
-  };
-  
-  // Ajustar el sonido cuando aparece el temporizador de combo
+  // Ajustar el sonido cuando cambia el nivel de combo
   useEffect(() => {
-    if (visible && comboCount >= 3) {
-      // Reproducir un sonido cuando aparece el timer
-      if (comboMultiplier >= 5.0) {
+    if (visible && comboCount && comboCount >= 3) {
+      // Reproducir un sonido acorde al nivel de combo
+      if (comboMultiplier && comboMultiplier >= 5.0) {
         audioManager.play('comboLarge');
-      } else if (comboMultiplier >= 3.0) {
+      } else if (comboMultiplier && comboMultiplier >= 3.0) {
         audioManager.play('comboMedium');
-      } else if (comboMultiplier >= 1.5) {
+      } else if (comboMultiplier && comboMultiplier >= 1.5) {
         audioManager.play('comboSmall');
       }
     }
   }, [visible, comboCount, comboMultiplier]);
   
-  // Mostrar/ocultar el timer según el estado del combo
+  // Efecto para forzar la visibilidad al inicio si hay combo activo
   useEffect(() => {
+    // Verificar directamente si hay un combo activo
+    const hasActiveCombo = comboCount && comboCount >= 3 && comboTimestamp > 0;
+    if (hasActiveCombo) {
+      setVisible(true);
+    }
+  }, [comboCount, comboTimestamp]);
+  
+  // Mostrar/ocultar el indicador según el estado del combo
+  useEffect(() => {
+    // Verificar si hay un combo activo
+    const hasActiveCombo = comboCount && comboCount >= 3 && comboTimestamp > 0;
+    
+    // Actualizar la visibilidad inmediatamente según el estado actual
+    setVisible(Boolean(hasActiveCombo));
+    
     // Limpiar intervalo existente
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
     
-    // Solo mostrar si hay un combo activo (3 o más)
-    if (comboCount >= 3 && comboTimestamp > 0) {
-      setVisible(true);
+    // Solo continuar si hay un combo activo
+    if (hasActiveCombo) {
       setTimePercentage(100); // Iniciar al 100%
       
-      // Configurar la frecuencia de actualización según modo de rendimiento
-      const updateFrequency = isPerformanceMode ? 100 : 33; // 10fps o 30fps
+      // Configurar la frecuencia de actualización para mejor fluidez
+      const updateFrequency = isPerformanceMode ? 100 : 16; // ~60fps para animación fluida
       
       // Actualizar el porcentaje de tiempo restante
       intervalRef.current = setInterval(() => {
@@ -104,9 +122,6 @@ const ComboTimer: React.FC = () => {
           }
         }
       }, updateFrequency);
-    } else {
-      // Ocultar si no hay combo activo
-      setVisible(false);
     }
     
     // Limpiar al desmontar
@@ -118,30 +133,35 @@ const ComboTimer: React.FC = () => {
     };
   }, [comboCount, comboTimestamp, comboTimeWindow, isPerformanceMode]);
   
-  // No renderizar si no es visible
-  if (!visible) return null;
+  // Para debug: renderizar siempre en desarrollo
+  const forceShowForDebug = process.env.NODE_ENV === 'development' && !visible && comboCount && comboCount > 0;
+  
+  // No renderizar si no es visible (excepto en modo debug)
+  if (!visible && !forceShowForDebug) return null;
+  
+  // Valores seguros para el renderizado
+  const safeComboCount = comboCount || 0;
+  const safeMultiplier = comboMultiplier || 1.0;
   
   return (
-    <div className={`combo-timer-container ${comboClass} ${isPerformanceMode ? 'performance-mode' : ''}`}>
-      <div className="combo-timer-icon">
-        {getComboIcon()}
-      </div>
-      
-      <div className="combo-timer-info">
-        <div className="combo-timer-text">
-          {getComboText()} <span className="combo-timer-multiplier">x{comboMultiplier.toFixed(1)}</span>
-        </div>
+    <div className="combo-indicator">
+      <div className={`combo-orbital ${comboLevel.class} ${isPerformanceMode ? 'performance-mode' : ''}`}>
+        {/* Icono como fondo dentro del círculo */}
+        <div className="combo-icon">{comboLevel.icon}</div>
         
-        <div className="combo-timer-bar-container">
+        {/* Anillo de tiempo circular en el borde exterior */}
+        <div className="combo-timer-ring">
           <div 
-            className="combo-timer-bar" 
-            style={{ width: `${timePercentage}%` }}
+            className="combo-timer-fill" 
+            style={timerStyle}
           />
         </div>
-      </div>
-      
-      <div className="combo-timer-counter">
-        x{comboCount}
+        
+        {/* Contador arriba */}
+        <div className="combo-count">{safeComboCount}</div>
+        
+        {/* Multiplicador en el centro */}
+        <div className="combo-multiplier">{formatMultiplier(safeMultiplier)}</div>
       </div>
     </div>
   );

@@ -1,243 +1,288 @@
-/* ComboTimer.css - Estilos para el indicador de tiempo de combo */
+/* ComboTimer.css - Temporizador de combo rediseñado con multiplicador central */
 
-.combo-timer-container {
-  /* position: relative;
-  top: 0;
-  left: 0;
-  transform: none; */
+:root {
+  /* Colores vibrantes con mayor saturación */
+  --combo-basic-color: #5ee6ff;
+  --combo-uncommon-color: #00b7ff;
+  --combo-rare-color: #b44dff;
+  --combo-epic-color: #ff40ff;
+  --combo-legendary-color: #ffe600;
+  
+  /* Efectos de brillo intensos */
+  --combo-basic-glow: 0 0 15px rgba(94, 230, 255, 0.7);
+  --combo-uncommon-glow: 0 0 18px rgba(0, 183, 255, 0.8);
+  --combo-rare-glow: 0 0 20px rgba(180, 77, 255, 0.9);
+  --combo-epic-glow: 0 0 25px rgba(255, 64, 255, 1);
+  --combo-legendary-glow: 0 0 30px rgba(255, 230, 0, 1);
+}
+
+.combo-indicator {
+  position: fixed;
+  top: 75px;
+  right: 15px;
+  z-index: 1000;
   display: flex;
   align-items: center;
-  padding: 8px 15px;
-  background: rgba(0, 0, 0, 0.85);
-  border-radius: 20px;
-  color: white;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-  animation: comboTimerAppear 0.3s ease-out forwards;
-  max-width: 320px;
-  width: 100%;
-  backdrop-filter: blur(4px);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  margin: 0 auto;
+  width: auto;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.7));
 }
 
-/* Icono del combo */
-.combo-timer-icon {
-  font-size: 26px;
-  margin-right: 12px;
-  animation: iconPulse 1.2s infinite;
-  text-shadow: 0 0 12px rgba(255, 100, 0, 0.9);
-}
-
-/* Sección principal con texto y barra */
-.combo-timer-info {
-  flex: 1;
+.combo-orbital {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(11, 17, 42, 0.95), rgba(21, 32, 78, 0.95));
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* Cambiado a hidden para controlar el icono de fondo */
+  transition: all 0.3s ease;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
 }
 
-/* Texto del combo */
-.combo-timer-text {
-  font-size: 18px;
+/* Círculo exterior - para el anillo del temporizador */
+.combo-orbital::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  background: transparent;
+  border: 3px solid transparent;
+  z-index: 1;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+}
+
+/* Animación de pulso para combos altos */
+@keyframes pulse-glow {
+  0% { filter: brightness(1); transform: scale(1); }
+  50% { filter: brightness(1.2); transform: scale(1.05); }
+  100% { filter: brightness(1); transform: scale(1); }
+}
+
+/* Clases para los diferentes niveles de combo - aplicadas al borde exterior */
+.combo-orbital.combo-basic::before {
+  border-color: var(--combo-basic-color);
+  box-shadow: var(--combo-basic-glow);
+}
+
+.combo-orbital.combo-uncommon::before {
+  border-color: var(--combo-uncommon-color);
+  box-shadow: var(--combo-uncommon-glow);
+}
+
+.combo-orbital.combo-rare::before {
+  border-color: var(--combo-rare-color);
+  box-shadow: var(--combo-rare-glow);
+}
+
+.combo-orbital.combo-epic::before {
+  border-color: var(--combo-epic-color);
+  box-shadow: var(--combo-epic-glow);
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+.combo-orbital.combo-legendary::before {
+  border-color: var(--combo-legendary-color);
+  box-shadow: var(--combo-legendary-glow);
+  animation: pulse-glow 1.5s infinite ease-in-out;
+}
+
+/* Contador de combo - Pequeño arriba */
+.combo-count {
+  position: absolute;
+  top: 12px;
+  font-size: 20px;
   font-weight: 800;
-  margin-bottom: 6px;
-  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
+  color: white;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 0 5px rgba(0, 0, 0, 1);
+  line-height: 1;
+  letter-spacing: -0.5px;
+  z-index: 10;
 }
 
-/* Multiplicador de combo */
-.combo-timer-multiplier {
+/* Multiplicador - Grande y centrado */
+.combo-multiplier {
+  position: relative;
+  font-size: 28px;
   font-weight: 900;
-  margin-left: 5px;
+  color: white;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.9), 0 0 6px rgba(0, 0, 0, 1);
+  line-height: 1;
+  margin: 0;
+  z-index: 10;
+  transform: scale(1);
+  letter-spacing: -1px;
 }
 
-/* Contenedor de la barra de tiempo */
-.combo-timer-bar-container {
-  height: 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+/* Resplandor detrás del multiplicador */
+.combo-multiplier::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 120%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, currentColor 0%, transparent 70%);
+  opacity: 0.2;
+  z-index: -1;
+  border-radius: 50%;
+}
+
+/* Barra circular para el tiempo - Solo en el borde exterior */
+.combo-timer-ring {
+  position: absolute;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  top: -4px;
+  left: -4px;
+  border-radius: 50%;
+  pointer-events: none;
   overflow: hidden;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
-  margin-bottom: 2px;
+  z-index: 2;
+  border: 3px solid transparent;
 }
 
-/* Barra de tiempo */
-.combo-timer-bar {
+.combo-timer-fill {
+  position: absolute;
+  width: 100%;
   height: 100%;
-  border-radius: 4px;
-  transition: width 0.1s linear;
+  border-radius: 50%;
+  opacity: 1;
+  transform-origin: center;
 }
 
-/* Contador del combo */
-.combo-timer-counter {
-  font-size: 22px;
-  font-weight: 900;
-  margin-left: 15px;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 5px 10px;
-  border-radius: 10px;
-  min-width: 40px;
-  text-align: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-  animation: counterPulse 1s infinite;
+/* Nuevo temporizador: usa SVG para mejor animación del borde */
+.combo-timer-fill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: 
+    conic-gradient(
+      from 0deg,
+      currentColor 0deg, 
+      currentColor var(--angle, 0deg), 
+      transparent var(--angle, 0deg)
+    );
+  mask: radial-gradient(transparent 62%, black 63% 70%, transparent 71%);
+  -webkit-mask: radial-gradient(transparent 62%, black 63% 70%, transparent 71%);
 }
 
-/* Variantes de color según el nivel de combo */
-.combo-timer-container.combo-basic .combo-timer-bar {
-  background: linear-gradient(to right, #AAA, #FFF);
+/* Color del temporizador según nivel de combo */
+.combo-orbital.combo-basic .combo-timer-fill,
+.combo-orbital.combo-basic .combo-multiplier {
+  color: var(--combo-basic-color);
 }
 
-.combo-timer-container.combo-uncommon .combo-timer-bar {
-  background: linear-gradient(to right, #0066CC, #1E90FF);
-  box-shadow: 0 0 10px rgba(30, 144, 255, 0.7);
+.combo-orbital.combo-uncommon .combo-timer-fill,
+.combo-orbital.combo-uncommon .combo-multiplier {
+  color: var(--combo-uncommon-color);
 }
 
-.combo-timer-container.combo-uncommon .combo-timer-icon,
-.combo-timer-container.combo-uncommon .combo-timer-counter {
-  animation: uncommonPulse 1.2s infinite;
+.combo-orbital.combo-rare .combo-timer-fill,
+.combo-orbital.combo-rare .combo-multiplier {
+  color: var(--combo-rare-color);
 }
 
-.combo-timer-container.combo-rare .combo-timer-bar {
-  background: linear-gradient(to right, #8A2BE2, #9932CC);
-  box-shadow: 0 0 10px rgba(153, 50, 204, 0.7);
+.combo-orbital.combo-epic .combo-timer-fill,
+.combo-orbital.combo-epic .combo-multiplier {
+  color: var(--combo-epic-color);
 }
 
-.combo-timer-container.combo-rare .combo-timer-icon,
-.combo-timer-container.combo-rare .combo-timer-counter {
-  animation: rarePulse 1.2s infinite;
+.combo-orbital.combo-legendary .combo-timer-fill,
+.combo-orbital.combo-legendary .combo-multiplier {
+  color: var(--combo-legendary-color);
 }
 
-.combo-timer-container.combo-epic .combo-timer-bar {
-  background: linear-gradient(to right, #FF00FF, #FF69B4);
-  box-shadow: 0 0 15px rgba(255, 0, 255, 0.7);
+/* Icono del combo - Como fondo opacado dentro del círculo */
+.combo-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  opacity: 0.15;
+  filter: blur(1px);
+  color: white;
+  z-index: 2;
 }
 
-.combo-timer-container.combo-epic .combo-timer-icon,
-.combo-timer-container.combo-epic .combo-timer-counter {
-  animation: epicPulse 1s infinite;
+/* Efectos para los diferentes niveles de combo */
+.combo-orbital.combo-basic .combo-icon {
+  color: var(--combo-basic-color);
 }
 
-.combo-timer-container.combo-legendary .combo-timer-bar {
-  background: linear-gradient(to right, #FFD700, #FF8C00);
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
+.combo-orbital.combo-uncommon .combo-icon {
+  color: var(--combo-uncommon-color);
 }
 
-.combo-timer-container.combo-legendary .combo-timer-icon,
-.combo-timer-container.combo-legendary .combo-timer-counter {
-  animation: legendaryPulse 0.8s infinite;
+.combo-orbital.combo-rare .combo-icon {
+  color: var(--combo-rare-color);
 }
 
-/* Animaciones */
-@keyframes comboTimerAppear {
-  0% {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.8);
+.combo-orbital.combo-epic .combo-icon {
+  color: var(--combo-epic-color);
+}
+
+.combo-orbital.combo-legendary .combo-icon {
+  color: var(--combo-legendary-color);
+}
+
+/* Adaptación para pantallas pequeñas */
+@media (max-width: 480px) {
+  .combo-indicator {
+    top: 65px;
+    right: 10px;
   }
-  70% {
-    opacity: 1;
-    transform: translateY(3px) scale(1.05);
+  
+  .combo-orbital {
+    width: 64px;
+    height: 64px;
   }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+  
+  .combo-count {
+    top: 10px;
+    font-size: 18px;
   }
-}
-
-@keyframes iconPulse {
-  0%, 100% {
-    transform: scale(1);
+  
+  .combo-multiplier {
+    font-size: 24px;
   }
-  50% {
-    transform: scale(1.2);
-  }
-}
-
-@keyframes counterPulse {
-  0%, 100% {
-    transform: scale(1);
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-  }
-  50% {
-    transform: scale(1.1);
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-  }
-}
-
-@keyframes uncommonPulse {
-  0%, 100% {
-    transform: scale(1);
-    text-shadow: 0 0 5px rgba(30, 144, 255, 0.5);
-  }
-  50% {
-    transform: scale(1.15);
-    text-shadow: 0 0 15px rgba(30, 144, 255, 0.8);
-  }
-}
-
-@keyframes rarePulse {
-  0%, 100% {
-    transform: scale(1);
-    text-shadow: 0 0 5px rgba(153, 50, 204, 0.5);
-  }
-  50% {
-    transform: scale(1.15);
-    text-shadow: 0 0 15px rgba(153, 50, 204, 0.8);
-  }
-}
-
-@keyframes epicPulse {
-  0%, 100% {
-    transform: scale(1);
-    text-shadow: 0 0 8px rgba(255, 0, 255, 0.5);
-  }
-  50% {
-    transform: scale(1.2);
-    text-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
-  }
-}
-
-@keyframes legendaryPulse {
-  0%, 100% {
-    transform: scale(1);
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-  }
-  50% {
-    transform: scale(1.25);
-    text-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
+  
+  .combo-icon {
+    font-size: 32px;
   }
 }
 
 /* Versión para dispositivos de bajo rendimiento */
-.performance-mode .combo-timer-container {
-  backdrop-filter: none;
-  animation: comboTimerAppear 0.2s ease-out forwards;
+.performance-mode .combo-orbital {
+  animation: none;
 }
 
-.performance-mode .combo-timer-icon,
-.performance-mode .combo-timer-counter {
-  animation: none !important;
+.performance-mode .combo-orbital::before {
+  animation: none;
+  box-shadow: none;
 }
 
-.performance-mode .combo-timer-bar {
-  transition: none;
+.performance-mode .combo-multiplier::before {
+  display: none;
 }
 
-/* Responsivo para pantallas pequeñas */
-@media (max-width: 480px) {
-  .combo-timer-container {
-    padding: 6px 12px;
-  }
-  
-  .combo-timer-icon {
-    font-size: 20px;
-  }
-  
-  .combo-timer-text {
-    font-size: 16px;
-  }
-  
-  .combo-timer-counter {
-    font-size: 18px;
+/* Posicionamiento alternativo para layout apaisado */
+@media (orientation: landscape) and (max-height: 500px) {
+  .combo-indicator {
+    top: auto;
+    bottom: 15px;
+    right: 15px;
   }
 } 

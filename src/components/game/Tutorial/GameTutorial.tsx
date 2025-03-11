@@ -37,6 +37,11 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onComplete }) => {
   const [isStepComplete, setIsStepComplete] = useState(false);
   const [showTutorialUI, setShowTutorialUI] = useState(true);
   const [completionModalVisible, setCompletionModalVisible] = useState(false);
+  // Estado para ocultar temporalmente el tutorial para realizar acciones
+  const [temporarilyHidden, setTemporarilyHidden] = useState(false);
+  const [actionPending, setActionPending] = useState(false);
+  // Estado para mostrar mensaje de ayuda sobre combos
+  const [showComboHelp, setShowComboHelp] = useState(false);
   
   // Referencias al estado del juego
   const tutorialOverlayRef = useRef<HTMLDivElement>(null);
@@ -64,6 +69,13 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onComplete }) => {
   const handleCompletionModalClose = () => {
     setCompletionModalVisible(false);
     onComplete();
+  };
+
+  // Función para ocultar temporalmente el tutorial para realizar una acción
+  const hideTemporarily = () => {
+    console.log('Tutorial: Ocultando temporalmente para acción');
+    setTemporarilyHidden(true);
+    setActionPending(true);
   };
   
   // Contenido de los pasos del tutorial
@@ -96,6 +108,9 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onComplete }) => {
           <p>Ahora es tu turno: <strong>encuentra 3 o más iconos iguales</strong> que estén alineados y haz clic en ellos para eliminarlos.</p>
           <p>Te he señalado un posible grupo. ¡Prueba a hacer clic!</p>
           <p className="tutorial-note">Debes completar esta acción para continuar.</p>
+          {!temporarilyHidden && (
+            <button className="tutorial-button" onClick={hideTemporarily}>Entendido</button>
+          )}
         </>
       ),
       waitForAction: true,
@@ -103,13 +118,22 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onComplete }) => {
       highlightCells: findPossibleConvergence(board)
     },
     [TutorialStep.COMBOS]: {
-      title: "¡Combos!",
+      title: "¡Sistema de Combos!",
       content: (
         <>
           <p>¡Excelente! Has creado tu primera convergencia.</p>
-          <p>Si eliminas varias convergencias en un corto periodo de tiempo, crearás <strong>combos</strong> que multiplican tus puntos.</p>
-          <p>Intenta eliminar otro grupo de iconos rápidamente para crear un combo.</p>
-          <p className="tutorial-note">Debes crear un combo para continuar.</p>
+          <p>Un <strong>combo</strong> ocurre cuando eliminas <strong>múltiples convergencias</strong> en un corto periodo de tiempo.</p>
+          <p>Para hacer un combo, necesitas:</p>
+          <ol>
+            <li>Eliminar una primera convergencia (que ya has hecho)</li>
+            <li>Encontrar y eliminar <strong>otra convergencia diferente</strong> antes de que se agote el tiempo</li>
+          </ol>
+          <p>Los combos multiplican tus puntos: <span className="combo-basic-text">x1.5</span>, <span className="combo-uncommon-text">x2.0</span>, <span className="combo-rare-text">x3.0</span> y hasta <span className="combo-legendary-text">x5.0</span>.</p>
+          <p>Verás una <strong>barra de tiempo</strong> en la parte superior cuando se active un combo. ¡Elimina otro grupo antes de que se agote!</p>
+          <p className="tutorial-note">Debes eliminar una segunda convergencia para continuar.</p>
+          {!temporarilyHidden && (
+            <button className="tutorial-button" onClick={hideTemporarily}>Entendido</button>
+          )}
         </>
       ),
       waitForAction: true,
@@ -184,13 +208,24 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onComplete }) => {
           
           // Si encontramos 3 o más, es una convergencia válida
           if (convergence.length >= 3) {
+            console.log(`Convergencia encontrada: ${convergence.length} iconos ${icon}`);
             return convergence;
           }
         }
       }
     }
     
+    console.log('No se encontraron convergencias existentes, buscando oportunidades para crear una');
+    
+    // Si no encontramos convergencias existentes, busquemos patrones donde falte 1 icono para completar
+    const potentialConvergences = findAlmostConvergences(board);
+    if (potentialConvergences.length > 0) {
+      console.log('Se encontró una oportunidad para crear convergencia');
+      return potentialConvergences;
+    }
+    
     // Si no encontramos ninguna, devolver algunas celdas al azar que tengan iconos
+    console.log('No se encontraron convergencias potenciales, seleccionando iconos aleatorios');
     const randomCells = [];
     for (let row = 0; row < boardSize; row++) {
       for (let col = 0; col < boardSize; col++) {
@@ -201,7 +236,65 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onComplete }) => {
     }
     
     // Devolver hasta 3 celdas aleatorias
-    return randomCells.slice(0, 3);
+    const selectedCells = randomCells.slice(0, Math.min(3, randomCells.length));
+    console.log(`Seleccionados ${selectedCells.length} iconos aleatorios para destacar`);
+    return selectedCells;
+  }
+  
+  // Función para encontrar patrones que estén a un icono de formar una convergencia
+  function findAlmostConvergences(board: (string | null)[][]): {row: number, col: number}[] {
+    const boardSize = board.length;
+    
+    // Recorrer cada celda del tablero
+    for (let row = 0; row < boardSize; row++) {
+      for (let col = 0; col < boardSize; col++) {
+        // Verificar si hay al menos 2 iconos del mismo tipo en línea horizontal
+        if (col < boardSize - 2) {
+          if (board[row][col] && board[row][col] === board[row][col+1]) {
+            // Destacar estos 2 iconos adyacentes
+            return [
+              {row, col},
+              {row, col: col+1}
+            ];
+          }
+        }
+        
+        // Verificar si hay al menos 2 iconos del mismo tipo en línea vertical
+        if (row < boardSize - 2) {
+          if (board[row][col] && board[row][col] === board[row+1][col]) {
+            // Destacar estos 2 iconos adyacentes
+            return [
+              {row, col},
+              {row: row+1, col}
+            ];
+          }
+        }
+        
+        // Verificar si hay al menos 2 iconos del mismo tipo en diagonal descendente
+        if (row < boardSize - 2 && col < boardSize - 2) {
+          if (board[row][col] && board[row][col] === board[row+1][col+1]) {
+            // Destacar estos 2 iconos adyacentes en diagonal
+            return [
+              {row, col},
+              {row: row+1, col: col+1}
+            ];
+          }
+        }
+        
+        // Verificar si hay al menos 2 iconos del mismo tipo en diagonal ascendente
+        if (row > 1 && col < boardSize - 2) {
+          if (board[row][col] && board[row][col] === board[row-1][col+1]) {
+            // Destacar estos 2 iconos adyacentes en diagonal
+            return [
+              {row, col},
+              {row: row-1, col: col+1}
+            ];
+          }
+        }
+      }
+    }
+    
+    return [];
   }
   
   // Avanzar al siguiente paso del tutorial
@@ -209,10 +302,15 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onComplete }) => {
     const steps = Object.values(TutorialStep);
     const currentIndex = steps.indexOf(currentStep);
     
+    console.log(`Tutorial: Avanzando al paso ${currentIndex + 1} de ${steps.length}`);
+    
     if (currentIndex < steps.length - 1) {
       setCurrentStep(steps[currentIndex + 1]);
       setIsStepComplete(false);
+      setTemporarilyHidden(false);
+      setActionPending(false);
     } else {
+      console.log('Tutorial: Finalizando tutorial');
       finishTutorial();
     }
   };
@@ -221,19 +319,37 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onComplete }) => {
   useEffect(() => {
     const currentStepContent = tutorialSteps[currentStep];
     
-    if (currentStepContent.waitForAction) {
+    if (currentStepContent.waitForAction && actionPending) {
       switch (currentStepContent.actionType) {
         case 'convergence':
           // Verificar si se ha hecho una convergencia (la puntuación ha aumentado)
           if (score > prevScore.current) {
+            console.log('Convergencia detectada: puntuación aumentada');
             setIsStepComplete(true);
+            setTemporarilyHidden(false);
+            setActionPending(false);
           }
           break;
           
         case 'combo':
-          // Verificar si se ha hecho un combo
-          if (comboCount > prevComboCount.current) {
+          // Verificar si se ha hecho un combo real (no solo una convergencia)
+          // Un combo real ocurre cuando el contador de combos es al menos 2
+          if (comboCount >= 2) {
+            console.log(`Combo real detectado: ${comboCount} convergencias consecutivas`);
             setIsStepComplete(true);
+            setTemporarilyHidden(false);
+            setActionPending(false);
+            setShowComboHelp(false);
+          } else if (score > prevScore.current && comboCount < 2) {
+            // Si solo aumentó la puntuación pero no es un combo real, mostrar un mensaje
+            console.log('Se detectó una convergencia, pero no un combo. El combo requiere múltiples convergencias.');
+            
+            // Mostrar mensaje de ayuda
+            setShowComboHelp(true);
+            setTemporarilyHidden(false);
+            
+            // No marcamos como completo, solo actualizamos la referencia de puntuación
+            prevScore.current = score;
           }
           break;
           
@@ -242,11 +358,13 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onComplete }) => {
       }
     }
     
-    // Actualizar referencias
-    prevScore.current = score;
+    // Actualizar referencias (excepto para el caso especial del combo)
+    if (!(currentStepContent.actionType === 'combo' && score > prevScore.current && comboCount < 2)) {
+      prevScore.current = score;
+    }
     prevIconCount.current = iconCount;
     prevComboCount.current = comboCount;
-  }, [score, iconCount, comboCount, currentStep, tutorialSteps]);
+  }, [score, iconCount, comboCount, currentStep, tutorialSteps, actionPending]);
   
   // Avanzar automáticamente cuando se completa un paso
   useEffect(() => {
@@ -311,7 +429,7 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onComplete }) => {
       
       dispatch(setHighlightedCells([]));
     };
-  }, [currentStep, dispatch, board]);
+  }, [currentStep, dispatch, board, temporarilyHidden]);
   
   // Verificar que estamos en modo tutorial
   useEffect(() => {
@@ -320,10 +438,30 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onComplete }) => {
     }
   }, [currentPlayMode, status]);
   
+  // Ocultar el mensaje de ayuda de combo después de un tiempo
+  useEffect(() => {
+    if (showComboHelp) {
+      const timer = setTimeout(() => {
+        setShowComboHelp(false);
+      }, 5000); // Ocultar después de 5 segundos
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showComboHelp]);
+  
+  // Logging al montar el componente
+  useEffect(() => {
+    console.log('GameTutorial: Componente montado y visible');
+    
+    return () => {
+      console.log('GameTutorial: Componente desmontado');
+    };
+  }, []);
+  
   return (
     <>
       {/* Overlay principal del tutorial */}
-      {showTutorialUI && (
+      {showTutorialUI && !temporarilyHidden && (
         <div 
           className={`tutorial-overlay ${tutorialSteps[currentStep].waitForAction ? 'interactive' : ''}`} 
           ref={tutorialOverlayRef}
@@ -333,12 +471,26 @@ const GameTutorial: React.FC<GameTutorialProps> = ({ onComplete }) => {
             <div className="tutorial-content">
               {tutorialSteps[currentStep].content}
             </div>
+            {showComboHelp && currentStep === TutorialStep.COMBOS && (
+              <div className="tutorial-help-message">
+                <p>¡Bien! Has eliminado una convergencia, pero un combo requiere eliminar <strong>varias convergencias seguidas</strong>.</p>
+                <p>Busca y elimina <strong>otro grupo de iconos</strong> antes de que se agote el tiempo.</p>
+              </div>
+            )}
             {isStepComplete && tutorialSteps[currentStep].waitForAction && (
               <div className="tutorial-success-message">
                 ¡Perfecto! Avanzando al siguiente paso...
               </div>
             )}
           </div>
+        </div>
+      )}
+      
+      {/* Botón flotante para volver a mostrar el tutorial cuando está oculto */}
+      {temporarilyHidden && (
+        <div className="tutorial-mini-button" onClick={() => setTemporarilyHidden(false)}>
+          <span className="tutorial-mini-icon">❓</span>
+          <span>Mostrar Tutorial</span>
         </div>
       )}
       

@@ -78,13 +78,11 @@ export function isLevelCompleted(
         return false;
       }
       
-      // Verificar puntuación (este criterio siempre es válido)
+      // MODIFICADO: Solo registramos la puntuación como un hito alcanzado, pero no completamos el nivel
       const scoreReq = classicRequirements.find(req => req.type === 'score');
       if (scoreReq && score >= scoreReq.value) {
-        logger.info('LevelAdapter', `Nivel completado por puntuación: ${score}/${scoreReq.value}`);
-        const spawnRateSeconds = (store.getState().game.spawnRate / 1000).toFixed(1);
-        store.dispatch(setGameEndReason(`¡Has alcanzado la puntuación objetivo de ${scoreReq.value} puntos! Velocidad de aparición: ${spawnRateSeconds}s por icono.`));
-        return true;
+        logger.info('LevelAdapter', `Puntuación objetivo alcanzada: ${score}/${scoreReq.value}, pero el nivel continúa`);
+        // No completamos el nivel por puntuación
       }
       
       // Criterio por ocupación: solo válido después de tiempo mínimo de juego
@@ -97,6 +95,16 @@ export function isLevelCompleted(
           return true;
         }
       }
+      
+      // Si no hay movimientos válidos y el tablero está completamente vacío, nivel completado
+      if (hasMovesAvailable === false && iconCount === 0) {
+        logger.info('LevelAdapter', `Tablero completamente vacío. Nivel completado.`);
+        store.dispatch(setGameEndReason(`¡Has limpiado completamente el tablero! Impresionante.`));
+        return true;
+      }
+      
+      // Si no se cumple ningún criterio, el nivel no está completado
+      return false;
     } 
     // En modo contrarreloj, completado si se acaba el tiempo
     else if (playMode === 'timed') {
@@ -405,5 +413,79 @@ export function getLevelConfig(
         }]
       }
     };
+  }
+}
+
+/**
+ * Obtiene el puntaje objetivo para el nivel y modo de juego dado
+ */
+export function getTargetScore(
+  level: number,
+  playMode: GamePlayMode
+): number {
+  try {
+    // Obtener la configuración del nivel actual
+    const levelConfig = levels.getLevelConfig(level, playMode, 'normal');
+    if (!levelConfig || !levelConfig.requirements) {
+      return 0;
+    }
+    
+    // Buscar requisitos de puntuación para el modo de juego
+    if (playMode === 'classic') {
+      const classicRequirements = levelConfig.requirements.classic;
+      if (classicRequirements && Array.isArray(classicRequirements)) {
+        const scoreReq = classicRequirements.find(req => req.type === 'score');
+        if (scoreReq) {
+          return scoreReq.value;
+        }
+      }
+    }
+    
+    // Valor por defecto si no se encuentra un requisito específico
+    return 0;
+  } catch (error) {
+    logger.error('LevelAdapter', 'Error obteniendo puntaje objetivo:', error);
+    return 0;
+  }
+}
+
+/**
+ * Calcula el porcentaje de progreso en el nivel actual
+ */
+export function getProgress(
+  level: number,
+  playMode: GamePlayMode,
+  score: number,
+  iconCount: number,
+  boardSize: number,
+  timeRemaining?: number
+): number {
+  try {
+    // Para el modo clásico, el progreso es el porcentaje del puntaje objetivo
+    if (playMode === 'classic') {
+      const targetScore = getTargetScore(level, playMode);
+      if (targetScore <= 0) return 0;
+      return Math.min(100, Math.round((score / targetScore) * 100));
+    }
+    
+    // Para el modo tiempo, el progreso es el tiempo restante
+    if (playMode === 'timed' && timeRemaining !== undefined) {
+      // Usar el tiempo base del modo tiempo como valor predeterminado
+      const timeLimit = config.LEVEL_REQUIREMENTS.timed?.baseTime || 120;
+      return Math.max(0, Math.round((timeRemaining / timeLimit) * 100));
+    }
+    
+    // Para el modo supervivencia, el progreso es la ocupación inversa del tablero
+    if (playMode === 'survival' && boardSize > 0) {
+      const totalCells = boardSize * boardSize;
+      const occupationPercentage = (iconCount / totalCells) * 100;
+      return Math.max(0, Math.min(100, 100 - occupationPercentage));
+    }
+    
+    // Para el modo zen, sin progreso específico
+    return 0;
+  } catch (error) {
+    logger.error('LevelAdapter', 'Error calculando progreso:', error);
+    return 0;
   }
 } 

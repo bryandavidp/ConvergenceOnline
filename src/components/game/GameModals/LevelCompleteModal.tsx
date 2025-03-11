@@ -11,23 +11,19 @@ interface LevelCompleteModalProps {
   onContinue?: () => void;
   onReturnToMenu?: () => void;
   stars?: number;
-  rewards?: string[];
+  rewards?: {type: string, amount: number, rarity?: string}[] | string[];
 }
-
-// Configuración inicial para animación de la entrada del modal
-const LEVEL_COMPLETE_ANIMATIONS = {
-  title: { opacity: 0, transform: 'translateY(-20px)' },
-  stars: { opacity: 0, transform: 'scale(0.8)' },
-  content: { opacity: 0, transform: 'translateY(20px)' },
-  buttons: { opacity: 0, transform: 'scale(0.8)' },
-};
 
 const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ 
   isVisible = false, 
   onContinue,
   onReturnToMenu,
   stars = 3,
-  rewards = ['monedas', 'gemas', 'vidas']
+  rewards = [
+    {type: 'monedas', amount: 150, rarity: 'common'}, 
+    {type: 'gemas', amount: 5, rarity: 'rare'}, 
+    {type: 'vidas', amount: 1, rarity: 'epic'}
+  ]
 }) => {
   const { gameState } = useGameContext();
   const { 
@@ -38,408 +34,431 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
     gameEndReason, 
     currentPlayMode, 
     currentDifficulty,
-    spawnRate
+    spawnRate,
+    iconCount
   } = useSelector((state: RootState) => state.game);
   const { playSound } = useGameSound();
   const modalContentRef = useRef<HTMLDivElement>(null);
   const confettiContainerRef = useRef<HTMLDivElement>(null);
   
   // Estados para controlar animaciones y visibilidad
-  const [animations, setAnimations] = useState(LEVEL_COMPLETE_ANIMATIONS);
   const [modalVisible, setModalVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
-  
-  // Establecer la variable CSS --vh para altura real del viewport
+  const [showRewards, setShowRewards] = useState(false);
+
+  // Ajustar altura de la ventana para dispositivos móviles
+  const setViewportHeight = () => {
+    // Cálculo más preciso de la altura real disponible
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  };
+
+  // Crear partículas flotantes doradas y ajustar altura
   useEffect(() => {
-    // Función para establecer la altura real del viewport
-    const setViewportHeight = () => {
-      // El viewport height real en píxeles
-      const vh = window.innerHeight * 0.01;
-      // Establecer la variable CSS --vh
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
-    };
-
-    // Establecer la altura inicialmente
+    // Configuración inicial
     setViewportHeight();
-
-    // Actualizar la altura cuando cambie el tamaño de la ventana
-    window.addEventListener('resize', setViewportHeight);
     
-    // Para dispositivos móviles, actualizar también al cambiar la orientación
+    // Recalcular en cambios de orientación o redimensionamiento
+    window.addEventListener('resize', setViewportHeight);
     window.addEventListener('orientationchange', setViewportHeight);
     
-    // Actualizar después de cargar completamente (para iOS Safari)
+    // Recalcular después de cargar completamente (para barras de navegación móviles)
     window.addEventListener('load', setViewportHeight);
     
-    // Limpiar los event listeners al desmontar
+    // Limpiar event listeners
     return () => {
       window.removeEventListener('resize', setViewportHeight);
       window.removeEventListener('orientationchange', setViewportHeight);
       window.removeEventListener('load', setViewportHeight);
     };
   }, []);
-  
-  // Efecto para manejar la animación de entrada cuando el modal es visible
-  useEffect(() => {
-    let animationTimeout: NodeJS.Timeout;
-    const timeouts: NodeJS.Timeout[] = [];
-    let confetiTimeout: NodeJS.Timeout;
 
+  // Efectos para manejar la visibilidad del modal
+  useEffect(() => {
     if (isVisible) {
       setModalVisible(true);
       setIsClosing(false);
-      document.body.classList.add('modal-open');
+      // playSound('levelComplete');
+      createConfetti();
       
-      // Reproducir sonido de victoria
-      playSound('levelUp');
+      // Mostrar recompensas con un pequeño retraso para crear efecto
+      const rewardsTimer = setTimeout(() => {
+        setShowRewards(true);
+      }, 600);
       
-      // Mostrar confeti
-      confetiTimeout = setTimeout(() => {
-        setShowConfetti(true);
-      }, 300);
-      
-      // Registrar el timeout para limpieza
-      timeouts.push(confetiTimeout);
-
-      // Animación secuencial para los elementos del modal
-      timeouts.push(setTimeout(() => {
-        setAnimations(prev => ({
-          ...prev,
-          title: { opacity: 1, transform: 'translateY(0)' }
-        }));
-
-        timeouts.push(setTimeout(() => {
-          setAnimations(prev => ({
-            ...prev,
-            stars: { opacity: 1, transform: 'scale(1)' }
-          }));
-
-          timeouts.push(setTimeout(() => {
-            setAnimations(prev => ({
-              ...prev,
-              content: { opacity: 1, transform: 'translateY(0)' }
-            }));
-
-            timeouts.push(setTimeout(() => {
-              setAnimations(prev => ({
-                ...prev,
-                buttons: { opacity: 1, transform: 'scale(1)' }
-              }));
-            }, 100));
-          }, 100));
-        }, 200));
-      }, 100));
+      return () => clearTimeout(rewardsTimer);
     } else {
       setIsClosing(true);
-      setShowConfetti(false);
-      animationTimeout = setTimeout(() => {
+      setShowRewards(false);
+      const timer = setTimeout(() => {
         setModalVisible(false);
-        setAnimations(LEVEL_COMPLETE_ANIMATIONS);
-        document.body.classList.remove('modal-open');
-      }, 300);
+      }, 500);
+      return () => clearTimeout(timer);
     }
+  }, [isVisible, playSound]);
 
-    return () => {
-      // Limpieza exhaustiva de todos los timeouts
-      if (animationTimeout) {
-        clearTimeout(animationTimeout);
+  // Crear efecto de confeti
+  const createConfetti = () => {
+    if (!confettiContainerRef.current) return;
+    
+    const container = confettiContainerRef.current;
+    container.innerHTML = '';
+    
+    const colors = ['#FFD700', '#FF5722', '#3F51B5', '#4CAF50', '#9C27B0'];
+    
+    for (let i = 0; i < 50; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      
+      // Posición aleatoria horizontal
+      const leftPos = Math.random() * 100;
+      confetti.style.left = `${leftPos}%`;
+      
+      // Agregar delay para que no aparezcan todos a la vez
+      const delay = Math.random() * 3;
+      confetti.style.animationDelay = `${delay}s`;
+      
+      // Color aleatorio
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.backgroundColor = randomColor;
+      
+      // Forma aleatoria
+      const shapes = ['square', 'circle', 'triangle'];
+      const shape = shapes[Math.floor(Math.random() * shapes.length)];
+      
+      if (shape === 'circle') {
+        confetti.style.borderRadius = '50%';
+      } else if (shape === 'triangle') {
+        confetti.style.width = '0';
+        confetti.style.height = '0';
+        confetti.style.backgroundColor = 'transparent';
+        confetti.style.borderLeft = '5px solid transparent';
+        confetti.style.borderRight = '5px solid transparent';
+        confetti.style.borderBottom = `10px solid ${randomColor}`;
       }
       
-      // Limpiar todos los timeouts acumulados
-      timeouts.forEach(timeout => clearTimeout(timeout));
+      // Tamaño aleatorio
+      const size = Math.random() * 8 + 5;
+      confetti.style.width = `${size}px`;
+      confetti.style.height = `${size}px`;
       
-      // Asegurar que el cuerpo no se quede con la clase modal-open
-      document.body.classList.remove('modal-open');
-      
-      // Reiniciar estados
-      setIsClosing(false);
-      setAnimations(LEVEL_COMPLETE_ANIMATIONS);
-      setShowConfetti(false);
-      
-      console.log('LevelCompleteModal desmontado y recursos liberados');
-    };
-  }, [isVisible, playSound]);
-  
-  // Crea elementos de confeti
-  const createConfetti = () => {
-    if (!showConfetti) return null;
-    
-    const confettiCount = 50;
-    const colors = ['#ff6b81', '#5ad95a', '#3ecbff', '#ffaa5a', '#9f6bff'];
-    
-    return Array.from({ length: confettiCount }).map((_, index) => {
-      const delay = Math.random() * 3;
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      const left = Math.random() * 100;
-      const size = 5 + Math.random() * 10;
-      const duration = 1 + Math.random() * 2;
-      
-      return (
-        <div
-          key={index}
-          className="confetti"
-          style={{
-            backgroundColor: color,
-            left: `${left}%`,
-            width: `${size}px`,
-            height: `${size}px`,
-            animationDelay: `${delay}s`,
-            animationDuration: `${duration}s`
-          }}
-        />
-      );
-    });
+      container.appendChild(confetti);
+    }
   };
-  
-  // Manejar el clic en continuar
+
+  // Manejo de continuar al siguiente nivel
   const handleContinue = () => {
-    if (onContinue) {
-      setIsClosing(true);
-      
-      // Reproducir sonido de clic
-      playSound('uiClick');
-      
-      // Cerrar el modal con animación y luego llamar al callback
-      setTimeout(() => {
-        setModalVisible(false);
-        onContinue();
-      }, 300);
-    }
-  };
-  
-  // Manejar el clic en volver al menú principal
-  const handleReturnToMenuClick = () => {
-    if (onReturnToMenu) {
-      setIsClosing(true);
-      
-      // Reproducir sonido de clic
-      playSound('uiClick');
-      
-      // Cerrar el modal con animación y luego llamar al callback
-      setTimeout(() => {
-        setModalVisible(false);
-        onReturnToMenu();
-      }, 300);
-    }
-  };
-  
-  // Renderiza las recompensas del nivel
-  const renderRewards = () => {
-    return rewards.map((reward, index) => (
-      <div key={index} className="reward-badge">
-        <span className="reward-icon">{getFeatureIcon(reward)}</span>
-        <span className="reward-name">{reward}</span>
-      </div>
-    ));
-  };
-  
-  // Obtiene un ícono para cada tipo de recompensa
-  const getFeatureIcon = (feature: string): string => {
-    const icons: Record<string, string> = {
-      'monedas': '💰',
-      'gemas': '💎',
-      'vidas': '❤️',
-      'energia': '⚡',
-      'poderes': '🔮',
-      'llave': '🔑',
-    };
+    setIsClosing(true);
+    // playSound('buttonClick');
     
-    return icons[feature.toLowerCase()] || '🎁';
+    setTimeout(() => {
+      if (onContinue) {
+        onContinue();
+      }
+    }, 300);
   };
-  
-  // Función para obtener la clase de estilo según el nivel de combo
+
+  // Manejo de volver al menú principal
+  const handleReturnToMenuClick = () => {
+    setIsClosing(true);
+    // playSound('buttonClick');
+    
+    setTimeout(() => {
+      if (onReturnToMenu) {
+        onReturnToMenu();
+      }
+    }, 300);
+  };
+
+  // Función para obtener el icono según el tipo de victoria
+  const getVictoryIcon = () => {
+    if (gameEndReason?.includes('limpiado completamente el tablero')) {
+      return '✨🏆✨';
+    } else if (gameEndReason?.match(/Solo quedan (\d+) iconos/)) {
+      return '🎯';
+    } else if (gameEndReason?.match(/tiene (\d+) iconos/)) {
+      return '📊';
+    } else if (gameEndReason?.includes('ocupación')) {
+      return '📉';
+    } else {
+      return '🎉';
+    }
+  };
+
+  // Función para obtener el título según el tipo de victoria
+  const getVictoryTitle = () => {
+    if (gameEndReason?.includes('limpiado completamente el tablero')) {
+      return '¡Tablero Vacío!';
+    } else if (gameEndReason?.match(/Solo quedan (\d+) iconos/)) {
+      const iconCount = gameEndReason.match(/Solo quedan (\d+) iconos/)?.[1] || '0';
+      return `Casi Perfecto - ${iconCount} iconos restantes`;
+    } else if (gameEndReason?.match(/tiene (\d+) iconos/)) {
+      const iconCount = gameEndReason.match(/tiene (\d+) iconos/)?.[1] || '0';
+      return `Nivel Completado - ${iconCount} iconos restantes`;
+    } else if (gameEndReason?.includes('ocupación')) {
+      const percentage = gameEndReason.match(/(\d+\.\d+)% de ocupación/)?.[1] || '0';
+      return `Tablero Despejado - ${percentage}% ocupación`;
+    } else {
+      return '¡Nivel Completado!';
+    }
+  };
+
+  // Clase de combo según nivel
   const getComboClass = () => {
-    if (comboMultiplier >= 5.0) return 'combo-legendary-text';
-    if (comboMultiplier >= 3.0) return 'combo-epic-text';
-    if (comboMultiplier >= 2.0) return 'combo-rare-text';
-    if (comboMultiplier >= 1.5) return 'combo-uncommon-text';
+    if (comboCount >= 30) return 'combo-legendary-text';
+    if (comboCount >= 20) return 'combo-epic-text';
+    if (comboCount >= 10) return 'combo-rare-text';
+    if (comboCount >= 5) return 'combo-uncommon-text';
     return 'combo-basic-text';
   };
-  
-  // Función para obtener color según nivel de combo
-  const getComboColor = () => {
-    if (comboMultiplier >= 5.0) return '#FFD700'; // Dorado para legendario
-    if (comboMultiplier >= 3.0) return '#FF00FF'; // Magenta para épico
-    if (comboMultiplier >= 2.0) return '#9932CC'; // Púrpura para raro
-    if (comboMultiplier >= 1.5) return '#1E90FF'; // Azul para poco común
-    return '#FFFFFF'; // Blanco para básico
-  };
-  
-  // Función para obtener el nombre del modo de juego en español
+
+  // Traducir nombres de modos de juego
   const getPlayModeName = (mode: string): string => {
-    const modeNames: {[key: string]: string} = {
-      'classic': 'Clásico',
-      'timed': 'Contrarreloj',
-      'survival': 'Supervivencia',
-      'zen': 'Zen',
-      'tutorial': 'Tutorial'
-    };
-    return modeNames[mode] || mode;
+    switch (mode) {
+      case 'classic': return 'Clásico';
+      case 'timed': return 'Contrarreloj';
+      case 'survival': return 'Supervivencia';
+      case 'zen': return 'Zen';
+      case 'tutorial': return 'Tutorial';
+      default: return mode;
+    }
   };
-  
-  // Función para obtener el nombre de la dificultad en español
+
+  // Traducir nombres de dificultad
   const getDifficultyName = (difficulty: string): string => {
-    const difficultyNames: {[key: string]: string} = {
-      'easy': 'Fácil',
-      'normal': 'Normal',
-      'hard': 'Difícil',
-      'tutorial': 'Tutorial'
-    };
-    return difficultyNames[difficulty] || difficulty;
+    switch (difficulty) {
+      case 'easy': return 'Fácil';
+      case 'normal': return 'Normal';
+      case 'hard': return 'Difícil';
+      case 'very_easy': return 'Muy Fácil';
+      case 'very_hard': return 'Muy Difícil';
+      default: return difficulty;
+    }
   };
-  
-  // Función para formatear la velocidad de spawn
+
+  // Formatear velocidad de spawn
   const formatSpawnRate = (rate: number): string => {
-    return (rate / 1000).toFixed(1) + 's';
+    const seconds = rate / 1000;
+    return `${seconds.toFixed(1)}s/icon`;
+  };
+
+  // Obtener el porcentaje de victoria si existe
+  const getVictoryPercentage = (): string | null => {
+    if (gameEndReason?.includes('ocupación')) {
+      return gameEndReason.match(/(\d+\.\d+)% de ocupación/)?.[1] || null;
+    }
+    return null;
+  };
+
+  // Extraer la información de iconos restantes
+  const getRemainingIcons = (): string | null => {
+    if (gameEndReason?.match(/Solo quedan (\d+) iconos/)) {
+      return gameEndReason.match(/Solo quedan (\d+) iconos/)?.[1] || null;
+    } else if (gameEndReason?.match(/tiene (\d+) iconos/)) {
+      return gameEndReason.match(/tiene (\d+) iconos/)?.[1] || null;
+    }
+    return null;
+  };
+
+  // Obtener icono para cada tipo de recompensa
+  const getRewardIcon = (type: string): string => {
+    const lowerType = type.toLowerCase();
+    
+    if (lowerType.includes('moned') || lowerType.includes('coin') || lowerType === 'oro' || lowerType === 'gold') {
+      return '🪙';
+    } else if (lowerType.includes('gema') || lowerType.includes('gem') || lowerType.includes('diam')) {
+      return '💎';
+    } else if (lowerType.includes('vida') || lowerType.includes('life') || lowerType.includes('heart')) {
+      return '❤️';
+    } else if (lowerType.includes('energ')) {
+      return '⚡';
+    } else if (lowerType.includes('poder') || lowerType.includes('power')) {
+      return '✨';
+    } else if (lowerType.includes('llave') || lowerType.includes('key')) {
+      return '🔑';
+    } else if (lowerType.includes('cofre') || lowerType.includes('chest') || lowerType.includes('tesoro')) {
+      return '🎁';
+    } else if (lowerType.includes('trofeo') || lowerType.includes('trophy')) {
+      return '🏆';
+    } else if (lowerType.includes('ticket') || lowerType.includes('entra')) {
+      return '🎫';
+    } else if (lowerType.includes('boost')) {
+      return '🚀';
+    } else if (lowerType.includes('scroll') || lowerType.includes('pergam')) {
+      return '📜';
+    } else if (lowerType.includes('potion') || lowerType.includes('poción')) {
+      return '🧪';
+    } else if (lowerType.includes('skin') || lowerType.includes('apar')) {
+      return '👕';
+    } else {
+      return '🎮';
+    }
   };
   
-  // Si el modal no está visible, no renderizamos nada
-  if (!modalVisible && !isVisible) {
-    return null;
-  }
-  
+  // Normalizar las recompensas al formato estándar
+  const normalizeRewards = () => {
+    if (!rewards || rewards.length === 0) return [];
+    
+    // Si ya tienen el formato de objeto
+    if (typeof rewards[0] !== 'string' && 'type' in rewards[0]) {
+      return rewards as {type: string, amount: number, rarity?: string}[];
+    }
+    
+    // Si son solo strings, convertir a formato de objeto
+    return (rewards as string[]).map(type => ({
+      type,
+      amount: Math.floor(Math.random() * 5) + 1,
+      rarity: ['common', 'uncommon', 'rare', 'epic', 'legendary'][Math.floor(Math.random() * 5)]
+    }));
+  };
+
+  // Normalizar recompensas
+  const normalizedRewards = normalizeRewards();
+
+  if (!modalVisible) return null;
+
   return (
-    <div className={`game-modal fullscreen-modal ${modalVisible ? 'visible' : ''} ${isClosing ? 'closing' : ''}`}>
-      {showConfetti && (
-        <div ref={confettiContainerRef} className="confetti-container">
-          {createConfetti()}
-        </div>
-      )}
+    <div className={`game-modal fullscreen-modal ${isVisible ? 'visible' : ''} ${isClosing ? 'closing' : ''}`}>
+      <div className="level-complete-background"></div>
+      <div className="confetti-container" ref={confettiContainerRef}></div>
       
       <div className="modal-content level-complete-content" ref={modalContentRef}>
-        <div className="level-header-stars-container">
-          <div 
-            className="level-complete-header"
-            style={{
-              transition: 'all 0.6s ease',
-              ...animations.title
-            }}
-          >
-            <h1>¡Nivel Completado!</h1>
-            <h2>¡Excelente trabajo!</h2>
-            
-            {/* Mostrar el motivo de nivel completado */}
-            {gameEndReason && (
-              <div className="level-end-reason">
-                <p>{gameEndReason}</p>
-              </div>
-            )}
-            
-            {/* Nueva sección para mostrar el modo, dificultad y velocidad */}
-            <div className="game-session-info">
-              <div className="info-pill">
-                <span className="info-label">🎮 Modo:</span>
-                <span className="info-value">{getPlayModeName(currentPlayMode)}</span>
-              </div>
-              <div className="info-pill">
-                <span className="info-label">🏆 Nivel:</span>
-                <span className="info-value">{level}</span>
-              </div>
-              <div className="info-pill">
-                <span className="info-label">🔥 Dificultad:</span>
-                <span className="info-value">{getDifficultyName(currentDifficulty)}</span>
-              </div>
-              <div className="info-pill">
-                <span className="info-label">⚡ Velocidad:</span>
-                <span className="info-value">{formatSpawnRate(spawnRate)}/icon</span>
-              </div>
-            </div>
-          </div>
+        {/* Cabecera con título y estrellas */}
+        <div className="level-header">
+          <h1>¡Nivel Completado!</h1>
           
-          <div 
-            className="stars-container"
-            style={{
-              transition: 'all 0.5s ease',
-              transitionDelay: '0.2s',
-              ...animations.stars
-            }}
-          >
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div 
-                key={i} 
-                className={`level-star ${i < stars ? 'earned' : 'missed'}`}
+          <div className="stars-container">
+            {[...Array(3)].map((_, index) => (
+              <svg
+                key={index}
+                className={`level-star ${index < stars ? 'earned' : ''}`}
+                style={{ '--delay': `${index * 0.1}s` } as React.CSSProperties}
+                viewBox="0 0 24 24"
+                fill="currentColor"
               >
-                ⭐
-              </div>
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+              </svg>
             ))}
           </div>
         </div>
         
-        <div 
-          className="compact-body"
-          style={{
-            transition: 'all 0.5s ease',
-            transitionDelay: '0.4s',
-            ...animations.content
-          }}
-        >
-          <div className="main-stats">
-            <div className="score-highlight">
-              <div className="score-icon">💰</div>
-              <div className="score-details">
-                <div className="score-label">Puntuación</div>
-                <div className="score-value">{score}</div>
+        {/* Nueva estructura de contenido más compacta */}
+        <div className="results-container">
+          {/* Tarjeta de victoria visual */}
+          <div className="victory-banner">
+            <div className="victory-icon">{getVictoryIcon()}</div>
+            <div className="victory-content">
+              <div className="victory-title">{getVictoryTitle()}</div>
+              {getVictoryPercentage() && (
+                <div className="victory-metric">
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill" 
+                      style={{ width: `${100 - parseFloat(getVictoryPercentage() || '0')}%` }}
+                    ></div>
+                  </div>
+                  <span>{getVictoryPercentage()}% ocupación</span>
+                </div>
+              )}
+              {getRemainingIcons() && (
+                <div className="victory-metric">
+                  <span className="remaining-icons">{getRemainingIcons()}</span>
+                  <span>iconos restantes</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Stats en formato compacto */}
+          <div className="stats-grid">
+            <div className="stat-item">
+              <div className="stat-icon mode-icon">🎮</div>
+              <div className="stat-data">
+                <div className="stat-label">Modo</div>
+                <div className="stat-value">{getPlayModeName(currentPlayMode)}</div>
               </div>
             </div>
             
-            <div className="compact-stats-grid">
-              <div className="compact-stat-item">
-                <div className="compact-stat-icon">🏆</div>
-                <div className="compact-stat-value">{level}</div>
-                <div className="compact-stat-label">Nivel</div>
+            <div className="stat-item">
+              <div className="stat-icon level-icon">🏆</div>
+              <div className="stat-data">
+                <div className="stat-label">Nivel</div>
+                <div className="stat-value level-value">{level}</div>
               </div>
-              
-              <div className="compact-stat-item">
-                <div className="compact-stat-icon">🔥</div>
-                <div className={`compact-stat-value ${getComboClass()}`} style={{ color: getComboColor() }}>
-                  {comboCount}
-                </div>
-                <div className="compact-stat-label">
-                  Combo ({comboMultiplier.toFixed(1)}x)
-                </div>
+            </div>
+            
+            <div className="stat-item">
+              <div className="stat-icon difficulty-icon">🔥</div>
+              <div className="stat-data">
+                <div className="stat-label">Dificultad</div>
+                <div className="stat-value">{getDifficultyName(currentDifficulty)}</div>
               </div>
-              
-              <div className="compact-stat-item">
-                <div className="compact-stat-icon">⭐</div>
-                <div className="compact-stat-value">+{Math.floor(score * 0.1)}</div>
-                <div className="compact-stat-label">EXP</div>
+            </div>
+            
+            <div className="stat-item">
+              <div className="stat-icon speed-icon">⚡</div>
+              <div className="stat-data">
+                <div className="stat-label">Velocidad</div>
+                <div className="stat-value">{formatSpawnRate(spawnRate)}</div>
+              </div>
+            </div>
+            
+            <div className="stat-item">
+              <div className="stat-icon score-icon">🎯</div>
+              <div className="stat-data">
+                <div className="stat-label">Puntuación</div>
+                <div className="stat-value score-value">{score}</div>
+              </div>
+            </div>
+            
+            <div className="stat-item">
+              <div className="stat-icon combo-icon">🔄</div>
+              <div className="stat-data">
+                <div className="stat-label">Combo</div>
+                <div className={`stat-value combo-value ${getComboClass()}`}>
+                  {comboMultiplier.toFixed(1)}x
+                </div>
               </div>
             </div>
           </div>
           
-          <div className="rewards-container">
-            <h3 className="rewards-title">Recompensas</h3>
-            <div className="rewards-grid">
-              {renderRewards()}
+          {/* Nueva sección de recompensas */}
+          {normalizedRewards.length > 0 && (
+            <div className={`rewards-section ${showRewards ? 'visible' : ''}`}>
+              <div className="rewards-header">
+                <div className="rewards-title">Recompensas</div>
+                <div className="rewards-shine"></div>
+              </div>
+              <div className="rewards-container">
+                {normalizedRewards.map((reward, index) => (
+                  <div 
+                    key={`reward-${index}`} 
+                    className={`reward-item ${reward.rarity || 'common'}`}
+                    style={{ '--delay': `${index * 0.15 + 0.3}s` } as React.CSSProperties}
+                  >
+                    <div className="reward-icon">
+                      {getRewardIcon(reward.type)}
+                    </div>
+                    <div className="reward-details">
+                      <div className="reward-amount">+{reward.amount}</div>
+                      <div className="reward-type">{reward.type}</div>
+                    </div>
+                    <div className="reward-glow"></div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
         
-        <div className="level-complete-buttons">
-          <button 
-            className="game-button primary-button"
-            onClick={handleContinue}
-            style={{
-              transition: 'all 0.5s ease',
-              ...animations.buttons
-            }}
-          >
+        {/* Botones de acción */}
+        <div className="action-buttons">
+          <button className="continue-button" onClick={handleContinue}>
             Continuar
           </button>
-          
-          {onReturnToMenu && (
-            <button 
-              className="game-button secondary-button"
-              onClick={handleReturnToMenuClick}
-              style={{
-                transition: 'all 0.5s ease',
-                ...animations.buttons
-              }}
-            >
-              Menú Principal
-            </button>
-          )}
+          <button className="menu-button" onClick={handleReturnToMenuClick}>
+            Menú Principal
+          </button>
         </div>
       </div>
     </div>

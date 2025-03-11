@@ -14,7 +14,8 @@ import {
   addIcon,
   incrementCombo,
   resetCombo,
-  setComboTimeWindow
+  setComboTimeWindow,
+  setGameEndReason
 } from '../../../../store/slices/gameSlice';
 import { findConvergences } from '../utils/convergenceUtils';
 import { findHintPosition, getHighlightedCells, canUseHint, findConvergingIcons as findConvergingIconsUtil } from '../utils/hintUtils';
@@ -496,9 +497,14 @@ const useBoardInteraction = () => {
           // Obtener el elemento DOM de la celda para verificar si es un icono nuevo
           const cellElement = getCellElement(row, col);
           
-          // Solo marcar para eliminación si no es un icono nuevo
-          if (!cellElement || !cellElement.classList.contains('new-icon')) {
-            newBoard[row][col] = newBoard[row][col] + '_removing';
+          // Marcar para eliminación, incluso si es un icono nuevo
+          // Eliminamos la verificación de si es un icono nuevo para asegurar que todos se eliminen
+          newBoard[row][col] = newBoard[row][col] + '_removing';
+          
+          // Si es un icono nuevo, eliminar la clase para que no esté protegido
+          if (cellElement && cellElement.classList.contains('new-icon')) {
+            cellElement.classList.remove('new-icon');
+            console.log(`[CONVERGENCIA] Eliminar protección de icono nuevo en [${row},${col}] para permitir eliminación`);
           }
         }
       });
@@ -523,18 +529,9 @@ const useBoardInteraction = () => {
         );
         
         // Contar cuántos iconos se eliminaron realmente
-        let actualIconsRemoved = 0;
-        for (let r = 0; r < newBoard.length; r++) {
-          for (let c = 0; c < newBoard[r].length; c++) {
-            const oldCell = newBoard[r][c];
-            const newCell = finalBoard[r][c];
-            if (oldCell && oldCell.includes('_removing') && newCell === null) {
-              actualIconsRemoved++;
-            }
-          }
-        }
+        const actualIconsRemoved = totalIconsToRemove.length;
         
-        // Actualizar tablero final
+        // Asegurar que se dispare la eliminación de los iconos, incluso si son nuevos
         dispatch(updateBoard(finalBoard));
         
         // Actualizar el contador de iconos solo con los que realmente se eliminaron
@@ -845,65 +842,85 @@ const useBoardInteraction = () => {
     if (convergingIcons.length > 0) {
       // Hay convergencia, eliminar los iconos y actualizar la puntuación
       // La gestión completa de puntuación y combos se maneja dentro de removeConvergingIcons
-      removeConvergingIcons(convergingIcons, row, col);
-      
-      // Mostrar animación de puntos ganados con el nuevo sistema
-      // Este valor será solo visual, la puntuación real se calcula en removeConvergingIcons
-      showPointsEarned(convergingIcons.length * 10, row, col);
-      
-      // Verificar si el tablero está vacío para mostrar bonificación
-      setTimeout(() => {
-        const boardEmpty = board.flat().every(cell => cell === '');
-        if (boardEmpty) {
-          // Mostrar bonificación por tablero vacío
-          showEmptyBoardBonus();
-          
-          // Añadir puntos extra por tablero vacío
-          const emptyBoardBonus = 100;
-          dispatch(incrementScore(emptyBoardBonus));
-        }
-      }, 200);
-      
-      // Obtener el elemento DOM de la celda objetivo
-      const targetCell = getCellElement(row, col);
-      
-      // Resaltar las celdas que tienen convergencia
-      if (convergingIcons.length > 0) {
-        dispatch(setHighlightedCells(convergingIcons.map(icon => ({ row: icon.row, col: icon.col }))));
-      }
-      
-      // Eliminar el highlight instantáneamente, no después de un timeout
-      dispatch(setHighlightedCells([]));
-      
-      // Verificar si no hay más movimientos válidos o si el tablero está vacío
-      const currentIconCount = store.getState().game.iconCount;
-      
-      if (currentIconCount === 0) {
-        // Tablero vacío, nivel completado - INSTANTÁNEO
-        logger.info("¡Tablero vacío! Completando nivel...", ' [' + status + ']');
-        dispatch(setGameStatus('levelCompleted'));
-        audioManager.play('levelComplete');
-      } else if (!hasValidMoves()) {
-        // No hay movimientos válidos
-        // Calcular el porcentaje de ocupación para determinar si se pasa al siguiente nivel
-        const totalCells = boardSize * boardSize;
-        const occupationPercentage = (currentIconCount / totalCells) * 100;
+      removeConvergingIcons(convergingIcons, row, col).then(() => {
+        // Mostrar animación de puntos ganados con el nuevo sistema
+        // Este valor será solo visual, la puntuación real se calcula en removeConvergingIcons
+        showPointsEarned(convergingIcons.length * 10, row, col);
         
-        // Si hay pocos iconos en el tablero, considerar nivel completado
-        if (occupationPercentage <= 30) {
-          // Nivel completado con pocos iconos - INSTANTÁNEO
-          logger.info(`Pocos iconos sin convergencias (${occupationPercentage.toFixed(1)}%). Nivel completado.`, ' [' + status + ']');
-          dispatch(setGameStatus('levelCompleted'));
-          audioManager.play('levelComplete');
-        } else {
-          // Game over - INSTANTÁNEO
-          logger.info(`No hay movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`, ' [' + status + ']');
-          dispatch(setGameStatus('gameOver'));
-          audioManager.play('gameOver');
+        // Obtener el elemento DOM de la celda objetivo
+        const targetCell = getCellElement(row, col);
+        
+        // Resaltar las celdas que tienen convergencia
+        if (convergingIcons.length > 0) {
+          dispatch(setHighlightedCells(convergingIcons.map(icon => ({ row: icon.row, col: icon.col }))));
         }
-      }
-      
-      // Nota: No liberamos el debounce aquí, se libera automáticamente después del tiempo establecido
+        
+        // Eliminar el highlight instantáneamente, no después de un timeout
+        dispatch(setHighlightedCells([]));
+        
+        // Verificar si el tablero está vacío para mostrar bonificación
+        setTimeout(() => {
+          const boardEmpty = board.flat().every(cell => cell === null);
+          if (boardEmpty) {
+            // Mostrar bonificación por tablero vacío
+            showEmptyBoardBonus();
+            
+            // Añadir puntos extra por tablero vacío
+            const emptyBoardBonus = 100;
+            dispatch(incrementScore(emptyBoardBonus));
+            
+            // Tablero vacío, nivel completado - INSTANTÁNEO
+            logger.info("¡Tablero vacío! Completando nivel...", ' [' + status + ']');
+            
+            // Establecer el motivo de victoria: tablero vacío
+            const spawnRateSeconds = (spawnRate / 1000).toFixed(1);
+            dispatch(setGameEndReason(`¡Increíble! Has limpiado completamente el tablero eliminando todos los iconos. Velocidad de aparición: ${spawnRateSeconds}s por icono.`));
+            
+            dispatch(setGameStatus('levelCompleted'));
+            audioManager.play('levelComplete');
+            return;
+          }
+          
+          // IMPORTANTE: Verificar si hay movimientos válidos DESPUÉS de que el tablero se haya actualizado
+          // Verificar el estado actualizado del juego
+          const currentIconCount = store.getState().game.iconCount;
+          
+          // Verificar específicamente si hay nuevas convergencias posibles
+          if (!hasValidMoves()) {
+            // No hay movimientos válidos
+            // Calcular el porcentaje de ocupación para determinar si se pasa al siguiente nivel
+            const totalCells = boardSize * boardSize;
+            const occupationPercentage = (currentIconCount / totalCells) * 100;
+            
+            logger.info('CONVERGENCIA', `Verificando fin de juego: ${occupationPercentage.toFixed(1)}% de ocupación sin movimientos válidos`);
+            
+            // Si hay pocos iconos en el tablero, considerar nivel completado
+            if (occupationPercentage <= 30) {
+              // Nivel completado con pocos iconos - INSTANTÁNEO
+              logger.info(`Pocos iconos sin convergencias (${occupationPercentage.toFixed(1)}%). Nivel completado.`, ' [' + status + ']');
+              
+              // Establecer el motivo de victoria: pocos iconos
+              const spawnRateSeconds = (spawnRate / 1000).toFixed(1);
+              dispatch(setGameEndReason(`¡Has eliminado casi todos los iconos! Solo quedan ${currentIconCount} iconos sin posibilidad de convergencia. Velocidad de aparición: ${spawnRateSeconds}s por icono.`));
+              
+              dispatch(setGameStatus('levelCompleted'));
+              audioManager.play('levelComplete');
+            } else {
+              // Game over - INSTANTÁNEO
+              logger.info(`No hay movimientos válidos (${occupationPercentage.toFixed(1)}%). Game over.`, ' [' + status + ']');
+              
+              // Establecer el motivo de game over: demasiados iconos sin movimientos
+              const spawnRateSeconds = (spawnRate / 1000).toFixed(1);
+              dispatch(setGameEndReason(`El tablero tiene ${currentIconCount} iconos (${occupationPercentage.toFixed(1)}% de ocupación) sin movimientos válidos. Velocidad: ${spawnRateSeconds}s por icono.`));
+              
+              dispatch(setGameStatus('gameOver'));
+              audioManager.play('gameOver');
+            }
+          } else {
+            logger.info('CONVERGENCIA', 'Hay movimientos válidos después de eliminar. El juego continúa.');
+          }
+        }, 200); // Usar el mismo tiempo que en la versión original
+      });
     } else {
       // No hay convergencia, feedback inmediato
       audioManager.play("invalidMove");
@@ -935,7 +952,8 @@ const useBoardInteraction = () => {
     availableIcons,
     animateCellError,
     animateBoardShake,
-    showPointsEarned
+    showPointsEarned,
+    penalize
   ]);
   
   /**

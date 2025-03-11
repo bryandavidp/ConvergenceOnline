@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import logger from '../../../../utils/logger';
 
 // Umbral crítico para FPS que siempre debe activar animaciones ligeras
 const CRITICAL_FPS_THRESHOLD = 10;
@@ -17,14 +18,31 @@ const useAnimationsLoader = (fpsThreshold: number = 30) => {
   // Referencias para la detección de FPS
   const hasInitialized = useRef(false);
   const detectionComplete = useRef(false);
+  const timeoutRef = useRef<number | null>(null);
+  
+  // Limpiar timeout al desmontar para evitar memory leaks
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
   
   /**
    * Carga el archivo CSS de animaciones según el modo seleccionado
    */
   const loadAnimations = useCallback((lite: boolean) => {
-    if (hasInitialized.current) return;
+    if (hasInitialized.current) {
+      // Si ya se ha inicializado pero no se ha marcado como cargado, forzar el estado
+      if (!isLoaded) {
+        logger.info('AnimationsLoader', 'Animaciones ya inicializadas, forzando estado a cargado');
+        setIsLoaded(true);
+      }
+      return;
+    }
     
-    console.log(`Cargando animaciones en modo: ${lite ? 'lite' : 'normal'}`);
+    logger.info('AnimationsLoader', `Cargando animaciones en modo: ${lite ? 'lite' : 'normal'}`);
     const head = document.head;
     const existingLink = document.getElementById('game-animations-css');
     
@@ -38,29 +56,65 @@ const useAnimationsLoader = (fpsThreshold: number = 30) => {
     link.rel = 'stylesheet';
     link.type = 'text/css';
     
-    // URLs relativas para evitar problemas de ruta en diferentes entornos
-    const basePath = window.location.origin;
-    link.href = lite 
-      ? `${basePath}/src/components/game/GameBoard/styles/animations-lite.css`
-      : `${basePath}/src/components/game/GameBoard/styles/animations.css`;
+    // Intentar con múltiples rutas posibles para mayor compatibilidad
+    const possiblePaths = [
+      // Rutas relativas a la raíz
+      `./src/components/game/GameBoard/styles/animations${lite ? '-lite' : ''}.css`,
+      `/src/components/game/GameBoard/styles/animations${lite ? '-lite' : ''}.css`,
+      // Rutas relativas al origen
+      `${window.location.origin}/src/components/game/GameBoard/styles/animations${lite ? '-lite' : ''}.css`,
+      // Rutas alternativas
+      `./animations${lite ? '-lite' : ''}.css`,
+      `/animations${lite ? '-lite' : ''}.css`,
+    ];
     
-    // Monitorear la carga
+    let currentPathIndex = 0;
+    let maxAttempts = possiblePaths.length;
+    
+    // Intentar cargar con diferentes rutas
+    const tryLoadPath = () => {
+      if (currentPathIndex >= maxAttempts) {
+        logger.error('AnimationsLoader', 'No se pudo cargar el archivo CSS de animaciones después de múltiples intentos');
+        // Si no se puede cargar, considerar que está cargado para no bloquear
+        setIsLoaded(true);
+        hasInitialized.current = true;
+        return;
+      }
+      
+      link.href = possiblePaths[currentPathIndex];
+      logger.info('AnimationsLoader', `Intentando cargar animaciones desde: ${link.href}`);
+      currentPathIndex++;
+    };
+    
+    // Configurar eventos
     link.onload = () => {
+      logger.info('AnimationsLoader', `Cargado modo de animaciones: ${lite ? 'reducido' : 'completo'}`);
       setIsLoaded(true);
       hasInitialized.current = true;
-      console.log(`Cargado modo de animaciones: ${lite ? 'reducido' : 'completo'}`);
+      
+      // Limpiar timeout si existe
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
     
-    link.onerror = (e) => {
-      console.error('Error al cargar el archivo CSS de animaciones:', e);
-      // Intentar cargar de forma alternativa
-      const alternativePath = lite 
-        ? '/animations-lite.css'
-        : '/animations.css';
-      link.href = alternativePath;
+    link.onerror = () => {
+      logger.warn('AnimationsLoader', `Error al cargar animaciones desde: ${link.href}, intentando ruta alternativa...`);
+      tryLoadPath();
     };
+    
+    // Establecer un timeout para casos donde ni onload ni onerror se dispara
+    timeoutRef.current = window.setTimeout(() => {
+      if (!isLoaded) {
+        logger.warn('AnimationsLoader', 'Timeout al cargar animaciones, marcando como cargado de todos modos');
+        setIsLoaded(true);
+        hasInitialized.current = true;
+      }
+    }, 2000);
     
     // Agregar el link al head
+    tryLoadPath();
     head.appendChild(link);
     setUseLiteAnimations(lite);
     
@@ -78,15 +132,14 @@ const useAnimationsLoader = (fpsThreshold: number = 30) => {
       document.documentElement.classList.remove('performance-mode');
       document.documentElement.classList.remove('performance-mode-high');
     }
-  }, [fpsThreshold]);
+  }, [fpsThreshold, isLoaded]);
 
   /**
    * Inicializa las animaciones con el modo seleccionado.
    * Diseñado para ser llamado desde LoadingScreen después de la detección de FPS.
    */
   const initializeAnimations = useCallback((useLite: boolean) => {
-    if (detectionComplete.current) return;
-    
+    // Permitir reintentar la inicialización si es necesario
     loadAnimations(useLite);
     detectionComplete.current = true;
   }, [loadAnimations]);

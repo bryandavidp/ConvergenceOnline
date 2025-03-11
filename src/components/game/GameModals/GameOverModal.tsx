@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGameContext } from '../../../contexts/GameContext';
 import { useGameSound } from '../../../hooks/useGameSound';
-import { ICONS } from '../../../constants/icons';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store';
 import './GameOverModal.css';
@@ -18,6 +17,9 @@ const GAME_OVER_ANIMATIONS = {
   content: { opacity: 0, transform: 'translateY(20px)' },
   button: { opacity: 0, transform: 'scale(0.8)' },
 };
+
+// Iconos flotantes para el efecto espacial (limitamos a menos iconos para rendimiento)
+const FLOATING_ICONS = ['🪐', '💫', '✨', '🌟'];
 
 const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRestart, onReturnToMenu }) => {
   const { gameState } = useGameContext();
@@ -40,6 +42,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
   const [modalVisible, setModalVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isNewHighScore, setIsNewHighScore] = useState(false);
+  const [floatingIcons, setFloatingIcons] = useState<{icon: string, style: React.CSSProperties}[]>([]);
   
   // Establecer la variable CSS --vh para altura real del viewport
   useEffect(() => {
@@ -70,6 +73,42 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
       window.removeEventListener('load', setViewportHeight);
     };
   }, []);
+  
+  // Efecto para crear iconos flotantes en el espacio (limitados en dispositivos pequeños)
+  useEffect(() => {
+    if (isVisible && modalVisible) {
+      const icons = [];
+      // Reducimos la cantidad de iconos en pantallas pequeñas
+      const isSmallScreen = window.innerWidth < 400 || window.innerHeight < 700;
+      const iconCount = isSmallScreen ? 3 : Math.min(5, Math.floor(window.innerWidth / 120));
+      
+      for (let i = 0; i < iconCount; i++) {
+        // Valores aleatorios para posición y animación
+        const top = Math.random() * 100;
+        const left = Math.random() * 100;
+        const size = Math.random() * (isSmallScreen ? 1 : 1.5) + 0.8; // Tamaño entre 0.8 y 1.8em o 2.3em
+        const duration = Math.random() * 15 + 20; // Duración entre 20 y 35s
+        const delay = Math.random() * 5; // Retraso aleatorio hasta 5s
+        const icon = FLOATING_ICONS[Math.floor(Math.random() * FLOATING_ICONS.length)];
+        
+        icons.push({
+          icon,
+          style: {
+            position: 'absolute',
+            top: `${top}%`,
+            left: `${left}%`,
+            fontSize: `${size}em`,
+            opacity: isSmallScreen ? 0.3 : 0.5, // Menor opacidad en pantallas pequeñas
+            filter: 'blur(0.5px)',
+            animation: `float ${duration}s ease-in-out ${delay}s infinite`,
+            zIndex: 1
+          } as React.CSSProperties
+        });
+      }
+      
+      setFloatingIcons(icons);
+    }
+  }, [isVisible, modalVisible]);
   
   // Efecto para manejar la animación de entrada cuando el modal es visible
   useEffect(() => {
@@ -105,8 +144,8 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
               ...prev,
               button: { opacity: 1, transform: 'scale(1)' }
             }));
-          }, 200));
-        }, 200));
+          }, 150)); // Acortamos los tiempos para una experiencia más fluida
+        }, 150));
       }, 100));
     } else {
       setIsClosing(true);
@@ -132,8 +171,6 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
       // Reiniciar estados
       setIsClosing(false);
       setAnimations(GAME_OVER_ANIMATIONS);
-      
-      console.log('GameOverModal desmontado y recursos liberados');
     };
   }, [isVisible, playSound, score, highScore]);
   
@@ -180,9 +217,9 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
   // Función para obtener color según nivel de combo
   const getComboColor = () => {
     if (comboMultiplier >= 5.0) return '#FFD700'; // Dorado para legendario
-    if (comboMultiplier >= 3.0) return '#FF00FF'; // Magenta para épico
-    if (comboMultiplier >= 2.0) return '#9932CC'; // Púrpura para raro
-    if (comboMultiplier >= 1.5) return '#1E90FF'; // Azul para poco común
+    if (comboMultiplier >= 3.0) return '#FF2D55'; // Rojo para épico
+    if (comboMultiplier >= 2.0) return '#8E2DE2'; // Púrpura para raro
+    if (comboMultiplier >= 1.5) return '#36D1DC'; // Azul para poco común
     return '#FFFFFF'; // Blanco para básico
   };
   
@@ -213,6 +250,12 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
   const formatSpawnRate = (rate: number): string => {
     return (rate / 1000).toFixed(1) + 's';
   };
+
+  // Función para determinar si mostrar las pills de sesión como flex o grid según el espacio
+  const getSessionInfoClassName = () => {
+    // En pantallas muy pequeñas, usamos una organización más compacta
+    return `game-session-info ${window.innerWidth <= 375 ? 'compact-layout' : ''}`;
+  };
   
   // Si el modal no está visible, no renderizamos nada
   if (!modalVisible && !isVisible) {
@@ -221,16 +264,43 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
   
   return (
     <div className={`game-modal fullscreen-modal ${modalVisible ? 'visible' : ''} ${isClosing ? 'closing' : ''}`}>
+      {/* Iconos flotantes de fondo para efecto espacial */}
+      {floatingIcons.map((item, index) => (
+        <div key={`floating-icon-${index}`} style={item.style}>
+          {item.icon}
+        </div>
+      ))}
+      
       <div className="modal-content game-over-content" ref={modalContentRef}>
         <div 
           className="game-over-header"
           style={{
-            transition: 'all 0.6s ease',
+            transition: 'all 0.5s ease',
             ...animations.title
           }}
         >
-          <h1>¡Juego Terminado!</h1>
-          <h2>{isNewHighScore ? '¡Nuevo récord!' : 'No te preocupes, ¡inténtalo de nuevo!'}</h2>
+          <h1>¡MISIÓN FALLIDA!</h1>
+          <h2>{isNewHighScore ? '¡Nuevo récord galáctico!' : '¡Has perdido esta batalla espacial!'}</h2>
+          
+          {/* Sección para mostrar el modo, dificultad y velocidad */}
+          <div className={getSessionInfoClassName()}>
+            <div className="info-pill">
+              <span className="info-label">🎮</span>
+              <span className="info-value">{getPlayModeName(currentPlayMode)}</span>
+            </div>
+            <div className="info-pill">
+              <span className="info-label">🚀</span>
+              <span className="info-value">{level}</span>
+            </div>
+            <div className="info-pill">
+              <span className="info-label">🔥</span>
+              <span className="info-value">{getDifficultyName(currentDifficulty)}</span>
+            </div>
+            <div className="info-pill">
+              <span className="info-label">⚡</span>
+              <span className="info-value">{formatSpawnRate(spawnRate)}</span>
+            </div>
+          </div>
           
           {/* Mostrar el motivo del fin del juego */}
           {gameEndReason && (
@@ -238,33 +308,13 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
               <p>{gameEndReason}</p>
             </div>
           )}
-          
-          {/* Nueva sección para mostrar el modo, dificultad y velocidad */}
-          <div className="game-session-info">
-            <div className="info-pill">
-              <span className="info-label">🎮 Modo:</span>
-              <span className="info-value">{getPlayModeName(currentPlayMode)}</span>
-            </div>
-            <div className="info-pill">
-              <span className="info-label">🏆 Nivel:</span>
-              <span className="info-value">{level}</span>
-            </div>
-            <div className="info-pill">
-              <span className="info-label">🔥 Dificultad:</span>
-              <span className="info-value">{getDifficultyName(currentDifficulty)}</span>
-            </div>
-            <div className="info-pill">
-              <span className="info-label">⚡ Velocidad:</span>
-              <span className="info-value">{formatSpawnRate(spawnRate)}/icon</span>
-            </div>
-          </div>
         </div>
         
         <div 
           className="game-over-body"
           style={{
             transition: 'all 0.5s ease',
-            transitionDelay: '0.2s',
+            transitionDelay: '0.15s',
             ...animations.content
           }}
         >
@@ -284,7 +334,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
             
             <div className="compact-stats-grid">
               <div className="compact-stat-item">
-                <div className="compact-stat-icon">🏆</div>
+                <div className="compact-stat-icon">🚀</div>
                 <div className="compact-stat-value">{level}</div>
                 <div className="compact-stat-label">Nivel</div>
               </div>
@@ -295,7 +345,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
                   {comboCount}
                 </div>
                 <div className="compact-stat-label">
-                  Combo ({comboMultiplier.toFixed(1)}x)
+                  Combo {comboMultiplier > 1 ? `${comboMultiplier.toFixed(1)}x` : ''}
                 </div>
               </div>
               
@@ -309,8 +359,8 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
           
           <div className="game-over-message">
             <p>{isNewHighScore 
-              ? '¡Increíble! Has superado tu mejor puntuación. ¿Puedes ir aún más lejos?' 
-              : '¡Has hecho un gran esfuerzo! Practica y mejora tu estrategia para obtener una puntuación más alta.'}
+              ? '¡Has establecido un nuevo récord en la galaxia! ¿Podrás superarlo?' 
+              : 'No te rindas, tu aventura espacial continúa. ¡Mejora y conquista las estrellas!'}
             </p>
           </div>
         </div>
@@ -336,7 +386,7 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
                 ...animations.button
               }}
             >
-              Menú Principal
+              Menú
             </button>
           )}
         </div>

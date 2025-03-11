@@ -403,7 +403,7 @@ export const DIFFICULTY_CONFIG: Record<GameMode, DifficultyConfig> = {
     spawnRate: 4000,                
     speedIncreaseInterval: 30,      
     speedIncreaseAmount: 200,       
-    minSpawnRate: 2000,             
+    minSpawnRate: 1333,             // Exactamente el mínimo para x3 (4000/3)
     penaltyIcons: 1,                
     maxIconsOnBoard: 48,            
     initialIconCount: 20,           
@@ -413,7 +413,7 @@ export const DIFFICULTY_CONFIG: Record<GameMode, DifficultyConfig> = {
     spawnRate: 3000,                
     speedIncreaseInterval: 20,      
     speedIncreaseAmount: 250,       
-    minSpawnRate: 1500,             
+    minSpawnRate: 1000,             // Exactamente x3
     penaltyIcons: 2,                
     maxIconsOnBoard: 60,            
     initialIconCount: 45,           
@@ -423,7 +423,7 @@ export const DIFFICULTY_CONFIG: Record<GameMode, DifficultyConfig> = {
     spawnRate: 2000,                
     speedIncreaseInterval: 15,      
     speedIncreaseAmount: 300,       
-    minSpawnRate: 1000,             
+    minSpawnRate: 667,              // Exactamente x3 (2000/3)
     penaltyIcons: 3,                
     maxIconsOnBoard: 60,            
     initialIconCount: 45,           
@@ -433,7 +433,7 @@ export const DIFFICULTY_CONFIG: Record<GameMode, DifficultyConfig> = {
     spawnRate: 5000,                
     speedIncreaseInterval: 60,      
     speedIncreaseAmount: 100,       
-    minSpawnRate: 3000,             
+    minSpawnRate: 1667,             // Exactamente x3 (5000/3)
     penaltyIcons: 0,                
     maxIconsOnBoard: 32,            
     initialIconCount: 6,            

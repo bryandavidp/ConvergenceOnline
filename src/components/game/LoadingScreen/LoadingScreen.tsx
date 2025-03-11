@@ -21,7 +21,7 @@ interface LoadingScreenProps {
 }
 
 // Umbral de FPS para activar el modo de animaciones ligeras
-const LOW_FPS_THRESHOLD = 10;
+const LOW_FPS_THRESHOLD = 25;
 
 const LoadingScreen: React.FC<LoadingScreenProps> = ({ 
   stage: externalStage, 
@@ -124,8 +124,8 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
       fpsDetectionRef.current.frameCount = 0;
       fpsDetectionRef.current.startTime = now;
       
-      // Si tenemos al menos 3 muestras, tomar decisión
-      if (fpsDetectionRef.current.samples.length >= 3 && !fpsDetectionRef.current.hasDecided) {
+      // Si tenemos al menos 2 muestras, tomar decisión (reducido de 3 para acelerar)
+      if (fpsDetectionRef.current.samples.length >= 2 && !fpsDetectionRef.current.hasDecided) {
         // Calcular promedio ignorando valores extremos
         const sortedSamples = [...fpsDetectionRef.current.samples].sort((a, b) => a - b);
         const filteredSamples = sortedSamples.length > 3 
@@ -161,7 +161,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
     // Configurar timeout por si no se llega a una decisión después de 5 segundos
     const timeoutId = setTimeout(() => {
       if (!fpsDetectionRef.current.hasDecided) {
-        logger.info('LoadingScreen', 'Tiempo de detección de FPS agotado, usando animaciones normales por defecto');
+        logger.warn('LoadingScreen', 'Tiempo de detección de FPS agotado, usando animaciones normales por defecto');
         
         // Por defecto, usar animaciones normales
         applyAnimationMode(false);
@@ -179,7 +179,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         
         fpsDetectionRef.current.isRunning = false;
       }
-    }, 5000);
+    }, 3000);
     
     return () => {
       clearTimeout(timeoutId);
@@ -213,8 +213,8 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         // Inicializar el sistema de niveles
         initLevelSystem();
         
-        // Simular tiempo de carga
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Simular tiempo de carga (reducido)
+        await new Promise(resolve => setTimeout(resolve, 300));
         
         // Etapa 2: Detección de FPS (solo si no se ha realizado)
         setInternalStage('fps_detection');
@@ -224,7 +224,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         if (!fpsDetectionRef.current.hasDecided) {
           detectPerformance();
           
-          // Esperar a que se complete la detección de FPS o timeout después de 5 segundos (reducido de 8)
+          // Esperar a que se complete la detección de FPS o timeout después de 3.5 segundos (reducido)
           const fpsPromise = new Promise<void>(resolve => {
             // Verificar periódicamente si se completó la detección de FPS
             const checkInterval = setInterval(() => {
@@ -232,17 +232,22 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
                 clearInterval(checkInterval);
                 resolve();
               }
-            }, 200);
+            }, 100); // Reducido de 200ms a 100ms
             
-            // Si después de 5 segundos no se completa, continuar de todos modos
+            // Si después de 3.5 segundos no se completa, continuar de todos modos
             setTimeout(() => {
               clearInterval(checkInterval);
               if (!fpsDetectionComplete) {
                 logger.warn('LoadingScreen', 'Tiempo de espera para detección de FPS agotado');
+                // Forzar la finalización de la detección con modo normal
+                if (!fpsDetectionRef.current.hasDecided) {
+                  fpsDetectionRef.current.hasDecided = true;
+                  applyAnimationMode(false);
+                }
                 setFpsDetectionComplete(true);
                 resolve();
               }
-            }, 5000);
+            }, 3500);
           });
           
           await fpsPromise;
@@ -267,20 +272,28 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         // Esperar a que las animaciones estén cargadas
         if (!animationsLoader.isLoaded) {
           logger.info('LoadingScreen', 'Esperando que se carguen las animaciones...');
+          // Intentar inicializar animaciones de nuevo si no se ha hecho
+          if (!animationsLoader.isInitialized()) {
+            const useLite = fpsDetectionRef.current.useLiteMode;
+            logger.info('LoadingScreen', `Inicializando animaciones en modo: ${useLite ? 'lite' : 'normal'}`);
+            animationsLoader.initializeAnimations(useLite);
+          }
+          
           const animationPromise = new Promise<void>(resolve => {
             const checkInterval = setInterval(() => {
               if (animationsLoader.isLoaded) {
                 clearInterval(checkInterval);
                 resolve();
               }
-            }, 200);
+            }, 100); // Reducido de 200ms a 100ms
             
-            // Timeout después de 3 segundos (reducido de 5)
+            // Timeout después de 2.5 segundos (reducido)
             setTimeout(() => {
               clearInterval(checkInterval);
               logger.warn('LoadingScreen', 'Tiempo de espera para carga de animaciones agotado');
+              // Considerar las animaciones como cargadas aunque no lo estén
               resolve();
-            }, 3000);
+            }, 2500);
           });
           
           await animationPromise;

@@ -1,934 +1,785 @@
-/* Variables para colores consistentes */
+/* Variables para tema espacial - Nivel Completado */
 :root {
-  --level-primary-bg: #41b95e;
-  --level-secondary-bg: #37a04f;
-  --level-dark-bg: #308845;
-  --level-title-color: #ffeb3b;
-  --level-text-color: #ffffff;
-  --level-secondary-text: rgba(255, 255, 255, 0.9);
-  --level-card-bg: rgba(255, 255, 255, 0.15);
+  --space-bg-dark: #020818;
+  --space-bg-medium: #061128;
+  --space-bg-light: #0c1d42;
+  --space-accent: #5272e4;
+  --space-glow: rgba(82, 114, 228, 0.6);
+  --space-highlight: #7a9bf8;
+  --space-text: #ffffff;
+  --space-card-bg: rgba(10, 21, 56, 0.7);
+  --nebula-color-1: rgba(223, 72, 172, 0.25);
+  --nebula-color-2: rgba(86, 156, 214, 0.25);
+  --nebula-color-3: rgba(255, 140, 66, 0.15);
+  --star-color: rgba(255, 255, 255, 0.9);
   --level-star-color: #ffd700;
   --level-star-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
   --level-button-bg-start: #ffb300;
   --level-button-bg-end: #ff9800;
   --level-button-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
-  --level-card-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-  --level-transition: all 0.3s ease;
-  --vh: 1vh;
+  --level-success-color: #4CD964;
+  --vh: 1vh; /* Esta variable se actualizará con JavaScript */
+  --card-border-radius: 12px;
+  --card-shadow: 0 5px 15px rgba(93, 178, 255, 0.2);
+  --badge-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  --badge-border: 1px solid rgba(255, 255, 255, 0.1);
+  --content-padding: 12px;
+  --icon-small: 18px;
+  --icon-medium: 24px;
+  --icon-large: 32px;
+  
+  /* Colores de rareza para recompensas */
+  --rarity-common-color: #9e9e9e;
+  --rarity-common-glow: rgba(158, 158, 158, 0.5);
+  --rarity-uncommon-color: #4CAF50;
+  --rarity-uncommon-glow: rgba(76, 175, 80, 0.5);
+  --rarity-rare-color: #2196F3;
+  --rarity-rare-glow: rgba(33, 150, 243, 0.5);
+  --rarity-epic-color: #9C27B0;
+  --rarity-epic-glow: rgba(156, 39, 176, 0.5);
+  --rarity-legendary-color: #FF9800;
+  --rarity-legendary-glow: rgba(255, 152, 0, 0.7);
+
+  /* Variables para tamaños seguros */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Estilos para el contenedor principal del modal */
+/* Contenedor principal del modal a pantalla completa */
 .game-modal.fullscreen-modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100vh; /* Fallback para navegadores antiguos */
   height: calc(var(--vh, 1vh) * 100);
-  background-color: rgba(0, 0, 0, 0.75);
+  z-index: 1000;
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  overflow: hidden;
   opacity: 0;
   visibility: hidden;
-  transition: var(--level-transition);
-  padding: 15px;
-  box-sizing: border-box;
-  backdrop-filter: blur(3px);
-  overflow: auto;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+  padding-bottom: var(--safe-bottom); /* Compatibilidad con notch o barras inferiores */
 }
 
+/* Fondo espacial del modal */
+.level-complete-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, var(--space-bg-dark) 0%, var(--space-bg-medium) 50%, var(--space-bg-light) 100%);
+  overflow: hidden;
+}
+
+/* Efecto de estrellas en el fondo */
+.level-complete-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(1px 1px at 20px 30px, var(--star-color), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 90px 40px, var(--star-color), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 160px 120px, var(--star-color), rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 200px 30px, var(--star-color), rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 70px 200px, var(--star-color), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 250px 220px, var(--star-color), rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 300px 300px;
+  opacity: 0.8;
+  z-index: 0;
+  will-change: opacity;
+  animation: twinkleAnimation 4s ease-in-out infinite;
+}
+
+/* Efecto de nebulosa */
+.level-complete-background::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, var(--nebula-color-1), transparent 20%),
+    radial-gradient(circle at 70% 60%, var(--nebula-color-2), transparent 30%);
+  opacity: 0.5;
+  z-index: 0;
+}
+
+/* Animación de estrellas parpadeantes */
+@keyframes twinkleAnimation {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Modal activo */
 .game-modal.fullscreen-modal.visible {
-  opacity: 1;
+    opacity: 1;
   visibility: visible;
 }
 
 .game-modal.fullscreen-modal.closing {
-  opacity: 0;
-}
-
-/* Contenido del modal con apariencia de tarjeta */
-.modal-content.level-complete-content {
-  background-color: var(--level-primary-bg);
-  width: 100%;
-  max-width: 370px;
-  max-height: calc(100vh - 30px);
-  max-height: calc(var(--vh, 1vh) * 100 - 30px);
-  border-radius: 24px;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5), inset 0 0 1px rgba(255, 255, 255, 0.4);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  position: relative;
-  transform: translateY(20px);
-  transition: var(--level-transition);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  margin: auto;
-}
-
-.game-modal.fullscreen-modal.visible .modal-content.level-complete-content {
-  transform: translateY(0);
-}
-
-/* Contenedor de confetti */
-.confetti-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 10;
-  overflow: hidden;
-}
-
-.confetti {
-  position: absolute;
-  top: -20px;
-  width: 10px;
-  height: 10px;
-  opacity: 0.8;
-  animation: confetti-fall linear forwards;
-  z-index: 10;
-}
-
-@keyframes confetti-fall {
-  0% {
-    transform: translateY(0) rotate(0deg);
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(calc(100vh)) rotate(360deg);
     opacity: 0;
-  }
+  visibility: hidden;
 }
 
-/* Contenedor del encabezado y estrellas */
-.level-header-stars-container {
+/* Contenido del modal - REDISEÑADO Y OPTIMIZADO PARA ALTURA */
+.modal-content.level-complete-content {
+  position: relative;
+  width: 90%;
+  max-width: 400px;
+  max-height: 85vh; /* Altura máxima relativa a la ventana */
+  max-height: calc(var(--vh, 1vh) * 85); /* Altura máxima ajustada */
+  border-radius: 16px;
+  background-color: rgba(10, 21, 56, 0.85);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 20px 10px;
-  background: linear-gradient(to bottom, var(--level-primary-bg), var(--level-secondary-bg));
+  transform: scale(0.9);
+  opacity: 0;
+  transition: all 0.5s cubic-bezier(0.26, 1.04, 0.54, 1);
+  padding: 12px;
+  
+  /* Permitir scroll solo si es estrictamente necesario */
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain; /* Prevenir scroll accidental */
+  
+  /* Asegurar que el espacio se distribuya correctamente */
+  justify-content: space-between;
 }
 
-/* Encabezado del Level Complete */
-.level-complete-header {
-  text-align: center;
-  margin-bottom: 16px;
+.game-modal.fullscreen-modal.visible .modal-content.level-complete-content {
+  transform: scale(1);
+  opacity: 1;
 }
 
-.level-complete-header h1 {
-  margin: 0 0 8px 0;
-  font-size: 32px;
-  color: var(--level-title-color);
-  font-weight: bold;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  letter-spacing: 0.5px;
+/* NUEVA CABECERA SUPER COMPACTA */
+.level-header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 6px;
+  flex-shrink: 0; /* Evitar que la cabecera se comprima */
 }
 
-.level-complete-header h2 {
+.level-header h1 {
+  font-size: 1.6rem;
+  color: var(--level-star-color);
   margin: 0;
-  font-size: 18px;
-  color: var(--level-text-color);
-  font-weight: normal;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+  animation: titlePulse 5s ease-in-out infinite;
+  will-change: text-shadow;
 }
 
-/* Contenedor de estrellas */
+@keyframes titlePulse {
+  0%, 100% {
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.6), 0 0 2px rgba(255, 215, 0, 0.4);
+  }
+  50% {
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.8), 0 0 5px rgba(255, 215, 0, 0.6);
+  }
+}
+
+/* Contenedor de estrellas - MÁS COMPACTO */
 .stars-container {
   display: flex;
   justify-content: center;
-  gap: 16px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin: 4px 0;
 }
 
 .level-star {
-  font-size: 40px;
-  color: rgba(255, 255, 255, 0.3);
-  filter: grayscale(100%);
-  opacity: 0.4;
-  transition: var(--level-transition);
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  width: 24px;
+  height: 24px;
+  color: rgba(255, 215, 0, 0.3);
+  filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.2));
+  transition: all 0.4s ease;
+  opacity: 0;
+  transform: scale(0.8);
 }
 
 .level-star.earned {
   color: var(--level-star-color);
-  filter: grayscale(0%);
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.7));
+  animation: star-pulse 2s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
   opacity: 1;
-  text-shadow: var(--level-star-shadow);
-  animation: star-pulse 2s infinite;
+  transform: scale(1);
 }
 
 @keyframes star-pulse {
-  0% {
+  0%, 100% {
     transform: scale(1);
-    text-shadow: var(--level-star-shadow);
+    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.7));
   }
   50% {
-    transform: scale(1.1);
-    text-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
-  }
-  100% {
-    transform: scale(1);
-    text-shadow: var(--level-star-shadow);
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.9));
   }
 }
 
-/* Cuerpo del modal */
-.compact-body {
-  padding: 16px;
+/* CONTENEDOR DE RESULTADOS - ASEGURA SCROLL CORRECTO */
+.results-container {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  background-color: var(--level-secondary-bg);
+  gap: 8px;
+  margin-bottom: 8px;
+  overflow-y: auto; /* Permite scroll interno si es necesario */
+  flex: 1; /* Ocupa el espacio disponible dinámicamente */
+  min-height: 0; /* Importante para que flex funcione correctamente */
 }
 
-/* Contenedor de estadísticas principales */
-.main-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* Puntuación destacada */
-.score-highlight {
+/* BANNER DE VICTORIA MÁS COMPACTO */
+.victory-banner {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-radius: var(--card-border-radius);
+  padding: 8px;
+  width: 100%;
   display: flex;
   align-items: center;
-  background-color: var(--level-card-bg);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: var(--level-card-shadow);
-  position: relative;
-  overflow: hidden;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0; /* No permitir que se comprima */
 }
 
-.score-highlight::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
-  pointer-events: none;
-}
-
-.score-icon {
-  font-size: 32px;
-  margin-right: 15px;
-  background-color: rgba(0, 0, 0, 0.15);
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+.victory-icon {
+  font-size: 24px;
+  margin-right: 8px;
+  animation: pulse 1.5s infinite;
+  color: var(--level-star-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.score-details {
+.victory-content {
   flex: 1;
-  text-align: right;
 }
 
-.score-label {
-  font-size: 14px;
-  color: var(--level-secondary-text);
-  margin-bottom: 4px;
+.victory-title {
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 3px;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
+
+.victory-metric {
+  display: flex;
+  align-items: center;
+  margin-top: 3px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.progress-bar {
+  width: 80px;
+  height: 5px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  margin-right: 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CD964 0%, #5272e4 100%);
+  border-radius: 3px;
+  transition: width 0.5s ease-out;
+}
+
+.remaining-icons {
+  font-weight: bold;
+  margin-right: 5px;
+  color: var(--level-star-color);
+}
+
+/* GRID DE ESTADÍSTICAS MÁS EFICIENTE */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  width: 100%;
+  flex-shrink: 0; /* No permitir que se comprima */
+}
+
+.stat-item {
+  background-color: rgba(10, 21, 56, 0.4);
+  border-radius: var(--card-border-radius);
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  border: var(--badge-border);
+  box-shadow: var(--badge-shadow);
+}
+
+.stat-icon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.stat-data {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.score-value {
-  font-size: 34px;
+.stat-value {
+  font-size: 0.85rem;
   font-weight: bold;
-  color: var(--level-text-color);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  letter-spacing: 1px;
+  color: white;
 }
 
-/* Grid de estadísticas */
-.compact-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+.level-value, .score-value {
+  font-size: 0.95rem;
+  color: var(--level-star-color);
 }
 
-.compact-stat-item {
-  background-color: var(--level-card-bg);
-  border-radius: 12px;
-  padding: 12px 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  box-shadow: var(--level-card-shadow);
+/* SISTEMA DE RECOMPENSAS OPTIMIZADO */
+.rewards-section {
+  width: 100%;
+  margin-top: 6px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(50, 50, 80, 0.3) 100%);
+  border-radius: var(--card-border-radius);
+  padding: 6px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
   position: relative;
   overflow: hidden;
+  border: var(--badge-border);
+  flex-shrink: 0; /* No permitir que se comprima */
 }
 
-.compact-stat-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
-  pointer-events: none;
+.rewards-section.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.compact-stat-icon {
-  font-size: 18px;
+.rewards-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 6px;
-  background-color: rgba(0, 0, 0, 0.15);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.compact-stat-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--level-text-color);
-  margin-bottom: 4px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.compact-stat-label {
-  font-size: 11px;
-  color: var(--level-secondary-text);
-  letter-spacing: 0.3px;
-}
-
-/* Recompensas */
-.rewards-container {
-  background-color: var(--level-card-bg);
-  border-radius: 12px;
-  padding: 14px;
-  box-shadow: var(--level-card-shadow);
   position: relative;
-  overflow: hidden;
-}
-
-.rewards-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
-  pointer-events: none;
 }
 
 .rewards-title {
-  text-align: center;
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  color: var(--level-text-color);
+  font-size: 0.9rem;
   font-weight: bold;
-  letter-spacing: 0.5px;
-}
-
-.rewards-grid {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-}
-
-.reward-badge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 15px;
-  background-color: rgba(0, 0, 0, 0.15);
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  transition: var(--level-transition);
-}
-
-.reward-badge:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
-}
-
-.reward-icon {
-  font-size: 24px;
-  margin-bottom: 5px;
-}
-
-.reward-name {
-  font-size: 12px;
-  color: var(--level-secondary-text);
-  text-transform: capitalize;
-}
-
-/* Botones del modal */
-.modal-buttons {
-  padding: 16px 16px 20px;
-  display: flex;
-  justify-content: center;
-  background-color: var(--level-secondary-bg);
-}
-
-.next-level-button {
-  background: linear-gradient(to bottom, var(--level-button-bg-start), var(--level-button-bg-end));
-  color: white;
-  border: none;
-  border-radius: 50px;
-  padding: 14px 28px;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: var(--level-transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  box-shadow: var(--level-button-shadow);
-  width: 100%;
-  max-width: 280px;
+  color: var(--level-star-color);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
   position: relative;
-  overflow: hidden;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  letter-spacing: 0.5px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
 }
 
-.next-level-button::before {
-  content: '';
+.rewards-shine {
   position: absolute;
   top: 0;
   left: -100%;
-  width: 100%;
+  width: 50%;
   height: 100%;
   background: linear-gradient(
     90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
   );
-  transition: 0.5s;
+  animation: shineEffect 3s infinite;
 }
 
-.next-level-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 7px 20px rgba(255, 152, 0, 0.5);
+@keyframes shineEffect {
+  0% { left: -100%; }
+  20% { left: 100%; }
+  100% { left: 100%; }
 }
 
-.next-level-button:hover::before {
-  left: 100%;
-}
-
-.next-level-button:active {
-  transform: translateY(1px);
-  box-shadow: 0 3px 10px rgba(255, 152, 0, 0.3);
-}
-
-/* Clase para agregar efecto de pulso al botón */
-.pulse-button {
-  animation: level-button-pulse 2s infinite;
-}
-
-@keyframes level-button-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(255, 152, 0, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
-  }
-}
-
-/* Estilos de color para combos */
-.combo-basic-text {
-  color: #FFFFFF;
-}
-
-.combo-uncommon-text {
-  color: #1E90FF;
-}
-
-.combo-rare-text {
-  color: #9932CC;
-}
-
-.combo-epic-text {
-  color: #FF00FF;
-}
-
-.combo-legendary-text {
-  color: #FFD700;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-}
-
-/* Responsive para dispositivos móviles */
-@media (max-width: 480px) {
-  .level-complete-header {
-    margin-bottom: 12px;
-  }
-  
-  .level-complete-header h1 {
-    font-size: 28px;
-  }
-  
-  .level-complete-header h2 {
-    font-size: 16px;
-  }
-  
-  .stars-container {
-    gap: 12px;
-  }
-  
-  .level-star {
-    font-size: 36px;
-  }
-  
-  .compact-body {
-    padding: 12px;
-    gap: 12px;
-  }
-  
-  .main-stats {
-    gap: 12px;
-  }
-  
-  .score-icon {
-    font-size: 28px;
-    width: 45px;
-    height: 45px;
-  }
-  
-  .score-value {
-    font-size: 30px;
-  }
-  
-  .compact-stat-icon {
-    font-size: 16px;
-    width: 32px;
-    height: 32px;
-    margin-bottom: 4px;
-  }
-  
-  .compact-stat-value {
-    font-size: 22px;
-    margin-bottom: 2px;
-  }
-  
-  .compact-stat-label {
-    font-size: 10px;
-  }
-  
-  .rewards-title {
-    font-size: 15px;
-    margin-bottom: 10px;
-  }
-  
-  .rewards-grid {
-    gap: 10px;
-  }
-  
-  .reward-badge {
-    padding: 6px 12px;
-  }
-  
-  .reward-icon {
-    font-size: 20px;
-    margin-bottom: 4px;
-  }
-  
-  .reward-name {
-    font-size: 11px;
-  }
-  
-  .modal-buttons {
-    padding: 12px 12px 16px;
-  }
-  
-  .next-level-button {
-    padding: 12px 24px;
-    font-size: 16px;
-    max-width: 260px;
-  }
-}
-
-/* Pantallas más pequeñas verticalmente */
-@media (max-height: 700px) {
-  .game-modal.fullscreen-modal {
-    align-items: flex-start;
-    padding: 10px;
-  }
-  
-  .modal-content.level-complete-content {
-    max-height: calc(100vh - 20px);
-    max-height: calc(var(--vh, 1vh) * 100 - 20px);
-    margin: 10px auto;
-  }
-  
-  .level-header-stars-container {
-    padding: 15px 15px 5px;
-  }
-  
-  .level-complete-header {
-    margin-bottom: 10px;
-  }
-  
-  .level-complete-header h1 {
-    font-size: 26px;
-    margin-bottom: 5px;
-  }
-  
-  .level-complete-header h2 {
-    font-size: 15px;
-  }
-  
-  .stars-container {
-    margin-bottom: 5px;
-  }
-  
-  .level-star {
-    font-size: 32px;
-  }
-  
-  .compact-body {
-    padding: 12px;
-    gap: 12px;
-  }
-  
-  .score-highlight {
-    padding: 10px;
-  }
-  
-  .score-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 24px;
-    margin-right: 10px;
-  }
-  
-  .score-value {
-    font-size: 28px;
-  }
-  
-  .compact-stat-item {
-    padding: 10px 6px;
-  }
-  
-  .rewards-container {
-    padding: 10px;
-  }
-  
-  .rewards-title {
-    margin-bottom: 8px;
-  }
-  
-  .modal-buttons {
-    padding: 12px 12px 15px;
-  }
-  
-  .next-level-button {
-    padding: 12px 24px;
-    font-size: 16px;
-  }
-}
-
-/* Pantallas extremadamente pequeñas (iPhone SE y similares) */
-@media (max-height: 600px) {
-  .game-modal.fullscreen-modal {
-    padding: 8px;
-  }
-  
-  .modal-content.level-complete-content {
-    max-height: calc(100vh - 16px);
-    max-height: calc(var(--vh, 1vh) * 100 - 16px);
-    margin: 8px auto;
-    border-radius: 18px;
-  }
-  
-  .level-header-stars-container {
-    padding: 10px 10px 5px;
-  }
-  
-  .level-complete-header {
-    margin-bottom: 8px;
-  }
-  
-  .level-complete-header h1 {
-    font-size: 24px;
-    margin-bottom: 4px;
-  }
-  
-  .level-complete-header h2 {
-    font-size: 14px;
-  }
-  
-  .stars-container {
-    gap: 10px;
-  }
-  
-  .level-star {
-    font-size: 28px;
-  }
-  
-  .compact-body {
-    padding: 10px;
-    gap: 10px;
-  }
-  
-  .main-stats {
-    gap: 10px;
-  }
-  
-  .score-highlight,
-  .compact-stat-item,
-  .rewards-container {
-    padding: 8px;
-    border-radius: 10px;
-  }
-  
-  .score-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 20px;
-    margin-right: 8px;
-  }
-  
-  .score-label {
-    font-size: 12px;
-    margin-bottom: 2px;
-  }
-  
-  .score-value {
-    font-size: 26px;
-  }
-  
-  .compact-stats-grid {
-    gap: 8px;
-  }
-  
-  .compact-stat-icon {
-    width: 28px;
-    height: 28px;
-    font-size: 14px;
-    margin-bottom: 2px;
-  }
-  
-  .compact-stat-value {
-    font-size: 18px;
-    margin-bottom: 1px;
-  }
-  
-  .compact-stat-label {
-    font-size: 9px;
-  }
-  
-  .rewards-title {
-    font-size: 14px;
-    margin-bottom: 6px;
-  }
-  
-  .rewards-grid {
-    gap: 6px;
-  }
-  
-  .reward-badge {
-    padding: 5px 10px;
-  }
-  
-  .reward-icon {
-    font-size: 18px;
-    margin-bottom: 2px;
-  }
-  
-  .reward-name {
-    font-size: 9px;
-  }
-  
-  .modal-buttons {
-    padding: 10px 10px 12px;
-  }
-  
-  .next-level-button {
-    padding: 10px 20px;
-    font-size: 14px;
-    max-width: 220px;
-  }
-}
-
-/* Muy pequeños dispositivos en modo portrait */
-@media (max-width: 350px) {
-  .level-complete-header h1 {
-    font-size: 22px;
-  }
-  
-  .level-star {
-    font-size: 24px;
-  }
-  
-  .compact-stats-grid {
-    gap: 6px;
-  }
-  
-  .compact-stat-icon {
-    width: 26px;
-    height: 26px;
-    font-size: 13px;
-  }
-  
-  .compact-stat-value {
-    font-size: 16px;
-  }
-  
-  .compact-stat-label {
-    font-size: 8px;
-  }
-  
-  .rewards-grid {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  
-  .reward-badge {
-    min-width: 60px;
-  }
-}
-
-/* Asegurarnos de que se vea bien en dispositivos iOS */
-@supports (-webkit-touch-callout: none) {
-  .game-modal.fullscreen-modal {
-    height: -webkit-fill-available;
-  }
-  
-  .modal-content.level-complete-content {
-    max-height: calc(-webkit-fill-available - 30px);
-  }
-  
-  @media (max-height: 700px) {
-    .modal-content.level-complete-content {
-      max-height: calc(-webkit-fill-available - 20px);
-    }
-  }
-  
-  @media (max-height: 600px) {
-    .modal-content.level-complete-content {
-      max-height: calc(-webkit-fill-available - 16px);
-    }
-  }
-}
-
-/* Estilos para el mensaje de motivo de nivel completado */
-.level-end-reason {
-  background-color: rgba(0, 0, 0, 0.6);
-  border-radius: 12px;
-  padding: 10px 15px;
-  margin: 15px auto 5px;
-  max-width: 85%;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 0.9rem;
-  font-weight: 400;
-  color: #fff;
-  text-align: center;
-  animation: fadeIn 0.8s forwards;
-}
-
-.level-end-reason p {
-  margin: 0;
-  padding: 0;
-  line-height: 1.4;
-}
-
-/* Estilos para la sección de información de sesión */
-.game-session-info {
+.rewards-container {
   display: flex;
   flex-wrap: wrap;
+  gap: 6px;
   justify-content: center;
-  gap: 8px;
-  margin: 12px auto;
-  max-width: 90%;
-  animation: fadeIn 0.8s forwards;
-  animation-delay: 0.2s;
-  opacity: 0;
 }
 
-.info-pill {
-  background-color: rgba(0, 0, 0, 0.45);
-  border-radius: 16px;
-  padding: 5px 10px;
+.reward-item {
   display: flex;
   align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  padding: 5px;
+  border-radius: 20px;
+  background-color: rgba(20, 30, 60, 0.6);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  min-width: 100px;
+  transform: scale(0);
+  animation: popInReward 0.4s forwards;
+  animation-delay: var(--delay, 0s);
 }
 
-.info-label {
-  font-size: 0.75rem;
-  font-weight: 600;
+@keyframes popInReward {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.reward-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-right: 6px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.reward-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+
+.reward-amount {
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: white;
+}
+
+.reward-type {
+  font-size: 0.65rem;
   color: rgba(255, 255, 255, 0.7);
-  margin-right: 5px;
+  white-space: nowrap;
 }
 
-.info-value {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #fff;
+.reward-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.4;
+  z-index: 0;
+  border-radius: 20px;
+  background: radial-gradient(circle at 30% 50%, var(--glow-color), transparent 70%);
 }
 
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(5px);
+/* Estilos para diferentes rarezas */
+.reward-item.common {
+  border: 1px solid var(--rarity-common-color);
+  --glow-color: var(--rarity-common-glow);
+}
+
+.reward-item.uncommon {
+  border: 1px solid var(--rarity-uncommon-color);
+  --glow-color: var(--rarity-uncommon-glow);
+}
+
+.reward-item.rare {
+  border: 1px solid var(--rarity-rare-color);
+  --glow-color: var(--rarity-rare-glow);
+  animation: pulseRare 2s infinite alternate;
+}
+
+@keyframes pulseRare {
+  0% { box-shadow: 0 0 5px var(--rarity-rare-glow); }
+  100% { box-shadow: 0 0 12px var(--rarity-rare-glow); }
+}
+
+.reward-item.epic {
+  border: 1px solid var(--rarity-epic-color);
+  --glow-color: var(--rarity-epic-glow);
+  animation: pulseEpic 1.5s infinite alternate;
+}
+
+@keyframes pulseEpic {
+  0% { box-shadow: 0 0 8px var(--rarity-epic-glow); }
+  100% { box-shadow: 0 0 15px var(--rarity-epic-glow); }
+}
+
+.reward-item.legendary {
+  border: 1px solid var(--rarity-legendary-color);
+  --glow-color: var(--rarity-legendary-glow);
+  animation: pulseLegendary 1.2s infinite alternate;
+  background: linear-gradient(135deg, rgba(30, 40, 70, 0.7) 0%, rgba(60, 50, 30, 0.7) 100%);
+}
+
+@keyframes pulseLegendary {
+  0% { box-shadow: 0 0 10px var(--rarity-legendary-glow); }
+  100% { box-shadow: 0 0 20px var(--rarity-legendary-glow); }
+}
+
+/* BOTONES DE ACCIÓN REDISEÑADOS Y FIJOS */
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+  flex-shrink: 0; /* No permitir que se comprima */
+}
+
+.continue-button, .menu-button {
+  flex: 1;
+  padding: 8px;
+  border-radius: 20px;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.continue-button {
+  background: linear-gradient(135deg, #ffb300 0%, #ff8d00 100%);
+  box-shadow: 0 4px 10px rgba(255, 140, 0, 0.3);
+}
+
+.continue-button::after {
+  content: "→";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  transition: transform 0.3s ease;
+}
+
+.continue-button:hover::after {
+  transform: translate(5px, -50%);
+}
+
+.continue-button:hover {
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+  box-shadow: 0 6px 15px rgba(255, 140, 0, 0.4);
+}
+
+.menu-button {
+  background: linear-gradient(135deg, #5272e4 0%, #4059c8 100%);
+  box-shadow: 0 4px 10px rgba(82, 114, 228, 0.3);
+}
+
+.menu-button:hover {
+  background: linear-gradient(135deg, #6384f5 0%, #526fe4 100%);
+  box-shadow: 0 6px 15px rgba(82, 114, 228, 0.4);
+}
+
+/* Estilos para colores de combos */
+.combo-basic-text { color: #5dc2f1; }
+.combo-uncommon-text { color: #9d65ff; }
+.combo-rare-text { color: #ff9500; }
+.combo-epic-text { color: #ff3b30; }
+.combo-legendary-text { color: #ffd700; }
+.combo-value { position: relative; padding-right: 10px; }
+
+/* ADAPTACIÓN PARA DIFERENTES DISPOSITIVOS */
+/* Pantallas muy estrechas - menos de 360px de ancho */
+@media (max-width: 360px) {
+  .modal-content.level-complete-content {
+    width: 95%;
+    padding: 8px;
+    max-height: 92vh;
+    max-height: calc(var(--vh, 1vh) * 92);
   }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
+  
+  .results-container {
+    gap: 5px;
+  }
+  
+  .stats-grid {
+    gap: 5px;
+  }
+  
+  .reward-item {
+    min-width: 90px;
+    padding: 4px;
+  }
+  
+  .reward-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+  }
+  
+  .reward-amount {
+    font-size: 0.8rem;
+  }
+  
+  .victory-banner {
+    padding: 6px;
+  }
+  
+  .progress-bar {
+    width: 60px;
   }
 }
 
-/* Ajustes para la visibilidad de las estrellas */
-.level-complete-header .game-session-info + .stars-container {
-  margin-top: 15px;
-}
-
-/* Ajustes responsivos para la nueva sección */
-@media (max-width: 480px) {
-  .game-session-info {
+/* Pantallas con altura muy pequeña - menos de 550px */
+@media (max-height: 550px) {
+  .modal-content.level-complete-content {
+    padding: 8px;
+    max-height: 95vh;
+    max-height: calc(var(--vh, 1vh) * 95);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    grid-gap: 6px;
+    justify-content: center;
+    align-items: start;
+  }
+  
+  .level-header {
+    margin-bottom: 0;
+    grid-column: 1 / 3;
+    grid-row: 1;
+  }
+  
+  .victory-banner {
+    grid-column: 1 / 3;
+    grid-row: 2;
+  }
+  
+  .stats-grid {
+    grid-column: 1;
+    grid-row: 3;
+    display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 6px;
+    gap: 4px;
   }
   
-  .info-pill {
-    width: 90%;
-    justify-content: space-between;
-    padding: 4px 12px;
+  .rewards-section {
+    grid-column: 2;
+    grid-row: 3;
+    margin-top: 0;
+  }
+  
+  .rewards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .action-buttons {
+    grid-column: 1 / 3;
+    grid-row: 4;
+    margin-top: 4px;
+  }
+  
+  .level-header h1 {
+    font-size: 1.3rem;
+  }
+  
+  .stars-container {
+    margin: 2px 0;
+  }
+  
+  .level-star {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .continue-button, .menu-button {
+    padding: 6px;
+    font-size: 0.8rem;
   }
 }
 
-@media (max-height: 600px) {
-  .game-session-info {
-    margin: 8px auto;
+/* Pantallas extremadamente pequeñas - altura menor a 450px */
+@media (max-height: 450px) {
+  .level-header h1 {
+    font-size: 1.1rem;
   }
   
-  .info-pill {
-    padding: 3px 8px;
+  .stars-container {
+    gap: 5px;
   }
   
-  .info-label, .info-value {
+  .level-star {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .victory-icon {
+    font-size: 20px;
+  }
+  
+  .victory-title {
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+  }
+  
+  .victory-metric {
     font-size: 0.7rem;
   }
+  
+  .stat-item {
+    padding: 4px;
+  }
+  
+  .stat-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 4px;
+  }
+  
+  .stat-label {
+    font-size: 0.6rem;
+  }
+  
+  .stat-value {
+    font-size: 0.75rem;
+  }
+  
+  .rewards-title {
+    font-size: 0.8rem;
+  }
+  
+  .reward-item {
+    padding: 3px;
+    min-width: auto;
+  }
+  
+  .continue-button, .menu-button {
+    padding: 5px;
+    font-size: 0.75rem;
+  }
+  
+  .continue-button::after {
+    right: 8px;
+  font-size: 0.9rem;
+  }
 }
+

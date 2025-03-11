@@ -28,6 +28,7 @@ import './GamePage.css';
 import PauseModal from '../../components/game/GameModals/PauseModal';
 import { useNavigate } from 'react-router-dom';
 import LoadingScreen from '../../components/game/LoadingScreen/LoadingScreen';
+import { setLevelTransitionGrace } from '../../utils/gameEndConditions';
 
 // Iconos para los botones
 const ICONS = {
@@ -274,6 +275,10 @@ const GamePage: React.FC = () => {
     }
     
     isInitializingRef.current = true;
+    console.log("\n**********************************************************");
+    console.log("INICIO DEL FLUJO: REINICIO DE PARTIDA");
+    console.log(`Reiniciando el juego al nivel 1`);
+    console.log("**********************************************************");
     
     try {
       // Limpiar referencias
@@ -286,8 +291,8 @@ const GamePage: React.FC = () => {
       dispatch(resetGame());
       dispatch(resetCombo());
       
-      // Configurar mismo nivel
-      const newBoardConfig = configureBoardForLevel(level);
+      // Configurar nivel 1 (siempre empezamos desde el principio al reiniciar)
+      const newBoardConfig = configureBoardForLevel(1);
       dispatch(setAvailableIcons(newBoardConfig.icons || []));
       
       // Reiniciar el juego
@@ -296,10 +301,31 @@ const GamePage: React.FC = () => {
       // Limpiar la selección actual si existe
       dispatch(setHighlightedCells([]));
       
+      // Establecer el período de gracia para el nuevo juego
+      console.log("Fase 3: Estableciendo período de gracia inicial");
+      setLevelTransitionGrace(3);
+      
+      // SOLUCIÓN: Inicializar el tablero con los iconos iniciales
+      console.log("Fase 4: Inicializando tablero para el nuevo juego");
+      initializeBoard(boardSize, true, 1);
+      
+      // SOLUCIÓN: Iniciar los temporizadores
+      console.log("Fase 5: Iniciando temporizadores para el nuevo juego");
+      setTimeout(() => {
+        // Usar un pequeño retraso para asegurar que el tablero esté listo
+        startTimers(true);
+        console.log("Temporizadores iniciados correctamente");
+      }, 100);
+      
+      console.log("**********************************************************");
+      console.log("FIN DEL FLUJO: REINICIO DE PARTIDA COMPLETADO");
+      console.log("**********************************************************\n");
+      
       isInitializingRef.current = false;
     } catch (error) {
       isInitializingRef.current = false;
       logger.error('GamePage', 'Error al reiniciar el juego', error);
+      console.error("Error al reiniciar el juego:", error);
     }
   };
 
@@ -347,11 +373,14 @@ const GamePage: React.FC = () => {
           // Inicializar el tablero con los iconos del nivel
           initializeBoard(boardConfig.size, true, level);
           
+          // Establecer el período de gracia para evitar game over inmediato
+          console.log("Estableciendo período de gracia inicial para el nuevo juego");
+          setLevelTransitionGrace(3);
+          
           // Cambiar el estado a 'playing' para iniciar el juego
           dispatch(setGameStatus('playing'));
           
           // IMPORTANTE: Solo iniciamos los temporizadores UNA VEZ desde aquí
-          // Usamos setTimeout para asegurar que el estado ya está actualizado
           setTimeout(() => {
             if (store.getState().game.status === 'playing') {
               logger.info('GamePage', "Iniciando temporizadores para el juego");
@@ -405,6 +434,10 @@ const GamePage: React.FC = () => {
     }
     
     isInitializingRef.current = true;
+    console.log("\n**********************************************************");
+    console.log("INICIO DEL FLUJO: AVANZAR AL SIGUIENTE NIVEL");
+    console.log(`Avanzando del nivel ${level} al nivel ${level + 1}`);
+    console.log("**********************************************************");
     
     try {
       // Detener temporizadores actuales
@@ -428,15 +461,36 @@ const GamePage: React.FC = () => {
       // Limpiar la selección actual
       dispatch(setHighlightedCells([]));
       
+      // Establecer el período de gracia para el nuevo nivel
+      console.log("Fase 3: Estableciendo período de gracia para el nuevo nivel");
+      setLevelTransitionGrace(3);
+      
+      // SOLUCIÓN: Inicializar el tablero con los iconos iniciales
+      console.log("Fase 4: Inicializando tablero para el nuevo nivel");
+      initializeBoard(boardSize, true, nextLevel);
+      
+      // SOLUCIÓN: Iniciar los temporizadores
+      console.log("Fase 5: Iniciando temporizadores para el nuevo nivel");
+      setTimeout(() => {
+        // Usar un pequeño retraso para asegurar que el tablero esté listo
+        startTimers(true);
+        console.log("Temporizadores iniciados correctamente");
+      }, 100);
+      
       // Reproducir sonido de nivel completado
       if (soundOn) {
         playSound('levelUp');
       }
       
+      console.log("**********************************************************");
+      console.log("FIN DEL FLUJO: AVANCE AL SIGUIENTE NIVEL COMPLETADO");
+      console.log("**********************************************************\n");
+      
       isInitializingRef.current = false;
     } catch (error) {
       isInitializingRef.current = false;
       logger.error('GamePage', 'Error al avanzar al siguiente nivel', error);
+      console.error("Error al avanzar al siguiente nivel:", error);
     }
   };
 
@@ -476,6 +530,14 @@ const GamePage: React.FC = () => {
 
   // Determinar si el tablero debe ser renderizado
   const shouldRenderBoard = status === 'playing';
+
+  // Efecto para activar el tutorial cuando el modo cambia a tutorial
+  useEffect(() => {
+    if (currentPlayMode === 'tutorial' && status === 'playing') {
+      console.log("Modo tutorial detectado - Activando componente de tutorial");
+      setShowTutorial(true);
+    }
+  }, [currentPlayMode, status]);
 
   return (
     <div className="game-page" ref={gameComponentRef}>
@@ -520,7 +582,7 @@ const GamePage: React.FC = () => {
             )}
             
             {/* Tutorial - visible solo cuando está activado */}
-            {showTutorial && (
+            {showTutorial && status === 'playing' && (
               <GameTutorial onComplete={handleTutorialComplete} />
             )}
             

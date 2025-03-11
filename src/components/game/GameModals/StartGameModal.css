@@ -41,7 +41,7 @@
 }
 
 /* Efecto de estrellas en el fondo */
-.start-game::before {
+/* .start-game::before {
   content: '';
   position: absolute;
   top: 0;
@@ -62,7 +62,7 @@
   opacity: 0.3;
   animation: twinkleAnimation 10s linear infinite;
   z-index: -1;
-}
+} */
 
 /* Efecto de nebulosa en el fondo */
 .start-game::after {

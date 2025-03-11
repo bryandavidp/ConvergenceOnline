@@ -390,15 +390,17 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   
   // Obtenemos información del estado del juego
   const { highScore } = useSelector((state: RootState) => state.game);
-  const isNewPlayer = highScore <= 0;
+  // const isNewPlayer = highScore <= 0;
+  const isNewPlayer = false;
   
   // Verificamos si el tutorial ha sido completado
   const [tutorialCompleted, setTutorialCompleted] = useState<boolean>(() => {
+    // Desactivar tutorial para pruebas
+    localStorage.setItem('tutorialCompleted', 'true');
     return localStorage.getItem('tutorialCompleted') === 'true';
   });
   
   // Estado para la modal
-  const [activeScreen, setActiveScreen] = useState<ScreenType>('main');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -415,13 +417,16 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   useEffect(() => {
     const generateStars = () => {
       const newStars = [];
-      const starCount = 8; // Cantidad de estrellas flotantes
+      // Reducimos la cantidad de estrellas para mejorar el rendimiento
+      const starCount = 6; 
       
       for (let i = 0; i < starCount; i++) {
-        const size = Math.random() * 3 + 1;
+        // Tamaño más controlado para mejor rendimiento
+        const size = Math.random() * 2.5 + 1;
         const left = Math.random() * 100;
-        const duration = Math.random() * 15 + 15;
-        const delay = Math.random() * 10;
+        // Aumentamos la duración para que parezcan más estrellas con menos elementos
+        const duration = Math.random() * 20 + 20;
+        const delay = Math.random() * 15;
         
         newStars.push(
           <div 
@@ -432,7 +437,10 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
               height: `${size}px`,
               left: `${left}%`,
               opacity: 0,
-              animation: `floatStar ${duration}s linear ${delay}s infinite`
+              // Usamos will-change en inline style para asegurar que se aplique
+              animation: `floatStar ${duration}s linear ${delay}s infinite`,
+              backgroundColor: '#FFD700', // Color dorado
+              boxShadow: '0 0 4px 1px rgba(255, 215, 0, 0.6)'
             }}
           />
         );
@@ -529,8 +537,8 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
         setLocalDifficulty(GameDifficulty.EASY);
       }
       
-      // Si estamos en la pantalla principal, ir a la pantalla de juego
-      currentScreen === 'main' && setActiveScreen('play');
+      // Siempre ir a la pantalla de juego al abrir el modal
+      setCurrentScreen('play');
 
       // Animation timeline
       timeouts.push(setTimeout(() => {
@@ -671,7 +679,13 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
       setLocalDifficulty(GameDifficulty.EASY); // Dificultad fácil para tutorial
       
       // Actualizar también el estado Redux - usamos los tipos correctos para Redux
-      changeGameConfig('tutorial' as any, 'tutorial' as any);
+      changeGameConfig({ 
+        difficulty: 'tutorial' as any, 
+        mode: 'tutorial' as any 
+      });
+
+      // Verificar que se ha aplicado correctamente
+      console.log("Modo de juego cambiado a tutorial - GameMode:", GamePlayMode.TUTORIAL);
       
       // Marcar el tutorial como completado cuando el usuario lo inicia
       localStorage.setItem('tutorialCompleted', 'true');
@@ -682,17 +696,20 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
       setGameMode(GamePlayMode.ZEN);
       setLocalDifficulty(GameDifficulty.EASY); // Default para el backend
       // Actualizar también el estado Redux
-      changeGameConfig('easy' as any, 'zen' as any);
+      changeGameConfig({ 
+        difficulty: 'easy' as any, 
+        mode: 'zen' as any 
+      });
     } else {
       // Iniciar otros modos (clásico, contrarreloj, supervivencia)
       console.log(`Iniciando modo ${selectedMode} con dificultad ${localDifficulty}`);
       setGameMode(selectedMode);
       
       // Actualizar también el estado Redux
-      changeGameConfig(
-        localDifficulty ? convertDifficultyToReduxFormat(localDifficulty) as any : 'easy' as any,
-        convertModeToReduxFormat(selectedMode) as any
-      );
+      changeGameConfig({
+        difficulty: localDifficulty ? convertDifficultyToReduxFormat(localDifficulty) as any : 'easy' as any,
+        mode: convertModeToReduxFormat(selectedMode) as any
+      });
     }
 
     // Cerrar el modal con animación
@@ -1083,7 +1100,7 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
       case 'credits':
         return renderCreditsScreen();
       default:
-        return renderPlayScreen();
+        return renderMainScreen();
     }
   };
 
