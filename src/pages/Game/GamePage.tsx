@@ -12,6 +12,7 @@ import LevelCompleteModal from '../../components/game/GameModals/LevelCompleteMo
 import StartGameModal from '../../components/game/GameModals/StartGameModal';
 import ModeSelectionModal from '../../components/game/GameModals/ModeSelectionModal';
 import GameTutorial from '../../components/game/Tutorial/GameTutorial';
+import FpsCounter from '../../components/game/FpsCounter/FpsCounter';
 import { audioManager } from '../../utils/audioManager';
 import * as config from '../../utils/config';
 import { useGameContext } from '../../contexts/GameContext';
@@ -26,6 +27,7 @@ import * as levelAdapter from '../../utils/levelAdapter';
 import './GamePage.css';
 import PauseModal from '../../components/game/GameModals/PauseModal';
 import { useNavigate } from 'react-router-dom';
+import LoadingScreen from '../../components/game/LoadingScreen/LoadingScreen';
 
 // Iconos para los botones
 const ICONS = {
@@ -41,6 +43,9 @@ const ICONS = {
   INFO: 'ℹ️',
   SETTINGS: '⚙️'
 };
+
+// Umbral de FPS para animaciones en baja calidad
+const LOW_FPS_THRESHOLD = 10;
 
 const GamePage: React.FC = () => {
   const dispatch = useDispatch();
@@ -64,49 +69,63 @@ const GamePage: React.FC = () => {
   const [showTutorial, setShowTutorial] = useState(false);
   const [showModeSelection, setShowModeSelection] = useState(false);
   
+  // Estado para controlar si se ha completado la detección de FPS
+  const [fpsDetectionComplete, setFpsDetectionComplete] = useState(false);
+  
   // Usar GameContext para la integración con los modales
   const { 
     gameMode, 
     setGameMode, 
     gameDifficulty, 
     setGameDifficulty, 
-    isSoundEnabled, 
-    setIsSoundEnabled,
-    isMusicEnabled,
-    setIsMusicEnabled,
-    gameState,
-    updateGameState
+    isSoundEnabled: soundOn,
+    setIsSoundEnabled: setSoundOn,
+    isMusicEnabled: musicOn,
+    setIsMusicEnabled: setMusicOn,
+    gameState
   } = useGameContext();
   
-  // Custom hooks para tema
-  const { darkMode: darkModeFromHook, toggleDarkMode: toggleDarkModeFromHook } = useDarkMode();
+  // Estado local para sincronizar con el contexto
+  const [isDarkMode, setIsDarkMode] = useState(darkMode);
   
-  // Renombrar la función importada para evitar conflictos
-  const { 
-    initializeBoard: initializeBoardFromHook, 
-    stopTimers, 
-    startTimers, 
-    changeGameConfig,
-    resetSystemsForNewLevel
-  } = useGameLogic();
+  // Estado para mostrar/ocultar la configuración
+  const [showConfig, setShowConfig] = useState(true);
   
-  // Referencia para controlar las inicializaciones repetidas
-  const isInitializingRef = useRef<boolean>(false);
-  // Track if board has been initialized
-  const isBoardInitializedRef = useRef<boolean>(false);
+  // Estado para controlar si se está en un dispositivo móvil
+  const [isMobile, setIsMobile] = useState(false);
   
-  // Estado para controlar la visualización del selector de configuración
-  const [showConfig, setShowConfig] = useState<boolean>(true);
-  // Estado para detectar dispositivo móvil
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  // Estado para aplicar pantalla completa
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(true);
-  // Estado para mostrar panel de ayuda
-  const [showHelp, setShowHelp] = useState<boolean>(false);
+  // Referencias para evitar múltiples renders o efectos no deseados
+  const isInitializingRef = useRef(false);
+  const isBoardInitializedRef = useRef(false);
   
-  // Referencias a los elementos del tablero
-  const boardContainerRef = useRef<HTMLDivElement>(null);
-  const boardElementRef = useRef<HTMLDivElement>(null);
+  // Obtener funciones del hook de lógica del juego
+  const { stopTimers, startTimers, initializeBoard } = useGameLogic();
+  
+  // Referencia para la detección de FPS
+  const fpsDetectionRef = useRef({
+    isRunning: false,
+    frameCount: 0,
+    startTime: 0,
+    samples: [] as number[],
+    hasDecided: false
+  });
+  
+  // Hook para el modo oscuro
+  const { toggleDarkMode: themeToggle } = useDarkMode();
+  
+  // Aplicar modo de animaciones según FPS detectados
+  const applyAnimationMode = useCallback((lite: boolean) => {
+    // Añadir clase a nivel de documento para que otros componentes respondan
+    if (lite) {
+      document.documentElement.classList.add("lite-animations");
+      document.documentElement.classList.add("performance-mode");
+      logger.info('GamePage', 'Modo de animaciones ligeras activado por FPS bajos');
+    } else {
+      document.documentElement.classList.remove("lite-animations");
+      document.documentElement.classList.remove("performance-mode");
+      logger.info('GamePage', 'Modo de animaciones completas activado');
+    }
+  }, []);
   
   // Efecto para detectar dispositivo móvil
   useEffect(() => {
@@ -123,223 +142,162 @@ const GamePage: React.FC = () => {
     };
   }, []);
   
-  // Efecto para inicializar el estado de juego
+  // Efecto para configurar el estado inicial del juego 
+  // solo se ejecuta una vez al montar el componente
   useEffect(() => {
-    // Establecer el estado inicial del juego cuando se carga la página
-    if (status === 'idle') {
+    // Solo cambiar a 'startScreen' si la carga inicial no está en progreso
+    if (status === 'idle' && fpsDetectionComplete) {
       dispatch(setGameStatus('startScreen'));
     }
-    
+  }, [fpsDetectionComplete, dispatch, status]);
+  
+  // Efecto para mostrar/ocultar la configuración según el estado del juego
+  useEffect(() => {
     // Mostrar el selector de configuración en la pantalla de inicio
     if (status === 'startScreen' || status === 'paused' || status === 'gameOver' || status === 'levelCompleted') {
       setShowConfig(true);
     } else {
       setShowConfig(false);
     }
-  }, [status, dispatch]);
+  }, [status]);
   
   // Ajustar el tamaño del tablero cuando cambia la ventana
   useEffect(() => {
     const handleResize = () => {
-      if (boardContainerRef.current && boardElementRef.current) {
-        // Usamos la función adjustBoardVisuals importada al principio del archivo
-        adjustBoardVisuals(boardContainerRef.current, boardElementRef.current);
+      // Solo ajustar visuales si el tablero está renderizado
+      const boardElement = document.getElementById('game-board');
+      if (boardElement && isBoardInitializedRef.current) {
+        // Pasar el elemento del boardElement en lugar de boardSize
+        const boardContainer = boardElement.parentElement as HTMLElement;
+        if (boardContainer) {
+          adjustBoardVisuals(boardContainer, boardElement);
+        }
       }
     };
-
-    // Ajustar tamaño inicialmente
-    handleResize();
     
-    // Escuchar cambios de tamaño
+    handleResize();
     window.addEventListener('resize', handleResize);
     
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [boardSize]);
+  }, [boardSize, isMobile]);
   
-  // Inicializar el tablero cuando cambie su tamaño o cuando el estado sea 'playing'
+  // Sincronizar el modo oscuro
   useEffect(() => {
-    if (status === 'playing' && !isBoardInitializedRef.current && !isInitializingRef.current) {
-      logger.info('GamePage', `Inicializando tablero automáticamente por cambio de estado a playing`);
-      initializeBoardFromHook();
-    } else if (status !== 'playing' && status !== 'paused') {
-      // Reiniciar el estado de inicialización cuando no estamos jugando o pausados
-      isBoardInitializedRef.current = false;
-    }
-  }, [status, initializeBoardFromHook]);
+    setIsDarkMode(darkMode);
+  }, [darkMode]);
   
-  // Gestionar arranque y parada de temporizadores según estado del juego
+  // Evitar que el usuario haga zoom en dispositivos móviles para una mejor experiencia
   useEffect(() => {
-    // Detener temporizadores cuando el juego no está en estado 'playing'
-    if (status !== 'playing' && !isInitializingRef.current) {
-      logger.info('GamePage', `Deteniendo temporizadores por cambio de estado a: ${status}`);
-      stopTimers();
-    }
+    // Agregar meta tag para evitar zoom en móviles
+    const viewportMeta = document.createElement('meta');
+    viewportMeta.name = 'viewport';
+    viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+    document.head.appendChild(viewportMeta);
     
-    // Iniciar temporizadores cuando el juego está en estado 'playing'
-    if (status === 'playing' && isBoardInitializedRef.current && !isInitializingRef.current) {
-      logger.info('GamePage', 'Iniciando temporizadores por estado playing');
-      startTimers();
-    }
-  }, [status, startTimers, stopTimers, isInitializingRef]);
-  
-  // Limpiar recursos al desmontar el componente
-  useEffect(() => {
+    // Prevenir zoom con gestos de pinch
+    const preventZoom = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+    
+    document.addEventListener('touchmove', preventZoom, { passive: false });
+    
     return () => {
-      logger.info('GamePage', 'Componente desmontado, limpiando todos los temporizadores');
-      stopTimers();
-    }
-  }, [stopTimers]);
-  
-  // Actualizar configuración cuando cambia el nivel
-  useEffect(() => {
-    // Ignorar si no estamos en juego o hay una inicialización en curso
-    if (status !== 'playing' || isInitializingRef.current) return;
-    
-    // Solo actualizar si estamos más allá del nivel 1
-    if (level > 1) {
-      logger.info('GamePage', `Configurando tablero para nivel ${level}`);
-      
-      // Establecer el estado de inicialización
-      isInitializingRef.current = true;
-      
-      // Detener temporizadores temporalmente
-      stopTimers();
-      
-      const oldSize = boardSize;
-      const newConfig = configureBoardForLevel(level, true);
-      
-      // Pequeña pausa antes de continuar para permitir que terminen procesos pendientes
-      setTimeout(() => {
-        // Si el tamaño del tablero cambió, no necesitamos hacer nada ya que
-        // el cambio de boardSize activará el useEffect correspondiente
-        if (newConfig.size !== oldSize) {
-          logger.info('GamePage', `El tamaño del tablero cambiará de ${oldSize}x${oldSize} a ${newConfig.size}x${newConfig.size}`);
-          // La inicialización la manejará el useEffect que observa boardSize
-        } else {
-          // Si el tamaño no cambió, necesitamos reinicializar manualmente
-          logger.info('GamePage', `Reinicializando tablero sin cambio de tamaño`);
-          
-          // Reiniciar el flag de inicialización
-          isBoardInitializedRef.current = false;
-          
-          // Inicializar el tablero (esto activará el useEffect que observa boardSize)
-          // porque cambiamos isBoardInitializedRef
-          setTimeout(() => {
-            // Asegurarnos de que seguimos en estado de juego
-            if (status === 'playing') {
-              isInitializingRef.current = false;
-            } else {
-              isInitializingRef.current = false;
-            }
-          }, 300);
-        }
-      }, 200);
-    }
-  }, [level, boardSize, status, initializeBoardFromHook, stopTimers]);
-  
-  // Inicializar el sistema de niveles al cargar la aplicación
-  useEffect(() => {
-    // Inicializar el sistema de niveles
-    const levelSystemInfo = initLevelSystem();
-    logger.info('GamePage', 'Sistema de niveles inicializado', levelSystemInfo);
-    
-    // Resto del código de inicialización existente...
+      // Limpiar al desmontar
+      document.removeEventListener('touchmove', preventZoom);
+      document.head.removeChild(viewportMeta);
+    };
   }, []);
   
-  // Manejar cambio de dificultad y modo
+  // Prevenir scroll en dispositivos móviles para el área del juego
+  useEffect(() => {
+    const gameElement = gameComponentRef.current;
+    
+    if (!gameElement) return;
+    
+    const preventScroll = (e: TouchEvent) => {
+      // Permitir scroll en los modales o elementos específicos
+      let targetElement = e.target as HTMLElement;
+      
+      // Comprobar si estamos dentro de un elemento desplazable
+      while (targetElement && targetElement !== gameElement) {
+        if (targetElement.classList.contains('scrollable')) {
+          return; // Permitir scroll
+        }
+        targetElement = targetElement.parentElement as HTMLElement;
+      }
+      
+      e.preventDefault();
+    };
+    
+    gameElement.addEventListener('touchmove', preventScroll, { passive: false });
+    
+    return () => {
+      gameElement.removeEventListener('touchmove', preventScroll);
+    };
+  }, []);
+  
+  // Manejar el evento de finalización del tutorial
+  const handleTutorialComplete = () => {
+    setShowTutorial(false);
+    dispatch(setGameStatus('playing'));
+    // Otros ajustes necesarios después del tutorial
+  };
+  
+  // Aplicar configuración seleccionada
   const handleApplyConfig = (difficulty: any, mode: any) => {
-    logger.info('GamePage', `Aplicando configuración: ${difficulty}, ${mode}`);
-    if (changeGameConfig) {
-      changeGameConfig(difficulty, mode);
+    setGameDifficulty(difficulty);
+    setGameMode(mode);
+  };
+  
+  // Manejar el botón de pausa/play
+  const handlePlayPauseClick = () => {
+    if (status === 'playing') {
+      dispatch(setGameStatus('paused'));
+      // Pausar los temporizadores
+      stopTimers();
+    } else if (status === 'paused') {
+      dispatch(setGameStatus('playing'));
+      // Otros ajustes necesarios al reanudar
     }
   };
   
-  // Manejadores para los botones de control
-  const handlePlayPauseClick = () => {
-    console.log("\n**********************************************************");
-    console.log("INICIO DEL FLUJO: ALTERNAR ESTADO PAUSA/JUEGO");
-    console.log(`Estado actual: ${status}`);
-    console.log("**********************************************************");
-    
-    if (status === 'playing') {
-      // Pausar el juego - solo cambiamos el estado y detenemos temporizadores
-      dispatch(setGameStatus('paused'));
-      stopTimers();
-      
-      // Resetear el combo cuando se pausa el juego para evitar que se quede congelado
-      dispatch(resetCombo());
-      
-      audioManager.play("pause");
-      console.log("Juego pausado y temporizadores detenidos");
-    } else if (status === 'paused') {
-      // Reanudar el juego - restaurar el estado y reiniciar temporizadores
-      dispatch(setGameStatus('playing'));
-      
-      // Aseguramos que el combo esté reseteado al reanudar
-      dispatch(resetCombo());
-      
-      // Iniciar los temporizadores después de un breve momento
-      setTimeout(() => {
-        startTimers(true);
-      }, 100);
-      
-      audioManager.play("play");
-      console.log("Juego reanudado y temporizadores iniciados");
-    }
-    
-    console.log("**********************************************************\n");
-  };
-
+  // Reiniciar el juego (usado en varias situaciones)
   const handleRestartClick = () => {
-    console.log("\n**********************************************************");
-    console.log("INICIO DEL FLUJO: REINICIAR JUEGO");
-    console.log(`Nivel actual: ${level}, Modo: ${currentPlayMode}`);
-    console.log("**********************************************************");
-    
-    // IMPORTANTE: Prevenimos múltiples llamadas
+    // Verificamos si ya hay una inicialización en progreso
     if (isInitializingRef.current) {
-      console.log("ADVERTENCIA: Ya hay una inicialización en progreso, ignorando solicitud");
-      console.log("**********************************************************\n");
+      console.warn("Ya hay una inicialización en progreso, ignorando solicitud de reinicio");
       return;
     }
     
-    // Marcar que estamos en proceso de inicialización
     isInitializingRef.current = true;
     
-    // Limpiar referencias
-    isBoardInitializedRef.current = false;
-    
-    // Detener temporizadores
-    stopTimers();
-    console.log("Fase 1: Temporizadores detenidos");
-    
     try {
-      // Restaurar al nivel 1 para un nuevo juego
-      dispatch(resetGame());
+      // Limpiar referencias
+      isBoardInitializedRef.current = false;
       
-      // Esperar a que el resetGame se procese
-      setTimeout(() => {
-        // Usar la configuración centralizada para iconos del nivel 1
-        const level1Icons = config.getIconSetForLevel(1);
-        dispatch(setAvailableIcons(level1Icons));
-        
-        console.log(`Fase 2: Juego reiniciado con iconos: ${level1Icons.join(', ')}`);
-        
-        // Volver a la pantalla inicial
-        dispatch(setGameStatus('startScreen'));
-        console.log("Fase 3: Estado cambiado a 'startScreen'");
-        
-        logger.info('GamePage', 'Juego reiniciado, volviendo a la pantalla de inicio');
-        console.log("**********************************************************\n");
-        console.log("FIN DEL FLUJO: JUEGO REINICIADO CORRECTAMENTE");
-        
-        // Limpiar la referencia de inicialización
-        isInitializingRef.current = false;
-      }, 100);
+      // Detener temporizadores
+      stopTimers();
+      
+      // Resetear el estado del juego
+      dispatch(resetGame());
+      dispatch(resetCombo());
+      
+      // Configurar mismo nivel
+      const newBoardConfig = configureBoardForLevel(level);
+      dispatch(setAvailableIcons(newBoardConfig.icons || []));
+      
+      // Reiniciar el juego
+      dispatch(setGameStatus('playing'));
+      
+      // Limpiar la selección actual si existe
+      dispatch(setHighlightedCells([]));
+      
+      isInitializingRef.current = false;
     } catch (error) {
-      console.error("Error al reiniciar el juego:", error);
       isInitializingRef.current = false;
       logger.error('GamePage', 'Error al reiniciar el juego', error);
     }
@@ -347,19 +305,18 @@ const GamePage: React.FC = () => {
 
   // Iniciar un juego nuevo
   const handleStartGame = () => {
-    console.log("\n**********************************************************");
-    console.log("INICIO DEL FLUJO: INICIAR JUEGO NUEVO");
+    logger.info('GamePage', "\n**********************************************************");
+    logger.info('GamePage', "INICIO DEL FLUJO: INICIAR JUEGO NUEVO");
     
     // Obtener los valores actuales directamente del estado de Redux
     const { currentDifficulty, currentPlayMode, level } = store.getState().game;
     
-    console.log(`Nivel: ${level}, Modo: ${currentPlayMode}, Dificultad: ${currentDifficulty}`);
-    console.log("**********************************************************");
+    logger.info('GamePage', `Nivel: ${level}, Modo: ${currentPlayMode}, Dificultad: ${currentDifficulty}`);
+    logger.info('GamePage', "**********************************************************");
 
     // IMPORTANTE: Prevenimos múltiples llamadas
     if (isInitializingRef.current) {
-      console.log("ADVERTENCIA: Ya hay una inicialización en progreso, ignorando solicitud");
-      console.log("**********************************************************\n");
+      logger.warn('GamePage', "Ya hay una inicialización en progreso, ignorando solicitud");
       return;
     }
     
@@ -369,586 +326,258 @@ const GamePage: React.FC = () => {
     // Limpiar referencias
     isBoardInitializedRef.current = false;
     
-    // Limpiar temporizadores
+    // Limpiar temporizadores EXISTENTES para evitar solapamientos
     stopTimers();
-
+    
     try {
-      // Asegurarnos que estamos en nivel 1
-      if (level !== 1) {
-        dispatch(setLevel(1));
-      }
-      
-      // Actualizar los iconos disponibles para el nivel 1 desde la configuración centralizada
-      const level1Icons = config.getIconSetForLevel(1);
-      dispatch(setAvailableIcons(level1Icons));
-      console.log(`Iconos para nivel 1: ${level1Icons.join(', ')}`);
-      
-      // Resetear combos al iniciar un nuevo juego
-      console.log("[COMBO] Reseteando sistema de combos al iniciar un nuevo juego");
+      // Reiniciar el juego antes de iniciar uno nuevo para evitar estados residuales
+      dispatch(resetGame());
       dispatch(resetCombo());
-
-      // Esperar un breve momento antes de iniciar
+      
+      // Esperar un poco antes de continuar con la inicialización
       setTimeout(() => {
-        logger.info('GamePage', 'Iniciando juego...');
-        console.log("Fase 1: Iniciando tablero...");
-        
-        // Primero, inicializar el tablero
-        const newBoard = initializeBoardFromHook();
-        if (!newBoard || !newBoard.length) {
-          console.log("ADVERTENCIA: El tablero no se inicializó correctamente");
-        } else {
-          let iconCount = 0;
-          newBoard.forEach(row => {
-            row.forEach(cell => {
-              if (cell !== null) iconCount++;
-            });
-          });
-          console.log(`Tablero inicializado con ${iconCount} iconos`);
-        }
-
-        // Luego cambiar el estado
-        dispatch(setGameStatus('playing'));
-        console.log("Fase 2: Estado cambiado a 'playing'");
-        
-        // Esperar a que se complete la inicialización para iniciar los temporizadores
-        setTimeout(() => {
-          if (!isBoardInitializedRef.current) {
-            isBoardInitializedRef.current = true;
-          }
+        try {
+          // Configurar el tablero para el nivel actual
+          logger.info('GamePage', `Configurando tablero para nivel ${level}`);
+          const boardConfig = configureBoardForLevel(level);
           
-          // Iniciar temporizadores explícitamente forzando reinicio
-          logger.info('GamePage', 'Iniciando temporizadores explícitamente después de inicializar el juego (forzado)');
-          startTimers(true);
-          console.log("Fase 3: Temporizadores iniciados (forzado)");
+          // Actualizar el conjunto de iconos disponibles para el juego
+          dispatch(setAvailableIcons(boardConfig.icons || []));
           
-          // Reproducir sonido de inicio
-          audioManager.play('startLevel');
+          // Inicializar el tablero con los iconos del nivel
+          initializeBoard(boardConfig.size, true, level);
           
-          logger.info('GamePage', 'Juego iniciado');
-          console.log("**********************************************************\n");
-          console.log("FIN DEL FLUJO: JUEGO INICIADO CORRECTAMENTE");
+          // Cambiar el estado a 'playing' para iniciar el juego
+          dispatch(setGameStatus('playing'));
           
-          // Limpiar referencia de inicialización
+          // IMPORTANTE: Solo iniciamos los temporizadores UNA VEZ desde aquí
+          // Usamos setTimeout para asegurar que el estado ya está actualizado
+          setTimeout(() => {
+            if (store.getState().game.status === 'playing') {
+              logger.info('GamePage', "Iniciando temporizadores para el juego");
+              startTimers();
+            }
+          }, 100);
+          
+          // Marcar que la inicialización ha terminado
           isInitializingRef.current = false;
-        }, 100);
+          isBoardInitializedRef.current = true;
+          
+          logger.info('GamePage', "FIN DEL FLUJO: JUEGO INICIADO CORRECTAMENTE");
+        } catch (error) {
+          logger.error('GamePage', "Error durante la inicialización del juego", error);
+          isInitializingRef.current = false;
+        }
       }, 100);
     } catch (error) {
-      console.error("Error al iniciar el juego:", error);
+      logger.error('GamePage', "Error al iniciar el juego", error);
       isInitializingRef.current = false;
-      logger.error('GamePage', 'Error al iniciar el juego', error);
     }
   };
 
+  // Nuevo método para volver a la pantalla de inicio de forma segura
+  const handleReturnToStart = () => {
+    // Detener temporizadores primero
+    stopTimers();
+    
+    // Limpiar el estado actual
+    dispatch(resetGame());
+    
+    // Asegurar que no hay inicializaciones pendientes
+    isInitializingRef.current = false;
+    isBoardInitializedRef.current = false;
+    
+    // Volver a la pantalla de inicio
+    dispatch(setGameStatus('startScreen'));
+    
+    // Resetear el estado del selector de modo
+    setShowModeSelection(false);
+    
+    logger.info('GamePage', "Volviendo a la pantalla de inicio");
+  };
+
+  // Manejar el paso al siguiente nivel
   const handleNextLevel = () => {
-    console.log("\n**********************************************************");
-    console.log("INICIO DEL FLUJO: AVANZAR AL SIGUIENTE NIVEL");
-    console.log(`Nivel actual: ${level}, Nivel destino: ${level + 1}`);
-    console.log(`Modo: ${currentPlayMode}, Dificultad: ${currentDifficulty}`);
-    console.log("**********************************************************");
-    
-    // Calcular el próximo nivel
-    const nextLevel = level + 1;
-    
-    // IMPORTANTE: PREVENIMOS MÚLTIPLES LLAMADAS
+    // Verificamos si ya hay una inicialización en progreso
     if (isInitializingRef.current) {
-      console.log("ADVERTENCIA: Ya hay una transición de nivel en progreso, ignorando solicitud");
-      console.log("**********************************************************\n");
+      console.warn("Ya hay una inicialización en progreso, ignorando paso a siguiente nivel");
       return;
     }
     
-    // Marcar que estamos en proceso de inicialización
     isInitializingRef.current = true;
     
-    // Paso 1: Primero pausar el juego y asegurar que estamos en un estado controlado
-    dispatch(setGameStatus('paused'));
-    console.log("Fase 1: Estado cambiado a 'paused' para preparar transición");
-    
-    // Paso 2: Reiniciar todos los sistemas del juego (esto establece el período de gracia)
-    resetSystemsForNewLevel();
-    console.log("Fase 2: Sistemas de juego reiniciados completamente");
-    
-    // Paso 3: Asegurar que los temporizadores estén detenidos
-    stopTimers();
-    console.log("Fase 3: Temporizadores detenidos");
-    
-    // Paso 4: Resetear el sistema de combos para el nuevo nivel
-    console.log("[COMBO] Reseteando sistema de combos para el nuevo nivel");
-    dispatch(resetCombo());
-
-    // Obtener configuración para el siguiente nivel
-    const nextLevelInfo = levelAdapter.getNextLevelDisplay(
-      level,
-      currentPlayMode,
-      currentDifficulty
-    );
-    console.log(`Fase 4: Configuración para nivel ${nextLevel} generada`);
-    
-    logger.info('GamePage', `Avanzando al nivel ${nextLevel}`, nextLevelInfo);
-    
-    // Preparar para inicialización
-    isBoardInitializedRef.current = false;
-    console.log("Fase 5: Referencias de inicialización preparadas");
-    
-    // SECUENCIA DE INICIALIZACIÓN CON MAYOR TIEMPO DE ESPERA
-    // Usamos setTimeout para garantizar que las acciones se ejecuten en secuencia y con tiempo suficiente
-    setTimeout(() => {
-      // Paso 4: Actualizar el nivel en el store (esto también actualiza los iconos disponibles)
+    try {
+      // Detener temporizadores actuales
+      stopTimers();
+      
+      // Calcular el siguiente nivel
+      const nextLevel = level + 1;
+      
+      // Actualizar el nivel en el estado
       dispatch(setLevel(nextLevel));
-      console.log(`Fase 6: Nivel actualizado a ${nextLevel}`);
       
-      // Esperar más tiempo antes de continuar para asegurar que el cambio de nivel se procese completamente
-      setTimeout(() => {
-        try {
-          // Paso 5: Inicializar el tablero para el nuevo nivel - siempre obtiene el estado más reciente del store
-          const newBoard = initializeBoardFromHook();
-          if (!newBoard || !newBoard.length) {
-            console.log("ADVERTENCIA: El tablero no se inicializó correctamente para el nivel " + nextLevel);
-            
-            // CORRECCIÓN: Intentar nuevamente la inicialización con un enfoque diferente
-            console.log("Intentando nueva estrategia de inicialización...");
-            
-            // Llamar directamente a la función con parámetros explícitos
-            const gameState = store.getState().game;
-            initializeBoardFromHook();
-            
-            // Verificar si esta vez fue exitoso
-            setTimeout(() => {
-              const verifyBoard = store.getState().game.board;
-              let iconCount = 0;
-              if (verifyBoard && verifyBoard.length > 0) {
-                verifyBoard.forEach(row => {
-                  row.forEach(cell => {
-                    if (cell !== null) iconCount++;
-                  });
-                });
-                console.log(`Segunda inicialización: Tablero ahora tiene ${iconCount} iconos`);
-              }
-            }, 300);
-          } else {
-            let iconCount = 0;
-            newBoard.forEach(row => {
-              row.forEach(cell => {
-                if (cell !== null) iconCount++;
-              });
-            });
-            console.log(`Tablero inicializado con ${iconCount} iconos para el nivel ${nextLevel}`);
-          }
-          console.log("Fase 7: Tablero inicializado para el nuevo nivel");
-          
-          // Esperar más tiempo para asegurar que la inicialización del tablero se complete
-          setTimeout(() => {
-            // Verificar el estado del store nuevamente
-            const currentState = store.getState().game;
-            console.log(`Fase 8: Verificando estado antes de iniciar nivel ${nextLevel}`);
-            console.log(`Estado actual: nivel=${currentState.level}, modo=${currentState.currentPlayMode}, tablero inicializado=${isBoardInitializedRef.current}`);
-            
-            // Verificación adicional del tablero
-            let iconCount = 0;
-            currentState.board.forEach(row => {
-              row.forEach(cell => {
-                if (cell !== null) iconCount++;
-              });
-            });
-            
-            if (iconCount < 10 && nextLevel > 1) {
-              console.log(`ADVERTENCIA: El tablero tiene muy pocos iconos (${iconCount}) para el nivel ${nextLevel}`);
-              console.log("Realizando inicialización de emergencia con valores predeterminados...");
-              
-              // Inicialización de emergencia con al menos 20 iconos
-              const emergencyBoard = initializeBoardForLevel(nextLevel, 20);
-              // Actualizar el tablero usando la acción de Redux
-              dispatch({ type: 'game/updateBoard', payload: emergencyBoard });
-
-              setTimeout(() => {
-                const finalIconCount = countIconsInBoard(store.getState().game.board);
-                console.log(`Inicialización de emergencia completada. Ahora hay ${finalIconCount} iconos en el tablero.`);
-                
-                // Ahora podemos continuar
-                continueToPlaying();
-              }, 500);
-            } else {
-              // Continuar con el flujo normal
-              continueToPlaying();
-            }
-          }, 800); // Aumentar tiempo de espera para mayor seguridad
-        } catch (error) {
-          console.error("Error durante la inicialización del nivel:", error);
-          // Intentar recuperarse del error
-          dispatch(setLevel(nextLevel));
-          setTimeout(() => {
-            dispatch(setGameStatus('playing'));
-            startTimers(true);
-          }, 1000);
-        }
-      }, 500); // Aumentar tiempo de espera para mejor sincronización
-    }, 300); // Aumentar tiempo de espera para inicialización
-    
-    // Función para continuar al estado playing
-    const continueToPlaying = () => {
-      const currentState = store.getState().game;
+      // Configurar el nuevo tablero según el nivel
+      const newBoardConfig = configureBoardForLevel(nextLevel);
       
-      // Si por alguna razón el nivel no se actualizó, intentar corregirlo
-      if (currentState.level !== nextLevel) {
-        console.log(`ERROR: El nivel en el store (${currentState.level}) no coincide con el esperado (${nextLevel})`);
-        dispatch(setLevel(nextLevel));
-        
-        // Dar un poco más de tiempo para que se actualice el nivel
-        setTimeout(() => {
-          dispatch(setGameStatus('playing'));
-        }, 300);
-        return;
+      // Actualizar iconos disponibles
+      dispatch(setAvailableIcons(newBoardConfig.icons || []));
+      
+      // Reiniciar para el nuevo nivel pero mantener puntuación
+      dispatch(setGameStatus('playing'));
+      
+      // Limpiar la selección actual
+      dispatch(setHighlightedCells([]));
+      
+      // Reproducir sonido de nivel completado
+      if (soundOn) {
+        playSound('levelUp');
       }
       
-      // Ahora cambiar a estado "playing" con un retraso adicional
-      setTimeout(() => {
-        // Paso 7: Cambiar a estado "playing"
-        dispatch(setGameStatus('playing'));
-        console.log("Fase 9: Estado cambiado a 'playing'");
-        
-        // Dar un tiempo adicional antes de iniciar los temporizadores
-        setTimeout(() => {
-          // Iniciar temporizadores con reinicio forzado
-          startTimers(true);
-          console.log("Fase 10: Temporizadores iniciados (forzado)");
-          
-          // Reproducir sonido de inicio de nivel
-          audioManager.play('startLevel');
-          
-          console.log("**********************************************************\n");
-          console.log("FIN DEL FLUJO: TRANSICIÓN AL NIVEL " + nextLevel + " COMPLETADA");
-          
-          // Finalizar el estado de inicialización
-          isInitializingRef.current = false;
-        }, 300);
-      }, 300);
-    };
-    
-    // Función auxiliar para contar iconos en el tablero
-    const countIconsInBoard = (board: (string | null)[][]) => {
-      let count = 0;
-      if (board && board.length > 0) {
-        board.forEach(row => {
-          row.forEach(cell => {
-            if (cell !== null) count++;
-          });
-        });
-      }
-      return count;
-    };
-    
-    // Función auxiliar para inicializar un tablero con un número específico de iconos
-    const initializeBoardForLevel = (level: number, minIcons: number) => {
-      const gameState = store.getState().game;
-      const size = gameState.boardSize;
-      const icons = gameState.availableIcons;
-      
-      // Crear tablero vacío
-      const newBoard = Array(size).fill(null).map(() => Array(size).fill(null));
-      
-      // Añadir iconos aleatorios
-      let iconsPlaced = 0;
-      const targetIcons = Math.min(minIcons, Math.floor(size * size * 0.5)); // Máximo 50% del tablero
-      
-      while (iconsPlaced < targetIcons) {
-        const row = Math.floor(Math.random() * size);
-        const col = Math.floor(Math.random() * size);
-        
-        if (newBoard[row][col] === null) {
-          const iconIndex = Math.floor(Math.random() * icons.length);
-          newBoard[row][col] = icons[iconIndex];
-          iconsPlaced++;
-        }
-      }
-      
-      return newBoard;
-    };
+      isInitializingRef.current = false;
+    } catch (error) {
+      isInitializingRef.current = false;
+      logger.error('GamePage', 'Error al avanzar al siguiente nivel', error);
+    }
   };
 
-  // Nuevas funciones para los controles
-  const toggleDarkMode = () => {
-    toggleDarkModeFromHook();
+  // Función para continuar jugando después de ver algún modal
+  const continueToPlaying = () => {
+    // Verificar que no esté en curso otra inicialización
+    if (isInitializingRef.current) {
+      return;
+    }
+    
+    dispatch(setGameStatus('playing'));
+  };
+
+  // Funciones para acciones UI
+  const toggleGameDarkMode = () => {
     dispatch(setDarkMode(!darkMode));
+    themeToggle();
   };
   
   const toggleHelp = () => {
-    setShowHelp(!showHelp);
-    audioManager.play('click');
+    setShowTutorial(!showTutorial);
   };
   
   const toggleSound = () => {
-    setIsSoundEnabled(!isSoundEnabled);
+    const newSoundState = !soundOn;
+    setSoundOn(newSoundState);
+    
+    // Usar toggleSound del audioManager
     audioManager.toggleSound();
   };
   
-  // Añadimos la función toggleSettings para mostrar/ocultar la configuración
   const toggleSettings = () => {
-    // Puedes implementar esto para mostrar opciones de configuración
-    // Por ahora, simplemente cerramos el modal de pausa y mostramos un mensaje
-    dispatch(setGameStatus('playing'));
-    console.log('Configuración de juego');
+    if (status === 'playing') {
+      dispatch(setGameStatus('paused'));
+    }
   };
-  
-  // Determinar las clases del contenedor principal
-  const gamePageClasses = `game-page ${isFullscreen ? 'game-fullscreen' : ''} ${darkModeFromHook ? 'dark-mode' : 'light-mode'} ${status === 'playing' ? 'game-active' : ''}`;
-  
-  // Asegurar que no se muestre el contenido del juego cuando no estamos jugando
-  useEffect(() => {
-    const gamePageElement = document.querySelector('.game-page');
-    
-    // Si el juego está en un estado que requiere un modal, aseguramos que modal-active esté activo
-    if (status === 'startScreen' || status === 'gameOver' || status === 'levelCompleted') {
-      gamePageElement?.classList.add('modal-active');
-    } else if (status === 'playing') {
-      // Si el juego está activo, quitamos la clase modal-active
-      gamePageElement?.classList.remove('modal-active');
-    }
-  }, [status]);
 
-  // Inicializar el tablero
-  const initializeBoard = useCallback(() => {
-    // Detener cualquier inicialización en curso para evitar competencia
-    if (isInitializingRef.current) {
-      logger.warn('GamePage', 'Se canceló una inicialización en curso para iniciar una nueva');
-      // No retornar aquí, sino continuar con la nueva inicialización
-    }
-    
-    logger.info('GamePage', `Iniciando inicialización de tablero (nivel ${level}, modo ${currentPlayMode})`);
-    
-    // Marcar que estamos inicializando y reiniciar flags
-    isInitializingRef.current = true;
-    isBoardInitializedRef.current = false;
-    
-    // Detener todos los temporizadores antes de modificar el tablero
-    stopTimers();
-    
-    // Limpiar explícitamente el estado anterior
-    dispatch(setHighlightedCells([]));
-    
-    // Usar el sistema centralizado para configurar el tablero
-    configureBoardForLevel(level);
-    
-    // Marcar el tablero como inicializado después de un breve retraso
-    setTimeout(() => {
-      isBoardInitializedRef.current = true;
-      isInitializingRef.current = false;
-      
-      // Si el juego está en estado 'playing', iniciar temporizadores
-      const currentStatus = store.getState().game.status;
-      if (currentStatus === 'playing') {
-        // Iniciar temporizadores con reinicio forzado
-        startTimers(true);
-        logger.info('GamePage', `Iniciando temporizadores con reinicio forzado (nivel ${level}, spawn ${spawnRate}ms)`);
-      } else {
-        logger.info('GamePage', `No se inician temporizadores, estado actual: ${currentStatus}`);
-      }
-      
-      logger.info('GamePage', 'Tablero inicializado correctamente');
-    }, 500);
-  }, [dispatch, level, currentPlayMode, currentDifficulty, startTimers, stopTimers, spawnRate]);
-
-  // Game Over
-  const handleGameOver = useCallback(() => {
-    console.log("\n**********************************************************");
-    console.log("INICIO DEL FLUJO: GAME OVER");
-    console.log(`Nivel: ${level}, Modo: ${currentPlayMode}`);
-    console.log(`Puntuación: ${score}, Récord: ${highScore}`);
-    console.log("**********************************************************");
-    
-    // Detener temporizadores
-    stopTimers();
-    console.log("Fase 1: Temporizadores detenidos");
-    
-    // Reproducir sonido de game over
-    audioManager.play('gameOver');
-    console.log("Fase 2: Sonido de Game Over reproducido");
-    
-    // Actualizar récord si es necesario
-    if (score > highScore) {
-      // Guardar nuevo récord en localStorage
-      localStorage.setItem('highScore', score.toString());
-      console.log(`Fase 3: Nuevo récord establecido: ${score} (anterior: ${highScore})`);
-    } else {
-      console.log("Fase 3: No se superó el récord actual");
-    }
-    
-    // Guardar datos del juego
-    localStorage.setItem('gameState', JSON.stringify(store.getState().game));
-    console.log("Fase 4: Datos del juego guardados");
-    
-    // Mostrar modal de game over
-    console.log("Fase 5: Preparando para mostrar resultados");
-    
-    // Resetear combos al perder
-    dispatch(resetCombo());
-    
-    console.log("**********************************************************\n");
-    console.log("FIN DEL FLUJO: GAME OVER COMPLETADO");
-  }, [dispatch, score, highScore, level, currentPlayMode, stopTimers]);
-
-  // Completar nivel
-  const handleLevelComplete = useCallback(() => {
-    const { iconCount } = store.getState().game;
-    
-    console.log("\n**********************************************************");
-    console.log("INICIO DEL FLUJO: NIVEL COMPLETADO");
-    console.log(`Nivel actual: ${level}, Modo: ${currentPlayMode}`);
-    console.log(`Puntuación: ${score}, Iconos en tablero: ${iconCount}`);
-    console.log("**********************************************************");
-    
-    // Detener temporizadores
-    stopTimers();
-    console.log("Fase 1: Temporizadores detenidos");
-    
-    // Reproducir sonido de nivel completado
-    audioManager.play('levelComplete');
-    console.log("Fase 2: Sonido de nivel completado reproducido");
-    
-    console.log("Fase 3: Preparando transición al siguiente nivel");
-    
-    // Calcular bonificación de nivel según iconos restantes
-    if (currentPlayMode === 'classic' || currentPlayMode === 'zen') {
-      // Dar puntos extra por completar el nivel
-      const levelBonus = Math.max(0, 100 - iconCount * 10);
-      
-      if (levelBonus > 0) {
-        dispatch(incrementScore(levelBonus));
-        console.log(`Fase 4: Bonificación por nivel: +${levelBonus} puntos`);
-      } else {
-        console.log("Fase 4: Sin bonificación adicional por nivel");
-      }
-    } else {
-      console.log("Fase 4: Sin bonificación por nivel (no aplica en este modo)");
-    }
-    
-    // Guardar datos del juego
-    localStorage.setItem('gameState', JSON.stringify(store.getState().game));
-    console.log("Fase 5: Datos del juego guardados");
-    
-    // Resetear combos al completar nivel
-    dispatch(resetCombo());
-    
-    console.log("**********************************************************\n");
-    console.log("FIN DEL FLUJO: NIVEL COMPLETADO CON ÉXITO");
-  }, [dispatch, level, currentPlayMode, score, stopTimers]);
-
-  // Efecto para prevenir scroll en iOS y otros dispositivos móviles
-  useEffect(() => {
-    // Crear una función para manejar el evento touchmove
-    const preventScroll = (e: TouchEvent) => {
-      if (gameComponentRef.current && gameComponentRef.current.contains(e.target as Node)) {
-        e.preventDefault();
-      }
-    };
-    
-    // Añadir listener con opciones passive: false para poder prevenir el comportamiento por defecto
-    document.addEventListener('touchmove', preventScroll, { passive: false });
-    
-    // Deshabilitar el bouncing del scroll en iOS
-    document.documentElement.style.overscrollBehavior = 'none';
-    document.body.style.overscrollBehavior = 'none';
-    
-    // Añadir clase específica para la página del juego
-    document.body.classList.add('in-game-page');
-    
-    return () => {
-      // Limpiar al desmontar
-      document.removeEventListener('touchmove', preventScroll);
-      document.documentElement.style.overscrollBehavior = '';
-      document.body.style.overscrollBehavior = '';
-      document.body.classList.remove('in-game-page');
-    };
-  }, []);
-
-  // Actualizar el estado del juego según el estado actual
-  useEffect(() => {
-    // Se necesitan referencias a los elementos del DOM para ajustar el tablero
-    const boardContainer = document.querySelector('.game-board-container');
-    const boardElement = document.querySelector('#game-board');
-    
-    if (boardContainer && boardElement) {
-      adjustBoardVisuals(boardContainer as HTMLElement, boardElement as HTMLElement);
-    }
-    
-    // Si el juego está en modo tutorial y en estado 'playing', mostrar el tutorial
-    if (currentPlayMode === 'tutorial' && status === 'playing') {
-      setShowTutorial(true);
-    } else {
-      setShowTutorial(false);
-    }
-    
-  }, [status, currentPlayMode]);
-
-  // Manejar la finalización del tutorial
-  const handleTutorialComplete = () => {
-    setShowTutorial(false);
-    // Redirigir al usuario a la pantalla de selección de modo
-    dispatch(setGameStatus('startScreen'));
-    // La aplicación de sonido se manejará en el componente modal
-  };
+  // Determinar si el tablero debe ser renderizado
+  const shouldRenderBoard = status === 'playing';
 
   return (
-    <div 
-      className={`game-page ${darkModeFromHook ? 'dark-mode' : 'light-mode'}`} 
-      ref={gameComponentRef}
-    >
+    <div className="game-page" ref={gameComponentRef}>
+      {/* FPS Counter siempre visible en todas las pantallas */}
+      <FpsCounter performanceThreshold={10} />
+      
       <div className="game-container">
-        
-        {/* Sección del HUD y tablero de juego */}
-        <div className="game-board-section">
-          {/* GameHUD en la parte superior */}
-          <GameHUD />
-          
-          {/* Contenedor del tablero de juego */}
-          <div className="game-board-container">
-            <div id="game-board">
-              <GameBoard />
-            </div>
-          </div>
-        </div>
-        
-        {/* Tutorial del juego */}
-        {showTutorial && (
-          <GameTutorial onComplete={handleTutorialComplete} />
+        {/* PASO 1: Pantalla de carga - se muestra primero */}
+        {!fpsDetectionComplete && (
+          <LoadingScreen 
+            onInitComplete={(fpsDetected, useLiteMode) => {
+              logger.info('GamePage', "Inicialización completa detectada: " + fpsDetected + ", Modo Lite: " + useLiteMode);
+              // Usar un pequeño retraso para evitar renderizaciones simultáneas
+              setTimeout(() => {
+                setFpsDetectionComplete(true);
+                applyAnimationMode(useLiteMode);
+                // Asegurar que el estado del juego es correcto después de la inicialización
+                if (status === 'idle') {
+                  dispatch(setGameStatus('startScreen'));
+                }
+              }, 500);
+            }}
+          />
         )}
         
-        {/* Modales del juego */}
-        <GameOverModal
-          isVisible={status === 'gameOver'}
-          onRestart={handleRestartClick}
-        />
-        
-        <LevelCompleteModal
-          isVisible={status === 'levelCompleted'}
-          onContinue={handleNextLevel}
-          stars={3}
-          rewards={['monedas', 'gemas', 'vidas']}
-        />
-        
-        <PauseModal
-          isVisible={status === 'paused'}
-          onResume={handlePlayPauseClick}
-          onRestart={handleRestartClick}
-          onExit={() => navigate('/')}
-          onSettings={toggleSettings}
-        />
-        
-        <StartGameModal
-          isVisible={status === 'startScreen' && !showModeSelection}
-          onPlay={() => setShowModeSelection(true)}
-          onOptions={() => {}}
-          onCredits={() => {}}
-        />
-        
-        <ModeSelectionModal
-          isVisible={status === 'startScreen' && showModeSelection}
-          onStart={() => {
-            setShowModeSelection(false);
-            handleStartGame();
-          }}
-        />
+        {/* PASOS 2-4: Contenido del juego después de la carga inicial */}
+        {fpsDetectionComplete && (
+          <>
+            {/* PASO 4: Tablero de juego - solo se muestra durante el juego activo */}
+            {shouldRenderBoard && (
+              <div className="game-board-section">
+                {/* GameHUD en la parte superior */}
+                <GameHUD />
+                
+                {/* Contenedor del tablero de juego */}
+                <div className="game-board-container">
+                  <div id="game-board">
+                    <GameBoard />
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Tutorial - visible solo cuando está activado */}
+            {showTutorial && (
+              <GameTutorial onComplete={handleTutorialComplete} />
+            )}
+            
+            {/* PASO 2: Pantalla de inicio */}
+            {status === 'startScreen' && !showModeSelection && (
+              <StartGameModal
+                isVisible={true}
+                onPlay={() => setShowModeSelection(true)}
+                onOptions={toggleGameDarkMode}
+                onCredits={() => {}}
+              />
+            )}
+            
+            {/* PASO 3: Pantalla de selección de modo */}
+            {status === 'startScreen' && showModeSelection && (
+              <ModeSelectionModal
+                isVisible={true}
+                onStart={() => {
+                  setShowModeSelection(false);
+                  handleStartGame();
+                }}
+              />
+            )}
+            
+            {/* Otros estados del juego */}
+            {status === 'gameOver' && (
+              <GameOverModal
+                isVisible={true}
+                onRestart={handleRestartClick}
+                onReturnToMenu={handleReturnToStart}
+              />
+            )}
+            
+            {status === 'levelCompleted' && (
+              <LevelCompleteModal
+                isVisible={true}
+                onContinue={handleNextLevel}
+                onReturnToMenu={handleReturnToStart}
+                stars={3}
+                rewards={['monedas', 'gemas', 'vidas']}
+              />
+            )}
+            
+            {status === 'paused' && (
+              <PauseModal
+                isVisible={true}
+                onResume={handlePlayPauseClick}
+                onRestart={handleRestartClick}
+                onExit={handleReturnToStart}
+                onSettings={toggleSettings}
+              />
+            )}
+          </>
+        )}
       </div>
     </div>
   );
 };
 
-export default GamePage;
+export default GamePage; 

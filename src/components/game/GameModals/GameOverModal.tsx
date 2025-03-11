@@ -9,6 +9,7 @@ import './GameOverModal.css';
 interface GameOverModalProps {
   isVisible?: boolean;
   onRestart?: () => void;
+  onReturnToMenu?: () => void;
 }
 
 // Configuración inicial para animación de la entrada del modal
@@ -18,7 +19,7 @@ const GAME_OVER_ANIMATIONS = {
   button: { opacity: 0, transform: 'scale(0.8)' },
 };
 
-const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRestart }) => {
+const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRestart, onReturnToMenu }) => {
   const { gameState } = useGameContext();
   const { 
     score, 
@@ -73,70 +74,98 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
   // Efecto para manejar la animación de entrada cuando el modal es visible
   useEffect(() => {
     let animationTimeout: NodeJS.Timeout;
-    
+    const timeouts: NodeJS.Timeout[] = [];
+
     if (isVisible) {
       setModalVisible(true);
       setIsClosing(false);
+      document.body.classList.add('modal-open');
       
       // Verificar si hay nuevo récord
       setIsNewHighScore(score > highScore);
       
       // Reproducir sonido de game over
       playSound('gameOver');
-      
+
       // Animación secuencial para los elementos del modal
-      setTimeout(() => {
+      timeouts.push(setTimeout(() => {
         setAnimations(prev => ({
           ...prev,
           title: { opacity: 1, transform: 'translateY(0)' }
         }));
-        
-        setTimeout(() => {
+
+        timeouts.push(setTimeout(() => {
           setAnimations(prev => ({
             ...prev,
             content: { opacity: 1, transform: 'translateY(0)' }
           }));
-          
-          setTimeout(() => {
+
+          timeouts.push(setTimeout(() => {
             setAnimations(prev => ({
               ...prev,
               button: { opacity: 1, transform: 'scale(1)' }
             }));
-          }, 200);
-        }, 200);
-      }, 100);
+          }, 200));
+        }, 200));
+      }, 100));
     } else {
       setIsClosing(true);
       animationTimeout = setTimeout(() => {
         setModalVisible(false);
         setAnimations(GAME_OVER_ANIMATIONS);
+        document.body.classList.remove('modal-open');
       }, 300);
     }
-    
+
     return () => {
+      // Limpieza exhaustiva de todos los timeouts
       if (animationTimeout) {
         clearTimeout(animationTimeout);
       }
+      
+      // Limpiar todos los timeouts acumulados
+      timeouts.forEach(timeout => clearTimeout(timeout));
+      
+      // Asegurar que el cuerpo no se quede con la clase modal-open
+      document.body.classList.remove('modal-open');
+      
+      // Reiniciar estados
+      setIsClosing(false);
+      setAnimations(GAME_OVER_ANIMATIONS);
+      
+      console.log('GameOverModal desmontado y recursos liberados');
     };
   }, [isVisible, playSound, score, highScore]);
   
   const handleRestartClick = () => {
-    playSound('uiSelect');
-    
-    // Minimizamos el modal
-    setIsClosing(true);
-    
-    // Quitamos la clase modal-active para permitir ver el tablero de juego
-    const gamePageElement = document.querySelector('.game-page');
-    if (gamePageElement) {
-      gamePageElement.classList.remove('modal-active');
-    }
-    
-    setTimeout(() => {
-      if (onRestart) {
+    if (onRestart) {
+      setIsClosing(true);
+      
+      // Reproducir sonido de clic
+      playSound('uiClick');
+      
+      // Cerrar el modal con animación y luego llamar al callback
+      setTimeout(() => {
+        setModalVisible(false);
         onRestart();
-      }
-    }, 300);
+      }, 300);
+    }
+  };
+  
+  // Manejar el clic en volver al menú principal
+  const handleReturnToMenuClick = () => {
+    if (onReturnToMenu) {
+      setIsClosing(true);
+      
+      // Reproducir sonido de clic
+      playSound('uiClick');
+      
+      // Cerrar el modal con animación y luego llamar al callback
+      setTimeout(() => {
+        setModalVisible(false);
+        onReturnToMenu();
+      }, 300);
+    }
   };
   
   // Función para obtener la clase de estilo según el nivel de combo
@@ -286,18 +315,30 @@ const GameOverModal: React.FC<GameOverModalProps> = ({ isVisible = false, onRest
           </div>
         </div>
         
-        <div className="modal-buttons">
+        <div className="game-over-buttons">
           <button 
-            className="pulse-button play-again-button"
+            className="game-button primary-button"
             onClick={handleRestartClick}
             style={{
-              transition: 'all 0.4s ease',
-              transitionDelay: '0.4s',
+              transition: 'all 0.5s ease',
               ...animations.button
             }}
           >
-            <span>🔄</span> Jugar de nuevo
+            Reintentar
           </button>
+          
+          {onReturnToMenu && (
+            <button 
+              className="game-button secondary-button"
+              onClick={handleReturnToMenuClick}
+              style={{
+                transition: 'all 0.5s ease',
+                ...animations.button
+              }}
+            >
+              Menú Principal
+            </button>
+          )}
         </div>
       </div>
     </div>

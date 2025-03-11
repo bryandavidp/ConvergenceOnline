@@ -8,7 +8,6 @@ import React, {
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../../store";
 import useBoardInteraction from "./hooks/useBoardInteraction";
-import useAnimationsLoader from "./hooks/useAnimationsLoader";
 import "./styles/index.css";
 import {
   setHighlightedCells,
@@ -16,11 +15,16 @@ import {
   setSpawnRate,
   setLevel,
   setGameStatus,
+  setAvailableIcons,
+  updateBoard,
+  setIconCount,
 } from "../../../store/slices/gameSlice";
 import * as config from "../../../utils/config";
 import { audioManager } from "../../../utils/audioManager";
 import FpsCounter from "../FpsCounter/FpsCounter";
 import { NotificationProvider } from "../GameNotifications/GameNotificationManager";
+import * as levelUtils from "../../../utils/levels";
+import useGameLogic from "../../../hooks/useGameLogic";
 
 const GameBoard: React.FC = () => {
   const dispatch = useDispatch();
@@ -32,6 +36,8 @@ const GameBoard: React.FC = () => {
     currentDifficulty,
     level,
     spawnRate,
+    currentPlayMode,
+    availableIcons,
   } = useSelector((state: RootState) => state.game);
 
   const {
@@ -44,6 +50,10 @@ const GameBoard: React.FC = () => {
     showPenaltyAlert,
     showSpeedAlertUI,
   } = useBoardInteraction();
+  
+  // Importar las funciones necesarias de useGameLogic
+  const gameLogic = useGameLogic();
+  const { startTimers, stopTimers } = gameLogic;
 
   // Referencias para el tablero
   const gridRef = useRef<HTMLDivElement>(null);
@@ -58,7 +68,10 @@ const GameBoard: React.FC = () => {
   const [customSpeedMultiplier, setCustomSpeedMultiplier] = useState(1);
 
   // Estado para mostrar/ocultar el contador de FPS
-  const [showFpsCounter, setShowFpsCounter] = useState<boolean>(true);
+  const [showFpsCounter, setShowFpsCounter] = useState(false);
+
+  // Para mantener la compatibilidad con la UI mientras eliminamos useAnimationsLoader
+  const [usingLiteMode, setUsingLiteMode] = useState(false);
 
   // Estado para detección de rendimiento
   const [lowPerformanceMode, setLowPerformanceMode] = useState<boolean>(false);
@@ -260,13 +273,15 @@ const GameBoard: React.FC = () => {
     };
   }, []);
 
-  // Función para cambiar el tamaño del tablero (para desarrollo)
-  const handleBoardSizeChange = useCallback(
-    (newSize: number) => {
+  // Funciones de manejo de eventos
+  const handleBoardSizeChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSize = parseInt(event.target.value, 10);
+    if (isNaN(newSize)) return;
+    
+    if (status !== "playing") {
       dispatch(setBoardSize(newSize));
-    },
-    [dispatch]
-  );
+    }
+  }, [dispatch, status]);
 
   // Botón para mostrar pista
   const handleShowHint = useCallback(() => {
@@ -275,34 +290,41 @@ const GameBoard: React.FC = () => {
 
   // Función para cambiar la velocidad del juego
   const handleSpeedChange = useCallback(
-    (multiplier: number) => {
+    (multiplierOrEvent: number | React.ChangeEvent<HTMLInputElement>, isIncrease?: boolean) => {
+      // Determinar si estamos recibiendo un evento o un valor directo
+      let multiplier: number;
+      
+      if (typeof multiplierOrEvent === 'number') {
+        multiplier = multiplierOrEvent;
+      } else {
+        multiplier = parseFloat(multiplierOrEvent.target.value);
+      }
+      
+      if (isNaN(multiplier) || multiplier <= 0) return;
+      
       // Calcular nueva velocidad basada en el multiplicador
       const baseRate = config.SPAWN_RATES.MEDIUM; // Usar un valor consistente
       const newRate = Math.round(baseRate / multiplier);
-
-      // Actualizar estado local
-      setCustomSpeedMultiplier(multiplier);
-
-      // Mostrar feedback visual al usuario
-      audioManager.play("speedUp");
-
-      // Actualizar el store
+      
+      // Actualizar estado y dispatch
       dispatch(setSpawnRate(newRate));
-
-      // Mostrar siempre la alerta de cambio de velocidad con un pequeño retraso
-      // para asegurar que se actualice después de que Redux haya procesado los cambios
-      setTimeout(() => {
-        showSpeedAlertUI(multiplier);
-      }, 50);
-
+      setCustomSpeedMultiplier(multiplier);
+      
+      // Mostrar UI de alerta de velocidad
+      showSpeedAlertUI(multiplier);
+      
       console.log(`Velocidad cambiada a ${multiplier}x (${newRate}ms)`);
+
+      if (isIncrease) {
+        handleStepSpeed(multiplier);
+      }
     },
     [dispatch, showSpeedAlertUI]
   );
 
   // Función para avanzar o retroceder la velocidad paso a paso
   const handleStepSpeed = useCallback(
-    (direction: "increase" | "decrease") => {
+    (direction: number) => {
       const baseRate = config.SPAWN_RATES.MEDIUM;
       const currentMultiplier = Number((baseRate / spawnRate).toFixed(1));
 
@@ -325,7 +347,7 @@ const GameBoard: React.FC = () => {
 
       // Determinar el nuevo índice basado en la dirección
       let newIndex;
-      if (direction === "increase") {
+      if (direction > 0) {
         newIndex = Math.min(closestIndex + 1, speedSteps.length - 1);
       } else {
         newIndex = Math.max(closestIndex - 1, 0);
@@ -333,7 +355,7 @@ const GameBoard: React.FC = () => {
 
       // Aplicar el nuevo multiplicador
       const newMultiplier = speedSteps[newIndex];
-      handleSpeedChange(newMultiplier);
+      handleSpeedChange(newMultiplier, direction > 0);
     },
     [spawnRate, handleSpeedChange]
   );
@@ -382,168 +404,72 @@ const GameBoard: React.FC = () => {
     return Number((baseRate / spawnRate).toFixed(1));
   }, [spawnRate]);
 
-  // Valores predefinidos de multiplicadores de velocidad (ampliados)
-  const speedPresets = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
-
-  // Manejador para cuando se detecta una caída de rendimiento
-  const handlePerformanceDrop = useCallback((avgFps: number) => {
-    // Si ya activamos el modo, no volver a hacerlo
-    if (performanceActivatedRef.current) {
-      return;
-    }
-
-    // Marcar como activado
-    performanceActivatedRef.current = true;
-
-    console.log(
-      `GameBoard: Detectada caída de rendimiento. FPS promedio: ${avgFps}`
-    );
-
-    // Activar el modo de bajo rendimiento (local)
-    setLowPerformanceMode(true);
-
-    // Si el FPS es extremadamente bajo, activar el modo de rendimiento alto
-    if (avgFps < 20) {
-      // Añadir clase de rendimiento alto a nivel de documento
-      document.documentElement.classList.add("performance-mode");
-      document.documentElement.classList.add("performance-mode-high");
-      console.log(
-        `GameBoard: Activando modo de rendimiento ALTO. FPS promedio: ${avgFps}`
-      );
-    } else {
-      // Añadir clase a nivel de documento para que otros componentes respondan
-      document.documentElement.classList.add("performance-mode");
-    }
-
-    // Aplicar clase al grid para mejorar rendimiento
-    setTimeout(() => {
-      if (gridRef.current) {
-        gridRef.current.classList.add("performance-mode");
-      }
-    }, 0);
-  }, []);
-
-  // Hook para gestionar las animaciones según el rendimiento
-  const { useLiteAnimations, fps, setAnimationMode, isManualMode } =
-    useAnimationsLoader(35); // 35 FPS como umbral
-
   // Renderizar controles de desarrollo
   const renderDevControls = useCallback(() => {
     if (!showDevControls) return null;
 
-    // Describir el impacto de cada velocidad
-    const getSpeedDescription = (multiplier: number): string => {
-      if (multiplier <= 0.25) return "Ultra lento (debug detallado)";
-      if (multiplier <= 0.5) return "Muy lento (para debug)";
-      if (multiplier <= 0.75) return "Lento (principiantes)";
-      if (multiplier <= 1.1) return "Normal (equilibrado)";
-      if (multiplier <= 1.5) return "Rápido (intermedio)";
-      if (multiplier <= 2.0) return "Muy rápido (avanzado)";
-      if (multiplier <= 3.0) return "Extremo (expertos)";
-      return "Ultra rápido (imposible)";
-    };
-
-    // Convertir multiplicador a milisegundos
-    const getSpawnRateMs = (multiplier: number): number => {
-      return Math.round(config.SPAWN_RATES.MEDIUM / multiplier);
-    };
-
     return (
       <div className="dev-controls">
-        <div className="dev-controls-header">
-          <span>Controles de Desarrollo</span>
-          <button
-            onClick={() => setShowDevControls(false)}
-            className="close-btn"
-          >
-            ×
-          </button>
-        </div>
-        <div className="dev-controls-body">
+        <h3>Controles de Desarrollo</h3>
+        <div className="dev-controls-container">
           <div className="control-group">
-            <label>Tamaño del Tablero:</label>
-            <div className="board-size-buttons">
-              {[6, 8, 10, 12].map((size) => (
-                <button
-                  key={size}
-                  onClick={() => handleBoardSizeChange(size)}
-                  className={boardSize === size ? "active" : ""}
-                >
-                  {size}×{size}
-                </button>
-              ))}
-            </div>
+            <label>Tamaño del tablero</label>
+            <select
+              value={boardSize}
+              onChange={handleBoardSizeChange}
+              disabled={status === "playing"}
+            >
+              <option value={4}>4x4</option>
+              <option value={5}>5x5</option>
+              <option value={6}>6x6</option>
+              <option value={7}>7x7</option>
+              <option value={8}>8x8</option>
+            </select>
           </div>
 
           <div className="control-group">
-            <label>
-              Velocidad:{" "}
-              <span className="value-display">x{currentSpeedMultiplier}</span>
-              <span className="speed-description">
-                ({getSpeedDescription(currentSpeedMultiplier)})
-              </span>
-            </label>
-            <div className="speed-ms-display">
-              Tiempo entre iconos: {getSpawnRateMs(currentSpeedMultiplier)}ms
-            </div>
-
-            {/* Control preciso de velocidad */}
-            <div className="speed-step-controls">
-              <button
-                onClick={() => handleStepSpeed("decrease")}
-                className="step-button"
-              >
-                <span>⏪</span> Más lento
-              </button>
-              <button
-                onClick={toggleIconGeneration}
-                className={`toggle-button ${iconGenPaused ? "paused" : ""}`}
-              >
-                {iconGenPaused ? "▶️ Reanudar" : "⏸️ Pausar"}
-              </button>
-              <button
-                onClick={() => handleStepSpeed("increase")}
-                className="step-button"
-              >
-                Más rápido <span>⏩</span>
-              </button>
-            </div>
-
-            <div className="speed-buttons">
-              {speedPresets.map((speed) => (
-                <button
-                  key={speed}
-                  onClick={() => handleSpeedChange(speed)}
-                  className={
-                    Math.abs(currentSpeedMultiplier - speed) < 0.1
-                      ? "active"
-                      : ""
-                  }
-                >
-                  x{speed}
-                </button>
-              ))}
-            </div>
-            <div className="speed-slider">
+            <label>Velocidad de juego ({currentSpeedMultiplier.toFixed(1)}x)</label>
+            <div className="speed-controls">
+              <button onClick={() => handleSpeedChange(0.5)}>-</button>
               <input
                 type="range"
-                min="0.25"
-                max="4"
-                step="0.05"
-                value={customSpeedMultiplier}
-                onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
+                min="0.1"
+                max="3"
+                step="0.1"
+                value={customSpeedMultiplier || currentSpeedMultiplier}
+                onChange={handleSpeedChange}
               />
+              <button onClick={() => handleSpeedChange(0.5, true)}>+</button>
+            </div>
+            <div className="speed-buttons">
+              <button onClick={() => handleStepSpeed(0.5)}>0.5x</button>
+              <button onClick={() => handleStepSpeed(1)}>1x</button>
+              <button onClick={() => handleStepSpeed(1.5)}>1.5x</button>
+              <button onClick={() => handleStepSpeed(2)}>2x</button>
             </div>
           </div>
 
           <div className="control-group">
-            <label>Herramientas de Diagnóstico:</label>
-            <div className="diagnostic-tools">
+            <label>Generación de iconos</label>
+            <button onClick={toggleIconGeneration} className="action-button">
+              {iconGenPaused ? "Reanudar" : "Pausar"} generación
+            </button>
+          </div>
+
+          <div className="control-group">
+            <label>Contador FPS</label>
+            <div className="speed-buttons">
               <button
-                onClick={() => setShowFpsCounter(!showFpsCounter)}
-                className={showFpsCounter ? "active" : ""}
+                className={!showFpsCounter ? "active" : ""}
+                onClick={() => setShowFpsCounter(false)}
               >
-                {showFpsCounter ? "Ocultar FPS" : "Mostrar FPS"}
+                Oculto
+              </button>
+              <button
+                className={showFpsCounter ? "active" : ""}
+                onClick={() => setShowFpsCounter(true)}
+              >
+                Visible
               </button>
             </div>
           </div>
@@ -552,19 +478,24 @@ const GameBoard: React.FC = () => {
             <label>Modo de animaciones</label>
             <div className="speed-buttons">
               <button
-                className={!useLiteAnimations ? "active" : ""}
-                onClick={() => setAnimationMode(false)}
+                className={!usingLiteMode ? "active" : ""}
+                onClick={() => {
+                  setUsingLiteMode(false);
+                  document.documentElement.classList.remove('lite-animations');
+                }}
               >
                 Completas
               </button>
               <button
-                className={useLiteAnimations ? "active" : ""}
-                onClick={() => setAnimationMode(true)}
+                className={usingLiteMode ? "active" : ""}
+                onClick={() => {
+                  setUsingLiteMode(true);
+                  document.documentElement.classList.add('lite-animations');
+                }}
               >
                 Reducidas
               </button>
             </div>
-            {fps && <div className="value-display">FPS detectados: {fps}</div>}
           </div>
 
           <div className="control-actions">
@@ -598,10 +529,7 @@ const GameBoard: React.FC = () => {
     handleStepSpeed,
     toggleIconGeneration,
     handleNextLevel,
-    useLiteAnimations,
-    fps,
-    setAnimationMode,
-    isManualMode,
+    usingLiteMode
   ]);
 
   // Renderizar el tablero como una grid
@@ -638,11 +566,52 @@ const GameBoard: React.FC = () => {
     );
   }, [board, boardSize, cells, status]);
 
+  // Efecto para inicializar el tablero cuando cambia el nivel o el modo de juego
+  useEffect(() => {
+    if (status === 'playing' && board.length > 0) {
+      // Obtener los iconos para el nivel actual según dificultad y modo de juego
+      const levelIcons = levelUtils.getLevelIcons(level, currentPlayMode);
+      
+      // Verificar si los iconos actuales son diferentes de los que deberían estar
+      const shouldUpdateIcons = !availableIcons.every(icon => levelIcons.includes(icon)) || 
+                              !levelIcons.every(icon => availableIcons.includes(icon));
+      
+      if (shouldUpdateIcons) {
+        // Actualizar los iconos disponibles en el estado
+        dispatch(setAvailableIcons(levelIcons));
+        console.log(`GameBoard: Actualizados iconos para nivel ${level}, modo ${currentPlayMode}`);
+      }
+      
+      // Obtener la tasa de spawn adecuada para el nivel
+      const levelSpawnRate = levelUtils.getLevelSpawnRate(level, currentPlayMode, currentDifficulty);
+      if (spawnRate !== levelSpawnRate) {
+        dispatch(setSpawnRate(levelSpawnRate));
+        console.log(`GameBoard: Actualizada tasa de spawn para nivel ${level}: ${levelSpawnRate}ms`);
+      }
+      
+      // Asegurar que el tablero está inicializado correctamente
+      const boardEmpty = board.flat().every(cell => cell === null);
+      if (boardEmpty) {
+        console.log("GameBoard: Tablero vacío detectado, inicializando...");
+        gameLogic.initializeBoard(boardSize, true, level);
+      }
+      
+      // IMPORTANTE: Ya NO iniciamos los temporizadores desde aquí
+      // Esto evita tener múltiples temporizadores activos simultáneamente
+    }
+  }, [level, currentPlayMode, currentDifficulty, status, board, availableIcons, spawnRate, dispatch, gameLogic, boardSize]);
+  
+  // Efecto para detener timers cuando el juego no está en 'playing'
+  useEffect(() => {
+    if (status !== 'playing') {
+      stopTimers();
+    }
+  }, [status, stopTimers]);
+
   return (
     <NotificationProvider>
       {showFpsCounter && (
         <FpsCounter
-          onPerformanceDrop={handlePerformanceDrop}
           performanceThreshold={35}
         />
       )}

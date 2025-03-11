@@ -16,6 +16,7 @@ interface AudioManagerInstance {
   toggleMusic(): boolean;
   setVolume(volume: number): void;
   setMusicVolume(volume: number): void;
+  loadAll(): void;
 }
 
 /**
@@ -57,24 +58,24 @@ export function createAudioManager(): AudioManagerInstance {
     
     // Mapeo de nombres de sonidos a URLs
     const soundUrls: Record<string, string> = {
-      click: `${basePath}/sounds/click.mp3`,
-      invalidMove: `${basePath}/sounds/error.mp3`,
-      success: `${basePath}/sounds/success.mp3`,
-      levelComplete: `${basePath}/sounds/level_complete.mp3`,
-      gameOver: `${basePath}/sounds/game_over.mp3`,
-      startLevel: `${basePath}/sounds/start_level.mp3`,
-      hint: `${basePath}/sounds/hint.mp3`,
-      newIcon: `${basePath}/sounds/new_icon.mp3`,
-      removeIcon: `${basePath}/sounds/remove_icon.mp3`,
-      timeBonus: `${basePath}/sounds/time_bonus.mp3`,
-      buttonClick: `${basePath}/sounds/button_click.mp3`,
+      click: `${basePath}/public/assets/audio/pops/click.wav`,
+      invalidMove: `${basePath}/public/assets/audio/negatives/error.wav`,
+      success: `${basePath}/public/assets/audio/positives/bleep.wav`,
+      levelComplete: `${basePath}/public/assets/audio/level-completed.wav`,
+      gameOver: `${basePath}/public/assets/audio/negatives/gameover.wav`,
+      startLevel: `${basePath}/public/assets/audio/pops/start.wav`,
+      hint: `${basePath}/public/assets/audio/pops/hint.wav`,
+      newIcon: `${basePath}/public/assets/audio/pops/pop-up.wav`,
+      removeIcon: `${basePath}/public/assets/audio/pops/bubble-pop.wav`,
+      timeBonus: `${basePath}/public/assets/audio/positives/time-bonus.wav`,
+      buttonClick: `${basePath}/public/assets/audio/pops/click.wav`,
       // Añadir sonidos para el sistema de combos
-      comboSmall: `${basePath}/sounds/success.mp3`,      // Reutilizar el sonido de success
-      comboMedium: `${basePath}/sounds/success.mp3`,     // Reutilizar el sonido de success
-      comboLarge: `${basePath}/sounds/level_complete.mp3` // Reutilizar el sonido de level_complete
+      comboSmall: `${basePath}/public/assets/audio/positives/bleep.wav`,      // Reutilizar el sonido de success
+      comboMedium: `${basePath}/public/assets/audio/positives/bleep.wav`,     // Reutilizar el sonido de success
+      comboLarge: `${basePath}/public/assets/audio/positives/bleep.wav` // Reutilizar el sonido de level_complete
     };
     
-    return soundUrls[name] || `${basePath}/sounds/${name}.mp3`;
+    return soundUrls[name] || `${basePath}/public/assets/audio/pops/click.wav`;
   }
 
   // Función para cargar música
@@ -106,7 +107,7 @@ export function createAudioManager(): AudioManagerInstance {
     loadSound('success', '/assets/audio/positives/bleep.wav');
     loadSound('error', '/assets/audio/negatives/error.wav');
     loadSound('levelComplete', '/assets/audio/level-completed.wav');
-    loadSound('gameOver', '/assets/audio/pops/gameover.wav');
+    loadSound('gameOver', '/assets/audio/negatives/gameover.wav');
     loadSound('click', '/assets/audio/pops/click.wav');
 
     // Sonidos específicos del juego
@@ -115,7 +116,7 @@ export function createAudioManager(): AudioManagerInstance {
     loadSound('hint', '/assets/audio/pops/hint.wav');
     loadSound('speedUp', '/assets/audio/speed-up.mp3');
     loadSound('penalty', '/assets/audio/error.mp3');
-    loadSound('emptyBoard', '/assets/audio/pops/chime-up.wav');
+    loadSound('emptyBoard', '/assets/audio/positives/cartoon-sparkle.wav');
     loadSound('levelTransition', '/assets/audio/positives/cartoon-sparkle.wav');
     
     // Mejora del sonido de convergencia encontrada para hacerlo más satisfactorio
@@ -132,6 +133,36 @@ export function createAudioManager(): AudioManagerInstance {
     loadMusic('/assets/audio/level-music-2.mp3');
   } catch (error) {
     console.error('Error al cargar recursos de audio', error);
+  }
+
+  // Función para cargar todos los sonidos del juego
+  function loadAllSounds() {
+    // Efectos de interfaz
+    loadSound('click', '/sounds/ui/click.mp3');
+    loadSound('start', '/sounds/ui/start.mp3');
+    loadSound('pause', '/sounds/ui/pause.mp3');
+    loadSound('resume', '/sounds/ui/resume.mp3');
+    
+    // Efectos de juego
+    loadSound('points', '/sounds/game/points.mp3');
+    loadSound('gameOver', '/sounds/game/game_over.mp3');
+    loadSound('levelComplete', '/sounds/game/level_complete.mp3');
+    loadSound('startLevel', '/sounds/game/start_level.mp3');
+    loadSound('removeIcon', '/sounds/game/remove_icon.mp3');
+    loadSound('newIcon', '/sounds/game/new_icon.mp3');
+    loadSound('invalidMove', '/sounds/game/invalid_move.mp3');
+    loadSound('hint', '/sounds/game/hint.mp3');
+    loadSound('timeBonus', '/sounds/game/time_bonus.mp3');
+    loadSound('speedUp', '/sounds/game/speed_up.mp3');
+    loadSound('convergingFound', '/sounds/game/converging_found.mp3');
+    
+    // Combos
+    loadSound('comboSmall', '/sounds/game/combo_small.mp3');
+    loadSound('comboMedium', '/sounds/game/combo_medium.mp3');
+    loadSound('comboLarge', '/sounds/game/combo_large.mp3');
+    
+    // Cargar música de fondo
+    loadMusic('/sounds/music/game_music.mp3');
   }
 
   return {
@@ -240,6 +271,12 @@ export function createAudioManager(): AudioManagerInstance {
       if (music) {
         music.volume = musicVolume;
       }
+    },
+
+    // Implementación del método loadAll
+    loadAll() {
+      console.log('Cargando todos los sonidos del juego...');
+      loadAllSounds();
     }
   };
 }

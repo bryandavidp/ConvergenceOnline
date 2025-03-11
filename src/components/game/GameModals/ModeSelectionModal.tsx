@@ -513,42 +513,46 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
     }
   }, [selectedMode, localDifficulty]);
 
-  // Efecto para manejar la animación de entrada cuando el modal es visible
+  // Manejar la aparición/desaparición de la modal
   useEffect(() => {
     let animationTimeout: NodeJS.Timeout;
+    const timeouts: NodeJS.Timeout[] = [];
 
     if (isVisible) {
       setModalVisible(true);
       setIsClosing(false);
       document.body.classList.add('modal-open');
-
+      
       // Para nuevos jugadores, forzar el tutorial
       if (isNewPlayer && !tutorialCompleted) {
         setSelectedMode(GamePlayMode.TUTORIAL);
         setLocalDifficulty(GameDifficulty.EASY);
       }
+      
+      // Si estamos en la pantalla principal, ir a la pantalla de juego
+      currentScreen === 'main' && setActiveScreen('play');
 
-      // Animación secuencial para los elementos del modal
-      setTimeout(() => {
+      // Animation timeline
+      timeouts.push(setTimeout(() => {
         setAnimations(prev => ({
           ...prev,
           title: { opacity: 1, transform: 'translateY(0)' }
         }));
 
-        setTimeout(() => {
+        timeouts.push(setTimeout(() => {
           setAnimations(prev => ({
             ...prev,
             options: { opacity: 1, transform: 'translateY(0)' }
           }));
 
-          setTimeout(() => {
+          timeouts.push(setTimeout(() => {
             setAnimations(prev => ({
               ...prev,
               button: { opacity: 1, transform: 'scale(1)' }
             }));
-          }, 200);
-        }, 200);
-      }, 100);
+          }, 200));
+        }, 200));
+      }, 100));
     } else {
       setIsClosing(true);
       animationTimeout = setTimeout(() => {
@@ -561,11 +565,24 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
     }
 
     return () => {
+      // Limpieza exhaustiva de todos los timeouts
       if (animationTimeout) {
         clearTimeout(animationTimeout);
       }
+      
+      // Limpiar todos los timeouts acumulados
+      timeouts.forEach(timeout => clearTimeout(timeout));
+      
+      // Asegurar que el cuerpo no se quede con la clase modal-open
+      document.body.classList.remove('modal-open');
+      
+      // Reiniciar estados
+      setIsClosing(false);
+      setAnimations(START_ANIMATIONS);
+      
+      console.log('ModeSelectionModal desmontado y recursos liberados');
     };
-  }, [isVisible, playSound]);
+  }, [isVisible, currentScreen, isNewPlayer, tutorialCompleted]);
 
   // Navegar a otra pantalla
   const navigateTo = (screen: ScreenType) => {

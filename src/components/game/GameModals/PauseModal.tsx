@@ -69,93 +69,118 @@ const PauseModal: React.FC<PauseModalProps> = ({
   // Efecto para manejar la animación de entrada cuando el modal es visible
   useEffect(() => {
     let animationTimeout: NodeJS.Timeout;
-    
+    const timeouts: NodeJS.Timeout[] = [];
+
     if (isVisible) {
       setModalVisible(true);
       setIsClosing(false);
+      document.body.classList.add('modal-open');
       
       // Reproducir sonido de pausa
-      playSound('uiSelect');
-      
+      playSound('uiOpen');
+
       // Animación secuencial para los elementos del modal
-      setTimeout(() => {
+      timeouts.push(setTimeout(() => {
         setAnimations(prev => ({
           ...prev,
           title: { opacity: 1, transform: 'translateY(0)' }
         }));
-        
-        setTimeout(() => {
+
+        timeouts.push(setTimeout(() => {
           setAnimations(prev => ({
             ...prev,
             content: { opacity: 1, transform: 'translateY(0)' }
           }));
-          
-          setTimeout(() => {
+
+          timeouts.push(setTimeout(() => {
             setAnimations(prev => ({
               ...prev,
               buttons: { opacity: 1, transform: 'scale(1)' }
             }));
-          }, 200);
-        }, 200);
-      }, 100);
+          }, 200));
+        }, 200));
+      }, 100));
     } else {
       setIsClosing(true);
       animationTimeout = setTimeout(() => {
         setModalVisible(false);
         setAnimations(PAUSE_ANIMATIONS);
+        document.body.classList.remove('modal-open');
       }, 300);
     }
-    
+
     return () => {
+      // Limpieza exhaustiva de todos los timeouts
       if (animationTimeout) {
         clearTimeout(animationTimeout);
       }
+      
+      // Limpiar todos los timeouts acumulados
+      timeouts.forEach(timeout => clearTimeout(timeout));
+      
+      // Asegurar que el cuerpo no se quede con la clase modal-open
+      document.body.classList.remove('modal-open');
+      
+      // Reiniciar estados
+      setIsClosing(false);
+      setAnimations(PAUSE_ANIMATIONS);
+      
+      console.log('PauseModal desmontado y recursos liberados');
     };
   }, [isVisible, playSound]);
   
+  // Manejar el clic en reanudar
   const handleResume = () => {
-    playSound('uiSelect');
-    setIsClosing(true);
-    
-    // Quitamos la clase modal-active para permitir ver el tablero de juego
-    const gamePageElement = document.querySelector('.game-page');
-    if (gamePageElement) {
-      gamePageElement.classList.remove('modal-active');
-    }
-    
-    setTimeout(() => {
-      if (onResume) {
+    if (onResume) {
+      setIsClosing(true);
+      
+      // Reproducir sonido de clic
+      playSound('uiClick');
+      
+      // Cerrar el modal con animación y luego llamar al callback
+      setTimeout(() => {
+        setModalVisible(false);
         onResume();
-      }
-    }, 300);
+      }, 300);
+    }
   };
   
+  // Manejar el clic en reiniciar
   const handleRestart = () => {
-    playSound('uiSelect');
-    setIsClosing(true);
-    
-    setTimeout(() => {
-      if (onRestart) {
+    if (onRestart) {
+      setIsClosing(true);
+      
+      // Reproducir sonido de clic
+      playSound('uiClick');
+      
+      // Cerrar el modal con animación y luego llamar al callback
+      setTimeout(() => {
+        setModalVisible(false);
         onRestart();
-      }
-    }, 300);
+      }, 300);
+    }
   };
   
+  // Manejar el clic en salir
   const handleExit = () => {
-    playSound('uiSelect');
-    setIsClosing(true);
-    
-    setTimeout(() => {
-      if (onExit) {
+    if (onExit) {
+      setIsClosing(true);
+      
+      // Reproducir sonido de clic
+      playSound('uiClick');
+      
+      // Cerrar el modal con animación y luego llamar al callback
+      setTimeout(() => {
+        setModalVisible(false);
         onExit();
-      }
-    }, 300);
+      }, 300);
+    }
   };
   
+  // Manejar el clic en configuración
   const handleSettings = () => {
-    playSound('uiSelect');
-    
     if (onSettings) {
+      playSound('uiClick');
       onSettings();
     }
   };

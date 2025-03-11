@@ -9,6 +9,7 @@ import './LevelCompleteModal.css';
 interface LevelCompleteModalProps {
   isVisible?: boolean;
   onContinue?: () => void;
+  onReturnToMenu?: () => void;
   stars?: number;
   rewards?: string[];
 }
@@ -24,6 +25,7 @@ const LEVEL_COMPLETE_ANIMATIONS = {
 const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ 
   isVisible = false, 
   onContinue,
+  onReturnToMenu,
   stars = 3,
   rewards = ['monedas', 'gemas', 'vidas']
 }) => {
@@ -81,60 +83,81 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
   // Efecto para manejar la animación de entrada cuando el modal es visible
   useEffect(() => {
     let animationTimeout: NodeJS.Timeout;
-    
+    const timeouts: NodeJS.Timeout[] = [];
+    let confetiTimeout: NodeJS.Timeout;
+
     if (isVisible) {
       setModalVisible(true);
       setIsClosing(false);
+      document.body.classList.add('modal-open');
       
       // Reproducir sonido de victoria
       playSound('levelUp');
       
       // Mostrar confeti
-      setTimeout(() => {
+      confetiTimeout = setTimeout(() => {
         setShowConfetti(true);
       }, 300);
       
+      // Registrar el timeout para limpieza
+      timeouts.push(confetiTimeout);
+
       // Animación secuencial para los elementos del modal
-      setTimeout(() => {
+      timeouts.push(setTimeout(() => {
         setAnimations(prev => ({
           ...prev,
           title: { opacity: 1, transform: 'translateY(0)' }
         }));
-        
-        setTimeout(() => {
+
+        timeouts.push(setTimeout(() => {
           setAnimations(prev => ({
             ...prev,
             stars: { opacity: 1, transform: 'scale(1)' }
           }));
-          
-          setTimeout(() => {
+
+          timeouts.push(setTimeout(() => {
             setAnimations(prev => ({
               ...prev,
               content: { opacity: 1, transform: 'translateY(0)' }
             }));
-            
-            setTimeout(() => {
+
+            timeouts.push(setTimeout(() => {
               setAnimations(prev => ({
                 ...prev,
                 buttons: { opacity: 1, transform: 'scale(1)' }
               }));
-            }, 200);
-          }, 200);
-        }, 200);
-      }, 100);
+            }, 100));
+          }, 100));
+        }, 200));
+      }, 100));
     } else {
       setIsClosing(true);
       setShowConfetti(false);
       animationTimeout = setTimeout(() => {
         setModalVisible(false);
         setAnimations(LEVEL_COMPLETE_ANIMATIONS);
+        document.body.classList.remove('modal-open');
       }, 300);
     }
-    
+
     return () => {
+      // Limpieza exhaustiva de todos los timeouts
       if (animationTimeout) {
         clearTimeout(animationTimeout);
       }
+      
+      // Limpiar todos los timeouts acumulados
+      timeouts.forEach(timeout => clearTimeout(timeout));
+      
+      // Asegurar que el cuerpo no se quede con la clase modal-open
+      document.body.classList.remove('modal-open');
+      
+      // Reiniciar estados
+      setIsClosing(false);
+      setAnimations(LEVEL_COMPLETE_ANIMATIONS);
+      setShowConfetti(false);
+      
+      console.log('LevelCompleteModal desmontado y recursos liberados');
     };
   }, [isVisible, playSound]);
   
@@ -169,34 +192,36 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
     });
   };
   
+  // Manejar el clic en continuar
   const handleContinue = () => {
-    playSound('uiSelect');
-    
-    // Mostrar un mensaje de carga mientras se prepara el nivel
-    setAnimations({
-      ...animations,
-      title: { opacity: 0, transform: 'translateY(-20px)' },
-      content: { opacity: 0, transform: 'translateY(20px)' }
-    });
-    
-    // Minimizamos el modal
-    setIsClosing(true);
-    
-    // Esperar a que termine la animación antes de continuar
-    setTimeout(() => {
-      // Quitamos la clase modal-active para permitir ver el tablero de juego
-      const gamePageElement = document.querySelector('.game-page');
-      if (gamePageElement) {
-        gamePageElement.classList.remove('modal-active');
-      }
+    if (onContinue) {
+      setIsClosing(true);
       
-      // Llamar al callback de continuar DESPUÉS de quitar el modal
+      // Reproducir sonido de clic
+      playSound('uiClick');
+      
+      // Cerrar el modal con animación y luego llamar al callback
       setTimeout(() => {
-        if (onContinue) {
-          onContinue();
-        }
-      }, 200); // Pequeño retraso para asegurar que la transición visual sea suave
-    }, 500);
+        setModalVisible(false);
+        onContinue();
+      }, 300);
+    }
+  };
+  
+  // Manejar el clic en volver al menú principal
+  const handleReturnToMenuClick = () => {
+    if (onReturnToMenu) {
+      setIsClosing(true);
+      
+      // Reproducir sonido de clic
+      playSound('uiClick');
+      
+      // Cerrar el modal con animación y luego llamar al callback
+      setTimeout(() => {
+        setModalVisible(false);
+        onReturnToMenu();
+      }, 300);
+    }
   };
   
   // Renderiza las recompensas del nivel
@@ -391,20 +416,30 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
           </div>
         </div>
         
-        <div 
-          className="modal-buttons"
-          style={{
-            transition: 'all 0.4s ease',
-            transitionDelay: '0.6s',
-            ...animations.buttons
-          }}
-        >
+        <div className="level-complete-buttons">
           <button 
-            className="pulse-button next-level-button"
+            className="game-button primary-button"
             onClick={handleContinue}
+            style={{
+              transition: 'all 0.5s ease',
+              ...animations.buttons
+            }}
           >
-            ▶️ Siguiente Nivel
+            Continuar
           </button>
+          
+          {onReturnToMenu && (
+            <button 
+              className="game-button secondary-button"
+              onClick={handleReturnToMenuClick}
+              style={{
+                transition: 'all 0.5s ease',
+                ...animations.buttons
+              }}
+            >
+              Menú Principal
+            </button>
+          )}
         </div>
       </div>
     </div>

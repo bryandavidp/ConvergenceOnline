@@ -31,12 +31,14 @@ export interface LevelConfig {
     classic: LevelRequirement[];
     timed: LevelRequirement[];
     survival: LevelRequirement[];
+    tutorial?: LevelRequirement[];
     zen?: LevelRequirement[];
   };
   rewards: {
     classic?: LevelReward[];
     timed?: LevelReward[];
     survival?: LevelReward[];
+    tutorial?: LevelReward[];
     zen?: LevelReward[];
   };
   specialFeatures?: {
@@ -486,6 +488,11 @@ export function getLevelConfig(
       adjustedConfig.requirements.zen = [
         { type: 'time', value: 0, description: 'Juega sin presión' }
       ];
+    } else if (playMode === 'tutorial') {
+      // Para el tutorial, crear requisitos específicos para enseñar el juego
+      adjustedConfig.requirements.tutorial = [
+        { type: 'score', value: 100, description: 'Completa el tutorial' }
+      ];
     } else if (adjustedConfig.requirements.classic) {
       // Para otros modos, copiar los del clásico si existen
       adjustedConfig.requirements[playMode] = [...adjustedConfig.requirements.classic];
@@ -500,13 +507,13 @@ export function getLevelConfig(
   // Ajustar requisitos según dificultad
   const modeRequirements = adjustedConfig.requirements[playMode];
   if (modeRequirements) {
-    modeRequirements.forEach(req => {
+    modeRequirements.forEach((req: LevelRequirement) => {
       if (req.type === 'score') {
         req.value = Math.round(req.value * difficultyMod.scoreRequirement);
         req.description = `Alcanza ${req.value} puntos`;
       } else if (req.type === 'time') {
-        // Para el modo zen, no ajustar requisitos de tiempo
-        if (playMode !== 'zen') {
+        // Para el modo zen o tutorial, no ajustar requisitos de tiempo
+        if (playMode !== 'zen' && playMode !== 'tutorial') {
           req.value = Math.round(req.value * difficultyMod.timeRequirement);
           req.description = `Sobrevive ${req.value >= 60 ? `${Math.floor(req.value/60)} minuto${req.value >= 120 ? 's' : ''}` : ''}${req.value % 60 > 0 ? (req.value >= 60 ? ' y ' : '') + `${req.value % 60} segundo${req.value % 60 !== 1 ? 's' : ''}` : ''}`;
         }
