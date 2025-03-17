@@ -51,7 +51,10 @@ export function migrateConfigToLevelSystem() {
     logger.info('LevelSystem', 'Migrando configuración existente al nuevo sistema de niveles');
     
     // Crear mapeo de configuraciones antiguas a nuevas
-    const iconSets = config.LEVEL_ICONS;
+    const iconSets: Record<number, string[]> = {};
+    for (let i = 1; i <= 10; i++) {
+      iconSets[i] = config.getIconSetForLevel(i);
+    }
     const boardSizes = config.BOARD_SIZES;
     
     // Verificar si ya existen niveles predefinidos

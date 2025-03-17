@@ -1,128 +1,142 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useGameContext } from '../../../contexts/GameContext';
-import { useGameSound } from '../../../hooks/useGameSound';
-import { ICONS } from '../../../constants/icons';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../store';
+import { GameState } from '../../../store/slices/gameSlice';
 import './LevelCompleteModal.css';
 
-interface LevelCompleteModalProps {
-  isVisible?: boolean;
-  onContinue?: () => void;
-  onReturnToMenu?: () => void;
-  stars?: number;
-  rewards?: {type: string, amount: number, rarity?: string}[] | string[];
+// Definición de GameStats si no existe
+interface GameStats {
+  score: number;
+  timeFormatted: string;
+  maxCombo: number;
+  moves: number;
+  averageSpeed: number;
 }
 
-const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({ 
-  isVisible = false, 
-  onContinue,
-  onReturnToMenu,
-  stars = 3,
-  rewards = [
-    {type: 'monedas', amount: 150, rarity: 'common'}, 
-    {type: 'gemas', amount: 5, rarity: 'rare'}, 
-    {type: 'vidas', amount: 1, rarity: 'epic'}
-  ]
-}) => {
-  const { gameState } = useGameContext();
-  const { 
-    score, 
-    level, 
-    comboCount, 
-    comboMultiplier, 
-    gameEndReason, 
-    currentPlayMode, 
-    currentDifficulty,
-    spawnRate,
-    iconCount
-  } = useSelector((state: RootState) => state.game);
-  const { playSound } = useGameSound();
-  const modalContentRef = useRef<HTMLDivElement>(null);
-  const confettiContainerRef = useRef<HTMLDivElement>(null);
-  
-  // Estados para controlar animaciones y visibilidad
-  const [modalVisible, setModalVisible] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
-  const [showRewards, setShowRewards] = useState(false);
+// Tipos para las recompensas
+type RewardType = 'coins' | 'gems' | 'xp' | 'item' | 'character' | 'skill';
+type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
-  // Ajustar altura de la ventana para dispositivos móviles
+interface Reward {
+  type: RewardType;
+  amount: number;
+  name: string;
+  icon: string;
+  rarity: Rarity;
+}
+
+interface NextLevelPreview {
+  level: number;
+  difficulty: number;
+  newIcons: string[];
+  objectives: {
+    description: string;
+    target: string;
+    icon: string;
+  }[];
+}
+
+interface LevelCompleteModalProps {
+  isVisible: boolean;
+  onClose: () => void;
+  onContinue: () => void;
+  onMainMenu: () => void;
+  gameStats: GameStats;
+  levelNumber: number;
+  nextLevel: number;
+  starsEarned: number;
+  rewards: Reward[];
+  nextLevelPreview?: NextLevelPreview;
+}
+
+const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
+  isVisible,
+  onClose,
+  onContinue,
+  onMainMenu,
+  gameStats = {
+    score: 0,
+    timeFormatted: '00:00',
+    maxCombo: 0,
+    moves: 0,
+    averageSpeed: 0
+  }, // Valor por defecto para gameStats
+  levelNumber = 1,
+  nextLevel = 2,
+  starsEarned = 0,
+  rewards = [],
+  nextLevelPreview
+}) => {
+  const [closing, setClosing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'results' | 'preview'>('results');
+  const modalRef = useRef<HTMLDivElement>(null);
+  const confettiRef = useRef<HTMLDivElement>(null);
+  
+  // Función para ajustar el alto del viewport en dispositivos móviles
   const setViewportHeight = () => {
-    // Cálculo más preciso de la altura real disponible
     const vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
   };
-
-  // Crear partículas flotantes doradas y ajustar altura
+  
   useEffect(() => {
-    // Configuración inicial
+    // Ajustar viewport para dispositivos móviles
     setViewportHeight();
-    
-    // Recalcular en cambios de orientación o redimensionamiento
     window.addEventListener('resize', setViewportHeight);
-    window.addEventListener('orientationchange', setViewportHeight);
     
-    // Recalcular después de cargar completamente (para barras de navegación móviles)
-    window.addEventListener('load', setViewportHeight);
-    
-    // Limpiar event listeners
+    // Limpiar event listener
     return () => {
       window.removeEventListener('resize', setViewportHeight);
-      window.removeEventListener('orientationchange', setViewportHeight);
-      window.removeEventListener('load', setViewportHeight);
     };
   }, []);
 
-  // Efectos para manejar la visibilidad del modal
+  // Manejar el cierre con animación
+  const handleClose = () => {
+    setClosing(true);
+    setTimeout(() => {
+      onClose();
+      setClosing(false);
+    }, 300);
+  };
+  
+  // Crear confeti al mostrar el modal
   useEffect(() => {
-    if (isVisible) {
-      setModalVisible(true);
-      setIsClosing(false);
-      // playSound('levelComplete');
+    if (isVisible && confettiRef.current) {
       createConfetti();
-      
-      // Mostrar recompensas con un pequeño retraso para crear efecto
-      const rewardsTimer = setTimeout(() => {
-        setShowRewards(true);
-      }, 600);
-      
-      return () => clearTimeout(rewardsTimer);
-    } else {
-      setIsClosing(true);
-      setShowRewards(false);
-      const timer = setTimeout(() => {
-        setModalVisible(false);
-      }, 500);
-      return () => clearTimeout(timer);
     }
-  }, [isVisible, playSound]);
-
+  }, [isVisible]);
+  
   // Crear efecto de confeti
   const createConfetti = () => {
-    if (!confettiContainerRef.current) return;
+    if (!confettiRef.current) return;
     
-    const container = confettiContainerRef.current;
-    container.innerHTML = '';
+    // Reducir la cantidad de confeti en pantallas pequeñas
+    const confettiCount = window.innerWidth < 500 ? 20 : 35;
     
-    const colors = ['#FFD700', '#FF5722', '#3F51B5', '#4CAF50', '#9C27B0'];
+    // Limpiar confeti anterior
+    while (confettiRef.current.firstChild) {
+      confettiRef.current.removeChild(confettiRef.current.firstChild);
+    }
     
-    for (let i = 0; i < 50; i++) {
+    const colors = ['#4CAF50', '#FFC107', '#2196F3', '#E91E63', '#FFEB3B', '#3F51B5'];
+    
+    // Crear piezas de confeti
+    for (let i = 0; i < confettiCount; i++) {
       const confetti = document.createElement('div');
       confetti.className = 'confetti';
       
-      // Posición aleatoria horizontal
-      const leftPos = Math.random() * 100;
-      confetti.style.left = `${leftPos}%`;
+      // Estilos aleatorios para cada pieza
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const left = Math.random() * 100 + '%';
+      const size = Math.random() * 8 + 5 + 'px';
+      const delay = Math.random() * 3 + 's';
+      const duration = (Math.random() * 2 + 3) + 's';
       
-      // Agregar delay para que no aparezcan todos a la vez
-      const delay = Math.random() * 3;
-      confetti.style.animationDelay = `${delay}s`;
+      confetti.style.left = left;
+      confetti.style.width = size;
+      confetti.style.height = size;
+      confetti.style.backgroundColor = color;
+      confetti.style.animationDelay = delay;
+      confetti.style.animationDuration = duration;
       
-      // Color aleatorio
-      const randomColor = colors[Math.floor(Math.random() * colors.length)];
-      confetti.style.backgroundColor = randomColor;
-      
-      // Forma aleatoria
+      // Formas aleatorias para el confeti
       const shapes = ['square', 'circle', 'triangle'];
       const shape = shapes[Math.floor(Math.random() * shapes.length)];
       
@@ -132,333 +146,251 @@ const LevelCompleteModal: React.FC<LevelCompleteModalProps> = ({
         confetti.style.width = '0';
         confetti.style.height = '0';
         confetti.style.backgroundColor = 'transparent';
-        confetti.style.borderLeft = '5px solid transparent';
-        confetti.style.borderRight = '5px solid transparent';
-        confetti.style.borderBottom = `10px solid ${randomColor}`;
+        confetti.style.borderLeft = size + ' solid transparent';
+        confetti.style.borderRight = size + ' solid transparent';
+        confetti.style.borderBottom = size + ' solid ' + color;
       }
       
-      // Tamaño aleatorio
-      const size = Math.random() * 8 + 5;
-      confetti.style.width = `${size}px`;
-      confetti.style.height = `${size}px`;
-      
-      container.appendChild(confetti);
-    }
-  };
-
-  // Manejo de continuar al siguiente nivel
-  const handleContinue = () => {
-    setIsClosing(true);
-    // playSound('buttonClick');
-    
-    setTimeout(() => {
-      if (onContinue) {
-        onContinue();
-      }
-    }, 300);
-  };
-
-  // Manejo de volver al menú principal
-  const handleReturnToMenuClick = () => {
-    setIsClosing(true);
-    // playSound('buttonClick');
-    
-    setTimeout(() => {
-      if (onReturnToMenu) {
-        onReturnToMenu();
-      }
-    }, 300);
-  };
-
-  // Función para obtener el icono según el tipo de victoria
-  const getVictoryIcon = () => {
-    if (gameEndReason?.includes('limpiado completamente el tablero')) {
-      return '✨🏆✨';
-    } else if (gameEndReason?.match(/Solo quedan (\d+) iconos/)) {
-      return '🎯';
-    } else if (gameEndReason?.match(/tiene (\d+) iconos/)) {
-      return '📊';
-    } else if (gameEndReason?.includes('ocupación')) {
-      return '📉';
-    } else {
-      return '🎉';
-    }
-  };
-
-  // Función para obtener el título según el tipo de victoria
-  const getVictoryTitle = () => {
-    if (gameEndReason?.includes('limpiado completamente el tablero')) {
-      return '¡Tablero Vacío!';
-    } else if (gameEndReason?.match(/Solo quedan (\d+) iconos/)) {
-      const iconCount = gameEndReason.match(/Solo quedan (\d+) iconos/)?.[1] || '0';
-      return `Casi Perfecto - ${iconCount} iconos restantes`;
-    } else if (gameEndReason?.match(/tiene (\d+) iconos/)) {
-      const iconCount = gameEndReason.match(/tiene (\d+) iconos/)?.[1] || '0';
-      return `Nivel Completado - ${iconCount} iconos restantes`;
-    } else if (gameEndReason?.includes('ocupación')) {
-      const percentage = gameEndReason.match(/(\d+\.\d+)% de ocupación/)?.[1] || '0';
-      return `Tablero Despejado - ${percentage}% ocupación`;
-    } else {
-      return '¡Nivel Completado!';
-    }
-  };
-
-  // Clase de combo según nivel
-  const getComboClass = () => {
-    if (comboCount >= 30) return 'combo-legendary-text';
-    if (comboCount >= 20) return 'combo-epic-text';
-    if (comboCount >= 10) return 'combo-rare-text';
-    if (comboCount >= 5) return 'combo-uncommon-text';
-    return 'combo-basic-text';
-  };
-
-  // Traducir nombres de modos de juego
-  const getPlayModeName = (mode: string): string => {
-    switch (mode) {
-      case 'classic': return 'Clásico';
-      case 'timed': return 'Contrarreloj';
-      case 'survival': return 'Supervivencia';
-      case 'zen': return 'Zen';
-      case 'tutorial': return 'Tutorial';
-      default: return mode;
-    }
-  };
-
-  // Traducir nombres de dificultad
-  const getDifficultyName = (difficulty: string): string => {
-    switch (difficulty) {
-      case 'easy': return 'Fácil';
-      case 'normal': return 'Normal';
-      case 'hard': return 'Difícil';
-      case 'very_easy': return 'Muy Fácil';
-      case 'very_hard': return 'Muy Difícil';
-      default: return difficulty;
-    }
-  };
-
-  // Formatear velocidad de spawn
-  const formatSpawnRate = (rate: number): string => {
-    const seconds = rate / 1000;
-    return `${seconds.toFixed(1)}s/icon`;
-  };
-
-  // Obtener el porcentaje de victoria si existe
-  const getVictoryPercentage = (): string | null => {
-    if (gameEndReason?.includes('ocupación')) {
-      return gameEndReason.match(/(\d+\.\d+)% de ocupación/)?.[1] || null;
-    }
-    return null;
-  };
-
-  // Extraer la información de iconos restantes
-  const getRemainingIcons = (): string | null => {
-    if (gameEndReason?.match(/Solo quedan (\d+) iconos/)) {
-      return gameEndReason.match(/Solo quedan (\d+) iconos/)?.[1] || null;
-    } else if (gameEndReason?.match(/tiene (\d+) iconos/)) {
-      return gameEndReason.match(/tiene (\d+) iconos/)?.[1] || null;
-    }
-    return null;
-  };
-
-  // Obtener icono para cada tipo de recompensa
-  const getRewardIcon = (type: string): string => {
-    const lowerType = type.toLowerCase();
-    
-    if (lowerType.includes('moned') || lowerType.includes('coin') || lowerType === 'oro' || lowerType === 'gold') {
-      return '🪙';
-    } else if (lowerType.includes('gema') || lowerType.includes('gem') || lowerType.includes('diam')) {
-      return '💎';
-    } else if (lowerType.includes('vida') || lowerType.includes('life') || lowerType.includes('heart')) {
-      return '❤️';
-    } else if (lowerType.includes('energ')) {
-      return '⚡';
-    } else if (lowerType.includes('poder') || lowerType.includes('power')) {
-      return '✨';
-    } else if (lowerType.includes('llave') || lowerType.includes('key')) {
-      return '🔑';
-    } else if (lowerType.includes('cofre') || lowerType.includes('chest') || lowerType.includes('tesoro')) {
-      return '🎁';
-    } else if (lowerType.includes('trofeo') || lowerType.includes('trophy')) {
-      return '🏆';
-    } else if (lowerType.includes('ticket') || lowerType.includes('entra')) {
-      return '🎫';
-    } else if (lowerType.includes('boost')) {
-      return '🚀';
-    } else if (lowerType.includes('scroll') || lowerType.includes('pergam')) {
-      return '📜';
-    } else if (lowerType.includes('potion') || lowerType.includes('poción')) {
-      return '🧪';
-    } else if (lowerType.includes('skin') || lowerType.includes('apar')) {
-      return '👕';
-    } else {
-      return '🎮';
+      confettiRef.current.appendChild(confetti);
     }
   };
   
-  // Normalizar las recompensas al formato estándar
-  const normalizeRewards = () => {
-    if (!rewards || rewards.length === 0) return [];
+  // Generar iconos flotantes
+  const floatingIcons = () => {
+    // Reducir la cantidad de iconos
+    const icons = ['🏆', '⭐', '🎉', '🚀', '🌟'];
+    const numIcons = Math.min(7, window.innerWidth < 500 ? 3 : 5);
     
-    // Si ya tienen el formato de objeto
-    if (typeof rewards[0] !== 'string' && 'type' in rewards[0]) {
-      return rewards as {type: string, amount: number, rarity?: string}[];
+    const renderedIcons = [];
+    for (let i = 0; i < numIcons; i++) {
+      const icon = icons[Math.floor(Math.random() * icons.length)];
+      const delay = Math.random() * 2;
+      const duration = Math.random() * 2 + 2;
+      const top = 5 + Math.random() * 20; // Limitamos a la parte superior
+      const left = 5 + Math.random() * 90;
+      
+      renderedIcons.push(
+        <div 
+          key={i}
+          className="floating-icon"
+          style={{
+            position: 'absolute',
+            top: `${top}%`,
+            left: `${left}%`,
+            fontSize: `${Math.random() * 1.2 + 0.8}em`,
+            opacity: 0.4,
+            filter: 'blur(0.5px)',
+            animation: `float ${duration}s ease-in-out ${delay}s infinite`,
+            zIndex: 0 // Menor z-index para que no cubra el contenido
+          }}
+        >
+          {icon}
+        </div>
+      );
     }
     
-    // Si son solo strings, convertir a formato de objeto
-    return (rewards as string[]).map(type => ({
-      type,
-      amount: Math.floor(Math.random() * 5) + 1,
-      rarity: ['common', 'uncommon', 'rare', 'epic', 'legendary'][Math.floor(Math.random() * 5)]
-    }));
+    return <>{renderedIcons}</>;
   };
-
-  // Normalizar recompensas
-  const normalizedRewards = normalizeRewards();
-
-  if (!modalVisible) return null;
-
+  
+  // Determinar la clase de combo
+  const getComboClass = (combo: number) => {
+    if (combo >= 20) return 'combo-legendary-text';
+    if (combo >= 15) return 'combo-epic-text';
+    if (combo >= 10) return 'combo-rare-text';
+    if (combo >= 5) return 'combo-uncommon-text';
+    return 'combo-basic-text';
+  };
+  
+  // Obtener iconos para las estadísticas
+  const getStatIcon = (statType: string) => {
+    switch (statType) {
+      case 'score': return '🏆';
+      case 'time': return '⏱️';
+      case 'combo': return '⚡';
+      case 'moves': return '👣';
+      case 'speed': return '🚀';
+      default: return '📊';
+    }
+  };
+  
+  // Si el modal no está visible, no renderizar nada
+  if (!isVisible && !closing) {
+    return null;
+  }
+  
   return (
-    <div className={`game-modal fullscreen-modal ${isVisible ? 'visible' : ''} ${isClosing ? 'closing' : ''}`}>
-      <div className="level-complete-background"></div>
-      <div className="confetti-container" ref={confettiContainerRef}></div>
-      
-      <div className="modal-content level-complete-content" ref={modalContentRef}>
-        {/* Cabecera con título y estrellas */}
+    <div 
+      className={`game-modal fullscreen-modal ${isVisible ? 'visible' : ''} ${closing ? 'closing' : ''}`}
+      onClick={handleClose}
+    >
+      <div 
+        ref={modalRef}
+        className={`level-complete-content ${isVisible && !closing ? 'animate-in' : ''}`}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+      >
+        {/* Fondo con efectos */}
+        <div className="level-complete-background"></div>
+        
+        {/* Contenedor de confeti */}
+        <div ref={confettiRef} className="confetti-container"></div>
+        
+        {/* Iconos flotantes - ahora están detrás del contenido */}
+        {floatingIcons()}
+        
+        {/* Encabezado */}
         <div className="level-header">
-          <h1>¡Nivel Completado!</h1>
-          
+          <div className="level-transition">
+            <span className="previous-level">N{levelNumber}</span>
+            <span className="level-arrow">→</span>
+            <span className="next-level pulse-animation">N{nextLevel}</span>
+          </div>
           <div className="stars-container">
-            {[...Array(3)].map((_, index) => (
-              <svg
-                key={index}
-                className={`level-star ${index < stars ? 'earned' : ''}`}
-                style={{ '--delay': `${index * 0.1}s` } as React.CSSProperties}
-                viewBox="0 0 24 24"
-                fill="currentColor"
+            {[1, 2, 3].map((star) => (
+              <div 
+                key={star} 
+                className={`level-star ${star <= starsEarned ? 'earned' : ''}`}
+                style={{ '--delay': `${(star - 1) * 0.2}s` } as React.CSSProperties}
               >
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-              </svg>
+                ⭐
+              </div>
             ))}
           </div>
         </div>
         
-        {/* Nueva estructura de contenido más compacta */}
-        <div className="results-container">
-          {/* Tarjeta de victoria visual */}
-          <div className="victory-banner">
-            <div className="victory-icon">{getVictoryIcon()}</div>
-            <div className="victory-content">
-              <div className="victory-title">{getVictoryTitle()}</div>
-              {getVictoryPercentage() && (
-                <div className="victory-metric">
-                  <div className="progress-bar">
-                    <div 
-                      className="progress-fill" 
-                      style={{ width: `${100 - parseFloat(getVictoryPercentage() || '0')}%` }}
-                    ></div>
+        {/* Pestañas de navegación */}
+        <div className="modal-tabs">
+          <button 
+            className={`tab-button ${activeTab === 'results' ? 'active' : ''}`}
+            onClick={() => setActiveTab('results')}
+          >
+            Resultados
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'preview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('preview')}
+          >
+            Siguiente nivel
+          </button>
+        </div>
+        
+        {/* Secciones principales - aumentado z-index */}
+        <div className="modal-sections">
+          {/* Sección de resultados */}
+          {activeTab === 'results' && (
+            <div className="results-section">
+              <div className="victory-banner">
+                <div className="victory-icon">🏆</div>
+                <h2 className="victory-title">¡NIVEL COMPLETADO!</h2>
+              </div>
+              
+              {/* Estadísticas principales */}
+              <div className="main-stats">
+                <div className="stat-card score">
+                  <div className="stat-icon-badge">{getStatIcon('score')}</div>
+                  <div className="stat-value">{gameStats?.score || 0}</div>
+                  <div className="stat-label">PUNTOS</div>
+                </div>
+                <div className="stat-card time">
+                  <div className="stat-icon-badge">{getStatIcon('time')}</div>
+                  <div className="stat-value">{gameStats?.timeFormatted || '00:00'}</div>
+                  <div className="stat-label">TIEMPO</div>
+                </div>
+                <div className="stat-card combo">
+                  <div className="stat-icon-badge">{getStatIcon('combo')}</div>
+                  <div className={`stat-value ${getComboClass(gameStats?.maxCombo || 0)}`}>
+                    {gameStats?.maxCombo || 0}x
                   </div>
-                  <span>{getVictoryPercentage()}% ocupación</span>
-                </div>
-              )}
-              {getRemainingIcons() && (
-                <div className="victory-metric">
-                  <span className="remaining-icons">{getRemainingIcons()}</span>
-                  <span>iconos restantes</span>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Stats en formato compacto */}
-          <div className="stats-grid">
-            <div className="stat-item">
-              <div className="stat-icon mode-icon">🎮</div>
-              <div className="stat-data">
-                <div className="stat-label">Modo</div>
-                <div className="stat-value">{getPlayModeName(currentPlayMode)}</div>
-              </div>
-            </div>
-            
-            <div className="stat-item">
-              <div className="stat-icon level-icon">🏆</div>
-              <div className="stat-data">
-                <div className="stat-label">Nivel</div>
-                <div className="stat-value level-value">{level}</div>
-              </div>
-            </div>
-            
-            <div className="stat-item">
-              <div className="stat-icon difficulty-icon">🔥</div>
-              <div className="stat-data">
-                <div className="stat-label">Dificultad</div>
-                <div className="stat-value">{getDifficultyName(currentDifficulty)}</div>
-              </div>
-            </div>
-            
-            <div className="stat-item">
-              <div className="stat-icon speed-icon">⚡</div>
-              <div className="stat-data">
-                <div className="stat-label">Velocidad</div>
-                <div className="stat-value">{formatSpawnRate(spawnRate)}</div>
-              </div>
-            </div>
-            
-            <div className="stat-item">
-              <div className="stat-icon score-icon">🎯</div>
-              <div className="stat-data">
-                <div className="stat-label">Puntuación</div>
-                <div className="stat-value score-value">{score}</div>
-              </div>
-            </div>
-            
-            <div className="stat-item">
-              <div className="stat-icon combo-icon">🔄</div>
-              <div className="stat-data">
-                <div className="stat-label">Combo</div>
-                <div className={`stat-value combo-value ${getComboClass()}`}>
-                  {comboMultiplier.toFixed(1)}x
+                  <div className="stat-label">COMBO</div>
                 </div>
               </div>
-            </div>
-          </div>
-          
-          {/* Nueva sección de recompensas */}
-          {normalizedRewards.length > 0 && (
-            <div className={`rewards-section ${showRewards ? 'visible' : ''}`}>
-              <div className="rewards-header">
-                <div className="rewards-title">Recompensas</div>
-                <div className="rewards-shine"></div>
+              
+              {/* Estadísticas detalladas */}
+              <div className="detailed-stats compact">
+                <div className="stat-row">
+                  <span className="stat-icon">{getStatIcon('moves')}</span>
+                  <span className="stat-label">MOVIMIENTOS</span>
+                  <span className="stat-value">{gameStats?.moves || 0}</span>
+                </div>
+                <div className="stat-row">
+                  <span className="stat-icon">{getStatIcon('speed')}</span>
+                  <span className="stat-label">VELOCIDAD</span>
+                  <span className="stat-value">{(gameStats?.averageSpeed || 0).toFixed(1)}/s</span>
+                </div>
               </div>
-              <div className="rewards-container">
-                {normalizedRewards.map((reward, index) => (
-                  <div 
-                    key={`reward-${index}`} 
-                    className={`reward-item ${reward.rarity || 'common'}`}
-                    style={{ '--delay': `${index * 0.15 + 0.3}s` } as React.CSSProperties}
-                  >
-                    <div className="reward-icon">
-                      {getRewardIcon(reward.type)}
-                    </div>
-                    <div className="reward-details">
+              
+              {/* Sección de recompensas */}
+              <div className="rewards-section">
+                <h3 className="section-title">Recompensas</h3>
+                <div className="rewards-grid adaptive">
+                  {(rewards || []).map((reward, index) => (
+                    <div key={index} className={`reward-card ${reward.rarity}`}>
+                      <div className="reward-icon">{reward.icon}</div>
                       <div className="reward-amount">+{reward.amount}</div>
-                      <div className="reward-type">{reward.type}</div>
+                      <div className="reward-name">{reward.name}</div>
                     </div>
-                    <div className="reward-glow"></div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           )}
-        </div>
-        
-        {/* Botones de acción */}
-        <div className="action-buttons">
-          <button className="continue-button" onClick={handleContinue}>
-            Continuar
-          </button>
-          <button className="menu-button" onClick={handleReturnToMenuClick}>
-            Menú Principal
-          </button>
+          
+          {/* Sección de vista previa */}
+          {activeTab === 'preview' && nextLevelPreview && (
+            <div className="preview-section compact">
+              <h3 className="section-title">Nivel {nextLevelPreview.level}</h3>
+              
+              {/* Indicador de dificultad */}
+              <div className="difficulty-indicator">
+                <span>Dificultad:</span>
+                <div className="difficulty-bars">
+                  {[1, 2, 3, 4, 5].map((level) => (
+                    <div 
+                      key={level}
+                      className={`difficulty-bar ${level <= nextLevelPreview.difficulty ? 'active' : ''}`}
+                    ></div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Nuevos iconos */}
+              {nextLevelPreview.newIcons.length > 0 && (
+                <div className="new-icons-preview compact">
+                  <div className="preview-subtitle">Nuevos iconos:</div>
+                  <div className="icons-grid compact">
+                    {nextLevelPreview.newIcons.map((icon, index) => (
+                      <div key={index} className="new-icon-card">
+                        {icon}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Objetivos */}
+              <div className="level-objectives compact">
+                <div className="preview-subtitle">Objetivos:</div>
+                <div className="objectives-list">
+                  {nextLevelPreview.objectives.map((objective, index) => (
+                    <div key={index} className="objective-item">
+                      <div className="objective-icon">{objective.icon}</div>
+                      <div className="objective-desc">{objective.description}</div>
+                      <div className="objective-target">{objective.target}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Botones de acción */}
+          <div className="action-buttons">
+            <button className="continue-button pulse-animation" onClick={onContinue}>
+              Siguiente nivel
+            </button>
+            <button className="menu-button" onClick={onMainMenu}>
+              Menú
+            </button>
+          </div>
         </div>
       </div>
     </div>
