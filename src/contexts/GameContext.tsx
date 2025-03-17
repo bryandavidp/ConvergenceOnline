@@ -23,7 +23,29 @@ const defaultGameState: GameState = {
   timeLeft: 60,
   gameOver: false,
   isPaused: false,
-  isMuted: false
+  isMuted: false,
+  
+  // Propiedades faltantes
+  currentPlayMode: GamePlayMode.CLASSIC,
+  currentDifficulty: GameDifficulty.MEDIUM,
+  spawnRate: 2000,
+  iconCount: 4,
+  boardSize: 8,
+  
+  // Estadísticas
+  timeElapsed: 0,
+  movesCount: 0,
+  matchesCount: 0,
+  comboCount: 0,
+  comboMultiplier: 1,
+  highScore: 0,
+  
+  // Estado del nivel
+  levelScoreTarget: 1000,
+  levelOccupationTarget: 70,
+  availableIcons: ["🍎", "🍇", "🍊", "🍓"],
+  status: 'startScreen',
+  gameEndReason: ''
 };
 
 const defaultGameConfig: GameConfig = {

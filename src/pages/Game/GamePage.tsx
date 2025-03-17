@@ -571,9 +571,23 @@ const GamePage: React.FC = () => {
               <LevelCompleteModal
                 isVisible={true}
                 onContinue={handleNextLevel}
-                onReturnToMenu={handleReturnToStart}
-                stars={3}
-                rewards={['monedas', 'gemas', 'vidas']}
+                onMainMenu={handleReturnToStart}
+                onClose={() => store.dispatch(setGameStatus('playing'))}
+                gameStats={{
+                  score: score,
+                  timeFormatted: '00:30',
+                  maxCombo: 5,
+                  moves: 20,
+                  averageSpeed: 0.5
+                }}
+                levelNumber={level}
+                nextLevel={level + 1}
+                starsEarned={3}
+                rewards={[
+                  { type: 'coins', amount: 100, name: 'Monedas', icon: '🪙', rarity: 'common' },
+                  { type: 'gems', amount: 20, name: 'Gemas', icon: '💎', rarity: 'uncommon' },
+                  { type: 'xp', amount: 50, name: 'Experiencia', icon: '⭐', rarity: 'common' }
+                ]}
               />
             )}
             
