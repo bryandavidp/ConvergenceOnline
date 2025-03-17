@@ -946,11 +946,11 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
               />
             </div>
             <div className="difficulty-options">
-              <DifficultyOption 
+              {/* <DifficultyOption 
                 difficulty={GameDifficulty.VERY_EASY} 
                 selected={localDifficulty === GameDifficulty.VERY_EASY}
                 onClick={() => handleDifficultySelect(GameDifficulty.VERY_EASY)}
-              />
+              /> */}
               <DifficultyOption 
                 difficulty={GameDifficulty.EASY} 
                 selected={localDifficulty === GameDifficulty.EASY}
@@ -966,11 +966,11 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
                 selected={localDifficulty === GameDifficulty.HARD}
                 onClick={() => handleDifficultySelect(GameDifficulty.HARD)}
               />
-              <DifficultyOption 
+              {/* <DifficultyOption 
                 difficulty={GameDifficulty.VERY_HARD} 
                 selected={localDifficulty === GameDifficulty.VERY_HARD}
                 onClick={() => handleDifficultySelect(GameDifficulty.VERY_HARD)}
-              />
+              /> */}
             </div>
           </div>
 

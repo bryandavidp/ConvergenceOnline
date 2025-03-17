@@ -1,11 +1,17 @@
 import { store } from '../store';
 import { setBoardSize, setSpawnRate, setAvailableIcons } from '../store/slices/gameSlice';
+import { GameDifficulty, GamePlayMode } from '../store/slices/gameSlice';
 import { shuffleArray } from './gameUtils';
 import * as config from './config';
 import { createLogger } from './logUtils';
+import { IconSystem } from './iconSystem';
+import { speedController } from './speedController';
 
 // Crear un logger específico para las utilidades del tablero
 const logger = createLogger('boardUtils');
+
+// Obtener instancia del sistema de iconos
+const iconSystem = IconSystem.getInstance();
 
 /**
  * Interfaz para las opciones de configuración del tablero
@@ -54,13 +60,22 @@ export function changeBoardSize(size: number): number {
  * @returns La nueva velocidad de aparición
  */
 export function changeSpawnRate(newSpawnRate: number): number {
-  const minRate = 200; // No permitir velocidades demasiado rápidas
-  const maxRate = 5000; // No permitir velocidades demasiado lentas
+  const { currentDifficulty, currentPlayMode } = store.getState().game;
   
-  const safeRate = Math.max(minRate, Math.min(maxRate, newSpawnRate));
+  // Validar que la velocidad esté dentro de los límites permitidos
+  const safeRate = Math.max(
+    speedController.getSpeedConfigForDifficulty(currentDifficulty).minRate,
+    Math.min(
+      speedController.getSpeedConfigForDifficulty(currentDifficulty).baseRate,
+      newSpawnRate
+    )
+  );
   
-  logger.info(`Cambiando velocidad de aparición a ${safeRate}ms`);
+  // Actualizar el estado
   store.dispatch(setSpawnRate(safeRate));
+  
+  // Log para depuración
+  logger.info('BoardUtils', `Velocidad actualizada: ${newSpawnRate}ms → ${safeRate}ms (Dificultad: ${currentDifficulty})`);
   
   return safeRate;
 }
@@ -88,48 +103,48 @@ export function setAvailableBoardIcons(icons: string[]): string[] {
  * @returns Array con los iconos seleccionados
  */
 export function getRandomIcons(count: number): string[] {
-  const allIcons = [...config.AVAILABLE_ICONS];
-  shuffleArray(allIcons);
+  // Obtener el estado actual del juego
+  const { currentDifficulty: difficulty, currentPlayMode: playMode, level } = store.getState().game;
   
-  const selectedCount = Math.min(count, allIcons.length);
-  const selectedIcons = allIcons.slice(0, selectedCount);
+  // Obtener iconos del sistema de iconos
+  const icons = iconSystem.getIconsForLevel(level, difficulty, playMode, count);
   
-  logger.debug(`Seleccionados ${selectedIcons.length} iconos aleatorios`);
-  return selectedIcons;
+  // Convertir los iconos a strings (display)
+  const iconStrings = icons.map(icon => icon.display);
+  
+  logger.debug(`Seleccionados ${iconStrings.length} iconos aleatorios`);
+  return iconStrings;
 }
 
 /**
  * Configura el tablero para un nivel específico
  * @param level Nivel del juego
- * @param preserveSpeed Si es true, mantiene la velocidad actual
  * @returns Objeto con la configuración aplicada
  */
-export function configureBoardForLevel(level: number, preserveSpeed: boolean = false): BoardConfig {
+export function configureBoardForLevel(level: number): BoardConfig {
   // Obtener el estado actual
-  const { spawnRate: currentSpawnRate } = store.getState().game;
+  const { spawnRate: currentSpawnRate, currentDifficulty, currentPlayMode } = store.getState().game;
   
   // Determinar nuevos valores basados en el nivel
   const size = config.getLevelBoardSize(level);
-  const spawnRate = preserveSpeed ? currentSpawnRate : config.getLevelSpawnRate(level);
   const iconCount = config.iconCountByLevel(level);
   const icons = getRandomIcons(iconCount);
   
   // Aplicar los cambios
   changeBoardSize(size);
-  if (!preserveSpeed) {
-    changeSpawnRate(spawnRate);
-  }
   setAvailableBoardIcons(icons);
   
   logger.info(`Tablero configurado para nivel ${level}`, {
     tamaño: size,
-    velocidad: preserveSpeed ? `mantenida (${currentSpawnRate}ms)` : `${spawnRate}ms`,
-    iconos: icons.length
+    velocidad: `mantenida (${currentSpawnRate}ms)`,
+    iconos: icons.length,
+    dificultad: currentDifficulty,
+    modo: currentPlayMode
   });
   
   return {
     size,
-    spawnRate: preserveSpeed ? currentSpawnRate : spawnRate,
+    spawnRate: currentSpawnRate,
     icons
   };
 }

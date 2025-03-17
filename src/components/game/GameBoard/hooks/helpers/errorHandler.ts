@@ -1,8 +1,9 @@
 import { Dispatch } from 'redux';
-import { setSpawnRate } from '../../../../../store/slices/gameSlice';
-import * as config from '../../../../../utils/config';
 import { audioManager } from '../../../../../utils/audioManager';
 import logger from '../../../../../utils/logger';
+import { speedController } from '../../../../../utils/speedController';
+import { store } from '../../../../../store';
+import { setSpawnRate } from '../../../../../store/slices/gameSlice';
 
 /**
  * Función para animar una celda con error
@@ -59,27 +60,41 @@ export const animateBoardShake = (
  * 
  * @param currentSpawnRate - Velocidad actual de aparición
  * @param dispatch - Función dispatch de Redux
- * @returns - El nuevo multiplicador de velocidad
+ * @param addNotification - Función para mostrar notificaciones
+ * @returns - La nueva velocidad
  */
 export const increaseSpeedAsPenalty = (
   currentSpawnRate: number,
-  dispatch: Dispatch
-) => {
-  // Calcular nueva velocidad
-  const baseSpeed = config.INITIAL_SPAWN_RATE;
-  const maxSpeedMultiplier = 3; // Valor máximo de multiplicador
-  const minSpeed = baseSpeed / maxSpeedMultiplier;
+  dispatch: Dispatch,
+  addNotification?: (notification: any) => void
+): number => {
+  const { currentDifficulty } = store.getState().game;
+  const newSpawnRate = speedController.calculatePenaltyRate(currentSpawnRate, currentDifficulty);
   
-  // Reducir el tiempo entre apariciones (aumentar velocidad)
-  // Usamos un factor más pequeño (0.95) para que sea menos brusco
-  const newSpawnRate = Math.max(minSpeed, currentSpawnRate * 0.95);
+  // Solo aplicar si hay un cambio significativo
+  if (Math.abs(currentSpawnRate - newSpawnRate) >= 50) {
+    // Calcular el cambio de velocidad
+    const speedChange = ((currentSpawnRate - newSpawnRate) / currentSpawnRate * 100).toFixed(1);
+    const spawnTimeOld = (currentSpawnRate / 1000).toFixed(1);
+    const spawnTimeNew = (newSpawnRate / 1000).toFixed(1);
+    
+    // Actualizar la velocidad
+    dispatch(setSpawnRate(newSpawnRate));
+    
+    // Mostrar notificación si está disponible
+    if (addNotification) {
+      addNotification({
+        message: '¡Penalización por error!',
+        type: 'error',
+        icon: '⚡',
+        duration: 3000,
+        value: `${spawnTimeOld}s → ${spawnTimeNew}s (${speedChange}% más rápido)`
+      });
+    }
+    
+    // Log para depuración
+    logger.info('Game', `Penalización de velocidad aplicada: ${currentSpawnRate}ms → ${newSpawnRate}ms (${speedChange}% más rápido)`);
+  }
   
-  // Actualizar en el store
-  dispatch(setSpawnRate(newSpawnRate));
-  
-  // Calcular y devolver el nuevo multiplicador
-  const newMultiplier = Number((baseSpeed / newSpawnRate).toFixed(1));
-  logger.info('ErrorHandler', `Velocidad aumentada a ${newMultiplier}x (${newSpawnRate}ms)`);
-  
-  return newMultiplier;
+  return newSpawnRate;
 }; 

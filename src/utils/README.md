@@ -20,7 +20,6 @@ Este módulo proporciona una forma modular de añadir nuevos iconos al tablero c
 
 - Control de velocidad para evitar apariciones demasiado rápidas
 - Detección de condiciones de fin de partida
-- Integración con el período de gracia para evitar game over prematuros
 - Validación de movimientos disponibles
 
 Ejemplo de uso:
@@ -32,7 +31,6 @@ const {
   lastIconAddedTimeRef,
   resetSpawningState 
 } = useIconSpawner(
-  levelTransitionGraceRef,
   hasValidMoves,
   addNotification
 );
@@ -77,7 +75,6 @@ Controla la lógica para determinar si una partida ha terminado:
 
 - Detección de tablero lleno
 - Comprobación de movimientos válidos
-- Manejo del período de gracia
 - Diferentes condiciones según el modo de juego
 
 ## Configuración

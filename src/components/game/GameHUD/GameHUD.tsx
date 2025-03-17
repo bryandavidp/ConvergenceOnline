@@ -5,6 +5,7 @@ import { setGameStatus, resetCombo } from '../../../store/slices/gameSlice';
 import ComboTimer from '../ComboTimer/ComboTimer';
 import * as config from '../../../utils/config';
 import './GameHUD.css';
+import { speedController } from '../../../utils/speedController';
 
 // Mapa de iconos para los niveles de dificultad (usando emojis espaciales)
 const DIFFICULTY_EMOJIS = {
@@ -118,20 +119,17 @@ const GameHUD: React.FC = () => {
     return '0:00';
   };
   
-  // Calcular velocidad como porcentaje inverso (más bajo = más rápido)
+  // Calcular velocidad como multiplicador basado en la configuración actual
   const getSpeedValue = () => {
     if (typeof spawnRate !== 'number' || spawnRate <= 0) {
       return 'x1.0';
     }
     
-    // Base: Inicio en 3000ms (valor típico), más rápido aproxima a 1000ms
-    const baseRate = 3000; 
-    const minRate = 1000;
+    // Usar el SpeedController para obtener el multiplicador actual
+    const multiplier = speedController.getCurrentMultiplier(spawnRate, currentDifficulty);
     
-    // Velocidad en porcentaje relativo (100% = velocidad normal, >100% = más rápido)
-    const speedPercentage = Math.round((baseRate / Math.max(spawnRate, minRate)) * 100);
-    
-    return `x${(speedPercentage / 100).toFixed(1)}`;
+    // Formatear el multiplicador con un decimal
+    return `x${multiplier.toFixed(1)}`;
   };
   
   // Obtener el nombre del modo para mostrar

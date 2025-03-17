@@ -1,9 +1,15 @@
 import { GameDifficulty, GamePlayMode } from '../store/slices/gameSlice';
 import * as levels from './levels';
 import * as config from './config';
+import { DIFFICULTY_CONFIG } from './config';
 import logger from './logger';
 import { store } from '../store';
 import { setGameEndReason } from '../store/slices/gameSlice';
+import { IconSystem } from './iconSystem';
+import { speedController } from './speedController';
+
+// Obtener el sistema de iconos
+const iconSystem = IconSystem.getInstance();
 
 // Tipo de seguridad para acceder a las propiedades de los niveles
 type ModeKey = keyof typeof levels.PREDEFINED_LEVELS[0]['requirements'];
@@ -78,11 +84,13 @@ export function isLevelCompleted(
         return false;
       }
       
-      // MODIFICADO: Solo registramos la puntuación como un hito alcanzado, pero no completamos el nivel
+      // Verificar si se ha alcanzado la puntuación objetivo
       const scoreReq = classicRequirements.find(req => req.type === 'score');
       if (scoreReq && score >= scoreReq.value) {
-        logger.info('LevelAdapter', `Puntuación objetivo alcanzada: ${score}/${scoreReq.value}, pero el nivel continúa`);
-        // No completamos el nivel por puntuación
+        logger.info('LevelAdapter', `Nivel completado por puntuación: ${score}/${scoreReq.value}`);
+        const spawnRateSeconds = (store.getState().game.spawnRate / 1000).toFixed(1);
+        store.dispatch(setGameEndReason(`¡Has alcanzado la puntuación objetivo de ${scoreReq.value} puntos! Velocidad de aparición: ${spawnRateSeconds}s por icono.`));
+        return true;
       }
       
       // Criterio por ocupación: solo válido después de tiempo mínimo de juego
@@ -191,6 +199,10 @@ export function getNextLevelDisplay(
   try {
     const nextLevelConfig = levels.getLevelConfig(nextLevel, playMode, difficulty);
     
+    // Obtener iconos usando el nuevo sistema
+    const icons = iconSystem.getIconsForLevel(nextLevel, difficulty, playMode)
+      .map(icon => icon.display);
+    
     // Extraer objetivos y recompensas
     const objectives: string[] = [];
     
@@ -242,7 +254,7 @@ export function getNextLevelDisplay(
     return {
       level: nextLevel,
       boardSize: nextLevelConfig ? nextLevelConfig.boardSize : config.BOARD_SIZE.SMALL,
-      icons: nextLevelConfig ? nextLevelConfig.icons : config.DEFAULT_BOARD_CONFIG.icons || ["🍎", "🍇", "🍊", "🍓"],
+      icons,
       objectives,
       rewards,
       specialFeatures
@@ -253,7 +265,8 @@ export function getNextLevelDisplay(
     return {
       level: nextLevel,
       boardSize: config.BOARD_SIZE.SMALL,
-      icons: config.DEFAULT_BOARD_CONFIG.icons || ["🍎", "🍇", "🍊", "🍓"],
+      icons: iconSystem.getIconsForLevel(nextLevel, difficulty, playMode)
+        .map(icon => icon.display),
       objectives: [],
       rewards: [],
       specialFeatures: []
@@ -307,27 +320,36 @@ export function getLevelRewards(
 }
 
 /**
- * Obtener el tamaño del tablero para un nivel
+ * Obtener velocidad de spawn para un nivel
  */
-export function getBoardSizeForLevel(level: number): number {
-  // Usar directamente la configuración central
-  return config.getBoardSizeForLevel(level);
-}
-
-/**
- * Obtener iconos para un nivel
- */
-export function getIconSetForLevel(level: number): string[] {
-  // Usar directamente la configuración central
-  return config.getIconSetForLevel(level);
-}
-
-/**
- * Obtener velocidad de spawn
- */
-export function getLevelSpawnRate(level: number, gameMode: string = 'classic', difficulty: string = 'normal'): number {
-  // Usar directamente la configuración central
-  return config.getLevelSpawnRate(level, gameMode);
+export function getLevelSpawnRate(
+  level: number, 
+  playMode: GamePlayMode = 'classic', 
+  difficulty: GameDifficulty = 'normal'
+): number {
+  try {
+    // Obtener velocidad base del SpeedController
+    const baseSpeed = speedController.calculateLevelSpeed(level, playMode, difficulty);
+    
+    // Si no tenemos una velocidad base válida, usar la configuración por defecto
+    if (!baseSpeed || isNaN(baseSpeed)) {
+      logger.error('LevelAdapter', `Error obteniendo velocidad base para nivel ${level}, usando valor por defecto`);
+      const config = speedController.getSpeedConfigForDifficulty(difficulty);
+      return config.baseRate;
+    }
+    
+    // Log detallado
+    logger.debug('LevelAdapter', `Velocidad calculada para nivel ${level}:
+      - Modo: ${playMode}
+      - Dificultad: ${difficulty}
+      - Velocidad: ${baseSpeed}ms`);
+    
+    return baseSpeed;
+  } catch (error) {
+    logger.error('LevelAdapter', `Error en getLevelSpawnRate: ${error}`);
+    // En caso de error, devolver la velocidad base para dificultad normal
+    return speedController.getSpeedConfigForDifficulty('normal').baseRate;
+  }
 }
 
 /**
@@ -359,20 +381,16 @@ export function getLevelConfig(
     
     // Aplicar configuraciones del archivo config.ts a la configuración del nivel
     if (levelConfig) {
-      // Aplicar multiplicadores de dificultad
-      const difficultyMod = config.LEVEL_REQUIREMENT_MULTIPLIERS[difficulty];
-      
-      // Si hay multiplicadores definidos, ajustar la velocidad de spawn
-      if (difficultyMod) {
-        levelConfig.spawnRate = Math.round(levelConfig.spawnRate * difficultyMod.spawnRate);
-      }
+      // Calcular la velocidad usando el SpeedController
+      levelConfig.spawnRate = speedController.calculateLevelSpeed(level, playMode, difficulty);
       
       // Asegurar que todas las configuraciones tomen en cuenta los límites globales
-      levelConfig.spawnRate = Math.max(config.MIN_SPAWN_RATE, levelConfig.spawnRate);
+      const speedConfig = speedController.getSpeedConfigForDifficulty(difficulty);
+      levelConfig.spawnRate = Math.max(speedConfig.minRate, levelConfig.spawnRate);
       
       // Para los niveles superiores a la configuración predefinida, usar lógica de config.ts
       if (level > config.MAX_LEVELS) {
-        levelConfig.boardSize = config.getBoardSizeForLevelV2(level);
+        levelConfig.boardSize = config.BOARD_SIZE.MEDIUM;
         levelConfig.icons = config.getIconsForLevel(level, difficulty);
       }
     }
@@ -382,36 +400,15 @@ export function getLevelConfig(
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('LevelAdapter', `Error al obtener configuración de nivel: ${errorMessage}`);
     
-    // Usar valores por defecto desde config.ts
+    // Usar valores por defecto desde config.ts y SpeedController
+    const speedConfig = speedController.getSpeedConfigForDifficulty(difficulty);
     return {
       id: level,
       boardSize: config.BOARD_SIZE.MEDIUM,
       icons: config.DEFAULT_BOARD_CONFIG.icons || ["🍎", "🍇", "🍊", "🍓"],
-      spawnRate: config.SPAWN_RATES.MEDIUM,
+      spawnRate: speedConfig.baseRate,
       speedMultiplier: 1.0,
-      penaltyIcons: Math.min(3, Math.max(1, level)),
-      requirements: {
-        classic: [{ 
-          type: 'score', 
-          value: config.LEVEL_REQUIREMENTS.classic.baseScore * Math.pow(config.LEVEL_REQUIREMENTS.classic.scoreMultiplier, level-1), 
-          description: `Alcanza ${config.LEVEL_REQUIREMENTS.classic.baseScore * Math.pow(config.LEVEL_REQUIREMENTS.classic.scoreMultiplier, level-1)} puntos` 
-        }],
-        timed: [{ 
-          type: 'time', 
-          value: config.LEVEL_REQUIREMENTS.timed.baseTime - (level-1) * config.LEVEL_REQUIREMENTS.timed.timeDecreasePerLevel, 
-          description: `Sobrevive ${config.LEVEL_REQUIREMENTS.timed.baseTime - (level-1) * config.LEVEL_REQUIREMENTS.timed.timeDecreasePerLevel} segundos` 
-        }],
-        survival: [{ 
-          type: 'time', 
-          value: config.LEVEL_REQUIREMENTS.survival.baseTime + (level-1) * config.LEVEL_REQUIREMENTS.survival.timeIncreasePerLevel, 
-          description: `Sobrevive ${(config.LEVEL_REQUIREMENTS.survival.baseTime + (level-1) * config.LEVEL_REQUIREMENTS.survival.timeIncreasePerLevel)/60} minutos` 
-        }],
-        zen: [{ 
-          type: 'time', 
-          value: 0, 
-          description: 'Juega sin presión' 
-        }]
-      }
+      penaltyIcons: Math.min(3, Math.max(1, level))
     };
   }
 }

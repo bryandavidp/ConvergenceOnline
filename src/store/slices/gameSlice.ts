@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import logger from '../../utils/logger';
 import * as config from '../../utils/config';
+import { speedController } from '../../utils/speedController';
 // import { fetchGameState, updateGameState } from '../thunks/gameThunks';
 
 // Definición de tipos para los modos de juego
@@ -213,6 +214,7 @@ const gameSlice = createSlice({
     
     setLevel: (state, action: PayloadAction<number>) => {
       const newLevel = action.payload;
+      const currentSpawnRate = state.spawnRate;
       
       console.log("\n**********************************************************");
       console.log("INICIO DEL FLUJO: CAMBIO DE NIVEL");
@@ -243,38 +245,10 @@ const gameSlice = createSlice({
         console.log(`Fase 4: Tablero redimensionado a ${state.boardSize}x${state.boardSize}`);
       }
       
-      // Ajustar la velocidad según el nivel y modo de juego
-      let newSpawnRate = 0;
-      if (state.currentPlayMode === 'tutorial') {
-        // Modo tutorial: Siempre muy lento para facilitar el aprendizaje
-        newSpawnRate = config.SPAWN_RATES.VERY_SLOW;
-      } else if (state.currentPlayMode === 'classic') {
-        // Modo clásico: Cada nivel es un 10% más rápido
-        newSpawnRate = Math.max(
-          config.MIN_SPAWN_RATE,
-          config.SPAWN_RATES.SLOW - ((newLevel - 1) * 150)
-        );
-      } else if (state.currentPlayMode === 'timed') {
-        // Modo contrarreloj: Cada nivel es un 15% más rápido
-        newSpawnRate = Math.max(
-          config.MIN_SPAWN_RATE, 
-          config.SPAWN_RATES.MEDIUM - ((newLevel - 1) * 200)
-        );
-      } else if (state.currentPlayMode === 'survival') {
-        // Modo supervivencia: Comienza más lento pero acelera durante el juego
-        newSpawnRate = Math.max(
-          config.MIN_SPAWN_RATE,
-          config.SPAWN_RATES.VERY_SLOW - ((newLevel - 1) * 100)
-        );
-      } else {
-        // Modo zen o cualquier otro: Mantener velocidad consistente
-        newSpawnRate = config.SPAWN_RATES.SLOW;
-      }
-      
-      // Actualizar velocidad de spawn
-      state.spawnRate = newSpawnRate;
-      state.speedMultiplier = Number((config.INITIAL_SPAWN_RATE / newSpawnRate).toFixed(1));
-      console.log(`Fase 5: Velocidad de spawn ajustada a ${newSpawnRate}ms (multiplicador: ${state.speedMultiplier}x)`);
+      // Mantener la velocidad actual
+      state.spawnRate = currentSpawnRate;
+      state.speedMultiplier = speedController.getCurrentMultiplier(currentSpawnRate, state.currentDifficulty);
+      console.log(`Fase 5: Manteniendo velocidad de spawn en ${currentSpawnRate}ms (multiplicador: ${state.speedMultiplier}x)`);
       
       // Ajustar objetivos según el modo de juego
       if (state.currentPlayMode === 'classic') {
@@ -361,70 +335,36 @@ const gameSlice = createSlice({
     },
     
     setSpawnRate: (state, action: PayloadAction<number>) => {
-      // Validar que el nuevo valor es razonable
-      const minRate = 300; // No permitir velocidades demasiado rápidas
-      const maxRate = 6000; // No permitir velocidades demasiado lentas
-      const validatedRate = Math.max(minRate, Math.min(maxRate, action.payload));
-      
-      // Comprobar si realmente hay un cambio significativo
-      if (Math.abs(state.spawnRate - validatedRate) < 50) {
-        // Cambio muy pequeño, probablemente no perceptible
-        logger.debug('Game', `Cambio de velocidad ignorado por ser muy pequeño: ${state.spawnRate}ms → ${validatedRate}ms`);
-        return;
-      }
-      
-      // Establecer la nueva velocidad de aparición
-      const oldRate = state.spawnRate;
-      state.spawnRate = validatedRate;
-      
-      // Actualizar el multiplicador de velocidad usando SPAWN_RATES.MEDIUM como base
-      // para mantener consistencia en todo el código
-      const baseSpeed = config.SPAWN_RATES.MEDIUM; // 2000ms
-      
-      // Calcular el multiplicador (un valor más pequeño significa aparición más rápida)
-      state.speedMultiplier = parseFloat((baseSpeed / validatedRate).toFixed(1));
-      
-      logger.info('Game', `Velocidad de aparición ajustada de ${oldRate}ms a ${validatedRate}ms (${state.speedMultiplier}x)`);
-    },
-    
-    increaseSpeed: (state, action: PayloadAction<number>) => {
-      // Incrementar velocidad (disminuir el tiempo entre apariciones)
-      const speedIncrease = action.payload || 0.1;
-      const minRate = 300; // Límite mínimo ajustado para evitar velocidades imposibles
-      const currentRate = state.spawnRate;
-      const baseSpeed = config.SPAWN_RATES.MEDIUM;
-      
-      // Obtener la configuración del modo actual
-      const modeConfig = state.currentPlayMode.toUpperCase() === 'CLASSIC' 
-        ? config.GAME_MODES.CLASSIC 
-        : state.currentPlayMode.toUpperCase() === 'TIMED'
-          ? config.GAME_MODES.TIMED
-          : config.GAME_MODES.SURVIVAL;
-      
-      // Obtener el multiplicador máximo permitido para este modo
-      const maxMultiplier = modeConfig.maxSpeedMultiplier || config.MAX_SPEED_MULTIPLIER;
-      const maxSpeed = Math.max(minRate, Math.round(baseSpeed / maxMultiplier));
-      
-      // Calcular nueva velocidad (con reducción percentual)
-      let newRate = Math.round(currentRate * (1 - speedIncrease));
-      
-      // Aplicar límites
-      if (newRate < maxSpeed) {
-        newRate = maxSpeed;
-      }
-      
-      // Asegurar que hay un cambio mínimo perceptible
-      const minChange = 50; // Al menos 50ms de diferencia
-      if (Math.abs(currentRate - newRate) < minChange && currentRate > maxSpeed + minChange) {
-        state.spawnRate = currentRate - minChange;
-      } else {
-        state.spawnRate = newRate;
-      }
+      const newRate = action.payload;
+      state.spawnRate = newRate;
       
       // Actualizar el multiplicador de velocidad
-      state.speedMultiplier = parseFloat((baseSpeed / state.spawnRate).toFixed(1));
+      const newMultiplier = speedController.getCurrentMultiplier(newRate, state.currentDifficulty);
+      state.speedMultiplier = newMultiplier;
       
-      logger.info('Game', `Velocidad incrementada a ${state.speedMultiplier}x (${state.spawnRate}ms)`);
+      logger.info('Game', `Velocidad de spawn actualizada a ${newRate}ms (${newMultiplier}x)`);
+    },
+    
+    increaseSpeed: (state) => {
+      const newRate = speedController.calculateIncreasedSpeed(state.spawnRate, state.currentDifficulty);
+      state.spawnRate = newRate;
+      const newMultiplier = speedController.getCurrentMultiplier(newRate, state.currentDifficulty);
+      state.speedMultiplier = newMultiplier;
+      
+      logger.info('Game', `Velocidad aumentada a ${newMultiplier}x`);
+    },
+    
+    applySpeedPenalty: (state) => {
+      const newRate = speedController.calculatePenaltyRate(state.spawnRate, state.currentDifficulty);
+      
+      // Solo actualizar si hay un cambio significativo
+      if (Math.abs(state.spawnRate - newRate) >= 50) {
+        state.spawnRate = newRate;
+        const newMultiplier = speedController.getCurrentMultiplier(newRate, state.currentDifficulty);
+        state.speedMultiplier = newMultiplier;
+        
+        logger.info('Game', `Penalización de velocidad aplicada, nuevo multiplicador: ${newMultiplier}x`);
+      }
     },
     
     setGameStatus: (state, action: PayloadAction<GameState['status']>) => {
@@ -500,8 +440,9 @@ const gameSlice = createSlice({
       const difficultyConfig = config.getDifficultyConfig(newDifficulty);
       if (difficultyConfig) {
         // Aplicar la velocidad de generación de iconos específica de la dificultad
-        state.spawnRate = difficultyConfig.spawnRate;
-        console.log(`SpawnRate actualizado según dificultad: ${difficultyConfig.spawnRate}ms`);
+        const newSpawnRate = speedController.getInitialSpeed(newDifficulty, state.currentPlayMode);
+        state.spawnRate = newSpawnRate;
+        console.log(`SpawnRate actualizado según dificultad: ${newSpawnRate}ms`);
         
         // Actualizar la ventana de tiempo para combos
         if (config.COMBO_SYSTEM && config.COMBO_SYSTEM.TIME_WINDOWS) {
@@ -644,33 +585,11 @@ const gameSlice = createSlice({
       const highScore = state.highScore;
       const darkMode = state.darkMode;
       
-      // Determinar el tamaño inicial del tablero según el modo de juego
-      let initialBoardSize = config.DEFAULT_BOARD_SIZE;
-      let initialSpawnRate = config.SPAWN_RATES.MEDIUM;
+      // Determinar el tamaño inicial del tablero
+      const initialBoardSize = config.DEFAULT_BOARD_SIZE;
       
-      // Configurar tamaño del tablero y spawn rate según el modo de juego
-      switch (playMode) {
-        case 'tutorial':
-          initialBoardSize = config.BOARD_SIZE.SMALL;
-          initialSpawnRate = config.SPAWN_RATES.VERY_SLOW; // Más lento para el tutorial
-          break;
-        case 'classic':
-          initialBoardSize = config.BOARD_SIZE.SMALL;
-          initialSpawnRate = config.SPAWN_RATES.SLOW;
-          break;
-        case 'timed':
-          initialBoardSize = config.BOARD_SIZE.MEDIUM;
-          initialSpawnRate = config.SPAWN_RATES.MEDIUM;
-          break;
-        case 'survival':
-          initialBoardSize = config.BOARD_SIZE.LARGE;
-          initialSpawnRate = config.SPAWN_RATES.VERY_SLOW;
-          break;
-        case 'zen':
-          initialBoardSize = config.BOARD_SIZE.MEDIUM;
-          initialSpawnRate = config.SPAWN_RATES.VERY_SLOW;
-          break;
-      }
+      // Obtener la velocidad inicial según la dificultad y modo de juego
+      const initialSpawnRate = speedController.getInitialSpeed(difficulty, playMode);
       
       console.log(`Fase 1: Tamaño de tablero: ${initialBoardSize}x${initialBoardSize}, Velocidad: ${initialSpawnRate}ms`);
       
@@ -685,7 +604,7 @@ const gameSlice = createSlice({
         darkMode,
         currentDifficulty: difficulty,
         currentPlayMode: playMode,
-        status: 'startScreen', // Cambiar a pantalla de inicio en lugar de playing
+        status: 'startScreen',
         hintsRemaining: config.HINT_SYSTEM.MAX_HINTS_PER_LEVEL,
         canEmptyBoardBonus: true,
         score: 0,
@@ -695,7 +614,7 @@ const gameSlice = createSlice({
         board: Array(initialBoardSize).fill(null).map(() => Array(initialBoardSize).fill(null)),
         boardSize: initialBoardSize,
         spawnRate: initialSpawnRate,
-        speedMultiplier: 1.0,
+        speedMultiplier: speedController.getCurrentMultiplier(initialSpawnRate, difficulty),
         hintCooldown: false,
         lastHintTime: 0,
         timeRemaining: config.GAME_MODE_CONFIG.TIMED.initialTimeLimit,
@@ -727,18 +646,18 @@ const gameSlice = createSlice({
           break;
         case 'survival':
           state.survivalTime = 0;
-          state.specialIconsEnabled = false;
-          console.log("Fase 4: Modo supervivencia configurado");
-          break;
-        case 'zen':
-          console.log("Fase 4: Modo zen configurado - sin límites ni objetivos");
           break;
       }
       
       console.log("**********************************************************\n");
       console.log("FIN DEL FLUJO: JUEGO REINICIADO CORRECTAMENTE");
       
-      logger.info('Game', `Juego reiniciado con modo ${playMode} y dificultad ${difficulty}`);
+      // Reiniciar el sistema de combos
+      state.comboCount = 0;
+      state.comboMultiplier = 1.0;
+      state.comboTimestamp = 0;
+      state.lastComboPoints = 0;
+      console.log("[COMBO] Estado después del reset: Combo 0, Mult 1.0x, TS: 0");
     },
     
     loadHighScore: (state) => {
@@ -822,6 +741,48 @@ const gameSlice = createSlice({
     setGameEndReason: (state, action: PayloadAction<string>) => {
       state.gameEndReason = action.payload;
     },
+
+    updateSpeedMultiplier: (state) => {
+      // Obtener el multiplicador actual basado en el spawn rate
+      const currentMultiplier = speedController.getCurrentMultiplier(state.spawnRate, state.currentDifficulty);
+      
+      // Actualizar el multiplicador en el estado
+      state.speedMultiplier = currentMultiplier;
+      
+      logger.info('Game', `Multiplicador de velocidad actualizado a ${currentMultiplier}x`);
+    },
+
+    initializeLevel: (state, action: PayloadAction<number>) => {
+      const level = action.payload;
+      const currentSpawnRate = state.spawnRate;
+      
+      // Actualizar el estado con los valores iniciales del nivel
+      state.level = level;
+      // Mantener la velocidad actual
+      state.spawnRate = currentSpawnRate;
+      state.speedMultiplier = speedController.getCurrentMultiplier(currentSpawnRate, state.currentDifficulty);
+      state.iconCount = 0;
+      state.canEmptyBoardBonus = true;
+      state.highlightedCells = [];
+      
+      // Reiniciar el sistema de combos
+      state.comboCount = 0;
+      state.comboMultiplier = 1.0;
+      state.comboTimestamp = 0;
+      state.lastComboPoints = 0;
+      
+      // Reiniciar el tablero
+      state.board = Array(state.boardSize).fill(null).map(() => Array(state.boardSize).fill(null));
+      
+      // Actualizar los iconos disponibles para el nivel
+      state.availableIcons = config.getIconsForLevel(level, state.currentDifficulty);
+      
+      logger.info('Game', `Nivel ${level} inicializado manteniendo velocidad en ${currentSpawnRate}ms (${state.speedMultiplier}x)`);
+    },
+
+    addScore: (state, action: PayloadAction<number>) => {
+      state.score += action.payload;
+    },
   },
   extraReducers: (builder) => {
     // ... extra reducers existentes
@@ -897,6 +858,9 @@ export const {
   resetCombo,
   setComboTimeWindow,
   setGameEndReason,
+  updateSpeedMultiplier,
+  initializeLevel,
+  addScore,
 } = gameSlice.actions;
 
 export default gameSlice.reducer;

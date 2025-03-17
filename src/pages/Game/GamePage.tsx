@@ -28,7 +28,6 @@ import './GamePage.css';
 import PauseModal from '../../components/game/GameModals/PauseModal';
 import { useNavigate } from 'react-router-dom';
 import LoadingScreen from '../../components/game/LoadingScreen/LoadingScreen';
-import { setLevelTransitionGrace } from '../../utils/gameEndConditions';
 
 // Iconos para los botones
 const ICONS = {
@@ -268,18 +267,6 @@ const GamePage: React.FC = () => {
   
   // Reiniciar el juego (usado en varias situaciones)
   const handleRestartClick = () => {
-    // Verificamos si ya hay una inicialización en progreso
-    if (isInitializingRef.current) {
-      console.warn("Ya hay una inicialización en progreso, ignorando solicitud de reinicio");
-      return;
-    }
-    
-    isInitializingRef.current = true;
-    console.log("\n**********************************************************");
-    console.log("INICIO DEL FLUJO: REINICIO DE PARTIDA");
-    console.log(`Reiniciando el juego al nivel 1`);
-    console.log("**********************************************************");
-    
     try {
       // Limpiar referencias
       isBoardInitializedRef.current = false;
@@ -300,10 +287,6 @@ const GamePage: React.FC = () => {
       
       // Limpiar la selección actual si existe
       dispatch(setHighlightedCells([]));
-      
-      // Establecer el período de gracia para el nuevo juego
-      console.log("Fase 3: Estableciendo período de gracia inicial");
-      setLevelTransitionGrace(3);
       
       // SOLUCIÓN: Inicializar el tablero con los iconos iniciales
       console.log("Fase 4: Inicializando tablero para el nuevo juego");
@@ -331,30 +314,6 @@ const GamePage: React.FC = () => {
 
   // Iniciar un juego nuevo
   const handleStartGame = () => {
-    logger.info('GamePage', "\n**********************************************************");
-    logger.info('GamePage', "INICIO DEL FLUJO: INICIAR JUEGO NUEVO");
-    
-    // Obtener los valores actuales directamente del estado de Redux
-    const { currentDifficulty, currentPlayMode, level } = store.getState().game;
-    
-    logger.info('GamePage', `Nivel: ${level}, Modo: ${currentPlayMode}, Dificultad: ${currentDifficulty}`);
-    logger.info('GamePage', "**********************************************************");
-
-    // IMPORTANTE: Prevenimos múltiples llamadas
-    if (isInitializingRef.current) {
-      logger.warn('GamePage', "Ya hay una inicialización en progreso, ignorando solicitud");
-      return;
-    }
-    
-    // Marcar que estamos en proceso de inicialización
-    isInitializingRef.current = true;
-    
-    // Limpiar referencias
-    isBoardInitializedRef.current = false;
-    
-    // Limpiar temporizadores EXISTENTES para evitar solapamientos
-    stopTimers();
-    
     try {
       // Reiniciar el juego antes de iniciar uno nuevo para evitar estados residuales
       dispatch(resetGame());
@@ -372,10 +331,6 @@ const GamePage: React.FC = () => {
           
           // Inicializar el tablero con los iconos del nivel
           initializeBoard(boardConfig.size, true, level);
-          
-          // Establecer el período de gracia para evitar game over inmediato
-          console.log("Estableciendo período de gracia inicial para el nuevo juego");
-          setLevelTransitionGrace(3);
           
           // Cambiar el estado a 'playing' para iniciar el juego
           dispatch(setGameStatus('playing'));
@@ -460,10 +415,6 @@ const GamePage: React.FC = () => {
       
       // Limpiar la selección actual
       dispatch(setHighlightedCells([]));
-      
-      // Establecer el período de gracia para el nuevo nivel
-      console.log("Fase 3: Estableciendo período de gracia para el nuevo nivel");
-      setLevelTransitionGrace(3);
       
       // SOLUCIÓN: Inicializar el tablero con los iconos iniciales
       console.log("Fase 4: Inicializando tablero para el nuevo nivel");
