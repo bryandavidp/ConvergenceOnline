@@ -685,19 +685,19 @@ const gameSlice = createSlice({
       
       // Incrementar contador de combos
       state.comboCount += 1;
-      
-      // Actualizar multiplicador basado en contador
-      if (state.comboCount >= 15) {
-        state.comboMultiplier = 5.0;
-      } else if (state.comboCount >= 10) {
-        state.comboMultiplier = 3.0;
-      } else if (state.comboCount >= 6) {
-        state.comboMultiplier = 2.0;
-      } else if (state.comboCount >= 3) {
-        state.comboMultiplier = 1.5;
-      } else {
-        state.comboMultiplier = 1.0;
+
+      // Actualizar multiplicador a partir de la tabla central
+      // (config.COMBO_SYSTEM.MULTIPLIERS), única fuente de verdad. Se elige el
+      // multiplicador del umbral más alto alcanzado. Antes estaba hardcodeado
+      // aquí y topaba en 5.0x, ignorando los niveles 8x@20 y 10x@30 que la
+      // config y los MILESTONE_BONUSES (20/30) ya contemplaban.
+      let resolvedMultiplier = 1.0;
+      for (const tier of config.COMBO_SYSTEM.MULTIPLIERS) {
+        if (state.comboCount >= tier.threshold) {
+          resolvedMultiplier = tier.multiplier;
+        }
       }
+      state.comboMultiplier = resolvedMultiplier;
       
       // Actualizar timestamp con la hora actual
       const currentTime = Date.now();
