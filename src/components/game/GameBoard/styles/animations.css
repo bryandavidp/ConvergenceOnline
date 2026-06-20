@@ -40,7 +40,7 @@
   text-shadow: 0 0 8px rgba(0, 0, 0, 0.7);
   white-space: nowrap;
   pointer-events: none;
-  z-index: 1000;
+  z-index: 1200;
   animation: pointsFloat 1.5s ease-out forwards;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
@@ -59,7 +59,7 @@
 
 /* Valor de los puntos */
 .points-value {
-  font-size: 24px;
+  font-size: clamp(1.1rem, 3.2vmin, 1.6rem);
   font-weight: bold;
   color: #FFFFFF;
   margin-bottom: 5px;
@@ -450,8 +450,8 @@
   align-items: center;
   white-space: nowrap;
   pointer-events: none;
-  z-index: 1000;
-  animation: pointsFloat 2s ease-out forwards;
+  z-index: 1200;
+  animation: pointsFloat 1.5s ease-out forwards;
   font-family: 'Segoe UI', Arial, sans-serif;
   line-height: 1.3;
   text-align: center;
@@ -605,7 +605,7 @@
   justify-content: center;
   flex-wrap: wrap;
   font-weight: bold;
-  font-size: 26px;
+  font-size: clamp(1.1rem, 3.4vmin, 1.7rem);
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
   line-height: 1.2;
   padding: 4px 8px;
@@ -618,8 +618,8 @@
 /* Estilos para los puntos */
 .points-text {
   font-weight: 800;
-  font-size: 32px;
-  text-shadow: 
+  font-size: clamp(1.3rem, 4vmin, 2rem);
+  text-shadow:
     0 0 10px rgba(255, 255, 255, 0.5),
     2px 2px 4px rgba(0, 0, 0, 0.8);
 }
@@ -635,7 +635,7 @@
 
 /* Estilos para el contador de combo */
 .combo-count {
-  font-size: 20px;
+  font-size: clamp(0.9rem, 2.6vmin, 1.25rem);
   opacity: 0;
   font-weight: 700;
   margin-left: 3px;
@@ -708,16 +708,16 @@
 
 .base-points-text {
   font-weight: 800;
-  font-size: 32px;
-  text-shadow: 
+  font-size: clamp(1.3rem, 4vmin, 2rem);
+  text-shadow:
     0 0 10px rgba(255, 255, 255, 0.5),
     2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .result-text {
   font-weight: 800;
-  font-size: 36px;
-  text-shadow: 
+  font-size: clamp(1.4rem, 4.4vmin, 2.25rem);
+  text-shadow:
     0 0 12px rgba(255, 255, 255, 0.6),
     2px 2px 5px rgba(0, 0, 0, 0.8);
 }
