@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { resolveAssetUrl } from '../utils/assetUrl';
 
 interface Sound {
   [key: string]: HTMLAudioElement;
@@ -44,14 +45,14 @@ export const useAudio = () => {
 
   const loadSound = useCallback((name: string, url: string) => {
     const audio = new Audio();
-    audio.src = url;
+    audio.src = resolveAssetUrl(url);
     audio.preload = 'auto';
     sounds.current[name] = audio;
   }, []);
 
   const loadMusic = useCallback((url: string) => {
     const audio = new Audio();
-    audio.src = url;
+    audio.src = resolveAssetUrl(url);
     audio.loop = true;
     audio.volume = 0.3;
     audio.preload = 'auto';

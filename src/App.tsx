@@ -117,7 +117,7 @@ const App: React.FC = () => {
   
   return (
     <ErrorBoundaryComponent>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <AppInitializer>
           {/* Rastreador de ruta para actualizar data-route en el body */}
           <RouteTracker />

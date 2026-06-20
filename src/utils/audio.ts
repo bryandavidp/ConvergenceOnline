@@ -1,6 +1,8 @@
 // src/utils/audio.ts
 // Utilidades para la reproducción de sonidos en el juego
 
+import { resolveAssetUrl } from './assetUrl';
+
 // Mapa de sonidos cargados
 const sounds: Record<string, HTMLAudioElement> = {};
 
@@ -8,7 +10,7 @@ const sounds: Record<string, HTMLAudioElement> = {};
 const loadSound = (name: string, url: string) => {
   try {
     const audio = new Audio();
-    audio.src = url;
+    audio.src = resolveAssetUrl(url);
     audio.preload = 'auto';
     sounds[name] = audio;
   } catch (error) {
