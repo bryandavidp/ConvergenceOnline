@@ -1,4 +1,6 @@
 // src/utils/audioManager.ts
+import { resolveAssetUrl } from './assetUrl';
+
 interface AudioManagerInstance {
   sounds: Record<string, HTMLAudioElement>;
   music: HTMLAudioElement | null;
@@ -34,9 +36,9 @@ export function createAudioManager(): AudioManagerInstance {
   function loadSound(name: string, url: string) {
     try {
       const audio = new Audio();
-      audio.src = url;
+      audio.src = resolveAssetUrl(url);
       audio.preload = 'auto';
-      
+
       // Agregar un manejador de errores
       audio.onerror = () => {
         console.warn(`Error al cargar el sonido: ${name} (${url}). Usando sonido alternativo.`);
@@ -82,7 +84,7 @@ export function createAudioManager(): AudioManagerInstance {
   function loadMusic(url: string) {
     try {
       music = new Audio();
-      music.src = url;
+      music.src = resolveAssetUrl(url);
       music.loop = true;
       music.volume = musicVolume;
       music.preload = 'auto';

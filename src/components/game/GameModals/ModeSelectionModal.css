@@ -1038,23 +1038,23 @@
 
 /* Imágenes de fondo para cada modo */
 .game-option.tutorial .game-option-image {
-  background-image: url('/assets/images/tutorial.jpg');
+  background-image: url('/ConvergenceOnline/assets/images/modes/tutorial.jpg');
 }
 
 .game-option.classic .game-option-image {
-  background-image: url('/assets/images/classic.jpg');
+  background-image: url('/ConvergenceOnline/assets/images/modes/classic.jpg');
 }
 
 .game-option.timed .game-option-image {
-  background-image: url('/assets/images/timeattack.jpg');
+  background-image: url('/ConvergenceOnline/assets/images/modes/timeattack.jpg');
 }
 
 .game-option.survival .game-option-image {
-  background-image: url('/assets/images/survival.jpg');
+  background-image: url('/ConvergenceOnline/assets/images/modes/survival.jpg');
 }
 
 .game-option.zen .game-option-image {
-  background-image: url('/assets/images/zen.jpg');
+  background-image: url('/ConvergenceOnline/assets/images/modes/zen.jpg');
 }
 
 /* Efectos al pasar el ratón */
