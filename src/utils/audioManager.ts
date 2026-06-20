@@ -54,30 +54,40 @@ export function createAudioManager(): AudioManagerInstance {
     }
   }
 
-  // Función para obtener una URL de sonido por defecto
+  // Función para obtener una URL de sonido por defecto.
+  // Importante: en el navegador no existe `process` (Vite solo resuelve NODE_ENV),
+  // por eso usamos resolveAssetUrl(import.meta.env.BASE_URL). Además todas las rutas
+  // apuntan a archivos que SÍ existen en public/assets/audio para no disparar onerror.
   function getDefaultSoundUrl(name: string): string {
-    const basePath = process.env.PUBLIC_URL || '';
-    
-    // Mapeo de nombres de sonidos a URLs
     const soundUrls: Record<string, string> = {
-      click: `${basePath}/public/assets/audio/pops/click.wav`,
-      invalidMove: `${basePath}/public/assets/audio/negatives/error.wav`,
-      success: `${basePath}/public/assets/audio/positives/bleep.wav`,
-      levelComplete: `${basePath}/public/assets/audio/level-completed.wav`,
-      gameOver: `${basePath}/public/assets/audio/negatives/gameover.wav`,
-      startLevel: `${basePath}/public/assets/audio/pops/start.wav`,
-      hint: `${basePath}/public/assets/audio/pops/hint.wav`,
-      newIcon: `${basePath}/public/assets/audio/pops/pop-up.wav`,
-      removeIcon: `${basePath}/public/assets/audio/pops/bubble-pop.wav`,
-      timeBonus: `${basePath}/public/assets/audio/positives/time-bonus.wav`,
-      buttonClick: `${basePath}/public/assets/audio/pops/click.wav`,
-      // Añadir sonidos para el sistema de combos
-      comboSmall: `${basePath}/public/assets/audio/positives/bleep.wav`,      // Reutilizar el sonido de success
-      comboMedium: `${basePath}/public/assets/audio/positives/bleep.wav`,     // Reutilizar el sonido de success
-      comboLarge: `${basePath}/public/assets/audio/positives/bleep.wav` // Reutilizar el sonido de level_complete
+      click: '/assets/audio/pops/click.wav',
+      buttonClick: '/assets/audio/pops/click.wav',
+      invalid: '/assets/audio/negatives/error.wav',
+      invalidMove: '/assets/audio/negatives/error.wav',
+      success: '/assets/audio/positives/bleep.wav',
+      points: '/assets/audio/positives/bleep.wav',
+      levelComplete: '/assets/audio/level-completed.wav',
+      levelTransition: '/assets/audio/positives/cartoon-sparkle.wav',
+      emptyBoard: '/assets/audio/positives/cartoon-sparkle.wav',
+      gameOver: '/assets/audio/negatives/gameover.wav',
+      start: '/assets/audio/positives/bleep.wav',
+      startLevel: '/assets/audio/positives/bleep.wav',
+      pause: '/assets/audio/pops/pause.wav',
+      resume: '/assets/audio/pops/pop-up.wav',
+      hint: '/assets/audio/pops/hint.wav',
+      newIcon: '/assets/audio/pops/pop-up.wav',
+      removeIcon: '/assets/audio/pops/bubble-pop.wav',
+      speedUp: '/assets/audio/speed-up.mp3',
+      penalty: '/assets/audio/error.mp3',
+      timeBonus: '/assets/audio/positives/chime-up.wav',
+      convergingFound: '/assets/audio/positives/chime-up.wav',
+      // Sonidos del sistema de combos (reutilizan efectos existentes)
+      comboSmall: '/assets/audio/positives/bleep.wav',
+      comboMedium: '/assets/audio/positives/chime-up.wav',
+      comboLarge: '/assets/audio/positives/cartoon-sparkle.wav'
     };
-    
-    return soundUrls[name] || `${basePath}/public/assets/audio/pops/click.wav`;
+
+    return resolveAssetUrl(soundUrls[name] || '/assets/audio/pops/click.wav');
   }
 
   // Función para cargar música
@@ -121,15 +131,21 @@ export function createAudioManager(): AudioManagerInstance {
     loadSound('emptyBoard', '/assets/audio/positives/cartoon-sparkle.wav');
     loadSound('levelTransition', '/assets/audio/positives/cartoon-sparkle.wav');
     
-    // Mejora del sonido de convergencia encontrada para hacerlo más satisfactorio
-    loadSound('convergingFound', '/assets/audio/positives/bell-up.wav');
-    
+    // Sonido de convergencia encontrada (archivo existente)
+    loadSound('convergingFound', '/assets/audio/positives/chime-up.wav');
+
     loadSound('start', '/assets/audio/positives/bleep.wav');
     loadSound('pause', '/assets/audio/pops/pause.wav');
-    loadSound('resume', '/assets/audio/pops/resume.wav');
+    loadSound('resume', '/assets/audio/pops/pop-up.wav');
     loadSound('invalid', '/assets/audio/negatives/error.wav');
     loadSound('invalidMove', '/assets/audio/negatives/error.wav');
-    loadSound('timeBonus', '/assets/audio/positives/time-bonus.wav');
+    loadSound('timeBonus', '/assets/audio/positives/chime-up.wav');
+
+    // Puntos y combos (antes no se precargaban y disparaban el fallback en cada jugada)
+    loadSound('points', '/assets/audio/positives/bleep.wav');
+    loadSound('comboSmall', '/assets/audio/positives/bleep.wav');
+    loadSound('comboMedium', '/assets/audio/positives/chime-up.wav');
+    loadSound('comboLarge', '/assets/audio/positives/cartoon-sparkle.wav');
 
     // Música de fondo
     loadMusic('/assets/audio/level-music-2.mp3');

@@ -102,6 +102,34 @@ y pistas, en varias iteraciones y modos.
 - **Logging excesivo**: gran volumen de `console.log`/`[COMBO DEBUG]` en producción; conviene reducir
   el nivel de log para no degradar rendimiento en sesiones largas.
 
+## Estado tras las correcciones (verificado con la misma batería de pruebas)
+
+Se repitió la prueba de estrés (~6.000 clicks, 4 modos) tras aplicar los arreglos:
+
+| Métrica | Antes | Después |
+|---------|-------|---------|
+| Excepciones no controladas (`process is not defined`) | 15 | **0** ✅ |
+| Warnings "Modo 'zen' no encontrado" | sí | **0** ✅ |
+| Warning `BASE_MODE_CONFIG` no importado | sí | **0** ✅ |
+| Warnings "Error al cargar el sonido" | sí | **0** ✅ |
+
+Correcciones aplicadas:
+- `audioManager.ts`: `getDefaultSoundUrl` ya no usa `process.env` (usa `resolveAssetUrl`) y todas
+  las rutas apuntan a archivos existentes; se precargan `points`/`combo*`.
+- Referencias a audio inexistentes (`bell-up`, `time-bonus`, `resume`, `start`) repuntadas a
+  archivos reales (`chime-up`, `pop-up`, `bleep`).
+- `config.ts`: añadidos `ZEN` y `TUTORIAL` a `GAME_MODES`/`GAME_MODE_CONFIG`.
+- `initLevelSystem.ts`: `require()` → `import` estático ESM.
+- `ModeSelectionModal.tsx`: eliminado el efecto secundario en el inicializador de `useState`.
+- `apiService.ts`/`socketService.ts`/`ComboTimer.tsx`/`main.tsx`: `process.env` → `import.meta.env`.
+- **Rendimiento**: en producción se silencian `console.log/info/debug` (cientos de logs crudos en
+  rutas calientes); `mobile-perf.css` desactiva `backdrop-filter: blur()` y reduce sombras en
+  ≤768px, y respeta `prefers-reduced-motion`.
+
+Pendientes ambientales/menores (no bloqueantes): la fuente de Google Fonts falla sin red (cae a
+fuente del sistema; conviene autoalojarla); aviso de "detección de FPS agotada" en headless; los
+`ERR_ABORTED` de audio son cancelaciones de precarga (los archivos sirven HTTP 200).
+
 ## Veredicto
 
 El juego **arranca y responde** en los 4 modos jugables y la puntuación progresa, pero hay **un bug

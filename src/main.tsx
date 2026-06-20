@@ -3,9 +3,24 @@ import { createRoot } from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { store } from './store'
 import './index.css'
+import './styles/mobile-perf.css'
 import App from './App'
 import { createLogger } from './utils/logUtils'
 import logger from './utils/logger'
+
+// En producción silenciamos los logs verbosos (console.log/info/debug). El juego
+// tiene cientos de console.log "crudos" en rutas calientes (combos, spawns) que no
+// pasan por el logger y degradan el rendimiento en sesiones largas, sobre todo en
+// móvil. Conservamos warn y error.
+if (import.meta.env.PROD) {
+  const noop = () => {};
+  // eslint-disable-next-line no-console
+  console.log = noop;
+  // eslint-disable-next-line no-console
+  console.info = noop;
+  // eslint-disable-next-line no-console
+  console.debug = noop;
+}
 
 // Nota: StrictMode causa que algunos componentes se renderizen dos veces en desarrollo
 // Esto es intencional y ayuda a identificar efectos secundarios inesperados
@@ -30,7 +45,7 @@ const appLogger = createLogger('Main');
 // Registrar el inicio de la aplicación
 appLogger.info('Iniciando aplicación', {
   versión: '1.0.0',
-  entorno: process.env.NODE_ENV,
+  entorno: import.meta.env.MODE,
   navegador: navigator.userAgent,
 });
 

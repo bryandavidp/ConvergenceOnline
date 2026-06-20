@@ -198,8 +198,16 @@ export const GAME_MODES = {
   },
   SURVIVAL: {
     name: 'survival',
-    iconVariety: 4,                           
-    specialIconProbability: 0.1               
+    iconVariety: 4,
+    specialIconProbability: 0.1
+  },
+  ZEN: {
+    name: 'zen',
+    iconVariety: 4                            // Modo relajado, sin objetivos ni fin
+  },
+  TUTORIAL: {
+    name: 'tutorial',
+    iconVariety: 3                            // Pocos iconos para aprender
   }
 };
 
@@ -264,6 +272,13 @@ export const GAME_MODE_CONFIG = {
     initialIcons: 6,
     penaltyIcons: 0,
     maxLevel: 1
+  },
+  ZEN: {
+    name: 'zen',
+    displayName: 'Zen',
+    description: 'Juega de forma relajada, sin presión de tiempo ni fin de partida',
+    initialIcons: 40,
+    basePenalty: 0
   }
 };
 
