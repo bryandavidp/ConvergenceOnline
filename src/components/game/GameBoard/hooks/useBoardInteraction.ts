@@ -70,6 +70,10 @@ const useBoardInteraction = () => {
   // Referencia para controlar el debounce de clics
   const isProcessingClickRef = useRef(false);
   const lastClickedCellRef = useRef<string | null>(null);
+
+  // Puntos base reales de la última convergencia (iconos × 10 × nivel),
+  // para que el popup muestre exactamente lo que se suma a la puntuación.
+  const lastBasePointsRef = useRef(0);
   
   /**
    * Detener todos los temporizadores
@@ -582,11 +586,10 @@ const useBoardInteraction = () => {
           // Reiniciar combo si ha pasado demasiado tiempo
           console.log(`[COMBO DEBUG] Tiempo fuera de ventana, reiniciando combo`);
           dispatch(resetCombo());
-          // Y comenzar un nuevo combo
-          setTimeout(() => {
-            console.log(`[COMBO DEBUG] Iniciando nuevo combo después del reset`);
-            dispatch(incrementCombo());
-          }, 0);
+          // Y comenzar un nuevo combo de forma SÍNCRONA, para que el estado
+          // quede consistente antes de leer el multiplicador más abajo
+          // (antes se diferia con setTimeout(...,0) y se leía un valor obsoleto).
+          dispatch(incrementCombo());
         }
         
         // Obtener el multiplicador actualizado después del incremento/reseteo
@@ -596,6 +599,9 @@ const useBoardInteraction = () => {
         // Aplicar el multiplicador de combo a los puntos base
         const basePoints = actualIconsRemoved * 10 * level;
         const pointsWithCombo = Math.floor(basePoints * activeMultiplier);
+
+        // Guardar los puntos base reales para que el popup muestre la misma cifra
+        lastBasePointsRef.current = basePoints;
         
         // Mostrar información detallada sobre los puntos
         console.log(`[COMBO DEBUG] Puntos base: ${basePoints} (${actualIconsRemoved} iconos × 10 × nivel ${level})`);
@@ -843,9 +849,10 @@ const useBoardInteraction = () => {
       // Hay convergencia, eliminar los iconos y actualizar la puntuación
       // La gestión completa de puntuación y combos se maneja dentro de removeConvergingIcons
       removeConvergingIcons(convergingIcons, row, col).then(() => {
-        // Mostrar animación de puntos ganados con el nuevo sistema
-        // Este valor será solo visual, la puntuación real se calcula en removeConvergingIcons
-        showPointsEarned(convergingIcons.length * 10, row, col);
+        // Mostrar animación de puntos ganados con el nuevo sistema.
+        // Usamos los puntos base reales (iconos × 10 × nivel) calculados en
+        // removeConvergingIcons para que la cifra mostrada coincida con la sumada.
+        showPointsEarned(lastBasePointsRef.current, row, col);
         
         // Obtener el elemento DOM de la celda objetivo
         const targetCell = getCellElement(row, col);

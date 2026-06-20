@@ -2,12 +2,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&display=swap');
 
 /* Contenedor principal de la notificación */
+/* En el flujo del contenedor flex (.notification-manager) para que se apilen
+   verticalmente con `gap` en lugar de solaparse en un mismo `top`. */
 .game-notification {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
+  position: relative;
+  margin: 0 auto;
   min-width: 250px;
   max-width: 80%;
   border-radius: 25px;
@@ -94,11 +93,11 @@
 /* Animación de entrada */
 @keyframes slideDown {
   0% {
-    transform: translate(-50%, -100%);
+    transform: translateY(-100%);
     opacity: 0;
   }
   100% {
-    transform: translate(-50%, 0);
+    transform: translateY(0);
     opacity: 1;
   }
 }
@@ -112,11 +111,11 @@
 @keyframes fadeOut {
   0% {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateY(0);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -20px);
+    transform: translateY(-20px);
   }
 }
 

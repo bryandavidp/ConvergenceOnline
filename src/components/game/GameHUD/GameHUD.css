@@ -93,10 +93,11 @@
 }
 
 .max-score-value {
-  font-size: 1.2rem;
+  font-size: clamp(0.95rem, 2.6vmin, 1.2rem);
   font-weight: 700;
   color: var(--space-highlight);
   text-shadow: 0 0 10px rgba(0, 170, 255, 0.8);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Botones de control */
@@ -168,7 +169,7 @@
 .game-hud {
   width: 98%;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 8px;
   margin: 10px auto;
   padding: 12px;
@@ -231,20 +232,23 @@
 .hud-item.progress::before { background: linear-gradient(90deg, transparent, var(--progress-color), transparent); }
 
 .hud-label {
-  font-size: 0.65rem;
+  font-size: clamp(0.55rem, 1.5vmin, 0.65rem);
   font-weight: 600;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.7);
   letter-spacing: 1px;
   margin-bottom: 4px;
+  white-space: nowrap;
 }
 
 .hud-value {
-  font-size: 1.3rem;
+  font-size: clamp(0.9rem, 2.6vmin, 1.3rem);
   font-weight: 700;
   color: white;
   text-align: center;
   position: relative;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* Colores personalizados para cada tipo de valor */
@@ -348,7 +352,7 @@
   }
 
   .game-hud {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-rows: repeat(2, auto);
     padding: 8px;
     gap: 6px;
@@ -397,7 +401,7 @@
   }
 
   .game-hud {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-rows: repeat(3, auto);
     gap: 6px;
     padding: 6px;
@@ -422,7 +426,7 @@
 
 @media (max-width: 360px) {
   .game-hud {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: repeat(4, auto);
     gap: 4px;
     padding: 5px;
@@ -448,7 +452,7 @@
   }
   
   .game-hud {
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     grid-template-rows: 1fr;
     gap: 5px;
     padding: 5px;
