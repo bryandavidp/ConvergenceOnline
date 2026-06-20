@@ -1,0 +1,111 @@
+# Informe de pruebas de estrés — Convergence Online (juego `/game`)
+
+Pruebas automatizadas con Playwright (Chromium headless) sobre el servidor de desarrollo
+(`vite`, `http://localhost:5173/ConvergenceOnline/`). Login mockeado (cualquier email/pass).
+Se jugó como "jugador profesional": ráfagas masivas de clicks sobre el tablero, pausas/reanudaciones
+y pistas, en varias iteraciones y modos.
+
+## Metodología
+
+- 5 modos recorridos (clásico, zen, contrarreloj, supervivencia, tutorial), recargando la app entre
+  cada uno (estado limpio).
+- **~6.900 clicks** totales sobre celdas (todas las vacías en cada iteración + ocupadas para
+  estresar el debounce), ~22 s de juego intensivo por modo.
+- Captura de: excepciones no controladas (`pageerror`), `console.error`/`warning`, peticiones
+  fallidas, evolución de puntuación y ocupación del tablero, y capturas de pantalla por modo.
+
+## Resultados (resumen)
+
+| Modo | Arrancó | Clicks | Score | Ocupación tablero | Excepciones |
+|------|---------|--------|-------|-------------------|-------------|
+| Clásico | ✅ | 1645 | 0→190 | 33→52 / 64 | 3 |
+| Zen | ✅ | 2377 | 0→100 | 20→45 / 64 | 3 |
+| Contrarreloj | ✅ | 1505 | 0→60 | 32→59 / 64 | 3 |
+| Supervivencia | ✅ | 1360 | 0→100 | 32→59 / 64 | 3 |
+| Tutorial | — | — | — | — | — |
+
+**Total: 15 excepciones no controladas, 7 peticiones fallidas, múltiples warnings.**
+
+---
+
+## Errores detectados (por severidad)
+
+### 🔴 ALTA — `ReferenceError: process is not defined` (15 excepciones durante el juego)
+- **Origen**: `src/utils/audioManager.ts:59`, función `getDefaultSoundUrl`:
+  `const basePath = process.env.PUBLIC_URL || '';`
+- **Disparador**: se ejecuta desde `audio.onerror` (`audioManager.ts:16`) **cada vez que un sonido
+  falla al cargar**. En el navegador `process` no existe (Vite no lo define salvo `NODE_ENV`), así
+  que lanza una excepción no controlada.
+- **Impacto**: excepciones repetidas en runtime durante la partida; el sonido de respaldo nunca se
+  asigna. Ruido grave y síntoma de audio roto.
+- **Relacionado**: las rutas de respaldo incluyen `/public/...` (p.ej.
+  `${basePath}/public/assets/audio/pops/click.wav`), que tampoco existen en producción.
+- **Fix sugerido**: usar `import.meta.env.BASE_URL` (o el helper `resolveAssetUrl` ya creado) y
+  quitar el segmento `/public/` de las rutas.
+
+### 🔴 ALTA — Archivos de audio referenciados que NO existen
+- **Origen**: cargadores en `audioManager.ts` / `audio.ts` / `useAudio.ts`.
+- **Faltan** (referenciados pero ausentes en `public/assets/audio/`):
+  - `pops/resume.wav`, `pops/start.wav`, `pops/gameover.wav`
+  - `positives/bell-up.wav`, `positives/time-bonus.wav`
+- **Impacto**: cada carga fallida (`net::ERR_ABORTED`) dispara `onerror` → y con ello el crash de
+  `process is not defined` (punto anterior). Sonidos clave (combo `convergingFound`→bell-up,
+  `timeBonus`, `resume`) nunca suenan.
+- **Fix sugerido**: apuntar a archivos existentes (p.ej. `positives/chime-up.wav`, `pops/pause.wav`)
+  o añadir los archivos que faltan.
+
+### 🟠 MEDIA — El modo **Zen** (y Tutorial) no existen en la config de modos → juegan como Clásico
+- **Origen**: `src/utils/config.ts:187` `GAME_MODES` solo define `CLASSIC`, `TIMED`, `SURVIVAL`.
+  `getGameModeConfig('zen')` (`config.ts:314-318`) no lo encuentra y hace fallback a `CLASSIC`
+  (warning en consola: *"Modo de juego 'zen' no encontrado, usando modo clásico"*).
+- **Impacto**: Zen no se comporta como Zen (debería ser relajado/sin fin); Tutorial tampoco tiene
+  config propia. Experiencia incorrecta en 2 de 5 modos.
+- **Fix sugerido**: añadir entradas `ZEN` y `TUTORIAL` a `GAME_MODES`/`GAME_MODE_CONFIG`.
+
+### 🟠 MEDIA — `BASE_MODE_CONFIG` nunca se carga (require en navegador)
+- **Origen**: `src/utils/initLevelSystem.ts:34` usa `require('./BASE_MODE_CONFIG')` (CommonJS) dentro
+  de código que corre en el navegador (ESM/Vite). Siempre falla → `catch` → valores por defecto
+  (warning: *"No se pudo importar BASE_MODE_CONFIG, usando valores por defecto"*).
+- **Impacto**: el sistema de niveles usa SIEMPRE el fallback, ignorando la configuración real de
+  modos por nivel. El mismo archivo se importa correctamente vía `import` en `levels.ts:2`.
+- **Fix sugerido**: sustituir `require(...)` por `import` estático (ya disponible).
+
+### 🟡 BAJA — El bloqueo de modos por tutorial no funciona (flag siempre activo)
+- **Origen**: `src/components/game/GameModals/ModeSelectionModal.tsx:397-400`: el inicializador del
+  estado hace `localStorage.setItem('tutorialCompleted','true')` **incondicionalmente**, de modo que
+  `tutorialCompleted` siempre es `true` y `areModesBeyondTutorialLocked` siempre es `false`.
+- **Impacto**: la mecánica de "desbloquear modos tras el tutorial" está anulada (los candados nunca
+  aparecen). Es un side-effect dentro de un inicializador `useState` (anti-patrón).
+- **Fix sugerido**: leer el flag sin escribirlo; marcar `tutorialCompleted` solo al completar el
+  tutorial (ya se hace en `GameTutorial.tsx:65` y `ModeSelectionModal.tsx:691`).
+
+### 🟡 BAJA — `process.env` latente en otros módulos (riesgo de crash si se ejecutan)
+- **Origen**: `src/services/api/apiService.ts:4` (`process.env.REACT_APP_API_URL`),
+  `src/services/websocket/socketService.ts:12` (`process.env.REACT_APP_SOCKET_URL`).
+- **Impacto**: si esos servicios se inicializan en el navegador, lanzarían `process is not defined`.
+  (`process.env.NODE_ENV` en `main.tsx`/`ComboTimer.tsx` sí lo resuelve Vite, no crashea.)
+- **Fix sugerido**: migrar a `import.meta.env.VITE_*`.
+
+---
+
+## Observaciones (no errores, pero puntos a vigilar)
+
+- **Ocupación del tablero al alza**: con clicks aleatorios masivos la ocupación sube (p.ej. 32→59/64
+  en contrarreloj/supervivencia). El spawn supera a las convergencias encontradas al azar; un jugador
+  real las encuentra mejor, pero conviene validar el balance de spawn vs. tamaño de tablero para que
+  no se llene de forma frustrante.
+- **Fuente remota bloqueada**: `@import` de `fonts.googleapis.com` (Baloo 2) falla en entorno sin red
+  (`ERR_CERT_AUTHORITY_INVALID`). Cae a fuente del sistema; conviene autoalojar la fuente para no
+  depender de red externa y evitar el FOUT.
+- **Tutorial en automatización**: la tarjeta de Tutorial no se ofreció al recargar con
+  `tutorialCompleted=true`; no se pudo probar su flujo guiado de forma automática (revisar a mano).
+- **Logging excesivo**: gran volumen de `console.log`/`[COMBO DEBUG]` en producción; conviene reducir
+  el nivel de log para no degradar rendimiento en sesiones largas.
+
+## Veredicto
+
+El juego **arranca y responde** en los 4 modos jugables y la puntuación progresa, pero hay **un bug
+de runtime de severidad alta** (`process is not defined`) que se dispara de forma recurrente por
+**archivos de audio inexistentes**, además de **dos modos (Zen/Tutorial) que no usan su configuración**
+y el **sistema de niveles que ignora su config base**. Resolver el bloque de audio (process + archivos)
+y el registro de modos/`BASE_MODE_CONFIG` elevaría notablemente la fluidez y la corrección del juego.
