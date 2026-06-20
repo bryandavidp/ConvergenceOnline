@@ -130,6 +130,55 @@ Pendientes ambientales/menores (no bloqueantes): la fuente de Google Fonts falla
 fuente del sistema; conviene autoalojarla); aviso de "detección de FPS agotada" en headless; los
 `ERR_ABORTED` de audio son cancelaciones de precarga (los archivos sirven HTTP 200).
 
+## Pruebas en móvil — iPhone 14 Pro Max (430×932 @3x, touch)
+
+Emulación con Playwright (Chromium + GPU por software *swiftshader*, por lo que el FPS real en un
+iPhone con GPU hardware será mejor). ~32 s de combos intensivos con `tap`. Métricas:
+
+- **FPS medio ≈ 53** (frame ~18.7 ms), **1.6 %** de frames > 33 ms, **11** *long tasks*, heap **16 MB**,
+  **0 excepciones**. Aceptable, mejorable.
+- **CLS = 1.024** (objetivo < 0.1) → **muy alto**: la interfaz "salta" bastante.
+
+### Bug "las líneas se abren hacia arriba" (cazado) — Severidad: ALTA
+- **Causa raíz**: durante combos, los **popups de puntos** (`.points-popup`, `top:-40px`) y sus **6
+  `points-particle`** (`position:absolute`, salen disparadas) se dibujan **por encima** del tablero,
+  porque `.game-board-grid` y `.game-board-wrapper` tienen `overflow: visible`
+  (`GameBoard/styles/base.css:32,48`). La sonda detectó `.points-particle` en y≈363–401 cuando el
+  grid empieza en y≈412 → hasta **~49 px por encima** del tablero. En ráfagas de combos (sobre todo
+  en filas altas) el cúmulo de números/partículas "abre" visualmente hacia arriba. Es fugaz porque
+  solo ocurre en el pico del combo y desaparece en ~1.5 s.
+- **Fix recomendado**: contener los popups dentro de una capa propia del tablero (o limitar el
+  recorrido hacia arriba) y **reducir/eliminar partículas en móvil/perf-mode**; alternativamente
+  recortar el desbordamiento superior del contenedor del tablero.
+
+### Tablero desborda ~14 px por abajo — Severidad: MEDIA
+- `.board-cell` usa `padding-bottom: 100%` (truco de aspecto) **a la vez** que el grid define
+  `grid-template-rows: repeat(8, 1fr)` (`GameBoard.tsx:459`). Doble restricción → la última fila
+  sobresale ~14 px del grid (la sonda vio `.board-cell` en bottom=816 vs gridBottom=802).
+- **Fix recomendado**: eliminar `padding-bottom:100%` y confiar en el grid cuadrado (o usar
+  `aspect-ratio: 1` en la celda), para que filas y pista coincidan exactamente.
+
+### Multiplicador de velocidad disparado — Severidad: ALTA
+- Encadenando movimientos inválidos rápidos aparecen avisos **"¡Velocidad aumentada! x533 … x1000"**
+  (capado en 1000). El valor mostrado `baseSpeed / spawnRate` no está acotado y las penalizaciones de
+  velocidad se acumulan sin tope efectivo. El modal de fin sí muestra una velocidad sensata (1.0 s),
+  así que es sobre todo un **bug de cálculo/visualización del aviso** + **spam de notificaciones**.
+- **Fix recomendado**: acotar el multiplicador mostrado (p.ej. máx. 5–10x) y *throttlear* el aviso de
+  velocidad (no más de uno cada N s).
+
+### Notificaciones tapan el HUD y persisten sobre el modal — Severidad: MEDIA
+- El overlay de notificaciones es `position:fixed; top:0; z-index:2000`, por lo que en móvil cubre
+  PUNTUACIÓN/NIVEL/TIEMPO, y siguen visibles **encima del modal de Game Over**.
+- **Fix recomendado**: en móvil, situarlas bajo el HUD o limitar a 1; ocultarlas al terminar la
+  partida.
+
+### Otros
+- **CLS alto** agravado por las notificaciones apiladas en flujo (al aparecer/desaparecer empujan a
+  sus hermanas). Mejor animarlas con `transform`/reservar espacio.
+- **Overlay de FPS de desarrollo visible** ("60 FPS" arriba-izquierda): asegurarse de ocultarlo en
+  producción.
+- El **modal de Game Over** se ve correcto y legible en móvil (buena base de diseño).
+
 ## Veredicto
 
 El juego **arranca y responde** en los 4 modos jugables y la puntuación progresa, pero hay **un bug
