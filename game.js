@@ -408,7 +408,7 @@
   const Game = {
     hintCells: [], hintHideTimer: 0, ended: false,
 
-    setupLevel(firstLevel) {
+    setupLevel() {
       const m = Config.MODES[State.mode];
       State.pool = Engine.poolForLevel(State.level);
       State.spawnRate = Engine.spawnRateForLevel(State.level);
@@ -417,12 +417,13 @@
       State.hintReadyAt = 0;
       // Contrarreloj: límite de tiempo por nivel (decrece con el nivel)
       if (m.timed) State.timeLeft = Math.max(Config.TIMED_MIN, Config.TIMED_DURATION - (State.level - 1) * Config.TIMED_DECREASE);
-      if (firstLevel) {
-        State.board = new Array(State.size * State.size).fill(null);
-        State.iconCount = 0;
-        Engine.placeInitial(Config.DIFFICULTY[State.diff].initialIcons);
-      }
+      // Tablero fresco con la variedad de iconos del nivel actual
+      State.board = new Array(State.size * State.size).fill(null);
+      State.iconCount = 0;
+      State.combo = 0; State.comboMult = 1;
+      Engine.placeInitial(Config.DIFFICULTY[State.diff].initialIcons);
       Render.syncAll();
+      Render.combo();
       Render.hud();
     },
 
@@ -434,7 +435,7 @@
       State.maxCombo = 0; State.removedTotal = 0;
       State.status = 'playing'; this.ended = false;
       this.clearHintHighlight();
-      this.setupLevel(true);
+      this.setupLevel();
       Render.combo();
       Screens.show('game');
       Loop.start();
@@ -586,8 +587,9 @@
       State.level++;
       State.status = 'playing';
       Modal.close();
-      this.setupLevel(false); // mantiene el tablero actual; ajusta velocidad/variedad/tiempo/pistas
-      Loop.last = performance.now(); Loop.spawnAcc = 0;
+      this.setupLevel(); // tablero fresco con la variedad/velocidad/tiempo del nuevo nivel
+      // El bucle se detuvo al mostrarse el modal (status != playing); hay que reiniciarlo.
+      Loop.start();
       Toasts.show(`Nivel ${State.level}`, 'info', 1400);
     },
 
