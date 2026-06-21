@@ -422,7 +422,7 @@ h1, h2, h3, p { margin: 0; }
 /* Pulso por opacidad (solo compositor; sin box-shadow animado) */
 .fever.on { opacity: 1; animation: feverPulse 1.1s ease-in-out infinite; }
 @keyframes feverPulse { 50% { opacity: .5; } }
-body.fever .board-wrap { border-color: rgba(255,150,60,.6); }
+.board-wrap.fever-on { border-color: rgba(255,150,60,.6); }
 
 .rank {
   position: absolute; top: 42%; left: 50%; z-index: 8; pointer-events: none; opacity: 0;
