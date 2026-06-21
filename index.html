@@ -218,6 +218,7 @@
       <div class="over-ach" id="over-ach"></div>
       <div class="modal-buttons">
         <button class="btn btn-primary" id="btn-retry">↻ Reintentar</button>
+        <button class="btn btn-ghost" id="btn-share">📤 Compartir</button>
         <button class="btn btn-ghost" id="btn-over-quit">✕ Menú</button>
       </div>
     </div>
@@ -257,9 +258,13 @@
       <button class="btn btn-primary" id="shop-close" data-close>Cerrar</button>
     </div>
 
-    <!-- Logros / medallas -->
-    <div class="modal" id="modal-medals" role="dialog" aria-modal="true" aria-labelledby="medals-title" hidden>
-      <h2 id="medals-title">🏅 Logros</h2>
+    <!-- Perfil: estadísticas + leaderboard + logros -->
+    <div class="modal modal-profile" id="modal-medals" role="dialog" aria-modal="true" aria-labelledby="medals-title" hidden>
+      <h2 id="medals-title">📊 Perfil</h2>
+      <div class="stats" id="profile-stats"></div>
+      <h3 class="group-title">Mejores marcas por modo</h3>
+      <div class="profile-lb" id="profile-lb"></div>
+      <h3 class="group-title">Logros</h3>
       <div class="medals-list" id="medals-list"></div>
       <button class="btn btn-primary" data-close>Cerrar</button>
     </div>
