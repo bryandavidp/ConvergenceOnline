@@ -67,8 +67,10 @@
         <div class="start-meta" id="start-meta"></div>
         <div class="menu-buttons">
           <button class="btn btn-primary btn-lg" id="btn-play">▶ Jugar</button>
+          <button class="btn btn-reward" id="btn-reward" hidden>🎁 Recompensa diaria</button>
           <div class="menu-row">
             <button class="btn btn-ghost" id="btn-medals">🏅 Logros</button>
+            <button class="btn btn-ghost" id="btn-shop">🛍️ Tienda</button>
             <button class="btn btn-ghost" id="btn-settings">⚙️ Ajustes</button>
           </div>
           <button class="btn btn-ghost" id="btn-how">¿Cómo se juega?</button>
@@ -209,6 +211,15 @@
       <h2 id="settings-title">⚙️ Ajustes</h2>
       <div class="settings-list" id="settings-list"></div>
       <button class="btn btn-primary" data-close>Cerrar</button>
+    </div>
+
+    <!-- Tienda de cosméticos -->
+    <div class="modal modal-shop" id="modal-shop" role="dialog" aria-modal="true" aria-labelledby="shop-title" hidden>
+      <h2 id="shop-title">🛍️ Tienda</h2>
+      <p class="shop-coins">🪙 <span id="shop-coins">0</span> monedas</p>
+      <p class="shop-hint">Temas del tablero. Pulsa para previsualizar.</p>
+      <div class="shop-list" id="shop-list"></div>
+      <button class="btn btn-primary" id="shop-close" data-close>Cerrar</button>
     </div>
 
     <!-- Logros / medallas -->

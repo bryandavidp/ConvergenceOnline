@@ -494,9 +494,25 @@ body.reduced-fx .coach-text { animation: none; }
 .medal-tx { display: flex; flex-direction: column; }
 .medal-tx small { color: var(--muted); }
 
+/* Tienda */
+.shop-coins { color: var(--gold); font-weight: 800; margin-bottom: 2px; }
+.shop-hint { color: var(--muted); font-size: .82rem; margin-bottom: 12px; }
+.shop-list { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 18px; max-height: 52vh; overflow: auto; text-align: left; }
+.shop-item { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 12px; background: rgba(0,0,0,.2); border: 1px solid var(--line); cursor: pointer; }
+.shop-item.on { border-color: var(--gold); }
+.shop-item .shop-sw { width: 40px; height: 40px; border-radius: 10px; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.18); }
+.shop-item .shop-name { font-weight: 700; flex: 1; }
+.shop-item .btn { padding: 8px 14px; font-size: .9rem; flex: 0 0 auto; }
+
+/* Recompensa diaria (botón destacado) */
+.btn-reward { background: linear-gradient(135deg, var(--gold), var(--warn)); color: #1a1300; font-weight: 800; border: none; animation: rewardPulse 1.8s ease-in-out infinite; }
+@keyframes rewardPulse { 50% { transform: scale(1.03); filter: brightness(1.1); } }
+body.reduced-fx .btn-reward { animation: none; }
+
 /* XP en resultados */
 .over-xp { margin: 4px 0 4px; }
-.xp-line { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 6px; }
+.xp-line { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; margin-bottom: 6px; flex-wrap: wrap; }
+.xp-coins { color: var(--gold); }
 .xp-gain { color: var(--good); } .xp-rank { color: var(--accent-2); }
 .xp-up { color: var(--gold); font-weight: 800; margin-top: 6px; }
 .mission-done { color: var(--good); margin-top: 6px; font-size: .9rem; }
