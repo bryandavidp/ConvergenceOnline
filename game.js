@@ -59,11 +59,14 @@
     MODES: {
       tutorial:      { name: 'Tutorial',     emoji: '🎓', timed: false, penalties: false, mult: 0.5, single: true, fixedDiff: 'facil', desc: 'Aprende la mecánica sin prisa ni penalizaciones.' },
       clasico:       { name: 'Clásico',      emoji: '♟️', timed: false, penalties: true,  mult: 1.0, desc: 'Vacía el tablero para superar el nivel. Cuidado: errar añade iconos.' },
+      aventura:      { name: 'Aventura',     emoji: '🚀', timed: false, penalties: true,  mult: 1.1, desc: 'Viaje infinito por biomas con reglas propias, objetivos y mini-jefes. ¿Hasta dónde llegarás?',
+        onSetupLevel(ctx) { Adventure.setup(ctx.level); },
+        winCheck() { Adventure.refreshGoal(State.level); return Adventure.winCheck(); } },
       contrarreloj:  { name: 'Contrarreloj', emoji: '⏱️', timed: true,  penalties: true,  mult: 1.2, desc: 'Cada convergencia suma tiempo. ¡No dejes que el reloj llegue a cero!' },
       supervivencia: { name: 'Supervivencia',emoji: '❤️', timed: false, penalties: true,  mult: 1.5, fast: true, desc: 'Los iconos llegan más rápido y los errores penalizan más. Aguanta.' },
       zen:           { name: 'Zen',          emoji: '☯️', timed: false, penalties: false, mult: 0.8, relaxed: true, desc: 'Ritmo relajado, sin penalizaciones. Juega y respira.' },
     },
-    MODE_ORDER: ['tutorial', 'clasico', 'contrarreloj', 'supervivencia', 'zen'],
+    MODE_ORDER: ['tutorial', 'clasico', 'aventura', 'contrarreloj', 'supervivencia', 'zen'],
     DIFF_ORDER: ['facil', 'normal', 'dificil'],
   };
 
@@ -381,7 +384,7 @@
       this.popupsEl = $('#popups');
       this.boardEl.style.setProperty('--size', State.size);
       this.boardEl.innerHTML = '';
-      this.cells = []; this.glyphs = []; this._cellId = [];
+      this.cells = []; this.glyphs = []; this._cellId = []; this._cellTile = [];
       const frag = document.createDocumentFragment();
       for (let i = 0; i < State.size * State.size; i++) {
         const b = document.createElement('button');
@@ -420,10 +423,24 @@
       this.glyphs[i].innerHTML = id ? Icons.svg(id) : '';
     },
 
+    // Overlay de casilla especial (roca/helada/cristal…) por clase, con caché.
+    setTile(i) {
+      const t = State.tiles[i], type = t ? t.type : '';
+      if (this._cellTile[i] === type) return;
+      this._cellTile[i] = type;
+      const el = this.cells[i];
+      el.classList.toggle('tile-rock', type === 'rock');
+      el.classList.toggle('tile-frozen', type === 'frozen');
+      el.classList.toggle('tile-crystal', type === 'crystal');
+      el.classList.toggle('tile-locked', type === 'locked');
+      el.classList.toggle('tile-infected', type === 'infected');
+    },
+
     syncCell(i) {
       const el = this.cells[i], v = State.board[i];
       this.setGlyph(i, v);
-      el.classList.toggle('empty', v === null);
+      this.setTile(i);
+      el.classList.toggle('empty', v === null && !State.tiles[i]);
       el.classList.toggle('has-icon', v !== null);
       el.setAttribute('aria-label', this.cellLabel(i));
     },
@@ -730,13 +747,14 @@
   const Meta = (() => {
     const KEY = 'cv_meta';
     const SCHEMA = 2;
-    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
+    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
     let m;
     try { m = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); }
     catch (_) { m = JSON.parse(JSON.stringify(def)); }
     // Migración de esquema (rellena campos nuevos sin perder progreso previo).
     if (!m.cosmetics) m.cosmetics = JSON.parse(JSON.stringify(def.cosmetics));
     if (!m.reward) m.reward = { date: '', day: 0 };
+    if (!m.adventure) m.adventure = { maxLevel: 1 };
     if (typeof m.coins !== 'number') m.coins = 0;
     m._v = SCHEMA;
     const save = () => { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch (_) {} };
@@ -784,6 +802,8 @@
       // ---- Recompensa diaria ----
       rewardReady: () => m.reward.date !== today(),
       rewardDay: () => m.reward.day || 0,
+      advMax: () => (m.adventure && m.adventure.maxLevel) || 1,
+      advReach(level) { if (level > ((m.adventure && m.adventure.maxLevel) || 1)) { m.adventure.maxLevel = level; save(); } },
       claimReward() {
         if (m.reward.date === today()) return 0;
         const y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
@@ -892,6 +912,76 @@
     },
     apply() { this._set(Meta.cosmetics().theme); },
     previewTheme(id) { this._set(id); },
+  };
+
+  /* ===================== Adventure (modo Aventura: biomas procedurales infinitos) =====================
+   * Capítulos infinitos; cada capítulo = `perChapter` niveles de un bioma (paleta +
+   * modificadores + objetivo) y termina en un nodo de mini-jefe. La dificultad escala
+   * sin fin con el capítulo. Usa los registros Tiles/Modifiers de la Fase 0.
+   */
+  const Adventure = {
+    perChapter: 5,
+    BIOMES: [
+      { id: 'nebula',   name: 'Nebulosa',               glyph: '🌌', mods: [] },
+      { id: 'asteroid', name: 'Cinturón de Asteroides', glyph: '🪨', mods: ['rocks'] },
+      { id: 'ice',      name: 'Campo de Hielo',         glyph: '🧊', mods: ['ice'] },
+      { id: 'core',     name: 'Núcleo Ardiente',        glyph: '🔥', mods: ['rush'] },
+      { id: 'void',     name: 'El Vacío',               glyph: '🕳️', mods: ['scarce'] },
+      { id: 'crystal',  name: 'Cristalia',              glyph: '💎', mods: ['crystals'] },
+    ],
+    objective: 'clear', target: 0, levelScore0: 0, levelStart: 0,
+    chapterOf(level) { return Math.floor((level - 1) / this.perChapter); },
+    licOf(level) { return (level - 1) % this.perChapter; },
+    biomeOf(level) { return this.BIOMES[this.chapterOf(level) % this.BIOMES.length]; },
+    isBoss(level) { return this.licOf(level) === this.perChapter - 1; },
+    resumeLevel() { return Meta.advMax(); },
+
+    setup(level) {
+      const biome = this.biomeOf(level), lic = this.licOf(level), chapter = this.chapterOf(level), boss = this.isBoss(level);
+      this.levelScore0 = State.score; this.levelStart = State.elapsed;
+      // Escalada infinita: más presión de spawn por capítulo.
+      State.spawnRate = Math.max(360, Math.round(State.spawnRate / (1 + chapter * 0.12)));
+      // Objetivo del nivel
+      this.objective = boss ? 'boss' : (lic === 2 ? 'score' : (lic === 3 && chapter > 0 ? 'survive' : 'clear'));
+      this.target = 0;
+      // Modificadores de bioma (densidad creciente con el capítulo)
+      if (biome.mods.includes('rocks')) this._placeOnEmpty('rock', Math.min(0.16, 0.06 + chapter * 0.012));
+      if (biome.mods.includes('ice')) this._placeFrozen(Math.min(0.14, 0.05 + chapter * 0.012));
+      if (biome.mods.includes('rush')) State.spawnRate = Math.max(340, Math.round(State.spawnRate * 0.8));
+      if (biome.mods.includes('scarce')) State.hintsLeft = 1;
+      if (biome.mods.includes('crystals') && !boss) this._placeCrystals(2 + Math.min(chapter, 3));
+      if (this.objective === 'score') this.target = 250 + chapter * 120 + lic * 40;
+      if (this.objective === 'survive') this.target = 18 + chapter * 4;
+      if (this.objective === 'boss') this._placeCrystals(2 + Math.min(chapter, 4));
+      this.banner(level);
+    },
+
+    _emptyIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) a.push(i); return a; },
+    _filledIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) a.push(i); return a; },
+    _placeOnEmpty(type, density) { const e = this._emptyIdx(), n = Math.floor(e.length * density); for (let k = 0; k < n && e.length; k++) State.tiles[e.splice(rand(e.length), 1)[0]] = Tiles.make(type); },
+    _placeFrozen(density) { const f = this._filledIdx(), n = Math.floor(State.board.length * density); for (let k = 0; k < n && f.length; k++) State.tiles[f.splice(rand(f.length), 1)[0]] = Tiles.make('frozen'); },
+    _placeCrystals(k) { const f = this._filledIdx(); for (let x = 0; x < k && f.length; x++) State.tiles[f.splice(rand(f.length), 1)[0]] = Tiles.make('crystal'); },
+    crystalsLeft() { let n = 0; for (let i = 0; i < State.tiles.length; i++) if (State.tiles[i] && State.tiles[i].type === 'crystal') n++; return n; },
+
+    winCheck() {
+      if (this.objective === 'score') return (State.score - this.levelScore0) >= this.target ? 'win' : undefined;
+      if (this.objective === 'survive') return (State.elapsed - this.levelStart) >= this.target ? 'win' : undefined;
+      if (this.objective === 'boss') return this.crystalsLeft() === 0 ? 'win' : undefined;
+      return undefined; // 'clear' => regla por defecto (tablero vacío)
+    },
+    objectiveText() {
+      if (this.objective === 'boss') return `JEFE · rompe los 💎 (${this.crystalsLeft()})`;
+      if (this.objective === 'score') return `Consigue ${this.target} pts`;
+      if (this.objective === 'survive') return `Sobrevive ${this.target}s`;
+      return 'Vacía el tablero';
+    },
+    banner(level) {
+      const el = $('#obj-banner'); if (!el) return;
+      const biome = this.biomeOf(level);
+      el.hidden = false;
+      el.innerHTML = `<span class="obj-biome">${biome.glyph} Cap. ${this.chapterOf(level) + 1} · ${biome.name}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>`;
+    },
+    refreshGoal() { const g = $('#obj-goal'); if (g) g.textContent = this.objectiveText(); },
   };
 
   /* ===================== Rules (hooks por modo) =====================
@@ -1026,6 +1116,8 @@
             State.timeLeft -= secs;
             if (State.timeLeft <= 0) { State.timeLeft = 0; Render.hud(); Game.gameOver('¡Se acabó el tiempo!'); }
           }
+          // Aventura: revisar objetivos por tiempo (sobrevivir) cada segundo.
+          if (State.mode === 'aventura' && State.status === 'playing') Game.evaluate();
           Render.hud();
         }
         L.spawnAcc += dt;
@@ -1090,6 +1182,9 @@
       State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.coinsRun = 0;
       State.fever = false; State.feverEver = false; State.perfectEver = false; State.recordHit = false;
       State.status = 'playing'; this.ended = false;
+      // Aventura: reanuda en el nivel más lejano alcanzado; el resto empieza en 1.
+      if (mode === 'aventura') State.level = Meta.advMax();
+      { const ob = $('#obj-banner'); if (ob) ob.hidden = (mode !== 'aventura'); }
       Render.fever(false); Render.danger(0);
       this.clearHintHighlight();
       this.setupLevel();
@@ -1120,6 +1215,13 @@
     activate(i) {
       if (State.status !== 'playing') return;
       this.clearHintHighlight();
+      const ti = State.tiles[i];
+      // Casilla helada: tocar para descongelar (no es un error).
+      if (ti && ti.type === 'frozen') {
+        ti.taps = (ti.taps || 2) - 1;
+        if (ti.taps <= 0) { State.tiles[i] = null; Sound.success(); } else Sound.tap();
+        Render.setTile(i); Render.syncCell(i); Haptics.tap(); return;
+      }
       if (State.board[i] !== null) { Sound.tap(); return; }     // ocupada: nada
       const conv = Engine.converging(i);
       if (conv.length < 2) { this.mistake(i); return; }          // error → penalización
@@ -1157,10 +1259,14 @@
       const burstN = 6 + Math.min(State.combo, 14);
       for (const idx of conv) FX.burst(idx, Icons.colorOf(State.board[idx]), burstN);
 
-      // Aplicar al tablero
-      conv.forEach(idx => { State.board[idx] = null; State.iconCount--; });
+      // Aplicar al tablero (limpia también la casilla especial; cristal = bonus)
+      conv.forEach(idx => {
+        const t = State.tiles[idx];
+        if (t) { if (t.type === 'crystal') State.score += 50; State.tiles[idx] = null; }
+        State.board[idx] = null; State.iconCount--;
+      });
       Render.clearAnim(conv);
-      conv.forEach(idx => Render.cells[idx].setAttribute('aria-label', Render.cellLabel(idx)));
+      conv.forEach(idx => { Render.setTile(idx); Render.cells[idx].setAttribute('aria-label', Render.cellLabel(idx)); });
 
       // Color por tier de combo
       const color = State.comboMult >= 8 ? '#ffd84d' : State.comboMult >= 5 ? '#ff5cf0' : State.comboMult >= 3 ? '#b46cff' : State.comboMult >= 2 ? '#00d0ff' : State.comboMult >= 1.5 ? '#34e29b' : '#fff';
@@ -1283,13 +1389,21 @@
     },
 
     nextLevel() {
+      const prevChapter = State.mode === 'aventura' ? Adventure.chapterOf(State.level) : -1;
       State.level++;
       State.status = 'playing';
       Modal.close();
       this.setupLevel(); // tablero fresco con la variedad/velocidad/tiempo del nuevo nivel
       // El bucle se detuvo al mostrarse el modal (status != playing); hay que reiniciarlo.
       Loop.start();
-      Toasts.show(`Nivel ${State.level}`, 'info', 1400);
+      if (State.mode === 'aventura') {
+        Meta.advReach(State.level);
+        const ch = Adventure.chapterOf(State.level);
+        if (ch !== prevChapter) { const bi = Adventure.biomeOf(State.level); Toasts.show(`${bi.glyph} Capítulo ${ch + 1}: ${bi.name}`, 'good', 2200); }
+        else Toasts.show(`Nivel ${State.level}`, 'info', 1200);
+      } else {
+        Toasts.show(`Nivel ${State.level}`, 'info', 1400);
+      }
     },
 
     win(reason) {
@@ -1524,6 +1638,22 @@
     }));
   }
   function openShop() { buildShop(); Modal.open('modal-shop'); }
+
+  // Mapa de capítulos de Aventura (nodos hasta el capítulo alcanzado + el siguiente)
+  function buildAdventureMap() {
+    const wrap = $('#adventure-map'); if (!wrap) return;
+    const max = Meta.advMax(), curCh = Adventure.chapterOf(max);
+    let html = '';
+    for (let ch = 0; ch <= curCh + 1; ch++) {
+      const bi = Adventure.BIOMES[ch % Adventure.BIOMES.length];
+      const cls = ch < curCh ? 'done' : (ch === curCh ? 'cur' : 'next');
+      if (ch > 0) html += '<span class="adv-link"></span>';
+      html += `<div class="adv-node ${cls}"><span class="adv-glyph">${bi.glyph}</span><span class="adv-name">Cap. ${ch + 1}<small>${bi.name}</small></span></div>`;
+    }
+    wrap.innerHTML = html;
+    const btn = $('#adventure-continue');
+    if (btn) btn.textContent = max > 1 ? `Continuar · Nivel ${max}` : 'Empezar la aventura';
+  }
   function claimDailyReward() {
     if (!Meta.rewardReady()) return;
     const amt = Meta.claimReward();
@@ -1602,7 +1732,11 @@
 
     // Modos
     $('#modes-back').addEventListener('click', () => Screens.show('start'));
-    $('#btn-start-game').addEventListener('click', () => Game.start(selMode, selDiff));
+    $('#btn-start-game').addEventListener('click', () => {
+      if (selMode === 'aventura') { buildAdventureMap(); Modal.open('modal-adventure'); }
+      else Game.start(selMode, selDiff);
+    });
+    { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { Modal.close(); Game.start('aventura', selDiff); }); }
 
     // Juego
     $('#btn-hint').addEventListener('click', () => Game.hint());
@@ -1639,5 +1773,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Coach };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Coach, Adventure };
 })();

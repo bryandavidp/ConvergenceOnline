@@ -275,6 +275,18 @@ h1, h2, h3, p { margin: 0; }
 .cell.has-icon { background: rgba(90, 110, 190, 0.16); }
 .cell.hint { box-shadow: 0 0 0 2px var(--gold) inset, 0 0 14px var(--gold); }
 
+/* Casillas especiales (Aventura / Supervivencia) */
+.cell.tile-rock { background: #353b4a; }
+.cell.tile-rock::after { content: '🪨'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.4em; }
+.cell.tile-frozen { background: rgba(150, 220, 255, .2); box-shadow: 0 0 0 2px rgba(150, 220, 255, .55) inset; }
+.cell.tile-frozen::after { content: '❄️'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.5em; opacity: .85; }
+.cell.tile-crystal { box-shadow: 0 0 0 2px rgba(255, 215, 90, .7) inset, 0 0 12px rgba(255, 215, 90, .35); }
+.cell.tile-crystal::after { content: '💎'; position: absolute; top: 1px; right: 2px; font-size: .62em; }
+.cell.tile-locked { background: #2a2f3c; }
+.cell.tile-locked::after { content: '🔒'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.3em; }
+.cell.tile-infected { box-shadow: 0 0 0 2px rgba(120, 230, 120, .6) inset; }
+.cell.tile-infected::after { content: '☣️'; position: absolute; top: 1px; right: 2px; font-size: .62em; }
+
 /* Icono SVG dentro de la celda */
 .cell .glyph {
   width: 76%; height: 76%;
@@ -493,6 +505,21 @@ body.reduced-fx .coach-text { animation: none; }
 .medal-ic { font-size: 1.3rem; }
 .medal-tx { display: flex; flex-direction: column; }
 .medal-tx small { color: var(--muted); }
+
+/* Banner de objetivo (Aventura) */
+.obj-banner { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 auto 6px; width: min(96vw, 620px); max-width: 100%; background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; font-size: .82rem; }
+.obj-biome { color: var(--accent-2); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.obj-goal { color: var(--gold); font-weight: 700; white-space: nowrap; flex: 0 0 auto; }
+
+/* Mapa de Aventura */
+.adventure-map { display: flex; align-items: center; gap: 4px; overflow-x: auto; padding: 10px 2px; margin: 8px 0 16px; }
+.adv-node { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 86px; padding: 10px 8px; border-radius: 12px; background: rgba(0,0,0,.22); border: 1px solid var(--line); opacity: .55; flex: 0 0 auto; }
+.adv-node.cur { opacity: 1; border-color: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2) inset; }
+.adv-node.done { opacity: .85; border-color: var(--good); }
+.adv-glyph { font-size: 1.6rem; }
+.adv-name { font-size: .72rem; text-align: center; font-weight: 700; line-height: 1.15; }
+.adv-name small { display: block; color: var(--muted); font-weight: 400; }
+.adv-link { width: 16px; height: 2px; background: var(--line); flex: 0 0 auto; }
 
 /* Tienda */
 .shop-coins { color: var(--gold); font-weight: 800; margin-bottom: 2px; }
