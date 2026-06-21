@@ -451,9 +451,26 @@ h1, h2, h3, p { margin: 0; }
 .board-wrap.danger { border-color: rgba(255,93,115,.9); animation: dangerBorder 1s ease-in-out infinite; }
 @keyframes dangerBorder { 50% { border-color: rgba(255,60,80,.45); } }
 
+/* Bienvenida: opcional + selector de avatar */
+.field .opt { color: var(--muted); font-weight: 400; font-size: .82em; }
+.avatar-pick { display: flex; gap: 10px; justify-content: center; margin: 4px 0 16px; flex-wrap: wrap; }
+.avatar-dot { width: 32px; height: 32px; border-radius: 50%; background: var(--av, #00d0ff); border: 2px solid rgba(255,255,255,.25); padding: 0; cursor: pointer; transition: transform .12s; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
+.avatar-dot.sel { border-color: #fff; transform: scale(1.18); box-shadow: 0 0 0 3px var(--av), 0 2px 8px rgba(0,0,0,.5); }
+.avatar-dot.mini { width: 22px; height: 22px; border-width: 2px; cursor: default; flex: 0 0 auto; }
+
+/* Tutorial interactivo (coach-marks) */
+.coach { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 70; width: min(440px, 92vw); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.coach-text { pointer-events: none; background: rgba(10,16,40,.96); color: var(--text); border: 1px solid var(--accent-2); border-radius: 14px; padding: 12px 16px; font-weight: 600; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: coach-in .3s ease both; }
+.coach-skip { pointer-events: auto; padding: 8px 16px; }
+@keyframes coach-in { from { opacity: 0; transform: translateY(10px); } }
+body.reduced-fx .coach-text { animation: none; }
+
 /* Perfil / XP / misión en inicio */
 .start-meta { margin: 2px 0 14px; text-align: left; display: flex; flex-direction: column; gap: 10px; }
 .profile { background: rgba(0,0,0,.22); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.profile-id { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.profile-id .pname { font-weight: 800; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-id .coins { margin-left: auto; color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
 .profile-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-weight: 700; }
 .profile-top .rank { position: static; transform: none; opacity: 1; font-size: 1rem; color: var(--accent-2); text-shadow: none; }
 .profile-top .streak { margin-left: auto; color: var(--warn); }
