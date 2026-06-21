@@ -63,7 +63,12 @@
         onSetupLevel(ctx) { Adventure.setup(ctx.level); },
         winCheck() { Adventure.refreshGoal(State.level); return Adventure.winCheck(); } },
       contrarreloj:  { name: 'Contrarreloj', emoji: '⏱️', timed: true,  penalties: true,  mult: 1.2, desc: 'Cada convergencia suma tiempo. ¡No dejes que el reloj llegue a cero!' },
-      supervivencia: { name: 'Supervivencia',emoji: '❤️', timed: false, penalties: true,  mult: 1.5, fast: true, desc: 'Los iconos llegan más rápido y los errores penalizan más. Aguanta.' },
+      supervivencia: { name: 'Supervivencia',emoji: '❤️', timed: false, penalties: true,  mult: 1.5, fast: true, endless: true, desc: 'Aguanta oleadas crecientes con vidas, trampas, jefes y potenciadores. ¿Cuánto sobrevivirás?',
+        onSetupLevel(ctx) { Survival.setup(ctx.level); },
+        onTick(dt) { Survival.onTick(dt); },
+        onConverge(ctx) { Survival.onConverge(ctx.removed, ctx.combo); },
+        onOverflow() { Survival.onOverflow(); },
+        blockSpawn() { return Survival.frozen(); } },
       zen:           { name: 'Zen',          emoji: '☯️', timed: false, penalties: false, mult: 0.8, relaxed: true, desc: 'Ritmo relajado, sin penalizaciones. Juega y respira.' },
     },
     MODE_ORDER: ['tutorial', 'clasico', 'aventura', 'contrarreloj', 'supervivencia', 'zen'],
@@ -804,6 +809,8 @@
       rewardDay: () => m.reward.day || 0,
       advMax: () => (m.adventure && m.adventure.maxLevel) || 1,
       advReach(level) { if (level > ((m.adventure && m.adventure.maxLevel) || 1)) { m.adventure.maxLevel = level; save(); } },
+      survBest: () => m.survBest || 0,
+      survRecord(sec) { sec = Math.floor(sec); if (sec > (m.survBest || 0)) { m.survBest = sec; save(); return true; } return false; },
       claimReward() {
         if (m.reward.date === today()) return 0;
         const y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
@@ -982,6 +989,117 @@
       el.innerHTML = `<span class="obj-biome">${biome.glyph} Cap. ${this.chapterOf(level) + 1} · ${biome.name}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>`;
     },
     refreshGoal() { const g = $('#obj-goal'); if (g) g.textContent = this.objectiveText(); },
+  };
+
+  /* ===================== Survival (Supervivencia 2.0: oleadas, vidas, boosters, trampas) ===================== */
+  const Survival = {
+    WAVE_MS: 22000, MAX_LIVES: 3, CHARGE_PER: 9, BOOSTERS: ['bomb', 'freeze', 'x2', 'clearLine'],
+    lives: 3, wave: 1, waveAcc: 0, survSec: 0, charge: 0, freezeUntil: 0, x2Until: 0,
+    _r: {},
+    start() {
+      this.lives = this.MAX_LIVES; this.wave = 1; this.waveAcc = 0; this.survSec = 0; this.charge = 0;
+      this.freezeUntil = 0; this.x2Until = 0; State.tempMult = 1; this._r = {};
+      this.buildBar(); this.render();
+    },
+    setup() { if (this.wave >= 2) this._traps(Math.min(0.10, 0.02 * this.wave)); },
+    frozen() { return performance.now() < this.freezeUntil; },
+    x2Active() { return performance.now() < this.x2Until; },
+    _emptyIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) a.push(i); return a; },
+    _filledIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) a.push(i); return a; },
+    _traps(density) {
+      const e = this._emptyIdx(); let n = Math.floor(e.length * density);
+      for (let k = 0; k < n && e.length; k++) {
+        const idx = e.splice(rand(e.length), 1)[0];
+        if (Math.random() < 0.6) State.tiles[idx] = Tiles.make('rock');
+        else { State.tiles[idx] = Tiles.make('frozen'); State.board[idx] = State.pool[rand(State.pool.length)]; State.iconCount++; }
+      }
+      Render.syncAll();
+    },
+    onTick(dt) {
+      if (State.status !== 'playing') return;
+      this.survSec = State.elapsed;
+      if (this.x2Until && !this.x2Active()) { this.x2Until = 0; State.tempMult = 1; }
+      this.waveAcc += dt;
+      if (this.waveAcc >= this.WAVE_MS) { this.waveAcc -= this.WAVE_MS; this.newWave(); }
+      this.render();
+    },
+    newWave() {
+      this.wave++;
+      State.spawnRate = Math.max(360, Math.round(State.spawnRate * 0.88));
+      Toasts.show('🌊 Oleada ' + this.wave, 'warn', 1400); Sound.danger();
+      this._traps(Math.min(0.12, 0.02 * this.wave));
+      if (this.wave % 4 === 0) this.bossEvent();
+    },
+    bossEvent() {
+      if (rand(2) === 0) { for (let k = 0; k < 8; k++) Engine.spawnOne(); Render.syncAll(); Toasts.show('☄️ ¡Lluvia de iconos!', 'bad', 1800); }
+      else { this._shuffle(); Toasts.show('🌀 ¡Terremoto!', 'bad', 1800); }
+      Sound.fever(); Haptics.milestone();
+    },
+    _shuffle() {
+      const idx = [], vals = [];
+      for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) { idx.push(i); vals.push(State.board[i]); }
+      for (let i = vals.length - 1; i > 0; i--) { const j = rand(i + 1); const t = vals[i]; vals[i] = vals[j]; vals[j] = t; }
+      idx.forEach((p, k) => State.board[p] = vals[k]); Render.syncAll();
+    },
+    onConverge(removed, combo) { this.charge = Math.min(100, this.charge + this.CHARGE_PER + Math.min(combo || 0, 6)); this.render(); },
+    onOverflow() {
+      this.lives--;
+      if (this.lives <= 0) { this.lastChance(); return; }
+      Toasts.show('💔 -1 vida', 'bad', 1600); Sound.miss(); Haptics.error(); Render.boardShake();
+      this._relief(0.4); this.render();
+    },
+    _relief(frac) {
+      const f = this._filledIdx(); let n = Math.floor(f.length * frac);
+      for (let k = 0; k < n && f.length; k++) { const idx = f.splice(rand(f.length), 1)[0]; FX.burst(idx, Icons.colorOf(State.board[idx]), 4); State.board[idx] = null; State.iconCount--; }
+      Render.syncAll();
+    },
+    lastChance() {
+      State.status = 'paused'; Loop.stop(); Music.stop(true);
+      const cost = 120; const cc = $('#revive-cost'); if (cc) cc.textContent = cost;
+      const rb = $('#btn-revive'); if (rb) rb.disabled = Meta.coins() < cost;
+      Modal.open('modal-revive');
+    },
+    revive() {
+      if (!Meta.spend(120)) { Toasts.show('Monedas insuficientes', 'warn', 1500); return; }
+      this.lives = 1; this._relief(0.6);
+      Modal.close(); State.status = 'playing'; Loop.start(); if (Settings.music) Music.start();
+      Sound.success(); this.render();
+    },
+    giveUp() { Modal.close(); Game.gameOver('Sobreviviste ' + Math.floor(this.survSec) + 's'); },
+    useBooster(id) {
+      if (this.charge < 100) { Toasts.show('Potenciador cargando…', 'warn', 1000); Sound.ui(); return; }
+      this.charge = 0;
+      if (id === 'bomb') this._bomb();
+      else if (id === 'freeze') { this.freezeUntil = performance.now() + 6000; Toasts.show('❄️ Spawns congelados', 'info', 1500); }
+      else if (id === 'x2') { this.x2Until = performance.now() + 10000; State.tempMult = 2; Toasts.show('⚡ ¡Puntos x2!', 'good', 1500); }
+      else if (id === 'clearLine') this._clearLine();
+      Sound.rank(); Haptics.combo(); this.render();
+    },
+    _bomb() {
+      let best = 0, bestN = -1;
+      for (let i = 0; i < 64; i++) { const r = i / 8 | 0, c = i % 8; let n = 0; for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { const rr = r + dr, cc = c + dc; if (rr >= 0 && cc >= 0 && rr < 8 && cc < 8 && State.board[rr * 8 + cc] !== null) n++; } if (n > bestN) { bestN = n; best = i; } }
+      const r = best / 8 | 0, c = best % 8;
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { const rr = r + dr, cc = c + dc; if (rr >= 0 && cc >= 0 && rr < 8 && cc < 8) { const j = rr * 8 + cc; if (State.board[j] !== null && !(State.tiles[j] && State.tiles[j].solid)) { FX.burst(j, Icons.colorOf(State.board[j]), 5); State.board[j] = null; State.iconCount--; if (State.tiles[j]) State.tiles[j] = null; } } }
+      Render.syncAll(); Toasts.show('💣 ¡Boom!', 'good', 1300);
+    },
+    _clearLine() {
+      const row = rand(8);
+      for (let c = 0; c < 8; c++) { const j = row * 8 + c; if (State.board[j] !== null) { FX.burst(j, Icons.colorOf(State.board[j]), 4); State.board[j] = null; State.iconCount--; if (State.tiles[j] && !State.tiles[j].solid) State.tiles[j] = null; } }
+      Render.syncAll(); Toasts.show('🧹 ¡Fila despejada!', 'good', 1300);
+    },
+    buildBar() {
+      const el = $('#boosters'); if (!el) return;
+      el.innerHTML = this.BOOSTERS.map((id) => { const d = Boosters.DEFS[id]; return `<button class="booster" data-b="${id}" aria-label="${d.name}"><span class="b-ic">${d.glyph}</span></button>`; }).join('');
+      el.querySelectorAll('.booster').forEach((b) => b.addEventListener('click', () => this.useBooster(b.dataset.b)));
+    },
+    render() {
+      const r = this._r;
+      if (r.lives !== this.lives) { r.lives = this.lives; const lv = $('#surv-lives'); if (lv) lv.textContent = this.lives > 0 ? '❤️'.repeat(this.lives) : '💀'; }
+      if (r.wave !== this.wave) { r.wave = this.wave; const w = $('#surv-wave'); if (w) w.textContent = 'Oleada ' + this.wave; }
+      const sec = Math.floor(this.survSec); if (r.sec !== sec) { r.sec = sec; const t = $('#surv-time'); if (t) t.textContent = sec + 's'; }
+      const ch = Math.round(this.charge); if (r.charge !== ch) { r.charge = ch; const cf = $('#charge-fill'); if (cf) cf.style.width = ch + '%'; }
+      const ready = this.charge >= 100; if (r.ready !== ready) { r.ready = ready; const bb = $('#booster-bar'); if (bb) bb.classList.toggle('ready', ready); }
+    },
   };
 
   /* ===================== Rules (hooks por modo) =====================
@@ -1179,12 +1297,17 @@
       State.diff = Config.MODES[mode].fixedDiff || diff;
       State.score = 0; State.displayScore = 0; State.level = 1; State.elapsed = 0; State.timeLeft = 0;
       State.combo = 0; State.comboMult = 1; State.comboAt = 0;
-      State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.coinsRun = 0;
+      State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.coinsRun = 0; State.tempMult = 1;
       State.fever = false; State.feverEver = false; State.perfectEver = false; State.recordHit = false;
       State.status = 'playing'; this.ended = false;
       // Aventura: reanuda en el nivel más lejano alcanzado; el resto empieza en 1.
       if (mode === 'aventura') State.level = Meta.advMax();
       { const ob = $('#obj-banner'); if (ob) ob.hidden = (mode !== 'aventura'); }
+      // Supervivencia 2.0: vidas, oleadas, boosters.
+      const isSurv = mode === 'supervivencia';
+      document.body.classList.toggle('mode-surv', isSurv);
+      { const sb = $('#surv-bar'); if (sb) sb.hidden = !isSurv; const bb = $('#booster-bar'); if (bb) bb.hidden = !isSurv; }
+      if (isSurv) Survival.start();
       Render.fever(false); Render.danger(0);
       this.clearHintHighlight();
       this.setupLevel();
@@ -1198,7 +1321,7 @@
     },
 
     restart() { if (Coach.active) return Coach.skip(); Modal.close(); this.start(State.mode, State.diff); },
-    quit() { if (Coach.active) return Coach.skip(); Loop.stop(); Music.stop(); State.status = 'idle'; Modal.close(); this.clearHintHighlight(); refreshStart(); Screens.show('start'); },
+    quit() { if (Coach.active) return Coach.skip(); Loop.stop(); Music.stop(); State.status = 'idle'; Modal.close(); document.body.classList.remove('mode-surv'); this.clearHintHighlight(); refreshStart(); Screens.show('start'); },
 
     pause() {
       if (Coach.active) return Coach.skip();
@@ -1248,7 +1371,7 @@
       State.removedTotal += removed;
       const d = Config.DIFFICULTY[State.diff], m = Config.MODES[State.mode];
       const base = removed * 10 * State.level;
-      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * (State.fever ? Config.FEVER_BOOST : 1));
+      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * (State.fever ? Config.FEVER_BOOST : 1) * (State.tempMult || 1));
       State.score += points;
       if (Config.MILESTONES[State.combo]) { State.score += Config.MILESTONES[State.combo]; Toasts.show(`¡Combo ×${State.combo}! +${Config.MILESTONES[State.combo]}`, 'good'); Sound.milestone(); Haptics.milestone(); }
 
@@ -1295,6 +1418,7 @@
       Render.hudSoon();
       announce(`+${points} puntos.${State.combo >= 3 ? ' Combo ' + State.combo + '.' : ''}`);
       if (Coach.active) { Coach.notify(); return; }
+      Rules.call('onConverge', { removed, combo: State.combo });
       this.evaluate();
     },
 
@@ -1317,8 +1441,12 @@
     },
 
     doSpawn() {
+      if (Rules.call('blockSpawn')) return;   // potenciador de congelación (Supervivencia)
       const idx = Engine.spawnOne();
-      if (idx < 0) { this.evaluate(); return; }
+      if (idx < 0) { // tablero lleno
+        if (Config.MODES[State.mode].endless) { Rules.call('onOverflow'); return; }
+        this.evaluate(); return;
+      }
       Render.syncCell(idx); Render.spawnAnim(idx);
       // Aceleración progresiva suave dentro del nivel
       State.spawnRate = Math.max(Config.DIFFICULTY[State.diff].spawnMin, State.spawnRate - 6);
@@ -1335,6 +1463,8 @@
       if (wc) { this.levelComplete(wc === 'perfect'); return; }
       const lc = Rules.call('loseCheck', State);
       if (lc) { this.gameOver(typeof lc === 'string' ? lc : 'Fin de la partida.'); return; }
+      // Modos infinitos (Supervivencia): la victoria/derrota la gestionan sus hooks.
+      if (Config.MODES[State.mode].endless) return;
       if (State.iconCount === 0) { this.levelComplete(true); return; }
       if (!Engine.hasMoves()) {
         const occ = Engine.occupation();
@@ -1417,9 +1547,12 @@
 
     gameOver(reason) {
       if (this.ended) return;
+      // Supervivencia: registra el récord de tiempo sobrevivido.
+      this._survNew = false;
+      if (State.mode === 'supervivencia') { this._survNew = Meta.survRecord(Survival.survSec); document.body.classList.remove('mode-surv'); }
       this.endGame();
       Sound.over(); Haptics.error(); Render.boardShake();
-      $('#over-title').textContent = '¡Misión fallida!';
+      $('#over-title').textContent = State.mode === 'supervivencia' ? '🛡️ Fin de la supervivencia' : '¡Misión fallida!';
       $('#over-reason').textContent = reason;
       this.fillStats(); Modal.open('modal-over');
       announce(`Fin de la partida. ${reason} Puntuación ${State.score}.`);
@@ -1439,17 +1572,26 @@
     },
 
     fillStats() {
-      $('#over-record').hidden = !this.newRecord;
+      $('#over-record').hidden = !this.newRecord && !this._survNew;
+      if (this._survNew) { const rec = $('#over-record'); if (rec) rec.textContent = '🛡️ ¡Récord de supervivencia!'; }
       const m = Config.MODES[State.mode], d = Config.DIFFICULTY[State.diff];
       $('#over-meta').textContent = `Modo ${m.name} · ${d.label}`;
-      $('#over-stats').innerHTML = statRow([
+      const rows = (m.id === 'supervivencia' || State.mode === 'supervivencia') ? [
+        [State.score, 'Puntos', 'var(--score)'],
+        ['Oleada ' + Survival.wave, 'Oleada', 'var(--level)'],
+        ['×' + State.maxCombo, 'Combo máx.', 'var(--gold)'],
+        [State.removedTotal, 'Eliminados', 'var(--good)'],
+        [Math.floor(Survival.survSec) + 's', 'Sobreviviste', 'var(--time)'],
+        [Meta.survBest() + 's', 'Mejor', 'var(--gold)'],
+      ] : [
         [State.score, 'Puntos', 'var(--score)'],
         [State.level, 'Nivel', 'var(--level)'],
         ['×' + State.maxCombo, 'Combo máx.', 'var(--gold)'],
         [State.removedTotal, 'Eliminados', 'var(--good)'],
         [fmtTime(State.elapsed), 'Tiempo', 'var(--time)'],
         [Storage.best, 'Récord', 'var(--gold)'],
-      ]);
+      ];
+      $('#over-stats').innerHTML = statRow(rows);
       // Progresión: XP ganada, barra de perfil, misión y logros nuevos
       const r = this.metaResult || { xpGained: 0, coinsGained: 0, leveledUp: 0, newAch: [], missionDone: false };
       const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
@@ -1751,6 +1893,8 @@
     $('#btn-next-level').addEventListener('click', () => Game.nextLevel());
     $('#btn-retry').addEventListener('click', () => Game.restart());
     $('#btn-over-quit').addEventListener('click', () => Game.quit());
+    { const rv = $('#btn-revive'); if (rv) rv.addEventListener('click', () => Survival.revive()); }
+    { const gu = $('#btn-giveup'); if (gu) gu.addEventListener('click', () => Survival.giveUp()); }
     document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => Modal.close()));
 
     // Teclas globales
@@ -1773,5 +1917,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Coach, Adventure };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Coach, Adventure, Survival };
 })();

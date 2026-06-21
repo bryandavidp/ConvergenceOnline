@@ -511,6 +511,20 @@ body.reduced-fx .coach-text { animation: none; }
 .obj-biome { color: var(--accent-2); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .obj-goal { color: var(--gold); font-weight: 700; white-space: nowrap; flex: 0 0 auto; }
 
+/* Supervivencia 2.0 */
+body.mode-surv .hud-item.level { display: none; }
+.surv-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 auto 6px; width: min(96vw, 620px); max-width: 100%; background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; font-size: .9rem; font-weight: 700; }
+.surv-lives { letter-spacing: 1px; min-width: 60px; }
+.surv-wave { color: var(--warn); }
+.surv-time { color: var(--accent-2); font-variant-numeric: tabular-nums; }
+.booster-bar { width: min(96vw, 620px); max-width: 100%; margin: 8px auto 0; }
+.charge { height: 6px; border-radius: 6px; background: rgba(0,0,0,.4); overflow: hidden; margin-bottom: 8px; }
+.charge-fill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, var(--accent-2), var(--gold)); transition: width .2s ease; }
+.boosters { display: flex; gap: 10px; justify-content: center; }
+.booster { width: 56px; height: 46px; border-radius: 12px; background: rgba(0,0,0,.28); border: 1px solid var(--line); font-size: 1.5rem; opacity: .45; transition: transform .1s ease, opacity .2s ease; touch-action: manipulation; }
+.booster-bar.ready .booster { opacity: 1; border-color: var(--accent-2); box-shadow: 0 0 10px rgba(0,208,255,.3); }
+.booster-bar.ready .booster:active { transform: scale(.9); }
+
 /* Mapa de Aventura */
 .adventure-map { display: flex; align-items: center; gap: 4px; overflow-x: auto; padding: 10px 2px; margin: 8px 0 16px; }
 .adv-node { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 86px; padding: 10px 8px; border-radius: 12px; background: rgba(0,0,0,.22); border: 1px solid var(--line); opacity: .55; flex: 0 0 auto; }

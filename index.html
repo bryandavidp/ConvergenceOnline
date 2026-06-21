@@ -134,6 +134,13 @@
       <!-- Banner de objetivo (modo Aventura) -->
       <div class="obj-banner" id="obj-banner" hidden></div>
 
+      <!-- Barra de Supervivencia: vidas + oleada + tiempo sobrevivido -->
+      <div class="surv-bar" id="surv-bar" hidden>
+        <span class="surv-lives" id="surv-lives">❤️❤️❤️</span>
+        <span class="surv-wave" id="surv-wave">Oleada 1</span>
+        <span class="surv-time" id="surv-time">0s</span>
+      </div>
+
       <div class="board-area">
         <div class="board-wrap">
           <div class="board" id="board" role="grid" aria-label="Tablero de juego"></div>
@@ -144,6 +151,12 @@
           <!-- Flash de rango de combo -->
           <div class="rank" id="rank" aria-hidden="true"></div>
         </div>
+      </div>
+
+      <!-- Barra de potenciadores (Supervivencia) -->
+      <div class="booster-bar" id="booster-bar" hidden>
+        <div class="charge"><div class="charge-fill" id="charge-fill"></div></div>
+        <div class="boosters" id="boosters"></div>
       </div>
 
       <!-- Indicador de combo -->
@@ -214,6 +227,16 @@
       <h2 id="settings-title">⚙️ Ajustes</h2>
       <div class="settings-list" id="settings-list"></div>
       <button class="btn btn-primary" data-close>Cerrar</button>
+    </div>
+
+    <!-- Última oportunidad (Supervivencia) -->
+    <div class="modal modal-revive" id="modal-revive" role="dialog" aria-modal="true" aria-labelledby="revive-title" hidden>
+      <h2 id="revive-title">💔 ¡Última oportunidad!</h2>
+      <p class="modal-sub">Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?</p>
+      <div class="modal-buttons">
+        <button class="btn btn-primary" id="btn-revive">🪙 Revivir (<span id="revive-cost">120</span>)</button>
+        <button class="btn btn-ghost" id="btn-giveup">Rendirse</button>
+      </div>
     </div>
 
     <!-- Mapa de Aventura -->
