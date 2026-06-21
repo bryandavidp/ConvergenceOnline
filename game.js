@@ -144,17 +144,30 @@
 
   /* ===================== Sound (WebAudio, sin archivos) ===================== */
   const Sound = {
-    ctx: null, sfxGain: null, musicGain: null,
+    ctx: null, sfxGain: null, musicGain: null, _unlocked: false,
     get enabled() { return Settings.sfx; },
+    // Debe llamarse DENTRO de un gesto de usuario (iOS lo exige).
     ensure() {
       if (!this.ctx) {
         try {
+          // iOS 16.4+: enrutar al canal "playback" para que el audio suene aunque
+          // el interruptor físico de silencio esté activado (la causa más común de
+          // "no hay sonido en iPhone" mientras sí funciona en Android).
+          try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (_) {}
           this.ctx = new (window.AudioContext || window.webkitAudioContext)();
           this.sfxGain = this.ctx.createGain(); this.sfxGain.gain.value = 0.9; this.sfxGain.connect(this.ctx.destination);
           this.musicGain = this.ctx.createGain(); this.musicGain.gain.value = 0.0; this.musicGain.connect(this.ctx.destination);
         } catch (_) {}
       }
-      if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+      // iOS usa también el estado 'interrupted' (tras Siri/llamada), no solo 'suspended'.
+      if (this.ctx && this.ctx.state !== 'running') { const r = this.ctx.resume(); if (r && r.catch) r.catch(() => {}); }
+      // Desbloqueo iOS: reproducir un búfer silencioso una vez dentro del gesto.
+      if (this.ctx && !this._unlocked) {
+        try {
+          const buf = this.ctx.createBuffer(1, 1, 22050), src = this.ctx.createBufferSource();
+          src.buffer = buf; src.connect(this.ctx.destination); src.start(0); this._unlocked = true;
+        } catch (_) {}
+      }
     },
     tone(freq, dur, type = 'sine', vol = 0.2, when = 0) {
       if (!Settings.sfx || !this.ctx) return;
@@ -1212,6 +1225,14 @@
     Input.init();
     buildModeMenu();
 
+    // Audio iOS: red de seguridad. Desbloquea/reanuda el contexto con el primer
+    // gesto en cualquier parte y al volver a primer plano (iOS suspende el audio).
+    const unlockAudio = () => { Sound.ensure(); };
+    ['pointerdown', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, unlockAudio, { passive: true }));
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && Sound.ctx && Sound.ctx.state !== 'running') { const r = Sound.ctx.resume(); if (r && r.catch) r.catch(() => {}); }
+    });
+
     // Login (demo)
     if (Storage.user) Screens.show('start'); else Screens.show('login');
     refreshStart();
@@ -1272,5 +1293,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound };
 })();
