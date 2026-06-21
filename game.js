@@ -19,8 +19,7 @@
   /* ===================== Config ===================== */
   const Config = {
     SIZE: 8,
-    // Iconos por niveles de complejidad (se van añadiendo con el nivel)
-    ICON_POOL: ['🍎','🍇','🍊','🍓','🐶','🐱','🐭','🐰','⭐','✨','🔥','🌈','🍕','🍔','🍣','🍜'],
+    // Los iconos ya no son emojis: se generan por SVG (ver el módulo Icons).
     COMBO_MULTIPLIERS: [[30,10],[20,8],[15,5],[10,3],[6,2],[3,1.5]], // [umbral, multiplicador], desc
     MILESTONES: { 10: 500, 20: 1000, 30: 2000 },
     EMPTY_BOARD_BONUS: 500,   // bonus por dejar el tablero vacío
@@ -46,6 +45,62 @@
     MODE_ORDER: ['tutorial', 'clasico', 'contrarreloj', 'supervivencia', 'zen'],
     DIFF_ORDER: ['facil', 'normal', 'dificil'],
   };
+
+  /* ===================== Icons (SVG propios, sin emojis) =====================
+   * Catálogo ordenado por DIFICULTAD DE DISTINCIÓN (forma+color muy distintos →
+   * formas repetidas con colores parecidos). Cada nivel toma una "ventana" del
+   * catálogo (ver Engine.poolForLevel) que nunca repite el nivel anterior.
+   */
+  const Icons = (() => {
+    const COLORS = {
+      red:'#ff5b6e', blue:'#4b8bff', green:'#3ad07f', yellow:'#ffd23f', purple:'#a06bff',
+      cyan:'#2bd4e6', orange:'#ff9838', pink:'#ff79c6', lime:'#b6e64a', white:'#e8eefc',
+      teal:'#27b6a0', indigo:'#6c7bff',
+    };
+    const CNAME = { red:'rojo', blue:'azul', green:'verde', yellow:'amarillo', purple:'morado',
+      cyan:'cian', orange:'naranja', pink:'rosa', lime:'lima', white:'blanco', teal:'turquesa', indigo:'índigo' };
+    const ST = 'stroke="rgba(0,0,0,.30)" stroke-width="3" stroke-linejoin="round"';
+    const SHAPES = {
+      circle:   c => `<circle cx="50" cy="50" r="33" fill="${c}" ${ST}/>`,
+      square:   c => `<rect x="18" y="18" width="64" height="64" rx="12" fill="${c}" ${ST}/>`,
+      triangle: c => `<path d="M50 16 L85 80 L15 80 Z" fill="${c}" ${ST}/>`,
+      diamond:  c => `<path d="M50 13 L87 50 L50 87 L13 50 Z" fill="${c}" ${ST}/>`,
+      star:     c => `<path d="M50 13 L61 39 L88 41 L67 59 L74 86 L50 71 L26 86 L33 59 L12 41 L39 39 Z" fill="${c}" ${ST}/>`,
+      heart:    c => `<path d="M50 84 C12 58 20 26 44 26 C50 26 50 33 50 36 C50 33 50 26 56 26 C80 26 88 58 50 84 Z" fill="${c}" ${ST}/>`,
+      hexagon:  c => `<path d="M50 14 L84 32 L84 68 L50 86 L16 68 L16 32 Z" fill="${c}" ${ST}/>`,
+      plus:     c => `<path d="M40 15 H60 V40 H85 V60 H60 V85 H40 V60 H15 V40 H40 Z" fill="${c}" ${ST}/>`,
+      droplet:  c => `<path d="M50 13 C50 13 77 49 77 65 A27 27 0 1 1 23 65 C23 49 50 13 50 13 Z" fill="${c}" ${ST}/>`,
+      ring:     c => `<circle cx="50" cy="50" r="30" fill="none" stroke="${c}" stroke-width="15"/>`,
+    };
+    const SNAME = { circle:'círculo', square:'cuadrado', triangle:'triángulo', diamond:'rombo',
+      star:'estrella', heart:'corazón', hexagon:'hexágono', plus:'cruz', droplet:'gota', ring:'anillo' };
+
+    // Pares [forma, color] ordenados de más fácil a más difícil de distinguir.
+    const PAIRS = [
+      // Fácil: forma y color únicos y muy contrastados
+      ['circle','red'],['square','blue'],['triangle','green'],['star','yellow'],['heart','pink'],
+      ['diamond','cyan'],['hexagon','orange'],['plus','purple'],['droplet','lime'],['ring','white'],
+      // Medio: formas reutilizadas con colores distintos
+      ['circle','orange'],['square','purple'],['triangle','cyan'],['star','red'],['heart','blue'],
+      ['diamond','lime'],['hexagon','pink'],['plus','teal'],['droplet','yellow'],['ring','indigo'],
+      // Difícil: misma forma con colores parecidos (hay que fijarse en el matiz)
+      ['circle','blue'],['circle','indigo'],['circle','teal'],['square','red'],['square','orange'],
+      ['triangle','lime'],['triangle','teal'],['diamond','purple'],['diamond','indigo'],['star','orange'],
+      ['heart','purple'],['hexagon','teal'],
+    ];
+    const CATALOG = [], DEFS = {}, cache = {};
+    for (const [shape, color] of PAIRS) { const id = `${shape}_${color}`; CATALOG.push(id); DEFS[id] = { shape, color }; }
+
+    return {
+      CATALOG,
+      svg(id) {
+        if (cache[id]) return cache[id];
+        const d = DEFS[id];
+        return cache[id] = `<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true" focusable="false">${SHAPES[d.shape](COLORS[d.color])}</svg>`;
+      },
+      name(id) { const d = DEFS[id]; return `${SNAME[d.shape]} ${CNAME[d.color]}`; },
+    };
+  })();
 
   /* ===================== Storage ===================== */
   const Storage = {
@@ -109,9 +164,32 @@
     idx: (r, c) => r * State.size + c,
     inside: (r, c) => r >= 0 && c >= 0 && r < State.size && c < State.size,
 
+    // Nº de iconos distintos del nivel (variedad creciente => más difícil)
+    varietyFor(level) {
+      return clamp(4 + Math.floor((level - 1) / 2), 4, Math.min(8, Icons.CATALOG.length));
+    },
+    // Desplazamiento acumulado en el catálogo (ventanas contiguas por nivel)
+    _offset(level) {
+      let o = 0; for (let lv = 1; lv < level; lv++) o += this.varietyFor(lv);
+      return o % Icons.CATALOG.length;
+    },
+    _window(off, n) {
+      const L = Icons.CATALOG.length, a = [];
+      for (let i = 0; i < n; i++) a.push(Icons.CATALOG[(off + i) % L]);
+      return a;
+    },
+    // Conjunto de iconos del nivel: ventana del catálogo (dificultad creciente)
+    // garantizando que NO comparte ningún icono con el nivel anterior.
     poolForLevel(level) {
-      const variety = clamp(4 + Math.floor((level - 1) / 2), 4, Config.ICON_POOL.length);
-      return Config.ICON_POOL.slice(0, variety);
+      const L = Icons.CATALOG.length, n = this.varietyFor(level);
+      const prev = level > 1 ? new Set(this._window(this._offset(level - 1), this.varietyFor(level - 1))) : new Set();
+      let off = this._offset(level);
+      for (let t = 0; t < L; t++) {
+        const w = this._window(off, n);
+        if (!w.some(id => prev.has(id))) return w;
+        off = (off + 1) % L;
+      }
+      return this._window(off, n);
     },
 
     occupation() {
@@ -207,7 +285,7 @@
       this.popupsEl = $('#popups');
       this.boardEl.style.setProperty('--size', State.size);
       this.boardEl.innerHTML = '';
-      this.cells = []; this.glyphs = [];
+      this.cells = []; this.glyphs = []; this._cellId = [];
       const frag = document.createDocumentFragment();
       for (let i = 0; i < State.size * State.size; i++) {
         const b = document.createElement('button');
@@ -236,13 +314,19 @@
     cellLabel(i) {
       const r = (i / State.size | 0) + 1, c = (i % State.size) + 1;
       const v = State.board[i];
-      return `Fila ${r}, columna ${c}: ${v ? v : 'vacía'}`;
+      return `Fila ${r}, columna ${c}: ${v ? Icons.name(v) : 'vacía'}`;
+    },
+
+    // Pinta el SVG del icono solo cuando cambia (cache por celda para rendimiento)
+    setGlyph(i, id) {
+      if (this._cellId[i] === id) return;
+      this._cellId[i] = id;
+      this.glyphs[i].innerHTML = id ? Icons.svg(id) : '';
     },
 
     syncCell(i) {
       const el = this.cells[i], v = State.board[i];
-      const g = this.glyphs[i];
-      if (g.textContent !== (v || '')) g.textContent = v || '';
+      this.setGlyph(i, v);
       el.classList.toggle('empty', v === null);
       el.classList.toggle('has-icon', v !== null);
       el.setAttribute('aria-label', this.cellLabel(i));
@@ -255,10 +339,9 @@
       indices.forEach(i => {
         const el = this.cells[i];
         el.classList.add('clear');
-        const g = this.glyphs[i];
         el.addEventListener('animationend', () => {
           el.classList.remove('clear');
-          g.textContent = '';
+          this.setGlyph(i, null);
         }, { once: true });
       });
     },
