@@ -419,10 +419,18 @@
       p.style.color = color || '#fff';
       p.style.left = ((c + 0.5) / State.size * 100) + '%';
       p.style.top = ((r + 0.5) / State.size * 100) + '%';
-      p.classList.remove('show'); void p.offsetWidth; p.classList.add('show');
+      // WAAPI en lugar de reiniciar una animación CSS con `void offsetWidth`, que
+      // fuerza un reflujo sincrónico del documento en CADA eliminación (acumulado
+      // en combos rápidos, saturaba el hilo principal de iOS -> congelación).
+      p.getAnimations().forEach(a => a.cancel());
+      p.animate([
+        { opacity: 0, transform: 'translate(-50%,-50%) scale(.6)' },
+        { opacity: 1, transform: 'translate(-50%,-90%) scale(1.05)', offset: .18 },
+        { opacity: 0, transform: 'translate(-50%,-180%) scale(.95)' },
+      ], { duration: 1000, easing: 'ease-out', fill: 'forwards' });
     },
 
-    bump(el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); },
+    bump(el) { el.getAnimations().forEach(a => a.cancel()); el.animate([{}, { transform: 'scale(1.18)', color: '#ffd84d', offset: .5 }, {}], { duration: 300, easing: 'ease' }); },
 
     hud() {
       $('#hud-score').textContent = State.displayScore;
@@ -447,6 +455,11 @@
       $('#hint-badge').textContent = State.hintsLeft;
       $('#btn-hint').disabled = State.hintsLeft <= 0 || performance.now() < State.hintReadyAt;
     },
+    // Coalescer: marca el HUD como "sucio"; el bucle lo refresca UNA vez por frame.
+    // Evita rehacer occupation()+~10 escrituras del DOM en cada tap durante combos
+    // rápidos (lo que saturaba el hilo principal en iOS).
+    _hudDirty: false,
+    hudSoon() { this._hudDirty = true; },
 
     penalty(indices) {
       indices.forEach(i => {
@@ -471,7 +484,8 @@
       el.classList.toggle('lv2', State.comboMult >= 2 && State.comboMult < 3);
       el.classList.toggle('lv3', State.comboMult >= 3 && State.comboMult < 5);
       el.classList.toggle('lv4', State.comboMult >= 5);
-      el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+      el.getAnimations().forEach(a => a.cancel());
+      el.animate([{}, { transform: 'scale(1.14)', offset: .5 }, {}], { duration: 300, easing: 'ease' });
     },
     comboRing(frac) {
       const C = 119.38;
@@ -488,7 +502,8 @@
     // Activar/desactivar el aura de Fever
     fever(on) {
       const f = $('#fever'); if (f) f.classList.toggle('on', on);
-      document.body.classList.toggle('fever', on);
+      // Clase en el propio tablero (no en <body>): evita invalidar el árbol entero.
+      const w = document.querySelector('.board-wrap'); if (w) w.classList.toggle('fever-on', on);
     },
     // Destello breve de pantalla (récord / perfecto)
     flash() {
@@ -613,17 +628,18 @@
       const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
       anim.onfinish = done; anim.oncancel = done;
     },
-    // Estallido en la celda eliminada (sale del centro hacia fuera)
+    // Estallido en la celda eliminada (sale del centro hacia fuera).
+    // OJO: usa el rect del tablero CACHEADO (no se llama a getBoundingClientRect
+    // aquí: leerlo por cada eliminación, intercalado con las escrituras del DOM,
+    // provoca "layout thrashing" y bloquea el hilo principal en iOS).
     burst(i, color, n) {
       if (Settings.reducedFx || !this.supported) return;
-      this.syncBoardRect();
       const { x, y } = this.cellXY(i); n = Math.min(n, 5);
       for (let k = 0; k < n; k++) { const a = Math.random() * 6.283, sp = 70 + Math.random() * 170; this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp - 70, 780, 0.42 + Math.random() * 0.28, 5 + Math.random() * 4, color, 0, 0); }
     },
     // Celebración de récord: brota de la última eliminación, sube/se abre y cae al fondo
     celebrate(i) {
       if (Settings.reducedFx || !this.supported) return;
-      this.syncBoardRect();
       const { x, y } = this.cellXY(i), C = ['#ffd23f', '#ff5b6e', '#4b8bff', '#3ad07f', '#a06bff', '#2bd4e6', '#ff9838'];
       const n = Math.min(36, this.cap);
       for (let k = 0; k < n; k++) {
@@ -774,6 +790,8 @@
           if (left <= 0) Game.resetCombo();
           else Render.comboRing(left / State.comboWindow);
         }
+        // HUD coalescido: como máximo una actualización por frame
+        if (Render._hudDirty) { Render._hudDirty = false; Render.hud(); }
       }
 
       // Count-up del marcador (sensación de recompensa creciente)
@@ -917,7 +935,7 @@
         Toasts.show('🏆 ¡Nuevo récord!', 'good', 1600);
       }
 
-      Render.hud();
+      Render.hudSoon();
       announce(`+${points} puntos.${State.combo >= 3 ? ' Combo ' + State.combo + '.' : ''}`);
       this.evaluate();
     },
@@ -946,7 +964,7 @@
       Render.syncCell(idx); Render.spawnAnim(idx);
       // Aceleración progresiva suave dentro del nivel
       State.spawnRate = Math.max(Config.DIFFICULTY[State.diff].spawnMin, State.spawnRate - 6);
-      Render.hud();
+      Render.hudSoon();
       this.evaluate();
     },
 
