@@ -730,12 +730,13 @@
   const Meta = (() => {
     const KEY = 'cv_meta';
     const SCHEMA = 2;
-    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
+    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
     let m;
     try { m = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); }
     catch (_) { m = JSON.parse(JSON.stringify(def)); }
     // Migración de esquema (rellena campos nuevos sin perder progreso previo).
     if (!m.cosmetics) m.cosmetics = JSON.parse(JSON.stringify(def.cosmetics));
+    if (!m.reward) m.reward = { date: '', day: 0 };
     if (typeof m.coins !== 'number') m.coins = 0;
     m._v = SCHEMA;
     const save = () => { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch (_) {} };
@@ -780,6 +781,17 @@
       owns: (id) => id === 'default' || !!(m.cosmetics.owned && m.cosmetics.owned[id]),
       buy(id, cost) { if (this.owns(id)) return true; if (!this.spend(cost)) return false; m.cosmetics.owned[id] = today(); save(); return true; },
       equip(slot, id) { if (!this.owns(id)) return false; m.cosmetics[slot] = id; save(); return true; },
+      // ---- Recompensa diaria ----
+      rewardReady: () => m.reward.date !== today(),
+      rewardDay: () => m.reward.day || 0,
+      claimReward() {
+        if (m.reward.date === today()) return 0;
+        const y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+        m.reward.day = (m.reward.date === y) ? (m.reward.day + 1) : 1;
+        const amount = 20 + 10 * Math.min(m.reward.day, 7);
+        m.reward.date = today(); m.coins = (m.coins || 0) + amount; save();
+        return amount;
+      },
       achievements: () => ACH.map(a => ({ id: a.id, name: a.name, desc: a.desc, unlocked: !!m.achievements[a.id] })),
       addXp(n) { m.xp += n; let up = 0; while (m.xp >= xpForLevel(m.level)) { m.xp -= xpForLevel(m.level); m.level++; up++; } save(); return up; },
       recordGame(ctx) {
@@ -850,6 +862,36 @@
       scarce: { name: 'Vacío',      hints: 1 },
       crystals:{ name: 'Cristales', tile: 'crystal', density: 0.04 },
     },
+  };
+
+  /* ===================== Themes + Cosmetics (tienda) =====================
+   * Cada tema = sobrescritura de variables CSS (coste de runtime cero). Se aplican
+   * en :root; el equipado se guarda en Meta.cosmetics.theme.
+   */
+  const Themes = {
+    DEFS: {
+      default: { name: 'Cosmos', cost: 0, vars: {} },
+      neon:    { name: 'Neón',    cost: 150, vars: { '--bg-0': '#0a0420', '--bg-1': '#12063a', '--bg-2': '#1e0a5c', '--panel': '#1a1052', '--panel-2': '#241466', '--accent': '#b14bff', '--accent-2': '#19f0d0', '--level': '#ff5cf0', '--score': '#19f0d0' } },
+      sunset:  { name: 'Ocaso',   cost: 200, vars: { '--bg-0': '#1a0a14', '--bg-1': '#2e0f1e', '--bg-2': '#4a1530', '--panel': '#34122a', '--panel-2': '#451a38', '--accent': '#ff7a59', '--accent-2': '#ffd23f', '--level': '#ff5b6e', '--score': '#ffb24d' } },
+      forest:  { name: 'Bosque',  cost: 200, vars: { '--bg-0': '#04140f', '--bg-1': '#08231a', '--bg-2': '#0e3a2b', '--panel': '#0c3024', '--panel-2': '#114433', '--accent': '#2fbf71', '--accent-2': '#9be15d', '--level': '#27b6a0', '--score': '#9be15d' } },
+      aurora:  { name: 'Aurora',  cost: 300, vars: { '--bg-0': '#04101c', '--bg-1': '#082236', '--bg-2': '#0c3a52', '--panel': '#0b2c45', '--panel-2': '#103a59', '--accent': '#19f0d0', '--accent-2': '#7a5cff', '--level': '#3ad07f', '--score': '#19f0d0' } },
+      mono:    { name: 'Eclipse', cost: 250, vars: { '--bg-0': '#0c0c10', '--bg-1': '#16161c', '--bg-2': '#24242e', '--panel': '#1c1c24', '--panel-2': '#26262f', '--accent': '#8a90a6', '--accent-2': '#cfd6ea', '--level': '#aeb6cc', '--score': '#cfd6ea' } },
+    },
+    order: ['default', 'neon', 'sunset', 'forest', 'aurora', 'mono'],
+    allVars() { const s = {}; this.order.forEach((id) => Object.keys(this.DEFS[id].vars).forEach((k) => s[k] = 1)); return Object.keys(s); },
+    swatch(id) { const v = this.DEFS[id].vars; return `linear-gradient(135deg, ${v['--bg-2'] || '#101a3e'}, ${v['--accent-2'] || '#00d0ff'})`; },
+  };
+  const Cosmetics = {
+    _set(id) {
+      const root = document.documentElement;
+      Themes.allVars().forEach((k) => root.style.removeProperty(k));
+      const t = Themes.DEFS[id] || Themes.DEFS.default;
+      Object.keys(t.vars).forEach((k) => root.style.setProperty(k, t.vars[k]));
+      const tm = document.querySelector('meta[name=theme-color]');
+      if (tm && t.vars['--bg-1']) tm.setAttribute('content', t.vars['--bg-1']);
+    },
+    apply() { this._set(Meta.cosmetics().theme); },
+    previewTheme(id) { this._set(id); },
   };
 
   /* ===================== Rules (hooks por modo) =====================
@@ -1295,10 +1337,10 @@
         [Storage.best, 'Récord', 'var(--gold)'],
       ]);
       // Progresión: XP ganada, barra de perfil, misión y logros nuevos
-      const r = this.metaResult || { xpGained: 0, leveledUp: 0, newAch: [], missionDone: false };
+      const r = this.metaResult || { xpGained: 0, coinsGained: 0, leveledUp: 0, newAch: [], missionDone: false };
       const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
       $('#over-xp').innerHTML =
-        `<div class="xp-line"><span class="xp-gain">+${r.xpGained} XP</span><span class="xp-rank">${Meta.rank()} · Nivel ${lvl}</span></div>` +
+        `<div class="xp-line"><span class="xp-gain">+${r.xpGained} XP</span><span class="xp-coins">🪙 +${r.coinsGained || 0}</span><span class="xp-rank">${Meta.rank()} · Nivel ${lvl}</span></div>` +
         `<div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>` +
         (r.leveledUp ? `<div class="xp-up">⬆️ ¡Subiste a nivel ${lvl}!</div>` : '') +
         (r.missionDone ? `<div class="mission-done">✅ Misión diaria completada · +150 XP</div>` : '');
@@ -1407,6 +1449,7 @@
   function refreshStart() {
     $('#start-best').textContent = Storage.best;
     const sw = $('#btn-sound'); if (sw) sw.setAttribute('aria-checked', String(Settings.sfx));
+    const br = $('#btn-reward'); if (br) br.hidden = !Meta.rewardReady();
     const el = $('#start-meta');
     if (el) {
       const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
@@ -1458,11 +1501,43 @@
     Modal.open('modal-medals');
   }
 
+  // Tienda de temas (compra/equipa con monedas; previsualización en vivo)
+  function buildShop() {
+    const list = $('#shop-list'); if (!list) return;
+    const co = $('#shop-coins'); if (co) co.textContent = Meta.coins();
+    const cur = Meta.cosmetics().theme;
+    list.innerHTML = Themes.order.map((id) => {
+      const t = Themes.DEFS[id], owned = Meta.owns(id), eq = cur === id;
+      const btn = eq ? `<button class="btn btn-ghost" disabled>Equipado</button>`
+        : owned ? `<button class="btn btn-primary" data-equip="${id}">Equipar</button>`
+        : `<button class="btn btn-primary" data-buy="${id}">🪙 ${t.cost}</button>`;
+      return `<div class="shop-item${eq ? ' on' : ''}" data-theme="${id}" role="button" tabindex="0"><span class="shop-sw" style="background:${Themes.swatch(id)}"></span><span class="shop-name">${t.name}</span>${btn}</div>`;
+    }).join('');
+    list.querySelectorAll('.shop-item').forEach((it) => it.addEventListener('click', () => Cosmetics.previewTheme(it.dataset.theme)));
+    list.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', (e) => {
+      e.stopPropagation(); const id = b.dataset.buy;
+      if (Meta.buy(id, Themes.DEFS[id].cost)) { Sound.success(); Meta.equip('theme', id); Cosmetics.apply(); refreshStart(); buildShop(); Toasts.show('¡Tema desbloqueado!', 'good', 1600); }
+      else { Sound.miss(); Toasts.show('Monedas insuficientes', 'warn', 1600); }
+    }));
+    list.querySelectorAll('[data-equip]').forEach((b) => b.addEventListener('click', (e) => {
+      e.stopPropagation(); Meta.equip('theme', b.dataset.equip); Cosmetics.apply(); Sound.ui(); refreshStart(); buildShop();
+    }));
+  }
+  function openShop() { buildShop(); Modal.open('modal-shop'); }
+  function claimDailyReward() {
+    if (!Meta.rewardReady()) return;
+    const amt = Meta.claimReward();
+    Sound.success(); FX.confetti(28);
+    Toasts.show(`🎁 +${amt} monedas · día ${Meta.rewardDay()}`, 'good', 2600);
+    refreshStart();
+  }
+
   /* ===================== init / wiring ===================== */
   function init() {
     Render.buildBoard();
     FX.init();
     applyReducedFx();
+    Cosmetics.apply();
     Input.init();
     buildModeMenu();
     PWA.init();
@@ -1520,6 +1595,10 @@
     });
     const bs = $('#btn-settings'); if (bs) bs.addEventListener('click', () => { Sound.ensure(); openSettings(); });
     const bm = $('#btn-medals'); if (bm) bm.addEventListener('click', openMedals);
+    { const bsh = $('#btn-shop'); if (bsh) bsh.addEventListener('click', () => { Sound.ensure(); openShop(); }); }
+    { const br = $('#btn-reward'); if (br) br.addEventListener('click', claimDailyReward); }
+    // Al cerrar la tienda, revertir cualquier previsualización al tema equipado.
+    { const sc = $('#shop-close'); if (sc) sc.addEventListener('click', () => Cosmetics.apply()); }
 
     // Modos
     $('#modes-back').addEventListener('click', () => Screens.show('start'));
@@ -1560,5 +1639,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Coach };
 })();
