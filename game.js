@@ -220,6 +220,8 @@
     recordHit: false,       // récord superado en vivo (una vez por partida)
     lastDangerAt: 0,        // throttle del aviso de peligro
     pool: [], // iconos disponibles este nivel
+    tiles: [],              // capa de casillas especiales (paralela a board): null=normal
+    coinsRun: 0,            // monedas ganadas en la partida en curso
   };
 
   /* ===================== Engine (lógica pura del tablero) ===================== */
@@ -279,14 +281,20 @@
     /* Iconos que convergen al tocar la casilla vacía `i`.
        Devuelve los índices a eliminar (grupos con 2+ del mismo tipo). */
     converging(i) {
-      if (State.board[i] !== null) return [];
+      // Una casilla sólida (roca/bloqueada/helada) no se puede activar.
+      const ti = State.tiles[i];
+      if (State.board[i] !== null || (ti && ti.solid)) return [];
       const r = (i / State.size) | 0, c = i % State.size;
       const groups = Object.create(null);
       for (let d = 0; d < 8; d += 2) {
         let rr = r + DIRS[d], cc = c + DIRS[d + 1];
         while (this.inside(rr, cc)) {
-          const v = State.board[this.idx(rr, cc)];
-          if (v !== null) { (groups[v] || (groups[v] = [])).push(this.idx(rr, cc)); break; }
+          const j = this.idx(rr, cc);
+          // Casilla sólida: corta la línea de visión (no se ve ni converge tras ella).
+          const t = State.tiles[j];
+          if (t && t.solid) break;
+          const v = State.board[j];
+          if (v !== null) { (groups[v] || (groups[v] = [])).push(j); break; }
           rr += DIRS[d]; cc += DIRS[d + 1];
         }
       }
@@ -696,8 +704,15 @@
   /* ===================== Meta (progresión persistente) ===================== */
   const Meta = (() => {
     const KEY = 'cv_meta';
-    const def = { xp: 0, level: 1, games: 0, totalRemoved: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' } };
-    let m; try { m = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) { m = JSON.parse(JSON.stringify(def)); }
+    const SCHEMA = 2;
+    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
+    let m;
+    try { m = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); }
+    catch (_) { m = JSON.parse(JSON.stringify(def)); }
+    // Migración de esquema (rellena campos nuevos sin perder progreso previo).
+    if (!m.cosmetics) m.cosmetics = JSON.parse(JSON.stringify(def.cosmetics));
+    if (typeof m.coins !== 'number') m.coins = 0;
+    m._v = SCHEMA;
     const save = () => { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch (_) {} };
     const today = () => new Date().toISOString().slice(0, 10);
     const hashStr = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
@@ -731,6 +746,15 @@
       level: () => m.level, xp: () => m.xp, xpForLevel, streak: () => m.streak.count,
       rank: () => RANKS[Math.min(RANKS.length - 1, Math.floor((m.level - 1) / 3))],
       dailyMission,
+      // ---- Economía (monedas) ----
+      coins: () => m.coins || 0,
+      addCoins(n) { m.coins = (m.coins || 0) + Math.max(0, n | 0); save(); return m.coins; },
+      spend(n) { n = n | 0; if ((m.coins || 0) < n) return false; m.coins -= n; save(); return true; },
+      // ---- Cosméticos (propiedad y equipado) ----
+      cosmetics: () => m.cosmetics,
+      owns: (id) => id === 'default' || !!(m.cosmetics.owned && m.cosmetics.owned[id]),
+      buy(id, cost) { if (this.owns(id)) return true; if (!this.spend(cost)) return false; m.cosmetics.owned[id] = today(); save(); return true; },
+      equip(slot, id) { if (!this.owns(id)) return false; m.cosmetics[slot] = id; save(); return true; },
       achievements: () => ACH.map(a => ({ id: a.id, name: a.name, desc: a.desc, unlocked: !!m.achievements[a.id] })),
       addXp(n) { m.xp += n; let up = 0; while (m.xp >= xpForLevel(m.level)) { m.xp -= xpForLevel(m.level); m.level++; up++; } save(); return up; },
       recordGame(ctx) {
@@ -747,14 +771,74 @@
         let xpGained = Math.round(ctx.score / 10 + ctx.maxCombo * 5 + ctx.level * 20 + (ctx.perfect ? 100 : 0));
         if (missionDone) xpGained += 150;
         const leveledUp = this.addXp(xpGained);
+        // Monedas de la partida (motor de economía/tienda).
+        let coinsGained = Math.round(ctx.score / 40 + ctx.maxCombo * 2 + ctx.level * 5 + (ctx.perfect ? 40 : 0));
+        if (missionDone) coinsGained += 60;
+        m.coins = (m.coins || 0) + coinsGained;
         const cctx = Object.assign({ games: m.games }, ctx);
         const newAch = [];
         ACH.forEach(a => { if (!m.achievements[a.id] && a.t(cctx)) { m.achievements[a.id] = d; newAch.push(a); } });
         save();
-        return { xpGained, leveledUp, newAch, missionDone };
+        return { xpGained, coinsGained, leveledUp, newAch, missionDone };
       },
     };
   })();
+
+  /* ===================== Tiles (casillas especiales) =====================
+   * Registro de tipos de casilla. `solid` corta la línea de visión y no converge
+   * (lo consulta Engine.converging). El resto de propiedades las usan los modos
+   * que las emplean (Aventura/Supervivencia) y Render para el overlay visual.
+   */
+  const Tiles = {
+    DEFS: {
+      rock:     { glyph: '🪨', solid: true,  cls: 'tile-rock',     desc: 'Roca: estorba y no converge' },
+      locked:   { glyph: '🔒', solid: true,  cls: 'tile-locked',   desc: 'Bloqueada' },
+      frozen:   { glyph: '🧊', solid: true,  cls: 'tile-frozen', taps: 2, desc: 'Helada: toca para descongelar' },
+      infected: { glyph: '☣️', solid: false, cls: 'tile-infected', desc: 'Se propaga si no la limpias' },
+      crystal:  { glyph: '💎', solid: false, cls: 'tile-crystal', bonus: 3, desc: 'Vale puntos extra' },
+    },
+    make(type) { const d = this.DEFS[type]; return d ? Object.assign({ type }, d) : null; },
+  };
+
+  /* ===================== Boosters (potenciadores) =====================
+   * Catálogo de potenciadores. `apply(ctx)` se conecta en la Fase 5 (Supervivencia).
+   */
+  const Boosters = {
+    DEFS: {
+      bomb:      { name: 'Bomba',    glyph: '💣', cost: 80,  charge: 12, desc: 'Limpia una zona' },
+      freeze:    { name: 'Congelar', glyph: '❄️', cost: 60,  charge: 10, desc: 'Pausa los spawns' },
+      x2:        { name: 'Doble',    glyph: '⚡', cost: 70,  charge: 14, desc: 'Puntos x2 temporal' },
+      clearLine: { name: 'Limpiar',  glyph: '🧹', cost: 90,  charge: 16, desc: 'Vacía fila o columna' },
+      wild:      { name: 'Comodín',  glyph: '🃏', cost: 100, charge: 18, desc: 'Convergencia garantizada' },
+    },
+    order: ['bomb', 'freeze', 'x2', 'clearLine', 'wild'],
+  };
+
+  /* ===================== Modifiers (reglas de bioma/oleada) =====================
+   * Bloques reutilizables que combinan los modos Aventura/Supervivencia (Fases 4/5).
+   */
+  const Modifiers = {
+    DEFS: {
+      rocks:  { name: 'Asteroides', tile: 'rock',   density: 0.06 },
+      ice:    { name: 'Hielo',      tile: 'frozen', density: 0.05 },
+      rush:   { name: 'Núcleo',     spawnMult: 0.8 },
+      scarce: { name: 'Vacío',      hints: 1 },
+      crystals:{ name: 'Cristales', tile: 'crystal', density: 0.04 },
+    },
+  };
+
+  /* ===================== Rules (hooks por modo) =====================
+   * Punto de extensión: un modo puede definir funciones (onSetupLevel, onTick,
+   * onActivate, winCheck, loseCheck, objective...) en su descriptor de Config.MODES
+   * y Game/Loop las invocan si existen. Sin hooks => comportamiento clásico.
+   */
+  const Rules = {
+    call(name, ctx) {
+      const mode = Config.MODES[State.mode];
+      const fn = mode && mode[name];
+      return typeof fn === 'function' ? fn(ctx) : undefined;
+    },
+  };
 
   /* ===================== Loop (un único requestAnimationFrame) ===================== */
   const Loop = {
@@ -790,6 +874,8 @@
           if (left <= 0) Game.resetCombo();
           else Render.comboRing(left / State.comboWindow);
         }
+        // Hook de modo por frame (oleadas/jefes/eventos de Aventura y Supervivencia)
+        Rules.call('onTick', dt);
         // HUD coalescido: como máximo una actualización por frame
         if (Render._hudDirty) { Render._hudDirty = false; Render.hud(); }
       }
@@ -824,9 +910,12 @@
       if (m.timed) State.timeLeft = Math.max(Config.TIMED_MIN, Config.TIMED_DURATION - (State.level - 1) * Config.TIMED_DECREASE);
       // Tablero fresco con la variedad de iconos del nivel actual
       State.board = new Array(State.size * State.size).fill(null);
+      State.tiles = new Array(State.size * State.size).fill(null);
       State.iconCount = 0;
       State.combo = 0; State.comboMult = 1;
       Engine.placeInitial(Config.DIFFICULTY[State.diff].initialIcons);
+      // Hook de modo: permite a Aventura/Supervivencia sembrar tiles/objetivos.
+      Rules.call('onSetupLevel', { level: State.level, mode: m });
       Render.syncAll();
       Render.combo();
       Render.hud();
@@ -837,7 +926,7 @@
       State.diff = Config.MODES[mode].fixedDiff || diff;
       State.score = 0; State.displayScore = 0; State.level = 1; State.elapsed = 0; State.timeLeft = 0;
       State.combo = 0; State.comboMult = 1; State.comboAt = 0;
-      State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0;
+      State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.coinsRun = 0;
       State.fever = false; State.feverEver = false; State.perfectEver = false; State.recordHit = false;
       State.status = 'playing'; this.ended = false;
       Render.fever(false); Render.danger(0);
@@ -971,6 +1060,12 @@
     /* Win/Lose: se evalúa tras cada cambio del tablero */
     evaluate() {
       if (State.status !== 'playing') return;
+      // Hooks de modo: pueden forzar victoria/derrota propias (objetivos, oleadas…).
+      // Devuelven 'win' | 'lose' | un texto de derrota, o nada para usar la regla base.
+      const wc = Rules.call('winCheck', State);
+      if (wc) { this.levelComplete(wc === 'perfect'); return; }
+      const lc = Rules.call('loseCheck', State);
+      if (lc) { this.gameOver(typeof lc === 'string' ? lc : 'Fin de la partida.'); return; }
       if (State.iconCount === 0) { this.levelComplete(true); return; }
       if (!Engine.hasMoves()) {
         const occ = Engine.occupation();
@@ -1315,5 +1410,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules };
 })();
