@@ -57,19 +57,20 @@
       dificil: { label: 'Difícil', initialIcons: 34, comboWindow: 2500, spawnStart: 2100, spawnMin: 500,  scoreMult: 1.3, penaltyBase: 3 },
     },
     MODES: {
-      tutorial:      { name: 'Tutorial',     emoji: '🎓', timed: false, penalties: false, mult: 0.5, single: true, fixedDiff: 'facil', desc: 'Aprende la mecánica sin prisa ni penalizaciones.' },
-      clasico:       { name: 'Clásico',      emoji: '♟️', timed: false, penalties: true,  mult: 1.0, desc: 'Vacía el tablero para superar el nivel. Cuidado: errar añade iconos.' },
-      aventura:      { name: 'Aventura',     emoji: '🚀', timed: false, penalties: true,  mult: 1.1, desc: 'Viaje infinito por biomas con reglas propias, objetivos y mini-jefes. ¿Hasta dónde llegarás?',
+      tutorial:      { name: 'Tutorial',     emoji: '🎓', timed: false, penalties: false, mult: 0.5, single: true, fixedDiff: 'facil', accent: '#ffd23f', goal: 'Junta dos iguales', desc: 'Aprende la mecánica sin prisa ni penalizaciones.' },
+      clasico:       { name: 'Clásico',      emoji: '♟️', timed: false, penalties: true,  mult: 1.0, accent: '#00d0ff', goal: 'Vacía el tablero', desc: 'Vacía el tablero para superar el nivel. Cuidado: errar añade iconos.' },
+      aventura:      { name: 'Aventura',     emoji: '🚀', timed: false, penalties: true,  mult: 1.1, accent: '#7a5cff', desc: 'Viaje infinito por biomas con reglas propias, objetivos y mini-jefes. ¿Hasta dónde llegarás?',
         onSetupLevel(ctx) { Adventure.setup(ctx.level); },
         winCheck() { Adventure.refreshGoal(State.level); return Adventure.winCheck(); } },
-      contrarreloj:  { name: 'Contrarreloj', emoji: '⏱️', timed: true,  penalties: true,  mult: 1.2, desc: 'Cada convergencia suma tiempo. ¡No dejes que el reloj llegue a cero!' },
-      supervivencia: { name: 'Supervivencia',emoji: '❤️', timed: false, penalties: true,  mult: 1.5, fast: true, endless: true, desc: 'Aguanta oleadas crecientes con vidas, trampas, jefes y potenciadores. ¿Cuánto sobrevivirás?',
+      contrarreloj:  { name: 'Contrarreloj', emoji: '⏱️', timed: true,  penalties: true,  mult: 1.2, accent: '#ff6cb0', goal: 'Combos = más tiempo', desc: 'Cada convergencia suma tiempo; los combos suman aún más. ¡No dejes que el reloj llegue a cero!' },
+      supervivencia: { name: 'Supervivencia',emoji: '❤️', timed: false, penalties: true,  mult: 1.5, fast: true, endless: true, accent: '#ff5b6e', desc: 'Aguanta oleadas crecientes con vidas, trampas, jefes y potenciadores. ¿Cuánto sobrevivirás?',
         onSetupLevel(ctx) { Survival.setup(ctx.level); },
         onTick(dt) { Survival.onTick(dt); },
         onConverge(ctx) { Survival.onConverge(ctx.removed, ctx.combo); },
         onOverflow() { Survival.onOverflow(); },
         blockSpawn() { return Survival.frozen(); } },
-      zen:           { name: 'Zen',          emoji: '☯️', timed: false, penalties: false, mult: 0.8, relaxed: true, desc: 'Ritmo relajado, sin penalizaciones. Juega y respira.' },
+      zen:           { name: 'Zen',          emoji: '☯️', timed: false, penalties: false, mult: 0.8, relaxed: true, endless: true, accent: '#9be15d', goal: 'Sin fallos ni prisa',
+        onOverflow() { Game.softClear(0.45); }, desc: 'Ritmo relajado, sin penalizaciones ni fin de partida. Juega y respira.' },
     },
     MODE_ORDER: ['tutorial', 'clasico', 'aventura', 'contrarreloj', 'supervivencia', 'zen'],
     DIFF_ORDER: ['facil', 'normal', 'dificil'],
@@ -985,7 +986,7 @@
     banner(level) {
       const el = $('#obj-banner'); if (!el) return;
       const biome = this.biomeOf(level);
-      el.hidden = false;
+      el.hidden = false; el.style.borderColor = '';
       el.innerHTML = `<span class="obj-biome">${biome.glyph} Cap. ${this.chapterOf(level) + 1} · ${biome.name}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>`;
     },
     refreshGoal() { const g = $('#obj-goal'); if (g) g.textContent = this.objectiveText(); },
@@ -1302,7 +1303,6 @@
       State.status = 'playing'; this.ended = false;
       // Aventura: reanuda en el nivel más lejano alcanzado; el resto empieza en 1.
       if (mode === 'aventura') State.level = Meta.advMax();
-      { const ob = $('#obj-banner'); if (ob) ob.hidden = (mode !== 'aventura'); }
       // Supervivencia 2.0: vidas, oleadas, boosters.
       const isSurv = mode === 'supervivencia';
       document.body.classList.toggle('mode-surv', isSurv);
@@ -1311,6 +1311,7 @@
       Render.fever(false); Render.danger(0);
       this.clearHintHighlight();
       this.setupLevel();
+      this.showGoalBanner();
       Render.combo();
       Screens.show('game');
       FX.resize();
@@ -1375,8 +1376,8 @@
       State.score += points;
       if (Config.MILESTONES[State.combo]) { State.score += Config.MILESTONES[State.combo]; Toasts.show(`¡Combo ×${State.combo}! +${Config.MILESTONES[State.combo]}`, 'good'); Sound.milestone(); Haptics.milestone(); }
 
-      // Contrarreloj: bonus de tiempo por convergencia
-      if (m.timed) { const bonus = Math.max(5, removed * 3); State.timeLeft += bonus; Toasts.show(`+${bonus}s`, 'info', 1100); }
+      // Contrarreloj: bonus de tiempo por convergencia (los combos suman más)
+      if (m.timed) { const bonus = Math.max(5, removed * 3) + Math.min(State.combo, 6); State.timeLeft += bonus; Toasts.show(`+${bonus}s`, 'info', 1100); }
 
       // Partículas con el color real de cada icono (antes de borrarlos)
       const burstN = 6 + Math.min(State.combo, 14);
@@ -1452,6 +1453,26 @@
       State.spawnRate = Math.max(Config.DIFFICULTY[State.diff].spawnMin, State.spawnRate - 6);
       Render.hudSoon();
       this.evaluate();
+    },
+
+    // Limpieza suave de una fracción de iconos (Zen: respiro sin fin de partida).
+    softClear(frac) {
+      const f = [];
+      for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) f.push(i);
+      let n = Math.floor(f.length * frac);
+      for (let k = 0; k < n && f.length; k++) { const idx = f.splice(rand(f.length), 1)[0]; FX.burst(idx, Icons.colorOf(State.board[idx]), 4); State.board[idx] = null; State.iconCount--; }
+      Render.syncAll();
+    },
+
+    // Banner de objetivo/identidad por modo (Aventura y Supervivencia usan su propia UI).
+    showGoalBanner() {
+      const el = $('#obj-banner'); if (!el) return;
+      if (State.mode === 'aventura') return;            // lo gestiona Adventure.banner
+      const m = Config.MODES[State.mode];
+      if (State.mode === 'supervivencia' || !m.goal) { el.hidden = true; el.style.borderColor = ''; return; }
+      el.hidden = false;
+      el.style.borderColor = m.accent || '';
+      el.innerHTML = `<span class="obj-biome" style="color:${m.accent || 'var(--accent-2)'}">${m.emoji} ${m.name}</span><span class="obj-goal">${m.goal}</span>`;
     },
 
     /* Win/Lose: se evalúa tras cada cambio del tablero */
@@ -1876,6 +1897,7 @@
     $('#modes-back').addEventListener('click', () => Screens.show('start'));
     $('#btn-start-game').addEventListener('click', () => {
       if (selMode === 'aventura') { buildAdventureMap(); Modal.open('modal-adventure'); }
+      else if (selMode === 'tutorial') Coach.start();
       else Game.start(selMode, selDiff);
     });
     { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { Modal.close(); Game.start('aventura', selDiff); }); }

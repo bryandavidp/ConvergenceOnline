@@ -508,8 +508,8 @@ body.reduced-fx .coach-text { animation: none; }
 
 /* Banner de objetivo (Aventura) */
 .obj-banner { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 auto 6px; width: min(96vw, 620px); max-width: 100%; background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; font-size: .82rem; }
-.obj-biome { color: var(--accent-2); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.obj-goal { color: var(--gold); font-weight: 700; white-space: nowrap; flex: 0 0 auto; }
+.obj-biome { color: var(--accent-2); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; }
+.obj-goal { color: var(--gold); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
 
 /* Supervivencia 2.0 */
 body.mode-surv .hud-item.level { display: none; }
