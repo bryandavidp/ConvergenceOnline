@@ -172,8 +172,8 @@
     tap() { this.tone(420, 0.05, 'triangle', 0.10); },
     ui() { this.tone(380, 0.05, 'sine', 0.08); },
     success() { this.tone(660, 0.09, 'sine', 0.15); this.tone(990, 0.09, 'sine', 0.09, 0.03); },
-    // Pitch sube con el combo (eliminaciones encadenadas)
-    eliminate(n) { const base = 520 + Math.min(n, 24) * 16; this.tone(base, 0.07, 'triangle', 0.12); this.tone(base * 1.5, 0.08, 'sine', 0.07, 0.03); },
+    // Pitch sube con el combo (eliminaciones encadenadas). Throttle anti-acumulación.
+    eliminate(n) { const t = performance.now(); if (t - (this._lastElim || 0) < 30) return; this._lastElim = t; const base = 520 + Math.min(n, 24) * 16; this.tone(base, 0.07, 'triangle', 0.12); this.tone(base * 1.5, 0.08, 'sine', 0.07, 0.03); },
     combo(l) { const roots = [523, 587, 659, 784, 988]; const r = roots[clamp(l, 0, 4)]; this.chord([r, r * 1.26, r * 1.5], 0.14, 'sine', 0.10, 0.02); },
     rank() { this.chord([784, 1047, 1319], 0.2, 'sine', 0.12, 0.05); },
     fever() { this.chord([330, 415, 554, 659], 0.3, 'sawtooth', 0.06, 0.04); },
@@ -530,62 +530,100 @@
     close() { $('#overlay').hidden = true; document.querySelectorAll('.modal').forEach(m => m.hidden = true); },
   };
 
-  /* ===================== FX (capa de partículas por canvas) =====================
-   * Un único canvas sobre el tablero, dibujado desde Loop.tick. Pool fijo y tope
-   * global ajustado por el gobernador de rendimiento. Coste cero sin partículas.
+  /* ===================== FX (partículas DOM, animadas por el compositor) =======
+   * Capa <div> a pantalla completa con un pool fijo de <span> reutilizables.
+   * Cada partícula se anima con la Web Animations API (transform/opacity), que
+   * corre en el hilo del compositor (off-main-thread) -> coste de CPU casi nulo
+   * por frame y SIN canvas (evita el fallo de compositing de WebKit que dejaba
+   * la pantalla en blanco con secuencias largas de combos). La trayectoria con
+   * "gravedad" se precalcula como keyframes parabólicos.
    */
   const FX = {
-    canvas: null, ctx: null, w: 0, h: 0, dpr: 1, pool: [], active: 0, cap: 160, dirty: false,
+    layer: null, pool: [], idx: 0, active: 0, cap: 90, w: 0, h: 0, boardRect: null, supported: true,
     init() {
-      this.canvas = $('#fx'); if (!this.canvas) return;
-      this.ctx = this.canvas.getContext('2d', { alpha: true });
-      for (let i = 0; i < 240; i++) this.pool.push({ a: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 1, size: 2, color: '#fff', g: 0, shape: 0 });
+      this.layer = $('#fx'); if (!this.layer) return;
+      this.supported = typeof Element !== 'undefined' && !!Element.prototype.animate;
+      const frag = document.createDocumentFragment();
+      for (let i = 0; i < 110; i++) {
+        const s = document.createElement('span');
+        s.className = 'fxp';
+        s.style.opacity = '0';
+        this.pool.push({ el: s, anim: null, busy: false });
+        frag.appendChild(s);
+      }
+      this.layer.appendChild(frag);
       this.resize();
       window.addEventListener('resize', () => this.resize(), { passive: true });
+      window.addEventListener('scroll', () => this.syncBoardRect(), { passive: true });
     },
-    resize() {
-      if (!this.canvas) return;
-      const r = this.canvas.parentElement.getBoundingClientRect();
-      this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-      this.w = Math.max(1, r.width); this.h = Math.max(1, r.height);
-      this.canvas.width = Math.round(this.w * this.dpr); this.canvas.height = Math.round(this.h * this.dpr);
-      this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    resize() { this.w = window.innerWidth; this.h = window.innerHeight; this.syncBoardRect(); },
+    syncBoardRect() { const el = $('#board'); this.boardRect = el ? el.getBoundingClientRect() : null; },
+    // Coordenadas (viewport) del centro de la celda i
+    cellXY(i) {
+      const s = State.size, r = this.boardRect;
+      if (!r || !r.width) return { x: this.w / 2, y: this.h / 2 };
+      return { x: r.left + ((i % s) + 0.5) / s * r.width, y: r.top + ((i / s | 0) + 0.5) / s * r.height };
     },
-    _xy(i) { const s = State.size; return { x: ((i % s) + 0.5) / s * this.w, y: ((i / s | 0) + 0.5) / s * this.h }; },
-    _free() { for (let k = 0; k < this.pool.length; k++) if (!this.pool[k].a) return this.pool[k]; return null; },
-    _emit(x, y, color, vx, vy, life, size, g, shape) {
-      const p = this._free(); if (!p) return;
-      p.a = true; p.x = x; p.y = y; p.vx = vx; p.vy = vy; p.life = life; p.max = life; p.size = size; p.color = color; p.g = g; p.shape = shape;
+    _slot() {
+      // Coge la siguiente del pool (round-robin); recicla la más antigua si está ocupada.
+      const p = this.pool[this.idx]; this.idx = (this.idx + 1) % this.pool.length;
+      if (p.busy) {
+        p.busy = false; this.active = Math.max(0, this.active - 1);
+        if (p.anim) { p.anim.onfinish = null; p.anim.oncancel = null; try { p.anim.cancel(); } catch (_) {} }
+      }
+      return p;
     },
+    // Lanza una partícula con velocidad (vx,vy) px/s y gravedad g px/s^2 durante life s.
+    _emit(x, y, vx, vy, g, life, size, color, shape, spin) {
+      if (!this.supported) return;
+      const p = this._slot(), el = p.el;
+      el.style.width = size + 'px';
+      el.style.height = (shape === 1 ? size * 0.6 : size) + 'px';
+      el.style.background = color;
+      el.style.borderRadius = shape === 1 ? '1px' : '50%';
+      // Muestreo parabólico de la trayectoria -> keyframes (el compositor interpola).
+      const N = 5, frames = [];
+      for (let k = 0; k <= N; k++) {
+        const t = life * k / N;
+        const px = x + vx * t, py = y + vy * t + 0.5 * g * t * t;
+        const rot = spin ? ' rotate(' + (spin * t) + 'deg)' : '';
+        frames.push({ transform: 'translate3d(' + px.toFixed(1) + 'px,' + py.toFixed(1) + 'px,0)' + rot, opacity: k >= N - 1 ? 0 : 1, offset: k / N });
+      }
+      p.busy = true;
+      const anim = el.animate(frames, { duration: life * 1000, easing: 'linear', fill: 'forwards' });
+      p.anim = anim;
+      this.active++;
+      const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
+      anim.onfinish = done; anim.oncancel = done;
+    },
+    // Estallido en la celda eliminada (sale del centro hacia fuera)
     burst(i, color, n) {
-      if (Settings.reducedFx || !this.ctx) return;
-      const { x, y } = this._xy(i); n = Math.min(n, (this.cap / 18) | 0 || 4);
-      for (let k = 0; k < n; k++) { const a = Math.random() * 6.283, sp = 50 + Math.random() * 150; this._emit(x, y, color, Math.cos(a) * sp, Math.sin(a) * sp - 50, 0.45 + Math.random() * 0.35, 2 + Math.random() * 3, 360, 0); }
-      this.dirty = true; Loop.kick();
+      if (Settings.reducedFx || !this.supported) return;
+      this.syncBoardRect();
+      const { x, y } = this.cellXY(i); n = Math.min(n, 10);
+      for (let k = 0; k < n; k++) { const a = Math.random() * 6.283, sp = 70 + Math.random() * 180; this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp - 70, 760, 0.5 + Math.random() * 0.35, 5 + Math.random() * 5, color, 0, 0); }
     },
+    // Celebración de récord: brota de la última eliminación, sube/se abre y cae al fondo
+    celebrate(i) {
+      if (Settings.reducedFx || !this.supported) return;
+      this.syncBoardRect();
+      const { x, y } = this.cellXY(i), C = ['#ffd23f', '#ff5b6e', '#4b8bff', '#3ad07f', '#a06bff', '#2bd4e6', '#ff9838'];
+      const n = Math.min(70, this.cap);
+      for (let k = 0; k < n; k++) {
+        const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.2, sp = 260 + Math.random() * 320;
+        // vida suficiente para que la parábola alcance el fondo de la pantalla
+        this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp, 900, 1.7 + Math.random() * 1.1, 6 + Math.random() * 5, C[k % C.length], 1, (Math.random() - 0.5) * 720);
+      }
+    },
+    // Confeti que cae desde arriba (nivel/victoria)
     confetti(n) {
-      if (Settings.reducedFx || !this.ctx) return;
+      if (Settings.reducedFx || !this.supported) return;
       n = Math.min(n, this.cap);
       const C = ['#ff5b6e', '#4b8bff', '#3ad07f', '#ffd23f', '#a06bff', '#2bd4e6', '#ff9838'];
-      for (let k = 0; k < n; k++) this._emit(Math.random() * this.w, -8, C[k % C.length], (Math.random() - 0.5) * 70, 90 + Math.random() * 130, 1.3 + Math.random() * 0.9, 3 + Math.random() * 3, 240, 1);
-      this.dirty = true; Loop.kick();
+      for (let k = 0; k < n; k++) this._emit(Math.random() * this.w, -14, (Math.random() - 0.5) * 110, 150 + Math.random() * 170, 360, 1.8 + Math.random() * 1.1, 6 + Math.random() * 5, C[k % C.length], 1, (Math.random() - 0.5) * 540);
     },
-    step(dtms) {
-      if (!this.ctx) return false;
-      if (!this.dirty && this.active === 0) return false;
-      const dt = Math.min(dtms, 50) / 1000, ctx = this.ctx; let n = 0;
-      ctx.clearRect(0, 0, this.w, this.h);
-      for (let k = 0; k < this.pool.length; k++) {
-        const p = this.pool[k]; if (!p.a) continue;
-        p.life -= dt; if (p.life <= 0) { p.a = false; continue; }
-        p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; n++;
-        ctx.globalAlpha = p.life / p.max; ctx.fillStyle = p.color;
-        if (p.shape === 1) { ctx.fillRect(p.x, p.y, p.size * 1.7, p.size); }
-        else { ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, 6.283); ctx.fill(); }
-      }
-      ctx.globalAlpha = 1; this.active = n; this.dirty = n > 0;
-      return n > 0;
-    },
+    // Conservado por compatibilidad con el bucle; las partículas son autónomas (WAAPI).
+    step() { return false; },
   };
 
   /* ===================== Music (procedural, sin archivos; off por defecto) ===================== */
@@ -698,8 +736,8 @@
 
       // Gobernador de rendimiento: EMA del tiempo de frame -> ajusta el tope de partículas
       L.ema += (dt - L.ema) * 0.1;
-      if (L.ema > 22 && FX.cap > 40) FX.cap -= 8;
-      else if (L.ema < 17 && FX.cap < 160) FX.cap += 4;
+      if (L.ema > 22 && FX.cap > 30) FX.cap -= 6;
+      else if (L.ema < 17 && FX.cap < 90) FX.cap += 3;
 
       if (State.status === 'playing') {
         L.clockAcc += dt;
@@ -729,10 +767,9 @@
         $('#hud-score').textContent = State.displayScore;
       }
 
-      // Capa de partículas (coste cero si no hay nada)
-      FX.step(dt);
-
-      const alive = State.status === 'playing' || State.status === 'paused' || FX.active > 0 || FX.dirty;
+      // Las partículas se animan solas en el compositor (WAAPI); el bucle solo
+      // necesita seguir vivo mientras hay juego activo o en pausa.
+      const alive = State.status === 'playing' || State.status === 'paused';
       L.raf = alive ? requestAnimationFrame(L.tick) : 0;
     },
   };
@@ -856,9 +893,10 @@
       if (State.combo >= 3) Haptics.combo(); else Haptics.tap();
       if (Settings.music) Music.setIntensity(clamp(State.combo / 18, 0, 1));
 
-      // Récord en vivo (una sola vez por partida)
+      // Récord en vivo (una sola vez por partida): confeti desde la última
+      // eliminación, saliendo hacia fuera y cayendo al fondo de la pantalla.
       if (!State.recordHit && Storage.best > 0 && State.score > Storage.best) {
-        State.recordHit = true; Render.flash(); Sound.record(); Haptics.record(); FX.confetti(40);
+        State.recordHit = true; Render.flash(); Sound.record(); Haptics.record(); FX.celebrate(i);
         Toasts.show('🏆 ¡Nuevo récord!', 'good', 1600);
       }
 
