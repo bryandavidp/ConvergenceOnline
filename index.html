@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a1128" />
+  <meta name="description" content="Convergencia — junta iconos iguales tocando la casilla vacía entre ellos. Combos, niveles y varios modos de juego." />
+  <title>Convergencia</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌌</text></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-screen="login">
+  <!-- Fondo de estrellas (decorativo) -->
+  <div class="stars" aria-hidden="true"></div>
+
+  <!-- Región para mensajes a lector de pantalla -->
+  <p id="sr-status" class="sr-only" role="status" aria-live="polite"></p>
+
+  <main id="app">
+
+    <!-- ============ PANTALLA: LOGIN ============ -->
+    <section class="screen" id="screen-login" aria-labelledby="login-title">
+      <div class="panel">
+        <h1 id="login-title" class="logo">Convergencia<span class="logo-orbit" aria-hidden="true"></span></h1>
+        <p class="subtitle">Junta iconos iguales en el espacio</p>
+        <form id="login-form" novalidate>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="tú@ejemplo.com" required />
+          </div>
+          <div class="field">
+            <label for="password">Contraseña</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+          </div>
+          <button class="btn btn-primary" type="submit">Entrar</button>
+          <p class="hint">Demo: cualquier email y contraseña sirven.</p>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ PANTALLA: INICIO ============ -->
+    <section class="screen" id="screen-start" aria-labelledby="start-title" hidden>
+      <div class="panel">
+        <h1 id="start-title" class="logo">Convergencia<span class="logo-orbit" aria-hidden="true"></span></h1>
+        <p class="subtitle">¿List@ para conquistar el tablero?</p>
+        <div class="menu-buttons">
+          <button class="btn btn-primary btn-lg" id="btn-play">▶ Jugar</button>
+          <button class="btn btn-ghost" id="btn-how">¿Cómo se juega?</button>
+          <div class="toggle-row">
+            <span>Sonido</span>
+            <button class="switch" id="btn-sound" role="switch" aria-checked="true" aria-label="Activar o desactivar sonido"><span class="switch-dot"></span></button>
+          </div>
+        </div>
+        <p class="best-line">Mejor puntuación: <strong id="start-best">0</strong></p>
+      </div>
+    </section>
+
+    <!-- ============ PANTALLA: SELECCIÓN DE MODO ============ -->
+    <section class="screen" id="screen-modes" aria-labelledby="modes-title" hidden>
+      <div class="panel panel-wide">
+        <div class="panel-head">
+          <button class="icon-btn" id="modes-back" aria-label="Volver">←</button>
+          <h2 id="modes-title">Elige tu misión</h2>
+        </div>
+
+        <h3 class="group-title">Modo</h3>
+        <div class="mode-grid" id="mode-grid" role="radiogroup" aria-label="Modo de juego"></div>
+
+        <h3 class="group-title">Dificultad</h3>
+        <div class="diff-row" id="diff-row" role="radiogroup" aria-label="Dificultad"></div>
+
+        <p class="mode-desc" id="mode-desc" aria-live="polite"></p>
+
+        <button class="btn btn-primary btn-lg" id="btn-start-game" disabled>¡Empezar!</button>
+      </div>
+    </section>
+
+    <!-- ============ PANTALLA: JUEGO ============ -->
+    <section class="screen screen-game" id="screen-game" aria-label="Partida" hidden>
+      <header class="topbar">
+        <div class="best">
+          <span class="best-label">Récord</span>
+          <span class="best-value" id="hud-best">0</span>
+        </div>
+        <div class="controls">
+          <button class="icon-btn" id="btn-pause" aria-label="Pausa">⏸</button>
+          <button class="icon-btn" id="btn-restart" aria-label="Reiniciar">↻</button>
+          <button class="icon-btn" id="btn-quit" aria-label="Salir al menú">✕</button>
+        </div>
+      </header>
+
+      <div class="hud" id="hud">
+        <div class="hud-item score"><span class="hud-label">Puntos</span><span class="hud-value" id="hud-score">0</span></div>
+        <div class="hud-item level"><span class="hud-label">Nivel</span><span class="hud-value" id="hud-level">1</span></div>
+        <div class="hud-item time"><span class="hud-label">Tiempo</span><span class="hud-value" id="hud-time">0:00</span></div>
+        <div class="hud-item speed"><span class="hud-label">Velocidad</span><span class="hud-value" id="hud-speed">3.0s</span></div>
+        <div class="hud-item progress">
+          <span class="hud-label" id="hud-progress-label">Objetivo</span>
+          <div class="bar"><div class="bar-fill" id="hud-progress-fill"></div></div>
+        </div>
+      </div>
+
+      <div class="board-area">
+        <div class="board-wrap">
+          <div class="board" id="board" role="grid" aria-label="Tablero de juego"></div>
+          <!-- Capa de números flotantes, contenida dentro del tablero -->
+          <div class="popups" id="popups" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <!-- Indicador de combo -->
+      <div class="combo" id="combo" hidden aria-hidden="true">
+        <svg viewBox="0 0 44 44" class="combo-ring"><circle class="combo-ring-bg" cx="22" cy="22" r="19"/><circle class="combo-ring-fill" id="combo-ring-fill" cx="22" cy="22" r="19"/></svg>
+        <span class="combo-mult" id="combo-mult">x1</span>
+        <span class="combo-count" id="combo-count">0</span>
+      </div>
+
+      <!-- Notificaciones (abajo en móvil) -->
+      <div class="toasts" id="toasts" aria-live="polite"></div>
+    </section>
+
+  </main>
+
+  <!-- ============ MODALES ============ -->
+  <div class="overlay" id="overlay" hidden>
+    <!-- Cómo jugar -->
+    <div class="modal" id="modal-how" role="dialog" aria-modal="true" aria-labelledby="how-title" hidden>
+      <h2 id="how-title">¿Cómo se juega?</h2>
+      <ul class="how-list">
+        <li>🎯 Toca una <strong>casilla vacía</strong>.</li>
+        <li>👀 Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).</li>
+        <li>✨ Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!</li>
+        <li>🔥 Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.</li>
+        <li>⚠️ Los iconos aparecen solos: vacía el tablero antes de que se llene.</li>
+      </ul>
+      <button class="btn btn-primary" data-close>Entendido</button>
+    </div>
+
+    <!-- Pausa -->
+    <div class="modal" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+      <h2 id="pause-title">Pausa</h2>
+      <div class="modal-buttons">
+        <button class="btn btn-primary" id="btn-resume">▶ Reanudar</button>
+        <button class="btn btn-ghost" id="btn-pause-restart">↻ Reiniciar</button>
+        <button class="btn btn-ghost" id="btn-pause-quit">✕ Menú</button>
+      </div>
+    </div>
+
+    <!-- Nivel completado -->
+    <div class="modal modal-win" id="modal-level" role="dialog" aria-modal="true" aria-labelledby="level-title" hidden>
+      <h2 id="level-title">⭐ ¡Nivel completado!</h2>
+      <p class="modal-sub" id="level-sub"></p>
+      <button class="btn btn-primary" id="btn-next-level">Siguiente nivel →</button>
+    </div>
+
+    <!-- Fin de partida -->
+    <div class="modal modal-over" id="modal-over" role="dialog" aria-modal="true" aria-labelledby="over-title" hidden>
+      <h2 id="over-title">¡Misión fallida!</h2>
+      <p class="modal-sub" id="over-reason"></p>
+      <div class="stats" id="over-stats"></div>
+      <div class="modal-buttons">
+        <button class="btn btn-primary" id="btn-retry">↻ Reintentar</button>
+        <button class="btn btn-ghost" id="btn-over-quit">✕ Menú</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js" defer></script>
+</body>
+</html>
