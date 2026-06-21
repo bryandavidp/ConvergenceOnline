@@ -132,6 +132,12 @@
     set sound(v) { localStorage.setItem('cv_sound', v ? 'on' : 'off'); },
     get user() { return localStorage.getItem('cv_user'); },
     set user(v) { v ? localStorage.setItem('cv_user', v) : localStorage.removeItem('cv_user'); },
+    get profile() { try { return JSON.parse(localStorage.getItem('cv_profile') || 'null'); } catch (_) { return null; } },
+    set profile(v) { try { localStorage.setItem('cv_profile', JSON.stringify(v)); } catch (_) {} },
+    get tutorialDone() { return localStorage.getItem('cv_tut') === '1'; },
+    set tutorialDone(v) { localStorage.setItem('cv_tut', v ? '1' : '0'); },
+    get lastVersion() { return localStorage.getItem('cv_ver') || ''; },
+    set lastVersion(v) { localStorage.setItem('cv_ver', v); },
   };
 
   /* ===================== Settings (persistentes) ===================== */
@@ -892,6 +898,67 @@
     },
   };
 
+  /* ===================== Coach (tutorial interactivo, coach-marks) =====================
+   * Secuencia guiada con tableros deterministas: el jugador realiza sus primeras
+   * convergencias reales (mismo motor/feedback) con una casilla resaltada y texto.
+   * Se auto-lanza en el primer arranque y es rejugable desde "¿Cómo se juega?".
+   */
+  const Coach = {
+    active: false, step: 0, target: -1,
+    STEPS: [
+      {
+        text: '👆 Toca la casilla VACÍA que brilla, entre dos iconos iguales, para juntarlos.',
+        build() { State.board[26] = 'circle_red'; State.board[28] = 'circle_red'; State.iconCount = 2; return 27; },
+      },
+      {
+        text: '✨ ¡Eso es! Si coinciden en varias direcciones, eliminas más de golpe. Encadénalas rápido para subir el combo.',
+        build() { State.board[19] = 'star_yellow'; State.board[35] = 'star_yellow'; State.board[26] = 'star_yellow'; State.board[28] = 'star_yellow'; State.iconCount = 4; return 27; },
+      },
+    ],
+    start() {
+      this.active = true; this.step = 0; this.target = -1;
+      Loop.stop(); Music.stop(true);
+      State.mode = 'tutorial'; State.diff = 'facil'; State.level = 1;
+      State.score = 0; State.displayScore = 0; State.combo = 0; State.comboMult = 1; State.comboAt = 0;
+      State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.elapsed = 0; State.timeLeft = 0;
+      State.fever = false; State.recordHit = false;
+      Render.fever(false); Render.danger(0);
+      Game.ended = false; State.status = 'playing';
+      Screens.show('game'); FX.resize();
+      $('#coach').hidden = false;
+      this._render();
+    },
+    _render() {
+      const s = this.STEPS[this.step];
+      State.board = new Array(State.size * State.size).fill(null);
+      State.tiles = new Array(State.size * State.size).fill(null);
+      State.iconCount = 0; State.combo = 0; State.comboMult = 1;
+      this.target = s.build();
+      State.displayScore = State.score;
+      Render.syncAll(); Render.combo(); Render.hud();
+      Render.hint([this.target], true);
+      $('#coach-text').textContent = s.text;
+    },
+    notify() {
+      if (!this.active) return;
+      if (this.target >= 0) { Render.hint([this.target], false); this.target = -1; }
+      this.step++;
+      if (this.step >= this.STEPS.length) { setTimeout(() => this.finish(), 950); return; }
+      setTimeout(() => { State.displayScore = State.score; this._render(); }, 800);
+    },
+    finish() {
+      if (!this.active) return;
+      this.active = false;
+      if (this.target >= 0) { Render.hint([this.target], false); this.target = -1; }
+      $('#coach').hidden = true;
+      State.status = 'idle'; Game.ended = true;
+      Storage.tutorialDone = true;
+      Toasts.show('¡Listo! Ya sabes jugar 🎉', 'good', 2400);
+      refreshStart(); Screens.show('start');
+    },
+    skip() { this.finish(); },
+  };
+
   /* ===================== Loop (un único requestAnimationFrame) ===================== */
   const Loop = {
     raf: 0, last: 0, spawnAcc: 0, clockAcc: 0, ema: 16,
@@ -993,10 +1060,11 @@
       Toasts.show('¡A jugar!', 'good', 1400);
     },
 
-    restart() { Modal.close(); this.start(State.mode, State.diff); },
-    quit() { Loop.stop(); Music.stop(); State.status = 'idle'; Modal.close(); this.clearHintHighlight(); refreshStart(); Screens.show('start'); },
+    restart() { if (Coach.active) return Coach.skip(); Modal.close(); this.start(State.mode, State.diff); },
+    quit() { if (Coach.active) return Coach.skip(); Loop.stop(); Music.stop(); State.status = 'idle'; Modal.close(); this.clearHintHighlight(); refreshStart(); Screens.show('start'); },
 
     pause() {
+      if (Coach.active) return Coach.skip();
       if (State.status !== 'playing') return;
       State.status = 'paused'; Music.stop(true); Modal.open('modal-pause'); announce('Juego en pausa.');
     },
@@ -1078,6 +1146,7 @@
 
       Render.hudSoon();
       announce(`+${points} puntos.${State.combo >= 3 ? ' Combo ' + State.combo + '.' : ''}`);
+      if (Coach.active) { Coach.notify(); return; }
       this.evaluate();
     },
 
@@ -1111,7 +1180,7 @@
 
     /* Win/Lose: se evalúa tras cada cambio del tablero */
     evaluate() {
-      if (State.status !== 'playing') return;
+      if (State.status !== 'playing' || Coach.active) return;
       // Hooks de modo: pueden forzar victoria/derrota propias (objetivos, oleadas…).
       // Devuelven 'win' | 'lose' | un texto de derrota, o nada para usar la regla base.
       const wc = Rules.call('winCheck', State);
@@ -1340,10 +1409,13 @@
     const sw = $('#btn-sound'); if (sw) sw.setAttribute('aria-checked', String(Settings.sfx));
     const el = $('#start-meta');
     if (el) {
+      const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+      const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
       const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp(), dm = Meta.dailyMission();
       const prog = dm.done ? '✅' : `${Math.min(dm.progress || 0, dm.target)}/${dm.target}`;
       el.innerHTML =
         `<div class="profile">
+          <div class="profile-id"><span class="avatar-dot mini" style="--av:${esc(prof.color)}"></span><span class="pname">${esc(prof.name)}</span><span class="coins" title="Monedas">🪙 ${Meta.coins()}</span></div>
           <div class="profile-top"><span class="rank">${Meta.rank()}</span><span class="plevel">Nivel ${lvl}</span><span class="streak" title="Racha diaria">🔥 ${Meta.streak()}</span></div>
           <div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>
           <div class="xp-sub">${have} / ${need} XP</div>
@@ -1404,15 +1476,38 @@
       if (!document.hidden && Sound.ctx && Sound.ctx.state !== 'running') { const r = Sound.ctx.resume(); if (r && r.catch) r.catch(() => {}); }
     });
 
-    // Login (demo)
+    // Bienvenida sin fricción: nombre opcional + color de avatar + invitado.
+    const AV_COLORS = ['#00d0ff', '#ff5b6e', '#3ad07f', '#ffd23f', '#a06bff', '#ff9838'];
+    (function buildAvatars() {
+      const wrap = $('#avatar-pick'); if (!wrap) return;
+      const cur = (Storage.profile && Storage.profile.color) || AV_COLORS[0];
+      wrap.innerHTML = AV_COLORS.map((c, i) =>
+        `<button type="button" class="avatar-dot${c === cur ? ' sel' : ''}" role="radio" aria-checked="${c === cur}" data-color="${c}" style="--av:${c}" aria-label="Color ${i + 1}"></button>`).join('');
+      wrap.querySelectorAll('.avatar-dot').forEach(d => d.addEventListener('click', () => {
+        wrap.querySelectorAll('.avatar-dot').forEach(x => { x.classList.remove('sel'); x.setAttribute('aria-checked', 'false'); });
+        d.classList.add('sel'); d.setAttribute('aria-checked', 'true');
+      }));
+    })();
+    function enterApp(name) {
+      const wrap = $('#avatar-pick'); const sel = wrap && wrap.querySelector('.avatar-dot.sel');
+      const color = sel ? sel.dataset.color : AV_COLORS[0];
+      Storage.profile = { name: name || 'Jugador', color };
+      Storage.user = name || 'Jugador';
+      Sound.ensure(); refreshStart();
+      if (!Storage.tutorialDone) Coach.start(); else Screens.show('start');
+    }
     if (Storage.user) Screens.show('start'); else Screens.show('login');
     refreshStart();
-    $('#login-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const email = $('#email').value.trim() || 'jugador@demo';
-      Storage.user = email; Sound.ensure();
-      refreshStart(); Screens.show('start');
-    });
+    { const ni = $('#player-name'), pr = Storage.profile; if (ni && pr && pr.name && pr.name !== 'Invitado') ni.value = pr.name; }
+    $('#login-form').addEventListener('submit', (e) => { e.preventDefault(); enterApp($('#player-name').value.trim()); });
+    { const g = $('#btn-guest'); if (g) g.addEventListener('click', () => enterApp('Invitado')); }
+    { const bt = $('#btn-tutorial'); if (bt) bt.addEventListener('click', () => { Modal.close(); Coach.start(); }); }
+    { const cs = $('#coach-skip'); if (cs) cs.addEventListener('click', () => Coach.skip()); }
+    // "Novedades" al actualizar de versión (no en el primer arranque).
+    if (Storage.user && Storage.lastVersion && Storage.lastVersion !== VERSION) {
+      setTimeout(() => Toasts.show('✨ Actualizado a v' + VERSION, 'info', 3000), 900);
+    }
+    Storage.lastVersion = VERSION;
 
     // Inicio
     $('#btn-play').addEventListener('click', () => { Sound.ensure(); Screens.show('modes'); });
