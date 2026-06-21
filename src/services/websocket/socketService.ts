@@ -9,7 +9,7 @@ class SocketService {
   connect() {
     if (this.connected) return;
     
-    this.socket = io(process.env.REACT_APP_SOCKET_URL || '', {
+    this.socket = io(import.meta.env.VITE_SOCKET_URL || '', {
       withCredentials: true
     });
     

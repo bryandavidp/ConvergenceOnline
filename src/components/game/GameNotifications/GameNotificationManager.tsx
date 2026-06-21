@@ -12,61 +12,6 @@ export interface Notification {
   animateValue?: boolean;
 }
 
-interface GameNotificationManagerProps {
-  position?: 'top' | 'center' | 'bottom';
-}
-
-/**
- * Componente para gestionar y mostrar múltiples notificaciones del juego
- */
-const GameNotificationManager: React.FC<GameNotificationManagerProps> = ({ 
-  position = 'top' 
-}) => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  
-  // Eliminar una notificación por ID
-  const removeNotification = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
-  }, []);
-  
-  // Añadir una nueva notificación
-  const addNotification = useCallback((notification: Omit<Notification, 'id'>) => {
-    const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const newNotification = { ...notification, id };
-    
-    // Limitar a máximo 2 notificaciones
-    setNotifications(prev => {
-      // Si ya hay 2 o más notificaciones, eliminar la más antigua
-      if (prev.length >= 3) {
-        return [...prev.slice(1), newNotification];
-      }
-      // De lo contrario, añadir la nueva
-      return [...prev, newNotification];
-    });
-    
-    return id;
-  }, []);
-  
-  return (
-    <div className={`notification-manager ${position}`}>
-      {notifications.map(notification => (
-        <div className="notification-wrapper" key={notification.id}>
-          <GameNotification
-            message={notification.message}
-            type={notification.type}
-            icon={notification.icon}
-            duration={notification.duration || 2400}
-            visible={true}
-            onHide={() => removeNotification(notification.id)}
-            value={notification.value}
-            animateValue={notification.animateValue}
-          />
-        </div>
-      ))}
-    </div>
-  );
-};
-
 // Contexto para el sistema de notificaciones
 import { createContext, useContext } from 'react';
 
@@ -137,5 +82,3 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     </NotificationContext.Provider>
   );
 };
-
-export default GameNotificationManager; 

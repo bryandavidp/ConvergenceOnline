@@ -393,12 +393,12 @@ const StartGameModal: React.FC<StartGameModalProps> = ({ isVisible = true, onSta
   // const isNewPlayer = highScore <= 0;
   const isNewPlayer = false;
   
-  // Verificamos si el tutorial ha sido completado
-  const [tutorialCompleted, setTutorialCompleted] = useState<boolean>(() => {
-    // Desactivar tutorial para pruebas
-    localStorage.setItem('tutorialCompleted', 'true');
-    return localStorage.getItem('tutorialCompleted') === 'true';
-  });
+  // Verificamos si el tutorial ha sido completado (solo lectura; no debe
+  // escribirse dentro del inicializador de useState —era un efecto secundario en
+  // render que dejaba el flag siempre en 'true' y anulaba el bloqueo de modos).
+  const [tutorialCompleted, setTutorialCompleted] = useState<boolean>(
+    () => localStorage.getItem('tutorialCompleted') === 'true'
+  );
   
   // Estado para la modal
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);

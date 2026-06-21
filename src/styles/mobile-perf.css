@@ -1,0 +1,40 @@
+/*
+ * mobile-perf.css — Optimizaciones de rendimiento para dispositivos modestos.
+ *
+ * Se carga al final (tras el resto de estilos) para poder sobreescribir efectos
+ * costosos en pantallas pequeñas. El objetivo es mantener la fluidez del juego en
+ * móviles de gama media/baja sin alterar el aspecto en escritorio.
+ */
+
+/* --- Móvil/tablet pequeño: el blur de backdrop-filter es de lo más costoso para
+   la GPU. Los contenedores ya tienen fondos sólidos/degradados de respaldo, así que
+   podemos desactivarlo sin perder legibilidad. --- */
+@media (max-width: 768px) {
+  * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Reducir sombras difusas grandes (también costosas al recomponer) en el HUD/tablero */
+  .game-hud,
+  .top-bar,
+  .game-board-wrapper,
+  .board-container {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+  }
+}
+
+/* --- Respeta la preferencia del sistema de "movimiento reducido": minimiza
+   animaciones/transiciones (mejora batería y rendimiento en gama baja y evita
+   mareos). La lógica del juego no depende de la duración de las animaciones CSS,
+   por lo que es seguro. --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

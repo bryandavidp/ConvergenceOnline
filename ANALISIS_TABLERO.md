@@ -89,19 +89,32 @@ Pila: Vite 6 + React 19 + TypeScript + Redux Toolkit. Animaciones por CSS keyfra
   conteo potencialmente distinto.
 - **Fix**: se propaga el `basePoints` real (vía `lastBasePointsRef`) al `showPointsEarned`.
 
-### 3.3 Tablas de multiplicadores divergentes — MEDIA (documentado)
-- `incrementCombo` (`gameSlice.ts:690-700`) usa umbrales 3/6/10/15 → 1.5/2/3/5, mientras
-  `config.COMBO_SYSTEM.MULTIPLIERS` define 3/6/10/15/20/30 → 1.5/2/3/5/8/10. El reducer ignora los
-  niveles 8x/10x. Recomendado unificar contra `config` (no aplicado para no alterar el balance sin
-  tu visto bueno).
+### 3.3 Tablas de multiplicadores divergentes — MEDIA ✅
+- `incrementCombo` (`gameSlice.ts`) usaba umbrales hardcodeados 3/6/10/15 → 1.5/2/3/5 (topaba en
+  5x), mientras `config.COMBO_SYSTEM.MULTIPLIERS` define 3/6/10/15/20/30 → 1.5/2/3/5/8/10 y los
+  `MILESTONE_BONUSES` ya premiaban 20 y 30. Los niveles 8x/10x nunca se aplicaban.
+- **Fix**: el reducer ahora deriva el multiplicador de `config.COMBO_SYSTEM.MULTIPLIERS` (única
+  fuente de verdad), eligiendo el umbral más alto alcanzado. Esto **mejora el balance** premiando
+  combos largos (8x a partir de 20, 10x a partir de 30); coherente con los bonus de hito existentes.
 
-### 3.4 Posible doble spawn al cambiar la velocidad — BAJA (documentado)
-- Cambiar `spawnRate` no reinicia el intervalo inmediatamente (`useGameLogic.ts:665-694`); el nuevo
-  ritmo aplica tras el siguiente tick. Puede provocar un spawn extra puntual.
+### 3.4 Posible doble spawn al cambiar la velocidad — BAJA ✅ (no era un bug)
+- Tras revisión: `setupIconTimer` (`useGameLogic.ts:671-694`) **sí** limpia y recrea el intervalo
+  cuando `spawnRate` cambia (compara `lastSpawnRateRef` en cada tick y llama recursivamente a
+  `setupIconTimer`). El ritmo antiguo no se conserva. No requiere cambios.
 
-### 3.5 Redundancias — BAJA (documentado)
-- Tres implementaciones de audio (`audio.ts`, `audioManager.ts`, `useAudio.ts`) y dos de
-  notificaciones. Conviene consolidar para evitar inconsistencias.
+### 3.5 Redundancias / código muerto — BAJA ✅ (parcial)
+- **Eliminado** (código muerto confirmado, sin imports vivos):
+  - `src/utils/audio.ts` (0 referencias).
+  - `src/hooks/useAudio.ts` (solo lo usaba `Controls.tsx`).
+  - `src/components/game/Controls/Controls.tsx` (no se renderiza en ningún sitio; incluso importaba
+    un `Controls.css` inexistente).
+  - El componente default `GameNotificationManager` (sin imports; vivían solo `NotificationProvider`
+    y `useNotifications`).
+- **Audio vivo**: `audioManager` (juego) y `useGameSound` (modales). Se mantienen.
+- **Pendiente (no tocado, riesgo alto)**: `useGameLogic.ts` contiene `removeConvergingIcons`/
+  `showPointsEarned` paralelos al path vivo (`useBoardInteraction`). Siguen cableados en el `return`
+  del hook (por eso compila con `noUnusedLocals`), así que su eliminación requiere un refactor
+  mayor y verificación dedicada; se deja documentado para una fase futura.
 
 ---
 
@@ -117,6 +130,6 @@ Pila: Vite 6 + React 19 + TypeScript + Redux Toolkit. Animaciones por CSS keyfra
 | 2.3 | z-index incoherente | Media | ✅ Corregido |
 | 3.1 | Multiplicador obsoleto al reiniciar combo | Alta | ✅ Corregido |
 | 3.2 | Puntos mostrados ≠ sumados | Alta | ✅ Corregido |
-| 3.3 | Tablas de multiplicador divergentes | Media | Documentado |
-| 3.4 | Posible doble spawn | Baja | Documentado |
-| 3.5 | Sistemas duplicados (audio/notif/lógica) | Baja | Documentado |
+| 3.3 | Tablas de multiplicador divergentes | Media | ✅ Corregido (unificado con config) |
+| 3.4 | Posible doble spawn | Baja | ✅ Verificado: no era bug |
+| 3.5 | Código muerto (audio/notif/Controls) | Baja | ✅ Eliminado (parcial; ver 3.5) |

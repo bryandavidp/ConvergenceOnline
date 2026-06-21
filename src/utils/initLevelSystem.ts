@@ -9,6 +9,7 @@ import { GameDifficulty, GamePlayMode } from '../store/slices/gameSlice';
 import * as config from './config';
 import * as levelAdapter from './levelAdapter';
 import * as levels from './levels';
+import { BASE_MODE_CONFIG as IMPORTED_BASE_MODE_CONFIG } from './BASE_MODE_CONFIG';
 import logger from './logger';
 
 // Definición del tipo para BASE_MODE_CONFIG
@@ -28,20 +29,16 @@ type BaseModeConfigType = {
   [key: string]: ModeConfig;
 };
 
-// Intentamos importar BASE_MODE_CONFIG, pero no bloqueamos si falla
-let BASE_MODE_CONFIG: BaseModeConfigType;
-try {
-  BASE_MODE_CONFIG = require('./BASE_MODE_CONFIG').BASE_MODE_CONFIG;
-} catch (error) {
-  // Si no podemos importar, definimos un objeto por defecto
-  BASE_MODE_CONFIG = {
-    classic: { baseSpawnRate: 2000, spawnRateDecrement: 100, minSpawnRate: 500, scoreMultiplier: 1 },
-    timed: { baseSpawnRate: 1500, spawnRateDecrement: 150, minSpawnRate: 400, scoreMultiplier: 1.2 },
-    survival: { baseSpawnRate: 1800, spawnRateDecrement: 120, minSpawnRate: 450, scoreMultiplier: 0.8 },
-    zen: { baseSpawnRate: 2500, spawnRateDecrement: 50, minSpawnRate: 600, scoreMultiplier: 0.5 }
-  };
-  logger.warn('LevelSystem', 'No se pudo importar BASE_MODE_CONFIG, usando valores por defecto');
-}
+// Import estático ESM (antes se usaba require(), que no existe en el navegador con
+// Vite y siempre caía al fallback). Mantenemos un objeto por defecto por seguridad.
+const DEFAULT_BASE_MODE_CONFIG: BaseModeConfigType = {
+  classic: { baseSpawnRate: 2000, spawnRateDecrement: 100, minSpawnRate: 500, scoreMultiplier: 1 },
+  timed: { baseSpawnRate: 1500, spawnRateDecrement: 150, minSpawnRate: 400, scoreMultiplier: 1.2 },
+  survival: { baseSpawnRate: 1800, spawnRateDecrement: 120, minSpawnRate: 450, scoreMultiplier: 0.8 },
+  zen: { baseSpawnRate: 2500, spawnRateDecrement: 50, minSpawnRate: 600, scoreMultiplier: 0.5 }
+};
+const BASE_MODE_CONFIG: BaseModeConfigType =
+  (IMPORTED_BASE_MODE_CONFIG as BaseModeConfigType) || DEFAULT_BASE_MODE_CONFIG;
 
 /**
  * Migra la configuración existente al nuevo sistema de niveles

@@ -1,5 +1,4 @@
-/* Importar tipografía usada en el resto de la aplicación */
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&display=swap');
+/* Tipografía autoalojada (ver src/styles/fonts.css, cargado globalmente) */
 
 /* Contenedor principal de la notificación */
 /* En el flujo del contenedor flex (.notification-manager) para que se apilen

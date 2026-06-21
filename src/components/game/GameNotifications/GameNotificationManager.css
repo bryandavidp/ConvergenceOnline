@@ -42,11 +42,21 @@
 }
 
 /* Media queries para responsividad */
+@media (max-width: 768px) {
+  /* En móvil el HUD ocupa la parte superior; anclamos las notificaciones abajo
+     para no tapar la PUNTUACIÓN/NIVEL/TIEMPO. */
+  .notification-manager.top {
+    top: auto;
+    bottom: 90px;
+    justify-content: flex-end;
+  }
+}
+
 @media (max-width: 480px) {
   .notification-manager {
     padding: 10px;
   }
-  
+
   .notification-wrapper {
     max-width: 90%;
   }

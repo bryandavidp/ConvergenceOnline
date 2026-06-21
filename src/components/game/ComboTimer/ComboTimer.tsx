@@ -134,7 +134,7 @@ const ComboTimer: React.FC = () => {
   }, [comboCount, comboTimestamp, comboTimeWindow, isPerformanceMode]);
   
   // Para debug: renderizar siempre en desarrollo
-  const forceShowForDebug = process.env.NODE_ENV === 'development' && !visible && comboCount && comboCount > 0;
+  const forceShowForDebug = import.meta.env.DEV && !visible && comboCount && comboCount > 0;
   
   // No renderizar si no es visible (excepto en modo debug)
   if (!visible && !forceShowForDebug) return null;
