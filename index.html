@@ -12,6 +12,8 @@
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
   <div class="stars" aria-hidden="true"></div>
+  <!-- Destello de pantalla (récord / tablero perfecto) -->
+  <div class="flash" id="flash" aria-hidden="true"></div>
 
   <!-- Región para mensajes a lector de pantalla -->
   <p id="sr-status" class="sr-only" role="status" aria-live="polite"></p>
@@ -43,8 +45,13 @@
       <div class="panel">
         <h1 id="start-title" class="logo">Convergencia<span class="logo-orbit" aria-hidden="true"></span></h1>
         <p class="subtitle">¿List@ para conquistar el tablero?</p>
+        <div class="start-meta" id="start-meta"></div>
         <div class="menu-buttons">
           <button class="btn btn-primary btn-lg" id="btn-play">▶ Jugar</button>
+          <div class="menu-row">
+            <button class="btn btn-ghost" id="btn-medals">🏅 Logros</button>
+            <button class="btn btn-ghost" id="btn-settings">⚙️ Ajustes</button>
+          </div>
           <button class="btn btn-ghost" id="btn-how">¿Cómo se juega?</button>
           <div class="toggle-row">
             <span>Sonido</span>
@@ -104,8 +111,14 @@
       <div class="board-area">
         <div class="board-wrap">
           <div class="board" id="board" role="grid" aria-label="Tablero de juego"></div>
+          <!-- Capa de partículas (canvas) -->
+          <canvas class="fx" id="fx" aria-hidden="true"></canvas>
           <!-- Capa de números flotantes, contenida dentro del tablero -->
           <div class="popups" id="popups" aria-hidden="true"></div>
+          <!-- Aura de modo Fever -->
+          <div class="fever" id="fever" aria-hidden="true"></div>
+          <!-- Flash de rango de combo -->
+          <div class="rank" id="rank" aria-hidden="true"></div>
         </div>
       </div>
 
@@ -163,10 +176,26 @@
       <p class="modal-sub" id="over-reason"></p>
       <p class="modal-meta" id="over-meta"></p>
       <div class="stats" id="over-stats"></div>
+      <div class="over-xp" id="over-xp"></div>
+      <div class="over-ach" id="over-ach"></div>
       <div class="modal-buttons">
         <button class="btn btn-primary" id="btn-retry">↻ Reintentar</button>
         <button class="btn btn-ghost" id="btn-over-quit">✕ Menú</button>
       </div>
+    </div>
+
+    <!-- Ajustes -->
+    <div class="modal" id="modal-settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+      <h2 id="settings-title">⚙️ Ajustes</h2>
+      <div class="settings-list" id="settings-list"></div>
+      <button class="btn btn-primary" data-close>Cerrar</button>
+    </div>
+
+    <!-- Logros / medallas -->
+    <div class="modal" id="modal-medals" role="dialog" aria-modal="true" aria-labelledby="medals-title" hidden>
+      <h2 id="medals-title">🏅 Logros</h2>
+      <div class="medals-list" id="medals-list"></div>
+      <button class="btn btn-primary" data-close>Cerrar</button>
     </div>
   </div>
 
