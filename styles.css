@@ -41,12 +41,17 @@
 *, *::before, *::after { box-sizing: border-box; }
 /* `hidden` debe ocultar siempre, aunque la clase defina display (grid/flex). */
 [hidden] { display: none !important; }
+/* Color base sólido y oscuro en la RAÍZ: aunque WebKit/Safari suelte la capa de
+   pintado del degradado del body bajo carga (combos rápidos), el fondo nunca
+   queda en blanco — la base oscura siempre está pintada. */
+html { background-color: var(--bg-0); }
 html, body { height: 100%; }
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--text);
-  background: radial-gradient(120% 120% at 50% 0%, var(--bg-2) 0%, var(--bg-1) 45%, var(--bg-0) 100%);
+  /* Degradado decorativo SOBRE un color base sólido (no transparente). */
+  background: radial-gradient(120% 120% at 50% 0%, var(--bg-2) 0%, var(--bg-1) 45%, var(--bg-0) 100%) var(--bg-0);
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeSpeed;
@@ -404,8 +409,11 @@ h1, h2, h3, p { margin: 0; }
 /* ===================== Capa FX + recompensas ===================== */
 /* Capa de partículas DOM: cada partícula se anima en el compositor (WAAPI),
    sin canvas (evita el blanco por compositing de WebKit en combos largos). */
-.fx { position: fixed; inset: 0; z-index: 80; pointer-events: none; overflow: hidden; contain: strict; }
-.fxp { position: absolute; top: 0; left: 0; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; will-change: transform, opacity; backface-visibility: hidden; }
+.fx { position: fixed; inset: 0; z-index: 80; pointer-events: none; overflow: hidden; }
+/* Sin will-change permanente: las animaciones WAAPI promueven la capa solo
+   mientras la partícula está activa (capas transitorias y acotadas), evitando
+   saturar el compositor de Safari (que provocaba un blanqueo temporal). */
+.fxp { position: absolute; top: 0; left: 0; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; opacity: 0; }
 .fever {
   position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: 20px;
   background: radial-gradient(120% 120% at 50% 50%, rgba(255,150,50,0) 52%, rgba(255,110,40,.5) 100%);

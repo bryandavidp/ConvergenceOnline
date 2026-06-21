@@ -552,15 +552,15 @@
    * "gravedad" se precalcula como keyframes parabólicos.
    */
   const FX = {
-    layer: null, pool: [], idx: 0, active: 0, cap: 90, w: 0, h: 0, boardRect: null, supported: true,
+    layer: null, pool: [], idx: 0, active: 0, cap: 40, w: 0, h: 0, boardRect: null, supported: true,
+    POOL: 56,                 // capas DOM máximas (acotado para no saturar el compositor)
     init() {
       this.layer = $('#fx'); if (!this.layer) return;
       this.supported = typeof Element !== 'undefined' && !!Element.prototype.animate;
       const frag = document.createDocumentFragment();
-      for (let i = 0; i < 110; i++) {
+      for (let i = 0; i < this.POOL; i++) {
         const s = document.createElement('span');
         s.className = 'fxp';
-        s.style.opacity = '0';
         this.pool.push({ el: s, anim: null, busy: false });
         frag.appendChild(s);
       }
@@ -577,19 +577,22 @@
       if (!r || !r.width) return { x: this.w / 2, y: this.h / 2 };
       return { x: r.left + ((i % s) + 0.5) / s * r.width, y: r.top + ((i / s | 0) + 0.5) / s * r.height };
     },
+    // Busca una ranura LIBRE (sin cancelar las activas: cero churn de capas).
     _slot() {
-      // Coge la siguiente del pool (round-robin); recicla la más antigua si está ocupada.
-      const p = this.pool[this.idx]; this.idx = (this.idx + 1) % this.pool.length;
-      if (p.busy) {
-        p.busy = false; this.active = Math.max(0, this.active - 1);
-        if (p.anim) { p.anim.onfinish = null; p.anim.oncancel = null; try { p.anim.cancel(); } catch (_) {} }
+      const N = this.pool.length;
+      for (let k = 0; k < N; k++) {
+        const p = this.pool[this.idx]; this.idx = (this.idx + 1) % N;
+        if (!p.busy) return p;
       }
-      return p;
+      return null; // todas ocupadas -> se descarta la partícula (mejor que blanquear)
     },
     // Lanza una partícula con velocidad (vx,vy) px/s y gravedad g px/s^2 durante life s.
+    // Si se alcanza el tope de concurrencia, se DESCARTA (nunca se cancela una activa),
+    // así el nº de capas del compositor queda acotado y no hay parpadeo blanco.
     _emit(x, y, vx, vy, g, life, size, color, shape, spin) {
-      if (!this.supported) return;
-      const p = this._slot(), el = p.el;
+      if (!this.supported || this.active >= this.cap) return;
+      const p = this._slot(); if (!p) return;
+      const el = p.el;
       el.style.width = size + 'px';
       el.style.height = (shape === 1 ? size * 0.6 : size) + 'px';
       el.style.background = color;
@@ -602,10 +605,11 @@
         const rot = spin ? ' rotate(' + (spin * t) + 'deg)' : '';
         frames.push({ transform: 'translate3d(' + px.toFixed(1) + 'px,' + py.toFixed(1) + 'px,0)' + rot, opacity: k >= N - 1 ? 0 : 1, offset: k / N });
       }
-      p.busy = true;
-      const anim = el.animate(frames, { duration: life * 1000, easing: 'linear', fill: 'forwards' });
+      p.busy = true; this.active++;
+      let anim;
+      try { anim = el.animate(frames, { duration: life * 1000, easing: 'linear', fill: 'forwards' }); }
+      catch (_) { p.busy = false; this.active--; return; }
       p.anim = anim;
-      this.active++;
       const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
       anim.onfinish = done; anim.oncancel = done;
     },
@@ -613,19 +617,19 @@
     burst(i, color, n) {
       if (Settings.reducedFx || !this.supported) return;
       this.syncBoardRect();
-      const { x, y } = this.cellXY(i); n = Math.min(n, 10);
-      for (let k = 0; k < n; k++) { const a = Math.random() * 6.283, sp = 70 + Math.random() * 180; this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp - 70, 760, 0.5 + Math.random() * 0.35, 5 + Math.random() * 5, color, 0, 0); }
+      const { x, y } = this.cellXY(i); n = Math.min(n, 5);
+      for (let k = 0; k < n; k++) { const a = Math.random() * 6.283, sp = 70 + Math.random() * 170; this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp - 70, 780, 0.42 + Math.random() * 0.28, 5 + Math.random() * 4, color, 0, 0); }
     },
     // Celebración de récord: brota de la última eliminación, sube/se abre y cae al fondo
     celebrate(i) {
       if (Settings.reducedFx || !this.supported) return;
       this.syncBoardRect();
       const { x, y } = this.cellXY(i), C = ['#ffd23f', '#ff5b6e', '#4b8bff', '#3ad07f', '#a06bff', '#2bd4e6', '#ff9838'];
-      const n = Math.min(70, this.cap);
+      const n = Math.min(36, this.cap);
       for (let k = 0; k < n; k++) {
         const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.2, sp = 260 + Math.random() * 320;
         // vida suficiente para que la parábola alcance el fondo de la pantalla
-        this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp, 900, 1.7 + Math.random() * 1.1, 6 + Math.random() * 5, C[k % C.length], 1, (Math.random() - 0.5) * 720);
+        this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp, 900, 1.7 + Math.random() * 1.1, 6 + Math.random() * 4, C[k % C.length], 1, (Math.random() - 0.5) * 720);
       }
     },
     // Confeti que cae desde arriba (nivel/victoria)
@@ -633,7 +637,7 @@
       if (Settings.reducedFx || !this.supported) return;
       n = Math.min(n, this.cap);
       const C = ['#ff5b6e', '#4b8bff', '#3ad07f', '#ffd23f', '#a06bff', '#2bd4e6', '#ff9838'];
-      for (let k = 0; k < n; k++) this._emit(Math.random() * this.w, -14, (Math.random() - 0.5) * 110, 150 + Math.random() * 170, 360, 1.8 + Math.random() * 1.1, 6 + Math.random() * 5, C[k % C.length], 1, (Math.random() - 0.5) * 540);
+      for (let k = 0; k < n; k++) this._emit(Math.random() * this.w, -14, (Math.random() - 0.5) * 110, 150 + Math.random() * 170, 360, 1.8 + Math.random() * 1.1, 6 + Math.random() * 4, C[k % C.length], 1, (Math.random() - 0.5) * 540);
     },
     // Conservado por compatibilidad con el bucle; las partículas son autónomas (WAAPI).
     step() { return false; },
@@ -749,8 +753,8 @@
 
       // Gobernador de rendimiento: EMA del tiempo de frame -> ajusta el tope de partículas
       L.ema += (dt - L.ema) * 0.1;
-      if (L.ema > 22 && FX.cap > 30) FX.cap -= 6;
-      else if (L.ema < 17 && FX.cap < 90) FX.cap += 3;
+      if (L.ema > 22 && FX.cap > 18) FX.cap -= 6;
+      else if (L.ema < 17 && FX.cap < 50) FX.cap += 3;
 
       if (State.status === 'playing') {
         L.clockAcc += dt;
