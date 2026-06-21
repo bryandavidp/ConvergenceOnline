@@ -152,7 +152,8 @@
   /* ===================== Settings (persistentes) ===================== */
   const Settings = (() => {
     const reduced = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-    const def = { sfx: true, music: false, haptics: true, reducedFx: reduced };
+    const lang0 = (typeof navigator !== 'undefined' && /^en/i.test(navigator.language || '')) ? 'en' : 'es';
+    const def = { sfx: true, music: false, haptics: true, reducedFx: reduced, lang: lang0, largeText: false };
     let s; try { s = Object.assign({}, def, JSON.parse(localStorage.getItem('cv_settings') || '{}')); } catch (_) { s = { ...def }; }
     const save = () => { try { localStorage.setItem('cv_settings', JSON.stringify(s)); } catch (_) {} };
     return {
@@ -160,6 +161,89 @@
       get music() { return s.music; }, set music(v) { s.music = v; save(); },
       get haptics() { return s.haptics; }, set haptics(v) { s.haptics = v; save(); },
       get reducedFx() { return s.reducedFx; }, set reducedFx(v) { s.reducedFx = v; save(); },
+      get lang() { return s.lang; }, set lang(v) { s.lang = v; save(); },
+      get largeText() { return s.largeText; }, set largeText(v) { s.largeText = v; save(); },
+    };
+  })();
+
+  /* ===================== I18n (ES / EN) =====================
+   * Diccionario para la UI. apply() traduce el HTML estático por atributos
+   * data-i18n (texto), data-i18n-ph (placeholder) y data-i18n-al (aria-label).
+   * t(key) sirve para textos generados por JS (menús, resultados, ajustes…).
+   */
+  const I18n = (() => {
+    const DICT = {
+      es: {
+        welcome_sub: 'Junta iconos iguales en el espacio', name_q: '¿Cómo te llamas?', optional: '(opcional)',
+        begin: '¡Empezar!', guest: 'Jugar como invitado', start_sub: '¿List@ para conquistar el tablero?',
+        play: '▶ Jugar', reward: '🎁 Recompensa diaria', menu_profile: '🏅 Logros', menu_shop: '🛍️ Tienda',
+        menu_settings: '⚙️ Ajustes', how: '¿Cómo se juega?', install: '📲 Instalar app', sound: 'Sonido', best: 'Mejor puntuación:',
+        modes_title: 'Elige tu misión', group_mode: 'Modo', group_diff: 'Dificultad',
+        hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
+        how_title: '¿Cómo se juega?', how1: 'Toca una <strong>casilla vacía</strong>.', how2: 'Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).',
+        how3: 'Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!', how4: 'Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.',
+        how5: 'Los iconos aparecen solos: vacía el tablero antes de que se llene.',
+        tutorial_btn: '▶ Tutorial interactivo', understood: 'Entendido',
+        pause: 'Pausa', resume: '▶ Reanudar', restart: '↻ Reiniciar', menu: '✕ Menú', close: 'Cerrar', back: 'Volver', retry: '↻ Reintentar', share: '📤 Compartir',
+        settings_title: '⚙️ Ajustes', shop_title: '🛍️ Tienda', shop_hint: 'Temas del tablero. Pulsa para previsualizar.',
+        profile_title: '📊 Perfil', best_by_mode: 'Mejores marcas por modo', achievements: 'Logros',
+        adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
+        revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
+        coach_skip: 'Saltar tutorial',
+        diff_facil: 'Fácil', diff_normal: 'Normal', diff_dificil: 'Difícil',
+        set_sfx: '🔊 Efectos de sonido', set_music: '🎵 Música', set_haptics: '📳 Vibración', set_reduced: '✨ Reducir efectos', set_large: '🔠 Texto grande', set_lang: '🌐 Idioma',
+        st_points: 'Puntos', st_level: 'Nivel', st_combo: 'Combo máx.', st_removed: 'Eliminados', st_time: 'Tiempo', st_record: 'Récord', st_wave: 'Oleada', st_surv: 'Sobreviviste', st_best: 'Mejor',
+        st_games: 'Partidas', st_bestcombo: 'Mejor combo', st_totaltime: 'Tiempo total',
+        coins: 'monedas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
+      },
+      en: {
+        welcome_sub: 'Match equal icons across space', name_q: "What's your name?", optional: '(optional)',
+        begin: 'Start!', guest: 'Play as guest', start_sub: 'Ready to conquer the board?',
+        play: '▶ Play', reward: '🎁 Daily reward', menu_profile: '🏅 Profile', menu_shop: '🛍️ Shop',
+        menu_settings: '⚙️ Settings', how: 'How to play?', install: '📲 Install app', sound: 'Sound', best: 'Best score:',
+        modes_title: 'Choose your mission', group_mode: 'Mode', group_diff: 'Difficulty',
+        hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
+        how_title: 'How to play?', how1: 'Tap an <strong>empty cell</strong>.', how2: 'It looks at the nearest icon in each direction (up, down, left, right).',
+        how3: 'If <strong>2 or more match</strong>, they converge and vanish!', how4: 'Chain quick clears to raise the <strong>combo</strong> and multiply points.',
+        how5: 'Icons spawn on their own: clear the board before it fills up.',
+        tutorial_btn: '▶ Interactive tutorial', understood: 'Got it',
+        pause: 'Paused', resume: '▶ Resume', restart: '↻ Restart', menu: '✕ Menu', close: 'Close', back: 'Back', retry: '↻ Retry', share: '📤 Share',
+        settings_title: '⚙️ Settings', shop_title: '🛍️ Shop', shop_hint: 'Board themes. Tap to preview.',
+        profile_title: '📊 Profile', best_by_mode: 'Best by mode', achievements: 'Achievements',
+        adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
+        revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
+        coach_skip: 'Skip tutorial',
+        diff_facil: 'Easy', diff_normal: 'Normal', diff_dificil: 'Hard',
+        set_sfx: '🔊 Sound effects', set_music: '🎵 Music', set_haptics: '📳 Vibration', set_reduced: '✨ Reduce effects', set_large: '🔠 Large text', set_lang: '🌐 Language',
+        st_points: 'Score', st_level: 'Level', st_combo: 'Max combo', st_removed: 'Cleared', st_time: 'Time', st_record: 'Best', st_wave: 'Wave', st_surv: 'Survived', st_best: 'Best',
+        st_games: 'Games', st_bestcombo: 'Best combo', st_totaltime: 'Total time',
+        coins: 'coins', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
+        m_tutorial_n: 'Tutorial', m_tutorial_d: 'Learn the mechanic, no rush or penalties.', m_tutorial_g: 'Match two equal',
+        m_clasico_n: 'Classic', m_clasico_d: 'Clear the board to pass the level. Careful: mistakes add icons.', m_clasico_g: 'Clear the board',
+        m_aventura_n: 'Adventure', m_aventura_d: 'Endless journey across biomes with their own rules, goals and mini-bosses. How far will you go?',
+        m_contrarreloj_n: 'Time Attack', m_contrarreloj_d: 'Each convergence adds time; combos add even more. Do not let the clock hit zero!', m_contrarreloj_g: 'Combos = more time',
+        m_supervivencia_n: 'Survival', m_supervivencia_d: 'Endure rising waves with lives, traps, bosses and boosters. How long will you last?',
+        m_zen_n: 'Zen', m_zen_d: 'Relaxed pace, no penalties or game over. Play and breathe.', m_zen_g: 'No mistakes, no rush',
+      },
+    };
+    const FIELD = { name: 'n', desc: 'd', goal: 'g' };
+    return {
+      get lang() { return Settings.lang === 'en' ? 'en' : 'es'; },
+      t(key) { const d = DICT[this.lang] || DICT.es; return d[key] != null ? d[key] : (DICT.es[key] != null ? DICT.es[key] : key); },
+      modeT(id, field) {
+        const m = Config.MODES[id] || {};
+        if (this.lang === 'es') return m[field] || '';
+        const k = 'm_' + id + '_' + (FIELD[field] || field);
+        return DICT.en[k] != null ? DICT.en[k] : (m[field] || '');
+      },
+      apply(root) {
+        const r = root || document;
+        r.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = this.t(el.getAttribute('data-i18n')); });
+        r.querySelectorAll('[data-i18n-html]').forEach((el) => { el.innerHTML = this.t(el.getAttribute('data-i18n-html')); });
+        r.querySelectorAll('[data-i18n-ph]').forEach((el) => { el.setAttribute('placeholder', this.t(el.getAttribute('data-i18n-ph'))); });
+        r.querySelectorAll('[data-i18n-al]').forEach((el) => { el.setAttribute('aria-label', this.t(el.getAttribute('data-i18n-al'))); });
+        document.documentElement.setAttribute('lang', this.lang);
+      },
     };
   })();
 
@@ -604,14 +688,21 @@
     },
   };
   const Modal = {
+    _last: null,
     open(id) {
+      this._last = document.activeElement;
       $('#overlay').hidden = false;
       document.querySelectorAll('.modal').forEach(m => m.hidden = m.id !== id);
       const m = $('#' + id);
-      const focusable = m.querySelector('button, [href], input');
+      const focusable = m.querySelector('button:not([disabled]), [href], input');
       if (focusable) focusable.focus();
     },
-    close() { $('#overlay').hidden = true; document.querySelectorAll('.modal').forEach(m => m.hidden = true); },
+    close() {
+      $('#overlay').hidden = true; document.querySelectorAll('.modal').forEach(m => m.hidden = true);
+      // Accesibilidad: devolver el foco al elemento que abrió el modal.
+      if (this._last && this._last.focus) { try { this._last.focus(); } catch (_) {} }
+      this._last = null;
+    },
   };
 
   /* ===================== FX (partículas DOM, animadas por el compositor) =======
@@ -1543,7 +1634,7 @@
       if (State.mode === 'supervivencia' || !m.goal) { el.hidden = true; el.style.borderColor = ''; return; }
       el.hidden = false;
       el.style.borderColor = m.accent || '';
-      el.innerHTML = `<span class="obj-biome" style="color:${m.accent || 'var(--accent-2)'}">${m.emoji} ${m.name}</span><span class="obj-goal">${m.goal}</span>`;
+      el.innerHTML = `<span class="obj-biome" style="color:${m.accent || 'var(--accent-2)'}">${m.emoji} ${I18n.modeT(State.mode, 'name')}</span><span class="obj-goal">${I18n.modeT(State.mode, 'goal')}</span>`;
     },
 
     /* Win/Lose: se evalúa tras cada cambio del tablero */
@@ -1667,21 +1758,21 @@
       $('#over-record').hidden = !this.newRecord && !this._survNew;
       if (this._survNew) { const rec = $('#over-record'); if (rec) rec.textContent = '🛡️ ¡Récord de supervivencia!'; }
       const m = Config.MODES[State.mode], d = Config.DIFFICULTY[State.diff];
-      $('#over-meta').textContent = `Modo ${m.name} · ${d.label}`;
-      const rows = (m.id === 'supervivencia' || State.mode === 'supervivencia') ? [
-        [State.score, 'Puntos', 'var(--score)'],
-        ['Oleada ' + Survival.wave, 'Oleada', 'var(--level)'],
-        ['×' + State.maxCombo, 'Combo máx.', 'var(--gold)'],
-        [State.removedTotal, 'Eliminados', 'var(--good)'],
-        [Math.floor(Survival.survSec) + 's', 'Sobreviviste', 'var(--time)'],
-        [Meta.survBest() + 's', 'Mejor', 'var(--gold)'],
+      $('#over-meta').textContent = `${I18n.modeT(State.mode, 'name')} · ${I18n.t('diff_' + State.diff)}`;
+      const rows = State.mode === 'supervivencia' ? [
+        [State.score, I18n.t('st_points'), 'var(--score)'],
+        [Survival.wave, I18n.t('st_wave'), 'var(--level)'],
+        ['×' + State.maxCombo, I18n.t('st_combo'), 'var(--gold)'],
+        [State.removedTotal, I18n.t('st_removed'), 'var(--good)'],
+        [Math.floor(Survival.survSec) + 's', I18n.t('st_surv'), 'var(--time)'],
+        [Meta.survBest() + 's', I18n.t('st_best'), 'var(--gold)'],
       ] : [
-        [State.score, 'Puntos', 'var(--score)'],
-        [State.level, 'Nivel', 'var(--level)'],
-        ['×' + State.maxCombo, 'Combo máx.', 'var(--gold)'],
-        [State.removedTotal, 'Eliminados', 'var(--good)'],
-        [fmtTime(State.elapsed), 'Tiempo', 'var(--time)'],
-        [Storage.best, 'Récord', 'var(--gold)'],
+        [State.score, I18n.t('st_points'), 'var(--score)'],
+        [State.level, I18n.t('st_level'), 'var(--level)'],
+        ['×' + State.maxCombo, I18n.t('st_combo'), 'var(--gold)'],
+        [State.removedTotal, I18n.t('st_removed'), 'var(--good)'],
+        [fmtTime(State.elapsed), I18n.t('st_time'), 'var(--time)'],
+        [Storage.best, I18n.t('st_record'), 'var(--gold)'],
       ];
       $('#over-stats').innerHTML = statRow(rows);
       // Progresión: XP ganada, barra de perfil, misión y logros nuevos
@@ -1765,7 +1856,7 @@
       b.className = 'mode-card'; b.type = 'button';
       b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(key === selMode));
       b.dataset.mode = key;
-      b.innerHTML = `<span class="emoji" aria-hidden="true">${m.emoji}</span><span class="name">${m.name}</span>`;
+      b.innerHTML = `<span class="emoji" aria-hidden="true">${m.emoji}</span><span class="name">${I18n.modeT(key, 'name')}</span>`;
       b.addEventListener('click', () => selectMode(key));
       grid.appendChild(b);
     });
@@ -1774,7 +1865,7 @@
       const b = document.createElement('button');
       b.className = 'diff-chip'; b.type = 'button';
       b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(key === selDiff));
-      b.dataset.diff = key; b.textContent = Config.DIFFICULTY[key].label;
+      b.dataset.diff = key; b.textContent = I18n.t('diff_' + key);
       b.addEventListener('click', () => selectDiff(key));
       row.appendChild(b);
     });
@@ -1791,7 +1882,7 @@
       c.setAttribute('aria-checked', String(active));
       c.disabled = fixed;
     });
-    $('#mode-desc').textContent = m.desc + (fixed ? ' (dificultad fija: ' + Config.DIFFICULTY[m.fixedDiff].label + ')' : '');
+    $('#mode-desc').textContent = I18n.modeT(selMode, 'desc') + (fixed ? ' (' + I18n.t('diff_' + m.fixedDiff) + ')' : '');
     $('#btn-start-game').disabled = false;
   }
 
@@ -1809,37 +1900,56 @@
       el.innerHTML =
         `<div class="profile">
           <div class="profile-id"><span class="avatar-dot mini" style="--av:${esc(prof.color)}"></span><span class="pname">${esc(prof.name)}</span><span class="coins" title="Monedas">🪙 ${Meta.coins()}</span></div>
-          <div class="profile-top"><span class="rank">${Meta.rank()}</span><span class="plevel">Nivel ${lvl}</span><span class="streak" title="Racha diaria">🔥 ${Meta.streak()}</span></div>
+          <div class="profile-top"><span class="rank">${Meta.rank()}</span><span class="plevel">${I18n.t('lvl')} ${lvl}</span><span class="streak" title="Racha diaria">🔥 ${Meta.streak()}</span></div>
           <div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>
           <div class="xp-sub">${have} / ${need} XP</div>
         </div>
-        <div class="daily ${dm.done ? 'done' : ''}"><span class="daily-icon">🎯</span><span class="daily-text">${dm.done ? '¡Misión diaria completada!' : dm.text}</span><span class="daily-prog">${prog}</span></div>
-        <div class="daily weekly ${wk.done ? 'done' : ''}"><span class="daily-icon">🗓️</span><span class="daily-text">${wk.done ? '¡Reto semanal completado!' : wk.text}</span><span class="daily-prog">${wprog}</span></div>`;
+        <div class="daily ${dm.done ? 'done' : ''}"><span class="daily-icon">🎯</span><span class="daily-text">${dm.done ? I18n.t('daily_done') : dm.text}</span><span class="daily-prog">${prog}</span></div>
+        <div class="daily weekly ${wk.done ? 'done' : ''}"><span class="daily-icon">🗓️</span><span class="daily-text">${wk.done ? I18n.t('weekly_done') : wk.text}</span><span class="daily-prog">${wprog}</span></div>`;
     }
   }
 
   function applyReducedFx() {
     document.body.classList.toggle('reduced-fx', Settings.reducedFx);
   }
+  function applyLargeText() {
+    document.documentElement.style.fontSize = Settings.largeText ? '18.5px' : '';
+    document.body.classList.toggle('large-text', Settings.largeText);
+  }
+  // Aplica el idioma: re-traduce el HTML estático y reconstruye lo dinámico.
+  function applyLanguage() {
+    I18n.apply();
+    buildModeMenu(); refreshStart(); buildSettings();
+    if (State.status === 'playing' || State.status === 'paused') Game.showGoalBanner();
+  }
 
   // Panel de ajustes (toggles persistentes)
   function buildSettings() {
     const rows = [
-      { k: 'sfx', label: '🔊 Efectos de sonido' },
-      { k: 'music', label: '🎵 Música' },
-      { k: 'haptics', label: '📳 Vibración', show: Haptics.ok },
-      { k: 'reducedFx', label: '✨ Reducir efectos' },
+      { k: 'sfx', label: I18n.t('set_sfx') },
+      { k: 'music', label: I18n.t('set_music') },
+      { k: 'haptics', label: I18n.t('set_haptics'), show: Haptics.ok },
+      { k: 'reducedFx', label: I18n.t('set_reduced') },
+      { k: 'largeText', label: I18n.t('set_large') },
     ];
     const list = $('#settings-list'); if (!list) return;
-    list.innerHTML = rows.filter(r => r.show !== false).map(r =>
+    let html = rows.filter(r => r.show !== false).map(r =>
       `<div class="set-row"><span>${r.label}</span><button class="switch" role="switch" data-set="${r.k}" aria-checked="${Settings[r.k]}" aria-label="${r.label}"><span class="switch-dot"></span></button></div>`
     ).join('');
+    html += `<div class="set-row"><span>${I18n.t('set_lang')}</span><div class="lang-pick">` +
+      `<button class="lang-btn${Settings.lang !== 'en' ? ' on' : ''}" data-lang="es">ES</button>` +
+      `<button class="lang-btn${Settings.lang === 'en' ? ' on' : ''}" data-lang="en">EN</button></div></div>`;
+    list.innerHTML = html;
     list.querySelectorAll('[data-set]').forEach(btn => btn.addEventListener('click', () => {
       const k = btn.dataset.set; Settings[k] = !Settings[k]; btn.setAttribute('aria-checked', String(Settings[k]));
       if (k === 'sfx' && Settings.sfx) { Sound.ensure(); Sound.ui(); }
       if (k === 'music') { Settings.music && State.status === 'playing' ? Music.start() : Music.stop(); }
       if (k === 'reducedFx') applyReducedFx();
+      if (k === 'largeText') applyLargeText();
       const sw = $('#btn-sound'); if (sw) sw.setAttribute('aria-checked', String(Settings.sfx));
+    }));
+    list.querySelectorAll('[data-lang]').forEach(btn => btn.addEventListener('click', () => {
+      if (Settings.lang === btn.dataset.lang) return; Settings.lang = btn.dataset.lang; Sound.ui(); applyLanguage();
     }));
   }
   function openSettings() { buildSettings(); Modal.open('modal-settings'); }
@@ -1849,10 +1959,10 @@
     const st = Meta.stats();
     const sEl = $('#profile-stats');
     if (sEl) sEl.innerHTML = statRow([
-      [st.games, 'Partidas', 'var(--accent-2)'],
-      ['×' + st.bestCombo, 'Mejor combo', 'var(--gold)'],
-      [st.totalRemoved, 'Eliminados', 'var(--good)'],
-      [fmtTime(st.totalTime), 'Tiempo total', 'var(--time)'],
+      [st.games, I18n.t('st_games'), 'var(--accent-2)'],
+      ['×' + st.bestCombo, I18n.t('st_bestcombo'), 'var(--gold)'],
+      [st.totalRemoved, I18n.t('st_removed'), 'var(--good)'],
+      [fmtTime(st.totalTime), I18n.t('st_totaltime'), 'var(--time)'],
     ]);
     // Leaderboard local por modo (mejor marca)
     const lbEl = $('#profile-lb');
@@ -1861,7 +1971,7 @@
         const mo = Config.MODES[k];
         const best = k === 'supervivencia' ? (Meta.survBest() + 's') : Meta.modeBest(k);
         const plays = Meta.modePlays(k);
-        return `<div class="lb-row"><span class="lb-mode">${mo.emoji} ${mo.name}</span><span class="lb-best">${best}</span><span class="lb-plays">${plays} part.</span></div>`;
+        return `<div class="lb-row"><span class="lb-mode">${mo.emoji} ${I18n.modeT(k, 'name')}</span><span class="lb-best">${best}</span><span class="lb-plays">${plays}</span></div>`;
       }).join('');
       lbEl.innerHTML = rows;
     }
@@ -1925,6 +2035,8 @@
     Render.buildBoard();
     FX.init();
     applyReducedFx();
+    applyLargeText();
+    I18n.apply();
     Cosmetics.apply();
     Input.init();
     buildModeMenu();
@@ -2035,5 +2147,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Coach, Adventure, Survival, Share, refreshStart };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Coach, Adventure, Survival, Share, I18n, refreshStart, applyLanguage };
 })();
