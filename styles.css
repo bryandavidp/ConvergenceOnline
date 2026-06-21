@@ -112,6 +112,7 @@ h1, h2, h3, p { margin: 0; }
 .subtitle { color: var(--muted); margin-top: 8px; margin-bottom: 18px; }
 .best-line { color: var(--muted); margin-top: 16px; font-size: .95rem; }
 .best-line strong { color: var(--gold); }
+.version-line { color: var(--muted); opacity: .55; margin-top: 10px; font-size: .72rem; letter-spacing: .5px; }
 
 .menu-buttons { display: flex; flex-direction: column; gap: 12px; }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; color: var(--muted); margin-top: 4px; }
