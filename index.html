@@ -131,6 +131,9 @@
         </div>
       </div>
 
+      <!-- Banner de objetivo (modo Aventura) -->
+      <div class="obj-banner" id="obj-banner" hidden></div>
+
       <div class="board-area">
         <div class="board-wrap">
           <div class="board" id="board" role="grid" aria-label="Tablero de juego"></div>
@@ -211,6 +214,15 @@
       <h2 id="settings-title">⚙️ Ajustes</h2>
       <div class="settings-list" id="settings-list"></div>
       <button class="btn btn-primary" data-close>Cerrar</button>
+    </div>
+
+    <!-- Mapa de Aventura -->
+    <div class="modal modal-adventure" id="modal-adventure" role="dialog" aria-modal="true" aria-labelledby="adventure-title" hidden>
+      <h2 id="adventure-title">🚀 Aventura</h2>
+      <p class="modal-sub">Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.</p>
+      <div class="adventure-map" id="adventure-map"></div>
+      <button class="btn btn-primary btn-lg" id="adventure-continue">Continuar</button>
+      <button class="btn btn-ghost" data-close>Volver</button>
     </div>
 
     <!-- Tienda de cosméticos -->
