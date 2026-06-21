@@ -14,6 +14,8 @@
   <div class="stars" aria-hidden="true"></div>
   <!-- Destello de pantalla (récord / tablero perfecto) -->
   <div class="flash" id="flash" aria-hidden="true"></div>
+  <!-- Capa de partículas a pantalla completa (DOM, animada por compositor) -->
+  <div class="fx" id="fx" aria-hidden="true"></div>
 
   <!-- Región para mensajes a lector de pantalla -->
   <p id="sr-status" class="sr-only" role="status" aria-live="polite"></p>
@@ -111,8 +113,6 @@
       <div class="board-area">
         <div class="board-wrap">
           <div class="board" id="board" role="grid" aria-label="Tablero de juego"></div>
-          <!-- Capa de partículas (canvas) -->
-          <canvas class="fx" id="fx" aria-hidden="true"></canvas>
           <!-- Capa de números flotantes, contenida dentro del tablero -->
           <div class="popups" id="popups" aria-hidden="true"></div>
           <!-- Aura de modo Fever -->
