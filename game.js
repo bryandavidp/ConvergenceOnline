@@ -77,18 +77,18 @@
     const SNAME = { circle:'círculo', square:'cuadrado', triangle:'triángulo', diamond:'rombo',
       star:'estrella', heart:'corazón', hexagon:'hexágono', plus:'cruz', droplet:'gota', ring:'anillo' };
 
-    // Pares [forma, color] ordenados de más fácil a más difícil de distinguir.
+    // Pares [forma, color]. ORDENADOS EN CICLOS de las 10 formas EN EL MISMO
+    // ORDEN (3 ciclos = 30 iconos, múltiplo de 10). Cada forma aparece 3 veces
+    // con colores distintos. Como cada nivel toma una "ventana" contigua de <=8
+    // iconos (ver Engine.poolForLevel) y el periodo del ciclo es 10, CUALQUIER
+    // ventana tiene SIEMPRE formas distintas: dos iconos sólo coinciden si son
+    // idénticos (misma forma y color), eliminando convergencias "que parecen
+    // válidas" por colores parecidos de una misma forma. La longitud múltiplo de
+    // 10 conserva la propiedad incluso al dar la vuelta al catálogo.
     const PAIRS = [
-      // Fácil: forma y color únicos y muy contrastados
-      ['circle','red'],['square','blue'],['triangle','green'],['star','yellow'],['heart','pink'],
-      ['diamond','cyan'],['hexagon','orange'],['plus','purple'],['droplet','lime'],['ring','white'],
-      // Medio: formas reutilizadas con colores distintos
-      ['circle','orange'],['square','purple'],['triangle','cyan'],['star','red'],['heart','blue'],
-      ['diamond','lime'],['hexagon','pink'],['plus','teal'],['droplet','yellow'],['ring','indigo'],
-      // Difícil: misma forma con colores parecidos (hay que fijarse en el matiz)
-      ['circle','blue'],['circle','indigo'],['circle','teal'],['square','red'],['square','orange'],
-      ['triangle','lime'],['triangle','teal'],['diamond','purple'],['diamond','indigo'],['star','orange'],
-      ['heart','purple'],['hexagon','teal'],
+      ['circle','red'],['square','blue'],['triangle','green'],['star','yellow'],['heart','pink'],['diamond','cyan'],['hexagon','orange'],['plus','purple'],['droplet','lime'],['ring','white'],
+      ['circle','teal'],['square','orange'],['triangle','indigo'],['star','pink'],['heart','purple'],['diamond','lime'],['hexagon','red'],['plus','cyan'],['droplet','blue'],['ring','yellow'],
+      ['circle','blue'],['square','purple'],['triangle','cyan'],['star','orange'],['heart','lime'],['diamond','indigo'],['hexagon','teal'],['plus','green'],['droplet','yellow'],['ring','pink'],
     ];
     const CATALOG = [], DEFS = {}, cache = {};
     for (const [shape, color] of PAIRS) { const id = `${shape}_${color}`; CATALOG.push(id); DEFS[id] = { shape, color }; }
