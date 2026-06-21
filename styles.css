@@ -496,6 +496,11 @@ body.reduced-fx .coach-text { animation: none; }
 .menu-row { display: flex; gap: 10px; }
 .menu-row .btn { flex: 1; }
 
+/* Selector de idioma en ajustes */
+.lang-pick { display: flex; gap: 6px; }
+.lang-btn { padding: 6px 14px; border-radius: 8px; background: rgba(0,0,0,.25); border: 1px solid var(--line); font-weight: 800; color: var(--muted); }
+.lang-btn.on { border-color: var(--accent-2); color: var(--text); background: rgba(0,208,255,.12); }
+
 /* Ajustes / medallas */
 .settings-list { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 18px; }
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(0,0,0,.2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }

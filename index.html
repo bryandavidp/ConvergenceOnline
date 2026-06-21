@@ -37,7 +37,7 @@
   <!-- Tutorial interactivo (coach-marks) -->
   <div class="coach" id="coach" hidden>
     <p class="coach-text" id="coach-text" aria-live="polite"></p>
-    <button class="btn btn-ghost coach-skip" id="coach-skip">Saltar tutorial</button>
+    <button class="btn btn-ghost coach-skip" id="coach-skip" data-i18n="coach_skip">Saltar tutorial</button>
   </div>
 
   <main id="app">
@@ -46,15 +46,15 @@
     <section class="screen" id="screen-login" aria-labelledby="login-title">
       <div class="panel">
         <h1 id="login-title" class="logo">Convergencia<span class="logo-orbit" aria-hidden="true"></span></h1>
-        <p class="subtitle">Junta iconos iguales en el espacio</p>
+        <p class="subtitle" data-i18n="welcome_sub">Junta iconos iguales en el espacio</p>
         <form id="login-form" novalidate>
           <div class="field">
-            <label for="player-name">¿Cómo te llamas? <span class="opt">(opcional)</span></label>
+            <label for="player-name"><span data-i18n="name_q">¿Cómo te llamas?</span> <span class="opt" data-i18n="optional">(opcional)</span></label>
             <input id="player-name" name="player-name" type="text" maxlength="16" autocomplete="nickname" inputmode="text" placeholder="Jugador" />
           </div>
           <div class="avatar-pick" id="avatar-pick" role="radiogroup" aria-label="Elige un color de avatar"></div>
-          <button class="btn btn-primary btn-lg" type="submit">¡Empezar!</button>
-          <button class="btn btn-ghost" type="button" id="btn-guest">Jugar como invitado</button>
+          <button class="btn btn-primary btn-lg" type="submit" data-i18n="begin">¡Empezar!</button>
+          <button class="btn btn-ghost" type="button" id="btn-guest" data-i18n="guest">Jugar como invitado</button>
         </form>
       </div>
     </section>
@@ -63,24 +63,24 @@
     <section class="screen" id="screen-start" aria-labelledby="start-title" hidden>
       <div class="panel">
         <h1 id="start-title" class="logo">Convergencia<span class="logo-orbit" aria-hidden="true"></span></h1>
-        <p class="subtitle">¿List@ para conquistar el tablero?</p>
+        <p class="subtitle" data-i18n="start_sub">¿List@ para conquistar el tablero?</p>
         <div class="start-meta" id="start-meta"></div>
         <div class="menu-buttons">
-          <button class="btn btn-primary btn-lg" id="btn-play">▶ Jugar</button>
-          <button class="btn btn-reward" id="btn-reward" hidden>🎁 Recompensa diaria</button>
+          <button class="btn btn-primary btn-lg" id="btn-play" data-i18n="play">▶ Jugar</button>
+          <button class="btn btn-reward" id="btn-reward" hidden data-i18n="reward">🎁 Recompensa diaria</button>
           <div class="menu-row">
-            <button class="btn btn-ghost" id="btn-medals">🏅 Logros</button>
-            <button class="btn btn-ghost" id="btn-shop">🛍️ Tienda</button>
-            <button class="btn btn-ghost" id="btn-settings">⚙️ Ajustes</button>
+            <button class="btn btn-ghost" id="btn-medals" data-i18n="menu_profile">🏅 Logros</button>
+            <button class="btn btn-ghost" id="btn-shop" data-i18n="menu_shop">🛍️ Tienda</button>
+            <button class="btn btn-ghost" id="btn-settings" data-i18n="menu_settings">⚙️ Ajustes</button>
           </div>
-          <button class="btn btn-ghost" id="btn-how">¿Cómo se juega?</button>
-          <button class="btn btn-ghost" id="btn-install" hidden>📲 Instalar app</button>
+          <button class="btn btn-ghost" id="btn-how" data-i18n="how">¿Cómo se juega?</button>
+          <button class="btn btn-ghost" id="btn-install" hidden data-i18n="install">📲 Instalar app</button>
           <div class="toggle-row">
-            <span>Sonido</span>
+            <span data-i18n="sound">Sonido</span>
             <button class="switch" id="btn-sound" role="switch" aria-checked="true" aria-label="Activar o desactivar sonido"><span class="switch-dot"></span></button>
           </div>
         </div>
-        <p class="best-line">Mejor puntuación: <strong id="start-best">0</strong></p>
+        <p class="best-line"><span data-i18n="best">Mejor puntuación:</span> <strong id="start-best">0</strong></p>
         <p class="version-line">v<span id="app-version">1.0.0</span></p>
       </div>
     </section>
@@ -90,18 +90,18 @@
       <div class="panel panel-wide">
         <div class="panel-head">
           <button class="icon-btn" id="modes-back" aria-label="Volver">←</button>
-          <h2 id="modes-title">Elige tu misión</h2>
+          <h2 id="modes-title" data-i18n="modes_title">Elige tu misión</h2>
         </div>
 
-        <h3 class="group-title">Modo</h3>
+        <h3 class="group-title" data-i18n="group_mode">Modo</h3>
         <div class="mode-grid" id="mode-grid" role="radiogroup" aria-label="Modo de juego"></div>
 
-        <h3 class="group-title">Dificultad</h3>
+        <h3 class="group-title" data-i18n="group_diff">Dificultad</h3>
         <div class="diff-row" id="diff-row" role="radiogroup" aria-label="Dificultad"></div>
 
         <p class="mode-desc" id="mode-desc" aria-live="polite"></p>
 
-        <button class="btn btn-primary btn-lg" id="btn-start-game" disabled>¡Empezar!</button>
+        <button class="btn btn-primary btn-lg" id="btn-start-game" disabled data-i18n="begin">¡Empezar!</button>
       </div>
     </section>
 
@@ -109,7 +109,7 @@
     <section class="screen screen-game" id="screen-game" aria-label="Partida" hidden>
       <header class="topbar">
         <div class="best">
-          <span class="best-label">Récord</span>
+          <span class="best-label" data-i18n="hud_record">Récord</span>
           <span class="best-value" id="hud-best">0</span>
         </div>
         <div class="controls">
@@ -121,12 +121,12 @@
       </header>
 
       <div class="hud" id="hud">
-        <div class="hud-item score"><span class="hud-label">Puntos</span><span class="hud-value" id="hud-score">0</span></div>
-        <div class="hud-item level"><span class="hud-label">Nivel</span><span class="hud-value" id="hud-level">1</span></div>
-        <div class="hud-item time"><span class="hud-label">Tiempo</span><span class="hud-value" id="hud-time">0:00</span></div>
-        <div class="hud-item speed"><span class="hud-label">Velocidad</span><span class="hud-value" id="hud-speed">3.0s</span></div>
+        <div class="hud-item score"><span class="hud-label" data-i18n="hud_points">Puntos</span><span class="hud-value" id="hud-score">0</span></div>
+        <div class="hud-item level"><span class="hud-label" data-i18n="hud_level">Nivel</span><span class="hud-value" id="hud-level">1</span></div>
+        <div class="hud-item time"><span class="hud-label" data-i18n="hud_time">Tiempo</span><span class="hud-value" id="hud-time">0:00</span></div>
+        <div class="hud-item speed"><span class="hud-label" data-i18n="hud_speed">Velocidad</span><span class="hud-value" id="hud-speed">3.0s</span></div>
         <div class="hud-item progress">
-          <span class="hud-label" id="hud-progress-label">Ocupación</span>
+          <span class="hud-label" id="hud-progress-label" data-i18n="hud_occ">Ocupación</span>
           <div class="bar"><div class="bar-fill" id="hud-progress-fill"></div></div>
         </div>
       </div>
@@ -176,25 +176,25 @@
   <div class="overlay" id="overlay" hidden>
     <!-- Cómo jugar -->
     <div class="modal" id="modal-how" role="dialog" aria-modal="true" aria-labelledby="how-title" hidden>
-      <h2 id="how-title">¿Cómo se juega?</h2>
+      <h2 id="how-title" data-i18n="how_title">¿Cómo se juega?</h2>
       <ul class="how-list">
-        <li>🎯 Toca una <strong>casilla vacía</strong>.</li>
-        <li>👀 Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).</li>
-        <li>✨ Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!</li>
-        <li>🔥 Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.</li>
-        <li>⚠️ Los iconos aparecen solos: vacía el tablero antes de que se llene.</li>
+        <li>🎯 <span data-i18n-html="how1">Toca una <strong>casilla vacía</strong>.</span></li>
+        <li>👀 <span data-i18n-html="how2">Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).</span></li>
+        <li>✨ <span data-i18n-html="how3">Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!</span></li>
+        <li>🔥 <span data-i18n-html="how4">Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.</span></li>
+        <li>⚠️ <span data-i18n-html="how5">Los iconos aparecen solos: vacía el tablero antes de que se llene.</span></li>
       </ul>
-      <button class="btn btn-primary" id="btn-tutorial">▶ Tutorial interactivo</button>
-      <button class="btn btn-ghost" data-close>Entendido</button>
+      <button class="btn btn-primary" id="btn-tutorial" data-i18n="tutorial_btn">▶ Tutorial interactivo</button>
+      <button class="btn btn-ghost" data-close data-i18n="understood">Entendido</button>
     </div>
 
     <!-- Pausa -->
     <div class="modal" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
-      <h2 id="pause-title">Pausa</h2>
+      <h2 id="pause-title" data-i18n="pause">Pausa</h2>
       <div class="modal-buttons">
-        <button class="btn btn-primary" id="btn-resume">▶ Reanudar</button>
-        <button class="btn btn-ghost" id="btn-pause-restart">↻ Reiniciar</button>
-        <button class="btn btn-ghost" id="btn-pause-quit">✕ Menú</button>
+        <button class="btn btn-primary" id="btn-resume" data-i18n="resume">▶ Reanudar</button>
+        <button class="btn btn-ghost" id="btn-pause-restart" data-i18n="restart">↻ Reiniciar</button>
+        <button class="btn btn-ghost" id="btn-pause-quit" data-i18n="menu">✕ Menú</button>
       </div>
     </div>
 
@@ -217,56 +217,56 @@
       <div class="over-xp" id="over-xp"></div>
       <div class="over-ach" id="over-ach"></div>
       <div class="modal-buttons">
-        <button class="btn btn-primary" id="btn-retry">↻ Reintentar</button>
-        <button class="btn btn-ghost" id="btn-share">📤 Compartir</button>
-        <button class="btn btn-ghost" id="btn-over-quit">✕ Menú</button>
+        <button class="btn btn-primary" id="btn-retry" data-i18n="retry">↻ Reintentar</button>
+        <button class="btn btn-ghost" id="btn-share" data-i18n="share">📤 Compartir</button>
+        <button class="btn btn-ghost" id="btn-over-quit" data-i18n="menu">✕ Menú</button>
       </div>
     </div>
 
     <!-- Ajustes -->
     <div class="modal" id="modal-settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
-      <h2 id="settings-title">⚙️ Ajustes</h2>
+      <h2 id="settings-title" data-i18n="settings_title">⚙️ Ajustes</h2>
       <div class="settings-list" id="settings-list"></div>
-      <button class="btn btn-primary" data-close>Cerrar</button>
+      <button class="btn btn-primary" data-close data-i18n="close">Cerrar</button>
     </div>
 
     <!-- Última oportunidad (Supervivencia) -->
     <div class="modal modal-revive" id="modal-revive" role="dialog" aria-modal="true" aria-labelledby="revive-title" hidden>
-      <h2 id="revive-title">💔 ¡Última oportunidad!</h2>
-      <p class="modal-sub">Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?</p>
+      <h2 id="revive-title" data-i18n="revive_title">💔 ¡Última oportunidad!</h2>
+      <p class="modal-sub" data-i18n="revive_sub">Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?</p>
       <div class="modal-buttons">
         <button class="btn btn-primary" id="btn-revive">🪙 Revivir (<span id="revive-cost">120</span>)</button>
-        <button class="btn btn-ghost" id="btn-giveup">Rendirse</button>
+        <button class="btn btn-ghost" id="btn-giveup" data-i18n="giveup">Rendirse</button>
       </div>
     </div>
 
     <!-- Mapa de Aventura -->
     <div class="modal modal-adventure" id="modal-adventure" role="dialog" aria-modal="true" aria-labelledby="adventure-title" hidden>
-      <h2 id="adventure-title">🚀 Aventura</h2>
-      <p class="modal-sub">Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.</p>
+      <h2 id="adventure-title" data-i18n="adventure_title">🚀 Aventura</h2>
+      <p class="modal-sub" data-i18n="adventure_sub">Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.</p>
       <div class="adventure-map" id="adventure-map"></div>
       <button class="btn btn-primary btn-lg" id="adventure-continue">Continuar</button>
-      <button class="btn btn-ghost" data-close>Volver</button>
+      <button class="btn btn-ghost" data-close data-i18n="back">Volver</button>
     </div>
 
     <!-- Tienda de cosméticos -->
     <div class="modal modal-shop" id="modal-shop" role="dialog" aria-modal="true" aria-labelledby="shop-title" hidden>
-      <h2 id="shop-title">🛍️ Tienda</h2>
-      <p class="shop-coins">🪙 <span id="shop-coins">0</span> monedas</p>
-      <p class="shop-hint">Temas del tablero. Pulsa para previsualizar.</p>
+      <h2 id="shop-title" data-i18n="shop_title">🛍️ Tienda</h2>
+      <p class="shop-coins">🪙 <span id="shop-coins">0</span> <span data-i18n="coins">monedas</span></p>
+      <p class="shop-hint" data-i18n="shop_hint">Temas del tablero. Pulsa para previsualizar.</p>
       <div class="shop-list" id="shop-list"></div>
-      <button class="btn btn-primary" id="shop-close" data-close>Cerrar</button>
+      <button class="btn btn-primary" id="shop-close" data-close data-i18n="close">Cerrar</button>
     </div>
 
     <!-- Perfil: estadísticas + leaderboard + logros -->
     <div class="modal modal-profile" id="modal-medals" role="dialog" aria-modal="true" aria-labelledby="medals-title" hidden>
-      <h2 id="medals-title">📊 Perfil</h2>
+      <h2 id="medals-title" data-i18n="profile_title">📊 Perfil</h2>
       <div class="stats" id="profile-stats"></div>
-      <h3 class="group-title">Mejores marcas por modo</h3>
+      <h3 class="group-title" data-i18n="best_by_mode">Mejores marcas por modo</h3>
       <div class="profile-lb" id="profile-lb"></div>
-      <h3 class="group-title">Logros</h3>
+      <h3 class="group-title" data-i18n="achievements">Logros</h3>
       <div class="medals-list" id="medals-list"></div>
-      <button class="btn btn-primary" data-close>Cerrar</button>
+      <button class="btn btn-primary" data-close data-i18n="close">Cerrar</button>
     </div>
   </div>
 
