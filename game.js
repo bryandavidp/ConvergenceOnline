@@ -100,6 +100,7 @@
     status: 'idle', // idle|playing|paused|over|levelComplete
     mode: 'clasico', diff: 'normal',
     hintsLeft: 3, hintReadyAt: 0,
+    maxCombo: 0, removedTotal: 0, // estadísticas de la partida
     pool: [], // iconos disponibles este nivel
   };
 
@@ -340,6 +341,13 @@
     },
   };
 
+  // Construye una fila de estadísticas: items = [ [valor, etiqueta, color?], ... ]
+  function statRow(items) {
+    return items.map(([v, k, c]) =>
+      `<div class="stat"><span class="v"${c ? ` style="color:${c}"` : ''}>${v}</span><span class="k">${k}</span></div>`
+    ).join('');
+  }
+
   /* ===================== Screens ===================== */
   const Screens = {
     show(name) {
@@ -423,6 +431,7 @@
       State.diff = Config.MODES[mode].fixedDiff || diff;
       State.score = 0; State.level = 1; State.elapsed = 0; State.timeLeft = 0;
       State.combo = 0; State.comboMult = 1; State.comboAt = 0;
+      State.maxCombo = 0; State.removedTotal = 0;
       State.status = 'playing'; this.ended = false;
       this.clearHintHighlight();
       this.setupLevel(true);
@@ -461,8 +470,11 @@
       State.comboMult = 1;
       for (const [thr, mult] of Config.COMBO_MULTIPLIERS) { if (State.combo >= thr) { State.comboMult = mult; break; } }
 
+      if (State.combo > State.maxCombo) State.maxCombo = State.combo;
+
       // Puntos (icono×10×nivel × combo × dificultad × modo)
       const removed = conv.length;
+      State.removedTotal += removed;
       const d = Config.DIFFICULTY[State.diff], m = Config.MODES[State.mode];
       const base = removed * 10 * State.level;
       const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult);
@@ -538,10 +550,36 @@
       const m = Config.MODES[State.mode];
       if (m.single) { this.win(perfect ? '¡Tutorial completado con tablero perfecto!' : '¡Tutorial completado!'); return; }
       Sound.level();
+
       $('#level-title').textContent = perfect ? '✨ ¡Tablero perfecto!' : '⭐ ¡Nivel completado!';
-      $('#level-sub').textContent = `Nivel ${State.level} superado · ${State.score} puntos`;
+      $('#level-sub').textContent = perfect
+        ? `Has limpiado el tablero por completo. ¡Bonus +${Config.EMPTY_BOARD_BONUS}!`
+        : `Nivel ${State.level} superado sin jugadas restantes.`;
+
+      // Resumen de la partida hasta ahora
+      $('#level-stats').innerHTML = statRow([
+        [State.score, 'Puntos', 'var(--score)'],
+        ['×' + State.maxCombo, 'Combo máx.', 'var(--gold)'],
+        [State.removedTotal, 'Eliminados', 'var(--good)'],
+      ]);
+
+      // Preview del siguiente nivel
+      const next = State.level + 1;
+      const nextSpawn = (Engine.spawnRateForLevel(next) / 1000).toFixed(1);
+      const nextVariety = Engine.poolForLevel(next).length;
+      let preview = `<h3>Nivel ${next}</h3><ul>` +
+        `<li>⚡ Aparición cada <strong>${nextSpawn}s</strong></li>` +
+        `<li>🎲 <strong>${nextVariety}</strong> iconos distintos</li>`;
+      if (m.timed) {
+        const nextTime = Math.max(Config.TIMED_MIN, Config.TIMED_DURATION - (next - 1) * Config.TIMED_DECREASE);
+        preview += `<li>⏱️ Tiempo del nivel: <strong>${fmtTime(nextTime)}</strong></li>`;
+      }
+      preview += '</ul>';
+      $('#level-next').innerHTML = preview;
+      $('#btn-next-level').textContent = `Ir al nivel ${next} →`;
+
       Modal.open('modal-level');
-      announce(`Nivel ${State.level} completado.`);
+      announce(`Nivel ${State.level} completado. ${State.score} puntos. Siguiente: nivel ${next}.`);
     },
 
     nextLevel() {
@@ -572,13 +610,24 @@
       announce(`Fin de la partida. ${reason} Puntuación ${State.score}.`);
     },
 
-    endGame() { Loop.stop(); State.status = 'over'; this.ended = true; this.clearHintHighlight(); this.saveBest(); },
+    endGame() {
+      Loop.stop(); State.status = 'over'; this.ended = true; this.clearHintHighlight();
+      this.newRecord = State.score > Storage.best && State.score > 0;
+      this.saveBest();
+    },
 
     fillStats() {
-      $('#over-stats').innerHTML =
-        `<div class="stat"><span class="v" style="color:var(--score)">${State.score}</span><span class="k">Puntos</span></div>` +
-        `<div class="stat"><span class="v" style="color:var(--level)">${State.level}</span><span class="k">Nivel</span></div>` +
-        `<div class="stat"><span class="v" style="color:var(--gold)">${Storage.best}</span><span class="k">Récord</span></div>`;
+      $('#over-record').hidden = !this.newRecord;
+      const m = Config.MODES[State.mode], d = Config.DIFFICULTY[State.diff];
+      $('#over-meta').textContent = `Modo ${m.name} · ${d.label}`;
+      $('#over-stats').innerHTML = statRow([
+        [State.score, 'Puntos', 'var(--score)'],
+        [State.level, 'Nivel', 'var(--level)'],
+        ['×' + State.maxCombo, 'Combo máx.', 'var(--gold)'],
+        [State.removedTotal, 'Eliminados', 'var(--good)'],
+        [fmtTime(State.elapsed), 'Tiempo', 'var(--time)'],
+        [Storage.best, 'Récord', 'var(--gold)'],
+      ]);
     },
 
     saveBest() { if (State.score > Storage.best) Storage.best = State.score; },
@@ -744,4 +793,7 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
+
+  // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config };
 })();

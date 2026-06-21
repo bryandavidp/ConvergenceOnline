@@ -151,13 +151,17 @@
     <div class="modal modal-win" id="modal-level" role="dialog" aria-modal="true" aria-labelledby="level-title" hidden>
       <h2 id="level-title">⭐ ¡Nivel completado!</h2>
       <p class="modal-sub" id="level-sub"></p>
-      <button class="btn btn-primary" id="btn-next-level">Siguiente nivel →</button>
+      <div class="stats" id="level-stats"></div>
+      <div class="next-info" id="level-next"></div>
+      <button class="btn btn-primary btn-lg" id="btn-next-level">Siguiente nivel →</button>
     </div>
 
     <!-- Fin de partida -->
     <div class="modal modal-over" id="modal-over" role="dialog" aria-modal="true" aria-labelledby="over-title" hidden>
       <h2 id="over-title">¡Misión fallida!</h2>
+      <p class="record-badge" id="over-record" hidden>🎉 ¡Nuevo récord!</p>
       <p class="modal-sub" id="over-reason"></p>
+      <p class="modal-meta" id="over-meta"></p>
       <div class="stats" id="over-stats"></div>
       <div class="modal-buttons">
         <button class="btn btn-primary" id="btn-retry">↻ Reintentar</button>

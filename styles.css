@@ -192,7 +192,7 @@ h1, h2, h3, p { margin: 0; }
 /* HUD */
 .hud {
   width: min(620px, 100%);
-  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 8px;
   background: linear-gradient(180deg, var(--panel-2), var(--panel));
   border: 1px solid var(--line); border-radius: 12px; padding: 10px;
 }
@@ -203,7 +203,8 @@ h1, h2, h3, p { margin: 0; }
 .level .hud-value { color: var(--level); }
 .time .hud-value { color: var(--time); }
 .speed .hud-value { color: var(--speed); }
-.hud-item.progress { grid-column: span 1; }
+/* La ocupación ocupa toda la fila inferior del HUD en cualquier tamaño */
+.hud-item.progress { grid-column: 1 / -1; flex-direction: column; }
 .bar { width: 100%; height: 8px; border-radius: 6px; background: rgba(0,0,0,.35); overflow: hidden; margin-top: 6px; }
 .bar-fill { height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, var(--good), var(--accent-2)); transition: width .3s ease, background .3s ease; }
 .bar-fill.warn { background: linear-gradient(90deg, var(--warn), #ff8a3d); }
@@ -225,13 +226,13 @@ h1, h2, h3, p { margin: 0; }
 .board-area { width: 100%; flex: 1; display: grid; place-items: center; min-height: 0; }
 .board-wrap {
   position: relative;
-  width: min(94vw, 62vh, 560px);
+  width: min(96vw, 68vh, 600px);
   aspect-ratio: 1 / 1;
-  padding: 8px;
-  border-radius: 18px;
-  background: rgba(20, 28, 60, 0.55);
-  border: 1px solid var(--line);
-  box-shadow: 0 12px 30px rgba(0,0,0,.4);
+  padding: 10px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(28, 38, 78, 0.7), rgba(16, 24, 54, 0.7));
+  border: 1px solid rgba(120, 150, 255, 0.28);
+  box-shadow: 0 16px 40px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.03);
   overflow: hidden; /* contiene popups y partículas dentro del tablero */
   contain: layout paint;
 }
@@ -314,16 +315,21 @@ h1, h2, h3, p { margin: 0; }
 /* Toasts */
 .toasts {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(14px + env(safe-area-inset-bottom)); z-index: var(--z-toast);
-  display: flex; flex-direction: column-reverse; gap: 8px; width: min(420px, 92vw); pointer-events: none;
+  bottom: calc(96px + env(safe-area-inset-bottom)); z-index: var(--z-toast);
+  display: flex; flex-direction: column-reverse; align-items: center; gap: 6px;
+  width: min(420px, 92vw); pointer-events: none;
 }
+/* Toasts discretos: chip oscuro con acento de color (no parecen botones) */
 .toast {
-  padding: 10px 16px; border-radius: 999px; font-weight: 700; text-align: center;
-  border: 2px solid rgba(255,255,255,.85); color: #04122e;
-  animation: toast-in .25s ease both; box-shadow: 0 8px 20px rgba(0,0,0,.35);
+  padding: 7px 14px; border-radius: 10px; font-weight: 600; font-size: .82rem; text-align: center;
+  color: #fff; background: rgba(10, 16, 40, .92); border-left: 4px solid var(--accent-2);
+  animation: toast-in .2s ease both; box-shadow: 0 6px 16px rgba(0,0,0,.45);
+  max-width: 100%;
 }
-.toast.info { background: #56c7ff; } .toast.good { background: #54e0a0; }
-.toast.warn { background: #ffc065; } .toast.bad { background: #ff7d8f; color: #2a0008; }
+.toast.info { border-left-color: var(--accent-2); }
+.toast.good { border-left-color: var(--good); }
+.toast.warn { border-left-color: var(--warn); }
+.toast.bad  { border-left-color: var(--bad); }
 .toast.out { animation: toast-out .25s ease forwards; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } }
 @keyframes toast-out { to { opacity: 0; transform: translateY(-8px); } }
@@ -350,18 +356,36 @@ h1, h2, h3, p { margin: 0; }
 .modal-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 .how-list { text-align: left; color: var(--text); line-height: 1.6; margin: 0 0 18px; padding-left: 18px; }
 .how-list strong { color: var(--accent-2); }
-.stats { display: flex; justify-content: center; gap: 18px; margin: 6px 0 18px; flex-wrap: wrap; }
-.stat { display: flex; flex-direction: column; }
-.stat .v { font-size: 1.5rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-.stat .k { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; margin: 14px 0 16px; }
+.stat {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: rgba(0,0,0,.22); border: 1px solid var(--line); border-radius: 10px; padding: 8px 6px;
+}
+.stat .v { font-size: clamp(1.1rem, 4.5vw, 1.4rem); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat .k { font-size: .62rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+/* Preview del siguiente nivel */
+.next-info { text-align: left; background: rgba(0,0,0,.22); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 0 0 18px; }
+.next-info h3 { font-size: .95rem; color: var(--accent-2); margin-bottom: 8px; }
+.next-info ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; color: var(--muted); font-size: .9rem; }
+.next-info strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* Insignia de récord y meta del modal */
+.record-badge {
+  display: inline-block; background: linear-gradient(135deg, var(--gold), #ffb24d); color: #3a2700;
+  font-weight: 800; padding: 6px 16px; border-radius: 999px; margin-bottom: 10px; animation: bump .5s ease;
+}
+.modal-meta { color: var(--muted); font-size: .8rem; margin: -6px 0 4px; }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 380px) {
-  .hud { grid-template-columns: repeat(3, minmax(0,1fr)); }
-  .hud-item.progress { grid-column: span 3; }
-}
 @media (min-width: 720px) {
-  .board-wrap { width: min(70vh, 560px); }
+  /* En pantallas anchas el alto manda: tablero grande y centrado */
+  .board-wrap { width: min(78vh, 600px); }
+  .screen-game { gap: 14px; }
+}
+@media (min-height: 900px) and (max-width: 719px) {
+  /* Móviles altos: el tablero crece un poco más y se reduce el hueco */
+  .board-wrap { width: min(96vw, 72vh, 620px); }
 }
 
 /* ---------- Accesibilidad: movimiento reducido ---------- */
