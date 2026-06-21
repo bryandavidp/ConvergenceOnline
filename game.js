@@ -753,7 +753,7 @@
   const Meta = (() => {
     const KEY = 'cv_meta';
     const SCHEMA = 2;
-    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
+    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, survBest: 0, stats: { totalScore: 0, bestCombo: 0, totalTime: 0 }, modes: {}, weekly: { week: '', id: '', progress: 0, done: false }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
     let m;
     try { m = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); }
     catch (_) { m = JSON.parse(JSON.stringify(def)); }
@@ -761,6 +761,9 @@
     if (!m.cosmetics) m.cosmetics = JSON.parse(JSON.stringify(def.cosmetics));
     if (!m.reward) m.reward = { date: '', day: 0 };
     if (!m.adventure) m.adventure = { maxLevel: 1 };
+    if (!m.stats) m.stats = { totalScore: 0, bestCombo: 0, totalTime: 0 };
+    if (!m.modes) m.modes = {};
+    if (!m.weekly) m.weekly = { week: '', id: '', progress: 0, done: false };
     if (typeof m.coins !== 'number') m.coins = 0;
     m._v = SCHEMA;
     const save = () => { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch (_) {} };
@@ -791,11 +794,28 @@
       if (m.daily.date !== d) { const idx = Math.abs(hashStr(d)) % MISSIONS.length; m.daily = { date: d, id: MISSIONS[idx].id, progress: 0, done: false }; save(); }
       return Object.assign({}, MISSIONS.find(x => x.id === m.daily.id), m.daily);
     }
+    // Reto semanal (acumulativo durante la semana)
+    const WEEKLY = [
+      { id: 'w_games', text: 'Juega 12 partidas esta semana', target: 12, kind: 'games' },
+      { id: 'w_remove', text: 'Elimina 800 iconos esta semana', target: 800, kind: 'remove' },
+      { id: 'w_score', text: 'Suma 20.000 puntos esta semana', target: 20000, kind: 'score' },
+      { id: 'w_combo', text: 'Consigue un combo ×15', target: 15, kind: 'combo' },
+    ];
+    function weekId(dt) { const t = dt || new Date(); const o = new Date(t); o.setHours(0, 0, 0, 0); o.setDate(o.getDate() - ((o.getDay() + 6) % 7)); return o.toISOString().slice(0, 10); }
+    function weeklyChallenge() {
+      const w = weekId();
+      if (m.weekly.week !== w) { const idx = Math.abs(hashStr(w)) % WEEKLY.length; m.weekly = { week: w, id: WEEKLY[idx].id, progress: 0, done: false }; save(); }
+      return Object.assign({}, WEEKLY.find(x => x.id === m.weekly.id), m.weekly);
+    }
     return {
       get state() { return m; },
       level: () => m.level, xp: () => m.xp, xpForLevel, streak: () => m.streak.count,
       rank: () => RANKS[Math.min(RANKS.length - 1, Math.floor((m.level - 1) / 3))],
-      dailyMission,
+      dailyMission, weeklyChallenge,
+      // ---- Estadísticas / leaderboard local ----
+      stats: () => ({ games: m.games || 0, totalRemoved: m.totalRemoved || 0, totalScore: m.stats.totalScore || 0, bestCombo: m.stats.bestCombo || 0, totalTime: m.stats.totalTime || 0 }),
+      modeBest: (mode) => (m.modes[mode] && m.modes[mode].best) || 0,
+      modePlays: (mode) => (m.modes[mode] && m.modes[mode].plays) || 0,
       // ---- Economía (monedas) ----
       coins: () => m.coins || 0,
       addCoins(n) { m.coins = (m.coins || 0) + Math.max(0, n | 0); save(); return m.coins; },
@@ -833,18 +853,35 @@
           m.daily.progress = Math.max(m.daily.progress || 0, val);
           if (m.daily.progress >= dm.target) { m.daily.done = true; missionDone = true; }
         }
+        // Reto semanal (acumulativo)
+        const wk = weeklyChallenge(); let weeklyDone = false;
+        if (!m.weekly.done) {
+          const inc = wk.kind === 'games' ? 1 : wk.kind === 'remove' ? ctx.removed : wk.kind === 'score' ? ctx.score : 0;
+          if (wk.kind === 'combo') m.weekly.progress = Math.max(m.weekly.progress || 0, ctx.maxCombo);
+          else m.weekly.progress = (m.weekly.progress || 0) + inc;
+          if (m.weekly.progress >= wk.target) { m.weekly.done = true; weeklyDone = true; }
+        }
+        // Estadísticas de por vida + mejor por modo (leaderboard local)
+        m.stats.totalScore = (m.stats.totalScore || 0) + ctx.score;
+        m.stats.totalTime = (m.stats.totalTime || 0) + (ctx.elapsed || 0);
+        if (ctx.maxCombo > (m.stats.bestCombo || 0)) m.stats.bestCombo = ctx.maxCombo;
+        const md = m.modes[ctx.mode] || (m.modes[ctx.mode] = { best: 0, plays: 0 });
+        md.plays = (md.plays || 0) + 1;
+        if (ctx.score > (md.best || 0)) md.best = ctx.score;
         let xpGained = Math.round(ctx.score / 10 + ctx.maxCombo * 5 + ctx.level * 20 + (ctx.perfect ? 100 : 0));
         if (missionDone) xpGained += 150;
+        if (weeklyDone) xpGained += 400;
         const leveledUp = this.addXp(xpGained);
         // Monedas de la partida (motor de economía/tienda).
         let coinsGained = Math.round(ctx.score / 40 + ctx.maxCombo * 2 + ctx.level * 5 + (ctx.perfect ? 40 : 0));
         if (missionDone) coinsGained += 60;
+        if (weeklyDone) coinsGained += 200;
         m.coins = (m.coins || 0) + coinsGained;
         const cctx = Object.assign({ games: m.games }, ctx);
         const newAch = [];
         ACH.forEach(a => { if (!m.achievements[a.id] && a.t(cctx)) { m.achievements[a.id] = d; newAch.push(a); } });
         save();
-        return { xpGained, coinsGained, leveledUp, newAch, missionDone };
+        return { xpGained, coinsGained, leveledUp, newAch, missionDone, weeklyDone };
       },
     };
   })();
@@ -1146,6 +1183,40 @@
     promptInstall() {
       const e = this.deferredPrompt; if (!e) { Toasts.show('Usa el menú del navegador para instalar', 'info', 2600); return; }
       e.prompt(); e.userChoice.finally(() => { this.deferredPrompt = null; const btn = $('#btn-install'); if (btn) btn.hidden = true; });
+    },
+  };
+
+  /* ===================== Share (tarjeta de resultado + Web Share API) =====================
+   * Genera una imagen (canvas fuera del DOM -> blob, sin riesgo de compositing) y la
+   * comparte con navigator.share; si no hay soporte, descarga la imagen.
+   */
+  const Share = {
+    card() {
+      const W = 600, H = 600, c = document.createElement('canvas'); c.width = W; c.height = H;
+      const x = c.getContext('2d');
+      const g = x.createRadialGradient(W / 2, H * 0.34, 30, W / 2, H * 0.4, W);
+      g.addColorStop(0, '#1a2a5e'); g.addColorStop(1, '#070b1c'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+      x.textAlign = 'center';
+      // Deco: 4 figuras del juego
+      const C = ['#ff5b6e', '#4b8bff', '#3ad07f', '#ffd23f'];
+      C.forEach((col, i) => { x.fillStyle = col; x.beginPath(); x.arc(150 + i * 100, 90, 16, 0, 6.283); x.fill(); });
+      x.fillStyle = '#eaf0ff'; x.font = '800 52px system-ui,-apple-system,sans-serif'; x.fillText('Convergencia', W / 2, 185);
+      x.fillStyle = '#9fb0e0'; x.font = '600 26px system-ui,sans-serif'; x.fillText('Modo ' + Config.MODES[State.mode].name, W / 2, 228);
+      x.fillStyle = '#18e6e6'; x.font = '900 150px system-ui,sans-serif'; x.fillText(String(State.score), W / 2, 380);
+      x.fillStyle = '#9fb0e0'; x.font = '600 28px system-ui,sans-serif'; x.fillText('PUNTOS', W / 2, 420);
+      x.fillStyle = '#ffd84d'; x.font = '800 36px system-ui,sans-serif'; x.fillText('Combo ×' + State.maxCombo + '  ·  ' + Meta.rank(), W / 2, 490);
+      x.fillStyle = '#6c7bff'; x.font = '600 26px system-ui,sans-serif'; x.fillText('¿Puedes superarlo?', W / 2, 545);
+      return new Promise((res) => c.toBlob(res, 'image/png'));
+    },
+    async go() {
+      try {
+        const blob = await this.card();
+        const text = `¡${State.score} puntos en Convergencia (${Config.MODES[State.mode].name})! Combo ×${State.maxCombo}. ¿Puedes superarlo?`;
+        const file = blob ? new File([blob], 'convergencia.png', { type: 'image/png' }) : null;
+        if (file && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text, title: 'Convergencia' }); return; }
+        if (navigator.share) { await navigator.share({ text, title: 'Convergencia' }); return; }
+        if (blob) { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'convergencia.png'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000); Toasts.show('Imagen guardada 📥', 'good', 1800); }
+      } catch (e) { if (e && e.name === 'AbortError') return; ErrLog.push('share', e && e.message); Toasts.show('No se pudo compartir', 'warn', 1800); }
     },
   };
 
@@ -1620,7 +1691,8 @@
         `<div class="xp-line"><span class="xp-gain">+${r.xpGained} XP</span><span class="xp-coins">🪙 +${r.coinsGained || 0}</span><span class="xp-rank">${Meta.rank()} · Nivel ${lvl}</span></div>` +
         `<div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>` +
         (r.leveledUp ? `<div class="xp-up">⬆️ ¡Subiste a nivel ${lvl}!</div>` : '') +
-        (r.missionDone ? `<div class="mission-done">✅ Misión diaria completada · +150 XP</div>` : '');
+        (r.missionDone ? `<div class="mission-done">✅ Misión diaria completada · +150 XP</div>` : '') +
+        (r.weeklyDone ? `<div class="mission-done">🗓️ ¡Reto semanal completado! · +400 XP</div>` : '');
       $('#over-ach').innerHTML = r.newAch.length
         ? '<div class="ach-new">🏅 Nuevos logros: ' + r.newAch.map(a => a.name).join(' · ') + '</div>' : '';
       if (r.leveledUp) { setTimeout(() => { Sound.record(); FX.confetti(60); }, 350); }
@@ -1731,8 +1803,9 @@
     if (el) {
       const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
       const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
-      const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp(), dm = Meta.dailyMission();
+      const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp(), dm = Meta.dailyMission(), wk = Meta.weeklyChallenge();
       const prog = dm.done ? '✅' : `${Math.min(dm.progress || 0, dm.target)}/${dm.target}`;
+      const wprog = wk.done ? '✅' : `${Math.min(wk.progress || 0, wk.target)}/${wk.target}`;
       el.innerHTML =
         `<div class="profile">
           <div class="profile-id"><span class="avatar-dot mini" style="--av:${esc(prof.color)}"></span><span class="pname">${esc(prof.name)}</span><span class="coins" title="Monedas">🪙 ${Meta.coins()}</span></div>
@@ -1740,7 +1813,8 @@
           <div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>
           <div class="xp-sub">${have} / ${need} XP</div>
         </div>
-        <div class="daily ${dm.done ? 'done' : ''}"><span class="daily-icon">🎯</span><span class="daily-text">${dm.done ? '¡Misión diaria completada!' : dm.text}</span><span class="daily-prog">${prog}</span></div>`;
+        <div class="daily ${dm.done ? 'done' : ''}"><span class="daily-icon">🎯</span><span class="daily-text">${dm.done ? '¡Misión diaria completada!' : dm.text}</span><span class="daily-prog">${prog}</span></div>
+        <div class="daily weekly ${wk.done ? 'done' : ''}"><span class="daily-icon">🗓️</span><span class="daily-text">${wk.done ? '¡Reto semanal completado!' : wk.text}</span><span class="daily-prog">${wprog}</span></div>`;
     }
   }
 
@@ -1771,6 +1845,27 @@
   function openSettings() { buildSettings(); Modal.open('modal-settings'); }
 
   function openMedals() {
+    // Estadísticas de por vida
+    const st = Meta.stats();
+    const sEl = $('#profile-stats');
+    if (sEl) sEl.innerHTML = statRow([
+      [st.games, 'Partidas', 'var(--accent-2)'],
+      ['×' + st.bestCombo, 'Mejor combo', 'var(--gold)'],
+      [st.totalRemoved, 'Eliminados', 'var(--good)'],
+      [fmtTime(st.totalTime), 'Tiempo total', 'var(--time)'],
+    ]);
+    // Leaderboard local por modo (mejor marca)
+    const lbEl = $('#profile-lb');
+    if (lbEl) {
+      const rows = Config.MODE_ORDER.filter(k => k !== 'tutorial').map(k => {
+        const mo = Config.MODES[k];
+        const best = k === 'supervivencia' ? (Meta.survBest() + 's') : Meta.modeBest(k);
+        const plays = Meta.modePlays(k);
+        return `<div class="lb-row"><span class="lb-mode">${mo.emoji} ${mo.name}</span><span class="lb-best">${best}</span><span class="lb-plays">${plays} part.</span></div>`;
+      }).join('');
+      lbEl.innerHTML = rows;
+    }
+    // Logros
     const list = $('#medals-list');
     if (list) list.innerHTML = Meta.achievements().map(a =>
       `<div class="medal ${a.unlocked ? 'on' : ''}"><span class="medal-ic">${a.unlocked ? '🏅' : '🔒'}</span><span class="medal-tx"><strong>${a.name}</strong><small>${a.desc}</small></span></div>`
@@ -1914,6 +2009,7 @@
     $('#btn-pause-quit').addEventListener('click', () => Game.quit());
     $('#btn-next-level').addEventListener('click', () => Game.nextLevel());
     $('#btn-retry').addEventListener('click', () => Game.restart());
+    { const bsh = $('#btn-share'); if (bsh) bsh.addEventListener('click', () => Share.go()); }
     $('#btn-over-quit').addEventListener('click', () => Game.quit());
     { const rv = $('#btn-revive'); if (rv) rv.addEventListener('click', () => Survival.revive()); }
     { const gu = $('#btn-giveup'); if (gu) gu.addEventListener('click', () => Survival.giveUp()); }
@@ -1939,5 +2035,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Coach, Adventure, Survival };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Coach, Adventure, Survival, Share, refreshStart };
 })();

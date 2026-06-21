@@ -550,6 +550,16 @@ body.mode-surv .hud-item.level { display: none; }
 @keyframes rewardPulse { 50% { transform: scale(1.03); filter: brightness(1.1); } }
 body.reduced-fx .btn-reward { animation: none; }
 
+/* Perfil: leaderboard local por modo + reto semanal */
+.modal-profile { max-height: 88vh; overflow: auto; }
+.profile-lb { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 8px; text-align: left; }
+.lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: rgba(0,0,0,.2); border: 1px solid var(--line); }
+.lb-mode { flex: 1; font-weight: 700; }
+.lb-best { color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
+.lb-plays { color: var(--muted); font-size: .78rem; }
+.daily.weekly { border-color: rgba(150,120,255,.4); }
+.daily.weekly.done { border-color: var(--good); }
+
 /* XP en resultados */
 .over-xp { margin: 4px 0 4px; }
 .xp-line { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; margin-bottom: 6px; flex-wrap: wrap; }
