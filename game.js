@@ -16,6 +16,25 @@
 (() => {
   'use strict';
 
+  const VERSION = '1.0.0';
+
+  /* ===================== Telemetría de errores (local, sin red) =====================
+   * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
+   */
+  const ErrLog = {
+    KEY: 'cv_errlog', MAX: 20,
+    push(kind, msg, extra) {
+      try {
+        const a = JSON.parse(localStorage.getItem(this.KEY) || '[]');
+        a.push({ t: Date.now(), v: VERSION, kind, msg: String(msg).slice(0, 300), extra });
+        while (a.length > this.MAX) a.shift();
+        localStorage.setItem(this.KEY, JSON.stringify(a));
+      } catch (_) {}
+    },
+  };
+  window.addEventListener('error', (e) => ErrLog.push('error', e.message, { src: e.filename, line: e.lineno }));
+  window.addEventListener('unhandledrejection', (e) => ErrLog.push('promise', (e.reason && e.reason.message) || e.reason));
+
   /* ===================== Config ===================== */
   const Config = {
     SIZE: 8,
@@ -840,6 +859,39 @@
     },
   };
 
+  /* ===================== PWA (instalable + offline + actualización) ===================== */
+  const PWA = {
+    deferredPrompt: null,
+    init() {
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js').then((reg) => {
+            reg.addEventListener('updatefound', () => {
+              const nw = reg.installing; if (!nw) return;
+              nw.addEventListener('statechange', () => {
+                if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                  Toasts.show('✨ Nueva versión lista — reábrela para actualizar', 'info', 5000);
+                }
+              });
+            });
+          }).catch((e) => ErrLog.push('sw', e && e.message));
+        });
+      }
+      // Captura del prompt de instalación para ofrecer "Instalar" en el menú.
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault(); this.deferredPrompt = e;
+        const btn = $('#btn-install'); if (btn) btn.hidden = false;
+      });
+      window.addEventListener('appinstalled', () => {
+        this.deferredPrompt = null; const btn = $('#btn-install'); if (btn) btn.hidden = true;
+      });
+    },
+    promptInstall() {
+      const e = this.deferredPrompt; if (!e) { Toasts.show('Usa el menú del navegador para instalar', 'info', 2600); return; }
+      e.prompt(); e.userChoice.finally(() => { this.deferredPrompt = null; const btn = $('#btn-install'); if (btn) btn.hidden = true; });
+    },
+  };
+
   /* ===================== Loop (un único requestAnimationFrame) ===================== */
   const Loop = {
     raf: 0, last: 0, spawnAcc: 0, clockAcc: 0, ema: 16,
@@ -1341,6 +1393,8 @@
     applyReducedFx();
     Input.init();
     buildModeMenu();
+    PWA.init();
+    const vEl = $('#app-version'); if (vEl) vEl.textContent = VERSION;
 
     // Audio iOS: red de seguridad. Desbloquea/reanuda el contexto con el primer
     // gesto en cualquier parte y al volver a primer plano (iOS suspende el audio).
@@ -1363,6 +1417,7 @@
     // Inicio
     $('#btn-play').addEventListener('click', () => { Sound.ensure(); Screens.show('modes'); });
     $('#btn-how').addEventListener('click', () => Modal.open('modal-how'));
+    { const bi = $('#btn-install'); if (bi) bi.addEventListener('click', () => PWA.promptInstall()); }
     $('#btn-sound').addEventListener('click', () => {
       Settings.sfx = !Settings.sfx;
       $('#btn-sound').setAttribute('aria-checked', String(Settings.sfx));
