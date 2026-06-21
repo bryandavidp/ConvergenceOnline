@@ -23,6 +23,8 @@
     COMBO_MULTIPLIERS: [[30,10],[20,8],[15,5],[10,3],[6,2],[3,1.5]], // [umbral, multiplicador], desc
     MILESTONES: { 10: 500, 20: 1000, 30: 2000 },
     EMPTY_BOARD_BONUS: 500,   // bonus por dejar el tablero vacío
+    FEVER_COMBO: 10,          // combo para entrar en modo Fever
+    FEVER_BOOST: 1.25,        // multiplicador extra de puntos en Fever
     WIN_OCCUPATION: 30,       // % de ocupación: sin movimientos y por debajo => nivel superado
     TIMED_DURATION: 120,      // s (contrarreloj)
     TIMED_MIN: 30,            // s mínimo de límite por nivel
@@ -99,6 +101,7 @@
         return cache[id] = `<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true" focusable="false">${SHAPES[d.shape](COLORS[d.color])}</svg>`;
       },
       name(id) { const d = DEFS[id]; return `${SNAME[d.shape]} ${CNAME[d.color]}`; },
+      colorOf(id) { const d = DEFS[id]; return d ? COLORS[d.color] : '#fff'; },
     };
   })();
 
@@ -112,15 +115,49 @@
     set user(v) { v ? localStorage.setItem('cv_user', v) : localStorage.removeItem('cv_user'); },
   };
 
+  /* ===================== Settings (persistentes) ===================== */
+  const Settings = (() => {
+    const reduced = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const def = { sfx: true, music: false, haptics: true, reducedFx: reduced };
+    let s; try { s = Object.assign({}, def, JSON.parse(localStorage.getItem('cv_settings') || '{}')); } catch (_) { s = { ...def }; }
+    const save = () => { try { localStorage.setItem('cv_settings', JSON.stringify(s)); } catch (_) {} };
+    return {
+      get sfx() { return s.sfx; }, set sfx(v) { s.sfx = v; save(); },
+      get music() { return s.music; }, set music(v) { s.music = v; save(); },
+      get haptics() { return s.haptics; }, set haptics(v) { s.haptics = v; save(); },
+      get reducedFx() { return s.reducedFx; }, set reducedFx(v) { s.reducedFx = v; save(); },
+    };
+  })();
+
+  /* ===================== Haptics (vibración móvil) ===================== */
+  const Haptics = {
+    ok: typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function',
+    fire(p) { if (this.ok && Settings.haptics) { try { navigator.vibrate(p); } catch (_) {} } },
+    tap() { this.fire(8); },
+    combo() { this.fire(14); },
+    milestone() { this.fire([12, 30, 14]); },
+    error() { this.fire(40); },
+    level() { this.fire([18, 40, 18, 40]); },
+    record() { this.fire([12, 28, 12, 28, 36]); },
+    fever() { this.fire([20, 30, 20]); },
+  };
+
   /* ===================== Sound (WebAudio, sin archivos) ===================== */
   const Sound = {
-    ctx: null, enabled: Storage.sound,
+    ctx: null, sfxGain: null, musicGain: null,
+    get enabled() { return Settings.sfx; },
     ensure() {
-      if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {} }
+      if (!this.ctx) {
+        try {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+          this.sfxGain = this.ctx.createGain(); this.sfxGain.gain.value = 0.9; this.sfxGain.connect(this.ctx.destination);
+          this.musicGain = this.ctx.createGain(); this.musicGain.gain.value = 0.0; this.musicGain.connect(this.ctx.destination);
+        } catch (_) {}
+      }
       if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
     },
     tone(freq, dur, type = 'sine', vol = 0.2, when = 0) {
-      if (!this.enabled || !this.ctx) return;
+      if (!Settings.sfx || !this.ctx) return;
       const t = this.ctx.currentTime + when;
       const osc = this.ctx.createOscillator();
       const g = this.ctx.createGain();
@@ -128,15 +165,24 @@
       g.gain.setValueAtTime(0.0001, t);
       g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      osc.connect(g).connect(this.ctx.destination);
+      osc.connect(g).connect(this.sfxGain || this.ctx.destination);
       osc.start(t); osc.stop(t + dur + 0.02);
     },
-    tap()    { this.tone(420, 0.06, 'triangle', 0.12); },
-    success(){ this.tone(660, 0.10, 'sine', 0.18); this.tone(990, 0.10, 'sine', 0.12, 0.04); },
-    combo(l) { const base = 520 + l * 90; this.tone(base, 0.10, 'square', 0.12); this.tone(base * 1.5, 0.12, 'sine', 0.12, 0.05); },
-    miss()   { this.tone(160, 0.14, 'sawtooth', 0.10); },
-    level()  { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, 0.16, 'sine', 0.16, i * 0.09)); },
-    over()   { [392, 311, 247, 196].forEach((f, i) => this.tone(f, 0.22, 'sine', 0.18, i * 0.12)); },
+    chord(freqs, dur, type = 'sine', vol = 0.12, stagger = 0) { freqs.forEach((f, i) => this.tone(f, dur, type, vol, i * stagger)); },
+    tap() { this.tone(420, 0.05, 'triangle', 0.10); },
+    ui() { this.tone(380, 0.05, 'sine', 0.08); },
+    success() { this.tone(660, 0.09, 'sine', 0.15); this.tone(990, 0.09, 'sine', 0.09, 0.03); },
+    // Pitch sube con el combo (eliminaciones encadenadas)
+    eliminate(n) { const base = 520 + Math.min(n, 24) * 16; this.tone(base, 0.07, 'triangle', 0.12); this.tone(base * 1.5, 0.08, 'sine', 0.07, 0.03); },
+    combo(l) { const roots = [523, 587, 659, 784, 988]; const r = roots[clamp(l, 0, 4)]; this.chord([r, r * 1.26, r * 1.5], 0.14, 'sine', 0.10, 0.02); },
+    rank() { this.chord([784, 1047, 1319], 0.2, 'sine', 0.12, 0.05); },
+    fever() { this.chord([330, 415, 554, 659], 0.3, 'sawtooth', 0.06, 0.04); },
+    milestone() { this.chord([659, 988, 1319], 0.25, 'square', 0.07, 0.06); },
+    record() { this.chord([784, 988, 1175, 1568], 0.3, 'sine', 0.12, 0.07); },
+    miss() { this.tone(160, 0.12, 'sawtooth', 0.09); },
+    danger() { this.tone(120, 0.09, 'sine', 0.08); },
+    level() { [523, 659, 784, 1047, 1319].forEach((f, i) => this.tone(f, 0.16, 'sine', 0.13, i * 0.08)); },
+    over() { [392, 311, 247, 196].forEach((f, i) => this.tone(f, 0.22, 'sine', 0.15, i * 0.12)); },
   };
 
   /* ===================== Helpers ===================== */
@@ -155,7 +201,11 @@
     status: 'idle', // idle|playing|paused|over|levelComplete
     mode: 'clasico', diff: 'normal',
     hintsLeft: 3, hintReadyAt: 0,
-    maxCombo: 0, removedTotal: 0, // estadísticas de la partida
+    maxCombo: 0, removedTotal: 0, mistakes: 0, // estadísticas de la partida
+    displayScore: 0,        // marcador animado (count-up)
+    fever: false, feverEver: false, perfectEver: false,
+    recordHit: false,       // récord superado en vivo (una vez por partida)
+    lastDangerAt: 0,        // throttle del aviso de peligro
     pool: [], // iconos disponibles este nivel
   };
 
@@ -362,7 +412,7 @@
     bump(el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); },
 
     hud() {
-      $('#hud-score').textContent = State.score;
+      $('#hud-score').textContent = State.displayScore;
       $('#hud-level').textContent = State.level;
       $('#hud-best').textContent = Storage.best;
       $('#hud-speed').textContent = (State.spawnRate / 1000).toFixed(1) + 's';
@@ -372,8 +422,14 @@
       const occ = Engine.occupation();
       const fill = $('#hud-progress-fill');
       fill.style.width = occ.toFixed(1) + '%';
-      fill.classList.toggle('warn', occ >= 60 && occ < 85);
-      fill.classList.toggle('danger', occ >= 85);
+      const dl = occ >= 85 ? 2 : occ >= 65 ? 1 : 0;
+      fill.classList.toggle('warn', dl === 1);
+      fill.classList.toggle('danger', dl === 2);
+      this.danger(dl);
+      if (dl === 2 && State.status === 'playing') {
+        const t = performance.now();
+        if (t - State.lastDangerAt > 900) { State.lastDangerAt = t; Sound.danger(); Haptics.fire(10); }
+      }
       // Pistas
       $('#hint-badge').textContent = State.hintsLeft;
       $('#btn-hint').disabled = State.hintsLeft <= 0 || performance.now() < State.hintReadyAt;
@@ -407,6 +463,31 @@
     comboRing(frac) {
       const C = 119.38;
       $('#combo-ring-fill').style.strokeDashoffset = (C * (1 - clamp(frac, 0, 1))).toFixed(1);
+    },
+
+    // Flash de rango central (¡BIEN!, ¡GENIAL!…)
+    rankFlash(text, color) {
+      if (Settings.reducedFx) return;
+      const el = $('#rank'); if (!el) return;
+      el.textContent = text; el.style.color = color || '#fff';
+      el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    },
+    // Activar/desactivar el aura de Fever
+    fever(on) {
+      const f = $('#fever'); if (f) f.classList.toggle('on', on);
+      document.body.classList.toggle('fever', on);
+    },
+    // Destello breve de pantalla (récord / perfecto)
+    flash() {
+      if (Settings.reducedFx) return;
+      const el = $('#flash'); if (!el) return;
+      el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    },
+    // Pulso de peligro del tablero según ocupación
+    danger(level) { // 0 ninguno, 1 warn, 2 danger
+      const w = document.querySelector('.board-wrap'); if (!w) return;
+      w.classList.toggle('warn', level === 1);
+      w.classList.toggle('danger', level === 2);
     },
   };
 
@@ -449,16 +530,178 @@
     close() { $('#overlay').hidden = true; document.querySelectorAll('.modal').forEach(m => m.hidden = true); },
   };
 
+  /* ===================== FX (capa de partículas por canvas) =====================
+   * Un único canvas sobre el tablero, dibujado desde Loop.tick. Pool fijo y tope
+   * global ajustado por el gobernador de rendimiento. Coste cero sin partículas.
+   */
+  const FX = {
+    canvas: null, ctx: null, w: 0, h: 0, dpr: 1, pool: [], active: 0, cap: 160, dirty: false,
+    init() {
+      this.canvas = $('#fx'); if (!this.canvas) return;
+      this.ctx = this.canvas.getContext('2d', { alpha: true });
+      for (let i = 0; i < 240; i++) this.pool.push({ a: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 1, size: 2, color: '#fff', g: 0, shape: 0 });
+      this.resize();
+      window.addEventListener('resize', () => this.resize(), { passive: true });
+    },
+    resize() {
+      if (!this.canvas) return;
+      const r = this.canvas.parentElement.getBoundingClientRect();
+      this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      this.w = Math.max(1, r.width); this.h = Math.max(1, r.height);
+      this.canvas.width = Math.round(this.w * this.dpr); this.canvas.height = Math.round(this.h * this.dpr);
+      this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    },
+    _xy(i) { const s = State.size; return { x: ((i % s) + 0.5) / s * this.w, y: ((i / s | 0) + 0.5) / s * this.h }; },
+    _free() { for (let k = 0; k < this.pool.length; k++) if (!this.pool[k].a) return this.pool[k]; return null; },
+    _emit(x, y, color, vx, vy, life, size, g, shape) {
+      const p = this._free(); if (!p) return;
+      p.a = true; p.x = x; p.y = y; p.vx = vx; p.vy = vy; p.life = life; p.max = life; p.size = size; p.color = color; p.g = g; p.shape = shape;
+    },
+    burst(i, color, n) {
+      if (Settings.reducedFx || !this.ctx) return;
+      const { x, y } = this._xy(i); n = Math.min(n, (this.cap / 18) | 0 || 4);
+      for (let k = 0; k < n; k++) { const a = Math.random() * 6.283, sp = 50 + Math.random() * 150; this._emit(x, y, color, Math.cos(a) * sp, Math.sin(a) * sp - 50, 0.45 + Math.random() * 0.35, 2 + Math.random() * 3, 360, 0); }
+      this.dirty = true; Loop.kick();
+    },
+    confetti(n) {
+      if (Settings.reducedFx || !this.ctx) return;
+      n = Math.min(n, this.cap);
+      const C = ['#ff5b6e', '#4b8bff', '#3ad07f', '#ffd23f', '#a06bff', '#2bd4e6', '#ff9838'];
+      for (let k = 0; k < n; k++) this._emit(Math.random() * this.w, -8, C[k % C.length], (Math.random() - 0.5) * 70, 90 + Math.random() * 130, 1.3 + Math.random() * 0.9, 3 + Math.random() * 3, 240, 1);
+      this.dirty = true; Loop.kick();
+    },
+    step(dtms) {
+      if (!this.ctx) return false;
+      if (!this.dirty && this.active === 0) return false;
+      const dt = Math.min(dtms, 50) / 1000, ctx = this.ctx; let n = 0;
+      ctx.clearRect(0, 0, this.w, this.h);
+      for (let k = 0; k < this.pool.length; k++) {
+        const p = this.pool[k]; if (!p.a) continue;
+        p.life -= dt; if (p.life <= 0) { p.a = false; continue; }
+        p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; n++;
+        ctx.globalAlpha = p.life / p.max; ctx.fillStyle = p.color;
+        if (p.shape === 1) { ctx.fillRect(p.x, p.y, p.size * 1.7, p.size); }
+        else { ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, 6.283); ctx.fill(); }
+      }
+      ctx.globalAlpha = 1; this.active = n; this.dirty = n > 0;
+      return n > 0;
+    },
+  };
+
+  /* ===================== Music (procedural, sin archivos; off por defecto) ===================== */
+  const Music = {
+    timer: 0, next: 0, step: 0, intensity: 0,
+    scale: [220, 247, 294, 330, 392, 440, 494, 587],
+    start() {
+      if (!Settings.music) return;
+      Sound.ensure(); if (!Sound.ctx) return;
+      const t = Sound.ctx.currentTime;
+      Sound.musicGain.gain.cancelScheduledValues(t);
+      Sound.musicGain.gain.setValueAtTime(0.0001, t);
+      Sound.musicGain.gain.linearRampToValueAtTime(0.14, t + 0.8);
+      this.next = t + 0.1; this.step = 0;
+      if (!this.timer) this.timer = setInterval(() => this._sched(), 60);
+    },
+    stop(fast) {
+      if (Sound.ctx && Sound.musicGain) { const t = Sound.ctx.currentTime; Sound.musicGain.gain.cancelScheduledValues(t); Sound.musicGain.gain.linearRampToValueAtTime(0.0001, t + (fast ? 0.05 : 0.4)); }
+      if (this.timer) { clearInterval(this.timer); this.timer = 0; }
+    },
+    setIntensity(v) { this.intensity = clamp(v, 0, 1); if (this.timer && Sound.ctx) Sound.musicGain.gain.linearRampToValueAtTime(0.12 + 0.14 * this.intensity, Sound.ctx.currentTime + 0.3); },
+    _note(f, dur, t, vol, type) { const o = Sound.ctx.createOscillator(), g = Sound.ctx.createGain(); o.type = type || 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(Sound.musicGain); o.start(t); o.stop(t + dur + 0.02); },
+    _sched() {
+      if (!Sound.ctx) return;
+      const tempo = 0.30 - 0.12 * this.intensity, ahead = Sound.ctx.currentTime + 0.2;
+      while (this.next < ahead) {
+        const s = this.step;
+        if (s % 4 === 0) this._note(this.scale[0] / 2, tempo * 3.6, this.next, 0.5, 'sine');
+        const idx = (s * 3) % this.scale.length;
+        this._note(this.scale[idx], tempo * 0.9, this.next, 0.32 + 0.3 * this.intensity, 'triangle');
+        if (this.intensity > 0.5 && s % 2 === 0) this._note(this.scale[(idx + 4) % this.scale.length] * 2, tempo * 0.5, this.next, 0.16, 'sine');
+        this.next += tempo; this.step++;
+      }
+    },
+  };
+
+  /* ===================== Meta (progresión persistente) ===================== */
+  const Meta = (() => {
+    const KEY = 'cv_meta';
+    const def = { xp: 0, level: 1, games: 0, totalRemoved: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' } };
+    let m; try { m = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) { m = JSON.parse(JSON.stringify(def)); }
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch (_) {} };
+    const today = () => new Date().toISOString().slice(0, 10);
+    const hashStr = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
+    const xpForLevel = (lvl) => 300 + (lvl - 1) * 250;
+    const RANKS = ['Novato', 'Aprendiz', 'Hábil', 'Experto', 'Maestro', 'Leyenda', 'Mítico'];
+    const ACH = [
+      { id: 'first', name: 'Primer paso', desc: 'Completa tu primera partida', t: c => c.games >= 1 },
+      { id: 'combo10', name: 'En racha', desc: 'Consigue un combo ×10', t: c => c.maxCombo >= 10 },
+      { id: 'combo20', name: 'Imparable', desc: 'Consigue un combo ×20', t: c => c.maxCombo >= 20 },
+      { id: 'perfect', name: 'Impecable', desc: 'Deja el tablero vacío', t: c => c.perfect },
+      { id: 'score3k', name: 'Triple millar', desc: 'Supera 3000 puntos', t: c => c.score >= 3000 },
+      { id: 'score8k', name: 'Leyenda viva', desc: 'Supera 8000 puntos', t: c => c.score >= 8000 },
+      { id: 'level5', name: 'Escalador', desc: 'Alcanza el nivel 5', t: c => c.level >= 5 },
+      { id: 'remove200', name: 'Demoledor', desc: 'Elimina 200 iconos (total)', t: c => m.totalRemoved >= 200 },
+      { id: 'fever', name: '¡Fiebre!', desc: 'Entra en modo Fever', t: c => c.fever },
+      { id: 'streak3', name: 'Constante', desc: 'Juega 3 días seguidos', t: c => m.streak.count >= 3 },
+    ];
+    const MISSIONS = [
+      { id: 'm_combo', text: 'Consigue un combo ×8', target: 8, kind: 'combo' },
+      { id: 'm_remove', text: 'Elimina 80 iconos en una partida', target: 80, kind: 'remove' },
+      { id: 'm_score', text: 'Haz 2500 puntos en una partida', target: 2500, kind: 'score' },
+      { id: 'm_perfect', text: 'Deja el tablero vacío una vez', target: 1, kind: 'perfect' },
+    ];
+    function dailyMission() {
+      const d = today();
+      if (m.daily.date !== d) { const idx = Math.abs(hashStr(d)) % MISSIONS.length; m.daily = { date: d, id: MISSIONS[idx].id, progress: 0, done: false }; save(); }
+      return Object.assign({}, MISSIONS.find(x => x.id === m.daily.id), m.daily);
+    }
+    return {
+      get state() { return m; },
+      level: () => m.level, xp: () => m.xp, xpForLevel, streak: () => m.streak.count,
+      rank: () => RANKS[Math.min(RANKS.length - 1, Math.floor((m.level - 1) / 3))],
+      dailyMission,
+      achievements: () => ACH.map(a => ({ id: a.id, name: a.name, desc: a.desc, unlocked: !!m.achievements[a.id] })),
+      addXp(n) { m.xp += n; let up = 0; while (m.xp >= xpForLevel(m.level)) { m.xp -= xpForLevel(m.level); m.level++; up++; } save(); return up; },
+      recordGame(ctx) {
+        m.games = (m.games || 0) + 1;
+        m.totalRemoved = (m.totalRemoved || 0) + ctx.removed;
+        const d = today(), y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+        if (m.streak.date !== d) { m.streak.count = (m.streak.date === y) ? (m.streak.count + 1) : 1; m.streak.date = d; }
+        const dm = dailyMission(); let missionDone = false;
+        if (!m.daily.done) {
+          const val = dm.kind === 'combo' ? ctx.maxCombo : dm.kind === 'remove' ? ctx.removed : dm.kind === 'score' ? ctx.score : (ctx.perfect ? 1 : 0);
+          m.daily.progress = Math.max(m.daily.progress || 0, val);
+          if (m.daily.progress >= dm.target) { m.daily.done = true; missionDone = true; }
+        }
+        let xpGained = Math.round(ctx.score / 10 + ctx.maxCombo * 5 + ctx.level * 20 + (ctx.perfect ? 100 : 0));
+        if (missionDone) xpGained += 150;
+        const leveledUp = this.addXp(xpGained);
+        const cctx = Object.assign({ games: m.games }, ctx);
+        const newAch = [];
+        ACH.forEach(a => { if (!m.achievements[a.id] && a.t(cctx)) { m.achievements[a.id] = d; newAch.push(a); } });
+        save();
+        return { xpGained, leveledUp, newAch, missionDone };
+      },
+    };
+  })();
+
   /* ===================== Loop (un único requestAnimationFrame) ===================== */
   const Loop = {
-    raf: 0, last: 0, spawnAcc: 0, clockAcc: 0,
+    raf: 0, last: 0, spawnAcc: 0, clockAcc: 0, ema: 16,
     start() { this.last = performance.now(); this.spawnAcc = 0; this.clockAcc = 0; cancelAnimationFrame(this.raf); this.raf = requestAnimationFrame(this.tick); },
     stop() { cancelAnimationFrame(this.raf); this.raf = 0; },
+    // Reinicia el rAF si está parado (para animar celebraciones aunque el juego no corra)
+    kick() { if (!this.raf) { this.last = performance.now(); this.raf = requestAnimationFrame(this.tick); } },
     tick: (now) => {
       const L = Loop;
       const dt = Math.min(100, now - L.last); L.last = now;
+
+      // Gobernador de rendimiento: EMA del tiempo de frame -> ajusta el tope de partículas
+      L.ema += (dt - L.ema) * 0.1;
+      if (L.ema > 22 && FX.cap > 40) FX.cap -= 8;
+      else if (L.ema < 17 && FX.cap < 160) FX.cap += 4;
+
       if (State.status === 'playing') {
-        // reloj
         L.clockAcc += dt;
         if (L.clockAcc >= 1000) {
           const secs = Math.floor(L.clockAcc / 1000); L.clockAcc -= secs * 1000;
@@ -469,21 +712,28 @@
           }
           Render.hud();
         }
-        // spawn
         L.spawnAcc += dt;
-        if (L.spawnAcc >= State.spawnRate) {
-          L.spawnAcc -= State.spawnRate;
-          Game.doSpawn();
-        }
-        // combo: expirar + anillo
+        if (L.spawnAcc >= State.spawnRate) { L.spawnAcc -= State.spawnRate; Game.doSpawn(); }
         if (State.combo > 0) {
           const left = State.comboWindow - (now - State.comboAt);
           if (left <= 0) Game.resetCombo();
           else Render.comboRing(left / State.comboWindow);
         }
       }
-      // Mantener el bucle solo mientras hay partida (ahorra batería en menús/fin)
-      L.raf = (State.status === 'playing' || State.status === 'paused') ? requestAnimationFrame(L.tick) : 0;
+
+      // Count-up del marcador (sensación de recompensa creciente)
+      if (State.displayScore !== State.score) {
+        const diff = State.score - State.displayScore;
+        const stepv = Math.max(1, Math.ceil(Math.abs(diff) * 0.18));
+        State.displayScore += diff > 0 ? Math.min(stepv, diff) : Math.max(-stepv, diff);
+        $('#hud-score').textContent = State.displayScore;
+      }
+
+      // Capa de partículas (coste cero si no hay nada)
+      FX.step(dt);
+
+      const alive = State.status === 'playing' || State.status === 'paused' || FX.active > 0 || FX.dirty;
+      L.raf = alive ? requestAnimationFrame(L.tick) : 0;
     },
   };
 
@@ -513,29 +763,34 @@
     start(mode, diff) {
       State.mode = mode;
       State.diff = Config.MODES[mode].fixedDiff || diff;
-      State.score = 0; State.level = 1; State.elapsed = 0; State.timeLeft = 0;
+      State.score = 0; State.displayScore = 0; State.level = 1; State.elapsed = 0; State.timeLeft = 0;
       State.combo = 0; State.comboMult = 1; State.comboAt = 0;
-      State.maxCombo = 0; State.removedTotal = 0;
+      State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0;
+      State.fever = false; State.feverEver = false; State.perfectEver = false; State.recordHit = false;
       State.status = 'playing'; this.ended = false;
+      Render.fever(false); Render.danger(0);
       this.clearHintHighlight();
       this.setupLevel();
       Render.combo();
       Screens.show('game');
+      FX.resize();
       Loop.start();
+      if (Settings.music) Music.start();
       announce(`Partida iniciada. Modo ${Config.MODES[mode].name}.`);
       Toasts.show('¡A jugar!', 'good', 1400);
     },
 
     restart() { Modal.close(); this.start(State.mode, State.diff); },
-    quit() { Loop.stop(); State.status = 'idle'; Modal.close(); this.clearHintHighlight(); refreshStart(); Screens.show('start'); },
+    quit() { Loop.stop(); Music.stop(); State.status = 'idle'; Modal.close(); this.clearHintHighlight(); refreshStart(); Screens.show('start'); },
 
     pause() {
       if (State.status !== 'playing') return;
-      State.status = 'paused'; Modal.open('modal-pause'); announce('Juego en pausa.');
+      State.status = 'paused'; Music.stop(true); Modal.open('modal-pause'); announce('Juego en pausa.');
     },
     resume() {
       if (State.status !== 'paused') return;
-      State.status = 'playing'; Modal.close(); Loop.last = performance.now();
+      State.status = 'playing'; Modal.close(); Loop.last = performance.now(); Loop.kick();
+      if (Settings.music) Music.start();
     },
 
     /* Activación de una casilla (clic/tecla) */
@@ -546,40 +801,66 @@
       const conv = Engine.converging(i);
       if (conv.length < 2) { this.mistake(i); return; }          // error → penalización
 
-      // Combo
+      // Combo (registrar tier anterior para detectar subidas de rango)
+      const prevMult = State.comboMult;
       const now = performance.now();
       if (State.combo > 0 && now - State.comboAt <= State.comboWindow) State.combo++;
       else State.combo = 1;
       State.comboAt = now;
       State.comboMult = 1;
       for (const [thr, mult] of Config.COMBO_MULTIPLIERS) { if (State.combo >= thr) { State.comboMult = mult; break; } }
-
       if (State.combo > State.maxCombo) State.maxCombo = State.combo;
 
-      // Puntos (icono×10×nivel × combo × dificultad × modo)
+      // FEVER: entrar al encadenar combo alto
+      if (!State.fever && State.combo >= Config.FEVER_COMBO) {
+        State.fever = true; State.feverEver = true; Render.fever(true); Sound.fever(); Haptics.fever();
+        if (Settings.music) Music.setIntensity(1);
+        Toasts.show('🔥 ¡FEVER!', 'warn', 1400);
+      }
+
+      // Puntos (icono×10×nivel × combo × dificultad × modo × fever)
       const removed = conv.length;
       State.removedTotal += removed;
       const d = Config.DIFFICULTY[State.diff], m = Config.MODES[State.mode];
       const base = removed * 10 * State.level;
-      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult);
+      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * (State.fever ? Config.FEVER_BOOST : 1));
       State.score += points;
-      if (Config.MILESTONES[State.combo]) { State.score += Config.MILESTONES[State.combo]; Toasts.show(`¡Combo x${State.combo}! +${Config.MILESTONES[State.combo]}`, 'good'); }
+      if (Config.MILESTONES[State.combo]) { State.score += Config.MILESTONES[State.combo]; Toasts.show(`¡Combo ×${State.combo}! +${Config.MILESTONES[State.combo]}`, 'good'); Sound.milestone(); Haptics.milestone(); }
 
       // Contrarreloj: bonus de tiempo por convergencia
-      if (m.timed) { const bonus = Math.max(5, removed * 3); State.timeLeft += bonus; Toasts.show(`+${bonus}s`, 'info', 1200); }
+      if (m.timed) { const bonus = Math.max(5, removed * 3); State.timeLeft += bonus; Toasts.show(`+${bonus}s`, 'info', 1100); }
+
+      // Partículas con el color real de cada icono (antes de borrarlos)
+      const burstN = 6 + Math.min(State.combo, 14);
+      for (const idx of conv) FX.burst(idx, Icons.colorOf(State.board[idx]), burstN);
 
       // Aplicar al tablero
       conv.forEach(idx => { State.board[idx] = null; State.iconCount--; });
       Render.clearAnim(conv);
       conv.forEach(idx => Render.cells[idx].setAttribute('aria-label', Render.cellLabel(idx)));
 
-      // Feedback
-      const color = State.comboMult >= 5 ? '#ffd84d' : State.comboMult >= 3 ? '#ff5cf0' : State.comboMult >= 2 ? '#b46cff' : State.comboMult >= 1.5 ? '#00d0ff' : '#fff';
+      // Color por tier de combo
+      const color = State.comboMult >= 8 ? '#ffd84d' : State.comboMult >= 5 ? '#ff5cf0' : State.comboMult >= 3 ? '#b46cff' : State.comboMult >= 2 ? '#00d0ff' : State.comboMult >= 1.5 ? '#34e29b' : '#fff';
       Render.popup(i, State.comboMult > 1 ? `+${points} ×${State.comboMult}` : `+${points}`, color);
       Render.bump($('#hud-score'));
       Render.combo();
-      if (State.combo >= 3) Sound.combo(State.combo >= 15 ? 4 : State.combo >= 10 ? 3 : State.combo >= 6 ? 2 : 1);
-      else Sound.success();
+
+      // Subida de rango → flash + sonido
+      if (State.comboMult > prevMult && State.combo >= 3) {
+        const labels = { 1.5: '¡BIEN!', 2: '¡GENIAL!', 3: '¡INCREÍBLE!', 5: '¡ÉPICO!', 8: '¡LEGENDARIO!', 10: '¡MÍTICO!' };
+        Render.rankFlash(labels[State.comboMult] || '¡COMBO!', color); Sound.rank();
+      }
+
+      // Sonido + háptica de eliminación
+      Sound.eliminate(State.combo);
+      if (State.combo >= 3) Haptics.combo(); else Haptics.tap();
+      if (Settings.music) Music.setIntensity(clamp(State.combo / 18, 0, 1));
+
+      // Récord en vivo (una sola vez por partida)
+      if (!State.recordHit && Storage.best > 0 && State.score > Storage.best) {
+        State.recordHit = true; Render.flash(); Sound.record(); Haptics.record(); FX.confetti(40);
+        Toasts.show('🏆 ¡Nuevo récord!', 'good', 1600);
+      }
 
       Render.hud();
       announce(`+${points} puntos.${State.combo >= 3 ? ' Combo ' + State.combo + '.' : ''}`);
@@ -588,7 +869,7 @@
 
     /* Error del jugador: penalización (salvo modos sin penalización) */
     mistake(i) {
-      Render.miss(i); Sound.miss();
+      Render.miss(i); Sound.miss(); Haptics.error(); State.mistakes++;
       const m = Config.MODES[State.mode];
       if (!m.penalties) return;
       Render.boardShake();
@@ -625,15 +906,19 @@
       }
     },
 
-    resetCombo() { State.combo = 0; State.comboMult = 1; Render.combo(); },
+    resetCombo() {
+      State.combo = 0; State.comboMult = 1;
+      if (State.fever) { State.fever = false; Render.fever(false); if (Settings.music) Music.setIntensity(0.15); }
+      Render.combo();
+    },
 
     levelComplete(perfect) {
       State.status = 'levelComplete'; this.clearHintHighlight();
-      if (perfect) { State.score += Config.EMPTY_BOARD_BONUS; Toasts.show(`¡Tablero limpio! +${Config.EMPTY_BOARD_BONUS}`, 'good'); }
-      this.saveBest(); Render.hud();
+      if (perfect) { State.perfectEver = true; State.score += Config.EMPTY_BOARD_BONUS; Toasts.show(`¡Tablero limpio! +${Config.EMPTY_BOARD_BONUS}`, 'good'); Render.flash(); }
+      this.saveBest(); Render.hud(); Render.fever(false); State.fever = false;
       const m = Config.MODES[State.mode];
       if (m.single) { this.win(perfect ? '¡Tutorial completado con tablero perfecto!' : '¡Tutorial completado!'); return; }
-      Sound.level();
+      Sound.level(); Haptics.level(); FX.confetti(perfect ? 90 : 60);
 
       $('#level-title').textContent = perfect ? '✨ ¡Tablero perfecto!' : '⭐ ¡Nivel completado!';
       $('#level-sub').textContent = perfect
@@ -678,7 +963,7 @@
 
     win(reason) {
       this.endGame();
-      Sound.level();
+      Sound.level(); Haptics.level(); FX.confetti(110);
       $('#over-title').textContent = '🏆 ¡Victoria!';
       $('#over-reason').textContent = reason;
       this.fillStats(); Modal.open('modal-over');
@@ -688,7 +973,7 @@
     gameOver(reason) {
       if (this.ended) return;
       this.endGame();
-      Sound.over();
+      Sound.over(); Haptics.error(); Render.boardShake();
       $('#over-title').textContent = '¡Misión fallida!';
       $('#over-reason').textContent = reason;
       this.fillStats(); Modal.open('modal-over');
@@ -696,9 +981,16 @@
     },
 
     endGame() {
-      Loop.stop(); State.status = 'over'; this.ended = true; this.clearHintHighlight();
+      Loop.stop(); Music.stop(); State.status = 'over'; this.ended = true; this.clearHintHighlight();
+      Render.fever(false); State.fever = false; Render.danger(0);
       this.newRecord = State.score > Storage.best && State.score > 0;
       this.saveBest();
+      // Progresión persistente (XP, logros, misión diaria, racha)
+      this.metaResult = Meta.recordGame({
+        score: State.score, level: State.level, maxCombo: State.maxCombo,
+        removed: State.removedTotal, elapsed: State.elapsed, mode: State.mode,
+        perfect: State.perfectEver, fever: State.feverEver,
+      });
     },
 
     fillStats() {
@@ -713,6 +1005,18 @@
         [fmtTime(State.elapsed), 'Tiempo', 'var(--time)'],
         [Storage.best, 'Récord', 'var(--gold)'],
       ]);
+      // Progresión: XP ganada, barra de perfil, misión y logros nuevos
+      const r = this.metaResult || { xpGained: 0, leveledUp: 0, newAch: [], missionDone: false };
+      const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
+      $('#over-xp').innerHTML =
+        `<div class="xp-line"><span class="xp-gain">+${r.xpGained} XP</span><span class="xp-rank">${Meta.rank()} · Nivel ${lvl}</span></div>` +
+        `<div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>` +
+        (r.leveledUp ? `<div class="xp-up">⬆️ ¡Subiste a nivel ${lvl}!</div>` : '') +
+        (r.missionDone ? `<div class="mission-done">✅ Misión diaria completada · +150 XP</div>` : '');
+      $('#over-ach').innerHTML = r.newAch.length
+        ? '<div class="ach-new">🏅 Nuevos logros: ' + r.newAch.map(a => a.name).join(' · ') + '</div>' : '';
+      if (r.leveledUp) { setTimeout(() => { Sound.record(); FX.confetti(60); }, 350); }
+      if (r.newAch.length) { setTimeout(() => { Sound.milestone(); Toasts.show('🏅 Logro: ' + r.newAch[0].name, 'good', 2400); }, 600); }
     },
 
     saveBest() { if (State.score > Storage.best) Storage.best = State.score; },
@@ -813,12 +1117,60 @@
 
   function refreshStart() {
     $('#start-best').textContent = Storage.best;
-    const sw = $('#btn-sound'); sw.setAttribute('aria-checked', String(Sound.enabled));
+    const sw = $('#btn-sound'); if (sw) sw.setAttribute('aria-checked', String(Settings.sfx));
+    const el = $('#start-meta');
+    if (el) {
+      const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp(), dm = Meta.dailyMission();
+      const prog = dm.done ? '✅' : `${Math.min(dm.progress || 0, dm.target)}/${dm.target}`;
+      el.innerHTML =
+        `<div class="profile">
+          <div class="profile-top"><span class="rank">${Meta.rank()}</span><span class="plevel">Nivel ${lvl}</span><span class="streak" title="Racha diaria">🔥 ${Meta.streak()}</span></div>
+          <div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>
+          <div class="xp-sub">${have} / ${need} XP</div>
+        </div>
+        <div class="daily ${dm.done ? 'done' : ''}"><span class="daily-icon">🎯</span><span class="daily-text">${dm.done ? '¡Misión diaria completada!' : dm.text}</span><span class="daily-prog">${prog}</span></div>`;
+    }
+  }
+
+  function applyReducedFx() {
+    document.body.classList.toggle('reduced-fx', Settings.reducedFx);
+  }
+
+  // Panel de ajustes (toggles persistentes)
+  function buildSettings() {
+    const rows = [
+      { k: 'sfx', label: '🔊 Efectos de sonido' },
+      { k: 'music', label: '🎵 Música' },
+      { k: 'haptics', label: '📳 Vibración', show: Haptics.ok },
+      { k: 'reducedFx', label: '✨ Reducir efectos' },
+    ];
+    const list = $('#settings-list'); if (!list) return;
+    list.innerHTML = rows.filter(r => r.show !== false).map(r =>
+      `<div class="set-row"><span>${r.label}</span><button class="switch" role="switch" data-set="${r.k}" aria-checked="${Settings[r.k]}" aria-label="${r.label}"><span class="switch-dot"></span></button></div>`
+    ).join('');
+    list.querySelectorAll('[data-set]').forEach(btn => btn.addEventListener('click', () => {
+      const k = btn.dataset.set; Settings[k] = !Settings[k]; btn.setAttribute('aria-checked', String(Settings[k]));
+      if (k === 'sfx' && Settings.sfx) { Sound.ensure(); Sound.ui(); }
+      if (k === 'music') { Settings.music && State.status === 'playing' ? Music.start() : Music.stop(); }
+      if (k === 'reducedFx') applyReducedFx();
+      const sw = $('#btn-sound'); if (sw) sw.setAttribute('aria-checked', String(Settings.sfx));
+    }));
+  }
+  function openSettings() { buildSettings(); Modal.open('modal-settings'); }
+
+  function openMedals() {
+    const list = $('#medals-list');
+    if (list) list.innerHTML = Meta.achievements().map(a =>
+      `<div class="medal ${a.unlocked ? 'on' : ''}"><span class="medal-ic">${a.unlocked ? '🏅' : '🔒'}</span><span class="medal-tx"><strong>${a.name}</strong><small>${a.desc}</small></span></div>`
+    ).join('');
+    Modal.open('modal-medals');
   }
 
   /* ===================== init / wiring ===================== */
   function init() {
     Render.buildBoard();
+    FX.init();
+    applyReducedFx();
     Input.init();
     buildModeMenu();
 
@@ -836,10 +1188,12 @@
     $('#btn-play').addEventListener('click', () => { Sound.ensure(); Screens.show('modes'); });
     $('#btn-how').addEventListener('click', () => Modal.open('modal-how'));
     $('#btn-sound').addEventListener('click', () => {
-      Sound.enabled = !Sound.enabled; Storage.sound = Sound.enabled;
-      $('#btn-sound').setAttribute('aria-checked', String(Sound.enabled));
-      if (Sound.enabled) { Sound.ensure(); Sound.tap(); }
+      Settings.sfx = !Settings.sfx;
+      $('#btn-sound').setAttribute('aria-checked', String(Settings.sfx));
+      if (Settings.sfx) { Sound.ensure(); Sound.ui(); }
     });
+    const bs = $('#btn-settings'); if (bs) bs.addEventListener('click', () => { Sound.ensure(); openSettings(); });
+    const bm = $('#btn-medals'); if (bm) bm.addEventListener('click', openMedals);
 
     // Modos
     $('#modes-back').addEventListener('click', () => Screens.show('start'));
@@ -880,5 +1234,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop };
 })();
