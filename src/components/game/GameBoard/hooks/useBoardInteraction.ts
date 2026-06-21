@@ -74,6 +74,9 @@ const useBoardInteraction = () => {
   // Puntos base reales de la última convergencia (iconos × 10 × nivel),
   // para que el popup muestre exactamente lo que se suma a la puntuación.
   const lastBasePointsRef = useRef(0);
+
+  // Marca de tiempo del último aviso de velocidad (para throttling antispam).
+  const lastSpeedAlertRef = useRef(0);
   
   /**
    * Detener todos los temporizadores
@@ -275,8 +278,10 @@ const useBoardInteraction = () => {
     pointsPopup.style.left = '50%';
     pointsPopup.style.transform = 'translate(-50%, -50%)';
     
-    // Si tenemos version completa de animaciones, añadir partículas
-    if (!isPerformanceMode) {
+    // Si tenemos version completa de animaciones, añadir partículas.
+    // Solo en escritorio: en móvil las partículas saturaban el tablero y, con
+    // overflow contenido, no aportan y cuestan rendimiento.
+    if (!isPerformanceMode && typeof window !== 'undefined' && window.innerWidth > 768) {
       // Añadir partículas alrededor (solo versión completa)
       for (let i = 0; i < 6; i++) {
         const particle = document.createElement('div');
@@ -688,18 +693,28 @@ const useBoardInteraction = () => {
    * Mostrar alerta de aumento de velocidad
    */
   const showSpeedAlertUI = useCallback((multiplier: number) => {
+    // Solo durante la partida (evita avisos sobre el modal de fin de juego)
+    if (store.getState().game.status !== 'playing') return;
+    // Throttle: como máximo un aviso cada 3s (evita el spam con clics rápidos)
+    const now = Date.now();
+    if (now - lastSpeedAlertRef.current < 3000) return;
+    lastSpeedAlertRef.current = now;
+
+    // Acotar el valor mostrado por seguridad (nunca un "x" desorbitado)
+    const shown = Math.min(Math.max(multiplier, 1), 10);
+
     // Usar el nuevo sistema de notificaciones con animación del valor
     addNotification({
       message: '¡Velocidad aumentada!',
       type: 'warning',
       icon: '⚡',
       duration: 2500,
-      value: `x${multiplier}`,
+      value: `x${shown}`,
       animateValue: true
     });
-    
+
     // Mantenemos el estado actual para compatibilidad, pero lo eliminaremos en el futuro
-    setSpeedMultiplier(multiplier);
+    setSpeedMultiplier(shown);
     setShowSpeedAlert(true);
     const timer = setTimeout(() => {
       setShowSpeedAlert(false);
@@ -734,12 +749,16 @@ const useBoardInteraction = () => {
     animateCellError(cellElement, addAnimationTimer);
     animateBoardShake(addAnimationTimer);
     
-    // Aumentar velocidad como penalización e informar al usuario
-    const newMultiplier = increaseSpeedAsPenalty(spawnRate, dispatch);
-    
+    // Aumentar velocidad como penalización e informar al usuario.
+    // increaseSpeedAsPenalty devuelve el nuevo spawn rate EN MS (no un multiplicador);
+    // antes se pasaba tal cual a showSpeedAlertUI y se mostraba "x533/x1000".
+    // Calculamos el multiplicador real (rate inicial / rate actual), acotado.
+    const newSpawnRate = increaseSpeedAsPenalty(spawnRate, dispatch);
+    const speedMult = Math.min(6, Math.max(1, Number((config.INITIAL_SPAWN_RATE / newSpawnRate).toFixed(1))));
+
     // Mostrar solo la notificación del cambio de velocidad (quitamos la de penalización)
     setTimeout(() => {
-      showSpeedAlertUI(newMultiplier);
+      showSpeedAlertUI(speedMult);
     }, 200);
     
     // Añadir iconos de penalización al tablero con mejor animación visual

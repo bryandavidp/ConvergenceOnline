@@ -33,8 +33,12 @@
   position: relative;
   background: rgba(48, 51, 78, 0.4);
   border-radius: 20px;
-  overflow: visible; /* Permitir que las animaciones se extiendan más allá de los bordes */
+  /* hidden: contiene los popups de puntos y las partículas dentro del tablero.
+     Antes era 'visible' y, en combos, los números/partículas salían por encima
+     del tablero ("las líneas se abren hacia arriba"). */
+  overflow: hidden;
   padding: 8px;
+  box-sizing: border-box;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   margin: 0 auto;
   aspect-ratio: 1 / 1;
@@ -51,13 +55,12 @@
   z-index: 1;
 }
 
-/* Celda individual del tablero */
-.game-cell {
-  border-radius: 8px;
-  overflow: visible; /* Permitir que las animaciones y efectos se extiendan */
-  position: relative;
-  width: 100%;
-  padding-bottom: 100%; /* Mantener proporción cuadrada */
+/* Las celdas (.board-cell) se dimensionan por el grid (repeat(n,1fr)).
+   min-width/height:0 evita el desbordamiento típico de los items de grid
+   (min-height:auto), que hacía sobresalir la última fila ~14px. */
+.board-cell {
+  min-width: 0;
+  min-height: 0;
 }
 
 /* Contenido interno de la celda */

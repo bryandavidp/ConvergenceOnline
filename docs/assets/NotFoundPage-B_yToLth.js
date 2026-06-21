@@ -1,1 +1,0 @@
-import{j as n,L as s}from"./index-BsGfN-7P.js";const o=()=>n.jsxs("div",{className:"not-found-page",children:[n.jsx("h1",{children:"404 - Página no encontrada"}),n.jsx("p",{children:"Lo sentimos, la página que buscas no existe."}),n.jsx(s,{to:"/",children:"Volver al inicio"})]});export{o as default};

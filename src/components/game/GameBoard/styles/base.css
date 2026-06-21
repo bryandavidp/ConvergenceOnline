@@ -29,7 +29,7 @@
   justify-content: center;
   align-items: center;
   border-radius: 16px;
-  overflow: visible !important;
+  overflow: hidden;
   background-color: rgba(35, 40, 65, 0.3);
   border: 1px solid rgba(100, 130, 255, 0.2);
   will-change: transform, opacity;

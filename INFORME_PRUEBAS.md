@@ -179,10 +179,29 @@ iPhone con GPU hardware será mejor). ~32 s de combos intensivos con `tap`. Mét
   producción.
 - El **modal de Game Over** se ve correcto y legible en móvil (buena base de diseño).
 
+### Estado tras las correcciones de móvil (re-verificado en iPhone 14 Pro Max)
+
+| Métrica | Antes | Después |
+|---------|-------|---------|
+| Bug "líneas hacia arriba" (anomalías de overflow/Δ de fila) | varias | **0** ✅ |
+| Desborde de celdas (~14 px) | sí | **0** ✅ |
+| **CLS** (saltos de interfaz) | 1.024 | **0.019** ✅ |
+| Multiplicador de velocidad mostrado | x533 … x1000 | **x2.8** (acotado + throttle) ✅ |
+| Notificaciones | tapaban HUD/modal | **ancladas abajo, sin spam** ✅ |
+
+Correcciones aplicadas:
+- `GameBoard/styles/index.css` + `base.css`: `.game-board-wrapper` con `overflow: hidden` (contiene
+  popups y partículas dentro del tablero) y `.board-cell { min-width:0; min-height:0 }` (evita el
+  desborde de items de grid). Eliminado el `.game-cell` muerto con `padding-bottom:100%`.
+- `useBoardInteraction.ts`: partículas solo en escritorio; `showSpeedAlertUI` con throttle (1/3 s),
+  guard de estado `playing` y valor acotado; `penalize` calcula un multiplicador real
+  (`INITIAL_SPAWN_RATE / spawnRate`) en vez de pasar el spawn rate en ms.
+- `GameNotificationManager.css`: en ≤768 px las notificaciones se anclan abajo (no tapan el HUD).
+
 ## Veredicto
 
-El juego **arranca y responde** en los 4 modos jugables y la puntuación progresa, pero hay **un bug
-de runtime de severidad alta** (`process is not defined`) que se dispara de forma recurrente por
-**archivos de audio inexistentes**, además de **dos modos (Zen/Tutorial) que no usan su configuración**
-y el **sistema de niveles que ignora su config base**. Resolver el bloque de audio (process + archivos)
-y el registro de modos/`BASE_MODE_CONFIG` elevaría notablemente la fluidez y la corrección del juego.
+El juego **arranca y responde** en todos los modos jugables. Tras las correcciones de motor, audio,
+modos, rendimiento y UI móvil, ya **no hay excepciones**, el **CLS** pasó de 1.024 a 0.019, el bug
+fugaz de "líneas hacia arriba" en combos está resuelto (popups/partículas contenidos) y el aviso de
+velocidad muestra valores coherentes. Quedan como mejora futura los puntos documentados de bajo
+impacto (sistemas duplicados restantes, balance de spawn) y autoalojar fuentes ya está hecho.
