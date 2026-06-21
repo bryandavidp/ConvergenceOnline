@@ -23,21 +23,25 @@
     ICON_POOL: ['🍎','🍇','🍊','🍓','🐶','🐱','🐭','🐰','⭐','✨','🔥','🌈','🍕','🍔','🍣','🍜'],
     COMBO_MULTIPLIERS: [[30,10],[20,8],[15,5],[10,3],[6,2],[3,1.5]], // [umbral, multiplicador], desc
     MILESTONES: { 10: 500, 20: 1000, 30: 2000 },
-    BASE_TARGET: 1000,
-    TARGET_GROWTH: 1.5,
-    TIMED_DURATION: 120,      // s
-    TIMED_LEVEL_BONUS: 15,    // s al subir de nivel
+    EMPTY_BOARD_BONUS: 500,   // bonus por dejar el tablero vacío
+    WIN_OCCUPATION: 30,       // % de ocupación: sin movimientos y por debajo => nivel superado
+    TIMED_DURATION: 120,      // s (contrarreloj)
+    TIMED_MIN: 30,            // s mínimo de límite por nivel
+    TIMED_DECREASE: 10,       // s menos por nivel
+    HINTS_PER_LEVEL: 3,
+    HINT_COOLDOWN: 10000,     // ms
+    HINT_DURATION: 2000,      // ms
     DIFFICULTY: {
-      facil:   { label: 'Fácil',   initialIcons: 16, comboWindow: 5000, spawnStart: 3200, spawnMin: 1000, scoreMult: 0.8 },
-      normal:  { label: 'Normal',  initialIcons: 26, comboWindow: 3500, spawnStart: 2600, spawnMin: 700,  scoreMult: 1.0 },
-      dificil: { label: 'Difícil', initialIcons: 34, comboWindow: 2500, spawnStart: 2100, spawnMin: 500,  scoreMult: 1.3 },
+      facil:   { label: 'Fácil',   initialIcons: 16, comboWindow: 5000, spawnStart: 3200, spawnMin: 1000, scoreMult: 0.8, penaltyBase: 1 },
+      normal:  { label: 'Normal',  initialIcons: 26, comboWindow: 3500, spawnStart: 2600, spawnMin: 700,  scoreMult: 1.0, penaltyBase: 2 },
+      dificil: { label: 'Difícil', initialIcons: 34, comboWindow: 2500, spawnStart: 2100, spawnMin: 500,  scoreMult: 1.3, penaltyBase: 3 },
     },
     MODES: {
-      tutorial:      { name: 'Tutorial',     emoji: '🎓', timed: false, target: 150,  fixedDiff: 'facil', desc: 'Aprende la mecánica sin prisa.' },
-      clasico:       { name: 'Clásico',      emoji: '♟️', timed: false, target: null, desc: 'Alcanza el objetivo de puntos para subir de nivel.' },
-      contrarreloj:  { name: 'Contrarreloj', emoji: '⏱️', timed: true,  target: null, desc: 'Consigue la máxima puntuación antes de que se acabe el tiempo.' },
-      supervivencia: { name: 'Supervivencia',emoji: '❤️', timed: false, target: null, fast: true, desc: 'Los iconos llegan más rápido. Aguanta sin llenar el tablero.' },
-      zen:           { name: 'Zen',          emoji: '☯️', timed: false, target: null, relaxed: true, desc: 'Ritmo relajado, sin presión. Juega y respira.' },
+      tutorial:      { name: 'Tutorial',     emoji: '🎓', timed: false, penalties: false, mult: 0.5, single: true, fixedDiff: 'facil', desc: 'Aprende la mecánica sin prisa ni penalizaciones.' },
+      clasico:       { name: 'Clásico',      emoji: '♟️', timed: false, penalties: true,  mult: 1.0, desc: 'Vacía el tablero para superar el nivel. Cuidado: errar añade iconos.' },
+      contrarreloj:  { name: 'Contrarreloj', emoji: '⏱️', timed: true,  penalties: true,  mult: 1.2, desc: 'Cada convergencia suma tiempo. ¡No dejes que el reloj llegue a cero!' },
+      supervivencia: { name: 'Supervivencia',emoji: '❤️', timed: false, penalties: true,  mult: 1.5, fast: true, desc: 'Los iconos llegan más rápido y los errores penalizan más. Aguanta.' },
+      zen:           { name: 'Zen',          emoji: '☯️', timed: false, penalties: false, mult: 0.8, relaxed: true, desc: 'Ritmo relajado, sin penalizaciones. Juega y respira.' },
     },
     MODE_ORDER: ['tutorial', 'clasico', 'contrarreloj', 'supervivencia', 'zen'],
     DIFF_ORDER: ['facil', 'normal', 'dificil'],
@@ -95,7 +99,7 @@
     spawnRate: 2600, elapsed: 0, timeLeft: 0,
     status: 'idle', // idle|playing|paused|over|levelComplete
     mode: 'clasico', diff: 'normal',
-    target: 1000,
+    hintsLeft: 3, hintReadyAt: 0,
     pool: [], // iconos disponibles este nivel
   };
 
@@ -109,10 +113,10 @@
       return Config.ICON_POOL.slice(0, variety);
     },
 
-    targetForLevel(level) {
-      const m = Config.MODES[State.mode];
-      if (m.target != null) return m.target;
-      return Math.round(Config.BASE_TARGET * Math.pow(Config.TARGET_GROWTH, level - 1));
+    occupation() {
+      let n = 0;
+      for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null) n++;
+      return n / State.board.length * 100;
     },
 
     spawnRateForLevel(level) {
@@ -174,6 +178,21 @@
       State.board[idx] = State.pool[rand(State.pool.length)];
       State.iconCount++;
       return idx;
+    },
+
+    // Coloca n iconos de penalización en celdas vacías; devuelve sus índices.
+    addPenalty(n) {
+      const empties = this.emptyCells();
+      const placed = [];
+      const k = Math.min(n, empties.length);
+      for (let x = 0; x < k; x++) {
+        const j = rand(empties.length);
+        const idx = empties.splice(j, 1)[0];
+        State.board[idx] = State.pool[rand(State.pool.length)];
+        State.iconCount++;
+        placed.push(idx);
+      }
+      return placed;
     },
   };
 
@@ -265,8 +284,29 @@
       $('#hud-speed').textContent = (State.spawnRate / 1000).toFixed(1) + 's';
       const timeEl = $('#hud-time');
       timeEl.textContent = Config.MODES[State.mode].timed ? fmtTime(State.timeLeft) : fmtTime(State.elapsed);
-      const pct = State.target ? clamp(State.score / State.target * 100, 0, 100) : 0;
-      $('#hud-progress-fill').style.width = pct + '%';
+      // Barra de ocupación = medidor de peligro (cuanto más llena, peor)
+      const occ = Engine.occupation();
+      const fill = $('#hud-progress-fill');
+      fill.style.width = occ.toFixed(1) + '%';
+      fill.classList.toggle('warn', occ >= 60 && occ < 85);
+      fill.classList.toggle('danger', occ >= 85);
+      // Pistas
+      $('#hint-badge').textContent = State.hintsLeft;
+      $('#btn-hint').disabled = State.hintsLeft <= 0 || performance.now() < State.hintReadyAt;
+    },
+
+    penalty(indices) {
+      indices.forEach(i => {
+        this.syncCell(i); this.spawnAnim(i);
+        const el = this.cells[i];
+        el.classList.add('penalty');
+        setTimeout(() => el.classList.remove('penalty'), 1400);
+      });
+    },
+    boardShake() {
+      const w = document.querySelector('.board-wrap');
+      w.classList.remove('shake'); void w.offsetWidth; w.classList.add('shake');
+      setTimeout(() => w.classList.remove('shake'), 320);
     },
 
     combo() {
@@ -351,18 +391,24 @@
           else Render.comboRing(left / State.comboWindow);
         }
       }
-      L.raf = requestAnimationFrame(L.tick);
+      // Mantener el bucle solo mientras hay partida (ahorra batería en menús/fin)
+      L.raf = (State.status === 'playing' || State.status === 'paused') ? requestAnimationFrame(L.tick) : 0;
     },
   };
 
   /* ===================== Game (orquestador) ===================== */
   const Game = {
-    hintTimer: 0, hintCells: [],
+    hintCells: [], hintHideTimer: 0, ended: false,
 
     setupLevel(firstLevel) {
+      const m = Config.MODES[State.mode];
       State.pool = Engine.poolForLevel(State.level);
       State.spawnRate = Engine.spawnRateForLevel(State.level);
-      State.target = Engine.targetForLevel(State.level);
+      State.comboWindow = Config.DIFFICULTY[State.diff].comboWindow;
+      State.hintsLeft = Config.HINTS_PER_LEVEL;
+      State.hintReadyAt = 0;
+      // Contrarreloj: límite de tiempo por nivel (decrece con el nivel)
+      if (m.timed) State.timeLeft = Math.max(Config.TIMED_MIN, Config.TIMED_DURATION - (State.level - 1) * Config.TIMED_DECREASE);
       if (firstLevel) {
         State.board = new Array(State.size * State.size).fill(null);
         State.iconCount = 0;
@@ -370,46 +416,42 @@
       }
       Render.syncAll();
       Render.hud();
-      $('#hud-progress-label').textContent = 'Objetivo';
     },
 
     start(mode, diff) {
       State.mode = mode;
       State.diff = Config.MODES[mode].fixedDiff || diff;
-      State.score = 0; State.level = 1; State.elapsed = 0;
+      State.score = 0; State.level = 1; State.elapsed = 0; State.timeLeft = 0;
       State.combo = 0; State.comboMult = 1; State.comboAt = 0;
-      State.comboWindow = Config.DIFFICULTY[State.diff].comboWindow;
-      State.timeLeft = Config.MODES[mode].timed ? Config.TIMED_DURATION : 0;
-      State.status = 'playing';
-      this.clearHint();
+      State.status = 'playing'; this.ended = false;
+      this.clearHintHighlight();
       this.setupLevel(true);
       Render.combo();
       Screens.show('game');
       Loop.start();
       announce(`Partida iniciada. Modo ${Config.MODES[mode].name}.`);
       Toasts.show('¡A jugar!', 'good', 1400);
-      this.scheduleHint();
     },
 
     restart() { Modal.close(); this.start(State.mode, State.diff); },
-    quit() { Loop.stop(); State.status = 'idle'; Modal.close(); this.clearHint(); refreshStart(); Screens.show('start'); },
+    quit() { Loop.stop(); State.status = 'idle'; Modal.close(); this.clearHintHighlight(); refreshStart(); Screens.show('start'); },
 
     pause() {
       if (State.status !== 'playing') return;
-      State.status = 'paused'; this.clearHint(); Modal.open('modal-pause'); announce('Juego en pausa.');
+      State.status = 'paused'; Modal.open('modal-pause'); announce('Juego en pausa.');
     },
     resume() {
       if (State.status !== 'paused') return;
-      State.status = 'playing'; Modal.close(); Loop.last = performance.now(); this.scheduleHint();
+      State.status = 'playing'; Modal.close(); Loop.last = performance.now();
     },
 
     /* Activación de una casilla (clic/tecla) */
     activate(i) {
       if (State.status !== 'playing') return;
-      this.clearHint();
-      if (State.board[i] !== null) { Sound.tap(); return; } // ocupada: nada
+      this.clearHintHighlight();
+      if (State.board[i] !== null) { Sound.tap(); return; }     // ocupada: nada
       const conv = Engine.converging(i);
-      if (conv.length < 2) { Render.miss(i); Sound.miss(); this.scheduleHint(); return; }
+      if (conv.length < 2) { this.mistake(i); return; }          // error → penalización
 
       // Combo
       const now = performance.now();
@@ -419,15 +461,16 @@
       State.comboMult = 1;
       for (const [thr, mult] of Config.COMBO_MULTIPLIERS) { if (State.combo >= thr) { State.comboMult = mult; break; } }
 
-      // Puntos
+      // Puntos (icono×10×nivel × combo × dificultad × modo)
       const removed = conv.length;
-      const d = Config.DIFFICULTY[State.diff];
+      const d = Config.DIFFICULTY[State.diff], m = Config.MODES[State.mode];
       const base = removed * 10 * State.level;
-      const points = Math.floor(base * State.comboMult * d.scoreMult);
+      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult);
       State.score += points;
-
-      // Hitos de combo
       if (Config.MILESTONES[State.combo]) { State.score += Config.MILESTONES[State.combo]; Toasts.show(`¡Combo x${State.combo}! +${Config.MILESTONES[State.combo]}`, 'good'); }
+
+      // Contrarreloj: bonus de tiempo por convergencia
+      if (m.timed) { const bonus = Math.max(5, removed * 3); State.timeLeft += bonus; Toasts.show(`+${bonus}s`, 'info', 1200); }
 
       // Aplicar al tablero
       conv.forEach(idx => { State.board[idx] = null; State.iconCount--; });
@@ -443,35 +486,59 @@
       else Sound.success();
 
       Render.hud();
-      announce(`+${points} puntos. ${State.combo >= 3 ? 'Combo ' + State.combo + '. ' : ''}`);
+      announce(`+${points} puntos.${State.combo >= 3 ? ' Combo ' + State.combo + '.' : ''}`);
+      this.evaluate();
+    },
 
-      // ¿Nivel completado?
-      if (State.target && State.score >= State.target) { this.levelComplete(); return; }
-      this.scheduleHint();
+    /* Error del jugador: penalización (salvo modos sin penalización) */
+    mistake(i) {
+      Render.miss(i); Sound.miss();
+      const m = Config.MODES[State.mode];
+      if (!m.penalties) return;
+      Render.boardShake();
+      // Añadir iconos de penalización (escala con dificultad y nivel)
+      const d = Config.DIFFICULTY[State.diff];
+      const n = clamp(d.penaltyBase + Math.floor((State.level - 1) / 3), 1, 5);
+      const placed = Engine.addPenalty(n);
+      if (placed.length) Render.penalty(placed);
+      // Subir velocidad de aparición
+      State.spawnRate = Math.max(d.spawnMin, Math.round(State.spawnRate * 0.9));
+      Toasts.show(`Error · +${placed.length} iconos · más rápido`, 'bad', 1800);
+      Render.hud();
+      this.evaluate();
     },
 
     doSpawn() {
       const idx = Engine.spawnOne();
-      if (idx < 0) { this.gameOver('El tablero se llenó.'); return; }
+      if (idx < 0) { this.evaluate(); return; }
       Render.syncCell(idx); Render.spawnAnim(idx);
-      Render.hud();
       // Aceleración progresiva suave dentro del nivel
-      const d = Config.DIFFICULTY[State.diff];
-      State.spawnRate = Math.max(d.spawnMin, State.spawnRate - 6);
-      // Game over si se llena o no hay jugadas posibles (salvo zen, más indulgente)
-      if (Engine.emptyCells().length === 0) { this.gameOver('El tablero se llenó.'); }
+      State.spawnRate = Math.max(Config.DIFFICULTY[State.diff].spawnMin, State.spawnRate - 6);
+      Render.hud();
+      this.evaluate();
+    },
+
+    /* Win/Lose: se evalúa tras cada cambio del tablero */
+    evaluate() {
+      if (State.status !== 'playing') return;
+      if (State.iconCount === 0) { this.levelComplete(true); return; }
+      if (!Engine.hasMoves()) {
+        const occ = Engine.occupation();
+        if (occ <= Config.WIN_OCCUPATION) this.levelComplete(false);
+        else this.gameOver(`Sin movimientos posibles · ${Math.round(occ)}% del tablero ocupado.`);
+      }
     },
 
     resetCombo() { State.combo = 0; State.comboMult = 1; Render.combo(); },
 
-    levelComplete() {
-      State.status = 'levelComplete'; this.clearHint();
+    levelComplete(perfect) {
+      State.status = 'levelComplete'; this.clearHintHighlight();
+      if (perfect) { State.score += Config.EMPTY_BOARD_BONUS; Toasts.show(`¡Tablero limpio! +${Config.EMPTY_BOARD_BONUS}`, 'good'); }
+      this.saveBest(); Render.hud();
       const m = Config.MODES[State.mode];
-      if (m.target != null) { // tutorial / objetivo único
-        this.win('¡Has completado el tutorial!');
-        return;
-      }
+      if (m.single) { this.win(perfect ? '¡Tutorial completado con tablero perfecto!' : '¡Tutorial completado!'); return; }
       Sound.level();
+      $('#level-title').textContent = perfect ? '✨ ¡Tablero perfecto!' : '⭐ ¡Nivel completado!';
       $('#level-sub').textContent = `Nivel ${State.level} superado · ${State.score} puntos`;
       Modal.open('modal-level');
       announce(`Nivel ${State.level} completado.`);
@@ -479,36 +546,33 @@
 
     nextLevel() {
       State.level++;
-      State.comboWindow = Config.DIFFICULTY[State.diff].comboWindow;
-      if (Config.MODES[State.mode].timed) { State.timeLeft += Config.TIMED_LEVEL_BONUS; Toasts.show(`+${Config.TIMED_LEVEL_BONUS}s`, 'info', 1400); }
       State.status = 'playing';
       Modal.close();
-      this.setupLevel(false);
-      Loop.last = performance.now();
+      this.setupLevel(false); // mantiene el tablero actual; ajusta velocidad/variedad/tiempo/pistas
+      Loop.last = performance.now(); Loop.spawnAcc = 0;
       Toasts.show(`Nivel ${State.level}`, 'info', 1400);
-      this.scheduleHint();
     },
 
     win(reason) {
-      Loop.stop(); State.status = 'over'; this.saveBest();
+      this.endGame();
       Sound.level();
       $('#over-title').textContent = '🏆 ¡Victoria!';
-      $('#over-title').className = '';
       $('#over-reason').textContent = reason;
-      this.fillStats();
-      Modal.open('modal-over');
+      this.fillStats(); Modal.open('modal-over');
+      announce(`¡Victoria! Puntuación ${State.score}.`);
     },
 
     gameOver(reason) {
-      if (State.status === 'over') return;
-      Loop.stop(); State.status = 'over'; this.clearHint(); this.saveBest();
+      if (this.ended) return;
+      this.endGame();
       Sound.over();
       $('#over-title').textContent = '¡Misión fallida!';
       $('#over-reason').textContent = reason;
-      this.fillStats();
-      Modal.open('modal-over');
+      this.fillStats(); Modal.open('modal-over');
       announce(`Fin de la partida. ${reason} Puntuación ${State.score}.`);
     },
+
+    endGame() { Loop.stop(); State.status = 'over'; this.ended = true; this.clearHintHighlight(); this.saveBest(); },
 
     fillStats() {
       $('#over-stats').innerHTML =
@@ -517,22 +581,31 @@
         `<div class="stat"><span class="v" style="color:var(--gold)">${Storage.best}</span><span class="k">Récord</span></div>`;
     },
 
-    saveBest() { if (State.score > Storage.best) { Storage.best = State.score; } },
+    saveBest() { if (State.score > Storage.best) Storage.best = State.score; },
 
-    /* Pistas tras inactividad */
-    scheduleHint() {
-      this.clearHint();
-      this.hintTimer = setTimeout(() => {
-        if (State.status !== 'playing') return;
-        for (let i = 0; i < State.board.length; i++) {
-          if (State.board[i] === null) {
-            const conv = Engine.converging(i);
-            if (conv.length >= 2) { this.hintCells = conv; Render.hint(conv, true); return; }
+    /* Pista manual: 3 por nivel, con enfriamiento */
+    hint() {
+      if (State.status !== 'playing') return;
+      if (State.hintsLeft <= 0) { Toasts.show('Sin pistas en este nivel', 'warn', 1400); return; }
+      if (performance.now() < State.hintReadyAt) { Toasts.show('Pista recargando…', 'warn', 1200); return; }
+      for (let i = 0; i < State.board.length; i++) {
+        if (State.board[i] === null) {
+          const conv = Engine.converging(i);
+          if (conv.length >= 2) {
+            this.clearHintHighlight();
+            this.hintCells = conv.concat(i);
+            Render.hint(this.hintCells, true);
+            State.hintsLeft--; State.hintReadyAt = performance.now() + Config.HINT_COOLDOWN;
+            Render.hud();
+            this.hintHideTimer = setTimeout(() => this.clearHintHighlight(), Config.HINT_DURATION);
+            Sound.tap();
+            return;
           }
         }
-      }, 6000);
+      }
+      Toasts.show('No hay jugadas ahora mismo', 'warn', 1400);
     },
-    clearHint() { clearTimeout(this.hintTimer); if (this.hintCells.length) { Render.hint(this.hintCells, false); this.hintCells = []; } },
+    clearHintHighlight() { clearTimeout(this.hintHideTimer); if (this.hintCells.length) { Render.hint(this.hintCells, false); this.hintCells = []; } },
   };
 
   /* ===================== Input ===================== */
@@ -639,6 +712,7 @@
     $('#btn-start-game').addEventListener('click', () => Game.start(selMode, selDiff));
 
     // Juego
+    $('#btn-hint').addEventListener('click', () => Game.hint());
     $('#btn-pause').addEventListener('click', () => Game.pause());
     $('#btn-restart').addEventListener('click', () => Game.restart());
     $('#btn-quit').addEventListener('click', () => Game.quit());
@@ -659,6 +733,8 @@
         else if (State.status === 'paused') Game.resume();
       } else if (e.key.toLowerCase() === 'p' && (State.status === 'playing' || State.status === 'paused')) {
         State.status === 'playing' ? Game.pause() : Game.resume();
+      } else if (e.key.toLowerCase() === 'h' && State.status === 'playing') {
+        Game.hint();
       }
     });
 
