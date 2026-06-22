@@ -21,7 +21,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=fx14" />
+  <link rel="stylesheet" href="styles.css?v=fx15" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -61,24 +61,23 @@
 
     <!-- ============ PANTALLA: INICIO ============ -->
     <section class="screen" id="screen-start" aria-labelledby="start-title" hidden>
-      <div class="panel">
+      <div class="panel panel-start">
         <h1 id="start-title" class="logo">Convergencia<span class="logo-orbit" aria-hidden="true"></span></h1>
-        <p class="subtitle" data-i18n="start_sub">¿List@ para conquistar el tablero?</p>
         <div class="start-meta" id="start-meta"></div>
-        <div class="menu-buttons">
-          <button class="btn btn-primary btn-lg" id="btn-play" data-i18n="play">▶ Jugar</button>
-          <button class="btn btn-reward" id="btn-reward" hidden data-i18n="reward">🎁 Recompensa diaria</button>
-          <div class="menu-row">
-            <button class="btn btn-ghost" id="btn-medals" data-i18n="menu_profile">🏅 Logros</button>
-            <button class="btn btn-ghost" id="btn-shop" data-i18n="menu_shop">🛍️ Tienda</button>
-            <button class="btn btn-ghost" id="btn-settings" data-i18n="menu_settings">⚙️ Ajustes</button>
-          </div>
-          <button class="btn btn-ghost" id="btn-how" data-i18n="how">¿Cómo se juega?</button>
-          <button class="btn btn-ghost" id="btn-install" hidden data-i18n="install">📲 Instalar app</button>
-          <div class="toggle-row">
-            <span data-i18n="sound">Sonido</span>
-            <button class="switch" id="btn-sound" role="switch" aria-checked="true" aria-label="Activar o desactivar sonido"><span class="switch-dot"></span></button>
-          </div>
+        <button class="btn btn-primary btn-lg" id="btn-play" data-i18n="play">▶ Jugar</button>
+        <p class="play-hint" id="play-hint" hidden></p>
+        <button class="btn btn-reward" id="btn-reward" hidden data-i18n="reward">🎁 Recompensa diaria</button>
+        <div class="start-missions" id="start-missions"></div>
+        <div class="menu-row">
+          <button class="btn btn-ghost menu-tile" id="btn-medals" data-i18n="menu_profile">🏅 Logros</button>
+          <button class="btn btn-ghost menu-tile" id="btn-shop" data-i18n="menu_shop">🛍️ Tienda</button>
+          <button class="btn btn-ghost menu-tile" id="btn-settings" data-i18n="menu_settings">⚙️ Ajustes</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="btn-how" data-i18n="how">¿Cómo se juega?</button>
+        <button class="btn btn-ghost btn-sm" id="btn-install" hidden data-i18n="install">📲 Instalar app</button>
+        <div class="toggle-row">
+          <span data-i18n="sound">Sonido</span>
+          <button class="switch" id="btn-sound" role="switch" aria-checked="true" aria-label="Activar o desactivar sonido"><span class="switch-dot"></span></button>
         </div>
         <p class="best-line"><span data-i18n="best">Mejor puntuación:</span> <strong id="start-best">0</strong></p>
         <p class="version-line">v<span id="app-version">1.0.0</span></p>
@@ -93,6 +92,7 @@
           <h2 id="modes-title" data-i18n="modes_title">Elige tu misión</h2>
         </div>
 
+        <div class="mode-featured" id="mode-featured" role="radiogroup" aria-label="Modos destacados"></div>
         <h3 class="group-title" data-i18n="group_mode">Modo</h3>
         <div class="mode-grid" id="mode-grid" role="radiogroup" aria-label="Modo de juego"></div>
 
@@ -270,6 +270,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=fx14" defer></script>
+  <script src="game.js?v=fx15" defer></script>
 </body>
 </html>

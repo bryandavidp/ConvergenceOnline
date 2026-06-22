@@ -121,36 +121,61 @@ h1, h2, h3, p { margin: 0; }
 .menu-buttons { display: flex; flex-direction: column; gap: 12px; }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; color: var(--muted); margin-top: 4px; }
 
-/* ---------- Botones ---------- */
+/* Inicio arcade: columna con jerarquía (perfil → JUGAR héroe → recompensa → misiones → resto) */
+.panel-start { display: flex; flex-direction: column; gap: 12px; }
+.panel-start .logo { margin-bottom: 2px; }
+.panel-start .start-meta { margin: 0; }
+.panel-start .menu-row { margin-top: 2px; }
+.panel-start .best-line { margin-top: 6px; }
+/* Misiones con barra de progreso (progreso visible = enganche) */
+.start-missions { display: flex; flex-direction: column; gap: 8px; }
+.daily-main { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.daily-bar { height: 6px; border-radius: 6px; background: rgba(0,0,0,.4); overflow: hidden; }
+.daily-bar-fill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, var(--accent-2), var(--gold)); transition: width .5s ease; }
+.daily.weekly .daily-bar-fill { background: linear-gradient(90deg, var(--level), var(--accent-2)); }
+.daily.done .daily-bar-fill { background: var(--good); }
+.daily-prog { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--muted); align-self: center; }
+.menu-tile { display: flex; flex-direction: column; gap: 3px; font-size: .82rem; padding: 11px 6px; min-height: 58px; align-items: center; justify-content: center; line-height: 1.15; }
+
+/* ---------- Botones "chunky" (arcade: relieve pulsable estilo Clash Royale) ---------- */
 .btn {
   position: relative; overflow: hidden;
   min-height: var(--tap);
-  border: 1px solid transparent; border-radius: 14px;
-  padding: 12px 18px; font-weight: 800; letter-spacing: .2px;
-  transition: transform .12s ease, filter .12s ease, background .2s, box-shadow .2s;
+  border: 0; border-radius: 16px;
+  padding: 13px 18px; font-weight: 800; letter-spacing: .3px;
+  transition: transform .08s ease, filter .12s ease, box-shadow .12s ease, background .2s;
   touch-action: manipulation;
+  /* lip 3D por defecto (los variantes lo recolorean) */
+  box-shadow: 0 4px 0 rgba(0,0,0,.45), 0 8px 14px rgba(0,0,0,.35);
 }
-.btn:active { transform: translateY(1px) scale(.99); }
-.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #04122e; box-shadow: 0 8px 22px rgba(47,107,255,.45), inset 0 1px 0 rgba(255,255,255,.35); }
-/* Brillo sutil de borde superior (look premium, sin coste de runtime) */
-.btn-primary::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 45%; background: linear-gradient(180deg, rgba(255,255,255,.28), transparent); pointer-events: none; }
-.btn-primary:hover { filter: brightness(1.06); }
-.btn-ghost { background: rgba(255,255,255,.06); border-color: var(--line); color: var(--text); }
-.btn-ghost:hover { background: rgba(255,255,255,.12); }
-.btn-lg { font-size: 1.15rem; padding: 15px 20px; }
+/* Pulsado: se "hunde" y el lip se reduce */
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.45), 0 3px 8px rgba(0,0,0,.3); }
+.btn-primary { background: linear-gradient(180deg, #3d7bff, #1f5be6); color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,.35); box-shadow: 0 5px 0 #103a9e, 0 10px 18px rgba(31,91,230,.4); }
+.btn-primary:active { box-shadow: 0 1px 0 #103a9e, 0 4px 10px rgba(31,91,230,.35); }
+/* Brillo superior (look "gloss" de botón arcade) */
+.btn-primary::after { content: ''; position: absolute; left: 6%; right: 6%; top: 5px; height: 38%; border-radius: 12px; background: linear-gradient(180deg, rgba(255,255,255,.38), transparent); pointer-events: none; }
+.btn-primary:hover { filter: brightness(1.05); }
+.btn-ghost { background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)); color: var(--text); box-shadow: 0 4px 0 rgba(0,0,0,.4), 0 7px 12px rgba(0,0,0,.3); }
+.btn-ghost:active { box-shadow: 0 1px 0 rgba(0,0,0,.4), 0 3px 7px rgba(0,0,0,.25); }
+.btn-ghost:hover { filter: brightness(1.12); }
+.btn-lg { font-size: 1.15rem; padding: 16px 20px; }
+.btn-sm { font-size: .88rem; padding: 9px 14px; min-height: 38px; box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.btn-sm:active { box-shadow: 0 1px 0 rgba(0,0,0,.35); }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 
 /* CTA principal del inicio: botón "héroe" dominante que guía el primer toque. */
 #btn-play {
-  font-size: 1.35rem; padding: 18px 22px; border-radius: 18px;
-  background: linear-gradient(135deg, #2f6bff 0%, #00d0ff 100%);
-  box-shadow: 0 10px 30px rgba(0,208,255,.45), 0 2px 0 rgba(255,255,255,.25) inset;
+  font-size: 1.5rem; font-weight: 900; padding: 20px 22px; border-radius: 20px;
+  background: linear-gradient(180deg, #20d6ff, #129fe6 55%, #0c6fd6);
+  color: #04223e; text-shadow: 0 1px 0 rgba(255,255,255,.35);
+  box-shadow: 0 7px 0 #0a5aa8, 0 14px 30px rgba(0,208,255,.5);
   animation: ctaPulse 2.4s ease-in-out infinite;
 }
-/* Latido SOLO por glow/brillo (sin transform/scale): llama la atención sin
-   alterar la caja del botón (no rompe estabilidad de toques/automatización). */
-@keyframes ctaPulse { 0%,100% { box-shadow: 0 10px 28px rgba(0,208,255,.40), 0 2px 0 rgba(255,255,255,.25) inset; filter: brightness(1); } 50% { box-shadow: 0 14px 40px rgba(0,208,255,.65), 0 2px 0 rgba(255,255,255,.25) inset; filter: brightness(1.08); } }
+#btn-play:active { transform: translateY(5px); box-shadow: 0 2px 0 #0a5aa8, 0 5px 14px rgba(0,208,255,.4); }
+/* Latido por GLOW (el lip 0 7px 0 se mantiene estático; no altera la caja). */
+@keyframes ctaPulse { 0%,100% { box-shadow: 0 7px 0 #0a5aa8, 0 14px 30px rgba(0,208,255,.45); } 50% { box-shadow: 0 7px 0 #0a5aa8, 0 16px 44px rgba(0,208,255,.72); } }
 body.reduced-fx #btn-play { animation: none; }
+.play-hint { color: var(--accent-2); font-weight: 700; font-size: .82rem; margin-top: -4px; }
 .hint { color: var(--muted); font-size: .82rem; margin-top: 6px; }
 
 .icon-btn {
@@ -195,14 +220,32 @@ body.reduced-fx #btn-play { animation: none; }
 .mode-card .emoji { font-size: 2.1rem; line-height: 1; filter: drop-shadow(0 3px 8px rgba(0,0,0,.5)); }
 .mode-card .name { font-weight: 800; font-size: 1rem; }
 .mode-card:hover { background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.16)); transform: translateY(-2px); }
+/* Selección: usa el color propio del modo (--mode-accent, fijado por JS) */
 .mode-card[aria-checked="true"] {
-  border-color: var(--accent-2);
-  background: linear-gradient(180deg, rgba(0,208,255,.20), rgba(0,208,255,.05));
-  box-shadow: 0 0 0 2px var(--accent-2) inset, 0 8px 22px rgba(0,208,255,.28);
+  border-color: var(--mode-accent, var(--accent-2));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mode-accent, #00d0ff) 26%, transparent), rgba(0,0,0,.12));
+  box-shadow: 0 0 0 2px var(--mode-accent, var(--accent-2)) inset, 0 8px 22px color-mix(in srgb, var(--mode-accent, #00d0ff) 35%, transparent);
 }
 /* Marca de selección (check) en la esquina */
-.mode-card[aria-checked="true"]::after { content: '✓'; position: absolute; top: 6px; right: 8px; font-size: .8rem; font-weight: 900; color: #04122e; background: var(--accent-2); border-radius: 999px; width: 18px; height: 18px; display: grid; place-items: center; }
+.mode-card[aria-checked="true"]::after { content: '✓'; position: absolute; top: 6px; right: 8px; font-size: .8rem; font-weight: 900; color: #04122e; background: var(--mode-accent, var(--accent-2)); border-radius: 999px; width: 18px; height: 18px; display: grid; place-items: center; }
 .mode-card:active { transform: scale(.97); }
+
+/* Modos destacados (Aventura, Supervivencia): tarjetas anchas tipo banner */
+.mode-featured { display: flex; flex-direction: column; gap: 12px; margin-bottom: 6px; }
+.mode-card.featured {
+  flex-direction: row; align-items: center; gap: 14px; text-align: left;
+  padding: 16px 16px; min-height: 84px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--mode-accent, #00d0ff) 30%, transparent), rgba(0,0,0,.10) 70%),
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.2));
+  border-color: color-mix(in srgb, var(--mode-accent, #00d0ff) 50%, var(--line));
+}
+.mode-card.featured .emoji { font-size: 2.6rem; flex: 0 0 auto; }
+.mode-card.featured .mc-tx { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.mode-card.featured .name { font-size: 1.2rem; }
+.mode-card.featured .mc-tag { font-size: .78rem; color: var(--muted); line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mode-card.featured .mc-badge { flex: 0 0 auto; align-self: flex-start; font-size: .72rem; font-weight: 800; color: #04122e; background: var(--mode-accent, var(--accent-2)); border-radius: 999px; padding: 3px 10px; }
+.mode-card.featured[aria-checked="true"]::after { top: 10px; right: 10px; }
 
 .diff-row { display: flex; gap: 10px; flex-wrap: wrap; }
 .diff-chip {
@@ -471,6 +514,14 @@ body.reduced-fx .toast { animation: none; }
 }
 .stat .v { font-size: clamp(1.1rem, 4.5vw, 1.4rem); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .stat .k { font-size: .62rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+/* Puntuación = dato HÉROE en modales: primer chip a fila completa y grande. */
+.modal-win .stats .stat:first-child, .modal-over .stats .stat:first-child {
+  grid-column: 1 / -1; flex-direction: row; align-items: baseline; justify-content: center; gap: 10px;
+  background: linear-gradient(180deg, rgba(24,230,230,.16), rgba(0,0,0,.22));
+  border-color: rgba(24,230,230,.32); box-shadow: inset 0 0 0 1px rgba(24,230,230,.12);
+}
+.modal-win .stats .stat:first-child .v, .modal-over .stats .stat:first-child .v { font-size: clamp(2rem, 9vw, 2.8rem); text-shadow: 0 0 18px rgba(24,230,230,.4); }
+.modal-win .stats .stat:first-child .k, .modal-over .stats .stat:first-child .k { align-self: center; }
 
 /* Preview premium del siguiente nivel */
 .next-info { text-align: center; background: rgba(0,0,0,.26); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin: 0 0 16px; }
@@ -645,8 +696,10 @@ body.mode-surv .hud-item.level { display: none; }
 .shop-item .btn { padding: 8px 14px; font-size: .9rem; flex: 0 0 auto; }
 
 /* Recompensa diaria (botón destacado) */
-.btn-reward { background: linear-gradient(135deg, var(--gold), var(--warn)); color: #1a1300; font-weight: 800; border: none; animation: rewardPulse 1.8s ease-in-out infinite; }
-@keyframes rewardPulse { 50% { transform: scale(1.03); filter: brightness(1.1); } }
+.btn-reward { background: linear-gradient(180deg, #ffe27a, #ffc23d 55%, #ff9e2e); color: #2a1a00; font-weight: 900; text-shadow: 0 1px 0 rgba(255,255,255,.4); box-shadow: 0 5px 0 #b06a12, 0 10px 20px rgba(255,180,60,.45); animation: rewardPulse 1.8s ease-in-out infinite; }
+.btn-reward:active { transform: translateY(3px); box-shadow: 0 1px 0 #b06a12, 0 4px 10px rgba(255,180,60,.4); }
+/* Latido por glow (mantiene el lip estático). */
+@keyframes rewardPulse { 0%,100% { box-shadow: 0 5px 0 #b06a12, 0 10px 20px rgba(255,180,60,.4); } 50% { box-shadow: 0 5px 0 #b06a12, 0 12px 30px rgba(255,200,80,.7); } }
 body.reduced-fx .btn-reward { animation: none; }
 
 /* Perfil: leaderboard local por modo + reto semanal */

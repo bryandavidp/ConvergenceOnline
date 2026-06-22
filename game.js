@@ -2107,17 +2107,30 @@
 
   /* ===================== Construcción de menús ===================== */
   let selMode = 'clasico', selDiff = 'normal';
+  const FEATURED_MODES = ['aventura', 'supervivencia'];
   function buildModeMenu() {
+    const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+    const feat = $('#mode-featured'); if (feat) feat.innerHTML = '';
     const grid = $('#mode-grid'); grid.innerHTML = '';
     Config.MODE_ORDER.forEach(key => {
       const m = Config.MODES[key];
       const b = document.createElement('button');
-      b.className = 'mode-card'; b.type = 'button';
+      b.type = 'button';
       b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(key === selMode));
       b.dataset.mode = key;
-      b.innerHTML = `<span class="emoji" aria-hidden="true">${m.emoji}</span><span class="name">${I18n.modeT(key, 'name')}</span>`;
+      b.style.setProperty('--mode-accent', m.accent || '#00d0ff');
+      if (feat && FEATURED_MODES.includes(key)) {
+        b.className = 'mode-card featured';
+        const badge = (key === 'aventura' && Meta.advMax && Meta.advMax() > 1)
+          ? `<span class="mc-badge">${I18n.t('lvl')} ${Meta.advMax()}</span>` : '';
+        b.innerHTML = `<span class="emoji" aria-hidden="true">${m.emoji}</span><span class="mc-tx"><span class="name">${I18n.modeT(key, 'name')}</span><span class="mc-tag">${esc(I18n.modeT(key, 'desc'))}</span></span>${badge}`;
+        feat.appendChild(b);
+      } else {
+        b.className = 'mode-card';
+        b.innerHTML = `<span class="emoji" aria-hidden="true">${m.emoji}</span><span class="name">${I18n.modeT(key, 'name')}</span>`;
+        grid.appendChild(b);
+      }
       b.addEventListener('click', () => selectMode(key));
-      grid.appendChild(b);
     });
     const row = $('#diff-row'); row.innerHTML = '';
     Config.DIFF_ORDER.forEach(key => {
@@ -2149,22 +2162,37 @@
     $('#start-best').textContent = Storage.best;
     const sw = $('#btn-sound'); if (sw) sw.setAttribute('aria-checked', String(Settings.sfx));
     const br = $('#btn-reward'); if (br) br.hidden = !Meta.rewardReady();
+    const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+    // Perfil + XP (identidad/progreso, secundario sobre el CTA Jugar).
     const el = $('#start-meta');
     if (el) {
-      const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
       const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
-      const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp(), dm = Meta.dailyMission(), wk = Meta.weeklyChallenge();
-      const prog = dm.done ? '✅' : `${Math.min(dm.progress || 0, dm.target)}/${dm.target}`;
-      const wprog = wk.done ? '✅' : `${Math.min(wk.progress || 0, wk.target)}/${wk.target}`;
+      const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
       el.innerHTML =
         `<div class="profile">
           <div class="profile-id"><span class="avatar-dot mini" style="--av:${esc(prof.color)}"></span><span class="pname">${esc(prof.name)}</span><span class="coins" title="Monedas">🪙 ${Meta.coins()}</span></div>
           <div class="profile-top"><span class="rank">${Meta.rank()}</span><span class="plevel">${I18n.t('lvl')} ${lvl}</span><span class="streak" title="Racha diaria">🔥 ${Meta.streak()}</span></div>
           <div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>
           <div class="xp-sub">${have} / ${need} XP</div>
-        </div>
-        <div class="daily ${dm.done ? 'done' : ''}"><span class="daily-icon">🎯</span><span class="daily-text">${dm.done ? I18n.t('daily_done') : dm.text}</span><span class="daily-prog">${prog}</span></div>
-        <div class="daily weekly ${wk.done ? 'done' : ''}"><span class="daily-icon">🗓️</span><span class="daily-text">${wk.done ? I18n.t('weekly_done') : wk.text}</span><span class="daily-prog">${wprog}</span></div>`;
+        </div>`;
+    }
+    // Misiones (gancho de retención) con barra de progreso visible, bajo el CTA.
+    const mi = $('#start-missions');
+    if (mi) {
+      const row = (cls, icon, m, doneTxt) => {
+        const tgt = m.target || 1, cur = Math.min(m.progress || 0, tgt);
+        const pct = m.done ? 100 : Math.min(100, cur / tgt * 100);
+        const prog = m.done ? '✅' : `${cur}/${tgt}`;
+        return `<div class="daily ${cls} ${m.done ? 'done' : ''}"><span class="daily-icon">${icon}</span><div class="daily-main"><span class="daily-text">${m.done ? doneTxt : esc(m.text)}</span><div class="daily-bar"><div class="daily-bar-fill" style="width:${pct.toFixed(0)}%"></div></div></div><span class="daily-prog">${prog}</span></div>`;
+      };
+      mi.innerHTML = row('', '🎯', Meta.dailyMission(), I18n.t('daily_done')) + row('weekly', '🗓️', Meta.weeklyChallenge(), I18n.t('weekly_done'));
+    }
+    // Hint de continuar Aventura (gancho de progresión) bajo el botón Jugar.
+    const ph = $('#play-hint');
+    if (ph) {
+      const am = (Meta.advMax && Meta.advMax()) || 1;
+      if (am > 1) { ph.hidden = false; ph.textContent = '🚀 ' + I18n.t('lvl') + ' ' + am; }
+      else ph.hidden = true;
     }
   }
 
