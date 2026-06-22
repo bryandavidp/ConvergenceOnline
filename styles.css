@@ -305,9 +305,10 @@ h1, h2, h3, p { margin: 0; }
 @keyframes glyph-in { from { transform: scale(.2); opacity: 0; } }
 @keyframes glyph-out {
   0%   { transform: scale(1); opacity: 1; animation-timing-function: ease-out; }
-  22%  { transform: scale(1.12); opacity: 1; animation-timing-function: ease-out; }  /* pop */
-  58%  { transform: scale(1); opacity: 1; animation-timing-function: ease-out; }      /* asienta */
-  100% { transform: scale(1.55) rotate(14deg); opacity: 0; }                          /* explota */
+  22%  { transform: scale(var(--clear-pop, 1.12)); opacity: 1; animation-timing-function: ease-out; }  /* pop */
+  58%  { transform: scale(1); opacity: 1; animation-timing-function: ease-in; }                         /* asienta */
+  /* explosión: la magnitud (--clear-boom/--clear-rot) crece con el combo */
+  100% { transform: scale(var(--clear-boom, 1.55)) rotate(var(--clear-rot, 14deg)); opacity: 0; }
 }
 .cell.miss { animation: miss .3s ease; }
 @keyframes miss { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
