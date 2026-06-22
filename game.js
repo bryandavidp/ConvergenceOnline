@@ -685,7 +685,7 @@
   const announce = (msg) => { $('#sr-status').textContent = msg; };
   const Toasts = {
     ICON: { info: 'ℹ️', good: '✅', warn: '⚠️', bad: '✖️' },
-    show(msg, kind = 'info', ms = 2200, icon) {
+    show(msg, kind = 'info', ms = 2800, icon) {
       const el = $('#toasts'); if (!el) return;
       const ic = icon != null ? icon : (this.ICON[kind] || '');
       // Fusión de repetidos aún visibles: incrementa ×N y reinicia el temporizador.
