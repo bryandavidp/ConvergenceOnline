@@ -757,8 +757,10 @@
    * "gravedad" se precalcula como keyframes parabólicos.
    */
   const FX = {
-    layer: null, pool: [], idx: 0, active: 0, cap: 40, w: 0, h: 0, boardRect: null, supported: true,
+    layer: null, pool: [], idx: 0, active: 0, cap: 40, w: 0, h: 0, boardRect: null, supported: true, star: null,
     POOL: 56,                 // capas DOM máximas (acotado para no saturar el compositor)
+    // Estrella de 5 puntas para las partículas de convergencia (clip-path).
+    STAR_CLIP: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
     init() {
       this.layer = $('#fx'); if (!this.layer) return;
       this.supported = typeof Element !== 'undefined' && !!Element.prototype.animate;
@@ -769,6 +771,10 @@
         this.pool.push({ el: s, anim: null, busy: false });
         frag.appendChild(s);
       }
+      // Estrella grande de convergencia (elemento dedicado: lleva glow propio
+      // vía CSS, así no contamina el pool con filtros costosos).
+      this.star = document.createElement('span'); this.star.id = 'fx-star';
+      frag.appendChild(this.star);
       this.layer.appendChild(frag);
       this.resize();
       window.addEventListener('resize', () => this.resize(), { passive: true });
@@ -802,6 +808,10 @@
       el.style.height = (shape === 1 ? size * 0.6 : size) + 'px';
       el.style.background = color;
       el.style.borderRadius = shape === 1 ? '1px' : '50%';
+      // shape 2 = estrella (clip-path + glow). Se resetean SIEMPRE para no
+      // contaminar ranuras reutilizadas por círculos/cuadrados (burst, confeti…).
+      el.style.clipPath = shape === 2 ? this.STAR_CLIP : 'none';
+      el.style.filter = shape === 2 ? 'drop-shadow(0 0 4px ' + color + ')' : 'none';
       // Muestreo parabólico de la trayectoria -> keyframes (el compositor interpola).
       const N = 5, frames = [];
       for (let k = 0; k <= N; k++) {
@@ -844,6 +854,77 @@
       n = Math.min(n, this.cap);
       const C = ['#ff5b6e', '#4b8bff', '#3ad07f', '#ffd23f', '#a06bff', '#2bd4e6', '#ff9838'];
       for (let k = 0; k < n; k++) this._emit(Math.random() * this.w, -14, (Math.random() - 0.5) * 110, 150 + Math.random() * 170, 360, 1.8 + Math.random() * 1.1, 6 + Math.random() * 4, C[k % C.length], 1, (Math.random() - 0.5) * 540);
+    },
+    // Destello/twinkle de estrella QUIETO en (x,y) (para "dibujar" la ruta).
+    // Reutiliza el pool y el gobernador igual que _emit. delay en ms.
+    _spark(x, y, size, color, delay) {
+      if (!this.supported || this.active >= this.cap) return;
+      const p = this._slot(); if (!p) return;
+      const el = p.el;
+      el.style.width = size + 'px'; el.style.height = size + 'px';
+      el.style.background = color; el.style.borderRadius = '50%';
+      el.style.clipPath = this.STAR_CLIP;
+      el.style.filter = 'drop-shadow(0 0 4px ' + color + ')';
+      const ox = (x - size / 2).toFixed(1), oy = (y - size / 2).toFixed(1);
+      const tr = (sc, rot) => 'translate3d(' + ox + 'px,' + oy + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
+      const frames = [
+        { transform: tr(0.2, 0), opacity: 0, offset: 0 },
+        { transform: tr(1.2, 35), opacity: 1, offset: 0.35 },
+        { transform: tr(0.85, 70), opacity: 1, offset: 0.7 },
+        { transform: tr(0.2, 110), opacity: 0, offset: 1 },
+      ];
+      p.busy = true; this.active++;
+      let anim;
+      try { anim = el.animate(frames, { duration: 440, delay: delay || 0, easing: 'ease-out', fill: 'both' }); }
+      catch (_) { p.busy = false; this.active--; return; }
+      p.anim = anim;
+      const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
+      anim.onfinish = done; anim.oncancel = done;
+    },
+    // Convergencia: estrella grande en el centro + estrellitas que viajan desde
+    // cada icono eliminado hacia el centro + ruta de destellos en cada camino.
+    // color = color por tier de combo (escala el efecto con el combo).
+    converge(centerIdx, cells, color) {
+      if (Settings.reducedFx || !this.supported) return;
+      this.syncBoardRect();
+      const C = this.cellXY(centerIdx);
+
+      // 1) Estrella grande central (elemento dedicado, con glow propio).
+      if (this.star) {
+        const s = 52 + Math.min(State.combo || 0, 8) * 3;   // crece con el combo
+        this.star.style.width = s + 'px'; this.star.style.height = s + 'px';
+        // Núcleo blanco compacto + cuerpo saturado del color de tier (lee como estrella, no gris).
+        this.star.style.background = 'radial-gradient(circle at 50% 45%, #fff 0%, #fff 22%, ' + color + ' 46%, ' + color + ' 100%)';
+        this.star.style.filter = 'drop-shadow(0 0 9px ' + color + ') drop-shadow(0 0 22px ' + color + ')';
+        const bt = (sc, rot) => 'translate3d(' + (C.x - s / 2).toFixed(1) + 'px,' + (C.y - s / 2).toFixed(1) + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
+        try {
+          this.star.animate([
+            { transform: bt(0.15, -50), opacity: 0, offset: 0, easing: 'cubic-bezier(.2,.9,.3,1)' },
+            { transform: bt(1.35, 0), opacity: 1, offset: 0.22, easing: 'ease-out' },
+            { transform: bt(1.06, 8), opacity: 1, offset: 0.5, easing: 'linear' },
+            { transform: bt(1.0, 14), opacity: 1, offset: 0.66, easing: 'ease-in' },
+            { transform: bt(0.8, 32), opacity: 0, offset: 1 },
+          ], { duration: 640, fill: 'forwards' });
+        } catch (_) {}
+      }
+
+      // 2) Estrellitas viajeras icono -> centro (convergen exactas, g=0).
+      // 3) Ruta de destellos a lo largo de cada camino (cometa que entra al centro).
+      const hot = (State.combo || 0) >= 6;
+      const trav = hot ? 3 : 2;
+      const route = hot ? 4 : 3;
+      for (const idx of cells) {
+        const S = this.cellXY(idx);
+        for (let k = 0; k < trav; k++) {
+          const life = 0.46 + k * 0.05 + Math.random() * 0.05;
+          this._emit(S.x, S.y, (C.x - S.x) / life, (C.y - S.y) / life, 0, life, 11 + k * 2, color, 2, 460);
+        }
+        for (let k = 1; k <= route; k++) {
+          const t = k / (route + 1);                 // de icono (t~1) a centro (t~0)
+          const px = S.x + (C.x - S.x) * (1 - t), py = S.y + (C.y - S.y) * (1 - t);
+          this._spark(px, py, 7 + (1 - t) * 4, color, (1 - t) * 320);
+        }
+      }
     },
     // Conservado por compatibilidad con el bucle; las partículas son autónomas (WAAPI).
     step() { return false; },
@@ -1576,6 +1657,10 @@
       for (const [thr, mult] of Config.COMBO_MULTIPLIERS) { if (State.combo >= thr) { State.comboMult = mult; break; } }
       if (State.combo > State.maxCombo) State.maxCombo = State.combo;
 
+      // Color por tier de combo (blanco→teal→morado→rosa→oro). Se calcula aquí
+      // para tintar la animación de estrellas y se reutiliza en popup/rango.
+      const color = State.comboMult >= 8 ? '#ffd84d' : State.comboMult >= 5 ? '#ff5cf0' : State.comboMult >= 3 ? '#b46cff' : State.comboMult >= 2 ? '#00d0ff' : State.comboMult >= 1.5 ? '#34e29b' : '#fff';
+
       // FEVER: entrar al encadenar combo alto
       if (!State.fever && State.combo >= Config.FEVER_COMBO) {
         State.fever = true; State.feverEver = true; Render.fever(true); Sound.fever(); Haptics.fever();
@@ -1595,6 +1680,9 @@
       // Contrarreloj: bonus de tiempo por convergencia (los combos suman más)
       if (m.timed) { const bonus = Math.max(5, removed * 3) + Math.min(State.combo, 6); State.timeLeft += bonus; Toasts.show(`+${bonus}s`, 'info', 1100); }
 
+      // Estrellas de convergencia: grande en el centro + viajeras/ruta hacia
+      // los iconos. Va PRIMERO para tener prioridad de ranuras frente al confeti.
+      FX.converge(i, conv, color);
       // Partículas con el color real de cada icono (antes de borrarlos)
       const burstN = 6 + Math.min(State.combo, 14);
       for (const idx of conv) FX.burst(idx, Icons.colorOf(State.board[idx]), burstN);
@@ -1608,8 +1696,6 @@
       Render.clearAnim(conv);
       conv.forEach(idx => { Render.setTile(idx); Render.cells[idx].setAttribute('aria-label', Render.cellLabel(idx)); });
 
-      // Color por tier de combo
-      const color = State.comboMult >= 8 ? '#ffd84d' : State.comboMult >= 5 ? '#ff5cf0' : State.comboMult >= 3 ? '#b46cff' : State.comboMult >= 2 ? '#00d0ff' : State.comboMult >= 1.5 ? '#34e29b' : '#fff';
       Render.popup(i, State.comboMult > 1 ? `+${points} ×${State.comboMult}` : `+${points}`, color);
       Render.bump($('#hud-score'));
       Render.combo();
