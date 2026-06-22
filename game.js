@@ -759,8 +759,20 @@
   const FX = {
     layer: null, pool: [], idx: 0, active: 0, cap: 40, w: 0, h: 0, boardRect: null, supported: true, star: null,
     POOL: 56,                 // capas DOM máximas (acotado para no saturar el compositor)
-    // Estrella de 5 puntas para las partículas de convergencia (clip-path).
-    STAR_CLIP: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+    // Estrella REDONDEADA (5 puntas con esquinas suaves) como máscara SVG: escala
+    // a cualquier tamaño (mask-size 100%) y el fondo/gradiente se ve a través.
+    STAR_MASK: "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20fill='%23fff'%20d='M12%202.5c.5%200%20.9.3%201.1.7l2.4%205%205.4.8c1%20.1%201.4%201.3.7%202l-3.9%203.8.9%205.4c.2%201-.9%201.8-1.8%201.3L12%2018.9l-4.8%202.5c-.9.5-2-.3-1.8-1.3l.9-5.4L3.4%2011c-.7-.7-.3-1.9.7-2l5.4-.8%202.4-5c.2-.4.6-.7%201.1-.7z'/%3E%3C/svg%3E\")",
+    // Aplica (on) o quita (off) la forma de estrella sobre un elemento del pool.
+    _setStar(el, on) {
+      const m = on ? this.STAR_MASK : 'none';
+      el.style.webkitMaskImage = m; el.style.maskImage = m;
+      if (on) {
+        el.style.webkitMaskSize = el.style.maskSize = '100% 100%';
+        el.style.webkitMaskRepeat = el.style.maskRepeat = 'no-repeat';
+        el.style.webkitMaskPosition = el.style.maskPosition = 'center';
+      }
+      el.style.clipPath = 'none';
+    },
     init() {
       this.layer = $('#fx'); if (!this.layer) return;
       this.supported = typeof Element !== 'undefined' && !!Element.prototype.animate;
@@ -808,10 +820,9 @@
       el.style.height = (shape === 1 ? size * 0.6 : size) + 'px';
       el.style.background = color;
       el.style.borderRadius = shape === 1 ? '1px' : '50%';
-      // shape 2 = estrella (clip-path + glow). Se resetean SIEMPRE para no
-      // contaminar ranuras reutilizadas por círculos/cuadrados (burst, confeti…).
-      el.style.clipPath = shape === 2 ? this.STAR_CLIP : 'none';
-      el.style.filter = shape === 2 ? 'drop-shadow(0 0 4px ' + color + ')' : 'none';
+      // Partículas redondas/cuadradas: sin estrella ni glow. Se resetea SIEMPRE
+      // para no contaminar ranuras reutilizadas por las estrellas (burst, confeti…).
+      this._setStar(el, false); el.style.filter = 'none';
       // Muestreo parabólico de la trayectoria -> keyframes (el compositor interpola).
       const N = 5, frames = [];
       for (let k = 0; k <= N; k++) {
@@ -855,20 +866,21 @@
       const C = ['#ff5b6e', '#4b8bff', '#3ad07f', '#ffd23f', '#a06bff', '#2bd4e6', '#ff9838'];
       for (let k = 0; k < n; k++) this._emit(Math.random() * this.w, -14, (Math.random() - 0.5) * 110, 150 + Math.random() * 170, 360, 1.8 + Math.random() * 1.1, 6 + Math.random() * 4, C[k % C.length], 1, (Math.random() - 0.5) * 540);
     },
-    // Duración del efecto = EXACTAMENTE la de glyph-out (.26s, styles.css:299),
-    // para que estrellas y camino aparezcan/desaparezcan en SINCRONÍA con la
-    // desaparición de los iconos del tablero (sin retraso ni "fuera de lugar").
-    DUR_CLEAR: 260,
+    // Duración del efecto = EXACTAMENTE la de glyph-out (styles.css:299), para que
+    // estrellas y camino aparezcan/desaparezcan en SINCRONÍA con la desaparición de
+    // los iconos (sin retraso). Algo más lento (460 ms) para que se perciba bien.
+    DUR_CLEAR: 460,
     _starBg(color) { return 'radial-gradient(circle at 50% 45%, #fff 0%, #fff 26%, ' + color + ' 52%, ' + color + ' 100%)'; },
     // Keyframes de "estrella" (pop + desvanecido) centrada en (cx,cy). Compartido
     // por la estrella de convergencia y por las de los iconos eliminados → idénticas.
     _starFrames(cx, cy, size) {
       const bt = (sc, rot) => 'translate3d(' + (cx - size / 2).toFixed(1) + 'px,' + (cy - size / 2).toFixed(1) + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
       return [
-        { transform: bt(0.3, -24), opacity: 0, offset: 0, easing: 'cubic-bezier(.2,.9,.3,1)' },
-        { transform: bt(1.16, 0), opacity: 1, offset: 0.32, easing: 'linear' },
-        { transform: bt(1.0, 6), opacity: 1, offset: 0.56, easing: 'ease-in' },
-        { transform: bt(0.55, 18), opacity: 0, offset: 1 },
+        { transform: bt(0.3, -20), opacity: 0, offset: 0, easing: 'cubic-bezier(.2,.9,.3,1.2)' }, // pop in
+        { transform: bt(1.12, 0), opacity: 1, offset: 0.26, easing: 'ease-out' },                  // aparece
+        { transform: bt(1.0, 0), opacity: 1, offset: 0.58, easing: 'ease-out' },                   // hold (perceptible)
+        // Salida "pop" explotando, IDÉNTICA a glyph-out: escala hacia arriba + fundido.
+        { transform: bt(1.55, 14), opacity: 0, offset: 1 },
       ];
     },
     // Estrella del TAMAÑO de una casilla (pooled), igual que la de convergencia.
@@ -879,8 +891,8 @@
       const p = this._slot(); if (!p) return;
       const el = p.el;
       el.style.width = size + 'px'; el.style.height = size + 'px';
-      el.style.background = this._starBg(color); el.style.borderRadius = '0';
-      el.style.clipPath = this.STAR_CLIP; el.style.filter = 'drop-shadow(0 0 5px ' + color + ')';
+      el.style.background = this._starBg(color);
+      this._setStar(el, true); el.style.filter = 'drop-shadow(0 0 5px ' + color + ')';
       p.busy = true; this.active++;
       let anim;
       try { anim = el.animate(this._starFrames(cx, cy, size), { duration: Math.max(120, this.DUR_CLEAR - (delay || 0)), delay: delay || 0, fill: 'both' }); }
@@ -897,18 +909,19 @@
       const p = this._slot(); if (!p) return;
       const el = p.el;
       el.style.width = size + 'px'; el.style.height = size + 'px';
-      el.style.background = color; el.style.borderRadius = '50%';
-      el.style.clipPath = this.STAR_CLIP; el.style.filter = 'none';
+      el.style.background = color;
+      this._setStar(el, true); el.style.filter = 'none';
       const ox = (x - size / 2).toFixed(1), oy = (y - size / 2).toFixed(1);
       const tr = (sc, rot) => 'translate3d(' + ox + 'px,' + oy + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
-      const dur = Math.max(110, this.DUR_CLEAR - delay);
-      const oin = Math.min(0.55, 60 / dur);
-      const ohold = Math.min(0.85, Math.max(oin + 0.05, (150 - delay) / dur));
+      const dur = Math.max(140, this.DUR_CLEAR - delay);
+      const oin = Math.min(0.5, 100 / dur);
+      const ohold = Math.min(0.8, Math.max(oin + 0.05, (260 - delay) / dur));
       const frames = [
         { transform: tr(0.3, 0), opacity: 0, offset: 0, easing: 'ease-out' },
-        { transform: tr(1, 30), opacity: 1, offset: oin, easing: 'linear' },
-        { transform: tr(1, 30), opacity: 1, offset: ohold, easing: 'ease-in' },
-        { transform: tr(0.5, 80), opacity: 0, offset: 1 },
+        { transform: tr(1, 0), opacity: 1, offset: oin, easing: 'linear' },
+        { transform: tr(1, 0), opacity: 1, offset: ohold, easing: 'ease-out' },
+        // Salida "pop" explotando, igual que las estrellas grandes.
+        { transform: tr(1.6, 16), opacity: 0, offset: 1 },
       ];
       p.busy = true; this.active++;
       let anim;
@@ -934,7 +947,7 @@
       const C = rcXY(cr, cc);
       const big = Math.round(cellPx * 0.5);           // estrella contenida en la casilla
       const tiny = Math.max(4, cellPx * 0.15);        // estrellitas de camino (mucho menores)
-      const SWEEP = 110;                              // barrido del camino (dentro de DUR_CLEAR)
+      const SWEEP = 170;                              // barrido del camino (dentro de DUR_CLEAR)
       let maxN = 1;
       for (const idx of cells) maxN = Math.max(maxN, Math.abs(((idx / sz) | 0) - cr), Math.abs((idx % sz) - cc));
 
