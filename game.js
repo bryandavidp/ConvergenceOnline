@@ -875,9 +875,6 @@
     },
     // Duración del efecto ambiental (onda + camino), sincronizado con styles.css.
     DUR_CLEAR: 460,
-    // Momento (ms) en que el icono "chasquea" (snap de glyph-out): las esquirlas
-    // del estallido se lanzan en ese instante para que coincida con el pop.
-    POP_AT: 230,
     // Estrellita de "camino": pop en (x,y) tras `delay` ms; se mantiene y se
     // desvanece junto con TODO el efecto al terminar DUR_CLEAR (mismo final).
     // Reutiliza el pool y el gobernador. Sin glow (son muchas).
@@ -950,14 +947,14 @@
     // Estallido del icono al "reventar": esquirlas que salen disparadas en todas
     // direcciones. La cantidad y la velocidad CRECEN con la racha de combo (suave
     // en combos bajos, violento al subir). delay = momento del chasquido del icono.
-    _iconBurst(x, y, color, delay) {
+    _iconBurst(x, y, color) {
       const t = clamp(((State.combo || 1) - 1) / 19, 0, 1);   // 0..1 sobre combo 1..20
-      const n = Math.round(3 + t * 9);                        // 3 → 12 esquirlas
-      const spMax = 95 + t * 250;                             // velocidad crece con el combo
-      const life = 0.22 + t * 0.08;
+      const n = Math.round(7 + t * 13);                       // 7 → 20 esquirlas (bien visibles)
+      const spMax = 150 + t * 320;                            // velocidad crece con el combo
+      const life = 0.26 + t * 0.08;
       for (let k = 0; k < n; k++) {
-        const a = Math.random() * 6.283, sp = spMax * (0.45 + Math.random() * 0.55);
-        this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp, 230, life, 3 + Math.random() * 3, color, 0, 0, delay);
+        const a = Math.random() * 6.283, sp = spMax * (0.4 + Math.random() * 0.6);
+        this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp, 280, life, 4 + Math.random() * 4, color, 0, 0);
       }
     },
     // Convergencia (un solo efecto, SINCRONIZADO con glyph-out = DUR_CLEAR):
@@ -994,25 +991,23 @@
         } catch (_) {}
       }
 
-      // 1b) Toque de "celebración": mini-estrellitas saliendo en todas direcciones
-      // desde el centro, estallando junto con la onda expansiva.
-      this._miniBurst(C.x, C.y, color, cellPx);
-
-      // 2) Camino de estrellitas (centro→afuera) hacia cada icono eliminado. El
-      // icono se elimina con su PROPIA animación (glyph-out: pop del icono real),
-      // no con una estrella encima.
+      // 2) Estallido de esquirlas en cada icono eliminado (la "explosión"; tiene
+      // PRIORIDAD de ranuras) + camino de estrellitas hacia el icono. El icono se
+      // elimina con su propio "pop seco" (glyph-out), no crece.
       for (const idx of cells) {
         const ir = (idx / sz) | 0, ic = idx % sz;
+        const ip = rcXY(ir, ic);
+        this._iconBurst(ip.x, ip.y, color);
         const dr = Math.sign(ir - cr), dc = Math.sign(ic - cc);
         const N = Math.max(Math.abs(ir - cr), Math.abs(ic - cc));  // distancia en celdas
         for (let d = 0.6; d <= N - 0.4 + 1e-6; d += 0.5) {
           const pos = rcXY(cr + dr * d, cc + dc * d);
           this._spark(pos.x, pos.y, tiny, color, (d / N) * SWEEP);
         }
-        // Estallido de esquirlas en el momento del chasquido del icono (POP_AT).
-        const ip = rcXY(ir, ic);
-        this._iconBurst(ip.x, ip.y, color, this.POP_AT);
       }
+
+      // 3) Toque de "celebración": mini-estrellitas desde el centro (secundario).
+      this._miniBurst(C.x, C.y, color, cellPx);
     },
     // Conservado por compatibilidad con el bucle; las partículas son autónomas (WAAPI).
     step() { return false; },
