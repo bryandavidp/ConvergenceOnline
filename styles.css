@@ -307,8 +307,8 @@ h1, h2, h3, p { margin: 0; }
   0%   { transform: scale(1); opacity: 1; animation-timing-function: ease-out; }
   22%  { transform: scale(var(--clear-pop, 1.12)); opacity: 1; animation-timing-function: ease-out; }  /* pop */
   58%  { transform: scale(1); opacity: 1; animation-timing-function: ease-in; }                         /* asienta */
-  /* explosión: la magnitud (--clear-boom/--clear-rot) crece con el combo */
-  100% { transform: scale(var(--clear-boom, 1.55)) rotate(var(--clear-rot, 14deg)); opacity: 0; }
+  /* explosión (sin giro): la magnitud --clear-boom crece con el combo */
+  100% { transform: scale(var(--clear-boom, 1.55)); opacity: 0; }
 }
 .cell.miss { animation: miss .3s ease; }
 @keyframes miss { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
