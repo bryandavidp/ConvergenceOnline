@@ -195,6 +195,13 @@
         st_points: 'Puntos', st_level: 'Nivel', st_combo: 'Combo máx.', st_removed: 'Eliminados', st_time: 'Tiempo', st_record: 'Récord', st_wave: 'Oleada', st_surv: 'Sobreviviste', st_best: 'Mejor',
         st_games: 'Partidas', st_bestcombo: 'Mejor combo', st_totaltime: 'Tiempo total',
         coins: 'monedas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
+        next: 'Próximo', new_icons: 'Nuevos iconos', chapter: 'Capítulo', next_to: 'Ir al nivel {n} →', lets_play: '¡A jugar!',
+        obj_clear: 'Vacía el tablero', obj_score: 'Consigue {n} pts', obj_survive: 'Sobrevive {n}s', obj_boss: 'JEFE · rompe los 💎', obj_boss_live: 'JEFE · rompe los 💎 ({n})',
+        biomemod_nebula: '', biomemod_asteroid: '🪨 Aparecen rocas que estorban', biomemod_ice: '🧊 Casillas heladas: tócalas para romperlas', biomemod_core: '🔥 Los iconos aparecen más rápido', biomemod_void: '🕳️ Menos pistas disponibles', biomemod_crystal: '💎 Cristales con puntos extra',
+        sum_level: 'Nivel alcanzado {n}', sum_time: 'Tiempo {t}', sum_wave: 'Oleada {w} · {s}s sobrevividos', sum_chapter: 'Capítulo {c} · Nivel {n}',
+        level_done: '¡Nivel completado!', perfect_done: '¡Tablero perfecto!', level_sub: 'Nivel {n} superado', perfect_sub: 'Tablero limpio · bonus +{b}', boss_next: '¡Jefe a la vista!',
+        over_victory: '🏆 ¡Victoria!', over_surv: '🛡️ Fin de la supervivencia', over_fail: '¡Misión fallida!',
+        reason_time: '¡Se acabó el tiempo!', reason_nomoves: 'Sin movimientos posibles · {n}% del tablero ocupado.', reason_end: 'Fin de la partida.', reason_surv: 'Sobreviviste {s}s', ach_unlocked: '🏅 Logro: {n}',
       },
       en: {
         welcome_sub: 'Match equal icons across space', name_q: "What's your name?", optional: '(optional)',
@@ -218,6 +225,14 @@
         st_points: 'Score', st_level: 'Level', st_combo: 'Max combo', st_removed: 'Cleared', st_time: 'Time', st_record: 'Best', st_wave: 'Wave', st_surv: 'Survived', st_best: 'Best',
         st_games: 'Games', st_bestcombo: 'Best combo', st_totaltime: 'Total time',
         coins: 'coins', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
+        next: 'Next', new_icons: 'New icons', chapter: 'Chapter', next_to: 'Go to level {n} →', lets_play: "Let's play!",
+        obj_clear: 'Clear the board', obj_score: 'Reach {n} pts', obj_survive: 'Survive {n}s', obj_boss: 'BOSS · break the 💎', obj_boss_live: 'BOSS · break the 💎 ({n})',
+        biome_nebula: 'Nebula', biome_asteroid: 'Asteroid Belt', biome_ice: 'Ice Field', biome_core: 'Burning Core', biome_void: 'The Void', biome_crystal: 'Crystalia',
+        biomemod_nebula: '', biomemod_asteroid: '🪨 Rocks block the board', biomemod_ice: '🧊 Frozen cells: tap to break', biomemod_core: '🔥 Icons spawn faster', biomemod_void: '🕳️ Fewer hints available', biomemod_crystal: '💎 Crystals worth extra points',
+        sum_level: 'Reached level {n}', sum_time: 'Time {t}', sum_wave: 'Wave {w} · {s}s survived', sum_chapter: 'Chapter {c} · Level {n}',
+        level_done: 'Level complete!', perfect_done: 'Perfect board!', level_sub: 'Level {n} cleared', perfect_sub: 'Clean board · bonus +{b}', boss_next: 'Boss ahead!',
+        over_victory: '🏆 Victory!', over_surv: '🛡️ Survival over', over_fail: 'Mission failed!',
+        reason_time: "Time's up!", reason_nomoves: 'No moves left · {n}% of the board filled.', reason_end: 'Game over.', reason_surv: 'Survived {s}s', ach_unlocked: '🏅 Achievement: {n}',
         m_tutorial_n: 'Tutorial', m_tutorial_d: 'Learn the mechanic, no rush or penalties.', m_tutorial_g: 'Match two equal',
         m_clasico_n: 'Classic', m_clasico_d: 'Clear the board to pass the level. Careful: mistakes add icons.', m_clasico_g: 'Clear the board',
         m_aventura_n: 'Adventure', m_aventura_d: 'Endless journey across biomes with their own rules, goals and mini-bosses. How far will you go?',
@@ -662,16 +677,44 @@
   /* ===================== Toasts y lector de pantalla ===================== */
   const announce = (msg) => { $('#sr-status').textContent = msg; };
   const Toasts = {
-    show(msg, kind = 'info', ms = 2200) {
-      const el = $('#toasts');
+    ICON: { info: 'ℹ️', good: '✅', warn: '⚠️', bad: '✖️' },
+    show(msg, kind = 'info', ms = 2200, icon) {
+      const el = $('#toasts'); if (!el) return;
+      const ic = icon != null ? icon : (this.ICON[kind] || '');
+      // Fusión de repetidos aún visibles: incrementa ×N y reinicia el temporizador.
+      const dup = Array.prototype.find.call(el.children, c => c.dataset.msg === msg && !c.classList.contains('out'));
+      if (dup) {
+        const n = (+dup.dataset.n || 1) + 1; dup.dataset.n = n;
+        let x = dup.querySelector('.toast-x');
+        if (!x) { x = document.createElement('span'); x.className = 'toast-x'; dup.appendChild(x); }
+        x.textContent = '×' + n;
+        clearTimeout(dup._t); dup._t = setTimeout(() => this._out(dup), ms);
+        dup.classList.remove('pop'); void dup.offsetWidth; dup.classList.add('pop');
+        return;
+      }
       const t = document.createElement('div');
-      t.className = 'toast ' + kind; t.textContent = msg;
+      t.className = 'toast ' + kind; t.dataset.msg = msg; t.dataset.n = '1';
+      if (ic) { const s = document.createElement('span'); s.className = 'toast-ic'; s.textContent = ic; t.appendChild(s); }
+      const tx = document.createElement('span'); tx.className = 'toast-tx'; tx.textContent = msg; t.appendChild(tx);
       el.appendChild(t);
-      setTimeout(() => { t.classList.add('out'); t.addEventListener('animationend', () => t.remove(), { once: true }); }, ms);
-      // limitar a 3
+      t._t = setTimeout(() => this._out(t), ms);
       while (el.children.length > 3) el.firstChild.remove();
     },
+    _out(t) { if (!t) return; t.classList.add('out'); t.addEventListener('animationend', () => t.remove(), { once: true }); },
   };
+
+  // Cuenta ascendente de un número en un elemento (recompensa visual barata).
+  function countUp(el, to, ms, prefix, suffix) {
+    if (!el) return; to = +to || 0; prefix = prefix || ''; suffix = suffix || '';
+    if (Settings.reducedFx || to <= 0) { el.textContent = prefix + to + suffix; return; }
+    const t0 = performance.now();
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / ms);
+      el.textContent = prefix + Math.round(to * (1 - Math.pow(1 - k, 3))) + suffix;
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
 
   // Construye una fila de estadísticas: items = [ [valor, etiqueta, color?], ... ]
   function statRow(items) {
@@ -1058,12 +1101,12 @@
   const Adventure = {
     perChapter: 5,
     BIOMES: [
-      { id: 'nebula',   name: 'Nebulosa',               glyph: '🌌', mods: [] },
-      { id: 'asteroid', name: 'Cinturón de Asteroides', glyph: '🪨', mods: ['rocks'] },
-      { id: 'ice',      name: 'Campo de Hielo',         glyph: '🧊', mods: ['ice'] },
-      { id: 'core',     name: 'Núcleo Ardiente',        glyph: '🔥', mods: ['rush'] },
-      { id: 'void',     name: 'El Vacío',               glyph: '🕳️', mods: ['scarce'] },
-      { id: 'crystal',  name: 'Cristalia',              glyph: '💎', mods: ['crystals'] },
+      { id: 'nebula',   name: 'Nebulosa',               glyph: '🌌', mods: [],           accent: '#7a5cff' },
+      { id: 'asteroid', name: 'Cinturón de Asteroides', glyph: '🪨', mods: ['rocks'],    accent: '#ff9838' },
+      { id: 'ice',      name: 'Campo de Hielo',         glyph: '🧊', mods: ['ice'],      accent: '#2bd4e6' },
+      { id: 'core',     name: 'Núcleo Ardiente',        glyph: '🔥', mods: ['rush'],     accent: '#ff5b6e' },
+      { id: 'void',     name: 'El Vacío',               glyph: '🕳️', mods: ['scarce'],   accent: '#a06bff' },
+      { id: 'crystal',  name: 'Cristalia',              glyph: '💎', mods: ['crystals'], accent: '#19f0d0' },
     ],
     objective: 'clear', target: 0, levelScore0: 0, levelStart: 0,
     chapterOf(level) { return Math.floor((level - 1) / this.perChapter); },
@@ -1106,16 +1149,27 @@
       return undefined; // 'clear' => regla por defecto (tablero vacío)
     },
     objectiveText() {
-      if (this.objective === 'boss') return `JEFE · rompe los 💎 (${this.crystalsLeft()})`;
-      if (this.objective === 'score') return `Consigue ${this.target} pts`;
-      if (this.objective === 'survive') return `Sobrevive ${this.target}s`;
-      return 'Vacía el tablero';
+      if (this.objective === 'boss') return I18n.t('obj_boss_live').replace('{n}', this.crystalsLeft());
+      if (this.objective === 'score') return I18n.t('obj_score').replace('{n}', this.target);
+      if (this.objective === 'survive') return I18n.t('obj_survive').replace('{n}', this.target);
+      return I18n.t('obj_clear');
     },
+    // Objetivo del nivel `level` SIN mutar estado (para previsualizar el siguiente).
+    previewObjective(level) {
+      const lic = this.licOf(level), chapter = this.chapterOf(level), boss = this.isBoss(level);
+      const obj = boss ? 'boss' : (lic === 2 ? 'score' : (lic === 3 && chapter > 0 ? 'survive' : 'clear'));
+      if (obj === 'boss') return I18n.t('obj_boss');
+      if (obj === 'score') return I18n.t('obj_score').replace('{n}', 250 + chapter * 120 + lic * 40);
+      if (obj === 'survive') return I18n.t('obj_survive').replace('{n}', 18 + chapter * 4);
+      return I18n.t('obj_clear');
+    },
+    biomeName(bi) { return I18n.lang === 'en' ? (I18n.t('biome_' + bi.id) || bi.name) : bi.name; },
+    biomeModText(bi) { return bi.mods.length ? I18n.t('biomemod_' + bi.id) : ''; },
     banner(level) {
       const el = $('#obj-banner'); if (!el) return;
       const biome = this.biomeOf(level);
       el.hidden = false; el.style.borderColor = '';
-      el.innerHTML = `<span class="obj-biome">${biome.glyph} Cap. ${this.chapterOf(level) + 1} · ${biome.name}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>`;
+      el.innerHTML = `<span class="obj-biome">${biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>`;
     },
     refreshGoal() { const g = $('#obj-goal'); if (g) g.textContent = this.objectiveText(); },
   };
@@ -1155,7 +1209,7 @@
     newWave() {
       this.wave++;
       State.spawnRate = Math.max(360, Math.round(State.spawnRate * 0.88));
-      Toasts.show('🌊 Oleada ' + this.wave, 'warn', 1400); Sound.danger();
+      Toasts.show('🌊 ' + I18n.t('st_wave') + ' ' + this.wave, 'warn', 1400); Sound.danger();
       this._traps(Math.min(0.12, 0.02 * this.wave));
       if (this.wave % 4 === 0) this.bossEvent();
     },
@@ -1194,7 +1248,7 @@
       Modal.close(); State.status = 'playing'; Loop.start(); if (Settings.music) Music.start();
       Sound.success(); this.render();
     },
-    giveUp() { Modal.close(); Game.gameOver('Sobreviviste ' + Math.floor(this.survSec) + 's'); },
+    giveUp() { Modal.close(); Game.gameOver(I18n.t('reason_surv').replace('{s}', Math.floor(this.survSec))); },
     useBooster(id) {
       if (this.charge < 100) { Toasts.show('Potenciador cargando…', 'warn', 1000); Sound.ui(); return; }
       this.charge = 0;
@@ -1224,7 +1278,7 @@
     render() {
       const r = this._r;
       if (r.lives !== this.lives) { r.lives = this.lives; const lv = $('#surv-lives'); if (lv) lv.textContent = this.lives > 0 ? '❤️'.repeat(this.lives) : '💀'; }
-      if (r.wave !== this.wave) { r.wave = this.wave; const w = $('#surv-wave'); if (w) w.textContent = 'Oleada ' + this.wave; }
+      if (r.wave !== this.wave) { r.wave = this.wave; const w = $('#surv-wave'); if (w) w.textContent = I18n.t('st_wave') + ' ' + this.wave; }
       const sec = Math.floor(this.survSec); if (r.sec !== sec) { r.sec = sec; const t = $('#surv-time'); if (t) t.textContent = sec + 's'; }
       const ch = Math.round(this.charge); if (r.charge !== ch) { r.charge = ch; const cf = $('#charge-fill'); if (cf) cf.style.width = ch + '%'; }
       const ready = this.charge >= 100; if (r.ready !== ready) { r.ready = ready; const bb = $('#booster-bar'); if (bb) bb.classList.toggle('ready', ready); }
@@ -1395,7 +1449,7 @@
           State.elapsed += secs;
           if (Config.MODES[State.mode].timed) {
             State.timeLeft -= secs;
-            if (State.timeLeft <= 0) { State.timeLeft = 0; Render.hud(); Game.gameOver('¡Se acabó el tiempo!'); }
+            if (State.timeLeft <= 0) { State.timeLeft = 0; Render.hud(); Game.gameOver(I18n.t('reason_time')); }
           }
           // Aventura: revisar objetivos por tiempo (sobrevivir) cada segundo.
           if (State.mode === 'aventura' && State.status === 'playing') Game.evaluate();
@@ -1480,7 +1534,7 @@
       Loop.start();
       if (Settings.music) Music.start();
       announce(`Partida iniciada. Modo ${Config.MODES[mode].name}.`);
-      Toasts.show('¡A jugar!', 'good', 1400);
+      Toasts.show(I18n.t('lets_play'), 'good', 1400);
     },
 
     restart() { if (Coach.active) return Coach.skip(); Modal.close(); this.start(State.mode, State.diff); },
@@ -1645,14 +1699,14 @@
       const wc = Rules.call('winCheck', State);
       if (wc) { this.levelComplete(wc === 'perfect'); return; }
       const lc = Rules.call('loseCheck', State);
-      if (lc) { this.gameOver(typeof lc === 'string' ? lc : 'Fin de la partida.'); return; }
+      if (lc) { this.gameOver(typeof lc === 'string' ? lc : I18n.t('reason_end')); return; }
       // Modos infinitos (Supervivencia): la victoria/derrota la gestionan sus hooks.
       if (Config.MODES[State.mode].endless) return;
       if (State.iconCount === 0) { this.levelComplete(true); return; }
       if (!Engine.hasMoves()) {
         const occ = Engine.occupation();
         if (occ <= Config.WIN_OCCUPATION) this.levelComplete(false);
-        else this.gameOver(`Sin movimientos posibles · ${Math.round(occ)}% del tablero ocupado.`);
+        else this.gameOver(I18n.t('reason_nomoves').replace('{n}', Math.round(occ)));
       }
     },
 
@@ -1670,35 +1724,55 @@
       if (m.single) { this.win(perfect ? '¡Tutorial completado con tablero perfecto!' : '¡Tutorial completado!'); return; }
       Sound.level(); Haptics.level(); FX.confetti(perfect ? 90 : 60);
 
-      $('#level-title').textContent = perfect ? '✨ ¡Tablero perfecto!' : '⭐ ¡Nivel completado!';
-      $('#level-sub').textContent = perfect
-        ? `Has limpiado el tablero por completo. ¡Bonus +${Config.EMPTY_BOARD_BONUS}!`
-        : `Nivel ${State.level} superado sin jugadas restantes.`;
+      const next = State.level + 1;
+      // Acento del modal: color del bioma siguiente (Aventura) o del modo.
+      const accent = State.mode === 'aventura' ? Adventure.biomeOf(next).accent : (m.accent || '#00d0ff');
+      const modal = $('#modal-level'); if (modal) modal.style.setProperty('--modal-accent', accent);
+      const emb = $('#level-emblem'); if (emb) emb.textContent = perfect ? '✨' : (State.mode === 'aventura' ? Adventure.biomeOf(State.level).glyph : (m.emoji || '⭐'));
 
-      // Resumen de la partida hasta ahora
+      $('#level-title').textContent = perfect ? I18n.t('perfect_done') : I18n.t('level_done');
+      $('#level-sub').textContent = perfect
+        ? I18n.t('perfect_sub').replace('{b}', Config.EMPTY_BOARD_BONUS)
+        : I18n.t('level_sub').replace('{n}', State.level);
+
+      // Resumen de la partida hasta ahora (chips premium)
       $('#level-stats').innerHTML = statRow([
-        [State.score, 'Puntos', 'var(--score)'],
-        ['×' + State.maxCombo, 'Combo máx.', 'var(--gold)'],
-        [State.removedTotal, 'Eliminados', 'var(--good)'],
+        [State.score, I18n.t('st_points'), 'var(--score)'],
+        ['×' + State.maxCombo, I18n.t('st_combo'), 'var(--gold)'],
+        [State.removedTotal, I18n.t('st_removed'), 'var(--good)'],
       ]);
 
-      // Preview del siguiente nivel
-      const next = State.level + 1;
-      const nextSpawn = (Engine.spawnRateForLevel(next) / 1000).toFixed(1);
-      const nextVariety = Engine.poolForLevel(next).length;
-      let preview = `<h3>Nivel ${next}</h3><ul>` +
-        `<li>⚡ Aparición cada <strong>${nextSpawn}s</strong></li>` +
-        `<li>🎲 <strong>${nextVariety}</strong> iconos distintos</li>`;
-      if (m.timed) {
-        const nextTime = Math.max(Config.TIMED_MIN, Config.TIMED_DURATION - (next - 1) * Config.TIMED_DECREASE);
-        preview += `<li>⏱️ Tiempo del nivel: <strong>${fmtTime(nextTime)}</strong></li>`;
-      }
-      preview += '</ul>';
-      $('#level-next').innerHTML = preview;
-      $('#btn-next-level').textContent = `Ir al nivel ${next} →`;
+      // Preview coherente del siguiente nivel (iconos que vienen + deltas + objetivo)
+      $('#level-next').innerHTML = this._nextPreview(next, m);
+      $('#btn-next-level').textContent = I18n.t('next_to').replace('{n}', next);
 
       Modal.open('modal-level');
       announce(`Nivel ${State.level} completado. ${State.score} puntos. Siguiente: nivel ${next}.`);
+    },
+
+    // Construye el HTML del preview del siguiente nivel, consciente del modo.
+    _nextPreview(next, m) {
+      const pool = Engine.poolForLevel(next);
+      const curSpawn = Engine.spawnRateForLevel(State.level) / 1000, nxtSpawn = Engine.spawnRateForLevel(next) / 1000;
+      const curVar = Engine.poolForLevel(State.level).length, nxtVar = pool.length;
+      const icons = pool.map(id => `<span class="ic-chip" title="${Icons.name(id)}">${Icons.svg(id)}</span>`).join('');
+      let head, extra = '';
+      if (State.mode === 'aventura') {
+        const bi = Adventure.biomeOf(next), ch = Adventure.chapterOf(next), boss = Adventure.isBoss(next);
+        const newChapter = ch !== Adventure.chapterOf(State.level);
+        head = `${bi.glyph} ${I18n.t('chapter')} ${ch + 1} · ${Adventure.biomeName(bi)}`;
+        extra = `<div class="m-goal${boss ? ' boss' : ''}">${boss ? '⚠️ ' : '🎯 '}${Adventure.previewObjective(next)}</div>`;
+        if (newChapter && bi.mods.length) extra += `<div class="m-mod">${Adventure.biomeModText(bi)}</div>`;
+      } else {
+        head = `${I18n.t('next')} · ${I18n.t('lvl')} ${next}`;
+      }
+      let deltas = `<span class="delta">⚡ ${curSpawn.toFixed(1)}s → <strong>${nxtSpawn.toFixed(1)}s</strong></span>` +
+        `<span class="delta">🎲 ${curVar} → <strong>${nxtVar}</strong></span>`;
+      if (m.timed) { const nt = Math.max(Config.TIMED_MIN, Config.TIMED_DURATION - (next - 1) * Config.TIMED_DECREASE); deltas += `<span class="delta">⏱️ <strong>${fmtTime(nt)}</strong></span>`; }
+      return `<div class="m-card-h">${head}</div>` +
+        `<div class="ic-label">${I18n.t('new_icons')}</div>` +
+        `<div class="ic-row">${icons}</div>` +
+        `<div class="deltas">${deltas}</div>${extra}`;
     },
 
     nextLevel() {
@@ -1712,17 +1786,24 @@
       if (State.mode === 'aventura') {
         Meta.advReach(State.level);
         const ch = Adventure.chapterOf(State.level);
-        if (ch !== prevChapter) { const bi = Adventure.biomeOf(State.level); Toasts.show(`${bi.glyph} Capítulo ${ch + 1}: ${bi.name}`, 'good', 2200); }
-        else Toasts.show(`Nivel ${State.level}`, 'info', 1200);
+        if (ch !== prevChapter) { const bi = Adventure.biomeOf(State.level); Toasts.show(`${I18n.t('chapter')} ${ch + 1}: ${Adventure.biomeName(bi)}`, 'good', 2200, bi.glyph); }
+        else Toasts.show(`${I18n.t('lvl')} ${State.level}`, 'info', 1200);
       } else {
-        Toasts.show(`Nivel ${State.level}`, 'info', 1400);
+        Toasts.show(`${I18n.t('lvl')} ${State.level}`, 'info', 1400);
       }
+    },
+
+    // Aplica emblema y color de acento al modal de fin de partida.
+    _overChrome(emoji, accent) {
+      const e = $('#over-emblem'); if (e) e.textContent = emoji;
+      const mo = $('#modal-over'); if (mo) mo.style.setProperty('--modal-accent', this.newRecord || this._survNew ? 'var(--gold)' : accent);
     },
 
     win(reason) {
       this.endGame();
       Sound.level(); Haptics.level(); FX.confetti(110);
-      $('#over-title').textContent = '🏆 ¡Victoria!';
+      $('#over-title').textContent = I18n.t('over_victory');
+      this._overChrome('🏆', 'var(--gold)');
       $('#over-reason').textContent = reason;
       this.fillStats(); Modal.open('modal-over');
       announce(`¡Victoria! Puntuación ${State.score}.`);
@@ -1735,7 +1816,9 @@
       if (State.mode === 'supervivencia') { this._survNew = Meta.survRecord(Survival.survSec); document.body.classList.remove('mode-surv'); }
       this.endGame();
       Sound.over(); Haptics.error(); Render.boardShake();
-      $('#over-title').textContent = State.mode === 'supervivencia' ? '🛡️ Fin de la supervivencia' : '¡Misión fallida!';
+      const m = Config.MODES[State.mode];
+      $('#over-title').textContent = State.mode === 'supervivencia' ? I18n.t('over_surv') : I18n.t('over_fail');
+      this._overChrome(State.mode === 'supervivencia' ? '🛡️' : (m.emoji || '🏁'), m.accent || '#ff5d73');
       $('#over-reason').textContent = reason;
       this.fillStats(); Modal.open('modal-over');
       announce(`Fin de la partida. ${reason} Puntuación ${State.score}.`);
@@ -1758,7 +1841,13 @@
       $('#over-record').hidden = !this.newRecord && !this._survNew;
       if (this._survNew) { const rec = $('#over-record'); if (rec) rec.textContent = '🛡️ ¡Récord de supervivencia!'; }
       const m = Config.MODES[State.mode], d = Config.DIFFICULTY[State.diff];
-      $('#over-meta').textContent = `${I18n.modeT(State.mode, 'name')} · ${I18n.t('diff_' + State.diff)}`;
+      // Resumen coherente por modo
+      let summary;
+      if (State.mode === 'supervivencia') summary = I18n.t('sum_wave').replace('{w}', Survival.wave).replace('{s}', Math.floor(Survival.survSec));
+      else if (State.mode === 'aventura') summary = I18n.t('sum_chapter').replace('{c}', Adventure.chapterOf(State.level) + 1).replace('{n}', State.level);
+      else if (m.timed) summary = I18n.t('sum_time').replace('{t}', fmtTime(State.elapsed));
+      else summary = I18n.t('sum_level').replace('{n}', State.level);
+      $('#over-meta').textContent = `${I18n.modeT(State.mode, 'name')} · ${I18n.t('diff_' + State.diff)} · ${summary}`;
       const rows = State.mode === 'supervivencia' ? [
         [State.score, I18n.t('st_points'), 'var(--score)'],
         [Survival.wave, I18n.t('st_wave'), 'var(--level)'],
@@ -1779,15 +1868,17 @@
       const r = this.metaResult || { xpGained: 0, coinsGained: 0, leveledUp: 0, newAch: [], missionDone: false };
       const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
       $('#over-xp').innerHTML =
-        `<div class="xp-line"><span class="xp-gain">+${r.xpGained} XP</span><span class="xp-coins">🪙 +${r.coinsGained || 0}</span><span class="xp-rank">${Meta.rank()} · Nivel ${lvl}</span></div>` +
+        `<div class="xp-line"><span class="xp-gain">+${r.xpGained} XP</span><span class="xp-coins">🪙 +${r.coinsGained || 0}</span><span class="xp-rank">${Meta.rank()} · ${I18n.t('lvl')} ${lvl}</span></div>` +
         `<div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>` +
-        (r.leveledUp ? `<div class="xp-up">⬆️ ¡Subiste a nivel ${lvl}!</div>` : '') +
-        (r.missionDone ? `<div class="mission-done">✅ Misión diaria completada · +150 XP</div>` : '') +
-        (r.weeklyDone ? `<div class="mission-done">🗓️ ¡Reto semanal completado! · +400 XP</div>` : '');
+        (r.leveledUp ? `<div class="xp-up">⬆️ ${I18n.t('lvl')} ${lvl}!</div>` : '') +
+        (r.missionDone ? `<div class="mission-done">✅ ${I18n.t('daily_done')} · +150 XP</div>` : '') +
+        (r.weeklyDone ? `<div class="mission-done">🗓️ ${I18n.t('weekly_done')} · +400 XP</div>` : '');
+      countUp($('#over-xp .xp-gain'), r.xpGained, 700, '+', ' XP');
+      countUp($('#over-xp .xp-coins'), r.coinsGained || 0, 700, '🪙 +', '');
       $('#over-ach').innerHTML = r.newAch.length
-        ? '<div class="ach-new">🏅 Nuevos logros: ' + r.newAch.map(a => a.name).join(' · ') + '</div>' : '';
+        ? '<div class="ach-new">🏅 ' + r.newAch.map(a => a.name).join(' · ') + '</div>' : '';
       if (r.leveledUp) { setTimeout(() => { Sound.record(); FX.confetti(60); }, 350); }
-      if (r.newAch.length) { setTimeout(() => { Sound.milestone(); Toasts.show('🏅 Logro: ' + r.newAch[0].name, 'good', 2400); }, 600); }
+      if (r.newAch.length) { setTimeout(() => { Sound.milestone(); Toasts.show(I18n.t('ach_unlocked').replace('{n}', r.newAch[0].name), 'good', 2400); }, 600); }
     },
 
     saveBest() { if (State.score > Storage.best) Storage.best = State.score; },
@@ -2147,5 +2238,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Coach, Adventure, Survival, Share, I18n, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Coach, Adventure, Survival, Share, I18n, Toasts, refreshStart, applyLanguage };
 })();
