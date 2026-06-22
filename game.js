@@ -931,6 +931,45 @@
       const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
       anim.onfinish = done; anim.oncancel = done;
     },
+    // Mini-estrella que sale volando de (x0,y0) hacia (x1,y1): pop + viaje hacia
+    // afuera con desaceleración elegante y desvanecido. Reutiliza el pool.
+    _flyStar(x0, y0, x1, y1, size, color, delay, dur) {
+      if (!this.supported || this.active >= this.cap) return;
+      const p = this._slot(); if (!p) return;
+      const el = p.el;
+      el.style.width = size + 'px'; el.style.height = size + 'px';
+      el.style.background = color;
+      this._setStar(el, true); el.style.filter = 'drop-shadow(0 0 3px ' + color + ')';
+      const tr = (x, y, sc, rot) => 'translate3d(' + (x - size / 2).toFixed(1) + 'px,' + (y - size / 2).toFixed(1) + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
+      const mx = x0 + (x1 - x0) * 0.62, my = y0 + (y1 - y0) * 0.62;
+      const frames = [
+        { transform: tr(x0, y0, 0.2, 0), opacity: 0, offset: 0, easing: 'ease-out' },
+        { transform: tr(mx, my, 1, 18), opacity: 1, offset: 0.4, easing: 'ease-out' },
+        { transform: tr(x1, y1, 0.4, 40), opacity: 0, offset: 1 },
+      ];
+      p.busy = true; this.active++;
+      let anim;
+      try { anim = el.animate(frames, { duration: dur, delay: delay || 0, fill: 'both' }); }
+      catch (_) { p.busy = false; this.active--; return; }
+      p.anim = anim;
+      const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
+      anim.onfinish = done; anim.oncancel = done;
+    },
+    // Estallido sutil de mini-estrellitas en todas direcciones desde (cx,cy),
+    // sincronizado con la explosión de la estrella central → toque de "celebración".
+    _miniBurst(cx, cy, color, cellPx) {
+      const n = 6 + ((State.combo || 0) >= 6 ? 2 : 0);   // sutil (no exagerado)
+      const size = Math.max(4, cellPx * 0.16);
+      const dist = cellPx * 0.78;
+      const delay = this.DUR_CLEAR * 0.5;                // estalla con la explosión central
+      const dur = this.DUR_CLEAR - delay;                // termina junto con todo
+      const base = Math.random() * 6.283;
+      for (let k = 0; k < n; k++) {
+        const a = base + k / n * 6.283 + (Math.random() - 0.5) * 0.35;
+        const d = dist * (0.8 + Math.random() * 0.4);
+        this._flyStar(cx, cy, cx + Math.cos(a) * d, cy + Math.sin(a) * d, size, color, delay, dur);
+      }
+    },
     // Convergencia (un solo efecto, SINCRONIZADO con glyph-out = DUR_CLEAR):
     // estrella contenida en la casilla central (la "X") + una estrella IGUAL sobre
     // cada icono eliminado (el icono "se convierte" en estrella al desaparecer) +
@@ -958,6 +997,10 @@
         this.star.style.filter = 'drop-shadow(0 0 6px ' + color + ')';
         try { this.star.animate(this._starFrames(C.x, C.y, big), { duration: this.DUR_CLEAR, fill: 'forwards' }); } catch (_) {}
       }
+
+      // 1b) Toque de "celebración": mini-estrellitas saliendo en todas direcciones
+      // desde el centro, estallando junto con la explosión de la estrella central.
+      this._miniBurst(C.x, C.y, color, cellPx);
 
       // 2) Por cada icono eliminado: camino de estrellitas (centro→afuera) + una
       // estrella igual a la de convergencia sobre el icono (que desaparece a la vez).
