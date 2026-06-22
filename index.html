@@ -142,6 +142,16 @@
       </div>
 
       <div class="board-area">
+        <!-- Notificaciones: en el hueco entre el HUD y el tablero (no encima del tablero) -->
+        <div class="toasts" id="toasts" aria-live="polite"></div>
+
+        <!-- Indicador de combo (multiplicador): mismo hueco superior, a la derecha -->
+        <div class="combo" id="combo" hidden aria-hidden="true">
+          <svg viewBox="0 0 44 44" class="combo-ring"><circle class="combo-ring-bg" cx="22" cy="22" r="19"/><circle class="combo-ring-fill" id="combo-ring-fill" cx="22" cy="22" r="19"/></svg>
+          <span class="combo-mult" id="combo-mult">x1</span>
+          <span class="combo-count" id="combo-count">0</span>
+        </div>
+
         <div class="board-wrap">
           <div class="board" id="board" role="grid" aria-label="Tablero de juego"></div>
           <!-- Capa de números flotantes, contenida dentro del tablero -->
@@ -158,16 +168,6 @@
         <div class="charge"><div class="charge-fill" id="charge-fill"></div></div>
         <div class="boosters" id="boosters"></div>
       </div>
-
-      <!-- Indicador de combo -->
-      <div class="combo" id="combo" hidden aria-hidden="true">
-        <svg viewBox="0 0 44 44" class="combo-ring"><circle class="combo-ring-bg" cx="22" cy="22" r="19"/><circle class="combo-ring-fill" id="combo-ring-fill" cx="22" cy="22" r="19"/></svg>
-        <span class="combo-mult" id="combo-mult">x1</span>
-        <span class="combo-count" id="combo-count">0</span>
-      </div>
-
-      <!-- Notificaciones (abajo en móvil) -->
-      <div class="toasts" id="toasts" aria-live="polite"></div>
     </section>
 
   </main>
