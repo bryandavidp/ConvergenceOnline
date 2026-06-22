@@ -855,74 +855,78 @@
       const C = ['#ff5b6e', '#4b8bff', '#3ad07f', '#ffd23f', '#a06bff', '#2bd4e6', '#ff9838'];
       for (let k = 0; k < n; k++) this._emit(Math.random() * this.w, -14, (Math.random() - 0.5) * 110, 150 + Math.random() * 170, 360, 1.8 + Math.random() * 1.1, 6 + Math.random() * 4, C[k % C.length], 1, (Math.random() - 0.5) * 540);
     },
-    // Destello/twinkle de estrella QUIETO en (x,y) (para "dibujar" la ruta).
-    // Reutiliza el pool y el gobernador igual que _emit. delay en ms.
+    // Estrellita de "camino": aparece (pop) en (x,y) tras `delay` ms y se
+    // mantiene hasta una ventana de fundido COMÚN (~620 ms desde el disparo),
+    // de modo que todo el camino queda visible a la vez antes de desvanecerse.
+    // Reutiliza el pool y el gobernador igual que _emit. Sin glow (son muchas).
     _spark(x, y, size, color, delay) {
       if (!this.supported || this.active >= this.cap) return;
       const p = this._slot(); if (!p) return;
       const el = p.el;
       el.style.width = size + 'px'; el.style.height = size + 'px';
       el.style.background = color; el.style.borderRadius = '50%';
-      el.style.clipPath = this.STAR_CLIP;
-      el.style.filter = 'drop-shadow(0 0 4px ' + color + ')';
+      el.style.clipPath = this.STAR_CLIP; el.style.filter = 'none';
       const ox = (x - size / 2).toFixed(1), oy = (y - size / 2).toFixed(1);
       const tr = (sc, rot) => 'translate3d(' + ox + 'px,' + oy + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
+      const END = 620, dur = Math.max(180, END - delay);
+      const oin = Math.min(0.5, 130 / dur);
+      const ohold = Math.min(0.9, Math.max(oin + 0.05, (360 - delay) / dur));
       const frames = [
-        { transform: tr(0.2, 0), opacity: 0, offset: 0 },
-        { transform: tr(1.2, 35), opacity: 1, offset: 0.35 },
-        { transform: tr(0.85, 70), opacity: 1, offset: 0.7 },
-        { transform: tr(0.2, 110), opacity: 0, offset: 1 },
+        { transform: tr(0.3, 0), opacity: 0, offset: 0, easing: 'ease-out' },
+        { transform: tr(1, 30), opacity: 1, offset: oin, easing: 'linear' },
+        { transform: tr(1, 30), opacity: 1, offset: ohold, easing: 'ease-in' },
+        { transform: tr(0.5, 80), opacity: 0, offset: 1 },
       ];
       p.busy = true; this.active++;
       let anim;
-      try { anim = el.animate(frames, { duration: 440, delay: delay || 0, easing: 'ease-out', fill: 'both' }); }
+      try { anim = el.animate(frames, { duration: dur, delay: delay || 0, fill: 'both' }); }
       catch (_) { p.busy = false; this.active--; return; }
       p.anim = anim;
       const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
       anim.onfinish = done; anim.oncancel = done;
     },
-    // Convergencia: estrella grande en el centro + estrellitas que viajan desde
-    // cada icono eliminado hacia el centro + ruta de destellos en cada camino.
-    // color = color por tier de combo (escala el efecto con el combo).
+    // Convergencia (un solo efecto): una estrella CONTENIDA en la casilla central
+    // (la "X" que se toca) + un camino de estrellitas mucho más pequeñas que se
+    // dibuja DESDE EL CENTRO HACIA AFUERA por cada icono que se elimina. Todo
+    // coexiste en pantalla y se desvanece a la vez. color = color por tier de combo.
     converge(centerIdx, cells, color) {
       if (Settings.reducedFx || !this.supported) return;
       this.syncBoardRect();
-      const C = this.cellXY(centerIdx);
+      const r = this.boardRect, sz = State.size;
+      if (!r || !r.width) return;
+      const cellPx = r.width / sz;
+      const rcXY = (row, col) => ({ x: r.left + (col + 0.5) / sz * r.width, y: r.top + (row + 0.5) / sz * r.height });
+      const cr = (centerIdx / sz) | 0, cc = centerIdx % sz;
+      const C = rcXY(cr, cc);
 
-      // 1) Estrella grande central (elemento dedicado, con glow propio).
+      // 1) Estrella central contenida en la casilla (no se sale de la celda).
       if (this.star) {
-        const s = 52 + Math.min(State.combo || 0, 8) * 3;   // crece con el combo
+        const s = Math.round(cellPx * (0.46 + Math.min(State.combo || 0, 8) * 0.008));
         this.star.style.width = s + 'px'; this.star.style.height = s + 'px';
-        // Núcleo blanco compacto + cuerpo saturado del color de tier (lee como estrella, no gris).
-        this.star.style.background = 'radial-gradient(circle at 50% 45%, #fff 0%, #fff 22%, ' + color + ' 46%, ' + color + ' 100%)';
-        this.star.style.filter = 'drop-shadow(0 0 9px ' + color + ') drop-shadow(0 0 22px ' + color + ')';
+        this.star.style.background = 'radial-gradient(circle at 50% 45%, #fff 0%, #fff 26%, ' + color + ' 52%, ' + color + ' 100%)';
+        this.star.style.filter = 'drop-shadow(0 0 5px ' + color + ')';
         const bt = (sc, rot) => 'translate3d(' + (C.x - s / 2).toFixed(1) + 'px,' + (C.y - s / 2).toFixed(1) + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
         try {
           this.star.animate([
-            { transform: bt(0.15, -50), opacity: 0, offset: 0, easing: 'cubic-bezier(.2,.9,.3,1)' },
-            { transform: bt(1.35, 0), opacity: 1, offset: 0.22, easing: 'ease-out' },
-            { transform: bt(1.06, 8), opacity: 1, offset: 0.5, easing: 'linear' },
-            { transform: bt(1.0, 14), opacity: 1, offset: 0.66, easing: 'ease-in' },
-            { transform: bt(0.8, 32), opacity: 0, offset: 1 },
-          ], { duration: 640, fill: 'forwards' });
+            { transform: bt(0.3, -30), opacity: 0, offset: 0, easing: 'cubic-bezier(.2,.9,.3,1)' },
+            { transform: bt(1.18, 0), opacity: 1, offset: 0.2, easing: 'ease-out' },
+            { transform: bt(1.0, 8), opacity: 1, offset: 0.58, easing: 'ease-in' },
+            { transform: bt(0.82, 18), opacity: 0, offset: 1 },
+          ], { duration: 620, fill: 'forwards' });
         } catch (_) {}
       }
 
-      // 2) Estrellitas viajeras icono -> centro (convergen exactas, g=0).
-      // 3) Ruta de destellos a lo largo de cada camino (cometa que entra al centro).
-      const hot = (State.combo || 0) >= 6;
-      const trav = hot ? 3 : 2;
-      const route = hot ? 4 : 3;
+      // 2) Camino de estrellitas (mucho más pequeñas) celda a celda, del centro
+      // hacia cada icono eliminado. El retardo crece con la distancia → se dibuja
+      // hacia afuera. Dos por celda (paso 0,5) para que lea como un trazo.
+      const SWEEP = 200, tiny = Math.max(4, cellPx * 0.15);
       for (const idx of cells) {
-        const S = this.cellXY(idx);
-        for (let k = 0; k < trav; k++) {
-          const life = 0.46 + k * 0.05 + Math.random() * 0.05;
-          this._emit(S.x, S.y, (C.x - S.x) / life, (C.y - S.y) / life, 0, life, 11 + k * 2, color, 2, 460);
-        }
-        for (let k = 1; k <= route; k++) {
-          const t = k / (route + 1);                 // de icono (t~1) a centro (t~0)
-          const px = S.x + (C.x - S.x) * (1 - t), py = S.y + (C.y - S.y) * (1 - t);
-          this._spark(px, py, 7 + (1 - t) * 4, color, (1 - t) * 320);
+        const ir = (idx / sz) | 0, ic = idx % sz;
+        const dr = Math.sign(ir - cr), dc = Math.sign(ic - cc);
+        const N = Math.max(Math.abs(ir - cr), Math.abs(ic - cc));  // distancia en celdas
+        for (let d = 0.6; d <= N - 0.4 + 1e-6; d += 0.5) {
+          const pos = rcXY(cr + dr * d, cc + dc * d);
+          this._spark(pos.x, pos.y, tiny, color, (d / N) * SWEEP);
         }
       }
     },
