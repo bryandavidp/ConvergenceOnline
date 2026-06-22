@@ -303,12 +303,15 @@ h1, h2, h3, p { margin: 0; }
    su propia forma, para mantener coherencia con la onda y el camino de estrellas. */
 .cell.clear .glyph { animation: glyph-out .46s linear forwards; }
 @keyframes glyph-in { from { transform: scale(.2); opacity: 0; } }
+/* "Pop" de desaparición: anticipación (squash), estallido OPACO y desaparición
+   de golpe al final (no un fundido progresivo). La magnitud --clear-boom crece
+   con el combo (más violento). Sin giro. */
 @keyframes glyph-out {
-  0%   { transform: scale(1); opacity: 1; animation-timing-function: ease-out; }
-  22%  { transform: scale(var(--clear-pop, 1.12)); opacity: 1; animation-timing-function: ease-out; }  /* pop */
-  58%  { transform: scale(1); opacity: 1; animation-timing-function: ease-in; }                         /* asienta */
-  /* explosión (sin giro): la magnitud --clear-boom crece con el combo */
-  100% { transform: scale(var(--clear-boom, 1.55)); opacity: 0; }
+  0%   { transform: scale(1);  opacity: 1; animation-timing-function: ease-in; }
+  20%  { transform: scale(var(--clear-pop, .82)); opacity: 1; animation-timing-function: cubic-bezier(.2,.7,.3,1.5); } /* squash + arranque explosivo */
+  64%  { transform: scale(var(--clear-boom, 1.6)); opacity: 1; animation-timing-function: ease-out; }                  /* estallido, OPACO */
+  82%  { transform: scale(calc(var(--clear-boom, 1.6) * 1.06)); opacity: 1; animation-timing-function: ease-in; }      /* sigue opaco */
+  100% { transform: scale(calc(var(--clear-boom, 1.6) * 1.16)); opacity: 0; }                                          /* POP: desaparece de golpe */
 }
 .cell.miss { animation: miss .3s ease; }
 @keyframes miss { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }

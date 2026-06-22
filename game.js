@@ -559,11 +559,11 @@
       // solo escala de "boom" (estallido) y overshoot.
       const combo = Math.max(1, State.combo || 1);
       const t = clamp((combo - 1) / 19, 0, 1);        // 0..1 ramp sobre combo 1..20
-      const boom = (1.4 + t * 1.3).toFixed(2);        // 1.40 → 2.70
-      const pop = (1.08 + t * 0.27).toFixed(2);       // 1.08 → 1.35
+      const boom = (1.4 + t * 1.3).toFixed(2);        // estallido 1.40 → 2.70
+      const squash = (0.88 - t * 0.16).toFixed(2);    // anticipación 0.88 → 0.72 (más a más combo)
       indices.forEach(i => {
         const el = this.cells[i];
-        el.style.setProperty('--clear-pop', pop);
+        el.style.setProperty('--clear-pop', squash);
         el.style.setProperty('--clear-boom', boom);
         el.classList.add('clear');
         el.addEventListener('animationend', () => {
