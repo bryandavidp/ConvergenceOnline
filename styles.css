@@ -229,7 +229,7 @@ h1, h2, h3, p { margin: 0; }
 @keyframes bump { 50% { transform: scale(1.18); color: var(--gold); } }
 
 /* Tablero */
-.board-area { width: 100%; flex: 1; display: grid; place-items: center; min-height: 0; }
+.board-area { width: 100%; flex: 1; display: grid; place-items: center; min-height: 0; position: relative; }
 .board-wrap {
   position: relative;
   /* Lado explícito (ancho Y alto) para que el grid interno resuelva height:100%
@@ -325,27 +325,27 @@ h1, h2, h3, p { margin: 0; }
 
 /* Indicador de combo (abajo-derecha, no tapa el HUD) */
 .combo {
-  position: fixed; right: 14px; bottom: 14px; z-index: var(--z-combo);
-  width: 72px; height: 72px; display: grid; place-items: center; pointer-events: none;
+  position: absolute; top: 0; right: 8px; z-index: var(--z-combo);
+  width: 56px; height: 56px; display: grid; place-items: center; pointer-events: none;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,.6));
 }
 .combo-ring { position: absolute; inset: 0; transform: rotate(-90deg); }
 .combo-ring-bg, .combo-ring-fill { fill: none; stroke-width: 4; }
 .combo-ring-bg { stroke: rgba(255,255,255,.12); }
 .combo-ring-fill { stroke: var(--gold); stroke-linecap: round; stroke-dasharray: 119.4; stroke-dashoffset: 0; }
-.combo-mult { font-size: 1.4rem; font-weight: 900; color: var(--gold); line-height: 1; }
-.combo-count { position: absolute; top: 8px; font-size: .7rem; font-weight: 800; color: #fff; }
+.combo-mult { font-size: 1.05rem; font-weight: 900; color: var(--gold); line-height: 1; }
+.combo-count { position: absolute; top: 6px; font-size: .62rem; font-weight: 800; color: #fff; }
 .combo.lv2 .combo-ring-fill { stroke: #00d0ff; } .combo.lv2 .combo-mult { color: #00d0ff; }
 .combo.lv3 .combo-ring-fill { stroke: #b46cff; } .combo.lv3 .combo-mult { color: #b46cff; }
 .combo.lv4 .combo-ring-fill { stroke: #ff5cf0; } .combo.lv4 .combo-mult { color: #ff5cf0; }
 .combo.pulse { animation: combo-pulse .3s ease; }
 @keyframes combo-pulse { 50% { transform: scale(1.14); } }
 
-/* Toasts */
+/* Toasts: en el hueco entre el HUD y el tablero (anclados arriba de .board-area) */
 .toasts {
-  position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(96px + env(safe-area-inset-bottom)); z-index: var(--z-toast);
-  display: flex; flex-direction: column-reverse; align-items: center; gap: 6px;
+  position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
   width: min(420px, 92vw); pointer-events: none;
 }
 /* Toasts premium: píldora con icono, acento por tipo y contador de repetidos */
