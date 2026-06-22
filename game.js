@@ -559,12 +559,10 @@
       // solo escala de "boom" (estallido) y overshoot.
       const combo = Math.max(1, State.combo || 1);
       const t = clamp((combo - 1) / 19, 0, 1);        // 0..1 ramp sobre combo 1..20
-      const boom = (1.4 + t * 1.3).toFixed(2);        // estallido 1.40 → 2.70
-      const squash = (0.88 - t * 0.16).toFixed(2);    // anticipación 0.88 → 0.72 (más a más combo)
+      const snap = (0.45 - t * 0.38).toFixed(2);      // colapso del pop 0.45 → 0.07 (más seco a más combo)
       indices.forEach(i => {
         const el = this.cells[i];
-        el.style.setProperty('--clear-pop', squash);
-        el.style.setProperty('--clear-boom', boom);
+        el.style.setProperty('--clear-snap', snap);
         el.classList.add('clear');
         el.addEventListener('animationend', () => {
           el.classList.remove('clear');
@@ -821,7 +819,7 @@
     // Lanza una partícula con velocidad (vx,vy) px/s y gravedad g px/s^2 durante life s.
     // Si se alcanza el tope de concurrencia, se DESCARTA (nunca se cancela una activa),
     // así el nº de capas del compositor queda acotado y no hay parpadeo blanco.
-    _emit(x, y, vx, vy, g, life, size, color, shape, spin) {
+    _emit(x, y, vx, vy, g, life, size, color, shape, spin, delay) {
       if (!this.supported || this.active >= this.cap) return;
       const p = this._slot(); if (!p) return;
       const el = p.el;
@@ -842,7 +840,7 @@
       }
       p.busy = true; this.active++;
       let anim;
-      try { anim = el.animate(frames, { duration: life * 1000, easing: 'linear', fill: 'forwards' }); }
+      try { anim = el.animate(frames, { duration: life * 1000, delay: delay || 0, easing: 'linear', fill: delay ? 'both' : 'forwards' }); }
       catch (_) { p.busy = false; this.active--; return; }
       p.anim = anim;
       const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
@@ -875,10 +873,11 @@
       const C = ['#ff5b6e', '#4b8bff', '#3ad07f', '#ffd23f', '#a06bff', '#2bd4e6', '#ff9838'];
       for (let k = 0; k < n; k++) this._emit(Math.random() * this.w, -14, (Math.random() - 0.5) * 110, 150 + Math.random() * 170, 360, 1.8 + Math.random() * 1.1, 6 + Math.random() * 4, C[k % C.length], 1, (Math.random() - 0.5) * 540);
     },
-    // Duración del efecto = EXACTAMENTE la de glyph-out (styles.css:299), para que
-    // estrellas y camino aparezcan/desaparezcan en SINCRONÍA con la desaparición de
-    // los iconos (sin retraso). Algo más lento (460 ms) para que se perciba bien.
+    // Duración del efecto ambiental (onda + camino), sincronizado con styles.css.
     DUR_CLEAR: 460,
+    // Momento (ms) en que el icono "chasquea" (snap de glyph-out): las esquirlas
+    // del estallido se lanzan en ese instante para que coincida con el pop.
+    POP_AT: 230,
     // Estrellita de "camino": pop en (x,y) tras `delay` ms; se mantiene y se
     // desvanece junto con TODO el efecto al terminar DUR_CLEAR (mismo final).
     // Reutiliza el pool y el gobernador. Sin glow (son muchas).
@@ -948,6 +947,19 @@
         this._flyStar(cx, cy, cx + Math.cos(a) * d, cy + Math.sin(a) * d, size, color, delay, dur);
       }
     },
+    // Estallido del icono al "reventar": esquirlas que salen disparadas en todas
+    // direcciones. La cantidad y la velocidad CRECEN con la racha de combo (suave
+    // en combos bajos, violento al subir). delay = momento del chasquido del icono.
+    _iconBurst(x, y, color, delay) {
+      const t = clamp(((State.combo || 1) - 1) / 19, 0, 1);   // 0..1 sobre combo 1..20
+      const n = Math.round(3 + t * 9);                        // 3 → 12 esquirlas
+      const spMax = 95 + t * 250;                             // velocidad crece con el combo
+      const life = 0.22 + t * 0.08;
+      for (let k = 0; k < n; k++) {
+        const a = Math.random() * 6.283, sp = spMax * (0.45 + Math.random() * 0.55);
+        this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp, 230, life, 3 + Math.random() * 3, color, 0, 0, delay);
+      }
+    },
     // Convergencia (un solo efecto, SINCRONIZADO con glyph-out = DUR_CLEAR):
     // estrella contenida en la casilla central (la "X") + una estrella IGUAL sobre
     // cada icono eliminado (el icono "se convierte" en estrella al desaparecer) +
@@ -997,6 +1009,9 @@
           const pos = rcXY(cr + dr * d, cc + dc * d);
           this._spark(pos.x, pos.y, tiny, color, (d / N) * SWEEP);
         }
+        // Estallido de esquirlas en el momento del chasquido del icono (POP_AT).
+        const ip = rcXY(ir, ic);
+        this._iconBurst(ip.x, ip.y, color, this.POP_AT);
       }
     },
     // Conservado por compatibilidad con el bucle; las partículas son autónomas (WAAPI).
