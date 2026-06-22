@@ -499,7 +499,7 @@ body.reduced-fx .toast { animation: none; }
   --modal-accent: var(--accent-2);
   width: min(440px, 100%);
   background: linear-gradient(180deg, rgba(30,42,92,.97), rgba(15,22,54,.99));
-  border: 1px solid var(--line); border-radius: var(--radius);
+  border: 1px solid var(--line); border-radius: 20px;
   padding: clamp(20px, 5vw, 30px); text-align: center; position: relative; overflow: hidden;
   box-shadow: 0 26px 72px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.10);
   animation: modal-in .26s cubic-bezier(.2,.9,.3,1.2) both;
@@ -515,7 +515,8 @@ body.reduced-fx .toast { animation: none; }
 .modal-over h2, .modal-win h2 { color: var(--modal-accent); }
 .modal-sub { color: var(--muted); margin-bottom: 16px; }
 .modal-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
-.how-list { text-align: left; color: var(--text); line-height: 1.6; margin: 0 0 18px; padding-left: 18px; }
+.how-list { list-style: none; text-align: left; color: var(--text); margin: 4px 0 16px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.how-list li { display: flex; align-items: flex-start; gap: 10px; font-size: .92rem; line-height: 1.4; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18)); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
 .how-list strong { color: var(--accent-2); }
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; margin: 14px 0 16px; }
 .stat {
@@ -621,8 +622,8 @@ body.reduced-fx .ic-chip { animation: none; }
 /* Bienvenida: opcional + selector de avatar */
 .field .opt { color: var(--muted); font-weight: 400; font-size: .82em; }
 .avatar-pick { display: flex; gap: 10px; justify-content: center; margin: 4px 0 16px; flex-wrap: wrap; }
-.avatar-dot { width: 32px; height: 32px; border-radius: 50%; background: var(--av, #00d0ff); border: 2px solid rgba(255,255,255,.25); padding: 0; cursor: pointer; transition: transform .12s; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
-.avatar-dot.sel { border-color: #fff; transform: scale(1.18); box-shadow: 0 0 0 3px var(--av), 0 2px 8px rgba(0,0,0,.5); }
+.avatar-dot { width: 38px; height: 38px; border-radius: 50%; background: var(--av, #00d0ff); border: 2px solid rgba(255,255,255,.25); padding: 0; cursor: pointer; transition: transform .12s; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
+.avatar-dot.sel { border-color: #fff; transform: scale(1.18); box-shadow: 0 0 0 3px var(--av), 0 0 16px var(--av), 0 2px 8px rgba(0,0,0,.5); }
 .avatar-dot.mini { width: 22px; height: 22px; border-width: 2px; cursor: default; flex: 0 0 auto; }
 
 /* Tutorial interactivo (coach-marks) */
@@ -652,18 +653,20 @@ body.reduced-fx .coach-text { animation: none; }
 .menu-row .btn { flex: 1; flex-direction: column; gap: 2px; font-size: .82rem; padding: 10px 6px; border-radius: 14px; min-height: 56px; display: flex; align-items: center; justify-content: center; line-height: 1.15; }
 
 /* Selector de idioma en ajustes */
-.lang-pick { display: flex; gap: 6px; }
-.lang-btn { padding: 6px 14px; border-radius: 8px; background: rgba(0,0,0,.25); border: 1px solid var(--line); font-weight: 800; color: var(--muted); }
-.lang-btn.on { border-color: var(--accent-2); color: var(--text); background: rgba(0,208,255,.12); }
+/* Selector de idioma como control segmentado chunky */
+.lang-pick { display: flex; gap: 0; background: rgba(0,0,0,.32); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.lang-btn { padding: 7px 16px; border-radius: 999px; background: transparent; border: 0; font-weight: 900; color: var(--muted); transition: background .15s, color .15s; }
+.lang-btn.on { color: #04122e; background: linear-gradient(180deg, var(--accent-2), #0bb6e0); box-shadow: 0 2px 6px rgba(0,0,0,.35); }
 
 /* Ajustes / medallas */
 .settings-list { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 18px; }
-.set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(0,0,0,.2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 700; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.2)); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
 .medals-list { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 18px; max-height: 50vh; overflow: auto; text-align: left; }
-.medal { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: rgba(0,0,0,.2); border: 1px solid var(--line); opacity: .5; }
-.medal.on { opacity: 1; border-color: var(--gold); }
-.medal-ic { font-size: 1.3rem; }
+.medal { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.22)); border: 1px solid var(--line); opacity: .5; }
+.medal.on { opacity: 1; border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset, 0 0 12px rgba(255,216,77,.2); }
+.medal-ic { font-size: 1.5rem; width: 34px; text-align: center; flex: 0 0 auto; }
 .medal-tx { display: flex; flex-direction: column; }
+.medal-tx strong { font-weight: 800; }
 .medal-tx small { color: var(--muted); }
 
 /* Banner de objetivo (Aventura) */
@@ -687,23 +690,23 @@ body.mode-surv .hud-item.level { display: none; }
 
 /* Mapa de Aventura */
 .adventure-map { display: flex; align-items: center; gap: 4px; overflow-x: auto; padding: 10px 2px; margin: 8px 0 16px; }
-.adv-node { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 86px; padding: 10px 8px; border-radius: 12px; background: rgba(0,0,0,.22); border: 1px solid var(--line); opacity: .55; flex: 0 0 auto; }
-.adv-node.cur { opacity: 1; border-color: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2) inset; }
-.adv-node.done { opacity: .85; border-color: var(--good); }
-.adv-glyph { font-size: 1.6rem; }
-.adv-name { font-size: .72rem; text-align: center; font-weight: 700; line-height: 1.15; }
-.adv-name small { display: block; color: var(--muted); font-weight: 400; }
-.adv-link { width: 16px; height: 2px; background: var(--line); flex: 0 0 auto; }
+.adv-node { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 92px; padding: 12px 8px; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.24)); border: 1px solid var(--line); opacity: .5; flex: 0 0 auto; }
+.adv-node.cur { opacity: 1; border-color: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2) inset, 0 0 16px rgba(0,208,255,.3); }
+.adv-node.done { opacity: .9; border-color: var(--good); box-shadow: 0 0 0 1px var(--good) inset; }
+.adv-glyph { font-size: 1.9rem; filter: drop-shadow(0 2px 6px rgba(0,0,0,.5)); }
+.adv-name { font-size: .74rem; text-align: center; font-weight: 800; line-height: 1.15; }
+.adv-name small { display: block; color: var(--muted); font-weight: 500; }
+.adv-link { width: 18px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--line), var(--accent-2)); flex: 0 0 auto; }
 
 /* Tienda */
-.shop-coins { color: var(--gold); font-weight: 800; margin-bottom: 2px; }
+.shop-coins { display: inline-block; color: var(--gold); font-weight: 900; background: rgba(255,216,77,.12); border: 1px solid rgba(255,216,77,.4); border-radius: 999px; padding: 4px 14px; margin-bottom: 4px; }
 .shop-hint { color: var(--muted); font-size: .82rem; margin-bottom: 12px; }
 .shop-list { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 18px; max-height: 52vh; overflow: auto; text-align: left; }
-.shop-item { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 12px; background: rgba(0,0,0,.2); border: 1px solid var(--line); cursor: pointer; }
-.shop-item.on { border-color: var(--gold); }
-.shop-item .shop-sw { width: 40px; height: 40px; border-radius: 10px; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.18); }
-.shop-item .shop-name { font-weight: 700; flex: 1; }
-.shop-item .btn { padding: 8px 14px; font-size: .9rem; flex: 0 0 auto; }
+.shop-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.2)); border: 1px solid var(--line); cursor: pointer; }
+.shop-item.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset, 0 0 14px rgba(255,216,77,.22); }
+.shop-item .shop-sw { width: 46px; height: 46px; border-radius: 12px; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.25); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 2px 6px rgba(0,0,0,.4); }
+.shop-item .shop-name { font-weight: 800; flex: 1; }
+.shop-item .btn { padding: 9px 14px; font-size: .9rem; flex: 0 0 auto; }
 
 /* Recompensa diaria (botón destacado) */
 .btn-reward { background: linear-gradient(180deg, #ffe27a, #ffc23d 55%, #ff9e2e); color: #2a1a00; font-weight: 900; text-shadow: 0 1px 0 rgba(255,255,255,.4); box-shadow: 0 5px 0 #b06a12, 0 10px 20px rgba(255,180,60,.45); animation: rewardPulse 1.8s ease-in-out infinite; }
@@ -715,10 +718,10 @@ body.reduced-fx .btn-reward { animation: none; }
 /* Perfil: leaderboard local por modo + reto semanal */
 .modal-profile { max-height: 88vh; overflow: auto; }
 .profile-lb { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 8px; text-align: left; }
-.lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: rgba(0,0,0,.2); border: 1px solid var(--line); }
-.lb-mode { flex: 1; font-weight: 700; }
-.lb-best { color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
-.lb-plays { color: var(--muted); font-size: .78rem; }
+.lb-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.2)); border: 1px solid var(--line); }
+.lb-mode { flex: 1; font-weight: 800; }
+.lb-best { color: var(--gold); font-weight: 900; font-variant-numeric: tabular-nums; background: rgba(255,216,77,.12); border-radius: 999px; padding: 2px 10px; }
+.lb-plays { color: var(--muted); font-size: .78rem; min-width: 1.5em; text-align: right; }
 .daily.weekly { border-color: rgba(150,120,255,.4); }
 .daily.weekly.done { border-color: var(--good); }
 
