@@ -456,22 +456,32 @@ body.reduced-fx #btn-play { animation: none; }
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   width: min(420px, 92vw); pointer-events: none;
 }
-/* Toasts premium: píldora con icono, acento por tipo y contador de repetidos */
+/* Toasts: alto contraste por tipo (tinte completo + glow + icono en chip),
+   legibles y multilínea. --tc = color del tipo (lo fijan .info/.good/...). */
 .toast {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 8px 14px; border-radius: 12px; font-weight: 700; font-size: .84rem; text-align: left;
-  color: #fff; background: linear-gradient(180deg, rgba(24,32,64,.96), rgba(12,18,42,.97));
-  border: 1px solid var(--line); border-left: 4px solid var(--accent-2);
-  animation: toast-in .22s cubic-bezier(.2,.9,.3,1.2) both; box-shadow: 0 8px 22px rgba(0,0,0,.5);
+  --tc: var(--accent-2);
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; border-radius: 14px; font-weight: 800; font-size: .95rem; line-height: 1.25;
+  text-align: left; color: #fff;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--tc) 26%, #0c1330) 0%, color-mix(in srgb, var(--tc) 14%, #0a1024) 100%);
+  border: 1px solid color-mix(in srgb, var(--tc) 60%, transparent);
+  box-shadow: 0 8px 22px rgba(0,0,0,.55), 0 0 16px color-mix(in srgb, var(--tc) 35%, transparent), inset 0 1px 0 rgba(255,255,255,.12);
+  animation: toast-in .22s cubic-bezier(.2,.9,.3,1.2) both;
   max-width: 100%;
 }
-.toast .toast-ic { font-size: 1.05rem; line-height: 1; flex: 0 0 auto; }
-.toast .toast-tx { min-width: 0; }
-.toast .toast-x { margin-left: 6px; font-size: .72rem; font-weight: 800; color: #07101c; background: var(--accent-2); border-radius: 999px; padding: 1px 7px; flex: 0 0 auto; }
-.toast.info { border-left-color: var(--accent-2); } .toast.info .toast-x { background: var(--accent-2); }
-.toast.good { border-left-color: var(--good); } .toast.good .toast-x { background: var(--good); }
-.toast.warn { border-left-color: var(--warn); } .toast.warn .toast-x { background: var(--warn); }
-.toast.bad  { border-left-color: var(--bad); }  .toast.bad .toast-x  { background: var(--bad); }
+/* Icono en chip circular del color del tipo (escaneo rápido) */
+.toast .toast-ic {
+  flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 1rem; line-height: 1; background: color-mix(in srgb, var(--tc) 45%, rgba(0,0,0,.35));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tc) 70%, transparent);
+}
+.toast .toast-tx { min-width: 0; flex: 1; text-shadow: 0 1px 2px rgba(0,0,0,.6); white-space: normal; overflow-wrap: anywhere; }
+.toast .toast-x { margin-left: 2px; font-size: .78rem; font-weight: 900; color: #07101c; background: var(--tc); border-radius: 999px; padding: 2px 8px; flex: 0 0 auto; align-self: center; }
+.toast.info { --tc: var(--accent-2); }
+.toast.good { --tc: var(--good); }
+.toast.warn { --tc: var(--warn); }
+.toast.bad  { --tc: var(--bad); }
 .toast.pop { animation: toast-pop .25s ease; }
 .toast.out { animation: toast-out .25s ease forwards; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(12px) scale(.96); } }
