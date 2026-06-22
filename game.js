@@ -883,24 +883,6 @@
         { transform: bt(1.55, 14), opacity: 0, offset: 1 },
       ];
     },
-    // Estrella del TAMAÑO de una casilla (pooled), igual que la de convergencia.
-    // Se usa sobre cada icono eliminado: el glyph encoge (glyph-out) mientras esta
-    // estrella aparece, y ambas desaparecen juntas al terminar DUR_CLEAR.
-    _cellStar(cx, cy, size, color, delay) {
-      if (!this.supported || this.active >= this.cap) return;
-      const p = this._slot(); if (!p) return;
-      const el = p.el;
-      el.style.width = size + 'px'; el.style.height = size + 'px';
-      el.style.background = this._starBg(color);
-      this._setStar(el, true); el.style.filter = 'drop-shadow(0 0 5px ' + color + ')';
-      p.busy = true; this.active++;
-      let anim;
-      try { anim = el.animate(this._starFrames(cx, cy, size), { duration: Math.max(120, this.DUR_CLEAR - (delay || 0)), delay: delay || 0, fill: 'both' }); }
-      catch (_) { p.busy = false; this.active--; return; }
-      p.anim = anim;
-      const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
-      anim.onfinish = done; anim.oncancel = done;
-    },
     // Estrellita de "camino": pop en (x,y) tras `delay` ms; se mantiene y se
     // desvanece junto con TODO el efecto al terminar DUR_CLEAR (mismo final).
     // Reutiliza el pool y el gobernador. Sin glow (son muchas).
@@ -987,8 +969,6 @@
       const big = Math.round(cellPx * 0.5);           // estrella contenida en la casilla
       const tiny = Math.max(4, cellPx * 0.15);        // estrellitas de camino (mucho menores)
       const SWEEP = 170;                              // barrido del camino (dentro de DUR_CLEAR)
-      let maxN = 1;
-      for (const idx of cells) maxN = Math.max(maxN, Math.abs(((idx / sz) | 0) - cr), Math.abs((idx % sz) - cc));
 
       // 1) Estrella de convergencia (elemento dedicado, con glow), en la casilla central.
       if (this.star) {
@@ -1002,8 +982,9 @@
       // desde el centro, estallando junto con la explosión de la estrella central.
       this._miniBurst(C.x, C.y, color, cellPx);
 
-      // 2) Por cada icono eliminado: camino de estrellitas (centro→afuera) + una
-      // estrella igual a la de convergencia sobre el icono (que desaparece a la vez).
+      // 2) Camino de estrellitas (centro→afuera) hacia cada icono eliminado. El
+      // icono se elimina con su PROPIA animación (glyph-out: pop del icono real),
+      // no con una estrella encima.
       for (const idx of cells) {
         const ir = (idx / sz) | 0, ic = idx % sz;
         const dr = Math.sign(ir - cr), dc = Math.sign(ic - cc);
@@ -1012,8 +993,6 @@
           const pos = rcXY(cr + dr * d, cc + dc * d);
           this._spark(pos.x, pos.y, tiny, color, (d / N) * SWEEP);
         }
-        const ip = rcXY(ir, ic);
-        this._cellStar(ip.x, ip.y, big, color, (N / maxN) * SWEEP);
       }
     },
     // Conservado por compatibilidad con el bucle; las partículas son autónomas (WAAPI).
