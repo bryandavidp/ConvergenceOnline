@@ -554,18 +554,17 @@
 
     spawnAnim(i) { const el = this.cells[i]; el.classList.remove('spawn'); void el.offsetWidth; el.classList.add('spawn'); },
     clearAnim(indices) {
-      // La explosión del icono se vuelve más AGRESIVA con la racha de combo
-      // (frenesí en el tablero): más escala de "boom", más overshoot y más giro.
+      // La explosión del icono crece con la racha de combo (frenesí en el tablero):
+      // suave en combos bajos y cada vez más violenta/llamativa al subir. SIN giro,
+      // solo escala de "boom" (estallido) y overshoot.
       const combo = Math.max(1, State.combo || 1);
       const t = clamp((combo - 1) / 19, 0, 1);        // 0..1 ramp sobre combo 1..20
-      const boom = (1.45 + t * 0.95).toFixed(2);      // 1.45 → 2.40
-      const pop = (1.1 + t * 0.22).toFixed(2);        // 1.10 → 1.32
-      const rotMag = 10 + t * 44;                     // 10° → 54°
+      const boom = (1.4 + t * 1.3).toFixed(2);        // 1.40 → 2.70
+      const pop = (1.08 + t * 0.27).toFixed(2);       // 1.08 → 1.35
       indices.forEach(i => {
         const el = this.cells[i];
         el.style.setProperty('--clear-pop', pop);
         el.style.setProperty('--clear-boom', boom);
-        el.style.setProperty('--clear-rot', ((Math.random() < 0.5 ? -1 : 1) * rotMag).toFixed(0) + 'deg');
         el.classList.add('clear');
         el.addEventListener('animationend', () => {
           el.classList.remove('clear');
