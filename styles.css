@@ -50,8 +50,12 @@ body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--text);
-  /* Degradado decorativo SOBRE un color base sólido (no transparente). */
-  background: radial-gradient(120% 120% at 50% 0%, var(--bg-2) 0%, var(--bg-1) 45%, var(--bg-0) 100%) var(--bg-0);
+  /* Nebulosa decorativa (glows estáticos del color de marca) SOBRE base sólida. */
+  background:
+    radial-gradient(60% 50% at 12% 8%, rgba(47,107,255,.20), transparent 70%),
+    radial-gradient(55% 45% at 88% 4%, rgba(0,208,255,.16), transparent 70%),
+    radial-gradient(70% 60% at 50% 108%, rgba(143,123,255,.18), transparent 72%),
+    radial-gradient(120% 120% at 50% 0%, var(--bg-2) 0%, var(--bg-1) 45%, var(--bg-0) 100%) var(--bg-0);
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeSpeed;
@@ -93,9 +97,9 @@ h1, h2, h3, p { margin: 0; }
   width: min(460px, 100%);
   background: linear-gradient(180deg, var(--panel-2), var(--panel));
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: 22px;
   padding: clamp(20px, 5vw, 34px);
-  box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  box-shadow: 0 24px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08);
   text-align: center;
 }
 .panel-wide { width: min(560px, 100%); text-align: left; }
@@ -119,19 +123,34 @@ h1, h2, h3, p { margin: 0; }
 
 /* ---------- Botones ---------- */
 .btn {
+  position: relative; overflow: hidden;
   min-height: var(--tap);
-  border: 1px solid transparent; border-radius: 12px;
-  padding: 12px 18px; font-weight: 700;
-  transition: transform .12s ease, filter .12s ease, background .2s;
+  border: 1px solid transparent; border-radius: 14px;
+  padding: 12px 18px; font-weight: 800; letter-spacing: .2px;
+  transition: transform .12s ease, filter .12s ease, background .2s, box-shadow .2s;
   touch-action: manipulation;
 }
 .btn:active { transform: translateY(1px) scale(.99); }
-.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #04122e; box-shadow: 0 6px 18px rgba(47,107,255,.4); }
+.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #04122e; box-shadow: 0 8px 22px rgba(47,107,255,.45), inset 0 1px 0 rgba(255,255,255,.35); }
+/* Brillo sutil de borde superior (look premium, sin coste de runtime) */
+.btn-primary::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 45%; background: linear-gradient(180deg, rgba(255,255,255,.28), transparent); pointer-events: none; }
 .btn-primary:hover { filter: brightness(1.06); }
 .btn-ghost { background: rgba(255,255,255,.06); border-color: var(--line); color: var(--text); }
 .btn-ghost:hover { background: rgba(255,255,255,.12); }
 .btn-lg { font-size: 1.15rem; padding: 15px 20px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* CTA principal del inicio: botón "héroe" dominante que guía el primer toque. */
+#btn-play {
+  font-size: 1.35rem; padding: 18px 22px; border-radius: 18px;
+  background: linear-gradient(135deg, #2f6bff 0%, #00d0ff 100%);
+  box-shadow: 0 10px 30px rgba(0,208,255,.45), 0 2px 0 rgba(255,255,255,.25) inset;
+  animation: ctaPulse 2.4s ease-in-out infinite;
+}
+/* Latido SOLO por glow/brillo (sin transform/scale): llama la atención sin
+   alterar la caja del botón (no rompe estabilidad de toques/automatización). */
+@keyframes ctaPulse { 0%,100% { box-shadow: 0 10px 28px rgba(0,208,255,.40), 0 2px 0 rgba(255,255,255,.25) inset; filter: brightness(1); } 50% { box-shadow: 0 14px 40px rgba(0,208,255,.65), 0 2px 0 rgba(255,255,255,.25) inset; filter: brightness(1.08); } }
+body.reduced-fx #btn-play { animation: none; }
 .hint { color: var(--muted); font-size: .82rem; margin-top: 6px; }
 
 .icon-btn {
@@ -164,17 +183,25 @@ h1, h2, h3, p { margin: 0; }
 /* ---------- Selección de modo ---------- */
 .panel-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .group-title { color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: 1px; margin: 14px 0 8px; }
-.mode-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.mode-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
 .mode-card {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 14px 8px; border-radius: 12px; text-align: center;
-  background: rgba(255,255,255,.05); border: 1px solid var(--line); color: var(--text);
-  transition: transform .12s, border-color .15s, background .15s;
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 18px 10px 16px; border-radius: 16px; text-align: center;
+  background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(0,0,0,.18));
+  border: 1px solid var(--line); color: var(--text);
+  transition: transform .12s, border-color .15s, background .15s, box-shadow .15s;
 }
-.mode-card .emoji { font-size: 1.8rem; line-height: 1; }
-.mode-card .name { font-weight: 700; font-size: .95rem; }
-.mode-card:hover { background: rgba(255,255,255,.1); }
-.mode-card[aria-checked="true"] { border-color: var(--accent-2); background: rgba(0,208,255,.14); box-shadow: 0 0 0 1px var(--accent-2) inset; }
+.mode-card .emoji { font-size: 2.1rem; line-height: 1; filter: drop-shadow(0 3px 8px rgba(0,0,0,.5)); }
+.mode-card .name { font-weight: 800; font-size: 1rem; }
+.mode-card:hover { background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(0,0,0,.16)); transform: translateY(-2px); }
+.mode-card[aria-checked="true"] {
+  border-color: var(--accent-2);
+  background: linear-gradient(180deg, rgba(0,208,255,.20), rgba(0,208,255,.05));
+  box-shadow: 0 0 0 2px var(--accent-2) inset, 0 8px 22px rgba(0,208,255,.28);
+}
+/* Marca de selección (check) en la esquina */
+.mode-card[aria-checked="true"]::after { content: '✓'; position: absolute; top: 6px; right: 8px; font-size: .8rem; font-weight: 900; color: #04122e; background: var(--accent-2); border-radius: 999px; width: 18px; height: 18px; display: grid; place-items: center; }
 .mode-card:active { transform: scale(.97); }
 
 .diff-row { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -186,7 +213,13 @@ h1, h2, h3, p { margin: 0; }
 .mode-desc { color: var(--muted); min-height: 1.4em; margin: 14px 0; font-size: .92rem; }
 
 /* ============ JUEGO ============ */
-.screen-game { justify-content: flex-start; gap: 10px; }
+.screen-game {
+  justify-content: flex-start; gap: 10px;
+  /* Tamaño del tablero como variable (con fallback vh) para anclar toasts/combo
+     justo encima del tablero y mantener DRY entre breakpoints. */
+  --board-size: min(96vw, 64vh, 600px);
+  --board-size: min(96vw, 64svh, 600px);
+}
 .topbar {
   width: min(620px, 100%); display: flex; align-items: center; justify-content: space-between; gap: 10px;
 }
@@ -200,12 +233,20 @@ h1, h2, h3, p { margin: 0; }
   width: min(620px, 100%);
   display: grid; grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 8px;
   background: linear-gradient(180deg, var(--panel-2), var(--panel));
-  border: 1px solid var(--line); border-radius: 12px; padding: 10px;
+  border: 1px solid var(--line); border-radius: 14px; padding: 10px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
 }
 .hud-item { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
 .hud-label { font-size: clamp(.55rem, 1.6vw, .65rem); color: var(--muted); text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
 .hud-value { font-size: clamp(.95rem, 3.4vw, 1.3rem); font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.score .hud-value { color: var(--score); }
+/* Puntuación = dato HÉROE: ocupa toda la fila superior, destacada y grande. */
+.hud-item.score {
+  grid-column: 1 / -1; flex-direction: row; align-items: baseline; justify-content: center; gap: 10px;
+  background: linear-gradient(180deg, rgba(24,230,230,.12), rgba(0,0,0,.18));
+  border: 1px solid rgba(24,230,230,.25); border-radius: 12px; padding: 6px 12px;
+}
+.score .hud-label { align-self: center; }
+.score .hud-value { font-size: clamp(1.5rem, 7vw, 2.2rem); color: var(--score); text-shadow: 0 0 16px rgba(24,230,230,.4); }
 .level .hud-value { color: var(--level); }
 .time .hud-value { color: var(--time); }
 .speed .hud-value { color: var(--speed); }
@@ -232,13 +273,10 @@ h1, h2, h3, p { margin: 0; }
 .board-area { width: 100%; flex: 1; display: grid; place-items: center; min-height: 0; position: relative; }
 .board-wrap {
   position: relative;
-  /* Lado explícito (ancho Y alto) para que el grid interno resuelva height:100%
-     correctamente en Safari iOS y no se recorte la última fila. svh evita el
-     desajuste con la barra del navegador; vh queda como fallback. */
-  width: min(96vw, 64vh, 600px);
-  height: min(96vw, 64vh, 600px);
-  width: min(96vw, 64svh, 600px);
-  height: min(96vw, 64svh, 600px);
+  /* Lado explícito (ancho Y alto) vía --board-size (definido en .screen-game)
+     para que el grid interno resuelva height:100% en Safari iOS sin recortes. */
+  width: var(--board-size);
+  height: var(--board-size);
   padding: 10px;
   border-radius: 20px;
   background: linear-gradient(180deg, rgba(28, 38, 78, 0.7), rgba(16, 24, 54, 0.7));
@@ -331,9 +369,11 @@ h1, h2, h3, p { margin: 0; }
   100% { opacity: 0; transform: translate(-50%, -180%) scale(.95); }
 }
 
-/* Indicador de combo (abajo-derecha, no tapa el HUD) */
+/* Indicador de combo: SIEMPRE encima del tablero (nunca dentro), arriba a la
+   derecha, anclado al borde superior del tablero. */
 .combo {
-  position: absolute; top: 0; right: 8px; z-index: var(--z-combo);
+  position: absolute; right: 6px; z-index: var(--z-combo);
+  bottom: calc(50% + var(--board-size) / 2 + 8px);
   width: 56px; height: 56px; display: grid; place-items: center; pointer-events: none;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,.6));
 }
@@ -349,9 +389,13 @@ h1, h2, h3, p { margin: 0; }
 .combo.pulse { animation: combo-pulse .3s ease; }
 @keyframes combo-pulse { 50% { transform: scale(1.14); } }
 
-/* Toasts: en el hueco entre el HUD y el tablero (anclados arriba de .board-area) */
+/* Toasts: SIEMPRE encima del tablero (nunca dentro). Anclados por su parte
+   inferior al borde superior del tablero; al acumularse, el contenedor crece
+   hacia ARRIBA (el más reciente queda abajo, junto al tablero, y los anteriores
+   "suben"). Nunca invaden el tablero aunque haya varios. */
 .toasts {
-  position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: calc(50% + var(--board-size) / 2 + 8px);
   z-index: var(--z-toast);
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   width: min(420px, 92vw); pointer-events: none;
@@ -441,14 +485,11 @@ body.reduced-fx .ic-chip { animation: none; }
 /* ---------- Responsive ---------- */
 @media (min-width: 720px) {
   /* En pantallas anchas el alto manda: tablero grande y centrado */
-  .board-wrap { width: min(82vh, 600px); height: min(82vh, 600px); }
-  .board-wrap { width: min(82svh, 600px); height: min(82svh, 600px); }
-  .screen-game { gap: 14px; }
+  .screen-game { --board-size: min(82vh, 600px); --board-size: min(82svh, 600px); gap: 14px; }
 }
 @media (min-height: 900px) and (max-width: 719px) {
   /* Móviles altos: el tablero crece un poco más y se reduce el hueco */
-  .board-wrap { width: min(96vw, 70vh, 620px); height: min(96vw, 70vh, 620px); }
-  .board-wrap { width: min(96vw, 70svh, 620px); height: min(96vw, 70svh, 620px); }
+  .screen-game { --board-size: min(96vw, 70vh, 620px); --board-size: min(96vw, 70svh, 620px); }
 }
 
 /* ===================== Capa FX + recompensas ===================== */
@@ -534,7 +575,7 @@ body.reduced-fx .coach-text { animation: none; }
 .daily .daily-prog { color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 700; }
 .daily.done { border-color: var(--good); }
 .menu-row { display: flex; gap: 10px; }
-.menu-row .btn { flex: 1; }
+.menu-row .btn { flex: 1; flex-direction: column; gap: 2px; font-size: .82rem; padding: 10px 6px; border-radius: 14px; min-height: 56px; display: flex; align-items: center; justify-content: center; line-height: 1.15; }
 
 /* Selector de idioma en ajustes */
 .lang-pick { display: flex; gap: 6px; }
