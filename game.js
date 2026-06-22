@@ -855,10 +855,43 @@
       const C = ['#ff5b6e', '#4b8bff', '#3ad07f', '#ffd23f', '#a06bff', '#2bd4e6', '#ff9838'];
       for (let k = 0; k < n; k++) this._emit(Math.random() * this.w, -14, (Math.random() - 0.5) * 110, 150 + Math.random() * 170, 360, 1.8 + Math.random() * 1.1, 6 + Math.random() * 4, C[k % C.length], 1, (Math.random() - 0.5) * 540);
     },
-    // Estrellita de "camino": aparece (pop) en (x,y) tras `delay` ms y se
-    // mantiene hasta una ventana de fundido COMÚN (~620 ms desde el disparo),
-    // de modo que todo el camino queda visible a la vez antes de desvanecerse.
-    // Reutiliza el pool y el gobernador igual que _emit. Sin glow (son muchas).
+    // Duración del efecto = EXACTAMENTE la de glyph-out (.26s, styles.css:299),
+    // para que estrellas y camino aparezcan/desaparezcan en SINCRONÍA con la
+    // desaparición de los iconos del tablero (sin retraso ni "fuera de lugar").
+    DUR_CLEAR: 260,
+    _starBg(color) { return 'radial-gradient(circle at 50% 45%, #fff 0%, #fff 26%, ' + color + ' 52%, ' + color + ' 100%)'; },
+    // Keyframes de "estrella" (pop + desvanecido) centrada en (cx,cy). Compartido
+    // por la estrella de convergencia y por las de los iconos eliminados → idénticas.
+    _starFrames(cx, cy, size) {
+      const bt = (sc, rot) => 'translate3d(' + (cx - size / 2).toFixed(1) + 'px,' + (cy - size / 2).toFixed(1) + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
+      return [
+        { transform: bt(0.3, -24), opacity: 0, offset: 0, easing: 'cubic-bezier(.2,.9,.3,1)' },
+        { transform: bt(1.16, 0), opacity: 1, offset: 0.32, easing: 'linear' },
+        { transform: bt(1.0, 6), opacity: 1, offset: 0.56, easing: 'ease-in' },
+        { transform: bt(0.55, 18), opacity: 0, offset: 1 },
+      ];
+    },
+    // Estrella del TAMAÑO de una casilla (pooled), igual que la de convergencia.
+    // Se usa sobre cada icono eliminado: el glyph encoge (glyph-out) mientras esta
+    // estrella aparece, y ambas desaparecen juntas al terminar DUR_CLEAR.
+    _cellStar(cx, cy, size, color, delay) {
+      if (!this.supported || this.active >= this.cap) return;
+      const p = this._slot(); if (!p) return;
+      const el = p.el;
+      el.style.width = size + 'px'; el.style.height = size + 'px';
+      el.style.background = this._starBg(color); el.style.borderRadius = '0';
+      el.style.clipPath = this.STAR_CLIP; el.style.filter = 'drop-shadow(0 0 5px ' + color + ')';
+      p.busy = true; this.active++;
+      let anim;
+      try { anim = el.animate(this._starFrames(cx, cy, size), { duration: Math.max(120, this.DUR_CLEAR - (delay || 0)), delay: delay || 0, fill: 'both' }); }
+      catch (_) { p.busy = false; this.active--; return; }
+      p.anim = anim;
+      const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
+      anim.onfinish = done; anim.oncancel = done;
+    },
+    // Estrellita de "camino": pop en (x,y) tras `delay` ms; se mantiene y se
+    // desvanece junto con TODO el efecto al terminar DUR_CLEAR (mismo final).
+    // Reutiliza el pool y el gobernador. Sin glow (son muchas).
     _spark(x, y, size, color, delay) {
       if (!this.supported || this.active >= this.cap) return;
       const p = this._slot(); if (!p) return;
@@ -868,9 +901,9 @@
       el.style.clipPath = this.STAR_CLIP; el.style.filter = 'none';
       const ox = (x - size / 2).toFixed(1), oy = (y - size / 2).toFixed(1);
       const tr = (sc, rot) => 'translate3d(' + ox + 'px,' + oy + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
-      const END = 620, dur = Math.max(180, END - delay);
-      const oin = Math.min(0.5, 130 / dur);
-      const ohold = Math.min(0.9, Math.max(oin + 0.05, (360 - delay) / dur));
+      const dur = Math.max(110, this.DUR_CLEAR - delay);
+      const oin = Math.min(0.55, 60 / dur);
+      const ohold = Math.min(0.85, Math.max(oin + 0.05, (150 - delay) / dur));
       const frames = [
         { transform: tr(0.3, 0), opacity: 0, offset: 0, easing: 'ease-out' },
         { transform: tr(1, 30), opacity: 1, offset: oin, easing: 'linear' },
@@ -885,10 +918,11 @@
       const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
       anim.onfinish = done; anim.oncancel = done;
     },
-    // Convergencia (un solo efecto): una estrella CONTENIDA en la casilla central
-    // (la "X" que se toca) + un camino de estrellitas mucho más pequeñas que se
-    // dibuja DESDE EL CENTRO HACIA AFUERA por cada icono que se elimina. Todo
-    // coexiste en pantalla y se desvanece a la vez. color = color por tier de combo.
+    // Convergencia (un solo efecto, SINCRONIZADO con glyph-out = DUR_CLEAR):
+    // estrella contenida en la casilla central (la "X") + una estrella IGUAL sobre
+    // cada icono eliminado (el icono "se convierte" en estrella al desaparecer) +
+    // un camino de estrellitas mucho más pequeñas dibujado del centro hacia afuera.
+    // Todo aparece y desaparece a la vez. color = color por tier de combo.
     converge(centerIdx, cells, color) {
       if (Settings.reducedFx || !this.supported) return;
       this.syncBoardRect();
@@ -898,28 +932,22 @@
       const rcXY = (row, col) => ({ x: r.left + (col + 0.5) / sz * r.width, y: r.top + (row + 0.5) / sz * r.height });
       const cr = (centerIdx / sz) | 0, cc = centerIdx % sz;
       const C = rcXY(cr, cc);
+      const big = Math.round(cellPx * 0.5);           // estrella contenida en la casilla
+      const tiny = Math.max(4, cellPx * 0.15);        // estrellitas de camino (mucho menores)
+      const SWEEP = 110;                              // barrido del camino (dentro de DUR_CLEAR)
+      let maxN = 1;
+      for (const idx of cells) maxN = Math.max(maxN, Math.abs(((idx / sz) | 0) - cr), Math.abs((idx % sz) - cc));
 
-      // 1) Estrella central contenida en la casilla (no se sale de la celda).
+      // 1) Estrella de convergencia (elemento dedicado, con glow), en la casilla central.
       if (this.star) {
-        const s = Math.round(cellPx * (0.46 + Math.min(State.combo || 0, 8) * 0.008));
-        this.star.style.width = s + 'px'; this.star.style.height = s + 'px';
-        this.star.style.background = 'radial-gradient(circle at 50% 45%, #fff 0%, #fff 26%, ' + color + ' 52%, ' + color + ' 100%)';
-        this.star.style.filter = 'drop-shadow(0 0 5px ' + color + ')';
-        const bt = (sc, rot) => 'translate3d(' + (C.x - s / 2).toFixed(1) + 'px,' + (C.y - s / 2).toFixed(1) + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
-        try {
-          this.star.animate([
-            { transform: bt(0.3, -30), opacity: 0, offset: 0, easing: 'cubic-bezier(.2,.9,.3,1)' },
-            { transform: bt(1.18, 0), opacity: 1, offset: 0.2, easing: 'ease-out' },
-            { transform: bt(1.0, 8), opacity: 1, offset: 0.58, easing: 'ease-in' },
-            { transform: bt(0.82, 18), opacity: 0, offset: 1 },
-          ], { duration: 620, fill: 'forwards' });
-        } catch (_) {}
+        this.star.style.width = big + 'px'; this.star.style.height = big + 'px';
+        this.star.style.background = this._starBg(color);
+        this.star.style.filter = 'drop-shadow(0 0 6px ' + color + ')';
+        try { this.star.animate(this._starFrames(C.x, C.y, big), { duration: this.DUR_CLEAR, fill: 'forwards' }); } catch (_) {}
       }
 
-      // 2) Camino de estrellitas (mucho más pequeñas) celda a celda, del centro
-      // hacia cada icono eliminado. El retardo crece con la distancia → se dibuja
-      // hacia afuera. Dos por celda (paso 0,5) para que lea como un trazo.
-      const SWEEP = 200, tiny = Math.max(4, cellPx * 0.15);
+      // 2) Por cada icono eliminado: camino de estrellitas (centro→afuera) + una
+      // estrella igual a la de convergencia sobre el icono (que desaparece a la vez).
       for (const idx of cells) {
         const ir = (idx / sz) | 0, ic = idx % sz;
         const dr = Math.sign(ir - cr), dc = Math.sign(ic - cc);
@@ -928,6 +956,8 @@
           const pos = rcXY(cr + dr * d, cc + dc * d);
           this._spark(pos.x, pos.y, tiny, color, (d / N) * SWEEP);
         }
+        const ip = rcXY(ir, ic);
+        this._cellStar(ip.x, ip.y, big, color, (N / maxN) * SWEEP);
       }
     },
     // Conservado por compatibilidad con el bucle; las partículas son autónomas (WAAPI).
@@ -1684,12 +1714,11 @@
       // Contrarreloj: bonus de tiempo por convergencia (los combos suman más)
       if (m.timed) { const bonus = Math.max(5, removed * 3) + Math.min(State.combo, 6); State.timeLeft += bonus; Toasts.show(`+${bonus}s`, 'info', 1100); }
 
-      // Estrellas de convergencia: grande en el centro + viajeras/ruta hacia
-      // los iconos. Va PRIMERO para tener prioridad de ranuras frente al confeti.
+      // Estrellas de convergencia: estrella en la casilla central + una estrella
+      // sobre cada icono eliminado + camino de estrellitas, TODO sincronizado con
+      // la desaparición de los iconos (glyph-out). Se lanza en el mismo frame que
+      // Render.clearAnim para que empiecen y terminen exactamente a la vez.
       FX.converge(i, conv, color);
-      // Partículas con el color real de cada icono (antes de borrarlos)
-      const burstN = 6 + Math.min(State.combo, 14);
-      for (const idx of conv) FX.burst(idx, Icons.colorOf(State.board[idx]), burstN);
 
       // Aplicar al tablero (limpia también la casilla especial; cristal = bonus)
       conv.forEach(idx => {
