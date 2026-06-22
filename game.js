@@ -757,7 +757,7 @@
    * "gravedad" se precalcula como keyframes parabólicos.
    */
   const FX = {
-    layer: null, pool: [], idx: 0, active: 0, cap: 40, w: 0, h: 0, boardRect: null, supported: true, star: null,
+    layer: null, pool: [], idx: 0, active: 0, cap: 40, w: 0, h: 0, boardRect: null, supported: true, wave: null,
     POOL: 56,                 // capas DOM máximas (acotado para no saturar el compositor)
     // Estrella REDONDEADA (5 puntas con esquinas suaves) como máscara SVG: escala
     // a cualquier tamaño (mask-size 100%) y el fondo/gradiente se ve a través.
@@ -783,10 +783,10 @@
         this.pool.push({ el: s, anim: null, busy: false });
         frag.appendChild(s);
       }
-      // Estrella grande de convergencia (elemento dedicado: lleva glow propio
-      // vía CSS, así no contamina el pool con filtros costosos).
-      this.star = document.createElement('span'); this.star.id = 'fx-star';
-      frag.appendChild(this.star);
+      // Onda expansiva del punto de convergencia (elemento dedicado: anillo con
+      // glow propio vía CSS, así no contamina el pool con filtros costosos).
+      this.wave = document.createElement('span'); this.wave.id = 'fx-wave';
+      frag.appendChild(this.wave);
       this.layer.appendChild(frag);
       this.resize();
       window.addEventListener('resize', () => this.resize(), { passive: true });
@@ -870,19 +870,6 @@
     // estrellas y camino aparezcan/desaparezcan en SINCRONÍA con la desaparición de
     // los iconos (sin retraso). Algo más lento (460 ms) para que se perciba bien.
     DUR_CLEAR: 460,
-    _starBg(color) { return 'radial-gradient(circle at 50% 45%, #fff 0%, #fff 26%, ' + color + ' 52%, ' + color + ' 100%)'; },
-    // Keyframes de "estrella" (pop + desvanecido) centrada en (cx,cy). Compartido
-    // por la estrella de convergencia y por las de los iconos eliminados → idénticas.
-    _starFrames(cx, cy, size) {
-      const bt = (sc, rot) => 'translate3d(' + (cx - size / 2).toFixed(1) + 'px,' + (cy - size / 2).toFixed(1) + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
-      return [
-        { transform: bt(0.3, -20), opacity: 0, offset: 0, easing: 'cubic-bezier(.2,.9,.3,1.2)' }, // pop in
-        { transform: bt(1.12, 0), opacity: 1, offset: 0.26, easing: 'ease-out' },                  // aparece
-        { transform: bt(1.0, 0), opacity: 1, offset: 0.58, easing: 'ease-out' },                   // hold (perceptible)
-        // Salida "pop" explotando, IDÉNTICA a glyph-out: escala hacia arriba + fundido.
-        { transform: bt(1.55, 14), opacity: 0, offset: 1 },
-      ];
-    },
     // Estrellita de "camino": pop en (x,y) tras `delay` ms; se mantiene y se
     // desvanece junto con TODO el efecto al terminar DUR_CLEAR (mismo final).
     // Reutiliza el pool y el gobernador. Sin glow (son muchas).
@@ -966,20 +953,28 @@
       const rcXY = (row, col) => ({ x: r.left + (col + 0.5) / sz * r.width, y: r.top + (row + 0.5) / sz * r.height });
       const cr = (centerIdx / sz) | 0, cc = centerIdx % sz;
       const C = rcXY(cr, cc);
-      const big = Math.round(cellPx * 0.5);           // estrella contenida en la casilla
       const tiny = Math.max(4, cellPx * 0.15);        // estrellitas de camino (mucho menores)
       const SWEEP = 170;                              // barrido del camino (dentro de DUR_CLEAR)
 
-      // 1) Estrella de convergencia (elemento dedicado, con glow), en la casilla central.
-      if (this.star) {
-        this.star.style.width = big + 'px'; this.star.style.height = big + 'px';
-        this.star.style.background = this._starBg(color);
-        this.star.style.filter = 'drop-shadow(0 0 6px ' + color + ')';
-        try { this.star.animate(this._starFrames(C.x, C.y, big), { duration: this.DUR_CLEAR, fill: 'forwards' }); } catch (_) {}
+      // 1) Onda expansiva elegante en el punto de convergencia: un anillo que crece
+      // desde el centro y se desvanece, a la misma velocidad que la eliminación.
+      if (this.wave) {
+        const w = Math.round(cellPx * 1.7);           // diámetro base del anillo
+        this.wave.style.width = w + 'px'; this.wave.style.height = w + 'px';
+        this.wave.style.borderColor = color;
+        this.wave.style.boxShadow = '0 0 7px ' + color + ', inset 0 0 7px ' + color;
+        const wt = (sc) => 'translate3d(' + (C.x - w / 2).toFixed(1) + 'px,' + (C.y - w / 2).toFixed(1) + 'px,0) scale(' + sc + ')';
+        try {
+          this.wave.animate([
+            { transform: wt(0.18), opacity: 0, offset: 0, easing: 'ease-out' },
+            { transform: wt(0.42), opacity: 0.95, offset: 0.16, easing: 'cubic-bezier(.15,.6,.3,1)' },
+            { transform: wt(1.0), opacity: 0, offset: 1 },
+          ], { duration: this.DUR_CLEAR, fill: 'forwards' });
+        } catch (_) {}
       }
 
       // 1b) Toque de "celebración": mini-estrellitas saliendo en todas direcciones
-      // desde el centro, estallando junto con la explosión de la estrella central.
+      // desde el centro, estallando junto con la onda expansiva.
       this._miniBurst(C.x, C.y, color, cellPx);
 
       // 2) Camino de estrellitas (centro→afuera) hacia cada icono eliminado. El
