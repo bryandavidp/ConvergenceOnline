@@ -325,8 +325,8 @@ body.reduced-fx #btn-play { animation: none; }
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06);
 }
 .cell.tile-rock::after {
-  content: ''; position: absolute; inset: 13%;
-  background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Cg%20fill='none'%20stroke-linecap='round'%3E%3Cpath%20d='M24%2024%2076%2076'%20stroke='%2311162a'%20stroke-width='22'/%3E%3Cpath%20d='M76%2024%2024%2076'%20stroke='%2311162a'%20stroke-width='22'/%3E%3Cpath%20d='M24%2024%2076%2076'%20stroke='%2397a1ba'%20stroke-width='14'%20stroke-dasharray='3%2015'/%3E%3Cpath%20d='M76%2024%2024%2076'%20stroke='%2397a1ba'%20stroke-width='14'%20stroke-dasharray='3%2015'/%3E%3Cpath%20d='M24%2024%2076%2076'%20stroke='%23dfe6f5'%20stroke-width='5'%20stroke-dasharray='1%2017'/%3E%3Cpath%20d='M76%2024%2024%2076'%20stroke='%23dfe6f5'%20stroke-width='5'%20stroke-dasharray='1%2017'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+  content: ''; position: absolute; inset: 6%;
+  background: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Cg%20fill='none'%20stroke-linecap='round'%3E%3Cpath%20d='M10%2010%2090%2090'%20stroke='%230e1326'%20stroke-width='18'%20stroke-dasharray='18%209'/%3E%3Cpath%20d='M90%2010%2010%2090'%20stroke='%230e1326'%20stroke-width='18'%20stroke-dasharray='18%209'/%3E%3Cpath%20d='M10%2010%2090%2090'%20stroke='%23b4bdd2'%20stroke-width='12'%20stroke-dasharray='18%209'/%3E%3Cpath%20d='M90%2010%2010%2090'%20stroke='%23b4bdd2'%20stroke-width='12'%20stroke-dasharray='18%209'/%3E%3Cpath%20d='M10%2010%2090%2090'%20stroke='%23e9eef8'%20stroke-width='3.5'%20stroke-dasharray='3%2024'/%3E%3Cpath%20d='M90%2010%2010%2090'%20stroke='%23e9eef8'%20stroke-width='3.5'%20stroke-dasharray='3%2024'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
   filter: drop-shadow(0 1px 1px rgba(0,0,0,.55));
 }
 .cell.tile-frozen { background: rgba(150, 220, 255, .2); box-shadow: 0 0 0 2px rgba(150, 220, 255, .55) inset; }
