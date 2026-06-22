@@ -300,12 +300,12 @@ h1, h2, h3, p { margin: 0; }
    luego desaparece de GOLPE (encoge un poco, NUNCA crece). El chasquido coincide
    con el estallido de esquirlas (FX._iconBurst en POP_AT). El colapso es más seco
    cuanto mayor es el combo (--clear-snap más pequeño). */
-.cell.clear .glyph { animation: glyph-out .42s linear forwards; }
+.cell.clear .glyph { animation: glyph-out .30s linear forwards; }
 @keyframes glyph-in { from { transform: scale(.2); opacity: 0; } }
 @keyframes glyph-out {
-  0%   { transform: scale(1); opacity: 1; }
-  55%  { transform: scale(1); opacity: 1; animation-timing-function: cubic-bezier(.7,0,.85,.25); } /* base, opaco */
-  100% { transform: scale(var(--clear-snap, .35)); opacity: 0; }                                    /* POP seco */
+  0%   { transform: scale(1); opacity: 1; animation-timing-function: ease-in; }
+  16%  { transform: scale(1); opacity: 1; animation-timing-function: cubic-bezier(.3,.85,.4,1); } /* brevísimo hold, luego colapso rápido */
+  100% { transform: scale(var(--clear-snap, .3)); opacity: 0; }                                    /* POP seco: revienta junto con las esquirlas */
 }
 .cell.miss { animation: miss .3s ease; }
 @keyframes miss { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
