@@ -34,7 +34,8 @@
   --z-toast: 40;
   --z-overlay: 100;
   --radius: 16px;
-  --tap: 44px; /* objetivo táctil mínimo accesible */
+  --tap: 44px; /* objetivo táctil mínimo accesible (Apple HIG 44pt) */
+  --tap-lg: 52px; /* objetivo de CTA primario (≥ Material 48dp) */
 }
 
 /* ---------- Reset ligero ---------- */
@@ -121,12 +122,20 @@ h1, h2, h3, p { margin: 0; }
 .menu-buttons { display: flex; flex-direction: column; gap: 12px; }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; color: var(--muted); margin-top: 4px; }
 
-/* Inicio arcade: columna con jerarquía (perfil → JUGAR héroe → recompensa → misiones → resto) */
-.panel-start { display: flex; flex-direction: column; gap: 12px; }
+/* Inicio: ESTADO (marca/perfil/misiones) arriba; ACCIONES (Play héroe + accesos)
+   ancladas en la zona cómoda del pulgar. Columna a altura completa con reparto. */
+.panel-start {
+  display: flex; flex-direction: column; justify-content: space-between; gap: 16px;
+  height: 100%; max-height: 800px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.start-status { display: flex; flex-direction: column; gap: 12px; flex: 0 0 auto; }
+.start-actions { display: flex; flex-direction: column; gap: 12px; flex: 0 0 auto; }
+.start-foot { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
 .panel-start .logo { margin-bottom: 2px; }
 .panel-start .start-meta { margin: 0; }
 .panel-start .menu-row { margin-top: 2px; }
-.panel-start .best-line { margin-top: 6px; }
+.panel-start .best-line { margin-top: 4px; }
+.panel-start .version-line { margin-top: 2px; }
 /* Misiones con barra de progreso (progreso visible = enganche) */
 .start-missions { display: flex; flex-direction: column; gap: 8px; }
 .daily-main { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
@@ -158,8 +167,8 @@ h1, h2, h3, p { margin: 0; }
 .btn-ghost { background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)); color: var(--text); box-shadow: 0 4px 0 rgba(0,0,0,.4), 0 7px 12px rgba(0,0,0,.3); }
 .btn-ghost:active { box-shadow: 0 1px 0 rgba(0,0,0,.4), 0 3px 7px rgba(0,0,0,.25); }
 .btn-ghost:hover { filter: brightness(1.12); }
-.btn-lg { font-size: 1.15rem; padding: 16px 20px; }
-.btn-sm { font-size: .88rem; padding: 9px 14px; min-height: 38px; box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.btn-lg { font-size: 1.15rem; padding: 16px 20px; min-height: var(--tap-lg); }
+.btn-sm { font-size: .88rem; padding: 9px 14px; min-height: 44px; box-shadow: 0 3px 0 rgba(0,0,0,.35); }
 .btn-sm:active { box-shadow: 0 1px 0 rgba(0,0,0,.35); }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 
@@ -206,6 +215,23 @@ body.reduced-fx #btn-play { animation: none; }
 .field input:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 1px; }
 
 /* ---------- Selección de modo ---------- */
+/* Panel a altura completa: cabecera fija, cuerpo scrollable y CTA "¡Empezar!"
+   anclado en una barra inferior siempre visible (zona del pulgar). */
+.panel-modes { display: flex; flex-direction: column; height: 100%; max-height: 840px; padding-bottom: 0; }
+.panel-modes .panel-head { flex: 0 0 auto; }
+.modes-body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 2px; margin-right: -2px; }
+.modes-actions {
+  flex: 0 0 auto; padding-top: 14px; margin-top: 6px;
+  border-top: 1px solid var(--line);
+  background: linear-gradient(180deg, transparent, var(--panel) 40%);
+  padding-bottom: max(4px, env(safe-area-inset-bottom));
+}
+.modes-actions #btn-start-game { width: 100%; }
+/* CTA toma el color del modo elegido para reforzar la decisión */
+.modes-actions #btn-start-game:not(:disabled) {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mode-accent, #1f5be6) 78%, #fff 6%), var(--mode-accent, #1f5be6));
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--mode-accent, #103a9e) 60%, #000), 0 10px 20px color-mix(in srgb, var(--mode-accent, #1f5be6) 40%, transparent);
+}
 .panel-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .group-title { color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: 1px; margin: 14px 0 8px; }
 .mode-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
@@ -249,10 +275,13 @@ body.reduced-fx #btn-play { animation: none; }
 
 .diff-row { display: flex; gap: 10px; flex-wrap: wrap; }
 .diff-chip {
-  flex: 1 1 0; min-width: 90px; min-height: var(--tap); border-radius: 10px;
+  flex: 1 1 0; min-width: 90px; min-height: 48px; border-radius: 12px;
   background: rgba(255,255,255,.05); border: 1px solid var(--line); color: var(--text); font-weight: 700;
+  transition: background .15s, border-color .15s, transform .1s;
 }
-.diff-chip[aria-checked="true"] { border-color: var(--good); background: rgba(52,226,155,.16); }
+.diff-chip:active { transform: scale(.97); }
+.diff-chip[aria-checked="true"] { border-color: var(--good); background: rgba(52,226,155,.16); box-shadow: 0 0 0 1px var(--good) inset; }
+.diff-chip:disabled { opacity: .5; }
 .mode-desc { color: var(--muted); min-height: 1.4em; margin: 14px 0; font-size: .92rem; }
 
 /* ============ JUEGO ============ */
@@ -490,17 +519,36 @@ body.reduced-fx .toast { animation: none; }
 /* ---------- Overlay y modales ---------- */
 .overlay {
   position: fixed; inset: 0; z-index: var(--z-overlay);
-  display: grid; place-items: center; padding: 18px;
+  display: grid; place-items: center;
+  padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
   background: rgba(4, 8, 22, .72);
 }
+/* Modal = columna flex: cabecera fija + cuerpo scrollable + footer de acciones
+   pegado abajo. max-height evita recortes y mantiene el CTA al alcance. */
 .modal {
   --modal-accent: var(--accent-2);
   width: min(440px, 100%);
+  max-height: min(90dvh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px));
+  display: flex; flex-direction: column;
   background: linear-gradient(180deg, rgba(30,42,92,.97), rgba(15,22,54,.99));
   border: 1px solid var(--line); border-radius: 20px;
   padding: clamp(20px, 5vw, 30px); text-align: center; position: relative; overflow: hidden;
   box-shadow: 0 26px 72px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.10);
   animation: modal-in .26s cubic-bezier(.2,.9,.3,1.2) both;
+}
+/* Cabecera y footer no scrollean; el cuerpo sí. */
+.modal > .m-head { flex: 0 0 auto; }
+.modal-body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0; padding: 0 2px; margin: 0 -2px; }
+.modal-actions {
+  flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px;
+  padding-top: 14px; margin-top: 6px; position: relative;
+}
+.modal-actions .btn { min-height: 48px; }
+/* Sombra-fade sutil sobre el footer para indicar que el cuerpo continúa arriba */
+.modal-actions::before {
+  content: ''; position: absolute; left: 0; right: 0; top: -18px; height: 18px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(15,22,54,.55));
 }
 /* Barra de acento superior (estática, sin coste de runtime) */
 .modal::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--modal-accent), transparent); }
@@ -707,7 +755,7 @@ body.mode-surv .lvl-chip { display: none; }
 .shop-item .btn { padding: 9px 14px; font-size: .9rem; flex: 0 0 auto; }
 
 /* Recompensa diaria (botón destacado) */
-.btn-reward { background: linear-gradient(180deg, #ffe27a, #ffc23d 55%, #ff9e2e); color: #2a1a00; font-weight: 900; text-shadow: 0 1px 0 rgba(255,255,255,.4); box-shadow: 0 5px 0 #b06a12, 0 10px 20px rgba(255,180,60,.45); animation: rewardPulse 1.8s ease-in-out infinite; }
+.btn-reward { min-height: 48px; background: linear-gradient(180deg, #ffe27a, #ffc23d 55%, #ff9e2e); color: #2a1a00; font-weight: 900; text-shadow: 0 1px 0 rgba(255,255,255,.4); box-shadow: 0 5px 0 #b06a12, 0 10px 20px rgba(255,180,60,.45); animation: rewardPulse 1.8s ease-in-out infinite; }
 .btn-reward:active { transform: translateY(3px); box-shadow: 0 1px 0 #b06a12, 0 4px 10px rgba(255,180,60,.4); }
 /* Latido por glow (mantiene el lip estático). */
 @keyframes rewardPulse { 0%,100% { box-shadow: 0 5px 0 #b06a12, 0 10px 20px rgba(255,180,60,.4); } 50% { box-shadow: 0 5px 0 #b06a12, 0 12px 30px rgba(255,200,80,.7); } }
