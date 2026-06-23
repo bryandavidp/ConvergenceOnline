@@ -21,7 +21,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=fx19" />
+  <link rel="stylesheet" href="styles.css?v=fx20" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -62,46 +62,60 @@
     <!-- ============ PANTALLA: INICIO ============ -->
     <section class="screen" id="screen-start" aria-labelledby="start-title" hidden>
       <div class="panel panel-start">
-        <h1 id="start-title" class="logo">Convergencia<span class="logo-orbit" aria-hidden="true"></span></h1>
-        <div class="start-meta" id="start-meta"></div>
-        <button class="btn btn-primary btn-lg" id="btn-play" data-i18n="play">▶ Jugar</button>
-        <p class="play-hint" id="play-hint" hidden></p>
-        <button class="btn btn-reward" id="btn-reward" hidden data-i18n="reward">🎁 Recompensa diaria</button>
-        <div class="start-missions" id="start-missions"></div>
-        <div class="menu-row">
-          <button class="btn btn-ghost menu-tile" id="btn-medals" data-i18n="menu_profile">🏅 Logros</button>
-          <button class="btn btn-ghost menu-tile" id="btn-shop" data-i18n="menu_shop">🛍️ Tienda</button>
-          <button class="btn btn-ghost menu-tile" id="btn-settings" data-i18n="menu_settings">⚙️ Ajustes</button>
+        <!-- ESTADO (solo-lectura) arriba: marca, perfil y misiones -->
+        <div class="start-status">
+          <h1 id="start-title" class="logo">Convergencia<span class="logo-orbit" aria-hidden="true"></span></h1>
+          <div class="start-meta" id="start-meta"></div>
+          <div class="start-missions" id="start-missions"></div>
         </div>
-        <button class="btn btn-ghost btn-sm" id="btn-how" data-i18n="how">¿Cómo se juega?</button>
-        <button class="btn btn-ghost btn-sm" id="btn-install" hidden data-i18n="install">📲 Instalar app</button>
-        <div class="toggle-row">
-          <span data-i18n="sound">Sonido</span>
-          <button class="switch" id="btn-sound" role="switch" aria-checked="true" aria-label="Activar o desactivar sonido"><span class="switch-dot"></span></button>
+        <!-- ACCIONES en la zona cómoda del pulgar (tercio inferior) -->
+        <div class="start-actions">
+          <button class="btn btn-primary btn-lg" id="btn-play" data-i18n="play">▶ Jugar</button>
+          <p class="play-hint" id="play-hint" hidden></p>
+          <button class="btn btn-reward" id="btn-reward" hidden data-i18n="reward">🎁 Recompensa diaria</button>
+          <div class="menu-row">
+            <button class="btn btn-ghost menu-tile" id="btn-medals" data-i18n="menu_profile">🏅 Logros</button>
+            <button class="btn btn-ghost menu-tile" id="btn-shop" data-i18n="menu_shop">🛍️ Tienda</button>
+            <button class="btn btn-ghost menu-tile" id="btn-settings" data-i18n="menu_settings">⚙️ Ajustes</button>
+          </div>
+          <div class="start-foot">
+            <button class="btn btn-ghost btn-sm" id="btn-how" data-i18n="how">¿Cómo se juega?</button>
+            <button class="btn btn-ghost btn-sm" id="btn-install" hidden data-i18n="install">📲 Instalar app</button>
+            <div class="toggle-row">
+              <span data-i18n="sound">Sonido</span>
+              <button class="switch" id="btn-sound" role="switch" aria-checked="true" aria-label="Activar o desactivar sonido"><span class="switch-dot"></span></button>
+            </div>
+            <p class="best-line"><span data-i18n="best">Mejor puntuación:</span> <strong id="start-best">0</strong></p>
+            <p class="version-line">v<span id="app-version">1.0.0</span></p>
+          </div>
         </div>
-        <p class="best-line"><span data-i18n="best">Mejor puntuación:</span> <strong id="start-best">0</strong></p>
-        <p class="version-line">v<span id="app-version">1.0.0</span></p>
       </div>
     </section>
 
     <!-- ============ PANTALLA: SELECCIÓN DE MODO ============ -->
     <section class="screen" id="screen-modes" aria-labelledby="modes-title" hidden>
-      <div class="panel panel-wide">
+      <div class="panel panel-wide panel-modes">
         <div class="panel-head">
           <button class="icon-btn" id="modes-back" aria-label="Volver">←</button>
           <h2 id="modes-title" data-i18n="modes_title">Elige tu misión</h2>
         </div>
 
-        <div class="mode-featured" id="mode-featured" role="radiogroup" aria-label="Modos destacados"></div>
-        <h3 class="group-title" data-i18n="group_mode">Modo</h3>
-        <div class="mode-grid" id="mode-grid" role="radiogroup" aria-label="Modo de juego"></div>
+        <!-- Cuerpo scrollable: el CTA queda fijo abajo (zona del pulgar) -->
+        <div class="modes-body">
+          <div class="mode-featured" id="mode-featured" role="radiogroup" aria-label="Modos destacados"></div>
+          <h3 class="group-title" data-i18n="group_mode">Modo</h3>
+          <div class="mode-grid" id="mode-grid" role="radiogroup" aria-label="Modo de juego"></div>
 
-        <h3 class="group-title" data-i18n="group_diff">Dificultad</h3>
-        <div class="diff-row" id="diff-row" role="radiogroup" aria-label="Dificultad"></div>
+          <h3 class="group-title" data-i18n="group_diff">Dificultad</h3>
+          <div class="diff-row" id="diff-row" role="radiogroup" aria-label="Dificultad"></div>
 
-        <p class="mode-desc" id="mode-desc" aria-live="polite"></p>
+          <p class="mode-desc" id="mode-desc" aria-live="polite"></p>
+        </div>
 
-        <button class="btn btn-primary btn-lg" id="btn-start-game" disabled data-i18n="begin">¡Empezar!</button>
+        <!-- Barra de acción inferior fija -->
+        <div class="modes-actions">
+          <button class="btn btn-primary btn-lg" id="btn-start-game" disabled data-i18n="begin">¡Empezar!</button>
+        </div>
       </div>
     </section>
 
@@ -204,22 +218,28 @@
     <!-- Nivel completado -->
     <div class="modal modal-win" id="modal-level" role="dialog" aria-modal="true" aria-labelledby="level-title" hidden>
       <div class="m-head"><span class="m-emblem" id="level-emblem" aria-hidden="true">⭐</span><h2 id="level-title">¡Nivel completado!</h2></div>
-      <p class="modal-sub" id="level-sub"></p>
-      <div class="stats" id="level-stats"></div>
-      <div class="next-info" id="level-next"></div>
-      <button class="btn btn-primary btn-lg" id="btn-next-level">Siguiente nivel →</button>
+      <div class="modal-body">
+        <p class="modal-sub" id="level-sub"></p>
+        <div class="stats" id="level-stats"></div>
+        <div class="next-info" id="level-next"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary btn-lg" id="btn-next-level">Siguiente nivel →</button>
+      </div>
     </div>
 
     <!-- Fin de partida -->
     <div class="modal modal-over" id="modal-over" role="dialog" aria-modal="true" aria-labelledby="over-title" hidden>
       <div class="m-head"><span class="m-emblem" id="over-emblem" aria-hidden="true">🏁</span><h2 id="over-title">¡Misión fallida!</h2></div>
-      <p class="record-badge" id="over-record" hidden>🎉 ¡Nuevo récord!</p>
-      <p class="modal-sub" id="over-reason"></p>
-      <p class="modal-meta" id="over-meta"></p>
-      <div class="stats" id="over-stats"></div>
-      <div class="over-xp" id="over-xp"></div>
-      <div class="over-ach" id="over-ach"></div>
-      <div class="modal-buttons">
+      <div class="modal-body">
+        <p class="record-badge" id="over-record" hidden>🎉 ¡Nuevo récord!</p>
+        <p class="modal-sub" id="over-reason"></p>
+        <p class="modal-meta" id="over-meta"></p>
+        <div class="stats" id="over-stats"></div>
+        <div class="over-xp" id="over-xp"></div>
+        <div class="over-ach" id="over-ach"></div>
+      </div>
+      <div class="modal-actions modal-buttons">
         <button class="btn btn-primary" id="btn-retry" data-i18n="retry">↻ Reintentar</button>
         <button class="btn btn-ghost" id="btn-share" data-i18n="share">📤 Compartir</button>
         <button class="btn btn-ghost" id="btn-over-quit" data-i18n="menu">✕ Menú</button>
@@ -273,6 +293,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=fx19" defer></script>
+  <script src="game.js?v=fx20" defer></script>
 </body>
 </html>
