@@ -256,51 +256,39 @@ body.reduced-fx #btn-play { animation: none; }
 .mode-desc { color: var(--muted); min-height: 1.4em; margin: 14px 0; font-size: .92rem; }
 
 /* ============ JUEGO ============ */
+/* Tablero = HÉROE. Cabecera de estado (solo lectura) arriba; controles de juego
+   (pista/boosters) en la zona inferior del pulgar. Más tablero al adelgazar el top. */
 .screen-game {
-  justify-content: flex-start; gap: 10px;
-  /* Tamaño del tablero como variable (con fallback vh) para anclar toasts/combo
-     justo encima del tablero y mantener DRY entre breakpoints. */
-  --board-size: min(96vw, 64vh, 600px);
-  --board-size: min(96vw, 64svh, 600px);
+  justify-content: flex-start; gap: 8px;
+  --board-size: min(96vw, 66vh, 620px);
+  --board-size: min(96vw, 66svh, 620px);
 }
-.topbar {
-  width: min(620px, 100%); display: flex; align-items: center; justify-content: space-between; gap: 10px;
-}
-.best { display: flex; flex-direction: column; align-items: flex-start; }
-.best-label { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-.best-value { font-weight: 800; color: var(--accent-2); font-variant-numeric: tabular-nums; }
-.controls { display: flex; gap: 8px; }
 
-/* HUD */
-.hud {
-  width: min(620px, 100%);
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 8px;
-  background: linear-gradient(180deg, var(--panel-2), var(--panel));
-  border: 1px solid var(--line); border-radius: 14px; padding: 10px;
-  box-shadow: 0 8px 22px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
-}
-.hud-item { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
-.hud-label { font-size: clamp(.55rem, 1.6vw, .65rem); color: var(--muted); text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
-.hud-value { font-size: clamp(.95rem, 3.4vw, 1.3rem); font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
-/* Puntuación = dato HÉROE: ocupa toda la fila superior, destacada y grande. */
-.hud-item.score {
-  grid-column: 1 / -1; flex-direction: row; align-items: baseline; justify-content: center; gap: 10px;
-  background: linear-gradient(180deg, rgba(24,230,230,.12), rgba(0,0,0,.18));
-  border: 1px solid rgba(24,230,230,.25); border-radius: 12px; padding: 6px 12px;
-}
-.score .hud-label { align-self: center; }
-.score .hud-value { font-size: clamp(1.5rem, 7vw, 2.2rem); color: var(--score); text-shadow: 0 0 16px rgba(24,230,230,.4); }
-.level .hud-value { color: var(--level); }
-.time .hud-value { color: var(--time); }
-.speed .hud-value { color: var(--speed); }
-/* La ocupación ocupa toda la fila inferior del HUD en cualquier tamaño */
-.hud-item.progress { grid-column: 1 / -1; flex-direction: column; }
-.bar { width: 100%; height: 8px; border-radius: 6px; background: rgba(0,0,0,.35); overflow: hidden; margin-top: 6px; }
+/* Cabecera de estado */
+.gtop { width: min(620px, 100%); display: flex; flex-direction: column; gap: 8px; }
+.gtop-main { display: flex; align-items: center; gap: 10px; }
+.gctx { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; flex: 0 0 auto; min-width: 0; }
+.g-chip { display: inline-flex; align-items: center; gap: 5px; font-size: .72rem; font-weight: 700; color: var(--muted);
+  background: rgba(0,0,0,.28); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+.g-chip b { color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }
+.lvl-chip b { color: var(--level); }
+.rec-chip b { color: var(--gold); }
+.time-chip { display: none; }                       /* visible solo en Contrarreloj */
+body.mode-timed .time-chip { display: inline-flex; }
+.time-chip b { color: var(--time); font-size: .95rem; }
+/* Puntuación = dato HÉROE: centrada, grande y dominante */
+.gscore { flex: 1; display: flex; justify-content: center; align-items: baseline; min-width: 0; }
+.gscore .hud-value { font-size: clamp(1.8rem, 9vw, 2.8rem); font-weight: 900; color: var(--score);
+  font-variant-numeric: tabular-nums; text-shadow: 0 0 18px rgba(24,230,230,.45); line-height: 1; }
+.controls { display: flex; gap: 8px; flex: 0 0 auto; }
+
+/* Ocupación: franja fina pegada al tablero (estados warn/danger) */
+.occ { width: 100%; height: 8px; border-radius: 6px; background: rgba(0,0,0,.4); overflow: hidden; }
 .bar-fill { height: 100%; width: 0%; border-radius: 6px; background: linear-gradient(90deg, var(--good), var(--accent-2)); transition: width .3s ease, background .3s ease; }
 .bar-fill.warn { background: linear-gradient(90deg, var(--warn), #ff8a3d); }
 .bar-fill.danger { background: linear-gradient(90deg, var(--bad), #ff2d4d); }
 
-/* Badge del botón de pista */
+/* Badge de pista (reutilizado) */
 .hint-btn { position: relative; }
 .hint-btn .badge {
   position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 4px;
@@ -309,6 +297,14 @@ body.reduced-fx #btn-play { animation: none; }
 }
 .hint-btn:disabled { opacity: .4; }
 .hint-btn:disabled .badge { background: #888; color: #222; }
+/* Pista como FAB en la zona natural del pulgar (inferior derecha) */
+.hint-fab {
+  position: absolute; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom));
+  width: 56px; height: 56px; border-radius: 50%; font-size: 1.6rem; z-index: 45;
+  background: linear-gradient(180deg, #243160, #141c3c); border: 1px solid var(--line);
+  box-shadow: 0 6px 0 rgba(0,0,0,.45), 0 12px 22px rgba(0,0,0,.45);
+}
+.hint-fab:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.45), 0 5px 12px rgba(0,0,0,.4); }
 .hud-value.bump { animation: bump .3s ease; }
 @keyframes bump { 50% { transform: scale(1.18); color: var(--gold); } }
 
@@ -562,11 +558,11 @@ body.reduced-fx .ic-chip { animation: none; }
 /* ---------- Responsive ---------- */
 @media (min-width: 720px) {
   /* En pantallas anchas el alto manda: tablero grande y centrado */
-  .screen-game { --board-size: min(82vh, 600px); --board-size: min(82svh, 600px); gap: 14px; }
+  .screen-game { --board-size: min(84vh, 640px); --board-size: min(84svh, 640px); gap: 12px; }
 }
 @media (min-height: 900px) and (max-width: 719px) {
   /* Móviles altos: el tablero crece un poco más y se reduce el hueco */
-  .screen-game { --board-size: min(96vw, 70vh, 620px); --board-size: min(96vw, 70svh, 620px); }
+  .screen-game { --board-size: min(96vw, 72vh, 640px); --board-size: min(96vw, 72svh, 640px); }
 }
 
 /* ===================== Capa FX + recompensas ===================== */
@@ -677,7 +673,7 @@ body.reduced-fx .coach-text { animation: none; }
 .obj-goal { color: var(--gold); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
 
 /* Supervivencia 2.0 */
-body.mode-surv .hud-item.level { display: none; }
+body.mode-surv .lvl-chip { display: none; }
 .surv-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 auto 6px; width: min(96vw, 620px); max-width: 100%; background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; font-size: .9rem; font-weight: 700; }
 .surv-lives { letter-spacing: 1px; min-width: 60px; }
 .surv-wave { color: var(--warn); }

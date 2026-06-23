@@ -21,7 +21,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=fx18" />
+  <link rel="stylesheet" href="styles.css?v=fx19" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -107,45 +107,45 @@
 
     <!-- ============ PANTALLA: JUEGO ============ -->
     <section class="screen screen-game" id="screen-game" aria-label="Partida" hidden>
-      <header class="topbar">
-        <div class="best">
-          <span class="best-label" data-i18n="hud_record">Récord</span>
-          <span class="best-value" id="hud-best">0</span>
+      <!-- Cabecera de estado (solo lectura): contexto + puntuación héroe + controles meta -->
+      <header class="gtop">
+        <div class="gtop-main">
+          <div class="gctx">
+            <span class="g-chip lvl-chip"><span class="g-k" data-i18n="hud_level">Nivel</span> <b id="hud-level">1</b></span>
+            <span class="g-chip time-chip"><b id="hud-time">0:00</b></span>
+            <span class="g-chip rec-chip">🏆 <b id="hud-best">0</b></span>
+          </div>
+          <div class="gscore"><span class="hud-value" id="hud-score">0</span></div>
+          <div class="controls">
+            <button class="icon-btn" id="btn-pause" aria-label="Pausa">⏸</button>
+            <button class="icon-btn" id="btn-restart" aria-label="Reiniciar">↻</button>
+            <button class="icon-btn" id="btn-quit" aria-label="Salir al menú">✕</button>
+          </div>
         </div>
-        <div class="controls">
-          <button class="icon-btn hint-btn" id="btn-hint" aria-label="Pista">💡<span class="badge" id="hint-badge">3</span></button>
-          <button class="icon-btn" id="btn-pause" aria-label="Pausa">⏸</button>
-          <button class="icon-btn" id="btn-restart" aria-label="Reiniciar">↻</button>
-          <button class="icon-btn" id="btn-quit" aria-label="Salir al menú">✕</button>
+
+        <!-- Banner de objetivo (modo Aventura) -->
+        <div class="obj-banner" id="obj-banner" hidden></div>
+        <!-- Barra de Supervivencia: vidas + oleada + tiempo sobrevivido -->
+        <div class="surv-bar" id="surv-bar" hidden>
+          <span class="surv-lives" id="surv-lives">❤️❤️❤️</span>
+          <span class="surv-wave" id="surv-wave">Oleada 1</span>
+          <span class="surv-time" id="surv-time">0s</span>
         </div>
+
+        <!-- Ocupación: franja fina pegada al tablero (estados warn/danger) -->
+        <div class="occ" aria-hidden="true">
+          <span class="sr-only" id="hud-progress-label" data-i18n="hud_occ">Ocupación</span>
+          <div class="bar-fill" id="hud-progress-fill"></div>
+        </div>
+        <!-- Velocidad: conservada para Render.hud pero oculta (HUD minimalista) -->
+        <span class="hud-value" id="hud-speed" hidden>3.0s</span>
       </header>
 
-      <div class="hud" id="hud">
-        <div class="hud-item score"><span class="hud-label" data-i18n="hud_points">Puntos</span><span class="hud-value" id="hud-score">0</span></div>
-        <div class="hud-item level"><span class="hud-label" data-i18n="hud_level">Nivel</span><span class="hud-value" id="hud-level">1</span></div>
-        <div class="hud-item time"><span class="hud-label" data-i18n="hud_time">Tiempo</span><span class="hud-value" id="hud-time">0:00</span></div>
-        <div class="hud-item speed"><span class="hud-label" data-i18n="hud_speed">Velocidad</span><span class="hud-value" id="hud-speed">3.0s</span></div>
-        <div class="hud-item progress">
-          <span class="hud-label" id="hud-progress-label" data-i18n="hud_occ">Ocupación</span>
-          <div class="bar"><div class="bar-fill" id="hud-progress-fill"></div></div>
-        </div>
-      </div>
-
-      <!-- Banner de objetivo (modo Aventura) -->
-      <div class="obj-banner" id="obj-banner" hidden></div>
-
-      <!-- Barra de Supervivencia: vidas + oleada + tiempo sobrevivido -->
-      <div class="surv-bar" id="surv-bar" hidden>
-        <span class="surv-lives" id="surv-lives">❤️❤️❤️</span>
-        <span class="surv-wave" id="surv-wave">Oleada 1</span>
-        <span class="surv-time" id="surv-time">0s</span>
-      </div>
-
       <div class="board-area">
-        <!-- Notificaciones: en el hueco entre el HUD y el tablero (no encima del tablero) -->
+        <!-- Notificaciones: encima del tablero (suben, nunca dentro) -->
         <div class="toasts" id="toasts" aria-live="polite"></div>
 
-        <!-- Indicador de combo (multiplicador): mismo hueco superior, a la derecha -->
+        <!-- Indicador de combo (multiplicador): encima del tablero, a la derecha -->
         <div class="combo" id="combo" hidden aria-hidden="true">
           <svg viewBox="0 0 44 44" class="combo-ring"><circle class="combo-ring-bg" cx="22" cy="22" r="19"/><circle class="combo-ring-fill" id="combo-ring-fill" cx="22" cy="22" r="19"/></svg>
           <span class="combo-mult" id="combo-mult">x1</span>
@@ -163,11 +163,14 @@
         </div>
       </div>
 
-      <!-- Barra de potenciadores (Supervivencia) -->
+      <!-- Barra de potenciadores (Supervivencia): zona inferior, al alcance del pulgar -->
       <div class="booster-bar" id="booster-bar" hidden>
         <div class="charge"><div class="charge-fill" id="charge-fill"></div></div>
         <div class="boosters" id="boosters"></div>
       </div>
+
+      <!-- Pista: FAB en la zona natural del pulgar (acción usada en juego) -->
+      <button class="icon-btn hint-btn hint-fab" id="btn-hint" aria-label="Pista">💡<span class="badge" id="hint-badge">3</span></button>
     </section>
 
   </main>
@@ -270,6 +273,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=fx18" defer></script>
+  <script src="game.js?v=fx19" defer></script>
 </body>
 </html>
