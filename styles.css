@@ -360,6 +360,8 @@ body.reduced-fx #btn-play { animation: none; }
 /* Bloqueo (roca): NO usa emoji (se confundía con un icono). Se muestra como un
    "muro" oscuro tramado con una X de CADENAS metálicas, para que se lea al
    instante como casilla bloqueada y nunca como icono a eliminar. */
+/* Defensa: una casilla de bloqueo sólido nunca muestra icono (las congeladas sí). */
+.cell.tile-rock .glyph, .cell.tile-locked .glyph { display: none; }
 .cell.tile-rock {
   background:
     repeating-linear-gradient(45deg, rgba(150,162,196,.10) 0 6px, rgba(0,0,0,0) 6px 12px),
