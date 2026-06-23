@@ -44,10 +44,10 @@
     EMPTY_BOARD_BONUS: 500,   // bonus por dejar el tablero vacío
     FEVER_COMBO: 10,          // combo para entrar en modo Fever
     FEVER_BOOST: 1.25,        // multiplicador extra de puntos en Fever
-    WIN_OCCUPATION: 30,       // % de ocupación: sin movimientos y por debajo => nivel superado
-    TIMED_DURATION: 120,      // s (contrarreloj)
-    TIMED_MIN: 30,            // s mínimo de límite por nivel
-    TIMED_DECREASE: 10,       // s menos por nivel
+    // Contrarreloj (score attack): el reloj tiene TOPE -> el tiempo ganado no se
+    // acumula sin límite (evita partidas infinitas a base de combos).
+    TIMED_START: 60,          // s reloj inicial
+    TIMED_CAP: 90,            // s máximo en el reloj (tope duro)
     HINTS_PER_LEVEL: 3,
     HINT_COOLDOWN: 10000,     // ms
     HINT_DURATION: 2000,      // ms
@@ -61,8 +61,11 @@
       clasico:       { name: 'Clásico',      emoji: '♟️', timed: false, penalties: true,  mult: 1.0, accent: '#00d0ff', goal: 'Vacía el tablero', desc: 'Vacía el tablero para superar el nivel. Cuidado: errar añade iconos.' },
       aventura:      { name: 'Aventura',     emoji: '🚀', timed: false, penalties: true,  mult: 1.1, accent: '#7a5cff', desc: 'Viaje infinito por biomas con reglas propias, objetivos y mini-jefes. ¿Hasta dónde llegarás?',
         onSetupLevel(ctx) { Adventure.setup(ctx.level); },
-        winCheck() { Adventure.refreshGoal(State.level); return Adventure.winCheck(); } },
-      contrarreloj:  { name: 'Contrarreloj', emoji: '⏱️', timed: true,  penalties: true,  mult: 1.2, accent: '#ff6cb0', goal: 'Combos = más tiempo', desc: 'Cada convergencia suma tiempo; los combos suman aún más. ¡No dejes que el reloj llegue a cero!' },
+        winCheck() { Adventure.refreshGoal(State.level); return Adventure.winCheck(); },
+        // El objetivo MANDA: solo en niveles 'clear' se gana vaciando el tablero;
+        // en score/survive/boss vaciar NO completa el nivel antes de tiempo.
+        boardClearWins() { return Adventure.objective === 'clear'; } },
+      contrarreloj:  { name: 'Contrarreloj', emoji: '⏱️', timed: true,  scoreAttack: true, penalties: true,  mult: 1.2, accent: '#ff6cb0', goal: 'Suma puntos a contrarreloj', desc: 'Un solo tablero: cada convergencia suma algo de tiempo (con tope), pero la presión crece. ¡Puntúa todo lo posible antes de que el reloj llegue a cero!' },
       supervivencia: { name: 'Supervivencia',emoji: '❤️', timed: false, penalties: true,  mult: 1.5, fast: true, endless: true, accent: '#ff5b6e', desc: 'Aguanta oleadas crecientes con vidas, trampas, jefes y potenciadores. ¿Cuánto sobrevivirás?',
         onSetupLevel(ctx) { Survival.setup(ctx.level); },
         onTick(dt) { Survival.onTick(dt); },
@@ -201,7 +204,7 @@
         sum_level: 'Nivel alcanzado {n}', sum_time: 'Tiempo {t}', sum_wave: 'Oleada {w} · {s}s sobrevividos', sum_chapter: 'Capítulo {c} · Nivel {n}',
         level_done: '¡Nivel completado!', perfect_done: '¡Tablero perfecto!', level_sub: 'Nivel {n} superado', perfect_sub: 'Tablero limpio · bonus +{b}', boss_next: '¡Jefe a la vista!',
         over_victory: '🏆 ¡Victoria!', over_surv: '🛡️ Fin de la supervivencia', over_fail: '¡Misión fallida!',
-        reason_time: '¡Se acabó el tiempo!', reason_nomoves: 'Sin movimientos posibles · {n}% del tablero ocupado.', reason_end: 'Fin de la partida.', reason_surv: 'Sobreviviste {s}s', ach_unlocked: '🏅 Logro: {n}',
+        reason_time: '¡Se acabó el tiempo!', reason_nomoves: 'Sin movimientos posibles · {n}% del tablero ocupado.', reason_full: 'El tablero se ha llenado.', reason_end: 'Fin de la partida.', reason_surv: 'Sobreviviste {s}s', ach_unlocked: '🏅 Logro: {n}',
       },
       en: {
         welcome_sub: 'Match equal icons across space', name_q: "What's your name?", optional: '(optional)',
@@ -232,7 +235,7 @@
         sum_level: 'Reached level {n}', sum_time: 'Time {t}', sum_wave: 'Wave {w} · {s}s survived', sum_chapter: 'Chapter {c} · Level {n}',
         level_done: 'Level complete!', perfect_done: 'Perfect board!', level_sub: 'Level {n} cleared', perfect_sub: 'Clean board · bonus +{b}', boss_next: 'Boss ahead!',
         over_victory: '🏆 Victory!', over_surv: '🛡️ Survival over', over_fail: 'Mission failed!',
-        reason_time: "Time's up!", reason_nomoves: 'No moves left · {n}% of the board filled.', reason_end: 'Game over.', reason_surv: 'Survived {s}s', ach_unlocked: '🏅 Achievement: {n}',
+        reason_time: "Time's up!", reason_nomoves: 'No moves left · {n}% of the board filled.', reason_full: 'The board filled up.', reason_end: 'Game over.', reason_surv: 'Survived {s}s', ach_unlocked: '🏅 Achievement: {n}',
         m_tutorial_n: 'Tutorial', m_tutorial_d: 'Learn the mechanic, no rush or penalties.', m_tutorial_g: 'Match two equal',
         m_clasico_n: 'Classic', m_clasico_d: 'Clear the board to pass the level. Careful: mistakes add icons.', m_clasico_g: 'Clear the board',
         m_aventura_n: 'Adventure', m_aventura_d: 'Endless journey across biomes with their own rules, goals and mini-bosses. How far will you go?',
@@ -1674,8 +1677,8 @@
       State.comboWindow = Config.DIFFICULTY[State.diff].comboWindow;
       State.hintsLeft = Config.HINTS_PER_LEVEL;
       State.hintReadyAt = 0;
-      // Contrarreloj: límite de tiempo por nivel (decrece con el nivel)
-      if (m.timed) State.timeLeft = Math.max(Config.TIMED_MIN, Config.TIMED_DURATION - (State.level - 1) * Config.TIMED_DECREASE);
+      // Contrarreloj (score attack): reloj inicial fijo; se extiende con tope al jugar.
+      if (m.timed) State.timeLeft = Config.TIMED_START;
       // Tablero fresco con la variedad de iconos del nivel actual
       State.board = new Array(State.size * State.size).fill(null);
       State.tiles = new Array(State.size * State.size).fill(null);
@@ -1779,7 +1782,17 @@
       if (Config.MILESTONES[State.combo]) { State.score += Config.MILESTONES[State.combo]; Toasts.show(`¡Combo ×${State.combo}! +${Config.MILESTONES[State.combo]}`, 'good'); Sound.milestone(); Haptics.milestone(); }
 
       // Contrarreloj: bonus de tiempo por convergencia (los combos suman más)
-      if (m.timed) { const bonus = Math.max(5, removed * 3) + Math.min(State.combo, 6); State.timeLeft += bonus; Toasts.show(`+${bonus}s`, 'info', 1100); }
+      if (m.timed) {
+        // Tiempo ganado MODESTO, con TOPE de reloj y RENDIMIENTO DECRECIENTE: los
+        // combos ya recompensan con puntos; el tiempo no se acumula sin límite ni
+        // hace la partida infinita. (Antes: hasta +20s por convergencia, sin tope.)
+        const decay = clamp(1 - State.elapsed / 150, 0.4, 1);      // 100% -> 40% hacia el min ~150s
+        const raw = (2 + Math.min(removed, 4) + Math.min(State.combo, 4)) * decay;  // ~2..10s, decreciente
+        const before = State.timeLeft;
+        State.timeLeft = Math.min(Config.TIMED_CAP, State.timeLeft + raw);
+        const got = Math.round(State.timeLeft - before);
+        Toasts.show(got > 0 ? `+${got}s` : '⏱️ tope', 'info', 1100);
+      }
 
       // Estrellas de convergencia: estrella en la casilla central + una estrella
       // sobre cada icono eliminado + camino de estrellitas, TODO sincronizado con
@@ -1845,14 +1858,24 @@
 
     doSpawn() {
       if (Rules.call('blockSpawn')) return;   // potenciador de congelación (Supervivencia)
+      const m = Config.MODES[State.mode];
       const idx = Engine.spawnOne();
-      if (idx < 0) { // tablero lleno
-        if (Config.MODES[State.mode].endless) { Rules.call('onOverflow'); return; }
-        this.evaluate(); return;
+      if (idx < 0) { // no queda casilla vacía colocable: el tablero está lleno
+        if (m.endless) { Rules.call('onOverflow'); return; }     // surv/zen lo gestionan
+        if (m.scoreAttack) return;                                // contrarreloj: el reloj decide
+        // Clásico/Aventura: tablero lleno = atasco real (sin huecos no hay jugada).
+        this.gameOver(I18n.t('reason_full')); return;
       }
       Render.syncCell(idx); Render.spawnAnim(idx);
-      // Aceleración progresiva suave dentro del nivel
-      State.spawnRate = Math.max(Config.DIFFICULTY[State.diff].spawnMin, State.spawnRate - 6);
+      if (m.scoreAttack) {
+        // Contrarreloj: presión CRECIENTE con el tiempo => la partida es finita
+        // aunque ganes tiempo (los spawns acaban superando al jugador).
+        const d = Config.DIFFICULTY[State.diff];
+        State.spawnRate = clamp(Math.round(d.spawnStart * Math.pow(0.92, State.elapsed / 10)), 300, d.spawnStart);
+      } else {
+        // Aceleración progresiva suave dentro del nivel
+        State.spawnRate = Math.max(Config.DIFFICULTY[State.diff].spawnMin, State.spawnRate - 6);
+      }
       Render.hudSoon();
       this.evaluate();
     },
@@ -1886,14 +1909,16 @@
       if (wc) { this.levelComplete(wc === 'perfect'); return; }
       const lc = Rules.call('loseCheck', State);
       if (lc) { this.gameOver(typeof lc === 'string' ? lc : I18n.t('reason_end')); return; }
-      // Modos infinitos (Supervivencia): la victoria/derrota la gestionan sus hooks.
-      if (Config.MODES[State.mode].endless) return;
-      if (State.iconCount === 0) { this.levelComplete(true); return; }
-      if (!Engine.hasMoves()) {
-        const occ = Engine.occupation();
-        if (occ <= Config.WIN_OCCUPATION) this.levelComplete(false);
-        else this.gameOver(I18n.t('reason_nomoves').replace('{n}', Math.round(occ)));
-      }
+      const m = Config.MODES[State.mode];
+      // Modos sin progresión por niveles: la gestionan sus hooks/temporizador
+      // (Supervivencia y Zen = endless; Contrarreloj = score attack).
+      if (m.endless || m.scoreAttack) return;
+      // VICTORIA = vaciar el tablero (si el objetivo del modo lo admite). NO hay
+      // "victoria por estancamiento": si en un instante no hay jugada válida, se
+      // espera al siguiente spawn (el spawn continuo creará nuevas convergencias).
+      // La DERROTA real llega por overflow (tablero lleno) en doSpawn().
+      const bcw = Rules.call('boardClearWins', State);
+      if (State.iconCount === 0 && (bcw === undefined || bcw)) { this.levelComplete(true); return; }
     },
 
     resetCombo() {
@@ -1952,9 +1977,9 @@
       } else {
         head = `${I18n.t('next')} · ${I18n.t('lvl')} ${next}`;
       }
-      let deltas = `<span class="delta">⚡ ${curSpawn.toFixed(1)}s → <strong>${nxtSpawn.toFixed(1)}s</strong></span>` +
+      // (Contrarreloj ya no progresa por niveles, así que no hay preview de tiempo.)
+      const deltas = `<span class="delta">⚡ ${curSpawn.toFixed(1)}s → <strong>${nxtSpawn.toFixed(1)}s</strong></span>` +
         `<span class="delta">🎲 ${curVar} → <strong>${nxtVar}</strong></span>`;
-      if (m.timed) { const nt = Math.max(Config.TIMED_MIN, Config.TIMED_DURATION - (next - 1) * Config.TIMED_DECREASE); deltas += `<span class="delta">⏱️ <strong>${fmtTime(nt)}</strong></span>`; }
       return `<div class="m-card-h">${head}</div>` +
         `<div class="ic-label">${I18n.t('new_icons')}</div>` +
         `<div class="ic-row">${icons}</div>` +

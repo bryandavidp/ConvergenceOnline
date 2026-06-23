@@ -722,6 +722,8 @@ body.reduced-fx .coach-text { animation: none; }
 
 /* Supervivencia 2.0 */
 body.mode-surv .lvl-chip { display: none; }
+/* Contrarreloj (score attack): sin niveles → se oculta el chip de Nivel; manda Tiempo + Puntuación. */
+body.mode-timed .lvl-chip { display: none; }
 .surv-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 auto 6px; width: min(96vw, 620px); max-width: 100%; background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; font-size: .9rem; font-weight: 700; }
 .surv-lives { letter-spacing: 1px; min-width: 60px; }
 .surv-wave { color: var(--warn); }
