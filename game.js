@@ -1690,6 +1690,8 @@
       // Supervivencia 2.0: vidas, oleadas, boosters.
       const isSurv = mode === 'supervivencia';
       document.body.classList.toggle('mode-surv', isSurv);
+      // Tiempo en HUD solo cuando importa (Contrarreloj): top minimalista.
+      document.body.classList.toggle('mode-timed', !!Config.MODES[mode].timed);
       { const sb = $('#surv-bar'); if (sb) sb.hidden = !isSurv; const bb = $('#booster-bar'); if (bb) bb.hidden = !isSurv; }
       if (isSurv) Survival.start();
       Render.fever(false); Render.danger(0);
