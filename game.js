@@ -407,7 +407,11 @@
 
     emptyCells() {
       const out = [];
-      for (let i = 0; i < State.board.length; i++) if (State.board[i] === null) out.push(i);
+      // Una casilla sólida (roca/bloqueada) NO es colocable: nunca debe recibir un
+      // icono (spawnOne/placeInitial/addPenalty). Las congeladas no son sólidas.
+      for (let i = 0; i < State.board.length; i++) {
+        if (State.board[i] === null && !(State.tiles[i] && State.tiles[i].solid)) out.push(i);
+      }
       return out;
     },
 
