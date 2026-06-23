@@ -556,7 +556,15 @@
 
     syncAll() { for (let i = 0; i < State.board.length; i++) this.syncCell(i); },
 
-    spawnAnim(i) { const el = this.cells[i]; el.classList.remove('spawn'); void el.offsetWidth; el.classList.add('spawn'); },
+    spawnAnim(i) {
+      const el = this.cells[i];
+      // Limpia un posible estado de "clear" en curso: si un icono aparece en una
+      // casilla que se acaba de vaciar (carrera spawn↔convergencia a alta velocidad),
+      // el icono nuevo NO debe heredar la animación glyph-out ni quedar invisible.
+      el.classList.remove('spawn', 'clear');
+      void el.offsetWidth;
+      el.classList.add('spawn');
+    },
     clearAnim(indices) {
       // La explosión del icono crece con la racha de combo (frenesí en el tablero):
       // suave en combos bajos y cada vez más violenta/llamativa al subir. SIN giro,
@@ -570,7 +578,11 @@
         el.classList.add('clear');
         el.addEventListener('animationend', () => {
           el.classList.remove('clear');
-          this.setGlyph(i, null);
+          // Solo borra el glyph si la casilla SIGUE vacía. Si entre medias apareció
+          // un icono nuevo (spawn/penalización sobre la celda recién limpiada), este
+          // listener obsoleto NO debe borrarlo: dejaría la casilla "ocupada pero
+          // invisible" y rechazaría el toque con el sonido de "hay icono aquí".
+          if (State.board[i] === null) this.setGlyph(i, null);
         }, { once: true });
       });
     },
