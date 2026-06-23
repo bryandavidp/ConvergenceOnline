@@ -668,7 +668,7 @@ body.reduced-fx .ic-chip { animation: none; }
 /* Bienvenida: opcional + selector de avatar */
 .field .opt { color: var(--muted); font-weight: 400; font-size: .82em; }
 .avatar-pick { display: flex; gap: 10px; justify-content: center; margin: 4px 0 16px; flex-wrap: wrap; }
-.avatar-dot { width: 38px; height: 38px; border-radius: 50%; background: var(--av, #00d0ff); border: 2px solid rgba(255,255,255,.25); padding: 0; cursor: pointer; transition: transform .12s; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
+.avatar-dot { width: 44px; height: 44px; border-radius: 50%; background: var(--av, #00d0ff); border: 2px solid rgba(255,255,255,.25); padding: 0; cursor: pointer; transition: transform .12s; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
 .avatar-dot.sel { border-color: #fff; transform: scale(1.18); box-shadow: 0 0 0 3px var(--av), 0 0 16px var(--av), 0 2px 8px rgba(0,0,0,.5); }
 .avatar-dot.mini { width: 22px; height: 22px; border-width: 2px; cursor: default; flex: 0 0 auto; }
 
@@ -707,7 +707,7 @@ body.reduced-fx .coach-text { animation: none; }
 /* Ajustes / medallas */
 .settings-list { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 18px; }
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 700; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.2)); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
-.medals-list { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 18px; max-height: 50vh; overflow: auto; text-align: left; }
+.medals-list { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 4px; text-align: left; }
 .medal { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.22)); border: 1px solid var(--line); opacity: .5; }
 .medal.on { opacity: 1; border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset, 0 0 12px rgba(255,216,77,.2); }
 .medal-ic { font-size: 1.5rem; width: 34px; text-align: center; flex: 0 0 auto; }
@@ -747,7 +747,7 @@ body.mode-surv .lvl-chip { display: none; }
 /* Tienda */
 .shop-coins { display: inline-block; color: var(--gold); font-weight: 900; background: rgba(255,216,77,.12); border: 1px solid rgba(255,216,77,.4); border-radius: 999px; padding: 4px 14px; margin-bottom: 4px; }
 .shop-hint { color: var(--muted); font-size: .82rem; margin-bottom: 12px; }
-.shop-list { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 18px; max-height: 52vh; overflow: auto; text-align: left; }
+.shop-list { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 4px; text-align: left; }
 .shop-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.2)); border: 1px solid var(--line); cursor: pointer; }
 .shop-item.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset, 0 0 14px rgba(255,216,77,.22); }
 .shop-item .shop-sw { width: 46px; height: 46px; border-radius: 12px; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.25); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 2px 6px rgba(0,0,0,.4); }
@@ -762,7 +762,7 @@ body.mode-surv .lvl-chip { display: none; }
 body.reduced-fx .btn-reward { animation: none; }
 
 /* Perfil: leaderboard local por modo + reto semanal */
-.modal-profile { max-height: 88vh; overflow: auto; }
+/* La altura/scroll los gestiona .modal + .modal-body (cabecera y footer fijos) */
 .profile-lb { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 8px; text-align: left; }
 .lb-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.2)); border: 1px solid var(--line); }
 .lb-mode { flex: 1; font-weight: 800; }

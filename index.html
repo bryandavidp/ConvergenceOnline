@@ -21,7 +21,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=fx20" />
+  <link rel="stylesheet" href="styles.css?v=fx21" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -194,21 +194,25 @@
     <!-- Cómo jugar -->
     <div class="modal" id="modal-how" role="dialog" aria-modal="true" aria-labelledby="how-title" hidden>
       <h2 id="how-title" data-i18n="how_title">¿Cómo se juega?</h2>
-      <ul class="how-list">
-        <li>🎯 <span data-i18n-html="how1">Toca una <strong>casilla vacía</strong>.</span></li>
-        <li>👀 <span data-i18n-html="how2">Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).</span></li>
-        <li>✨ <span data-i18n-html="how3">Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!</span></li>
-        <li>🔥 <span data-i18n-html="how4">Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.</span></li>
-        <li>⚠️ <span data-i18n-html="how5">Los iconos aparecen solos: vacía el tablero antes de que se llene.</span></li>
-      </ul>
-      <button class="btn btn-primary" id="btn-tutorial" data-i18n="tutorial_btn">▶ Tutorial interactivo</button>
-      <button class="btn btn-ghost" data-close data-i18n="understood">Entendido</button>
+      <div class="modal-body">
+        <ul class="how-list">
+          <li>🎯 <span data-i18n-html="how1">Toca una <strong>casilla vacía</strong>.</span></li>
+          <li>👀 <span data-i18n-html="how2">Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).</span></li>
+          <li>✨ <span data-i18n-html="how3">Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!</span></li>
+          <li>🔥 <span data-i18n-html="how4">Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.</span></li>
+          <li>⚠️ <span data-i18n-html="how5">Los iconos aparecen solos: vacía el tablero antes de que se llene.</span></li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btn-tutorial" data-i18n="tutorial_btn">▶ Tutorial interactivo</button>
+        <button class="btn btn-ghost" data-close data-i18n="understood">Entendido</button>
+      </div>
     </div>
 
     <!-- Pausa -->
     <div class="modal" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
       <h2 id="pause-title" data-i18n="pause">Pausa</h2>
-      <div class="modal-buttons">
+      <div class="modal-actions modal-buttons">
         <button class="btn btn-primary" id="btn-resume" data-i18n="resume">▶ Reanudar</button>
         <button class="btn btn-ghost" id="btn-pause-restart" data-i18n="restart">↻ Reiniciar</button>
         <button class="btn btn-ghost" id="btn-pause-quit" data-i18n="menu">✕ Menú</button>
@@ -249,15 +253,21 @@
     <!-- Ajustes -->
     <div class="modal" id="modal-settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
       <h2 id="settings-title" data-i18n="settings_title">⚙️ Ajustes</h2>
-      <div class="settings-list" id="settings-list"></div>
-      <button class="btn btn-primary" data-close data-i18n="close">Cerrar</button>
+      <div class="modal-body">
+        <div class="settings-list" id="settings-list"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" data-close data-i18n="close">Cerrar</button>
+      </div>
     </div>
 
     <!-- Última oportunidad (Supervivencia) -->
     <div class="modal modal-revive" id="modal-revive" role="dialog" aria-modal="true" aria-labelledby="revive-title" hidden>
       <h2 id="revive-title" data-i18n="revive_title">💔 ¡Última oportunidad!</h2>
-      <p class="modal-sub" data-i18n="revive_sub">Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?</p>
-      <div class="modal-buttons">
+      <div class="modal-body">
+        <p class="modal-sub" data-i18n="revive_sub">Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?</p>
+      </div>
+      <div class="modal-actions modal-buttons">
         <button class="btn btn-primary" id="btn-revive">🪙 Revivir (<span id="revive-cost">120</span>)</button>
         <button class="btn btn-ghost" id="btn-giveup" data-i18n="giveup">Rendirse</button>
       </div>
@@ -266,10 +276,14 @@
     <!-- Mapa de Aventura -->
     <div class="modal modal-adventure" id="modal-adventure" role="dialog" aria-modal="true" aria-labelledby="adventure-title" hidden>
       <h2 id="adventure-title" data-i18n="adventure_title">🚀 Aventura</h2>
-      <p class="modal-sub" data-i18n="adventure_sub">Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.</p>
-      <div class="adventure-map" id="adventure-map"></div>
-      <button class="btn btn-primary btn-lg" id="adventure-continue">Continuar</button>
-      <button class="btn btn-ghost" data-close data-i18n="back">Volver</button>
+      <div class="modal-body">
+        <p class="modal-sub" data-i18n="adventure_sub">Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.</p>
+        <div class="adventure-map" id="adventure-map"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary btn-lg" id="adventure-continue">Continuar</button>
+        <button class="btn btn-ghost" data-close data-i18n="back">Volver</button>
+      </div>
     </div>
 
     <!-- Tienda de cosméticos -->
@@ -277,22 +291,30 @@
       <h2 id="shop-title" data-i18n="shop_title">🛍️ Tienda</h2>
       <p class="shop-coins">🪙 <span id="shop-coins">0</span> <span data-i18n="coins">monedas</span></p>
       <p class="shop-hint" data-i18n="shop_hint">Temas del tablero. Pulsa para previsualizar.</p>
-      <div class="shop-list" id="shop-list"></div>
-      <button class="btn btn-primary" id="shop-close" data-close data-i18n="close">Cerrar</button>
+      <div class="modal-body">
+        <div class="shop-list" id="shop-list"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="shop-close" data-close data-i18n="close">Cerrar</button>
+      </div>
     </div>
 
     <!-- Perfil: estadísticas + leaderboard + logros -->
     <div class="modal modal-profile" id="modal-medals" role="dialog" aria-modal="true" aria-labelledby="medals-title" hidden>
       <h2 id="medals-title" data-i18n="profile_title">📊 Perfil</h2>
-      <div class="stats" id="profile-stats"></div>
-      <h3 class="group-title" data-i18n="best_by_mode">Mejores marcas por modo</h3>
-      <div class="profile-lb" id="profile-lb"></div>
-      <h3 class="group-title" data-i18n="achievements">Logros</h3>
-      <div class="medals-list" id="medals-list"></div>
-      <button class="btn btn-primary" data-close data-i18n="close">Cerrar</button>
+      <div class="modal-body">
+        <div class="stats" id="profile-stats"></div>
+        <h3 class="group-title" data-i18n="best_by_mode">Mejores marcas por modo</h3>
+        <div class="profile-lb" id="profile-lb"></div>
+        <h3 class="group-title" data-i18n="achievements">Logros</h3>
+        <div class="medals-list" id="medals-list"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" data-close data-i18n="close">Cerrar</button>
+      </div>
     </div>
   </div>
 
-  <script src="game.js?v=fx20" defer></script>
+  <script src="game.js?v=fx21" defer></script>
 </body>
 </html>
