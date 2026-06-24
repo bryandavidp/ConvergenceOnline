@@ -581,11 +581,15 @@
         el.classList.add('clear');
         el.addEventListener('animationend', () => {
           el.classList.remove('clear');
-          // Solo borra el glyph si la casilla SIGUE vacía. Si entre medias apareció
-          // un icono nuevo (spawn/penalización sobre la celda recién limpiada), este
-          // listener obsoleto NO debe borrarlo: dejaría la casilla "ocupada pero
-          // invisible" y rechazaría el toque con el sonido de "hay icono aquí".
-          if (State.board[i] === null) this.setGlyph(i, null);
+          // Si la casilla SIGUE vacía: borra el glyph y pasa el fondo a 'empty'
+          // (recupera el hueco hundido; ya no se ve "llena"). Mínimo coste (2 clases,
+          // sin setTile/aria que ya fija activate). Race-safe: si entre medias apareció
+          // un icono nuevo (spawn/penalización), board[i]!==null y NO se toca.
+          if (State.board[i] === null) {
+            this.setGlyph(i, null);
+            el.classList.remove('has-icon');
+            el.classList.toggle('empty', !State.tiles[i]);
+          }
         }, { once: true });
       });
     },
