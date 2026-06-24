@@ -1169,8 +1169,8 @@
   /* ===================== Meta (progresión persistente) ===================== */
   const Meta = (() => {
     const KEY = 'cv_meta';
-    const SCHEMA = 2;
-    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, survBest: 0, stats: { totalScore: 0, bestCombo: 0, totalTime: 0 }, modes: {}, weekly: { week: '', id: '', progress: 0, done: false }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
+    const SCHEMA = 3;
+    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, gems: 0, tickets: 0, chests: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, worlds: {}, boards: { owned: { classic: 1 }, equipped: 'classic' }, survBest: 0, stats: { totalScore: 0, bestCombo: 0, totalTime: 0 }, modes: {}, weekly: { week: '', id: '', progress: 0, done: false }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
     let m;
     try { m = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); }
     catch (_) { m = JSON.parse(JSON.stringify(def)); }
@@ -1182,6 +1182,15 @@
     if (!m.modes) m.modes = {};
     if (!m.weekly) m.weekly = { week: '', id: '', progress: 0, done: false };
     if (typeof m.coins !== 'number') m.coins = 0;
+    // Esquema 3: economía ampliada (gemas/tickets/cofres), tableros de tienda y mundos del modo Clásico.
+    if (typeof m.gems !== 'number') m.gems = 0;
+    if (typeof m.tickets !== 'number') m.tickets = 0;
+    if (typeof m.chests !== 'number') m.chests = 0;
+    if (!m.worlds || typeof m.worlds !== 'object') m.worlds = {};
+    if (!m.boards || typeof m.boards !== 'object') m.boards = { owned: { classic: 1 }, equipped: 'classic' };
+    if (!m.boards.owned) m.boards.owned = { classic: 1 };
+    m.boards.owned.classic = 1; // el tablero Clásico es siempre propiedad (gratis)
+    if (!m.boards.equipped || !m.boards.owned[m.boards.equipped]) m.boards.equipped = 'classic';
     m._v = SCHEMA;
     const save = () => { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch (_) {} };
     const today = () => new Date().toISOString().slice(0, 10);
@@ -1237,11 +1246,60 @@
       coins: () => m.coins || 0,
       addCoins(n) { m.coins = (m.coins || 0) + Math.max(0, n | 0); save(); return m.coins; },
       spend(n) { n = n | 0; if ((m.coins || 0) < n) return false; m.coins -= n; save(); return true; },
+      // ---- Economía (gemas: divisa premium) ----
+      gems: () => m.gems || 0,
+      addGems(n) { m.gems = (m.gems || 0) + Math.max(0, n | 0); save(); return m.gems; },
+      spendGems(n) { n = n | 0; if ((m.gems || 0) < n) return false; m.gems -= n; save(); return true; },
+      // ---- Economía (tickets: entradas a partidas especiales) ----
+      tickets: () => m.tickets || 0,
+      addTickets(n) { m.tickets = (m.tickets || 0) + Math.max(0, n | 0); save(); return m.tickets; },
+      spendTicket(n) { n = (n | 0) || 1; if ((m.tickets || 0) < n) return false; m.tickets -= n; save(); return true; },
+      // ---- Cofres (se acumulan sin abrir; openChest entrega recompensa) ----
+      chests: () => m.chests || 0,
+      addChest(n) { m.chests = (m.chests || 0) + Math.max(1, n | 0); save(); return m.chests; },
+      openChest() {
+        if ((m.chests || 0) <= 0) return null;
+        m.chests--;
+        // Recompensa ponderada: la mayoría monedas, a veces gemas, raro un ticket.
+        const roll = Math.random();
+        let reward;
+        if (roll < 0.62) reward = { kind: 'coins', amount: 60 + Math.floor(Math.random() * 140) };
+        else if (roll < 0.92) reward = { kind: 'gems', amount: 3 + Math.floor(Math.random() * 8) };
+        else reward = { kind: 'ticket', amount: 1 };
+        if (reward.kind === 'coins') m.coins = (m.coins || 0) + reward.amount;
+        else if (reward.kind === 'gems') m.gems = (m.gems || 0) + reward.amount;
+        else m.tickets = (m.tickets || 0) + reward.amount;
+        save();
+        return reward;
+      },
       // ---- Cosméticos (propiedad y equipado) ----
       cosmetics: () => m.cosmetics,
       owns: (id) => id === 'default' || !!(m.cosmetics.owned && m.cosmetics.owned[id]),
       buy(id, cost) { if (this.owns(id)) return true; if (!this.spend(cost)) return false; m.cosmetics.owned[id] = today(); save(); return true; },
       equip(slot, id) { if (!this.owns(id)) return false; m.cosmetics[slot] = id; save(); return true; },
+      // ---- Tableros de la tienda (propiedad y equipado) ----
+      boardsOwned: () => m.boards.owned,
+      ownsBoard: (id) => id === 'classic' || !!(m.boards.owned && m.boards.owned[id]),
+      equippedBoard: () => m.boards.equipped || 'classic',
+      buyBoard(id, cost) {
+        if (this.ownsBoard(id)) return true;
+        if (!this.spend(cost)) return false;
+        m.boards.owned[id] = 1; save(); return true;
+      },
+      equipBoard(id) { if (!this.ownsBoard(id)) return false; m.boards.equipped = id; save(); return true; },
+      // ---- Progresión del modo Clásico (mundos × niveles, estrellas 0..3) ----
+      worldData: (wid) => (m.worlds[wid] || (m.worlds[wid] = { levels: {} })),
+      levelStars(wid, lvl) { const w = m.worlds[wid]; return (w && w.levels && w.levels[lvl]) || 0; },
+      worldStars(wid) { const w = m.worlds[wid]; if (!w || !w.levels) return 0; let s = 0; for (const k in w.levels) s += w.levels[k] || 0; return s; },
+      worldCleared(wid) { const w = m.worlds[wid]; if (!w || !w.levels) return 0; let n = 0; for (const k in w.levels) if (w.levels[k] > 0) n++; return n; },
+      worldMaxLevel(wid) { const w = m.worlds[wid]; if (!w || !w.levels) return 1; let mx = 0; for (const k in w.levels) if (w.levels[k] > 0 && +k > mx) mx = +k; return Math.min(mx + 1, 50); },
+      setLevelStars(wid, lvl, stars) {
+        const w = m.worlds[wid] || (m.worlds[wid] = { levels: {} });
+        if (!w.levels) w.levels = {};
+        const prev = w.levels[lvl] || 0;
+        if (stars > prev) { w.levels[lvl] = stars; save(); return stars - prev; }
+        return 0;
+      },
       // ---- Recompensa diaria ----
       rewardReady: () => m.reward.date !== today(),
       rewardDay: () => m.reward.day || 0,
@@ -1302,6 +1360,32 @@
       },
     };
   })();
+
+  /* ===================== Econ (barra de economía reutilizable) =====================
+   * Actualiza CUALQUIER elemento con data-econ="coins|gems|streak|tickets|chests"
+   * en toda la app (home, selección de modo, mapa Clásico, juego). Una sola llamada
+   * Econ.refresh() sincroniza todas las píldoras visibles con el estado de Meta.
+   */
+  const Econ = {
+    ICONS: { coins: '🪙', gems: '💎', streak: '🔥', tickets: '🎟️', chests: '🎁' },
+    valueOf(kind) {
+      switch (kind) {
+        case 'coins': return Meta.coins();
+        case 'gems': return Meta.gems();
+        case 'streak': return Meta.streak();
+        case 'tickets': return Meta.tickets();
+        case 'chests': return Meta.chests();
+        default: return 0;
+      }
+    },
+    refresh(root) {
+      const scope = root || document;
+      scope.querySelectorAll('[data-econ]').forEach((el) => {
+        const kind = el.dataset.econ;
+        el.textContent = (this.ICONS[kind] || '') + ' ' + this.valueOf(kind);
+      });
+    },
+  };
 
   /* ===================== Tiles (casillas especiales) =====================
    * Registro de tipos de casilla. `solid` corta la línea de visión y no converge
@@ -2573,8 +2657,7 @@
     { const n = $('#home-name'); if (n) n.textContent = prof.name; }
     { const l = $('#home-level'); if (l) l.textContent = I18n.t('lvl') + ' ' + lvl; }
     { const xf = $('#home-xp-fill'); if (xf) xf.style.width = Math.min(100, have / need * 100).toFixed(0) + '%'; }
-    { const c = $('#home-coins'); if (c) c.textContent = '🪙 ' + Meta.coins(); }
-    { const s = $('#home-streak'); if (s) s.textContent = '🔥 ' + Meta.streak(); }
+    Econ.refresh();
     // Aviso en el FAB de misiones cuando alguna está completada (positivo).
     { const md = $('#missions-dot'); if (md) { const d = Meta.dailyMission(), w = Meta.weeklyChallenge(); md.hidden = !((d && d.done) || (w && w.done)); } }
     // Misiones (gancho de retención) con barra de progreso visible, en el panel lateral.
