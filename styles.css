@@ -389,17 +389,18 @@ body.mode-timed .time-chip { display: inline-flex; }
   color: var(--text);
   contain: layout style paint;
   -webkit-user-select: none; user-select: none;
-  touch-action: manipulation;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
   /* Sin transición de fondo: al limpiar, decenas de celdas cambian de clase a la vez
      (has-icon→empty); transicionar el fondo provocaba una tormenta de repintado en
      las cascadas (caída de FPS). El cambio de fondo es instantáneo (el glyph ya anima). */
 }
-/* Vacía = hueco RECESADO (slot); con icono = ficha con leve CUERPO/realce. */
 /* Vacía = hueco oscuro (slot); con icono = ficha más clara con cuerpo. Distinción por
    COLOR/BORDE (sin sombras): al limpiar, decenas de celdas cambian has-icon→empty a la
    vez; repintar una sombra (inset con blur) en cada una hundía los FPS en cascadas. */
 .cell.empty { background: rgba(22, 30, 62, 0.42); border-color: rgba(120, 150, 255, 0.06); }
-.cell.empty:hover { background: rgba(0, 208, 255, 0.12); }
+/* Solo con puntero REAL (ratón): en táctil el :hover se queda "pegado" a la última
+   casilla tocada y la dejaba marcada (tinte cian) hasta el siguiente toque. */
+@media (hover: hover) { .cell.empty:hover { background: rgba(0, 208, 255, 0.12); } }
 .cell:focus-visible { outline: 3px solid var(--accent-2); outline-offset: -2px; z-index: 2; }
 .cell.has-icon { background: rgba(102, 122, 200, 0.22); border-color: rgba(120, 150, 255, 0.22); }
 .cell.hint { box-shadow: 0 0 0 2px var(--gold) inset, 0 0 14px var(--gold); }
