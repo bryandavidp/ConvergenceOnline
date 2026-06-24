@@ -1,10 +1,10 @@
 {
-  "name": "Convergencia",
-  "short_name": "Convergencia",
+  "name": "Convergence",
+  "short_name": "Convergence",
   "description": "Junta iconos iguales tocando la casilla vacía entre ellos. Combos, niveles, logros y varios modos de juego.",
   "lang": "es",
   "dir": "ltr",
-  "id": "/convergencia/",
+  "id": "/convergence/",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

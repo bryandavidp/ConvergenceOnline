@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.0.0';
+  const VERSION = '1.0.3';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -71,7 +71,7 @@
         onTick(dt) { Survival.onTick(dt); },
         onConverge(ctx) { Survival.onConverge(ctx); },
         onOverflow() { Survival.onOverflow(); },
-        blockSpawn() { return Survival.frozen(); } },
+        blockSpawn() { return Survival.blockSpawn(); } },
       zen:           { name: 'Zen',          emoji: '☯️', timed: false, penalties: false, mult: 0.8, relaxed: true, endless: true, accent: '#9be15d', goal: 'Sin fallos ni prisa',
         onOverflow() { Game.softClear(0.45); }, desc: 'Ritmo relajado, sin penalizaciones ni fin de partida. Juega y respira.' },
     },
@@ -259,6 +259,7 @@
       apply(root) {
         const r = root || document;
         r.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = this.t(el.getAttribute('data-i18n')); });
+        r.querySelectorAll('.m-head h2[data-i18n]').forEach((el) => { el.textContent = el.textContent.replace(/^[^A-Za-z0-9¿¡]+/, '').trim(); });
         r.querySelectorAll('[data-i18n-html]').forEach((el) => { el.innerHTML = this.t(el.getAttribute('data-i18n-html')); });
         r.querySelectorAll('[data-i18n-ph]').forEach((el) => { el.setAttribute('placeholder', this.t(el.getAttribute('data-i18n-ph'))); });
         r.querySelectorAll('[data-i18n-al]').forEach((el) => { el.setAttribute('aria-label', this.t(el.getAttribute('data-i18n-al'))); });
@@ -278,6 +279,9 @@
     level() { this.fire([18, 40, 18, 40]); },
     record() { this.fire([12, 28, 12, 28, 36]); },
     fever() { this.fire([20, 30, 20]); },
+    ice() { this.fire([6, 18, 8]); },
+    quake() { this.fire([28, 28, 34, 28, 42]); },
+    life() { this.fire([18, 36, 18, 22]); },
   };
 
   /* ===================== Sound (WebAudio, sin archivos) ===================== */
@@ -334,6 +338,23 @@
     danger() { this.tone(120, 0.09, 'sine', 0.08); },
     level() { [523, 659, 784, 1047, 1319].forEach((f, i) => this.tone(f, 0.16, 'sine', 0.13, i * 0.08)); },
     over() { [392, 311, 247, 196].forEach((f, i) => this.tone(f, 0.22, 'sine', 0.15, i * 0.12)); },
+    iceCrack(stage = 1) {
+      const base = 820 + clamp(stage, 0, 3) * 80;
+      this.tone(base, 0.045, 'square', 0.055);
+      this.tone(260, 0.06, 'triangle', 0.045, 0.025);
+    },
+    iceBreak() { this.chord([740, 980, 1320], 0.12, 'triangle', 0.08, 0.018); this.tone(1700, 0.05, 'sine', 0.05, 0.06); },
+    quake() { [72, 58, 82, 64, 94].forEach((f, i) => this.tone(f, 0.16, 'sawtooth', 0.07, i * 0.08)); },
+    rain() { [988, 784, 659, 523, 392].forEach((f, i) => this.tone(f, 0.08, 'triangle', 0.07, i * 0.045)); },
+    lifeBlast() { this.tone(92, 0.18, 'sawtooth', 0.08); this.chord([392, 587, 784, 1175], 0.24, 'sine', 0.09, 0.035); },
+    booster(id) {
+      if (id === 'freeze') { this.chord([880, 1175, 1568], 0.16, 'triangle', 0.07, 0.025); return; }
+      if (id === 'bomb') { this.tone(96, 0.16, 'sawtooth', 0.10); this.tone(520, 0.08, 'square', 0.06, 0.04); return; }
+      if (id === 'x2') { this.chord([659, 988, 1319], 0.14, 'square', 0.055, 0.018); return; }
+      if (id === 'clearLine') { [660, 760, 860, 960].forEach((f, i) => this.tone(f, 0.055, 'triangle', 0.055, i * 0.035)); return; }
+      if (id === 'wild') { this.chord([523, 784, 1047, 1568], 0.18, 'sine', 0.08, 0.03); return; }
+      this.rank();
+    },
   };
 
   /* ===================== Helpers ===================== */
@@ -412,8 +433,8 @@
 
     emptyCells() {
       const out = [];
-      // Una casilla sólida (roca/bloqueada) NO es colocable: nunca debe recibir un
-      // icono (spawnOne/placeInitial/addPenalty). Las congeladas no son sólidas.
+      // Una casilla sólida (roca/bloqueada/helada) NO es colocable: nunca debe recibir
+      // un icono nuevo (spawnOne/placeInitial/addPenalty).
       for (let i = 0; i < State.board.length; i++) {
         if (State.board[i] === null && !(State.tiles[i] && State.tiles[i].solid)) out.push(i);
       }
@@ -540,14 +561,18 @@
     // Overlay de casilla especial (roca/helada/cristal…) por clase, con caché.
     setTile(i) {
       const t = State.tiles[i], type = t ? t.type : '';
-      if (this._cellTile[i] === type) return;
-      this._cellTile[i] = type;
+      const key = t ? type + ':' + (type === 'frozen' ? (t.taps || 0) : type === 'rock' ? (t.hits || 0) : '') : '';
+      if (this._cellTile[i] === key) return;
+      this._cellTile[i] = key;
       const el = this.cells[i];
       el.classList.toggle('tile-rock', type === 'rock');
       el.classList.toggle('tile-frozen', type === 'frozen');
       el.classList.toggle('tile-crystal', type === 'crystal');
       el.classList.toggle('tile-locked', type === 'locked');
       el.classList.toggle('tile-infected', type === 'infected');
+      el.classList.remove('ice-1', 'ice-2', 'ice-3');
+      if (type === 'frozen') el.classList.add('ice-' + clamp(t.taps || 1, 1, 3));
+      if (type !== 'rock') el.classList.remove('rock-cracked');
     },
 
     syncCell(i) {
@@ -595,6 +620,37 @@
       });
     },
     miss(i) { const el = this.cells[i]; el.classList.remove('miss'); void el.offsetWidth; el.classList.add('miss'); },
+
+    iceHit(i) {
+      const el = this.cells[i];
+      el.classList.remove('ice-hit'); void el.offsetWidth; el.classList.add('ice-hit');
+      setTimeout(() => el.classList.remove('ice-hit'), 360);
+    },
+    iceBreak(i) {
+      const el = this.cells[i];
+      el.classList.remove('ice-hit', 'ice-shatter'); void el.offsetWidth; el.classList.add('ice-shatter');
+      setTimeout(() => el.classList.remove('ice-shatter'), 520);
+    },
+    cellPulse(i, cls, ms = 700) {
+      const el = this.cells[i]; if (!el) return;
+      el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
+      setTimeout(() => el.classList.remove(cls), ms);
+    },
+    boardEvent(cls, ms = 900) {
+      const w = document.querySelector('.board-wrap'); if (!w) return;
+      w.classList.remove(cls); void w.offsetWidth; w.classList.add(cls);
+      setTimeout(() => w.classList.remove(cls), ms);
+    },
+    lifeClear(indices) {
+      this.boardEvent('life-blast', 900);
+      indices.forEach(i => this.cellPulse(i, 'life-cleared', 820));
+    },
+    meteor(indices) { indices.forEach(i => this.cellPulse(i, 'surv-meteor', 820)); },
+    boosterPulse(id) {
+      this.boardEvent('boost-' + id, id === 'freeze' || id === 'x2' ? 1100 : 780);
+      const b = document.querySelector(`.booster[data-b="${id}"]`);
+      if (b) { b.classList.remove('fired'); void b.offsetWidth; b.classList.add('fired'); setTimeout(() => b.classList.remove('fired'), 520); }
+    },
 
     hint(indices, on) { indices.forEach(i => this.cells[i].classList.toggle('hint', on)); },
 
@@ -765,6 +821,7 @@
     _last: null,
     open(id) {
       this._last = document.activeElement;
+      document.body.classList.add('modal-open');
       $('#overlay').hidden = false;
       document.querySelectorAll('.modal').forEach(m => m.hidden = m.id !== id);
       const m = $('#' + id);
@@ -772,6 +829,7 @@
       if (focusable) focusable.focus();
     },
     close() {
+      document.body.classList.remove('modal-open');
       $('#overlay').hidden = true; document.querySelectorAll('.modal').forEach(m => m.hidden = true);
       // Accesibilidad: devolver el foco al elemento que abrió el modal.
       if (this._last && this._last.focus) { try { this._last.focus(); } catch (_) {} }
@@ -1217,7 +1275,7 @@
     DEFS: {
       rock:     { glyph: '🪨', solid: true,  cls: 'tile-rock',     desc: 'Roca: estorba y no converge' },
       locked:   { glyph: '🔒', solid: true,  cls: 'tile-locked',   desc: 'Bloqueada' },
-      frozen:   { glyph: '🧊', solid: true,  cls: 'tile-frozen', taps: 2, desc: 'Helada: toca para descongelar' },
+      frozen:   { glyph: '🧊', solid: true,  cls: 'tile-frozen', taps: 3, desc: 'Helada: toca para descongelar' },
       infected: { glyph: '☣️', solid: false, cls: 'tile-infected', desc: 'Se propaga si no la limpias' },
       crystal:  { glyph: '💎', solid: false, cls: 'tile-crystal', bonus: 3, desc: 'Vale puntos extra' },
     },
@@ -1233,7 +1291,7 @@
       freeze:    { name: 'Congelar', glyph: '❄️', cost: 60,  charge: 10, desc: 'Pausa los spawns' },
       x2:        { name: 'Doble',    glyph: '⚡', cost: 70,  charge: 14, desc: 'Puntos x2 temporal' },
       clearLine: { name: 'Limpiar',  glyph: '🧹', cost: 90,  charge: 16, desc: 'Vacía fila o columna' },
-      wild:      { name: 'Comodín',  glyph: '🃏', cost: 100, charge: 18, desc: 'Convergencia garantizada' },
+      wild:      { name: 'Comodín',  glyph: '🃏', cost: 100, charge: 18, desc: 'Limpia el grupo más repetido' },
     },
     order: ['bomb', 'freeze', 'x2', 'clearLine', 'wild'],
   };
@@ -1364,17 +1422,23 @@
 
   /* ===================== Survival (Supervivencia 2.0: oleadas, vidas, boosters, trampas) ===================== */
   const Survival = {
-    WAVE_MS: 22000, MAX_LIVES: 3, CHARGE_PER: 9, BOOSTERS: ['bomb', 'freeze', 'x2', 'clearLine'],
+    WAVE_MS: 22000, MAX_LIVES: 3, CHARGE_PER: 9, BOOSTERS: ['bomb', 'freeze', 'x2', 'clearLine', 'wild'],
     ROCK_CAP: 10, ROCK_HITS: 2,   // las rocas NO son permanentes: tope de cobertura + se rompen por convergencia adyacente
-    lives: 3, wave: 1, waveAcc: 0, survSec: 0, charge: 0, freezeUntil: 0, x2Until: 0,
+    lives: 3, wave: 1, waveAcc: 0, survSec: 0, charge: 0, freezeUntil: 0, x2Until: 0, lockUntil: 0,
     _r: {},
     start() {
       this.lives = this.MAX_LIVES; this.wave = 1; this.waveAcc = 0; this.survSec = 0; this.charge = 0;
-      this.freezeUntil = 0; this.x2Until = 0; State.tempMult = 1; this._r = {};
+      this.freezeUntil = 0; this.x2Until = 0; this.lockUntil = 0; State.tempMult = 1; this._r = {};
       this.buildBar(); this.render();
     },
     setup() { if (this.wave >= 2) this._traps(Math.min(0.10, 0.02 * this.wave)); },
     frozen() { return performance.now() < this.freezeUntil; },
+    locked() { return performance.now() < this.lockUntil; },
+    blockSpawn() { return this.frozen() || this.locked(); },
+    _lock(ms, cls) {
+      this.lockUntil = Math.max(this.lockUntil || 0, performance.now() + ms);
+      if (cls) Render.boardEvent(cls, ms);
+    },
     x2Active() { return performance.now() < this.x2Until; },
     _emptyIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) a.push(i); return a; },
     _filledIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) a.push(i); return a; },
@@ -1407,9 +1471,41 @@
       if (this.wave % 4 === 0) this.bossEvent();
     },
     bossEvent() {
-      if (rand(2) === 0) { for (let k = 0; k < 8; k++) Engine.spawnOne(); Render.syncAll(); Toasts.show('☄️ ¡Lluvia de iconos!', 'bad', 1800); }
-      else { this._shuffle(); Toasts.show('🌀 ¡Terremoto!', 'bad', 1800); }
-      Sound.fever(); Haptics.milestone();
+      const event = rand(3);
+      if (event === 0) this.meteorRain();
+      else if (event === 1) this.quake();
+      else this.frostSurge();
+      Haptics.milestone();
+    },
+    meteorRain() {
+      this._lock(900, 'surv-rain');
+      const placed = [];
+      for (let k = 0; k < 8; k++) { const idx = Engine.spawnOne(); if (idx >= 0) placed.push(idx); }
+      Render.syncAll(); Render.meteor(placed);
+      Toasts.show('☄️ ¡Lluvia de iconos!', 'bad', 1800);
+      Sound.rain();
+    },
+    quake() {
+      this._lock(1150, 'surv-quake');
+      Toasts.show('🌀 ¡Terremoto!', 'bad', 1800);
+      Sound.quake(); Haptics.quake();
+      setTimeout(() => {
+        if (State.status !== 'playing') return;
+        this._shuffle();
+        Render.boardEvent('surv-quake-settle', 420);
+      }, 620);
+    },
+    frostSurge() {
+      this._lock(760, 'surv-frost');
+      const f = this._filledIdx(), placed = [];
+      const n = Math.min(5 + Math.floor(this.wave / 3), f.length);
+      for (let k = 0; k < n && f.length; k++) {
+        const idx = f.splice(rand(f.length), 1)[0];
+        if (!State.tiles[idx]) { State.tiles[idx] = Tiles.make('frozen'); placed.push(idx); }
+      }
+      Render.syncAll(); placed.forEach(i => Render.iceHit(i));
+      Toasts.show('🧊 Frente helado', 'warn', 1600);
+      Sound.booster('freeze'); Haptics.ice();
     },
     _shuffle() {
       const idx = [], vals = [];
@@ -1452,19 +1548,27 @@
     onOverflow() {
       this.lives--;
       if (this.lives <= 0) { this.lastChance(); return; }
-      Toasts.show('💔 -1 vida', 'bad', 1600); Sound.miss(); Haptics.error(); Render.boardShake();
+      Toasts.show('💥 Vida liberada · -1', 'bad', 1700);
+      Sound.lifeBlast(); Haptics.life(); this._lock(880, 'life-blast');
       this._relief(0.4); this.render();
     },
     _relief(frac) {
-      const f = this._filledIdx(); let n = Math.floor(f.length * frac);
-      for (let k = 0; k < n && f.length; k++) { const idx = f.splice(rand(f.length), 1)[0]; FX.burst(idx, Icons.colorOf(State.board[idx]), 4); State.board[idx] = null; State.iconCount--; }
+      const f = [];
+      for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null) f.push(i);
+      let n = Math.floor(f.length * frac);
+      const cleared = [];
+      for (let k = 0; k < n && f.length; k++) {
+        const idx = f.splice(rand(f.length), 1)[0];
+        this._powerClear(idx, cleared, 4);
+      }
       // El alivio también ROMPE bloqueos: quita ~la mitad de las rocas para dar respiro real.
       const rocks = this._rockIdx(); let rn = Math.ceil(rocks.length * 0.5);
       for (let k = 0; k < rn && rocks.length; k++) {
         const idx = rocks.splice(rand(rocks.length), 1)[0];
-        FX.burst(idx, '#c2cbe0', 4); Render.cells[idx].classList.remove('rock-cracked'); State.tiles[idx] = null;
+        this._powerClear(idx, cleared, 4);
       }
       Render.syncAll();
+      Render.lifeClear(cleared);
     },
     lastChance() {
       State.status = 'paused'; Loop.stop(); Music.stop(true);
@@ -1474,31 +1578,115 @@
     },
     revive() {
       if (!Meta.spend(120)) { Toasts.show('Monedas insuficientes', 'warn', 1500); return; }
-      this.lives = 1; this._relief(0.6);
+      this.lives = 1; Sound.lifeBlast(); Haptics.life(); this._lock(900, 'life-blast'); this._relief(0.6);
       Modal.close(); State.status = 'playing'; Loop.start(); if (Settings.music) Music.start();
-      Sound.success(); this.render();
+      this.render();
     },
     giveUp() { Modal.close(); Game.gameOver(I18n.t('reason_surv').replace('{s}', Math.floor(this.survSec))); },
     useBooster(id) {
       if (this.charge < 100) { Toasts.show('Potenciador cargando…', 'warn', 1000); Sound.ui(); return; }
       this.charge = 0;
-      if (id === 'bomb') this._bomb();
-      else if (id === 'freeze') { this.freezeUntil = performance.now() + 6000; Toasts.show('❄️ Spawns congelados', 'info', 1500); }
-      else if (id === 'x2') { this.x2Until = performance.now() + 10000; State.tempMult = 2; Toasts.show('⚡ ¡Puntos x2!', 'good', 1500); }
-      else if (id === 'clearLine') this._clearLine();
-      Sound.rank(); Haptics.combo(); this.render();
+      Render.boosterPulse(id);
+      if (id === 'bomb') { this._lock(520, 'boost-bomb'); this._bomb(); }
+      else if (id === 'freeze') { this.freezeUntil = performance.now() + 7000; Toasts.show('❄️ Spawns congelados', 'info', 1500); Render.boardEvent('boost-freeze', 1200); }
+      else if (id === 'x2') { this.x2Until = performance.now() + 11000; State.tempMult = 2; Toasts.show('⚡ ¡Puntos x2!', 'good', 1500); Render.boardEvent('boost-x2', 1200); }
+      else if (id === 'clearLine') { this._lock(520, 'boost-clearLine'); this._clearLine(); }
+      else if (id === 'wild') { this._lock(520, 'boost-wild'); this._wild(); }
+      Sound.booster(id); Haptics.combo(); this.render();
+    },
+    _powerClear(j, cleared, fxN = 5) {
+      const t = State.tiles[j], hadIcon = State.board[j] !== null;
+      if (!hadIcon && !t) return 0;
+      if (hadIcon) {
+        FX.burst(j, Icons.colorOf(State.board[j]), fxN);
+        State.board[j] = null;
+        State.iconCount = Math.max(0, State.iconCount - 1);
+      } else {
+        FX.burst(j, t && t.type === 'rock' ? '#c2cbe0' : '#dffbff', Math.max(3, fxN - 1));
+      }
+      if (t) {
+        if (t.type === 'frozen') Render.iceBreak(j);
+        if (t.type === 'rock') Render.cells[j].classList.remove('rock-cracked');
+        State.tiles[j] = null;
+      }
+      cleared.push(j);
+      return hadIcon ? 1 : 0;
+    },
+    _lineCells(axis, n) {
+      const cells = [], size = State.size;
+      for (let k = 0; k < size; k++) cells.push(axis === 'row' ? n * size + k : k * size + n);
+      return cells;
+    },
+    _lineScore(cells) {
+      return cells.reduce((sum, j) => {
+        const t = State.tiles[j];
+        return sum + (State.board[j] !== null ? 2 : 0) + (t ? (t.type === 'rock' ? 1.35 : 1) : 0);
+      }, 0);
     },
     _bomb() {
-      let best = 0, bestN = -1;
-      for (let i = 0; i < 64; i++) { const r = i / 8 | 0, c = i % 8; let n = 0; for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { const rr = r + dr, cc = c + dc; if (rr >= 0 && cc >= 0 && rr < 8 && cc < 8 && State.board[rr * 8 + cc] !== null) n++; } if (n > bestN) { bestN = n; best = i; } }
-      const r = best / 8 | 0, c = best % 8;
-      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { const rr = r + dr, cc = c + dc; if (rr >= 0 && cc >= 0 && rr < 8 && cc < 8) { const j = rr * 8 + cc; if (State.board[j] !== null && !(State.tiles[j] && State.tiles[j].solid)) { FX.burst(j, Icons.colorOf(State.board[j]), 5); State.board[j] = null; State.iconCount--; if (State.tiles[j]) State.tiles[j] = null; } } }
+      let best = 0, bestN = -1, size = State.size;
+      for (let i = 0; i < State.board.length; i++) {
+        const r = i / size | 0, c = i % size; let n = 0;
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+          const rr = r + dr, cc = c + dc;
+          if (rr >= 0 && cc >= 0 && rr < size && cc < size) {
+            const j = rr * size + cc;
+            n += (State.board[j] !== null ? 2 : 0) + (State.tiles[j] ? 1 : 0);
+          }
+        }
+        if (n > bestN) { bestN = n; best = i; }
+      }
+      const r = best / size | 0, c = best % size;
+      const cleared = []; let icons = 0;
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+        const rr = r + dr, cc = c + dc;
+        if (rr >= 0 && cc >= 0 && rr < size && cc < size) icons += this._powerClear(rr * size + cc, cleared, 5);
+      }
+      State.removedTotal += icons;
       Render.syncAll(); Toasts.show('💣 ¡Boom!', 'good', 1300);
+      cleared.forEach(i => Render.cellPulse(i, 'bomb-cleared', 760));
     },
     _clearLine() {
-      const row = rand(8);
-      for (let c = 0; c < 8; c++) { const j = row * 8 + c; if (State.board[j] !== null) { FX.burst(j, Icons.colorOf(State.board[j]), 4); State.board[j] = null; State.iconCount--; if (State.tiles[j] && !State.tiles[j].solid) State.tiles[j] = null; } }
-      Render.syncAll(); Toasts.show('🧹 ¡Fila despejada!', 'good', 1300);
+      let best = { axis: 'row', n: 0, cells: this._lineCells('row', 0), score: -1 };
+      for (const axis of ['row', 'col']) {
+        for (let n = 0; n < State.size; n++) {
+          const cells = this._lineCells(axis, n), score = this._lineScore(cells);
+          if (score > best.score || (score === best.score && Math.random() < 0.5)) best = { axis, n, cells, score };
+        }
+      }
+      const cleared = []; let icons = 0;
+      best.cells.forEach(j => { icons += this._powerClear(j, cleared, 4); });
+      State.removedTotal += icons;
+      Render.syncAll(); Toasts.show(best.axis === 'row' ? '🧹 ¡Fila despejada!' : '🧹 ¡Columna despejada!', 'good', 1300);
+      cleared.forEach(i => Render.cellPulse(i, 'line-cleared', 760));
+    },
+    _wild() {
+      const by = new Map();
+      for (let i = 0; i < State.board.length; i++) {
+        const v = State.board[i], t = State.tiles[i];
+        if (v !== null && !(t && t.type === 'rock')) {
+          if (!by.has(v)) by.set(v, []);
+          by.get(v).push(i);
+        }
+      }
+      let best = null;
+      by.forEach((arr, id) => { if (!best || arr.length > best.arr.length) best = { id, arr }; });
+      if (!best || best.arr.length < 2) {
+        const fallback = [];
+        for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null) fallback.push(i);
+        if (!fallback.length) { Toasts.show('🃏 Sin objetivo', 'warn', 1200); return; }
+        const cleared = [], idx = fallback[rand(fallback.length)];
+        State.removedTotal += this._powerClear(idx, cleared, 6);
+        Render.syncAll(); cleared.forEach(i => Render.cellPulse(i, 'wild-cleared', 820));
+        Toasts.show('🃏 Comodín · despeje de emergencia', 'good', 1300);
+        return;
+      }
+      const cleared = best.arr.slice(0, 8);
+      const pulsed = []; let icons = 0;
+      cleared.forEach(i => { icons += this._powerClear(i, pulsed, 6); });
+      State.removedTotal += icons;
+      Render.syncAll(); pulsed.forEach(i => Render.cellPulse(i, 'wild-cleared', 820));
+      Toasts.show(`🃏 Comodín · ${icons} iconos`, 'good', 1400);
     },
     buildBar() {
       const el = $('#boosters'); if (!el) return;
@@ -1786,13 +1974,16 @@
     /* Activación de una casilla (clic/tecla) */
     activate(i) {
       if (State.status !== 'playing') return;
+      if (State.mode === 'supervivencia' && Survival.locked()) return;
       this.clearHintHighlight();
       const ti = State.tiles[i];
       // Casilla helada: tocar para descongelar (no es un error).
       if (ti && ti.type === 'frozen') {
-        ti.taps = (ti.taps || 2) - 1;
-        if (ti.taps <= 0) { State.tiles[i] = null; Sound.success(); } else Sound.tap();
-        Render.setTile(i); Render.syncCell(i); Haptics.tap(); return;
+        ti.taps = (ti.taps || Tiles.DEFS.frozen.taps) - 1;
+        Render.iceHit(i);
+        if (ti.taps <= 0) { State.tiles[i] = null; Sound.iceBreak(); Render.iceBreak(i); }
+        else Sound.iceCrack(ti.taps);
+        Render.setTile(i); Render.syncCell(i); Haptics.ice(); return;
       }
       if (State.board[i] !== null) { Sound.tap(); return; }     // ocupada: nada
       const conv = Engine.converging(i);
@@ -1891,6 +2082,7 @@
       const m = Config.MODES[State.mode];
       if (!m.penalties) return;
       Render.boardShake();
+      if (State.mode === 'supervivencia') Render.boardEvent('surv-penalty', 520);
       // Añadir iconos de penalización (escala con dificultad y nivel)
       const d = Config.DIFFICULTY[State.diff];
       const n = clamp(d.penaltyBase + Math.floor((State.level - 1) / 3), 1, 5);
@@ -2060,7 +2252,7 @@
     win(reason) {
       this.endGame();
       Sound.level(); Haptics.level(); FX.confetti(110);
-      $('#over-title').textContent = I18n.t('over_victory');
+      $('#over-title').textContent = I18n.t('over_victory').replace(/^[^A-Za-z0-9¿¡]+/, '').trim();
       this._overChrome('🏆', 'var(--gold)');
       $('#over-reason').textContent = reason;
       this.fillStats(); Modal.open('modal-over');
@@ -2075,7 +2267,7 @@
       this.endGame();
       Sound.over(); Haptics.error(); Render.boardShake();
       const m = Config.MODES[State.mode];
-      $('#over-title').textContent = State.mode === 'supervivencia' ? I18n.t('over_surv') : I18n.t('over_fail');
+      $('#over-title').textContent = (State.mode === 'supervivencia' ? I18n.t('over_surv') : I18n.t('over_fail')).replace(/^[^A-Za-z0-9¿¡]+/, '').trim();
       this._overChrome(State.mode === 'supervivencia' ? '🛡️' : (m.emoji || '🏁'), m.accent || '#ff5d73');
       $('#over-reason').textContent = reason;
       this.fillStats(); Modal.open('modal-over');
