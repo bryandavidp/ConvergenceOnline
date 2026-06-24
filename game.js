@@ -578,18 +578,17 @@
       indices.forEach(i => {
         const el = this.cells[i];
         el.style.setProperty('--clear-snap', snap);
+        // El fondo se vacía YA, a la vez que el icono inicia su pop (sin delay): la
+        // casilla pasa a 'empty' al instante; el glyph (icono) sigue presente y se
+        // borra al terminar la animación de salida. Race-safe: si entre medias
+        // aparece un icono nuevo, su syncCell vuelve a poner has-icon.
+        if (State.board[i] === null) { el.classList.remove('has-icon'); el.classList.toggle('empty', !State.tiles[i]); }
         el.classList.add('clear');
         el.addEventListener('animationend', () => {
           el.classList.remove('clear');
-          // Si la casilla SIGUE vacía: borra el glyph y pasa el fondo a 'empty'
-          // (recupera el hueco hundido; ya no se ve "llena"). Mínimo coste (2 clases,
-          // sin setTile/aria que ya fija activate). Race-safe: si entre medias apareció
-          // un icono nuevo (spawn/penalización), board[i]!==null y NO se toca.
-          if (State.board[i] === null) {
-            this.setGlyph(i, null);
-            el.classList.remove('has-icon');
-            el.classList.toggle('empty', !State.tiles[i]);
-          }
+          // Borra el glyph al acabar el pop. Race-safe: si entre medias apareció un
+          // icono nuevo (spawn/penalización), board[i]!==null y NO se toca.
+          if (State.board[i] === null) this.setGlyph(i, null);
         }, { once: true });
       });
     },
