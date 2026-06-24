@@ -285,17 +285,28 @@ body.reduced-fx #btn-play { animation: none; }
 .mode-desc { color: var(--muted); min-height: 1.4em; margin: 14px 0; font-size: .92rem; }
 
 /* ============ JUEGO ============ */
-/* Tablero = HÉROE. Cabecera de estado (solo lectura) arriba; controles de juego
-   (pista/boosters) en la zona inferior del pulgar. Más tablero al adelgazar el top. */
+/* Tablero = HÉROE en posición FIJA para TODOS los modos. Rejilla de 3 bandas:
+   [status+contexto] · [TABLERO] · [boosters/pulgar]. El tablero (fila 2, auto =
+   --board-size) queda a una posición proporcional a la pantalla, independiente de
+   cuánto "cromo" añada cada modo (surv-bar/obj-banner/booster) → no se mueve. */
 .screen-game {
-  justify-content: flex-start; gap: 8px;
+  display: grid;
+  grid-template-rows: 3fr auto 2fr;
+  justify-items: center;
+  align-content: stretch;
+  row-gap: 0;
   --board-size: min(96vw, 66vh, 620px);
   --board-size: min(96vw, 66svh, 620px);
 }
+.gtop { grid-row: 1; }
+.board-area { grid-row: 2; }
+#booster-bar { grid-row: 3; align-self: start; }
 
-/* Cabecera de estado */
-.gtop { width: min(620px, 100%); display: flex; flex-direction: column; gap: 8px; }
+/* Cabecera: status pegado ARRIBA; contexto+ocupación pegados al borde del tablero
+   (margin-top:auto). El aire intermedio es el respiro donde aparecen los toasts. */
+.gtop { width: min(620px, 100%); align-self: stretch; display: flex; flex-direction: column; min-height: 0; }
 .gtop-main { display: flex; align-items: center; gap: 10px; }
+.gtop-context { margin-top: auto; display: flex; flex-direction: column; gap: 6px; padding-top: 8px; }
 .gctx { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; flex: 0 0 auto; min-width: 0; }
 /* Fichas de estado: misma familia visual que la bandeja del tablero (borde
    azulado + leve degradado + highlight) para que HUD y tablero se lean como uno. */
@@ -465,7 +476,7 @@ body.mode-timed .time-chip { display: inline-flex; }
    derecha, anclado al borde superior del tablero. */
 .combo {
   position: absolute; right: 6px; z-index: var(--z-combo);
-  bottom: calc(50% + var(--board-size) / 2 + 8px);
+  bottom: calc(50% + var(--board-size) / 2 + 52px);   /* libra la franja de contexto pegada al tablero */
   width: 56px; height: 56px; display: grid; place-items: center; pointer-events: none;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,.6));
 }
@@ -487,7 +498,7 @@ body.mode-timed .time-chip { display: inline-flex; }
    "suben"). Nunca invaden el tablero aunque haya varios. */
 .toasts {
   position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: calc(50% + var(--board-size) / 2 + 8px);
+  bottom: calc(50% + var(--board-size) / 2 + 52px);   /* por encima de la franja de contexto */
   z-index: var(--z-toast);
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   width: min(420px, 92vw); pointer-events: none;
