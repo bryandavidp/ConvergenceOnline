@@ -21,7 +21,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=fx24" />
+  <link rel="stylesheet" href="styles.css?v=fx25" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -137,19 +137,22 @@
           </div>
         </div>
 
-        <!-- Banner de objetivo (modo Aventura) -->
-        <div class="obj-banner" id="obj-banner" hidden></div>
-        <!-- Barra de Supervivencia: vidas + oleada + tiempo sobrevivido -->
-        <div class="surv-bar" id="surv-bar" hidden>
-          <span class="surv-lives" id="surv-lives">❤️❤️❤️</span>
-          <span class="surv-wave" id="surv-wave">Oleada 1</span>
-          <span class="surv-time" id="surv-time">0s</span>
-        </div>
+        <!-- Contexto del modo + ocupación: se pega al borde superior del tablero -->
+        <div class="gtop-context">
+          <!-- Banner de objetivo (modo Aventura) -->
+          <div class="obj-banner" id="obj-banner" hidden></div>
+          <!-- Barra de Supervivencia: vidas + oleada + tiempo sobrevivido -->
+          <div class="surv-bar" id="surv-bar" hidden>
+            <span class="surv-lives" id="surv-lives">❤️❤️❤️</span>
+            <span class="surv-wave" id="surv-wave">Oleada 1</span>
+            <span class="surv-time" id="surv-time">0s</span>
+          </div>
 
-        <!-- Ocupación: franja fina pegada al tablero (estados warn/danger) -->
-        <div class="occ" aria-hidden="true">
-          <span class="sr-only" id="hud-progress-label" data-i18n="hud_occ">Ocupación</span>
-          <div class="bar-fill" id="hud-progress-fill"></div>
+          <!-- Ocupación: franja fina pegada al tablero (estados warn/danger) -->
+          <div class="occ" aria-hidden="true">
+            <span class="sr-only" id="hud-progress-label" data-i18n="hud_occ">Ocupación</span>
+            <div class="bar-fill" id="hud-progress-fill"></div>
+          </div>
         </div>
         <!-- Velocidad: conservada para Render.hud pero oculta (HUD minimalista) -->
         <span class="hud-value" id="hud-speed" hidden>3.0s</span>
@@ -315,6 +318,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=fx24" defer></script>
+  <script src="game.js?v=fx25" defer></script>
 </body>
 </html>
