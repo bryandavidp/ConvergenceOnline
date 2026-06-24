@@ -1778,18 +1778,35 @@
           }).catch((e) => ErrLog.push('sw', e && e.message));
         });
       }
+      
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+      const btn = $('#btn-install');
+      if (btn && !isStandalone) btn.hidden = false;
+
       // Captura del prompt de instalación para ofrecer "Instalar" en el menú.
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault(); this.deferredPrompt = e;
-        const btn = $('#btn-install'); if (btn) btn.hidden = false;
+        if (btn) btn.hidden = false;
       });
       window.addEventListener('appinstalled', () => {
-        this.deferredPrompt = null; const btn = $('#btn-install'); if (btn) btn.hidden = true;
+        this.deferredPrompt = null; if (btn) btn.hidden = true;
       });
     },
     promptInstall() {
-      const e = this.deferredPrompt; if (!e) { Toasts.show('Usa el menú del navegador para instalar', 'info', 2600); return; }
-      e.prompt(); e.userChoice.finally(() => { this.deferredPrompt = null; const btn = $('#btn-install'); if (btn) btn.hidden = true; });
+      if (this.deferredPrompt) {
+        this.deferredPrompt.prompt();
+        this.deferredPrompt.userChoice.finally(() => { 
+          this.deferredPrompt = null; 
+          const btn = $('#btn-install'); if (btn) btn.hidden = true; 
+        });
+      } else {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIOS) {
+          Toasts.show('Para instalar: toca Compartir 📤 y "Añadir a inicio"', 'info', 4500);
+        } else {
+          Toasts.show('Instala desde el menú de opciones del navegador (⋮)', 'info', 4500);
+        }
+      }
     },
   };
 
