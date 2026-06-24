@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.0.3';
+  const VERSION = '1.0.4';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -334,6 +334,7 @@
     fever() { this.chord([330, 415, 554, 659], 0.3, 'sawtooth', 0.06, 0.04); },
     milestone() { this.chord([659, 988, 1319], 0.25, 'square', 0.07, 0.06); },
     record() { this.chord([784, 988, 1175, 1568], 0.3, 'sine', 0.12, 0.07); },
+    boardClear() { this.tone(196, 0.12, 'triangle', 0.08); [523, 784, 1047, 1568, 2093].forEach((f, i) => this.tone(f, 0.18, 'sine', 0.105, i * 0.045)); },
     miss() { this.tone(160, 0.12, 'sawtooth', 0.09); },
     danger() { this.tone(120, 0.09, 'sine', 0.08); },
     level() { [523, 659, 784, 1047, 1319].forEach((f, i) => this.tone(f, 0.16, 'sine', 0.13, i * 0.08)); },
@@ -377,6 +378,7 @@
     displayScore: 0,        // marcador animado (count-up)
     fever: false, feverEver: false, perfectEver: false,
     recordHit: false,       // récord superado en vivo (una vez por partida)
+    emptyBonusClaimed: false, emptyBoards: 0, lastActionCell: null,
     lastDangerAt: 0,        // throttle del aviso de peligro
     pool: [], // iconos disponibles este nivel
     tiles: [],              // capa de casillas especiales (paralela a board): null=normal
@@ -954,6 +956,41 @@
       n = Math.min(n, this.cap);
       const C = ['#ff5b6e', '#4b8bff', '#3ad07f', '#ffd23f', '#a06bff', '#2bd4e6', '#ff9838'];
       for (let k = 0; k < n; k++) this._emit(Math.random() * this.w, -14, (Math.random() - 0.5) * 110, 150 + Math.random() * 170, 360, 1.8 + Math.random() * 1.1, 6 + Math.random() * 4, C[k % C.length], 1, (Math.random() - 0.5) * 540);
+    },
+    // Bonus de tablero limpio en modos de tablero continuo: explosión radial
+    // desde el tablero, no lluvia desde arriba, para comunicar "lo vaciaste aquí".
+    boardClear(centerIdx, color) {
+      if (Settings.reducedFx || !this.supported) return;
+      this.syncBoardRect();
+      const r = this.boardRect;
+      if (!r || !r.width) return;
+      const C = ['#ffd84d', '#34e29b', '#00d0ff', '#ff5cf0', '#ffb24d', '#eaf0ff'];
+      const origin = centerIdx != null ? this.cellXY(centerIdx) : { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const radius = Math.max(r.width, r.height) * 0.72;
+      if (this.wave) {
+        const w = Math.round(r.width * 1.1);
+        this.wave.style.width = w + 'px'; this.wave.style.height = w + 'px';
+        this.wave.style.borderColor = color || '#ffd84d';
+        this.wave.style.boxShadow = '0 0 18px ' + (color || '#ffd84d') + ', inset 0 0 18px ' + (color || '#ffd84d');
+        const wt = (sc) => 'translate3d(' + (cx - w / 2).toFixed(1) + 'px,' + (cy - w / 2).toFixed(1) + 'px,0) scale(' + sc + ')';
+        try {
+          this.wave.animate([
+            { transform: wt(0.1), opacity: 0, offset: 0, easing: 'ease-out' },
+            { transform: wt(0.34), opacity: 0.9, offset: 0.18, easing: 'cubic-bezier(.15,.6,.3,1)' },
+            { transform: wt(1.18), opacity: 0, offset: 1 },
+          ], { duration: 760, fill: 'forwards' });
+        } catch (_) {}
+      }
+      const n = Math.min(34, this.cap);
+      for (let k = 0; k < n; k++) {
+        const a = (k / n) * 6.283 + (Math.random() - 0.5) * 0.22;
+        const dist = radius * (0.62 + Math.random() * 0.48);
+        const tx = cx + Math.cos(a) * dist, ty = cy + Math.sin(a) * dist;
+        const col = C[k % C.length];
+        if (k % 3 === 0) this._flyStar(origin.x, origin.y, tx, ty, 8 + Math.random() * 5, col, Math.random() * 70, 720 + Math.random() * 180);
+        else this._emit(origin.x, origin.y, Math.cos(a) * (260 + Math.random() * 280), Math.sin(a) * (260 + Math.random() * 280) - 80, 520, 0.82 + Math.random() * 0.32, 6 + Math.random() * 5, col, 1, (Math.random() - 0.5) * 720);
+      }
     },
     // Duración del efecto ambiental (onda + camino), sincronizado con styles.css.
     DUR_CLEAR: 460,
@@ -1551,6 +1588,7 @@
       Toasts.show('💥 Vida liberada · -1', 'bad', 1700);
       Sound.lifeBlast(); Haptics.life(); this._lock(880, 'life-blast');
       this._relief(0.4); this.render();
+      if (State.status === 'playing') Game.evaluate();
     },
     _relief(frac) {
       const f = [];
@@ -1569,6 +1607,7 @@
       }
       Render.syncAll();
       Render.lifeClear(cleared);
+      if (cleared.length) State.lastActionCell = cleared[0];
     },
     lastChance() {
       State.status = 'paused'; Loop.stop(); Music.stop(true);
@@ -1593,6 +1632,7 @@
       else if (id === 'clearLine') { this._lock(520, 'boost-clearLine'); this._clearLine(); }
       else if (id === 'wild') { this._lock(520, 'boost-wild'); this._wild(); }
       Sound.booster(id); Haptics.combo(); this.render();
+      if (State.status === 'playing') Game.evaluate();
     },
     _powerClear(j, cleared, fxN = 5) {
       const t = State.tiles[j], hadIcon = State.board[j] !== null;
@@ -1637,6 +1677,7 @@
         if (n > bestN) { bestN = n; best = i; }
       }
       const r = best / size | 0, c = best % size;
+      State.lastActionCell = best;
       const cleared = []; let icons = 0;
       for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
         const rr = r + dr, cc = c + dc;
@@ -1655,6 +1696,7 @@
         }
       }
       const cleared = []; let icons = 0;
+      State.lastActionCell = best.cells[Math.floor(best.cells.length / 2)];
       best.cells.forEach(j => { icons += this._powerClear(j, cleared, 4); });
       State.removedTotal += icons;
       Render.syncAll(); Toasts.show(best.axis === 'row' ? '🧹 ¡Fila despejada!' : '🧹 ¡Columna despejada!', 'good', 1300);
@@ -1676,12 +1718,14 @@
         for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null) fallback.push(i);
         if (!fallback.length) { Toasts.show('🃏 Sin objetivo', 'warn', 1200); return; }
         const cleared = [], idx = fallback[rand(fallback.length)];
+        State.lastActionCell = idx;
         State.removedTotal += this._powerClear(idx, cleared, 6);
         Render.syncAll(); cleared.forEach(i => Render.cellPulse(i, 'wild-cleared', 820));
         Toasts.show('🃏 Comodín · despeje de emergencia', 'good', 1300);
         return;
       }
       const cleared = best.arr.slice(0, 8);
+      State.lastActionCell = cleared[0];
       const pulsed = []; let icons = 0;
       cleared.forEach(i => { icons += this._powerClear(i, pulsed, 6); });
       State.removedTotal += icons;
@@ -1933,6 +1977,7 @@
       State.score = 0; State.displayScore = 0; State.level = 1; State.elapsed = 0; State.timeLeft = 0;
       State.combo = 0; State.comboMult = 1; State.comboAt = 0;
       State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.coinsRun = 0; State.tempMult = 1;
+      State.emptyBonusClaimed = false; State.emptyBoards = 0; State.lastActionCell = null;
       State.fever = false; State.feverEver = false; State.perfectEver = false; State.recordHit = false;
       State.status = 'playing'; this.ended = false;
       // Aventura: reanuda en el nivel más lejano alcanzado; el resto empieza en 1.
@@ -2013,6 +2058,7 @@
       // Puntos (icono×10×nivel × combo × dificultad × modo × fever)
       const removed = conv.length;
       State.removedTotal += removed;
+      State.lastActionCell = i;
       const d = Config.DIFFICULTY[State.diff], m = Config.MODES[State.mode];
       const base = removed * 10 * State.level;
       const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * (State.fever ? Config.FEVER_BOOST : 1) * (State.tempMult || 1));
@@ -2151,13 +2197,72 @@
       const m = Config.MODES[State.mode];
       // Modos sin progresión por niveles: la gestionan sus hooks/temporizador
       // (Supervivencia y Zen = endless; Contrarreloj = score attack).
-      if (m.endless || m.scoreAttack) return;
+      if (m.endless || m.scoreAttack) {
+        if (State.iconCount > 0) State.emptyBonusClaimed = false;
+        else if (!State.emptyBonusClaimed) this.emptyBoardBonus();
+        return;
+      }
       // VICTORIA = vaciar el tablero (si el objetivo del modo lo admite). NO hay
       // "victoria por estancamiento": si en un instante no hay jugada válida, se
       // espera al siguiente spawn (el spawn continuo creará nuevas convergencias).
       // La DERROTA real llega por overflow (tablero lleno) en doSpawn().
       const bcw = Rules.call('boardClearWins', State);
       if (State.iconCount === 0 && (bcw === undefined || bcw)) { this.levelComplete(true); return; }
+    },
+
+    emptyBoardBonus() {
+      if (State.emptyBonusClaimed || State.iconCount !== 0) return;
+      const m = Config.MODES[State.mode], d = Config.DIFFICULTY[State.diff];
+      if (!m || !(m.endless || m.scoreAttack)) return;
+      State.emptyBonusClaimed = true;
+      State.emptyBoards = (State.emptyBoards || 0) + 1;
+      State.perfectEver = true;
+
+      const chain = State.emptyBoards;
+      const wave = State.mode === 'supervivencia' ? Survival.wave : 1;
+      const combo = Math.min(State.combo || 1, 12);
+      const raw = Config.EMPTY_BOARD_BONUS + chain * 90 + combo * 28 + (State.mode === 'supervivencia' ? wave * 45 : 0);
+      const points = Math.max(250, Math.round(raw * d.scoreMult * m.mult * (State.fever ? Config.FEVER_BOOST : 1) * (State.tempMult || 1)));
+      const coins = clamp(Math.round(points / 220), 3, 16);
+      const extra = [];
+      const center = State.lastActionCell != null
+        ? State.lastActionCell
+        : (Math.floor(State.size / 2) * State.size + Math.floor(State.size / 2));
+
+      State.score += points;
+      State.coinsRun += coins;
+      Meta.addCoins(coins);
+
+      if (State.mode === 'supervivencia') {
+        Survival.charge = Math.min(100, Survival.charge + 25);
+        Survival._lock(760, 'board-clear-bonus');
+        Survival.render();
+        extra.push('+25% carga');
+      } else {
+        Render.boardEvent('board-clear-bonus', 950);
+      }
+      if (m.scoreAttack) {
+        const add = Math.min(8, Math.max(0, Math.round(Config.TIMED_CAP - State.timeLeft)));
+        if (add > 0) { State.timeLeft += add; extra.push('+' + add + 's'); }
+      }
+      if (State.mode === 'zen') {
+        State.hintsLeft = Math.min(9, State.hintsLeft + 1);
+        extra.push('+1 pista');
+      }
+
+      const msg = `✨ Tablero limpio · +${points} · 🪙 +${coins}${extra.length ? ' · ' + extra.join(' · ') : ''}`;
+      Toasts.show(msg, 'good', 2400);
+      Render.popup(center, `+${points} BONUS`, '#ffd84d');
+      Render.bump($('#hud-score'));
+      Render.flash();
+      Sound.boardClear(); Haptics.level();
+      if (!State.recordHit && Storage.best > 0 && State.score > Storage.best) {
+        State.recordHit = true; Sound.record(); Haptics.record(); Toasts.show('🏆 ¡Nuevo récord!', 'good', 1600);
+      }
+      this.saveBest();
+      Render.hudSoon();
+      announce(`Tablero limpio. Bonus ${points} puntos y ${coins} monedas.`);
+      setTimeout(() => FX.boardClear(center, '#ffd84d'), Settings.reducedFx ? 0 : 220);
     },
 
     resetCombo() {
