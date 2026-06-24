@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.0.6';
+  const VERSION = '1.0.4';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
