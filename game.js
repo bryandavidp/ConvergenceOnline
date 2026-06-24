@@ -182,7 +182,13 @@
         play: '▶ Jugar', reward: '🎁 Recompensa diaria', menu_profile: '🏅 Logros', menu_shop: '🛍️ Tienda',
         menu_settings: '⚙️ Ajustes', how: '¿Cómo se juega?', install: '📲 Instalar app', sound: 'Sonido', best: 'Mejor puntuación:',
         tab_log: 'Logros', tab_shop: 'Tienda', tab_home: 'Inicio', tab_guide: 'Guía', tab_set: 'Ajustes', missions_title: '🎯 Misiones',
-        modes_title: 'Elige tu misión', group_mode: 'Modo', group_diff: 'Dificultad',
+        modes_title: 'Elige tu modo', modes_sub: 'Cada modo, una forma diferente de jugar', group_mode: 'Modo', group_diff: 'Dificultad',
+        card_surv: 'Supervivencia', card_surv_badge: 'OLEADAS INFINITAS', card_surv_desc: 'Enfréntate a oleadas crecientes de enemigos. Cada vez son más fuertes. ¿Cuánto tiempo podrás sobrevivir?',
+        card_classic: 'Clásico', card_classic_badge: 'POR NIVELES', card_classic_desc: 'Supera niveles con diferentes mapas y desafíos únicos. Nuevos obstáculos, mecánicas y objetos te esperan en cada uno.',
+        card_multi: 'Multijugador', card_multi_badge: 'COMPITE EN LÍNEA', card_multi_desc: 'Compite contra otro jugador en el mismo tablero. Cada uno por su lado. Gana quien termine primero y consiga la mejor puntuación.',
+        card_feat_locks: 'Bloqueos', card_feat_objects: 'Objetos', card_feat_events: 'Eventos', card_feat_more: '¡Y mucho más!',
+        card_feat_first: 'Termina primero el tablero', card_feat_best: 'Mejor puntuación', card_feat_online: 'Partidas en línea',
+        how_card_desc: 'Repasa las reglas, consejos y todo lo que necesitas saber para dominar el juego.', how_card_cta: 'Ver información', multi_soon: 'Multijugador en línea: ¡muy pronto!',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
         how_title: '¿Cómo se juega?', how1: 'Toca una <strong>casilla vacía</strong>.', how2: 'Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).',
         how3: 'Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!', how4: 'Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.',
@@ -213,7 +219,13 @@
         play: '▶ Play', reward: '🎁 Daily reward', menu_profile: '🏅 Profile', menu_shop: '🛍️ Shop',
         menu_settings: '⚙️ Settings', how: 'How to play?', install: '📲 Install app', sound: 'Sound', best: 'Best score:',
         tab_log: 'Trophies', tab_shop: 'Shop', tab_home: 'Home', tab_guide: 'Guide', tab_set: 'Settings', missions_title: '🎯 Missions',
-        modes_title: 'Choose your mission', group_mode: 'Mode', group_diff: 'Difficulty',
+        modes_title: 'Choose your mode', modes_sub: 'Each mode, a different way to play', group_mode: 'Mode', group_diff: 'Difficulty',
+        card_surv: 'Survival', card_surv_badge: 'ENDLESS WAVES', card_surv_desc: 'Face rising waves of enemies. They get stronger every time. How long can you survive?',
+        card_classic: 'Classic', card_classic_badge: 'BY LEVELS', card_classic_desc: 'Beat levels across different maps and unique challenges. New obstacles, mechanics and objects await in each one.',
+        card_multi: 'Multiplayer', card_multi_badge: 'COMPETE ONLINE', card_multi_desc: 'Compete against another player on the same board. Each on their own side. Whoever finishes first with the best score wins.',
+        card_feat_locks: 'Locks', card_feat_objects: 'Objects', card_feat_events: 'Events', card_feat_more: 'And much more!',
+        card_feat_first: 'Finish the board first', card_feat_best: 'Best score', card_feat_online: 'Online matches',
+        how_card_desc: 'Review the rules, tips and everything you need to master the game.', how_card_cta: 'See info', multi_soon: 'Online multiplayer: coming soon!',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
         how_title: 'How to play?', how1: 'Tap an <strong>empty cell</strong>.', how2: 'It looks at the nearest icon in each direction (up, down, left, right).',
         how3: 'If <strong>2 or more match</strong>, they converge and vanish!', how4: 'Chain quick clears to raise the <strong>combo</strong> and multiply points.',
@@ -2594,56 +2606,64 @@
   };
 
   /* ===================== Construcción de menús ===================== */
+  // Dificultad por defecto al lanzar desde las tarjetas (los modos escalan solos).
   let selMode = 'clasico', selDiff = 'normal';
-  const FEATURED_MODES = ['aventura', 'supervivencia'];
+  // Tarjetas de la pantalla "Elige tu modo" (mockup 1). Cada tarjeta lanza su flujo
+  // directamente (sin paso de dificultad). El catálogo de modos internos (tutorial,
+  // contrarreloj, zen, aventura) sigue existiendo y se alcanza desde estos flujos.
+  const MODE_CARDS = [
+    { key: 'supervivencia', accent: '#ff5b6e', glyph: '❤️', art: 'surv',
+      i18n: 'card_surv', badge: 'card_surv_badge', desc: 'card_surv_desc', feats: [],
+      action: () => Game.start('supervivencia', 'normal') },
+    { key: 'clasico', accent: '#2f6bff', glyph: '🗺️', art: 'classic',
+      i18n: 'card_classic', badge: 'card_classic_badge', desc: 'card_classic_desc',
+      feats: [['🔒', 'card_feat_locks'], ['◎', 'card_feat_objects'], ['⚡', 'card_feat_events'], ['✦', 'card_feat_more']],
+      action: () => openWorldsMap() },
+    { key: 'multi', accent: '#7a5cff', glyph: '🆚', art: 'multi',
+      i18n: 'card_multi', badge: 'card_multi_badge', desc: 'card_multi_desc',
+      feats: [['🏆', 'card_feat_first'], ['⭐', 'card_feat_best'], ['📶', 'card_feat_online']],
+      action: () => openMultiplayer() },
+  ];
   function buildModeMenu() {
+    const cont = $('#mode-cards'); if (!cont) return;
     const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
-    const feat = $('#mode-featured'); if (feat) feat.innerHTML = '';
-    const grid = $('#mode-grid'); grid.innerHTML = '';
-    Config.MODE_ORDER.forEach(key => {
-      const m = Config.MODES[key];
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(key === selMode));
-      b.dataset.mode = key;
-      b.style.setProperty('--mode-accent', m.accent || '#00d0ff');
-      if (feat && FEATURED_MODES.includes(key)) {
-        b.className = 'mode-card featured';
-        const badge = (key === 'aventura' && Meta.advMax && Meta.advMax() > 1)
-          ? `<span class="mc-badge">${I18n.t('lvl')} ${Meta.advMax()}</span>` : '';
-        b.innerHTML = `<span class="emoji" aria-hidden="true">${m.emoji}</span><span class="mc-tx"><span class="name">${I18n.modeT(key, 'name')}</span><span class="mc-tag">${esc(I18n.modeT(key, 'desc'))}</span></span>${badge}`;
-        feat.appendChild(b);
-      } else {
-        b.className = 'mode-card';
-        b.innerHTML = `<span class="emoji" aria-hidden="true">${m.emoji}</span><span class="name">${I18n.modeT(key, 'name')}</span>`;
-        grid.appendChild(b);
-      }
-      b.addEventListener('click', () => selectMode(key));
+    const featsHTML = (feats) => feats && feats.length
+      ? `<span class="mc-feats">${feats.map(f => `<span class="mc-feat"><span class="mc-feat-ic">${f[0]}</span>${esc(I18n.t(f[1]))}</span>`).join('')}</span>` : '';
+    const cardHTML = (c) => `<button type="button" class="mode-hero" role="listitem" data-mode="${c.key}" style="--mode-accent:${c.accent}" aria-label="${esc(I18n.t(c.i18n))}">
+        <span class="mc-art mc-art-${c.art}" aria-hidden="true"><span class="mc-glyph">${c.glyph}</span></span>
+        <span class="mc-body">
+          <span class="mc-titlerow"><span class="mc-title">${esc(I18n.t(c.i18n))}</span><span class="mc-badge">${esc(I18n.t(c.badge))}</span></span>
+          <span class="mc-desc">${esc(I18n.t(c.desc))}</span>
+          ${featsHTML(c.feats)}
+        </span>
+        <span class="mc-go" aria-hidden="true">›</span>
+      </button>`;
+    const howHTML = `<button type="button" class="mode-how" role="listitem" data-mode="how">
+        <span class="mc-how-ic" aria-hidden="true">📘</span>
+        <span class="mc-body">
+          <span class="mc-title">${esc(I18n.t('how_title'))}</span>
+          <span class="mc-desc">${esc(I18n.t('how_card_desc'))}</span>
+        </span>
+        <span class="mc-how-cta">${esc(I18n.t('how_card_cta'))} ›</span>
+      </button>`;
+    cont.innerHTML = MODE_CARDS.map(cardHTML).join('') + howHTML;
+    MODE_CARDS.forEach((c) => {
+      const el = cont.querySelector(`[data-mode="${c.key}"]`);
+      if (el) el.addEventListener('click', () => { Sound.ui(); c.action(); });
     });
-    const row = $('#diff-row'); row.innerHTML = '';
-    Config.DIFF_ORDER.forEach(key => {
-      const b = document.createElement('button');
-      b.className = 'diff-chip'; b.type = 'button';
-      b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(key === selDiff));
-      b.dataset.diff = key; b.textContent = I18n.t('diff_' + key);
-      b.addEventListener('click', () => selectDiff(key));
-      row.appendChild(b);
-    });
-    updateModeUI();
+    const hb = cont.querySelector('[data-mode="how"]');
+    if (hb) hb.addEventListener('click', () => { Sound.ui(); Modal.open('modal-how'); });
+    Econ.refresh();
   }
-  function selectMode(key) { selMode = key; updateModeUI(); }
-  function selectDiff(key) { selDiff = key; updateModeUI(); }
-  function updateModeUI() {
-    const m = Config.MODES[selMode];
-    document.querySelectorAll('.mode-card').forEach(c => c.setAttribute('aria-checked', String(c.dataset.mode === selMode)));
-    const fixed = !!m.fixedDiff;
-    document.querySelectorAll('.diff-chip').forEach(c => {
-      const active = c.dataset.diff === (m.fixedDiff || selDiff);
-      c.setAttribute('aria-checked', String(active));
-      c.disabled = fixed;
-    });
-    $('#mode-desc').textContent = I18n.modeT(selMode, 'desc') + (fixed ? ' (' + I18n.t('diff_' + m.fixedDiff) + ')' : '');
-    $('#btn-start-game').disabled = false;
+  // Clásico → mapa de mundos (Fase 2 lo sustituye por la pantalla dedicada).
+  function openWorldsMap() {
+    if (typeof Worlds !== 'undefined' && Worlds.open) { Worlds.open(); return; }
+    buildAdventureMap(); Modal.open('modal-adventure');
+  }
+  // Multijugador → UI "Próximamente" (Fase 6 construye el modal completo).
+  function openMultiplayer() {
+    if ($('#modal-multi')) { Modal.open('modal-multi'); return; }
+    Toasts.show(I18n.t('multi_soon'), 'info', 1900);
   }
 
   function refreshStart() {
@@ -2872,11 +2892,7 @@
 
     // Modos
     $('#modes-back').addEventListener('click', () => Screens.show('start'));
-    $('#btn-start-game').addEventListener('click', () => {
-      if (selMode === 'aventura') { buildAdventureMap(); Modal.open('modal-adventure'); }
-      else if (selMode === 'tutorial') Coach.start();
-      else Game.start(selMode, selDiff);
-    });
+    { const ms = $('#modes-settings'); if (ms) ms.addEventListener('click', () => { Sound.ui(); openSettings(); }); }
     { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { Modal.close(); Game.start('aventura', selDiff); }); }
 
     // Juego

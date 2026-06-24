@@ -107,29 +107,25 @@
     </section>
 
     <!-- ============ PANTALLA: SELECCIÓN DE MODO ============ -->
-    <section class="screen" id="screen-modes" aria-labelledby="modes-title" hidden>
-      <div class="panel panel-wide panel-modes">
-        <div class="panel-head">
-          <button class="icon-btn" id="modes-back" aria-label="Volver">←</button>
-          <h2 id="modes-title" data-i18n="modes_title">Elige tu misión</h2>
+    <section class="screen screen-modes" id="screen-modes" aria-labelledby="modes-title" hidden>
+      <!-- Cabecera: volver + economía + ajustes (top bar persistente) -->
+      <header class="topbar">
+        <button class="icon-btn" id="modes-back" aria-label="Volver">←</button>
+        <div class="topbar-econ" id="modes-econ" aria-label="Recursos">
+          <span class="econ-pill econ-coins" data-econ="coins">🪙 0</span>
+          <span class="econ-pill econ-gems" data-econ="gems">💎 0</span>
+          <span class="econ-pill econ-streak" data-econ="streak">🔥 0</span>
         </div>
+        <button class="icon-btn" id="modes-settings" aria-label="Ajustes">⚙️</button>
+      </header>
 
-        <!-- Cuerpo scrollable: el CTA queda fijo abajo (zona del pulgar) -->
-        <div class="modes-body">
-          <div class="mode-featured" id="mode-featured" role="radiogroup" aria-label="Modos destacados"></div>
-          <h3 class="group-title" data-i18n="group_mode">Modo</h3>
-          <div class="mode-grid" id="mode-grid" role="radiogroup" aria-label="Modo de juego"></div>
-
-          <h3 class="group-title" data-i18n="group_diff">Dificultad</h3>
-          <div class="diff-row" id="diff-row" role="radiogroup" aria-label="Dificultad"></div>
-
-          <p class="mode-desc" id="mode-desc" aria-live="polite"></p>
+      <div class="modes-body">
+        <div class="modes-head">
+          <h2 id="modes-title" data-i18n="modes_title">Elige tu modo</h2>
+          <p class="modes-sub" data-i18n="modes_sub">Cada modo, una forma diferente de jugar</p>
         </div>
-
-        <!-- Barra de acción inferior fija -->
-        <div class="modes-actions">
-          <button class="btn btn-primary btn-lg" id="btn-start-game" disabled data-i18n="begin">¡Empezar!</button>
-        </div>
+        <!-- Tarjetas de modo (3 héroe + ¿Cómo se juega?), generadas por JS -->
+        <div class="mode-cards" id="mode-cards" role="list"></div>
       </div>
     </section>
 
