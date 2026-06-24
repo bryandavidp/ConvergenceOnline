@@ -122,20 +122,66 @@ h1, h2, h3, p { margin: 0; }
 .menu-buttons { display: flex; flex-direction: column; gap: 12px; }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; color: var(--muted); margin-top: 4px; }
 
-/* Inicio: ESTADO (marca/perfil/misiones) arriba; ACCIONES (Play héroe + accesos)
-   ancladas en la zona cómoda del pulgar. Columna a altura completa con reparto. */
-.panel-start {
-  display: flex; flex-direction: column; justify-content: space-between; gap: 16px;
-  height: 100%; max-height: 800px; overflow-y: auto; -webkit-overflow-scrolling: touch;
-}
-.start-status { display: flex; flex-direction: column; gap: 12px; flex: 0 0 auto; }
-.start-actions { display: flex; flex-direction: column; gap: 12px; flex: 0 0 auto; }
-.start-foot { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
-.panel-start .logo { margin-bottom: 2px; }
-.panel-start .start-meta { margin: 0; }
-.panel-start .menu-row { margin-top: 2px; }
-.panel-start .best-line { margin-top: 4px; }
-.panel-start .version-line { margin-top: 2px; }
+/* ===== Inicio "home" (estilo Supercell): cabecera anclada arriba, centro libre,
+   CTA Jugar masivo abajo y barra de navegación inferior. Sin tarjetas de fondo. ===== */
+.screen.home { justify-content: flex-start; align-items: stretch; gap: 0;
+  padding: max(10px, env(safe-area-inset-top)) 14px max(6px, env(safe-area-inset-bottom)); }
+
+/* Cabecera: perfil (izq) + economía (der) */
+.home-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex: 0 0 auto; }
+.home-profile { display: flex; align-items: center; gap: 9px; background: none; border: 0; padding: 4px; color: var(--text); }
+.home-profile .avatar-dot.mini { width: 34px; height: 34px; }
+.home-id { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+.home-name { font-weight: 800; font-size: .95rem; line-height: 1; }
+.home-lvlrow { display: flex; align-items: center; gap: 6px; }
+.home-level { font-size: .66rem; font-weight: 800; color: var(--muted); white-space: nowrap; text-transform: uppercase; letter-spacing: .5px; }
+.home-xp { width: 68px; height: 5px; border-radius: 999px; background: rgba(255,255,255,.12); overflow: hidden; }
+.home-xp-fill { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--accent-2), var(--gold)); }
+.home-econ { display: flex; gap: 8px; }
+.econ-pill { display: inline-flex; align-items: center; gap: 4px; font-weight: 800; font-size: .82rem; color: var(--text); background: rgba(255,255,255,.08); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; }
+
+/* Hero central libre: marca + órbita neón decorativa */
+.home-hero { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; position: relative; min-height: 0; }
+.home-hero .logo { font-size: clamp(2.2rem, 11vw, 3.4rem); position: relative; z-index: 1; }
+.hero-orbit { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 0; }
+.hero-orbit::before { content: ''; width: min(74vw, 320px); aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-2) 28%, transparent), transparent 62%); filter: blur(8px); }
+.hero-orbit::after { content: ''; position: absolute; width: min(66vw, 300px); aspect-ratio: 1; border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--accent-2) 38%, transparent);
+  box-shadow: 0 0 26px color-mix(in srgb, var(--accent-2) 28%, transparent), inset 0 0 30px color-mix(in srgb, var(--level) 20%, transparent);
+  transform: rotate(0deg) scaleY(.6); animation: heroSpin 30s linear infinite; }
+@keyframes heroSpin { to { transform: rotate(360deg) scaleY(.6); } }
+body.reduced-fx .hero-orbit::after { animation: none; }
+
+/* Misiones: FAB lateral (abre panel) */
+.missions-fab { position: absolute; left: 12px; top: 46%; transform: translateY(-50%);
+  width: 46px; height: 46px; border-radius: 50%; font-size: 1.3rem; z-index: 6; color: var(--text);
+  background: linear-gradient(180deg, #243160, #141c3c); border: 1px solid var(--line);
+  box-shadow: 0 5px 0 rgba(0,0,0,.45), 0 10px 18px rgba(0,0,0,.4); }
+.missions-fab:active { transform: translateY(-50%) scale(.94); }
+.missions-fab .fab-dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; border-radius: 50%; background: var(--good); box-shadow: 0 0 8px var(--good); }
+
+/* CTA: Jugar masivo flotante + mejor puntuación discreta */
+.home-cta { display: flex; flex-direction: column; align-items: center; gap: 7px; width: min(440px, 100%); margin: 0 auto 6px; flex: 0 0 auto; }
+.home-cta #btn-play { width: 100%; font-size: 1.65rem; padding: 22px; box-shadow: 0 8px 0 #0a5aa8, 0 16px 34px rgba(0,208,255,.55); }
+.home .best-line { margin: 0; font-size: .8rem; opacity: .75; }
+.home .version-line { margin: 0; opacity: .4; font-size: .64rem; }
+
+/* Barra de navegación inferior (Tab Bar) */
+.home-tabs { display: flex; align-items: stretch; gap: 2px; width: 100%; flex: 0 0 auto;
+  padding: 4px 4px max(4px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(10,16,38,0), rgba(8,12,30,.7)); }
+.tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px;
+  background: none; border: 0; color: var(--muted); font: inherit; min-height: 50px; border-radius: 12px; transition: color .15s, transform .1s; }
+.tab .tab-ic { font-size: 1.3rem; line-height: 1; }
+.tab small { font-size: .6rem; font-weight: 700; }
+.tab:active { transform: scale(.92); }
+.tab[aria-current="page"] { color: var(--text); }
+/* Pestaña central destacada (Inicio) */
+.tab-home .tab-ic { width: 50px; height: 50px; display: grid; place-items: center; margin-top: -18px; border-radius: 50%;
+  background: linear-gradient(180deg, #20d6ff, #0c6fd6); color: #04223e; font-size: 1.5rem;
+  box-shadow: 0 5px 0 #0a5aa8, 0 10px 18px rgba(0,208,255,.5); border: 3px solid #0a1128; }
+.tab-home small { color: var(--accent-2); }
 /* Misiones con barra de progreso (progreso visible = enganche) */
 .start-missions { display: flex; flex-direction: column; gap: 8px; }
 .daily-main { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
