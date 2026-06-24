@@ -181,6 +181,7 @@
         begin: '¡Empezar!', guest: 'Jugar como invitado', start_sub: '¿List@ para conquistar el tablero?',
         play: '▶ Jugar', reward: '🎁 Recompensa diaria', menu_profile: '🏅 Logros', menu_shop: '🛍️ Tienda',
         menu_settings: '⚙️ Ajustes', how: '¿Cómo se juega?', install: '📲 Instalar app', sound: 'Sonido', best: 'Mejor puntuación:',
+        tab_log: 'Logros', tab_shop: 'Tienda', tab_home: 'Inicio', tab_guide: 'Guía', tab_set: 'Ajustes', missions_title: '🎯 Misiones',
         modes_title: 'Elige tu misión', group_mode: 'Modo', group_diff: 'Dificultad',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
         how_title: '¿Cómo se juega?', how1: 'Toca una <strong>casilla vacía</strong>.', how2: 'Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).',
@@ -211,6 +212,7 @@
         begin: 'Start!', guest: 'Play as guest', start_sub: 'Ready to conquer the board?',
         play: '▶ Play', reward: '🎁 Daily reward', menu_profile: '🏅 Profile', menu_shop: '🛍️ Shop',
         menu_settings: '⚙️ Settings', how: 'How to play?', install: '📲 Install app', sound: 'Sound', best: 'Best score:',
+        tab_log: 'Trophies', tab_shop: 'Shop', tab_home: 'Home', tab_guide: 'Guide', tab_set: 'Settings', missions_title: '🎯 Missions',
         modes_title: 'Choose your mission', group_mode: 'Mode', group_diff: 'Difficulty',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
         how_title: 'How to play?', how1: 'Tap an <strong>empty cell</strong>.', how2: 'It looks at the nearest icon in each direction (up, down, left, right).',
@@ -2248,23 +2250,20 @@
 
   function refreshStart() {
     $('#start-best').textContent = Storage.best;
-    const sw = $('#btn-sound'); if (sw) sw.setAttribute('aria-checked', String(Settings.sfx));
     const br = $('#btn-reward'); if (br) br.hidden = !Meta.rewardReady();
     const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
-    // Perfil + XP (identidad/progreso, secundario sobre el CTA Jugar).
-    const el = $('#start-meta');
-    if (el) {
-      const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
-      const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
-      el.innerHTML =
-        `<div class="profile">
-          <div class="profile-id"><span class="avatar-dot mini" style="--av:${esc(prof.color)}"></span><span class="pname">${esc(prof.name)}</span><span class="coins" title="Monedas">🪙 ${Meta.coins()}</span></div>
-          <div class="profile-top"><span class="rank">${Meta.rank()}</span><span class="plevel">${I18n.t('lvl')} ${lvl}</span><span class="streak" title="Racha diaria">🔥 ${Meta.streak()}</span></div>
-          <div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>
-          <div class="xp-sub">${have} / ${need} XP</div>
-        </div>`;
-    }
-    // Misiones (gancho de retención) con barra de progreso visible, bajo el CTA.
+    // Cabecera compacta: perfil (izq) + economía (der), sin tarjeta.
+    const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
+    const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
+    { const a = $('#home-avatar'); if (a) a.style.setProperty('--av', prof.color); }
+    { const n = $('#home-name'); if (n) n.textContent = prof.name; }
+    { const l = $('#home-level'); if (l) l.textContent = I18n.t('lvl') + ' ' + lvl; }
+    { const xf = $('#home-xp-fill'); if (xf) xf.style.width = Math.min(100, have / need * 100).toFixed(0) + '%'; }
+    { const c = $('#home-coins'); if (c) c.textContent = '🪙 ' + Meta.coins(); }
+    { const s = $('#home-streak'); if (s) s.textContent = '🔥 ' + Meta.streak(); }
+    // Aviso en el FAB de misiones cuando alguna está completada (positivo).
+    { const md = $('#missions-dot'); if (md) { const d = Meta.dailyMission(), w = Meta.weeklyChallenge(); md.hidden = !((d && d.done) || (w && w.done)); } }
+    // Misiones (gancho de retención) con barra de progreso visible, en el panel lateral.
     const mi = $('#start-missions');
     if (mi) {
       const row = (cls, icon, m, doneTxt) => {
@@ -2463,11 +2462,10 @@
     $('#btn-play').addEventListener('click', () => { Sound.ensure(); Screens.show('modes'); });
     $('#btn-how').addEventListener('click', () => Modal.open('modal-how'));
     { const bi = $('#btn-install'); if (bi) bi.addEventListener('click', () => PWA.promptInstall()); }
-    $('#btn-sound').addEventListener('click', () => {
-      Settings.sfx = !Settings.sfx;
-      $('#btn-sound').setAttribute('aria-checked', String(Settings.sfx));
-      if (Settings.sfx) { Sound.ensure(); Sound.ui(); }
-    });
+    // Misiones: panel lanzado desde el FAB lateral (sonido ahora vive en Ajustes).
+    { const bmi = $('#btn-missions'); if (bmi) bmi.addEventListener('click', () => { Sound.ui(); Modal.open('modal-missions'); }); }
+    // Pestaña "Inicio" de la barra: ya estamos en inicio (feedback sutil, sin navegar).
+    { const bh = $('#btn-home'); if (bh) bh.addEventListener('click', () => Sound.ui()); }
     const bs = $('#btn-settings'); if (bs) bs.addEventListener('click', () => { Sound.ensure(); openSettings(); });
     const bm = $('#btn-medals'); if (bm) bm.addEventListener('click', openMedals);
     { const bsh = $('#btn-shop'); if (bsh) bsh.addEventListener('click', () => { Sound.ensure(); openShop(); }); }

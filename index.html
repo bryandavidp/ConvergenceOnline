@@ -21,7 +21,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=fx28" />
+  <link rel="stylesheet" href="styles.css?v=fx29" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -60,36 +60,49 @@
     </section>
 
     <!-- ============ PANTALLA: INICIO ============ -->
-    <section class="screen" id="screen-start" aria-labelledby="start-title" hidden>
-      <div class="panel panel-start">
-        <!-- ESTADO (solo-lectura) arriba: marca, perfil y misiones -->
-        <div class="start-status">
-          <h1 id="start-title" class="logo">Convergencia<span class="logo-orbit" aria-hidden="true"></span></h1>
-          <div class="start-meta" id="start-meta"></div>
-          <div class="start-missions" id="start-missions"></div>
+    <section class="screen home" id="screen-start" aria-labelledby="start-title" hidden>
+      <!-- CABECERA: perfil compacto (izq) + economía (der), sin tarjeta -->
+      <header class="home-top">
+        <button class="home-profile" id="btn-profile" aria-label="Perfil">
+          <span class="avatar-dot mini" id="home-avatar"></span>
+          <span class="home-id">
+            <span class="home-name" id="home-name">Invitado</span>
+            <span class="home-lvlrow"><span class="home-level" id="home-level">Nv 1</span><span class="home-xp"><span class="home-xp-fill" id="home-xp-fill"></span></span></span>
+          </span>
+        </button>
+        <div class="home-econ">
+          <span class="econ-pill" id="home-coins">🪙 0</span>
+          <span class="econ-pill" id="home-streak">🔥 0</span>
         </div>
-        <!-- ACCIONES en la zona cómoda del pulgar (tercio inferior) -->
-        <div class="start-actions">
-          <button class="btn btn-primary btn-lg" id="btn-play" data-i18n="play">▶ Jugar</button>
-          <p class="play-hint" id="play-hint" hidden></p>
-          <button class="btn btn-reward" id="btn-reward" hidden data-i18n="reward">🎁 Recompensa diaria</button>
-          <div class="menu-row">
-            <button class="btn btn-ghost menu-tile" id="btn-medals" data-i18n="menu_profile">🏅 Logros</button>
-            <button class="btn btn-ghost menu-tile" id="btn-shop" data-i18n="menu_shop">🛍️ Tienda</button>
-            <button class="btn btn-ghost menu-tile" id="btn-settings" data-i18n="menu_settings">⚙️ Ajustes</button>
-          </div>
-          <div class="start-foot">
-            <button class="btn btn-ghost btn-sm" id="btn-how" data-i18n="how">¿Cómo se juega?</button>
-            <button class="btn btn-ghost btn-sm" id="btn-install" hidden data-i18n="install">📲 Instalar app</button>
-            <div class="toggle-row">
-              <span data-i18n="sound">Sonido</span>
-              <button class="switch" id="btn-sound" role="switch" aria-checked="true" aria-label="Activar o desactivar sonido"><span class="switch-dot"></span></button>
-            </div>
-            <p class="best-line"><span data-i18n="best">Mejor puntuación:</span> <strong id="start-best">0</strong></p>
-            <p class="version-line">v<span id="app-version">1.0.0</span></p>
-          </div>
-        </div>
+      </header>
+
+      <!-- HERO: centro libre con marca + órbita decorativa -->
+      <div class="home-hero">
+        <h1 id="start-title" class="logo">Convergencia<span class="logo-orbit" aria-hidden="true"></span></h1>
+        <div class="hero-orbit" id="hero-orbit" aria-hidden="true"></div>
       </div>
+
+      <!-- Misiones: lanzador lateral (abre panel) -->
+      <button class="missions-fab" id="btn-missions" aria-label="Misiones">🎯<span class="fab-dot" id="missions-dot" hidden></span></button>
+
+      <!-- CTA: Jugar masivo flotante en el tercio inferior -->
+      <div class="home-cta">
+        <button class="btn btn-reward" id="btn-reward" hidden data-i18n="reward">🎁 Recompensa diaria</button>
+        <button class="btn btn-primary btn-lg" id="btn-play" data-i18n="play">▶ Jugar</button>
+        <p class="play-hint" id="play-hint" hidden></p>
+        <p class="best-line"><span data-i18n="best">Mejor puntuación:</span> <strong id="start-best">0</strong></p>
+        <button class="btn btn-ghost btn-sm" id="btn-install" hidden data-i18n="install">📲 Instalar app</button>
+        <p class="version-line">v<span id="app-version">1.0.0</span></p>
+      </div>
+
+      <!-- BARRA DE NAVEGACIÓN inferior (estilo Supercell) -->
+      <nav class="home-tabs" aria-label="Navegación">
+        <button class="tab" id="btn-medals"><span class="tab-ic">🏆</span><small data-i18n="tab_log">Logros</small></button>
+        <button class="tab" id="btn-shop"><span class="tab-ic">🛍️</span><small data-i18n="tab_shop">Tienda</small></button>
+        <button class="tab tab-home" id="btn-home" aria-current="page"><span class="tab-ic">🎮</span><small data-i18n="tab_home">Inicio</small></button>
+        <button class="tab" id="btn-how"><span class="tab-ic">❓</span><small data-i18n="tab_guide">Guía</small></button>
+        <button class="tab" id="btn-settings"><span class="tab-ic">⚙️</span><small data-i18n="tab_set">Ajustes</small></button>
+      </nav>
     </section>
 
     <!-- ============ PANTALLA: SELECCIÓN DE MODO ============ -->
@@ -194,6 +207,16 @@
 
   <!-- ============ MODALES ============ -->
   <div class="overlay" id="overlay" hidden>
+    <!-- Misiones (lanzadas desde el FAB lateral del inicio) -->
+    <div class="modal" id="modal-missions" role="dialog" aria-modal="true" aria-labelledby="missions-title" hidden>
+      <h2 id="missions-title" data-i18n="missions_title">🎯 Misiones</h2>
+      <div class="modal-body">
+        <div class="start-missions" id="start-missions"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" data-close data-i18n="close">Cerrar</button>
+      </div>
+    </div>
     <!-- Cómo jugar -->
     <div class="modal" id="modal-how" role="dialog" aria-modal="true" aria-labelledby="how-title" hidden>
       <h2 id="how-title" data-i18n="how_title">¿Cómo se juega?</h2>
@@ -318,6 +341,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=fx28" defer></script>
+  <script src="game.js?v=fx29" defer></script>
 </body>
 </html>
