@@ -57,7 +57,7 @@ const initialState: GameState = {
   error: null,
   spawnRate: 3000, // Tiempo entre generación de iconos en ms
   iconCount: 0,
-  currentDifficulty: 'normal',
+  currentDifficulty: 'easy',
   currentPlayMode: 'classic',
   boardSize: 8,
   // Usar la configuración centralizada para los iconos del nivel 1

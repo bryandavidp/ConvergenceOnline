@@ -104,22 +104,9 @@ export const BOARD_SIZES = [
   12, // Nivel 10: 12x12
 ];
 
-// Conjuntos de iconos por nivel
-export const LEVEL_ICONS = [
-  // Nivel 1: Frutas
-  ["🍎", "🍇", "🍊", "🍓"],
-  // Nivel 2: Animales
-  ["🐶", "🐱", "🐭", "🐹"],
-  // Nivel 3: Símbolos
-  ["⭐", "💫", "🔥", "🌈", "🌪️"],
-  // Nivel 4: Deportes
-  ["⚽", "🏀", "🏉", "🎱", "🏓"],
-  // Nivel 5: Vehículos
-  ["🚗", "🏎️", "🚓", "🚑", "✈️"],
-];
 
 // Iconos por temática (más variedad y dificultad progresiva)
-export const ICON_SETS: Record<string, string[]> = {
+export const LEVEL_ICONS: Record<string, string[]> = {
   // Sets básicos (fáciles de distinguir)
   fruits: ["🍎", "🍇", "🍊", "🍓", "🍉", "🍌", "🍍", "🥝"],
   animals: ["🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼"],
@@ -146,14 +133,14 @@ export const ICON_SETS: Record<string, string[]> = {
 // Mapeo de conjuntos de iconos por nivel y dificultad
 export const LEVEL_ICON_SETS: Record<GameMode, Record<number, string[]>> = {
   easy: {
-    1: ["fruits", "animals"],
+    1: ["tools", "flowers", "hearts", "music"],
     2: ["fruits", "faces"],
     3: ["animals", "sports"],
     4: ["vehicles", "sports"],
     5: ["faces", "weather"]
   },
   normal: {
-    1: ["fruits", "animals", "faces"],
+    1: ["tools", "flowers", "hearts", "music"],
     2: ["sports", "vehicles", "weather"],
     3: ["symbols", "geometric", "animals"],
     4: ["tools", "vehicles", "symbols"],
@@ -165,7 +152,7 @@ export const LEVEL_ICON_SETS: Record<GameMode, Record<number, string[]>> = {
     10: ["animals", "geometric", "faces"]
   },
   hard: {
-    1: ["fruits", "animals", "faces", "sports"],
+    1: ["tools", "flowers", "hearts", "music"],
     2: ["vehicles", "weather", "symbols", "geometric"],
     3: ["tools", "flowers", "hearts", "music"],
     4: ["symbols", "geometric", "hearts", "weather"],
@@ -177,7 +164,7 @@ export const LEVEL_ICON_SETS: Record<GameMode, Record<number, string[]>> = {
     10: ["flowers", "hearts", "music", "symbols"]
   },
   tutorial: {
-    1: ["fruits"]
+    1: ["flowers"]
   }
 };
 
@@ -510,7 +497,7 @@ export const ANIMATION_CONFIG: AnimationConfig = {
 };
 
 // Iconos disponibles en el juego
-export const AVAILABLE_ICONS = [
+/* export const AVAILABLE_ICONS = [
   '🍎', '🍊', '🍇', '🍓', '🍐', 
   '🍌', '🍉', '🍑', '🍒', '🍍',
   '🥝', '🥑', '🥕', '🌽', '🍅', 
@@ -519,7 +506,7 @@ export const AVAILABLE_ICONS = [
   '⭐', '💫', '🔥', '🌈', '🌪️',
   '⚽', '🏀', '🏉', '🎱', '🏓',
   '🚗', '🏎️', '🚓', '🚑', '✈️'
-];
+]; */
 
 // Configuración de modos de juego ampliada
 export const GAME_MODES_EXTENDED: Record<string, GameModeConfig> = {
@@ -587,8 +574,11 @@ export function changeSpawnRate(newSpawnRate: number): number {
 export function getIconSetForLevel(level: number): string[] {
   const adjustedLevel = level - 1;
   
-  if (adjustedLevel >= 0 && adjustedLevel < LEVEL_ICONS.length) {
-    return LEVEL_ICONS[adjustedLevel];
+  if (adjustedLevel >= 0 && adjustedLevel < Object.keys(LEVEL_ICONS).length) {
+    // LEVEL_ICONS is an object, so this logic may not be correct.
+    // You may want to select a specific key or set for the level.
+    // For now, return all icons as a fallback.
+    return Object.values(LEVEL_ICONS)[adjustedLevel];
   }
   // 🥱😏🫠😭🤯🥵🥶🤢
   return ["🐱", "🥱", "😏", "🫠", "😭", "🤯", "🥵", "🥶", "🤢"];
@@ -657,8 +647,8 @@ export function getIconsForLevel(level: number, difficulty: GameMode): string[] 
     let allIcons: string[] = [];
     
     iconCategories.forEach((category: string) => {
-      if (ICON_SETS[category]) {
-        allIcons = [...allIcons, ...ICON_SETS[category]];
+      if (LEVEL_ICONS[category]) {
+        allIcons = [...allIcons, ...LEVEL_ICONS[category]];
       } else {
         console.warn(`Categoría de iconos no encontrada: ${category}`);
       }

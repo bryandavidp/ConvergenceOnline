@@ -208,7 +208,9 @@ const useGameLogic = () => {
     // Esto garantiza consistencia entre nivel 1 y demás niveles
     let iconsForLevel: string[];
     
-    if (currentLevel <= config.LEVEL_ICONS.length) {
+    // Obtener los iconos del nivel desde la configuración
+    // Verificar que config.LEVEL_ICONS sea un array y currentLevel sea un número
+    if (currentLevel <= (Array.isArray(config.LEVEL_ICONS) ? config.LEVEL_ICONS.length : 0)) {
       // Usar conjuntos predefinidos para niveles básicos
       iconsForLevel = config.getIconSetForLevel(currentLevel);
     } else {
@@ -1277,7 +1279,7 @@ const useGameLogic = () => {
     
     // Determinar iconos adecuados para este nivel y dificultad
     let newIcons: string[];
-    if (level + 1 <= config.LEVEL_ICONS.length) {
+    if (level + 1 <= (Array.isArray(config.LEVEL_ICONS) ? config.LEVEL_ICONS.length : 0)) {
       // Usar conjuntos predefinidos para niveles básicos
       newIcons = config.getIconSetForLevel(level + 1);
     } else {

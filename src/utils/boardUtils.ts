@@ -88,7 +88,8 @@ export function setAvailableBoardIcons(icons: string[]): string[] {
  * @returns Array con los iconos seleccionados
  */
 export function getRandomIcons(count: number): string[] {
-  const allIcons = [...config.AVAILABLE_ICONS];
+  // Flatten all icon arrays from LEVEL_ICONS into a single array
+  const allIcons = Object.values(config.LEVEL_ICONS).flat();
   shuffleArray(allIcons);
   
   const selectedCount = Math.min(count, allIcons.length);
