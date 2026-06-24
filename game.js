@@ -69,7 +69,7 @@
       supervivencia: { name: 'Supervivencia',emoji: '❤️', timed: false, penalties: true,  mult: 1.5, fast: true, endless: true, accent: '#ff5b6e', desc: 'Aguanta oleadas crecientes con vidas, trampas, jefes y potenciadores. ¿Cuánto sobrevivirás?',
         onSetupLevel(ctx) { Survival.setup(ctx.level); },
         onTick(dt) { Survival.onTick(dt); },
-        onConverge(ctx) { Survival.onConverge(ctx.removed, ctx.combo); },
+        onConverge(ctx) { Survival.onConverge(ctx); },
         onOverflow() { Survival.onOverflow(); },
         blockSpawn() { return Survival.frozen(); } },
       zen:           { name: 'Zen',          emoji: '☯️', timed: false, penalties: false, mult: 0.8, relaxed: true, endless: true, accent: '#9be15d', goal: 'Sin fallos ni prisa',
@@ -1363,6 +1363,7 @@
   /* ===================== Survival (Supervivencia 2.0: oleadas, vidas, boosters, trampas) ===================== */
   const Survival = {
     WAVE_MS: 22000, MAX_LIVES: 3, CHARGE_PER: 9, BOOSTERS: ['bomb', 'freeze', 'x2', 'clearLine'],
+    ROCK_CAP: 10, ROCK_HITS: 2,   // las rocas NO son permanentes: tope de cobertura + se rompen por convergencia adyacente
     lives: 3, wave: 1, waveAcc: 0, survSec: 0, charge: 0, freezeUntil: 0, x2Until: 0,
     _r: {},
     start() {
@@ -1375,12 +1376,16 @@
     x2Active() { return performance.now() < this.x2Until; },
     _emptyIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) a.push(i); return a; },
     _filledIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) a.push(i); return a; },
+    _rockIdx() { const a = []; for (let i = 0; i < State.board.length; i++) { const t = State.tiles[i]; if (t && t.type === 'rock') a.push(i); } return a; },
     _traps(density) {
       const e = this._emptyIdx(); let n = Math.floor(e.length * density);
+      let rocks = this._rockIdx().length;   // tope de cobertura: el tablero nunca se "brickea"
       for (let k = 0; k < n && e.length; k++) {
         const idx = e.splice(rand(e.length), 1)[0];
-        if (Math.random() < 0.6) State.tiles[idx] = Tiles.make('rock');
-        else { State.tiles[idx] = Tiles.make('frozen'); State.board[idx] = State.pool[rand(State.pool.length)]; State.iconCount++; }
+        // Las rocas (ahora ROMPIBLES, con hits) bajan de proporción a ~45% y respetan el tope.
+        if (rocks < this.ROCK_CAP && Math.random() < 0.45) {
+          const t = Tiles.make('rock'); t.hits = this.ROCK_HITS; State.tiles[idx] = t; rocks++;
+        } else { State.tiles[idx] = Tiles.make('frozen'); State.board[idx] = State.pool[rand(State.pool.length)]; State.iconCount++; }
       }
       Render.syncAll();
     },
@@ -1410,7 +1415,38 @@
       for (let i = vals.length - 1; i > 0; i--) { const j = rand(i + 1); const t = vals[i]; vals[i] = vals[j]; vals[j] = t; }
       idx.forEach((p, k) => State.board[p] = vals[k]); Render.syncAll();
     },
-    onConverge(removed, combo) { this.charge = Math.min(100, this.charge + this.CHARGE_PER + Math.min(combo || 0, 6)); this.render(); },
+    onConverge(ctx) {
+      const combo = ctx ? ctx.combo : 0;
+      this.charge = Math.min(100, this.charge + this.CHARGE_PER + Math.min(combo || 0, 6));
+      // Romper rocas (con hits) ortogonalmente adyacentes a la acción: la casilla
+      // central tocada + cada icono eliminado. Da agencia y evita el bloqueo permanente.
+      if (ctx) {
+        const seen = new Set();
+        const mark = (idx) => {
+          const r = idx / 8 | 0, c = idx % 8;
+          const nb = [[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
+          for (const [rr, cc] of nb) {
+            if (rr < 0 || cc < 0 || rr > 7 || cc > 7) continue;
+            const j = rr * 8 + cc, t = State.tiles[j];
+            if (t && t.type === 'rock' && t.hits != null && !seen.has(j)) seen.add(j);
+          }
+        };
+        if (ctx.center != null) mark(ctx.center);
+        if (ctx.cells) ctx.cells.forEach(mark);
+        seen.forEach((j) => this._crackRock(j));
+      }
+      this.render();
+    },
+    _crackRock(j) {
+      const t = State.tiles[j]; if (!t || t.type !== 'rock') return;
+      t.hits = (t.hits || 1) - 1;
+      if (t.hits > 0) { Render.cells[j].classList.add('rock-cracked'); Sound.tap(); return; }
+      // Rota: desaparece (libera la casilla) con estallido.
+      FX.burst(j, '#c2cbe0', 5);
+      Render.cells[j].classList.remove('rock-cracked');
+      State.tiles[j] = null; Render.syncCell(j);
+      Sound.eliminate(1); Haptics.tap();
+    },
     onOverflow() {
       this.lives--;
       if (this.lives <= 0) { this.lastChance(); return; }
@@ -1420,6 +1456,12 @@
     _relief(frac) {
       const f = this._filledIdx(); let n = Math.floor(f.length * frac);
       for (let k = 0; k < n && f.length; k++) { const idx = f.splice(rand(f.length), 1)[0]; FX.burst(idx, Icons.colorOf(State.board[idx]), 4); State.board[idx] = null; State.iconCount--; }
+      // El alivio también ROMPE bloqueos: quita ~la mitad de las rocas para dar respiro real.
+      const rocks = this._rockIdx(); let rn = Math.ceil(rocks.length * 0.5);
+      for (let k = 0; k < rn && rocks.length; k++) {
+        const idx = rocks.splice(rand(rocks.length), 1)[0];
+        FX.burst(idx, '#c2cbe0', 4); Render.cells[idx].classList.remove('rock-cracked'); State.tiles[idx] = null;
+      }
       Render.syncAll();
     },
     lastChance() {
@@ -1837,7 +1879,7 @@
       Render.hudSoon();
       announce(`+${points} puntos.${State.combo >= 3 ? ' Combo ' + State.combo + '.' : ''}`);
       if (Coach.active) { Coach.notify(); return; }
-      Rules.call('onConverge', { removed, combo: State.combo });
+      Rules.call('onConverge', { removed, combo: State.combo, cells: conv, center: i });
       this.evaluate();
     },
 
