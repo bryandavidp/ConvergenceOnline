@@ -21,7 +21,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=v136" />
+  <link rel="stylesheet" href="styles.css?v=v137" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -101,21 +101,6 @@
 
       <!-- Pie anclado abajo: Jugar (encima) + menús -->
       <div class="home-foot">
-        <div class="home-cards">
-          <button class="app-card card-blue" data-act="home-classic">
-            <span class="ac-tx"><b data-i18n="home_classic">Partida clasica</b><small data-i18n="home_classic_sub">Juega en el tablero contra amigos o bots</small></span>
-            <span class="ac-art" data-art="boardMini" aria-hidden="true"></span>
-          </button>
-          <button class="app-card card-red" data-act="home-surv">
-            <span class="ac-tx"><b data-i18n="card_surv">Supervivencia</b><small data-i18n="home_surv_sub">Sobrevive a oleadas infinitas</small></span>
-            <span class="ac-art" data-art="heartFoes" aria-hidden="true"></span>
-          </button>
-          <button class="app-card card-orange" data-act="home-multi">
-            <span class="ac-tx"><b data-i18n="card_multi">Multijugador</b><small data-i18n="home_multi_sub">Desafia a jugadores en linea</small></span>
-            <span class="ac-art" data-art="vsPeople" aria-hidden="true"></span>
-          </button>
-        </div>
-
         <button class="btn-hero" id="btn-play"><span class="play-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="play_word">Jugar</span></button>
 
         <!-- Bottom nav (anclado) -->
@@ -221,6 +206,7 @@
             <div class="surv-wave-wrap">
               <span class="surv-wave-row"><span class="surv-wave" id="surv-wave">Oleada 1</span><span class="surv-tier" id="surv-tier" aria-label="Tier de dificultad">N1</span></span>
               <span class="surv-waveprog" aria-hidden="true"><span class="surv-waveprog-fill" id="surv-waveprog-fill"></span></span>
+              <span class="surv-best-wave" id="surv-best-wave"></span>
             </div>
             <span class="surv-time" id="surv-time">0s</span>
           </div>
@@ -260,6 +246,7 @@
       <!-- Barra de potenciadores (Supervivencia): zona inferior, al alcance del pulgar -->
       <div class="booster-bar" id="booster-bar" hidden>
         <div class="charge"><div class="charge-fill" id="charge-fill"></div></div>
+        <div class="frenzy-meter" id="frenzy-meter" aria-hidden="true"><span class="frenzy-label" data-i18n="surv_frenzy">Frenesí</span><span class="frenzy-fill" id="frenzy-fill"></span></div>
         <div class="boosters" id="boosters"></div>
       </div>
 
@@ -364,6 +351,23 @@
       </div>
     </div>
 
+    <!-- Dificultad de Supervivencia -->
+    <div class="modal modal-surv-diff" id="modal-surv-diff" role="dialog" aria-modal="true" aria-labelledby="surv-diff-title" hidden>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/heart.png" alt=""></span><h2 id="surv-diff-title" data-i18n="surv_diff_title">Supervivencia</h2></div>
+      <div class="modal-body">
+        <p class="modal-sub" data-i18n="surv_diff_sub">Elige el ritmo de la partida</p>
+        <div class="surv-diff-pick" id="surv-diff-pick" role="radiogroup" aria-label="Dificultad de Supervivencia">
+          <button class="diff-chip" type="button" data-surv-diff="facil" role="radio"><span data-i18n="diff_facil">Fácil</span></button>
+          <button class="diff-chip" type="button" data-surv-diff="normal" role="radio"><span data-i18n="diff_normal">Normal</span></button>
+          <button class="diff-chip" type="button" data-surv-diff="dificil" role="radio"><span data-i18n="diff_dificil">Difícil</span></button>
+        </div>
+      </div>
+      <div class="modal-actions modal-buttons">
+        <button class="btn btn-primary btn-icon" id="btn-surv-start"><span class="btn-ic"><img class="ic" src="img/ui/heart.png" alt=""></span><span data-i18n="surv_start">Empezar supervivencia</span></button>
+        <button class="btn btn-ghost" data-close data-i18n="back">Volver</button>
+      </div>
+    </div>
+
     <!-- Mapa de Aventura -->
     <div class="modal modal-adventure" id="modal-adventure" role="dialog" aria-modal="true" aria-labelledby="adventure-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/rocket.png" alt=""></span><h2 id="adventure-title" data-i18n="adventure_title">Aventura</h2></div>
@@ -450,6 +454,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=v128" defer></script>
+  <script src="game.js?v=v129" defer></script>
 </body>
 </html>
