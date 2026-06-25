@@ -105,9 +105,17 @@
       plus:     c => `<path d="M40 15 H60 V40 H85 V60 H60 V85 H40 V60 H15 V40 H40 Z" fill="${c}" ${ST}/>`,
       droplet:  c => `<path d="M50 13 C50 13 77 49 77 65 A27 27 0 1 1 23 65 C23 49 50 13 50 13 Z" fill="${c}" ${ST}/>`,
       ring:     c => `<circle cx="50" cy="50" r="30" fill="none" stroke="${c}" stroke-width="15"/>`,
+      // Figuras desbloqueables (mockup): siluetas limpias, mismo estilo plano + contorno.
+      pentagon: c => `<path d="M50 14 L84 39 L71 81 L29 81 L16 39 Z" fill="${c}" ${ST}/>`,
+      moon:     c => `<path d="M64 16 A36 36 0 1 0 64 84 A28 28 0 1 1 64 16 Z" fill="${c}" ${ST}/>`,
+      sun:      c => `<path d="M50 8 L58 28 L80 20 L72 42 L92 50 L72 58 L80 80 L58 72 L50 92 L42 72 L20 80 L28 58 L8 50 L28 42 L20 20 L42 28 Z" fill="${c}" ${ST}/>`,
+      flower:   c => `<g fill="${c}" ${ST}><circle cx="50" cy="28" r="15"/><circle cx="72" cy="44" r="15"/><circle cx="64" cy="70" r="15"/><circle cx="36" cy="70" r="15"/><circle cx="28" cy="44" r="15"/></g><circle cx="50" cy="52" r="12" fill="#ffe9a8" ${ST}/>`,
+      clover:   c => `<g fill="${c}" ${ST}><circle cx="50" cy="32" r="16"/><circle cx="34" cy="50" r="16"/><circle cx="66" cy="50" r="16"/></g><path d="M48 58 L52 58 L54 86 L46 86 Z" fill="${c}" ${ST}/>`,
+      spiral:   c => `<path d="M50 50 C50 43 59 43 59 50 C59 62 41 62 41 50 C41 34 67 34 67 50 C67 72 33 72 33 50 C33 25 75 25 75 50" fill="none" stroke="${c}" stroke-width="9" stroke-linecap="round"/>`,
     };
     const SNAME = { circle:'círculo', square:'cuadrado', triangle:'triángulo', diamond:'rombo',
-      star:'estrella', heart:'corazón', hexagon:'hexágono', plus:'cruz', droplet:'gota', ring:'anillo' };
+      star:'estrella', heart:'corazón', hexagon:'hexágono', plus:'cruz', droplet:'gota', ring:'anillo',
+      pentagon:'pentágono', moon:'luna', sun:'sol', flower:'flor', clover:'trébol', spiral:'espiral' };
 
     // Pares [forma, color]. ORDENADOS EN CICLOS de las 10 formas EN EL MISMO
     // ORDEN (3 ciclos = 30 iconos, múltiplo de 10). Cada forma aparece 3 veces
@@ -117,11 +125,18 @@
     // idénticos (misma forma y color), eliminando convergencias "que parecen
     // válidas" por colores parecidos de una misma forma. La longitud múltiplo de
     // 10 conserva la propiedad incluso al dar la vuelta al catálogo.
-    const PAIRS = [
-      ['circle','red'],['square','blue'],['triangle','green'],['star','yellow'],['heart','pink'],['diamond','cyan'],['hexagon','orange'],['plus','purple'],['droplet','lime'],['ring','white'],
-      ['circle','teal'],['square','orange'],['triangle','indigo'],['star','pink'],['heart','purple'],['diamond','lime'],['hexagon','red'],['plus','cyan'],['droplet','blue'],['ring','yellow'],
-      ['circle','blue'],['square','purple'],['triangle','cyan'],['star','orange'],['heart','lime'],['diamond','indigo'],['hexagon','teal'],['plus','green'],['droplet','yellow'],['ring','pink'],
-    ];
+    // Catálogo generado: ciclos de TODAS las formas en el MISMO orden (período = nº de
+    // formas, 16 > 8). Cada forma aparece 3 veces con colores distintos. Como cada nivel
+    // toma una ventana contigua de <=8 (Engine.poolForLevel), cualquier ventana tiene
+    // siempre formas distintas → dos iconos solo coinciden si son idénticos (forma+color).
+    const SHAPE_ORDER = ['circle', 'square', 'triangle', 'star', 'heart', 'diamond', 'hexagon', 'plus', 'droplet', 'ring', 'pentagon', 'moon', 'sun', 'flower', 'clover', 'spiral'];
+    const COLOR_ORDER = ['red', 'blue', 'green', 'yellow', 'purple', 'cyan', 'orange', 'pink', 'lime', 'white', 'teal', 'indigo'];
+    const PAIRS = [];
+    for (let cyc = 0; cyc < 3; cyc++) {
+      for (let i = 0; i < SHAPE_ORDER.length; i++) {
+        PAIRS.push([SHAPE_ORDER[i], COLOR_ORDER[(i + cyc * 7) % COLOR_ORDER.length]]);
+      }
+    }
     const CATALOG = [], DEFS = {}, cache = {};
     for (const [shape, color] of PAIRS) { const id = `${shape}_${color}`; CATALOG.push(id); DEFS[id] = { shape, color }; }
 
@@ -581,21 +596,20 @@
       this.glyphs[i].innerHTML = id ? Icons.svg(id) : '';
     },
 
-    // Overlay de casilla especial (roca/helada/cristal…) por clase, con caché.
+    // Overlay de casilla especial (roca/helada/cristal/cadenas/portal…) por clase, con caché.
     setTile(i) {
-      const t = State.tiles[i], type = t ? t.type : '';
-      const key = t ? type + ':' + (type === 'frozen' ? (t.taps || 0) : type === 'rock' ? (t.hits || 0) : '') : '';
+      const t = State.tiles[i], type = t ? t.type : '', def = t ? Tiles.DEFS[type] : null;
+      const key = t ? type + ':' + (t.taps != null ? t.taps : '') + ':' + (t.hits != null ? t.hits : '') : '';
       if (this._cellTile[i] === key) return;
       this._cellTile[i] = key;
       const el = this.cells[i];
-      el.classList.toggle('tile-rock', type === 'rock');
-      el.classList.toggle('tile-frozen', type === 'frozen');
-      el.classList.toggle('tile-crystal', type === 'crystal');
-      el.classList.toggle('tile-locked', type === 'locked');
-      el.classList.toggle('tile-infected', type === 'infected');
+      const cls = def ? def.cls : '';
+      Tiles.CLASSES.forEach((c) => el.classList.toggle(c, c === cls));
       el.classList.remove('ice-1', 'ice-2', 'ice-3');
       if (type === 'frozen') el.classList.add('ice-' + clamp(t.taps || 1, 1, 3));
       if (type !== 'rock') el.classList.remove('rock-cracked');
+      // Glifo de objetos especiales/obstáculos con etiqueta propia (p. ej. "+30").
+      el.dataset.tileGlyph = (def && def.trigger) ? def.glyph : '';
     },
 
     syncCell(i) {
@@ -1417,10 +1431,22 @@
     DEFS: {
       rock:     { glyph: '🪨', solid: true,  cls: 'tile-rock',     desc: 'Roca: estorba y no converge' },
       locked:   { glyph: '🔒', solid: true,  cls: 'tile-locked',   desc: 'Bloqueada' },
-      frozen:   { glyph: '🧊', solid: true,  cls: 'tile-frozen', taps: 3, desc: 'Helada: toca para descongelar' },
+      frozen:   { glyph: '🧊', solid: true,  cls: 'tile-frozen', taps: 3, breakable: true, desc: 'Helada: toca para descongelar' },
       infected: { glyph: '☣️', solid: false, cls: 'tile-infected', desc: 'Se propaga si no la limpias' },
       crystal:  { glyph: '💎', solid: false, cls: 'tile-crystal', bonus: 3, desc: 'Vale puntos extra' },
+      // --- Obstáculos del mockup ---
+      chains:   { glyph: '⛓️', solid: true,  cls: 'tile-chains', taps: 2, breakable: true, desc: 'Cadenas: toca 2 veces para liberar' },
+      web:      { glyph: '🕸️', solid: true,  cls: 'tile-web',    taps: 2, breakable: true, desc: 'Telaraña: toca 2 veces para liberar' },
+      barrier:  { glyph: '🚧', solid: true,  cls: 'tile-barrier', desc: 'Barrera: sólo se quita con objetos especiales' },
+      mud:      { glyph: '🟫', solid: false, cls: 'tile-mud',    taps: 2, breakable: true, desc: 'Lodo: ralentiza y cuesta limpiar' },
+      // --- Objetos especiales del mockup (tap = efecto) ---
+      bonus:    { glyph: '+30', trigger: 'bonus',    cls: 'tile-bonus',    desc: 'Bonus: +30 puntos al instante' },
+      portal:   { glyph: '🌀',  trigger: 'portal',   cls: 'tile-portal',   desc: 'Portal: teletransporta una figura' },
+      magicbox: { glyph: '🎁',  trigger: 'magicbox', cls: 'tile-magicbox', desc: 'Caja mágica: libera figuras cercanas' },
+      bomb:     { glyph: '💣',  trigger: 'bomb',     cls: 'tile-bomb',     desc: 'Bomba oculta: detona figuras cercanas' },
     },
+    // Lista de clases CSS de casilla (para limpiar/aplicar en Render.setTile).
+    CLASSES: ['tile-rock', 'tile-locked', 'tile-frozen', 'tile-infected', 'tile-crystal', 'tile-chains', 'tile-web', 'tile-barrier', 'tile-mud', 'tile-bonus', 'tile-portal', 'tile-magicbox', 'tile-bomb'],
     make(type) { const d = this.DEFS[type]; return d ? Object.assign({ type }, d) : null; },
   };
 
@@ -1862,16 +1888,16 @@
     PER_WORLD: 50,
     REWARD_EVERY: 50,            // cofre de recompensa al completar el mundo
     LIST: [
-      { id: 'bosque',   name: 'Bosque Verde',     glyph: '🌲', accent: '#3ad07f', mods: [],
-        nov: [['🧊', 'Hielo aromático', 'Combina 3 veces para eliminarlo'], ['⛓️', 'Cadenas', 'Toca la figura 2 veces'], ['🎯', 'Nuevos objetivos', 'Alcanza la meta en cada nivel']] },
+      { id: 'bosque',   name: 'Bosque Verde',     glyph: '🌲', accent: '#3ad07f', mods: ['chains'],
+        nov: [['⛓️', 'Cadenas', 'Toca la figura 2 veces para liberarla'], ['➕', 'Bonus +30', 'Tócalo para puntos extra'], ['🎯', 'Nuevos objetivos', 'Alcanza la meta en cada nivel']] },
       { id: 'desierto', name: 'Desierto Dorado',  glyph: '🏜️', accent: '#ffb24d', mods: ['rocks'],
         nov: [['🪨', 'Rocas', 'Estorban y no convergen'], ['☀️', 'Calor', 'El tablero se llena más rápido'], ['💰', 'Tesoros', 'Más monedas por combo']] },
-      { id: 'montana',  name: 'Montaña Helada',   glyph: '🏔️', accent: '#7ad7ff', mods: ['ice'],
-        nov: [['🧊', 'Hielo', 'Casillas heladas: tócalas para romperlas'], ['❄️', 'Ventiscas', 'Aparece hielo durante la partida'], ['🎯', 'Objetivos', 'Despeja el tablero helado']] },
-      { id: 'cueva',    name: 'Cueva Misteriosa', glyph: '🔮', accent: '#a06bff', mods: ['crystals'],
-        nov: [['💎', 'Cristales', 'Valen puntos extra'], ['🕳️', 'Oscuridad', 'Menos pistas disponibles'], ['🎯', 'Objetivos', 'Rompe los cristales']] },
-      { id: 'neon',     name: 'Ciudad Neón',      glyph: '🏙️', accent: '#ff5cf0', mods: ['rush'],
-        nov: [['⚡', 'Sobrecarga', 'Los iconos aparecen más rápido'], ['🌈', 'Neón', 'Efectos visuales intensos'], ['🏆', 'Élite', 'El reto definitivo']] },
+      { id: 'montana',  name: 'Montaña Helada',   glyph: '🏔️', accent: '#7ad7ff', mods: ['ice', 'web'],
+        nov: [['🧊', 'Hielo', 'Casillas heladas: tócalas para romperlas'], ['🕸️', 'Telaraña', 'Toca 2 veces para liberar'], ['🎯', 'Objetivos', 'Despeja el tablero helado']] },
+      { id: 'cueva',    name: 'Cueva Misteriosa', glyph: '🔮', accent: '#a06bff', mods: ['crystals', 'portal', 'barrier'],
+        nov: [['💎', 'Cristales', 'Valen puntos extra'], ['🌀', 'Portales', 'Teletransportan figuras'], ['🚧', 'Barreras', 'Sólo objetos especiales las quitan']] },
+      { id: 'neon',     name: 'Ciudad Neón',      glyph: '🏙️', accent: '#ff5cf0', mods: ['rush', 'bomb', 'magicbox'],
+        nov: [['⚡', 'Sobrecarga', 'Los iconos aparecen más rápido'], ['💣', 'Bomba oculta', 'Detona figuras cercanas'], ['🎁', 'Caja mágica', 'Libera figuras cercanas']] },
     ],
     sel: 'bosque',
     idx(wid) { return this.LIST.findIndex(w => w.id === wid); },
@@ -1980,17 +2006,34 @@
    * y número de nivel. Objetivo: vaciar el tablero (regla por defecto de Game).
    */
   const Classic = {
+    _onEmpty(type, k) {
+      const e = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) e.push(i);
+      for (let x = 0; x < k && e.length; x++) State.tiles[e.splice(rand(e.length), 1)[0]] = Tiles.make(type);
+    },
+    _onFilled(type, k) {
+      const f = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) f.push(i);
+      for (let x = 0; x < k && f.length; x++) State.tiles[f.splice(rand(f.length), 1)[0]] = Tiles.make(type);
+    },
     // setupLevel ya fijó pool/spawn y colocó iconos iniciales desde State.level (= n).
-    // Aquí solo añadimos los obstáculos propios del mundo, escalando con el nivel.
+    // Aquí añadimos los obstáculos y objetos especiales propios del mundo.
     setup() {
       const w = Worlds.get(State.world), wi = Worlds.idx(State.world), n = State.worldLevel || 1;
       const dens = Math.min(0.13, 0.015 + n * 0.0021 + wi * 0.008);
+      const k = (base) => base + Math.floor(n / 12);   // escala suave con el nivel
       (w.mods || []).forEach((mod) => {
         if (mod === 'rocks') Adventure._placeOnEmpty('rock', dens);
         else if (mod === 'ice') Adventure._placeFrozen(dens);
         else if (mod === 'crystals') Adventure._placeCrystals(2 + Math.min(8, Math.floor(n / 6)));
+        else if (mod === 'chains') this._onFilled('chains', k(1));
+        else if (mod === 'web') this._onFilled('web', k(1));
+        else if (mod === 'barrier') this._onEmpty('barrier', k(1));
+        else if (mod === 'portal') this._onEmpty('portal', 1);
+        else if (mod === 'magicbox') this._onEmpty('magicbox', 1);
+        else if (mod === 'bomb') this._onEmpty('bomb', 1);
         else if (mod === 'rush') State.spawnRate = Math.max(420, Math.round(State.spawnRate * 0.85));
       });
+      // Objeto Bonus +30 ocasional (delicia universal del mockup) a partir del nivel 2.
+      if (n >= 2 && Math.random() < 0.6) this._onEmpty('bonus', 1);
       Render.syncAll();
     },
   };
@@ -2302,12 +2345,19 @@
       if (State.mode === 'supervivencia' && Survival.locked()) return;
       this.clearHintHighlight();
       const ti = State.tiles[i];
-      // Casilla helada: tocar para descongelar (no es un error).
-      if (ti && ti.type === 'frozen') {
-        ti.taps = (ti.taps || Tiles.DEFS.frozen.taps) - 1;
-        Render.iceHit(i);
-        if (ti.taps <= 0) { State.tiles[i] = null; Sound.iceBreak(); Render.iceBreak(i); }
-        else Sound.iceCrack(ti.taps);
+      // Objeto especial con efecto al tocar (bonus/portal/caja mágica/bomba oculta).
+      if (ti && ti.trigger) { this._triggerTile(i, ti); return; }
+      // Casilla rompible: tocar para liberar (helada/cadenas/telaraña/lodo). No es error.
+      if (ti && ti.breakable) {
+        ti.taps = (ti.taps != null ? ti.taps : (Tiles.DEFS[ti.type].taps || 1)) - 1;
+        if (ti.type === 'frozen') Render.iceHit(i);
+        else Render.boardShake();
+        if (ti.taps <= 0) {
+          State.tiles[i] = null;
+          if (ti.type === 'frozen') { Sound.iceBreak(); Render.iceBreak(i); } else Sound.eliminate(3);
+        } else {
+          if (ti.type === 'frozen') Sound.iceCrack(ti.taps); else Sound.tap();
+        }
         Render.setTile(i); Render.syncCell(i); Haptics.ice(); return;
       }
       if (State.board[i] !== null) { Sound.tap(); return; }     // ocupada: nada
@@ -2418,6 +2468,57 @@
       State.spawnRate = Math.max(d.spawnMin, Math.round(State.spawnRate * 0.9));
       Toasts.show(`Error · +${placed.length} iconos · más rápido`, 'bad', 1800);
       Render.hud();
+      this.evaluate();
+    },
+
+    // Casillas ortogonalmente adyacentes a `i` dentro del tablero.
+    _adjacent(i) {
+      const r = i / State.size | 0, c = i % State.size, s = State.size, out = [];
+      [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].forEach(([rr, cc]) => { if (rr >= 0 && cc >= 0 && rr < s && cc < s) out.push(rr * s + cc); });
+      return out;
+    },
+    // Cuadrado (2·rad+1) centrado en `i`.
+    _area(i, rad) {
+      const r = i / State.size | 0, c = i % State.size, s = State.size, out = [];
+      for (let dr = -rad; dr <= rad; dr++) for (let dc = -rad; dc <= rad; dc++) { const rr = r + dr, cc = c + dc; if (rr >= 0 && cc >= 0 && rr < s && cc < s) out.push(rr * s + cc); }
+      return out;
+    },
+    // Elimina las figuras de `cells` (sin convergencia) actualizando contador y render.
+    _removeCells(cells) {
+      cells.forEach((idx) => { if (State.board[idx] !== null) { State.board[idx] = null; State.iconCount--; } });
+      Render.clearAnim(cells);
+      cells.forEach((idx) => { Render.setTile(idx); Render.syncCell(idx); });
+    },
+    // Objeto especial: efecto al tocar (bonus +30 / portal / caja mágica / bomba oculta).
+    _triggerTile(i, ti) {
+      const eff = ti.trigger;
+      State.tiles[i] = null;
+      if (eff === 'bonus') {
+        State.score += 30; Render.popup(i, '+30', 'var(--good)'); Render.bump($('#hud-score'));
+        Sound.milestone(); Haptics.milestone();
+      } else if (eff === 'portal') {
+        const filled = [], empties = [];
+        for (let k = 0; k < State.board.length; k++) {
+          if (State.board[k] !== null && !State.tiles[k]) filled.push(k);
+          else if (State.board[k] === null && !(State.tiles[k] && State.tiles[k].solid)) empties.push(k);
+        }
+        if (filled.length && empties.length) {
+          const from = filled[rand(filled.length)], to = empties[rand(empties.length)];
+          State.board[to] = State.board[from]; State.board[from] = null;
+          Render.syncCell(from); Render.syncCell(to);
+        }
+        Sound.booster('freeze'); Render.boardEvent('boost-freeze', 700);
+      } else if (eff === 'magicbox') {
+        this._adjacent(i).forEach((j) => { const t = State.tiles[j]; if (t && t.solid) { State.tiles[j] = null; Render.setTile(j); Render.syncCell(j); } });
+        FX.confetti(40); Sound.milestone(); Haptics.milestone();
+      } else if (eff === 'bomb') {
+        const cells = this._area(i, 1).filter((j) => State.board[j] !== null && !(State.tiles[j] && State.tiles[j].solid));
+        const pts = cells.length * 10 * State.level;
+        this._removeCells(cells); State.score += pts;
+        if (cells.length) Render.popup(i, '+' + pts, 'var(--warn)');
+        FX.celebrate(i); Sound.booster('bomb'); Haptics.milestone();
+      }
+      Render.setTile(i); Render.syncCell(i); Render.hud();
       this.evaluate();
     },
 
