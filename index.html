@@ -21,7 +21,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=v133" />
+  <link rel="stylesheet" href="styles.css?v=v136" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -75,11 +75,9 @@
         </div>
 
         <!-- Chip nivel + mejor puntuación -->
-        <div class="level-chip">
-          <span class="lc-ic" aria-hidden="true"><img class="ic ic-inline" src="img/ui/rocket.png" alt=""></span>
-          <b id="home-chip-lvl">Nivel 1</b>
-          <span class="lc-sep">·</span>
-          <span class="lc-best"><span data-i18n="best_score">Mejor puntuación</span>: <b id="start-best">0</b></span>
+        <div class="level-chip record-chip">
+          <span class="lc-ic" aria-hidden="true"><img class="ic ic-inline" src="img/ui/trophy.png" alt=""></span>
+          <span class="lc-best"><span data-i18n="best_score">Mejor puntuación</span> <b id="start-best">0</b></span>
         </div>
 
         <!-- 3 tarjetas de atajo -->
@@ -120,21 +118,12 @@
 
         <button class="btn-hero" id="btn-play"><span class="play-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="play_word">Jugar</span></button>
 
-        <!-- Fila rápida -->
-        <div class="quick-row">
-          <button class="quick" data-act="q-missions"><span class="q-ic" data-art="target"></span><span class="q-dot" id="missions-dot" hidden></span><small data-i18n="q_missions">Misiones</small></button>
-          <button class="quick" data-act="q-daily"><span class="q-ic" data-art="calendar"></span><small data-i18n="q_daily">Diario</small></button>
-          <button class="quick" data-act="q-chests"><span class="q-ic" data-art="chest"></span><small data-i18n="q_chests">Cofres</small></button>
-          <button class="quick" data-act="q-league"><span class="q-ic" data-art="crownLock"></span><small data-i18n="q_league">Liga</small></button>
-          <button class="quick" data-act="q-friends"><span class="q-ic" data-art="friends"></span><small data-i18n="q_friends">Amigos</small></button>
-        </div>
-
         <!-- Bottom nav (anclado) -->
         <nav class="bottom-nav" aria-label="Navegación">
           <button class="bnav" data-act="nav-medals"><span class="bn-ic" data-art="medal"></span><small data-i18n="tab_log">Logros</small></button>
           <button class="bnav" data-act="nav-shop"><span class="bn-ic" data-art="cart"></span><small data-i18n="tab_shop">Tienda</small></button>
           <button class="bnav bnav-center" data-act="nav-home" aria-current="page"><span class="bn-ic" data-art="home"></span><small data-i18n="tab_home">Inicio</small></button>
-          <button class="bnav" data-act="nav-guide"><span class="bn-ic" data-art="book"></span><small data-i18n="tab_guide">Guía</small></button>
+          <button class="bnav" data-act="nav-missions"><span class="bn-ic" data-art="target"></span><span class="q-dot" id="missions-dot" hidden></span><small data-i18n="tab_missions">Misiones</small></button>
           <button class="bnav" data-act="settings"><span class="bn-ic" data-art="gear"></span><small data-i18n="tab_set">Ajustes</small></button>
         </nav>
       </div>
@@ -458,6 +447,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=v125" defer></script>
+  <script src="game.js?v=v128" defer></script>
 </body>
 </html>
