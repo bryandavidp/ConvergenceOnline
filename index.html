@@ -21,7 +21,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=v110" />
+  <link rel="stylesheet" href="styles.css?v=v120" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -61,66 +61,77 @@
 
     <!-- ============ PANTALLA: INICIO ============ -->
     <section class="screen home" id="screen-start" aria-labelledby="start-title" hidden>
-      <!-- CABECERA: perfil compacto (izq) + economía (der), sin tarjeta -->
-      <header class="home-top">
-        <button class="home-profile" id="btn-profile" aria-label="Perfil">
-          <span class="avatar-dot mini" id="home-avatar"></span>
-          <span class="home-id">
-            <span class="home-name" id="home-name">Invitado</span>
-            <span class="home-lvlrow"><span class="home-level" id="home-level">Nv 1</span><span class="home-xp"><span class="home-xp-fill" id="home-xp-fill"></span></span></span>
-          </span>
-        </button>
-        <div class="home-econ">
-          <span class="econ-pill econ-coins" id="home-coins" data-econ="coins">🪙 0</span>
-          <span class="econ-pill econ-gems" id="home-gems" data-econ="gems">💎 0</span>
-          <span class="econ-pill econ-streak" id="home-streak" data-econ="streak">🔥 0</span>
+      <!-- Top bar reutilizable (perfil + economía + ajustes) -->
+      <header class="appbar" data-topbar></header>
+      <button class="appbar-bell" data-act="bell" aria-label="Notificaciones"><span class="art-ic" data-art="bell"></span><span class="bell-dot"></span></button>
+
+      <div class="home-scroll">
+        <!-- Recompensa diaria -->
+        <div class="daily-banner" id="btn-reward">
+          <span class="db-gift" data-art="gift" aria-hidden="true"></span>
+          <div class="db-tx"><b data-i18n="daily_banner_title">Recompensa diaria</b><small data-i18n="daily_banner_sub">¡Vuelve cada día y gana premios!</small></div>
+          <button class="db-claim" data-act="claim-daily"><span data-i18n="claim">Reclamar</span><span class="db-badge">1</span></button>
+          <span class="db-rocket" data-art="rocket" aria-hidden="true"></span>
         </div>
-      </header>
 
-      <!-- HERO: centro libre con marca + órbita decorativa -->
-      <div class="home-hero">
-        <h1 id="start-title" class="logo">Convergence<span class="logo-orbit" aria-hidden="true"></span></h1>
-        <div class="hero-orbit" id="hero-orbit" aria-hidden="true"></div>
+        <!-- CTA Jugar (hero) -->
+        <button class="btn-hero" id="btn-play"><span class="play-ic" aria-hidden="true">▶</span><span data-i18n="play_word">Jugar</span></button>
+
+        <!-- Chip nivel + mejor puntuación -->
+        <div class="level-chip">
+          <span class="lc-ic" aria-hidden="true">🚀</span>
+          <b id="home-chip-lvl">Nivel 1</b>
+          <span class="lc-sep">·</span>
+          <span class="lc-best"><span data-i18n="best_score">Mejor puntuación</span>: <b id="start-best">0</b></span>
+        </div>
+
+        <!-- 3 tarjetas de atajo -->
+        <div class="home-cards">
+          <button class="app-card card-blue" data-act="home-classic">
+            <span class="ac-tx"><b data-i18n="home_classic">Partida clásica</b><small data-i18n="home_classic_sub">Juega en el tablero contra amigos o bots</small></span>
+            <span class="ac-art" data-art="boardMini" aria-hidden="true"></span>
+          </button>
+          <button class="app-card card-green" data-act="home-tourneys">
+            <span class="ac-tx"><b data-i18n="home_tourneys">Torneos</b><small data-i18n="home_tourneys_sub">Compite y gana recompensas</small></span>
+            <span class="ac-art" data-art="trophy" aria-hidden="true"></span>
+          </button>
+          <button class="app-card card-orange" data-act="home-multi">
+            <span class="ac-tx"><b data-i18n="card_multi">Multijugador</b><small data-i18n="home_multi_sub">Desafía a jugadores en línea</small></span>
+            <span class="ac-art" data-art="vsPeople" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <!-- Fila rápida -->
+        <div class="quick-row">
+          <button class="quick" data-act="q-missions"><span class="q-ic" data-art="target"></span><span class="q-dot" id="missions-dot" hidden></span><small data-i18n="q_missions">Misiones</small></button>
+          <button class="quick" data-act="q-daily"><span class="q-ic" data-art="calendar"></span><small data-i18n="q_daily">Diario</small></button>
+          <button class="quick" data-act="q-chests"><span class="q-ic" data-art="chest"></span><small data-i18n="q_chests">Cofres</small></button>
+          <button class="quick" data-act="q-league"><span class="q-ic" data-art="crownLock"></span><small data-i18n="q_league">Liga</small></button>
+          <button class="quick" data-act="q-friends"><span class="q-ic" data-art="friends"></span><small data-i18n="q_friends">Amigos</small></button>
+        </div>
+
+        <button class="btn btn-ghost btn-sm home-install" id="btn-install" hidden data-i18n="install">📲 Instalar app</button>
+        <p class="version-line">v<span id="app-version">1.2.0</span></p>
       </div>
 
-      <!-- Misiones: lanzador lateral (abre panel) -->
-      <button class="missions-fab" id="btn-missions" aria-label="Misiones">🎯<span class="fab-dot" id="missions-dot" hidden></span></button>
-
-      <!-- CTA: Jugar masivo flotante en el tercio inferior -->
-      <div class="home-cta">
-        <button class="btn btn-reward" id="btn-reward" hidden data-i18n="reward">🎁 Recompensa diaria</button>
-        <button class="btn btn-primary btn-lg" id="btn-play" data-i18n="play">▶ Jugar</button>
-        <p class="play-hint" id="play-hint" hidden></p>
-        <p class="best-line"><span data-i18n="best">Mejor puntuación:</span> <strong id="start-best">0</strong></p>
-        <button class="btn btn-ghost btn-sm" id="btn-install" hidden data-i18n="install">📲 Instalar app</button>
-        <p class="version-line">v<span id="app-version">1.1.0</span></p>
-      </div>
-
-      <!-- BARRA DE NAVEGACIÓN inferior (estilo Supercell) -->
-      <nav class="home-tabs" aria-label="Navegación">
-        <button class="tab" id="btn-medals"><span class="tab-ic">🏆</span><small data-i18n="tab_log">Logros</small></button>
-        <button class="tab" id="btn-shop"><span class="tab-ic">🛍️</span><small data-i18n="tab_shop">Tienda</small></button>
-        <button class="tab tab-home" id="btn-home" aria-current="page"><span class="tab-ic">🎮</span><small data-i18n="tab_home">Inicio</small></button>
-        <button class="tab" id="btn-how"><span class="tab-ic">❓</span><small data-i18n="tab_guide">Guía</small></button>
-        <button class="tab" id="btn-settings"><span class="tab-ic">⚙️</span><small data-i18n="tab_set">Ajustes</small></button>
+      <!-- Bottom nav -->
+      <nav class="bottom-nav" aria-label="Navegación">
+        <button class="bnav" data-act="nav-medals"><span class="bn-ic" data-art="medal"></span><small data-i18n="tab_log">Logros</small></button>
+        <button class="bnav" data-act="nav-shop"><span class="bn-ic" data-art="cart"></span><small data-i18n="tab_shop">Tienda</small></button>
+        <button class="bnav bnav-center" data-act="nav-home" aria-current="page"><span class="bn-ic" data-art="home"></span><small data-i18n="tab_home">Inicio</small></button>
+        <button class="bnav" data-act="nav-guide"><span class="bn-ic" data-art="book"></span><small data-i18n="tab_guide">Guía</small></button>
+        <button class="bnav" data-act="settings"><span class="bn-ic" data-art="gear"></span><small data-i18n="tab_set">Ajustes</small></button>
       </nav>
     </section>
 
     <!-- ============ PANTALLA: SELECCIÓN DE MODO ============ -->
     <section class="screen screen-modes" id="screen-modes" aria-labelledby="modes-title" hidden>
-      <!-- Cabecera: volver + economía + ajustes (top bar persistente) -->
-      <header class="topbar">
-        <button class="icon-btn" id="modes-back" aria-label="Volver">←</button>
-        <div class="topbar-econ" id="modes-econ" aria-label="Recursos">
-          <span class="econ-pill econ-coins" data-econ="coins">🪙 0</span>
-          <span class="econ-pill econ-gems" data-econ="gems">💎 0</span>
-          <span class="econ-pill econ-streak" data-econ="streak">🔥 0</span>
-        </div>
-        <button class="icon-btn" id="modes-settings" aria-label="Ajustes">⚙️</button>
-      </header>
+      <!-- Top bar reutilizable (igual que en Inicio) -->
+      <header class="appbar" data-topbar></header>
 
       <div class="modes-body">
         <div class="modes-head">
+          <button class="back-btn" id="modes-back" aria-label="Volver">←</button>
           <h2 id="modes-title" data-i18n="modes_title">Elige tu modo</h2>
           <p class="modes-sub" data-i18n="modes_sub">Cada modo, una forma diferente de jugar</p>
         </div>
@@ -432,6 +443,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=v110" defer></script>
+  <script src="game.js?v=v120" defer></script>
 </body>
 </html>
