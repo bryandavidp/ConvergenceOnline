@@ -240,6 +240,7 @@
         set_sfx: 'Efectos de sonido', set_music: 'Música', set_haptics: 'Vibración', set_reduced: 'Reducir efectos', set_large: 'Texto grande', set_lang: 'Idioma',
         st_points: 'Puntos', st_level: 'Nivel', st_combo: 'Combo máx.', st_removed: 'Eliminados', st_time: 'Tiempo', st_record: 'Récord', st_wave: 'Oleada', st_surv: 'Sobreviviste', st_best: 'Mejor',
         st_games: 'Partidas', st_bestcombo: 'Mejor combo', st_totaltime: 'Tiempo total',
+        surv_new_icons: '¡Nuevos iconos! Sube la dificultad',
         coins: 'monedas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
         next: 'Próximo', new_icons: 'Nuevos iconos', chapter: 'Capítulo', next_to: 'Ir al nivel {n} →', lets_play: '¡A jugar!',
         obj_clear: 'Vacía el tablero', obj_score: 'Consigue {n} pts', obj_survive: 'Sobrevive {n}s', obj_boss: 'JEFE · rompe los 💎', obj_boss_live: 'JEFE · rompe los 💎 ({n})',
@@ -291,6 +292,7 @@
         set_sfx: 'Sound effects', set_music: 'Music', set_haptics: 'Vibration', set_reduced: 'Reduce effects', set_large: 'Large text', set_lang: 'Language',
         st_points: 'Score', st_level: 'Level', st_combo: 'Max combo', st_removed: 'Cleared', st_time: 'Time', st_record: 'Best', st_wave: 'Wave', st_surv: 'Survived', st_best: 'Best',
         st_games: 'Games', st_bestcombo: 'Best combo', st_totaltime: 'Total time',
+        surv_new_icons: 'New icons! Difficulty up',
         coins: 'coins', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
         next: 'Next', new_icons: 'New icons', chapter: 'Chapter', next_to: 'Go to level {n} →', lets_play: "Let's play!",
         obj_clear: 'Clear the board', obj_score: 'Reach {n} pts', obj_survive: 'Survive {n}s', obj_boss: 'BOSS · break the 💎', obj_boss_live: 'BOSS · break the 💎 ({n})',
@@ -1775,12 +1777,31 @@
   const Survival = {
     WAVE_MS: 22000, MAX_LIVES: 3, CHARGE_PER: 9, BOOSTERS: ['bomb', 'freeze', 'clearLine', 'wild', 'x2'],
     ROCK_CAP: 10, ROCK_HITS: 2,   // las rocas NO son permanentes: tope de cobertura + se rompen por convergencia adyacente
+    // Tabla de escalado por dificultad (curva "perfecta", iterable desde un solo sitio).
+    // waveMs: duración de oleada · lives: vidas · spawnDecay/Floor: aceleración de spawns ·
+    // trapBase/Cap: densidad de trampas (·oleada) · varEvery: cada cuántas oleadas suben los iconos ·
+    // bossEvery: cadencia de jefe · coinMult: multiplicador de recompensa.
+    TUNE: {
+      facil:   { waveMs: 26000, lives: 4, spawnDecay: 0.91, spawnFloor: 480, trapBase: 0.015, trapCap: 0.09, varEvery: 3, bossEvery: 5, coinMult: 0.85 },
+      normal:  { waveMs: 22000, lives: 3, spawnDecay: 0.88, spawnFloor: 360, trapBase: 0.02,  trapCap: 0.12, varEvery: 2, bossEvery: 4, coinMult: 1.0 },
+      dificil: { waveMs: 18000, lives: 3, spawnDecay: 0.85, spawnFloor: 300, trapBase: 0.03,  trapCap: 0.16, varEvery: 2, bossEvery: 3, coinMult: 1.3 },
+    },
+    tune() { return this.TUNE[State.diff] || this.TUNE.normal; },
+    // Nivel efectivo de dificultad: sube con las oleadas y MANDA sobre el catálogo de
+    // iconos (Engine.poolForLevel/varietyFor) → entran iconos más difíciles y se dejan
+    // atrás los fáciles; además escala la puntuación base.
+    dlevel() { return 1 + Math.floor((this.wave - 1) / this.tune().varEvery); },
     lives: 3, wave: 1, waveAcc: 0, survSec: 0, charge: 0, freezeUntil: 0, x2Until: 0, lockUntil: 0,
     inv: {},
     _r: {},
     start() {
+      const tn = this.tune();
+      this.WAVE_MS = tn.waveMs; this.MAX_LIVES = tn.lives;
       this.lives = this.MAX_LIVES; this.wave = 1; this.waveAcc = 0; this.survSec = 0; this.charge = 0;
       this.freezeUntil = 0; this.x2Until = 0; this.lockUntil = 0; State.tempMult = 1; this._r = {};
+      // Progresión de iconos desde la oleada 1: la puntuación base usa State.level (= dlevel).
+      State.level = this.dlevel();
+      State.pool = Engine.poolForLevel(State.level);
       // Inventario inicial de power-ups (consumibles por partida), según el mockup.
       this.inv = {}; this.BOOSTERS.forEach((id) => { this.inv[id] = Boosters.DEFS[id].start || 0; });
       this.buildBar(); this.render();
@@ -1792,7 +1813,7 @@
       Toasts.show(`+1 ${Boosters.DEFS[id].name}`, 'good', 1500, BOOSTER_IMG[id] || Boosters.DEFS[id].glyph);
       Sound.milestone(); this.buildBar();
     },
-    setup() { if (this.wave >= 2) this._traps(Math.min(0.10, 0.02 * this.wave)); },
+    setup() { const tn = this.tune(); if (this.wave >= 2) this._traps(Math.min(tn.trapCap, tn.trapBase * this.wave)); },
     frozen() { return performance.now() < this.freezeUntil; },
     locked() { return performance.now() < this.lockUntil; },
     blockSpawn() { return this.frozen() || this.locked(); },
@@ -1826,10 +1847,20 @@
     },
     newWave() {
       this.wave++;
-      State.spawnRate = Math.max(360, Math.round(State.spawnRate * 0.88));
+      const tn = this.tune();
+      State.spawnRate = Math.max(tn.spawnFloor, Math.round(State.spawnRate * tn.spawnDecay));
+      // Progresión de iconos: al subir el nivel efectivo, avanza la ventana del catálogo
+      // (entran iconos nuevos/más difíciles, se dejan atrás los iniciales) y crece la variedad.
+      const lvl = this.dlevel();
+      if (lvl !== State.level) {
+        State.level = lvl;
+        State.pool = Engine.poolForLevel(lvl);
+        Toasts.show('✨ ' + I18n.t('surv_new_icons'), 'info', 1500, '✨');
+      }
       Toasts.show('🌊 ' + I18n.t('st_wave') + ' ' + this.wave, 'warn', 1400); Sound.danger();
-      this._traps(Math.min(0.12, 0.02 * this.wave));
-      if (this.wave % 4 === 0) this.bossEvent();
+      this._traps(Math.min(tn.trapCap, tn.trapBase * this.wave));
+      if (this.wave % tn.bossEvery === 0) this.bossEvent();
+      this.render();
     },
     bossEvent() {
       const event = rand(3);
@@ -2069,7 +2100,11 @@
       const r = this._r;
       if (r.lives !== this.lives) { r.lives = this.lives; const lv = $('#surv-lives'); if (lv) lv.innerHTML = this.lives > 0 ? iconInline('heart').repeat(this.lives) : iconInline('skull'); }
       if (r.wave !== this.wave) { r.wave = this.wave; const w = $('#surv-wave'); if (w) w.textContent = I18n.t('st_wave') + ' ' + this.wave; }
+      const tier = this.dlevel(); if (r.tier !== tier) { r.tier = tier; const tEl = $('#surv-tier'); if (tEl) tEl.textContent = 'N' + tier; }
       const sec = Math.floor(this.survSec); if (r.sec !== sec) { r.sec = sec; const t = $('#surv-time'); if (t) t.textContent = sec + 's'; }
+      // Progreso a la siguiente oleada (telegrafía que la presión va a subir).
+      const wp = Math.min(100, Math.round(this.waveAcc / this.WAVE_MS * 100));
+      if (r.wp !== wp) { r.wp = wp; const wf = $('#surv-waveprog-fill'); if (wf) wf.style.width = wp + '%'; }
       const ch = Math.round(this.charge); if (r.charge !== ch) { r.charge = ch; const cf = $('#charge-fill'); if (cf) cf.style.width = ch + '%'; }
       const ready = this.charge >= 100; if (r.ready !== ready) { r.ready = ready; const bb = $('#booster-bar'); if (bb) bb.classList.toggle('ready', ready); }
     },
