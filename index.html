@@ -393,6 +393,29 @@
       </div>
     </div>
 
+    <!-- Multijugador (próximamente) -->
+    <div class="modal modal-multi" id="modal-multi" role="dialog" aria-modal="true" aria-labelledby="multi-title" hidden>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true">🆚</span><h2 id="multi-title" data-i18n="card_multi">Multijugador</h2></div>
+      <div class="modal-body">
+        <div class="multi-vs" aria-hidden="true">
+          <span class="multi-p multi-p1">🔵</span>
+          <span class="multi-vs-tag">VS</span>
+          <span class="multi-p multi-p2">🔴</span>
+        </div>
+        <p class="modal-sub" data-i18n="card_multi_desc">Compite contra otro jugador en el mismo tablero. Gana quien termine primero y consiga la mejor puntuación.</p>
+        <div class="multi-feats">
+          <div class="multi-feat"><span>🏆</span><span data-i18n="card_feat_first">Termina primero el tablero</span></div>
+          <div class="multi-feat"><span>⭐</span><span data-i18n="card_feat_best">Mejor puntuación</span></div>
+          <div class="multi-feat"><span>📶</span><span data-i18n="card_feat_online">Partidas en línea</span></div>
+        </div>
+        <p class="multi-soon-badge" data-i18n="soon_badge">🚧 Próximamente</p>
+      </div>
+      <div class="modal-actions modal-buttons">
+        <button class="btn btn-primary" id="btn-multi-notify" data-i18n="notify_me">🔔 Avísame</button>
+        <button class="btn btn-ghost" data-close data-i18n="close">Cerrar</button>
+      </div>
+    </div>
+
     <!-- Perfil: estadísticas + leaderboard + logros -->
     <div class="modal modal-profile" id="modal-medals" role="dialog" aria-modal="true" aria-labelledby="medals-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true">▥</span><h2 id="medals-title" data-i18n="profile_title">Perfil</h2></div>
