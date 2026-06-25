@@ -591,6 +591,22 @@ body.reduced-fx #btn-play { animation: none; }
 .classic-stars .cs.on:nth-child(3) { animation-delay: .2s; }
 @keyframes starpop { from { transform: scale(0) rotate(-30deg); } 60% { transform: scale(1.3) rotate(8deg); } }
 
+/* Criterio de estrellas en el modal (transparencia de por qué 1/2/3★) */
+.star-criteria { display: flex; flex-direction: column; gap: 2px; margin: 0 auto 12px; width: max-content; max-width: 100%; font-size: .74rem; color: var(--muted); }
+.sc-row { display: flex; align-items: center; gap: 8px; opacity: .55; }
+.sc-row .sc-st { color: var(--gold); font-size: .78rem; min-width: 44px; letter-spacing: -1px; }
+.sc-row.got { opacity: 1; color: var(--text); font-weight: 800; }
+.sc-row.missed { opacity: .38; }
+.sc-row.missed .sc-st { color: rgba(255,255,255,.3); }
+.sc-mine { margin-top: 4px; font-weight: 800; color: var(--text); align-self: center; }
+
+/* Estrellas en vivo en el banner de objetivo (Clásico) */
+.obj-stars { display: inline-flex; gap: 3px; flex: 0 0 auto; font-size: .95rem; line-height: 1; }
+.obj-stars .ols { color: rgba(255,255,255,.22); transition: color .2s; }
+.obj-stars .ols.on { color: var(--gold); text-shadow: 0 0 8px color-mix(in srgb, var(--gold) 55%, transparent); }
+.obj-stars.lost { animation: starShake .4s ease; }
+@keyframes starShake { 25% { transform: translateX(-2px); } 50% { transform: translateX(2px); } 75% { transform: translateX(-1px); } }
+
 /* Dos columnas en pantallas anchas: mapa + panel de mundos */
 @media (min-width: 720px) {
   .worlds-body { display: grid; grid-template-columns: 1fr 250px; align-items: start; }
