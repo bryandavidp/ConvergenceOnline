@@ -1535,6 +1535,25 @@
     },
     order: ['classic', 'madera', 'hielo', 'lava', 'cristal', 'magico', 'futurista', 'dorado', 'bosque', 'cosmico'],
     apply() { const b = $('#board'); if (b) b.dataset.board = Meta.equippedBoard(); },
+    // Efectos mecánicos por tablero (Fase 5). Valores normalizados; 1 = neutro.
+    EFFECTS: {
+      classic:   {},
+      madera:    { score: 1.05, chainTurns: -1 },
+      hielo:     { spawn: 0.9, iceBoost: 1.6 },
+      lava:      { spawn: 0.82, survTime: 0.85 },
+      cristal:   { combo: 1.10, portalBoost: true },
+      magico:    { charge: 1.2, x2Boost: 1.5 },
+      futurista: { charge: 1.45 },
+      dorado:    { coin: 1.10, score: 1.04 },
+      bosque:    { extras: 1.6 },
+      cosmico:   { score: 1.06, combo: 1.05 },
+    },
+    fx() {
+      return Object.assign(
+        { score: 1, coin: 1, spawn: 1, combo: 1, charge: 1, iceBoost: 1, chainTurns: 0, extras: 1, survTime: 1, x2Boost: 1, portalBoost: false },
+        this.EFFECTS[Meta.equippedBoard()] || {}
+      );
+    },
   };
 
   /* ===================== Adventure (modo Aventura: biomas procedurales infinitos) =====================
@@ -1723,7 +1742,8 @@
     },
     onConverge(ctx) {
       const combo = ctx ? ctx.combo : 0;
-      this.charge += this.CHARGE_PER + Math.min(combo || 0, 6);
+      // Tableros Futurista/Mágico: los power-ups se recargan más rápido (fx.charge).
+      this.charge += (this.CHARGE_PER + Math.min(combo || 0, 6)) * Boards.fx().charge;
       if (this.charge >= 100) { this.charge -= 100; this.grantRandom(); }
       // Romper rocas (con hits) ortogonalmente adyacentes a la acción: la casilla
       // central tocada + cada icono eliminado. Da agencia y evita el bloqueo permanente.
@@ -1800,7 +1820,7 @@
       Render.boosterPulse(id);
       if (id === 'bomb') { this._lock(520, 'boost-bomb'); this._bomb(); }
       else if (id === 'freeze') { this.freezeUntil = performance.now() + 7000; Toasts.show('❄️ Spawns congelados', 'info', 1500); Render.boardEvent('boost-freeze', 1200); }
-      else if (id === 'x2') { this.x2Until = performance.now() + 11000; State.tempMult = 2; Toasts.show('🃏 ¡Puntos x2!', 'good', 1500); Render.boardEvent('boost-x2', 1200); }
+      else if (id === 'x2') { this.x2Until = performance.now() + 11000 * Boards.fx().x2Boost; State.tempMult = 2; Toasts.show('🃏 ¡Puntos x2!', 'good', 1500); Render.boardEvent('boost-x2', 1200); }
       else if (id === 'clearLine') { this._lock(520, 'boost-clearLine'); this._clearLine(); }
       else if (id === 'wild') { this._lock(520, 'boost-wild'); this._wild(); }
       Sound.booster(id); Haptics.combo(); this.buildBar(); this.render();
@@ -2054,21 +2074,24 @@
       const e = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) e.push(i);
       for (let x = 0; x < k && e.length; x++) State.tiles[e.splice(rand(e.length), 1)[0]] = Tiles.make(type);
     },
-    _onFilled(type, k) {
+    _onFilled(type, k, init) {
       const f = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) f.push(i);
-      for (let x = 0; x < k && f.length; x++) State.tiles[f.splice(rand(f.length), 1)[0]] = Tiles.make(type);
+      for (let x = 0; x < k && f.length; x++) { const j = f.splice(rand(f.length), 1)[0]; const t = Tiles.make(type); if (init) init(t); State.tiles[j] = t; }
     },
     // setupLevel ya fijó pool/spawn y colocó iconos iniciales desde State.level (= n).
-    // Aquí añadimos los obstáculos y objetos especiales propios del mundo.
+    // Aquí añadimos los obstáculos y objetos especiales propios del mundo + efectos del tablero.
     setup() {
       const w = Worlds.get(State.world), wi = Worlds.idx(State.world), n = State.worldLevel || 1;
+      const fx = Boards.fx();
       const dens = Math.min(0.13, 0.015 + n * 0.0021 + wi * 0.008);
       const k = (base) => base + Math.floor(n / 12);   // escala suave con el nivel
+      // Cadenas con menos turnos si el tablero lo indica (Madera: -1).
+      const chainInit = (t) => { if (fx.chainTurns) t.taps = Math.max(1, (t.taps || 2) + fx.chainTurns); };
       (w.mods || []).forEach((mod) => {
         if (mod === 'rocks') Adventure._placeOnEmpty('rock', dens);
-        else if (mod === 'ice') Adventure._placeFrozen(dens);
+        else if (mod === 'ice') Adventure._placeFrozen(dens * fx.iceBoost);  // Hielo: más casillas heladas
         else if (mod === 'crystals') Adventure._placeCrystals(2 + Math.min(8, Math.floor(n / 6)));
-        else if (mod === 'chains') this._onFilled('chains', k(1));
+        else if (mod === 'chains') this._onFilled('chains', k(1), chainInit);
         else if (mod === 'web') this._onFilled('web', k(1));
         else if (mod === 'barrier') this._onEmpty('barrier', k(1));
         else if (mod === 'portal') this._onEmpty('portal', 1);
@@ -2076,8 +2099,10 @@
         else if (mod === 'bomb') this._onEmpty('bomb', 1);
         else if (mod === 'rush') State.spawnRate = Math.max(420, Math.round(State.spawnRate * 0.85));
       });
-      // Objeto Bonus +30 ocasional (delicia universal del mockup) a partir del nivel 2.
-      if (n >= 2 && Math.random() < 0.6) this._onEmpty('bonus', 1);
+      // Cristal: portales aleatorios extra en cualquier mundo.
+      if (fx.portalBoost && Math.random() < 0.5) this._onEmpty('portal', 1);
+      // Objeto Bonus +30 ocasional; el Bosque aumenta la probabilidad de extras.
+      if (n >= 2 && Math.random() < Math.min(0.95, 0.6 * fx.extras)) this._onEmpty('bonus', 1);
       Render.syncAll();
     },
   };
@@ -2304,7 +2329,7 @@
     setupLevel() {
       const m = Config.MODES[State.mode];
       State.pool = Engine.poolForLevel(State.level);
-      State.spawnRate = Engine.spawnRateForLevel(State.level);
+      State.spawnRate = Math.round(Engine.spawnRateForLevel(State.level) * Boards.fx().spawn);
       State.comboWindow = Config.DIFFICULTY[State.diff].comboWindow;
       State.hintsLeft = Config.HINTS_PER_LEVEL;
       State.hintReadyAt = 0;
@@ -2435,8 +2460,10 @@
       State.removedTotal += removed;
       State.lastActionCell = i;
       const d = Config.DIFFICULTY[State.diff], m = Config.MODES[State.mode];
+      const bfx = Boards.fx();
       const base = removed * 10 * State.level;
-      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * (State.fever ? Config.FEVER_BOOST : 1) * (State.tempMult || 1));
+      const comboBoost = State.comboMult > 1 ? bfx.combo : 1;   // tablero de cristal/cósmico: combos +%
+      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * bfx.score * comboBoost * (State.fever ? Config.FEVER_BOOST : 1) * (State.tempMult || 1));
       State.score += points;
       if (Config.MILESTONES[State.combo]) { State.score += Config.MILESTONES[State.combo]; Toasts.show(`¡Combo ×${State.combo}! +${Config.MILESTONES[State.combo]}`, 'good'); Sound.milestone(); Haptics.milestone(); }
 
@@ -2649,7 +2676,7 @@
       const combo = Math.min(State.combo || 1, 12);
       const raw = Config.EMPTY_BOARD_BONUS + chain * 90 + combo * 28 + (State.mode === 'supervivencia' ? wave * 45 : 0);
       const points = Math.max(250, Math.round(raw * d.scoreMult * m.mult * (State.fever ? Config.FEVER_BOOST : 1) * (State.tempMult || 1)));
-      const coins = clamp(Math.round(points / 220), 3, 16);
+      const coins = Math.round(clamp(Math.round(points / 220), 3, 16) * Boards.fx().coin);
       const extra = [];
       const center = State.lastActionCell != null
         ? State.lastActionCell
@@ -2741,7 +2768,7 @@
       const n = State.worldLevel || 1, w = Worlds.get(State.world);
       const stars = State.mistakes === 0 ? 3 : State.mistakes <= 3 ? 2 : 1;
       const gained = Meta.setLevelStars(State.world, n, stars);
-      const coins = 20 + stars * 10 + Math.round(State.score / 60);
+      const coins = Math.round((20 + stars * 10 + Math.round(State.score / 60)) * Boards.fx().coin);
       Meta.addCoins(coins);
       const modal = $('#modal-level'); if (modal) modal.style.setProperty('--modal-accent', w.accent);
       const emb = $('#level-emblem'); if (emb) emb.textContent = stars >= 3 ? '🌟' : w.glyph;
@@ -3356,5 +3383,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Coach, Adventure, Survival, Share, I18n, Toasts, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Share, I18n, Toasts, refreshStart, applyLanguage };
 })();
