@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.2.3';
+  const VERSION = '1.7.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -172,6 +172,8 @@
     set tutorialDone(v) { localStorage.setItem('cv_tut', v ? '1' : '0'); },
     get lastVersion() { return localStorage.getItem('cv_ver') || ''; },
     set lastVersion(v) { localStorage.setItem('cv_ver', v); },
+    get survDiff() { return localStorage.getItem('cv_surv_diff') || 'normal'; },
+    set survDiff(v) { localStorage.setItem('cv_surv_diff', v || 'normal'); },
   };
 
   /* ===================== Settings (persistentes) ===================== */
@@ -242,6 +244,12 @@
         st_games: 'Partidas', st_bestcombo: 'Mejor combo', st_totaltime: 'Tiempo total',
         surv_new_icons: '¡Nuevos iconos! Sube la dificultad',
         aim_hint: 'Toca dónde aplicarlo', pu_freeze: 'Spawns congelados', pu_x2: '¡Puntos x2!', pu_bomb: '¡Boom!', pu_ray: '¡Rayo!', pu_icons: 'iconos', chain_boom: 'Cadena ×{n}',
+        surv_meteor: '¡Lluvia de iconos!', surv_quake: '¡Terremoto!', surv_frost: 'Frente helado', surv_life_lost: 'Vida liberada · -1',
+        pu_row: '¡Fila despejada!', pu_col: '¡Columna despejada!', pu_no_target: 'Sin objetivo', pu_wild_emergency: 'Comodín · despeje de emergencia', pu_wild_icons: 'Comodín · {n} iconos',
+        surv_diff_title: 'Supervivencia', surv_diff_sub: 'Elige el ritmo de la partida', surv_start: 'Empezar supervivencia',
+        surv_frenzy: 'Frenesí', surv_frenzy_ready: '¡Frenesí activado!', surv_wave_reward: 'Oleada {w} · +{c} monedas',
+        surv_milestone: 'Hito de oleada {w}', surv_wave_record: '¡Récord! Oleada {w}', surv_best_wave: 'Mejor oleada',
+        surv_rewards: 'Recompensas', surv_reward_line: '+{c} monedas · +{g} gemas · +{ch} cofres', surv_time_record: '¡Récord de supervivencia!',
         coins: 'monedas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
         next: 'Próximo', new_icons: 'Nuevos iconos', chapter: 'Capítulo', next_to: 'Ir al nivel {n} →', lets_play: '¡A jugar!',
         obj_clear: 'Vacía el tablero', obj_score: 'Consigue {n} pts', obj_survive: 'Sobrevive {n}s', obj_boss: 'JEFE · rompe los 💎', obj_boss_live: 'JEFE · rompe los 💎 ({n})',
@@ -295,6 +303,12 @@
         st_games: 'Games', st_bestcombo: 'Best combo', st_totaltime: 'Total time',
         surv_new_icons: 'New icons! Difficulty up',
         aim_hint: 'Tap where to use it', pu_freeze: 'Spawns frozen', pu_x2: 'Double points!', pu_bomb: 'Boom!', pu_ray: 'Ray!', pu_icons: 'icons', chain_boom: 'Chain ×{n}',
+        surv_meteor: 'Icon rain!', surv_quake: 'Quake!', surv_frost: 'Frozen front', surv_life_lost: 'Life blast · -1',
+        pu_row: 'Row cleared!', pu_col: 'Column cleared!', pu_no_target: 'No target', pu_wild_emergency: 'Wildcard · emergency clear', pu_wild_icons: 'Wildcard · {n} icons',
+        surv_diff_title: 'Survival', surv_diff_sub: 'Choose the run pace', surv_start: 'Start survival',
+        surv_frenzy: 'Frenzy', surv_frenzy_ready: 'Frenzy active!', surv_wave_reward: 'Wave {w} · +{c} coins',
+        surv_milestone: 'Wave {w} milestone', surv_wave_record: 'Record! Wave {w}', surv_best_wave: 'Best wave',
+        surv_rewards: 'Rewards', surv_reward_line: '+{c} coins · +{g} gems · +{ch} chests', surv_time_record: 'Survival record!',
         coins: 'coins', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
         next: 'Next', new_icons: 'New icons', chapter: 'Chapter', next_to: 'Go to level {n} →', lets_play: "Let's play!",
         obj_clear: 'Clear the board', obj_score: 'Reach {n} pts', obj_survive: 'Survive {n}s', obj_boss: 'BOSS · break the 💎', obj_boss_live: 'BOSS · break the 💎 ({n})',
@@ -504,7 +518,7 @@
       // Una casilla sólida (roca/bloqueada/helada) NO es colocable: nunca debe recibir
       // un icono nuevo (spawnOne/placeInitial/addPenalty).
       for (let i = 0; i < State.board.length; i++) {
-        if (State.board[i] === null && !(State.tiles[i] && State.tiles[i].solid)) out.push(i);
+        if (State.board[i] === null && !State.tiles[i]) out.push(i);
       }
       return out;
     },
@@ -514,7 +528,7 @@
     converging(i) {
       // Una casilla sólida (roca/bloqueada/helada) no se puede activar.
       const ti = State.tiles[i];
-      if (State.board[i] !== null || (ti && ti.solid)) return [];
+      if (State.board[i] !== null || (ti && (ti.solid || ti.trigger))) return [];
       const r = (i / State.size) | 0, c = i % State.size;
       const groups = Object.create(null);
       for (let d = 0; d < 8; d += 2) {
@@ -1271,7 +1285,7 @@
   const Meta = (() => {
     const KEY = 'cv_meta';
     const SCHEMA = 3;
-    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, gems: 0, tickets: 0, chests: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, worlds: {}, boards: { owned: { classic: 1 }, equipped: 'classic' }, survBest: 0, stats: { totalScore: 0, bestCombo: 0, totalTime: 0 }, modes: {}, weekly: { week: '', id: '', progress: 0, done: false }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
+    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, gems: 0, tickets: 0, chests: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, worlds: {}, boards: { owned: { classic: 1 }, equipped: 'classic' }, survBest: 0, survBestWave: 0, stats: { totalScore: 0, bestCombo: 0, totalTime: 0 }, modes: {}, weekly: { week: '', id: '', progress: 0, done: false }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
     let m;
     try { m = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); }
     catch (_) { m = JSON.parse(JSON.stringify(def)); }
@@ -1283,6 +1297,7 @@
     if (!m.modes) m.modes = {};
     if (!m.weekly) m.weekly = { week: '', id: '', progress: 0, done: false };
     if (typeof m.coins !== 'number') m.coins = 0;
+    if (typeof m.survBestWave !== 'number') m.survBestWave = 0;
     // Esquema 3: economía ampliada (gemas/tickets/cofres), tableros de tienda y mundos del modo Clásico.
     if (typeof m.gems !== 'number') m.gems = 0;
     if (typeof m.tickets !== 'number') m.tickets = 0;
@@ -1408,6 +1423,8 @@
       advReach(level) { if (level > ((m.adventure && m.adventure.maxLevel) || 1)) { m.adventure.maxLevel = level; save(); } },
       survBest: () => m.survBest || 0,
       survRecord(sec) { sec = Math.floor(sec); if (sec > (m.survBest || 0)) { m.survBest = sec; save(); return true; } return false; },
+      survBestWave: () => m.survBestWave || 0,
+      survWaveRecord(wave) { wave = Math.max(0, wave | 0); if (wave > (m.survBestWave || 0)) { m.survBestWave = wave; save(); return true; } return false; },
       claimReward() {
         if (m.reward.date === today()) return 0;
         const y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
@@ -1793,21 +1810,79 @@
     // iconos (Engine.poolForLevel/varietyFor) → entran iconos más difíciles y se dejan
     // atrás los fáciles; además escala la puntuación base.
     dlevel() { return 1 + Math.floor((this.wave - 1) / this.tune().varEvery); },
-    lives: 3, wave: 1, waveAcc: 0, survSec: 0, charge: 0, freezeUntil: 0, x2Until: 0, lockUntil: 0,
+    lives: 3, wave: 1, waveAcc: 0, survSec: 0, charge: 0, frenzy: 0, frenzyUntil: 0, freezeUntil: 0, x2Until: 0, lockUntil: 0,
+    runCoins: 0, runGems: 0, runChests: 0, newWaveRecord: false,
     inv: {},
     _r: {},
     start() {
       const tn = this.tune();
       this.WAVE_MS = tn.waveMs; this.MAX_LIVES = tn.lives;
-      this.lives = this.MAX_LIVES; this.wave = 1; this.waveAcc = 0; this.survSec = 0; this.charge = 0;
-      this.freezeUntil = 0; this.x2Until = 0; this.lockUntil = 0; State.tempMult = 1; this._r = {};
+      this.lives = this.MAX_LIVES; this.wave = 1; this.waveAcc = 0; this.survSec = 0; this.charge = 0; this.frenzy = 0;
+      this.freezeUntil = 0; this.x2Until = 0; this.frenzyUntil = 0; this.lockUntil = 0; this.runCoins = 0; this.runGems = 0; this.runChests = 0; this.newWaveRecord = false; State.tempMult = 1; this._r = {};
       this.armed = null; this._preview = null; document.body.classList.remove('aiming');
+      this._setFrenzyClass();
       // Progresión de iconos desde la oleada 1: la puntuación base usa State.level (= dlevel).
       State.level = this.dlevel();
       State.pool = Engine.poolForLevel(State.level);
       // Inventario inicial de power-ups (consumibles por partida), según el mockup.
       this.inv = {}; this.BOOSTERS.forEach((id) => { this.inv[id] = Boosters.DEFS[id].start || 0; });
       this.buildBar(); this.render();
+    },
+    cleanup() {
+      this.disarm();
+      this.frenzyUntil = 0; this.x2Until = 0; this.freezeUntil = 0; this.lockUntil = 0;
+      State.tempMult = 1;
+      document.body.classList.remove('aiming', 'surv-frenzy-active', 'surv-frenzy-1', 'surv-frenzy-2', 'surv-frenzy-3');
+    },
+    frenzyTier() { return clamp(Math.floor((this.wave - 1) / 4) + 1, 1, 3); },
+    frenzyActive() { return performance.now() < this.frenzyUntil; },
+    frenzyMult() { return this.frenzyActive() ? 1.55 + this.frenzyTier() * 0.1 : 1; },
+    _syncMult() { State.tempMult = (this.x2Active() ? 2 : 1) * this.frenzyMult(); },
+    _syncIntensity() {
+      if (!Settings.music) return;
+      const base = 0.12 + Math.min(0.55, (this.wave - 1) * 0.045);
+      Music.setIntensity(clamp(base + (this.frenzyActive() ? 0.35 : 0), 0, 1));
+    },
+    _setFrenzyClass() {
+      const inSurv = State.mode === 'supervivencia' && State.status === 'playing';
+      const active = inSurv && this.frenzyActive();
+      document.body.classList.toggle('surv-frenzy-active', active);
+      for (let i = 1; i <= 3; i++) document.body.classList.toggle('surv-frenzy-' + i, inSurv && this.frenzyTier() === i);
+      Render.fever(!!(State.fever || active));
+    },
+    addFrenzy(n) {
+      if (this.frenzyActive()) return;
+      this.frenzy = Math.min(100, this.frenzy + Math.max(0, n || 0));
+      if (this.frenzy >= 100) this.activateFrenzy();
+    },
+    activateFrenzy() {
+      this.frenzy = 0;
+      this.frenzyUntil = performance.now() + 7200 + this.frenzyTier() * 900;
+      this._syncMult(); this._setFrenzyClass(); this._syncIntensity();
+      for (let k = 0; k < 2 + this.frenzyTier(); k++) Engine.spawnOne();
+      Render.syncAll(); Render.fever(true); Render.flash(); FX.confetti(36);
+      Toasts.show(I18n.t('surv_frenzy_ready'), 'warn', 1800, 'fire');
+      Sound.fever(); Haptics.fever(); this.render();
+    },
+    _waveReward(clearedWave) {
+      if (clearedWave <= 0) return;
+      const coins = Math.max(3, Math.round((4 + clearedWave * 1.45) * this.tune().coinMult));
+      Meta.addCoins(coins); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
+      Toasts.show(I18n.t('surv_wave_reward').replace('{w}', clearedWave).replace('{c}', coins), 'good', 1700, 'coin');
+      if (clearedWave % 5 === 0) {
+        let txt;
+        if (clearedWave % 10 === 0) { Meta.addChest(1); this.runChests++; txt = '+1 ' + I18n.t('tab_chests'); Toasts.show(I18n.t('surv_milestone').replace('{w}', clearedWave) + ' · ' + txt, 'good', 2300, 'chest'); }
+        else { const gems = 2 + Math.floor(clearedWave / 5); Meta.addGems(gems); this.runGems += gems; txt = '+' + gems; Toasts.show(I18n.t('surv_milestone').replace('{w}', clearedWave) + ' · ' + txt, 'good', 2300, 'gem'); }
+        Render.flash(); FX.confetti(70); Sound.record(); Haptics.record(); Econ.refresh();
+      }
+    },
+    _checkWaveRecord() {
+      if (this.wave <= 1) return;
+      if (Meta.survWaveRecord(this.wave)) {
+        this.newWaveRecord = true;
+        Toasts.show(I18n.t('surv_wave_record').replace('{w}', this.wave), 'good', 2200, 'trophy');
+        Render.flash(); FX.confetti(80); Sound.record(); Haptics.record();
+      }
     },
     // Goteo de power-ups: al llenarse la barra de carga, regala uno aleatorio.
     grantRandom() {
@@ -1853,12 +1928,21 @@
     onTick(dt) {
       if (State.status !== 'playing') return;
       this.survSec = State.elapsed;
-      if (this.x2Until && !this.x2Active()) { this.x2Until = 0; State.tempMult = 1; }
+      const wasFrenzy = this._r.frenzyActive;
+      if (this.x2Until && !this.x2Active()) { this.x2Until = 0; this._syncMult(); }
+      if (this.frenzyUntil && !this.frenzyActive()) { this.frenzyUntil = 0; this._syncMult(); }
       this.waveAcc += dt;
       if (this.waveAcc >= this.WAVE_MS) { this.waveAcc -= this.WAVE_MS; this.newWave(); }
+      const isFrenzy = this.frenzyActive();
+      if (wasFrenzy !== isFrenzy || this._r.intWave !== this.wave) {
+        this._r.frenzyActive = isFrenzy; this._r.intWave = this.wave;
+        this._setFrenzyClass(); this._syncIntensity();
+      }
       this.render();
     },
     newWave() {
+      const clearedWave = this.wave;
+      this._waveReward(clearedWave);
       this.wave++;
       const tn = this.tune();
       State.spawnRate = Math.max(tn.spawnFloor, Math.round(State.spawnRate * tn.spawnDecay));
@@ -1868,12 +1952,16 @@
       if (lvl !== State.level) {
         State.level = lvl;
         State.pool = Engine.poolForLevel(lvl);
-        Toasts.show('✨ ' + I18n.t('surv_new_icons'), 'info', 1500, '✨');
+        Toasts.show(I18n.t('surv_new_icons'), 'info', 1500, 'v2:four-pointed-star');
       }
-      Toasts.show('🌊 ' + I18n.t('st_wave') + ' ' + this.wave, 'warn', 1400); Sound.danger();
+      Toasts.show(I18n.t('st_wave') + ' ' + this.wave, 'warn', 1400, 'fire'); Sound.danger();
+      this.addFrenzy(8 + this.frenzyTier() * 3);
       this._traps(Math.min(tn.trapCap, tn.trapBase * this.wave));
       this._placeBombs(1 + Math.floor(this.wave / 6));
       if (this.wave % tn.bossEvery === 0) this.bossEvent();
+      this._checkWaveRecord();
+      this._setFrenzyClass(); this._syncIntensity();
+      Render.boardEvent('surv-wave-up', 900);
       this.render();
     },
     bossEvent() {
@@ -1888,12 +1976,12 @@
       const placed = [];
       for (let k = 0; k < 8; k++) { const idx = Engine.spawnOne(); if (idx >= 0) placed.push(idx); }
       Render.syncAll(); Render.meteor(placed);
-      Toasts.show('☄️ ¡Lluvia de iconos!', 'bad', 1800);
+      Toasts.show(I18n.t('surv_meteor'), 'bad', 1800, 'v2:meteor');
       Sound.rain();
     },
     quake() {
       this._lock(1150, 'surv-quake');
-      Toasts.show('🌀 ¡Terremoto!', 'bad', 1800);
+      Toasts.show(I18n.t('surv_quake'), 'bad', 1800, 'teleporter');
       Sound.quake(); Haptics.quake();
       setTimeout(() => {
         if (State.status !== 'playing') return;
@@ -1910,7 +1998,7 @@
         if (!State.tiles[idx]) { State.tiles[idx] = Tiles.make('frozen'); placed.push(idx); }
       }
       Render.syncAll(); placed.forEach(i => Render.iceHit(i));
-      Toasts.show('🧊 Frente helado', 'warn', 1600);
+      Toasts.show(I18n.t('surv_frost'), 'warn', 1600, 'v2:snowflake');
       Sound.booster('freeze'); Haptics.ice();
     },
     _shuffle() {
@@ -1923,6 +2011,9 @@
       const combo = ctx ? ctx.combo : 0;
       this.charge += this.CHARGE_PER + Math.min(combo || 0, 6);
       if (this.charge >= 100) { this.charge -= 100; this.grantRandom(); }
+      const removed = ctx ? (ctx.removed || 0) : 0;
+      this.addFrenzy(4 + Math.min(22, removed * 2 + Math.min(combo || 0, 10)));
+      if (this.frenzyActive()) this.charge = Math.min(100, this.charge + 4);
       // Romper rocas (con hits) ortogonalmente adyacentes a la acción: la casilla
       // central tocada + cada icono eliminado. Da agencia y evita el bloqueo permanente.
       if (ctx) {
@@ -1955,7 +2046,7 @@
     onOverflow() {
       this.lives--;
       if (this.lives <= 0) { this.lastChance(); return; }
-      Toasts.show('💥 Vida liberada · -1', 'bad', 1700);
+      Toasts.show(I18n.t('surv_life_lost'), 'bad', 1700, 'heart');
       Sound.lifeBlast(); Haptics.life(); this._lock(880, 'life-blast');
       this._relief(0.4); this.render();
       if (State.status === 'playing') Game.evaluate();
@@ -2005,7 +2096,7 @@
       this.armed = id;
       document.body.classList.add('aiming');
       this.buildBar();
-      Toasts.show(I18n.t('aim_hint'), 'info', 1600, Boosters.DEFS[id].glyph);
+      Toasts.show(I18n.t('aim_hint'), 'info', 1600, BOOSTER_IMG[id] || Boosters.DEFS[id].glyph);
       Sound.ui();
     },
     disarm() {
@@ -2018,8 +2109,8 @@
     _applyGlobal(id) {
       this.inv[id]--;
       Render.boosterPulse(id);
-      if (id === 'freeze') { this.freezeUntil = performance.now() + 7000; Toasts.show('❄️ ' + I18n.t('pu_freeze'), 'info', 1500); Render.boardEvent('boost-freeze', 1200); }
-      else if (id === 'x2') { this.x2Until = performance.now() + 11000 * (Boards.fx().x2Boost || 1); State.tempMult = 2; Toasts.show('🃏 ' + I18n.t('pu_x2'), 'good', 1500); Render.boardEvent('boost-x2', 1200); }
+      if (id === 'freeze') { this.freezeUntil = performance.now() + 7000; Toasts.show(I18n.t('pu_freeze'), 'info', 1500, BOOSTER_IMG.freeze); Render.boardEvent('boost-freeze', 1200); }
+      else if (id === 'x2') { this.x2Until = performance.now() + 11000 * (Boards.fx().x2Boost || 1); this._syncMult(); Toasts.show(I18n.t('pu_x2'), 'good', 1500, BOOSTER_IMG.x2); Render.boardEvent('boost-x2', 1200); }
       Sound.booster(id); Haptics.combo(); this.buildBar(); this.render();
       if (State.status === 'playing') Game.evaluate();
     },
@@ -2065,8 +2156,9 @@
       cells.forEach((j) => { icons += this._powerClear(j, cleared, fxN); });
       State.removedTotal += icons; State.lastActionCell = i;
       Render.syncAll();
-      const msg = id === 'bomb' ? '💣 ' + I18n.t('pu_bomb') : id === 'clearLine' ? '⚡ ' + I18n.t('pu_ray') : '🧹 ' + icons + ' ' + I18n.t('pu_icons');
-      Toasts.show(msg, 'good', 1200);
+      const msg = id === 'bomb' ? I18n.t('pu_bomb') : id === 'clearLine' ? I18n.t('pu_ray') : icons + ' ' + I18n.t('pu_icons');
+      Toasts.show(msg, 'good', 1200, BOOSTER_IMG[id]);
+      this.addFrenzy(Math.min(24, 6 + icons * 3));
       const pulse = id === 'bomb' ? 'bomb-cleared' : id === 'clearLine' ? 'line-cleared' : 'wild-cleared';
       cleared.forEach((j) => Render.cellPulse(j, pulse, 760));
       Sound.booster(id); Haptics.combo(); this.disarm(); this.render();
@@ -2122,7 +2214,8 @@
         if (rr >= 0 && cc >= 0 && rr < size && cc < size) icons += this._powerClear(rr * size + cc, cleared, 5);
       }
       State.removedTotal += icons;
-      Render.syncAll(); Toasts.show('💣 ¡Boom!', 'good', 1300);
+      Render.syncAll(); Toasts.show(I18n.t('pu_bomb'), 'good', 1300, BOOSTER_IMG.bomb);
+      this.addFrenzy(Math.min(24, 8 + icons * 3));
       cleared.forEach(i => Render.cellPulse(i, 'bomb-cleared', 760));
     },
     _clearLine() {
@@ -2137,7 +2230,8 @@
       State.lastActionCell = best.cells[Math.floor(best.cells.length / 2)];
       best.cells.forEach(j => { icons += this._powerClear(j, cleared, 4); });
       State.removedTotal += icons;
-      Render.syncAll(); Toasts.show(best.axis === 'row' ? '🧹 ¡Fila despejada!' : '🧹 ¡Columna despejada!', 'good', 1300);
+      Render.syncAll(); Toasts.show(best.axis === 'row' ? I18n.t('pu_row') : I18n.t('pu_col'), 'good', 1300, BOOSTER_IMG.wild);
+      this.addFrenzy(Math.min(24, 8 + icons * 2));
       cleared.forEach(i => Render.cellPulse(i, 'line-cleared', 760));
     },
     _wild() {
@@ -2154,12 +2248,13 @@
       if (!best || best.arr.length < 2) {
         const fallback = [];
         for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null) fallback.push(i);
-        if (!fallback.length) { Toasts.show('🃏 Sin objetivo', 'warn', 1200); return; }
+        if (!fallback.length) { Toasts.show(I18n.t('pu_no_target'), 'warn', 1200, BOOSTER_IMG.x2); return; }
         const cleared = [], idx = fallback[rand(fallback.length)];
         State.lastActionCell = idx;
         State.removedTotal += this._powerClear(idx, cleared, 6);
         Render.syncAll(); cleared.forEach(i => Render.cellPulse(i, 'wild-cleared', 820));
-        Toasts.show('Comodín · despeje de emergencia', 'good', 1300, BOOSTER_IMG.x2);
+        this.addFrenzy(10);
+        Toasts.show(I18n.t('pu_wild_emergency'), 'good', 1300, BOOSTER_IMG.x2);
         return;
       }
       const cleared = best.arr.slice(0, 8);
@@ -2168,7 +2263,8 @@
       cleared.forEach(i => { icons += this._powerClear(i, pulsed, 6); });
       State.removedTotal += icons;
       Render.syncAll(); pulsed.forEach(i => Render.cellPulse(i, 'wild-cleared', 820));
-      Toasts.show(`Comodín · ${icons} iconos`, 'good', 1400, BOOSTER_IMG.x2);
+      this.addFrenzy(Math.min(26, 8 + icons * 3));
+      Toasts.show(I18n.t('pu_wild_icons').replace('{n}', icons), 'good', 1400, BOOSTER_IMG.x2);
     },
     buildBar() {
       const el = $('#boosters'); if (!el) return;
@@ -2189,6 +2285,16 @@
       const wp = Math.min(100, Math.round(this.waveAcc / this.WAVE_MS * 100));
       if (r.wp !== wp) { r.wp = wp; const wf = $('#surv-waveprog-fill'); if (wf) wf.style.width = wp + '%'; }
       const ch = Math.round(this.charge); if (r.charge !== ch) { r.charge = ch; const cf = $('#charge-fill'); if (cf) cf.style.width = ch + '%'; }
+      const bestWave = Meta.survBestWave();
+      const bestTxt = bestWave > 0 ? I18n.t('surv_best_wave') + ' ' + bestWave : '';
+      if (r.bestWave !== bestTxt) { r.bestWave = bestTxt; const bw = $('#surv-best-wave'); if (bw) { bw.textContent = bestTxt; bw.hidden = !bestTxt; } }
+      const fActive = this.frenzyActive();
+      const fVal = fActive ? 100 : Math.round(this.frenzy);
+      if (r.frenzyVal !== fVal || r.frenzyOn !== fActive) {
+        r.frenzyVal = fVal; r.frenzyOn = fActive;
+        const ff = $('#frenzy-fill'); if (ff) ff.style.width = fVal + '%';
+        const fm = $('#frenzy-meter'); if (fm) fm.classList.toggle('on', fActive);
+      }
       const ready = this.charge >= 100; if (r.ready !== ready) { r.ready = ready; const bb = $('#booster-bar'); if (bb) bb.classList.toggle('ready', ready); }
     },
   };
@@ -2615,6 +2721,7 @@
       // Supervivencia 2.0: vidas, oleadas, boosters.
       const isSurv = mode === 'supervivencia';
       document.body.classList.toggle('mode-surv', isSurv);
+      if (isSurv) Storage.survDiff = State.diff;
       // Tiempo en HUD solo cuando importa (Contrarreloj): top minimalista.
       document.body.classList.toggle('mode-timed', !!Config.MODES[mode].timed);
       { const sb = $('#surv-bar'); if (sb) sb.hidden = !isSurv; const bb = $('#booster-bar'); if (bb) bb.hidden = !isSurv; }
@@ -2638,7 +2745,7 @@
       if (Coach.active) return Coach.skip();
       Loop.stop(); Music.stop(); State.status = 'idle'; Modal.close();
       document.body.classList.remove('mode-surv'); this.clearHintHighlight();
-      if (typeof Survival !== 'undefined') Survival.disarm();
+      if (typeof Survival !== 'undefined') Survival.cleanup();
       // Clásico: salir devuelve al mapa de mundos (su hub natural).
       if (State.mode === 'clasico') { Worlds.open(); return; }
       refreshStart(); Screens.show('start');
@@ -2656,13 +2763,22 @@
     },
 
     /* Activación de una casilla (clic/tecla) */
+    feverNeed() {
+      if (State.mode !== 'supervivencia') return Config.FEVER_COMBO;
+      return Math.max(6, Config.FEVER_COMBO - Survival.frenzyTier());
+    },
+    feverBoost() {
+      if (!State.fever) return 1;
+      return Config.FEVER_BOOST + (State.mode === 'supervivencia' ? Survival.frenzyTier() * 0.06 : 0);
+    },
+
     activate(i) {
       if (State.status !== 'playing') return;
       if (State.mode === 'supervivencia' && Survival.locked()) return;
       this.clearHintHighlight();
       const ti = State.tiles[i];
       // Objeto especial con efecto al tocar (bonus/portal/caja mágica/bomba oculta).
-      if (ti && ti.trigger) { this._triggerTile(i, ti); return; }
+      if (ti && ti.trigger) { Sound.tap(); return; }
       // Casilla rompible: tocar para liberar (helada/cadenas/telaraña/lodo). No es error.
       if (ti && ti.breakable) {
         ti.taps = (ti.taps != null ? ti.taps : (Tiles.DEFS[ti.type].taps || 1)) - 1;
@@ -2695,10 +2811,10 @@
       const color = State.comboMult >= 8 ? '#ffd84d' : State.comboMult >= 5 ? '#ff5cf0' : State.comboMult >= 3 ? '#b46cff' : State.comboMult >= 2 ? '#00d0ff' : State.comboMult >= 1.5 ? '#34e29b' : '#fff';
 
       // FEVER: entrar al encadenar combo alto
-      if (!State.fever && State.combo >= Config.FEVER_COMBO) {
+      if (!State.fever && State.combo >= this.feverNeed()) {
         State.fever = true; State.feverEver = true; Render.fever(true); Sound.fever(); Haptics.fever();
         if (Settings.music) Music.setIntensity(1);
-        Toasts.show('🔥 ¡FEVER!', 'warn', 1400);
+        Toasts.show('¡FEVER!', 'warn', 1400, 'fire');
       }
 
       // Puntos (icono×10×nivel × combo × dificultad × modo × fever)
@@ -2707,7 +2823,7 @@
       State.lastActionCell = i;
       const d = Config.DIFFICULTY[State.diff], m = Config.MODES[State.mode];
       const base = removed * 10 * State.level;
-      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * (State.fever ? Config.FEVER_BOOST : 1) * (State.tempMult || 1));
+      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * this.feverBoost() * (State.tempMult || 1));
       State.score += points;
       if (Config.MILESTONES[State.combo]) { State.score += Config.MILESTONES[State.combo]; Toasts.show(`¡Combo ×${State.combo}! +${Config.MILESTONES[State.combo]}`, 'good'); Sound.milestone(); Haptics.milestone(); }
 
@@ -2758,7 +2874,7 @@
       // eliminación, saliendo hacia fuera y cayendo al fondo de la pantalla.
       if (!State.recordHit && Storage.best > 0 && State.score > Storage.best) {
         State.recordHit = true; Render.flash(); Sound.record(); Haptics.record(); FX.celebrate(i);
-        Toasts.show('🏆 ¡Nuevo récord!', 'good', 1600);
+        Toasts.show('¡Nuevo récord!', 'good', 1600, 'trophy');
       }
 
       Render.hudSoon();
@@ -2821,32 +2937,33 @@
     // adyacente a una bomba, esta detona limpiando su 3×3, y encadena con otras bombas
     // que alcance. Reutiliza _adjacent/_area/_removeCells.
     _chainDetonate(seedCells) {
-      const isBomb = (j) => { const t = State.tiles[j]; return !!(t && t.trigger === 'bomb'); };
+      const isPowerup = (j) => { const t = State.tiles[j]; return !!(t && t.trigger); };
       const seen = new Set(), queue = [];
-      const enqueueAdj = (cells) => cells.forEach((idx) => this._adjacent(idx).forEach((j) => { if (isBomb(j) && !seen.has(j)) { seen.add(j); queue.push(j); } }));
+      const enqueueAdj = (cells) => cells.forEach((idx) => this._adjacent(idx).forEach((j) => { if (isPowerup(j) && !seen.has(j)) { seen.add(j); queue.push(j); } }));
       enqueueAdj(seedCells);
       if (!queue.length) return;
-      let pts = 0; const detonated = [];
+      const triggered = [];
+      let bombs = 0;
       while (queue.length) {
-        const b = queue.shift();
-        State.tiles[b] = null; Render.setTile(b); detonated.push(b);
-        FX.celebrate(b); Render.cellPulse(b, 'bomb-cleared', 760);
-        const foot = this._area(b, 1);   // huella 3×3 completa (para limpiar y para encadenar)
-        const area = foot.filter((j) => State.board[j] !== null && !(State.tiles[j] && State.tiles[j].solid));
-        pts += area.length * 10 * State.level;
-        this._removeCells(area);
-        area.forEach((j) => Render.cellPulse(j, 'bomb-cleared', 760));
-        enqueueAdj(foot);   // encadena con bombas dentro/adyacentes a la huella
+        const p = queue.shift();
+        const ti = State.tiles[p];
+        if (!ti || !ti.trigger) continue;
+        if (ti.trigger === 'bomb') bombs++;
+        triggered.push(p);
+        const touched = this._triggerTile(p, ti, { defer: true }) || [p];
+        enqueueAdj(touched);
       }
-      State.score += pts; State.removedTotal += detonated.length;
-      if (detonated.length && State.lastActionCell == null) State.lastActionCell = detonated[0];
+      if (triggered.length && State.lastActionCell == null) State.lastActionCell = triggered[0];
       Render.syncAll(); Render.bump($('#hud-score'));
-      Sound.booster('bomb'); Haptics.milestone();
-      Toasts.show('💣 ' + I18n.t('chain_boom').replace('{n}', detonated.length), 'good', 1300);
+      if (bombs) {
+        Sound.booster('bomb'); Haptics.milestone();
+        Toasts.show(I18n.t('chain_boom').replace('{n}', bombs), 'good', 1300, BOOSTER_IMG.bomb);
+      }
     },
     // Objeto especial: efecto al tocar (bonus +30 / portal / caja mágica / bomba oculta).
-    _triggerTile(i, ti) {
+    _triggerTile(i, ti, opts = {}) {
       const eff = ti.trigger;
+      let touched = [i];
       State.tiles[i] = null;
       if (eff === 'bonus') {
         State.score += 30; Render.popup(i, '+30', 'var(--good)'); Render.bump($('#hud-score'));
@@ -2855,26 +2972,31 @@
         const filled = [], empties = [];
         for (let k = 0; k < State.board.length; k++) {
           if (State.board[k] !== null && !State.tiles[k]) filled.push(k);
-          else if (State.board[k] === null && !(State.tiles[k] && State.tiles[k].solid)) empties.push(k);
+          else if (State.board[k] === null && !State.tiles[k]) empties.push(k);
         }
         if (filled.length && empties.length) {
           const from = filled[rand(filled.length)], to = empties[rand(empties.length)];
           State.board[to] = State.board[from]; State.board[from] = null;
           Render.syncCell(from); Render.syncCell(to);
+          touched = [i, from, to];
         }
         Sound.booster('freeze'); Render.boardEvent('boost-freeze', 700);
       } else if (eff === 'magicbox') {
+        touched = this._adjacent(i).concat(i);
         this._adjacent(i).forEach((j) => { const t = State.tiles[j]; if (t && t.solid) { State.tiles[j] = null; Render.setTile(j); Render.syncCell(j); } });
         FX.confetti(40); Sound.milestone(); Haptics.milestone();
       } else if (eff === 'bomb') {
-        const cells = this._area(i, 1).filter((j) => State.board[j] !== null && !(State.tiles[j] && State.tiles[j].solid));
+        touched = this._area(i, 1);
+        const cells = touched.filter((j) => State.board[j] !== null && !(State.tiles[j] && State.tiles[j].solid));
         const pts = cells.length * 10 * State.level;
-        this._removeCells(cells); State.score += pts;
+        this._removeCells(cells); State.score += pts; State.removedTotal += cells.length;
+        if (State.mode === 'supervivencia') Survival.addFrenzy(Math.min(28, 8 + cells.length * 2));
         if (cells.length) Render.popup(i, '+' + pts, 'var(--warn)');
         FX.celebrate(i); Sound.booster('bomb'); Haptics.milestone();
       }
       Render.setTile(i); Render.syncCell(i); Render.hud();
-      this.evaluate();
+      if (!opts.defer) this.evaluate();
+      return touched;
     },
 
     doSpawn() {
@@ -2975,7 +3097,7 @@
       const wave = State.mode === 'supervivencia' ? Survival.wave : 1;
       const combo = Math.min(State.combo || 1, 12);
       const raw = Config.EMPTY_BOARD_BONUS + chain * 90 + combo * 28 + (State.mode === 'supervivencia' ? wave * 45 : 0);
-      const points = Math.max(250, Math.round(raw * d.scoreMult * m.mult * (State.fever ? Config.FEVER_BOOST : 1) * (State.tempMult || 1)));
+      const points = Math.max(250, Math.round(raw * d.scoreMult * m.mult * this.feverBoost() * (State.tempMult || 1)));
       const coins = clamp(Math.round(points / 220), 3, 16);
       const extra = [];
       const center = State.lastActionCell != null
@@ -2988,9 +3110,10 @@
 
       if (State.mode === 'supervivencia') {
         Survival.charge = Math.min(100, Survival.charge + 25);
+        Survival.addFrenzy(24);
         Survival._lock(760, 'board-clear-bonus');
         Survival.render();
-        extra.push('+25% carga');
+        extra.push('+25% carga', '+24% ' + I18n.t('surv_frenzy'));
       } else {
         Render.boardEvent('board-clear-bonus', 950);
       }
@@ -3003,14 +3126,14 @@
         extra.push('+1 pista');
       }
 
-      const msg = `✨ Tablero limpio · +${points} · 🪙 +${coins}${extra.length ? ' · ' + extra.join(' · ') : ''}`;
-      Toasts.show(msg, 'good', 2400);
+      const msg = `Tablero limpio · +${points} · +${coins} ${I18n.t('coins')}${extra.length ? ' · ' + extra.join(' · ') : ''}`;
+      Toasts.show(msg, 'good', 2400, 'v2:four-pointed-star');
       Render.popup(center, `+${points} BONUS`, '#ffd84d');
       Render.bump($('#hud-score'));
       Render.flash();
       Sound.boardClear(); Haptics.level();
       if (!State.recordHit && Storage.best > 0 && State.score > Storage.best) {
-        State.recordHit = true; Sound.record(); Haptics.record(); Toasts.show('🏆 ¡Nuevo récord!', 'good', 1600);
+        State.recordHit = true; Sound.record(); Haptics.record(); Toasts.show('¡Nuevo récord!', 'good', 1600, 'trophy');
       }
       this.saveBest();
       Render.hudSoon();
@@ -3020,7 +3143,11 @@
 
     resetCombo() {
       State.combo = 0; State.comboMult = 1;
-      if (State.fever) { State.fever = false; Render.fever(false); if (Settings.music) Music.setIntensity(0.15); }
+      if (State.fever) {
+        State.fever = false;
+        if (State.mode === 'supervivencia') { Survival._setFrenzyClass(); Survival._syncIntensity(); }
+        else { Render.fever(false); if (Settings.music) Music.setIntensity(0.15); }
+      }
       Render.combo();
     },
 
@@ -3164,7 +3291,7 @@
     // Aplica emblema y color de acento al modal de fin de partida.
     _overChrome(iconName, accent, fallbackEmoji) {
       const e = $('#over-emblem'); if (e) { if (iconName) e.innerHTML = iconAny(iconName); else e.textContent = fallbackEmoji || ''; }
-      const mo = $('#modal-over'); if (mo) mo.style.setProperty('--modal-accent', this.newRecord || this._survNew ? 'var(--gold)' : accent);
+      const mo = $('#modal-over'); if (mo) mo.style.setProperty('--modal-accent', this.newRecord || this._survNew || this._survWaveNew ? 'var(--gold)' : accent);
     },
 
     win(reason) {
@@ -3180,8 +3307,11 @@
     gameOver(reason) {
       if (this.ended) return;
       // Supervivencia: registra el récord de tiempo sobrevivido.
-      this._survNew = false;
-      if (State.mode === 'supervivencia') { this._survNew = Meta.survRecord(Survival.survSec); document.body.classList.remove('mode-surv'); }
+      this._survNew = false; this._survWaveNew = false;
+      if (State.mode === 'supervivencia') {
+        this._survNew = Meta.survRecord(Survival.survSec);
+        this._survWaveNew = Survival.newWaveRecord || Meta.survWaveRecord(Survival.wave);
+      }
       this.endGame();
       Sound.over(); Haptics.error(); Render.boardShake();
       const m = Config.MODES[State.mode];
@@ -3195,6 +3325,7 @@
     endGame() {
       Loop.stop(); Music.stop(); State.status = 'over'; this.ended = true; this.clearHintHighlight();
       Render.fever(false); State.fever = false; Render.danger(0);
+      if (State.mode === 'supervivencia') { Survival.cleanup(); document.body.classList.remove('mode-surv'); }
       this.newRecord = State.score > Storage.best && State.score > 0;
       this.saveBest();
       // Progresión persistente (XP, logros, misión diaria, racha)
@@ -3206,8 +3337,13 @@
     },
 
     fillStats() {
-      $('#over-record').hidden = !this.newRecord && !this._survNew;
-      if (this._survNew) { const rec = $('#over-record'); if (rec) rec.innerHTML = iconInline('shield') + ' ¡Récord de supervivencia!'; }
+      const rec = $('#over-record');
+      if (rec) {
+        rec.hidden = !this.newRecord && !this._survNew && !this._survWaveNew;
+        if (this._survWaveNew) rec.innerHTML = iconInline('trophy') + ' ' + I18n.t('surv_wave_record').replace('{w}', Survival.wave);
+        else if (this._survNew) rec.innerHTML = iconInline('shield') + ' ' + I18n.t('surv_time_record');
+        else if (this.newRecord) rec.innerHTML = iconInline('trophy') + ' ¡Nuevo récord!';
+      }
       const m = Config.MODES[State.mode], d = Config.DIFFICULTY[State.diff];
       // Resumen coherente por modo
       let summary;
@@ -3219,6 +3355,7 @@
       const rows = State.mode === 'supervivencia' ? [
         [State.score, I18n.t('st_points'), 'var(--score)'],
         [Survival.wave, I18n.t('st_wave'), 'var(--level)'],
+        [Meta.survBestWave(), I18n.t('surv_best_wave'), 'var(--warn)'],
         ['×' + State.maxCombo, I18n.t('st_combo'), 'var(--gold)'],
         [State.removedTotal, I18n.t('st_removed'), 'var(--good)'],
         [Math.floor(Survival.survSec) + 's', I18n.t('st_surv'), 'var(--time)'],
@@ -3235,12 +3372,16 @@
       // Progresión: XP ganada, barra de perfil, misión y logros nuevos
       const r = this.metaResult || { xpGained: 0, coinsGained: 0, leveledUp: 0, newAch: [], missionDone: false };
       const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
+      const survRewards = State.mode === 'supervivencia'
+        ? `<div class="mission-done surv-rewards">${iconInline('coin')} ${I18n.t('surv_reward_line').replace('{c}', Survival.runCoins).replace('{g}', Survival.runGems).replace('{ch}', Survival.runChests)}</div>`
+        : '';
       $('#over-xp').innerHTML =
         `<div class="xp-line"><span class="xp-gain">+${r.xpGained} XP</span><span class="xp-coins">${iconInline('coin')} <span class="xp-coins-n">+${r.coinsGained || 0}</span></span><span class="xp-rank">${Meta.rank()} · ${I18n.t('lvl')} ${lvl}</span></div>` +
         `<div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>` +
         (r.leveledUp ? `<div class="xp-up">${iconInline('upgrade')} ${I18n.t('lvl')} ${lvl}!</div>` : '') +
         (r.missionDone ? `<div class="mission-done">${iconInline('check')} ${I18n.t('daily_done')} · +150 XP</div>` : '') +
-        (r.weeklyDone ? `<div class="mission-done">${iconInline('calendar')} ${I18n.t('weekly_done')} · +400 XP</div>` : '');
+        (r.weeklyDone ? `<div class="mission-done">${iconInline('calendar')} ${I18n.t('weekly_done')} · +400 XP</div>` : '') +
+        survRewards;
       countUp($('#over-xp .xp-gain'), r.xpGained, 700, '+', ' XP');
       countUp($('#over-xp .xp-coins-n'), r.coinsGained || 0, 700, '+', '');
       $('#over-ach').innerHTML = r.newAch.length
@@ -3324,7 +3465,7 @@
   const MODE_CARDS = [
     { key: 'supervivencia', accent: '#ff5b6e', svg: 'heartFoes', art: 'surv',
       i18n: 'card_surv', badge: 'card_surv_badge', desc: 'card_surv_desc', feats: [],
-      action: () => Game.start('supervivencia', 'normal') },
+      action: () => openSurvivalDiff() },
     { key: 'clasico', accent: '#2f6bff', svg: 'island', art: 'classic',
       i18n: 'card_classic', badge: 'card_classic_badge', desc: 'card_classic_desc',
       feats: [['lock', 'card_feat_locks'], ['target', 'card_feat_objects'], ['bolt', 'card_feat_events'], ['v2:four-pointed-star', 'card_feat_more']],
@@ -3378,6 +3519,26 @@
   function openMultiplayer() {
     if ($('#modal-multi')) { Modal.open('modal-multi'); return; }
     Toasts.show(I18n.t('multi_soon'), 'info', 1900);
+  }
+  let survDiff = Config.DIFF_ORDER.indexOf(Storage.survDiff) >= 0 ? Storage.survDiff : 'normal';
+  function renderSurvivalDiff() {
+    document.querySelectorAll('[data-surv-diff]').forEach((btn) => {
+      const on = btn.dataset.survDiff === survDiff;
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-checked', String(on));
+    });
+    const start = $('#btn-surv-start');
+    if (start) start.dataset.diff = survDiff;
+  }
+  function openSurvivalDiff() {
+    survDiff = Config.DIFF_ORDER.indexOf(Storage.survDiff) >= 0 ? Storage.survDiff : 'normal';
+    renderSurvivalDiff();
+    Modal.open('modal-surv-diff');
+  }
+  function startSurvivalSelected() {
+    Storage.survDiff = survDiff;
+    Modal.close();
+    Game.start('supervivencia', survDiff);
   }
 
   /* ===================== Top bar reutilizable (sistema base) ===================== */
@@ -3474,6 +3635,7 @@
   function applyLanguage() {
     I18n.apply();
     buildModeMenu(); refreshStart(); buildSettings();
+    renderSurvivalDiff();
     if (State.status === 'playing' || State.status === 'paused') Game.showGoalBanner();
   }
 
@@ -3524,7 +3686,7 @@
     if (lbEl) {
       const rows = Config.MODE_ORDER.filter(k => k !== 'tutorial').map(k => {
         const mo = Config.MODES[k];
-        const best = k === 'supervivencia' ? (Meta.survBest() + 's') : Meta.modeBest(k);
+        const best = k === 'supervivencia' ? (Meta.survBest() + 's · ' + I18n.t('st_wave') + ' ' + Meta.survBestWave()) : Meta.modeBest(k);
         const plays = Meta.modePlays(k);
         return `<div class="lb-row"><span class="lb-mode">${MODE_IMG[k] ? iconAnyInline(MODE_IMG[k]) : mo.emoji} ${I18n.modeT(k, 'name')}</span><span class="lb-best">${best}</span><span class="lb-plays">${plays}</span></div>`;
       }).join('');
@@ -3708,7 +3870,7 @@
       else if (a === 'buy-gems' || a === 'bell') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
       else if (a === 'play') { Sound.ensure(); Screens.show('modes'); }
       else if (a === 'home-classic') { Sound.ui(); Worlds.open(); }
-      else if (a === 'home-surv') { Sound.ensure(); Game.start('supervivencia', 'normal'); }
+      else if (a === 'home-surv') { Sound.ensure(); openSurvivalDiff(); }
       else if (a === 'home-multi') { Sound.ui(); openMultiplayer(); }
       else if (a === 'claim-daily') claimDailyReward();
       else if (a === 'nav-medals') { Sound.ensure(); openMedals(); }
@@ -3727,6 +3889,13 @@
     $('#modes-back').addEventListener('click', () => Screens.show('start'));
     { const ms = $('#modes-settings'); if (ms) ms.addEventListener('click', () => { Sound.ui(); openSettings(); }); }
     { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { Modal.close(); Game.start('aventura', selDiff); }); }
+    document.querySelectorAll('[data-surv-diff]').forEach((b) => b.addEventListener('click', () => {
+      survDiff = b.dataset.survDiff || 'normal';
+      Storage.survDiff = survDiff;
+      Sound.ui();
+      renderSurvivalDiff();
+    }));
+    { const ss = $('#btn-surv-start'); if (ss) ss.addEventListener('click', () => { Sound.ensure(); startSurvivalSelected(); }); }
 
     // Modo Clásico (mapa de mundos)
     { const wb = $('#worlds-back'); if (wb) wb.addEventListener('click', () => Screens.show('modes')); }
