@@ -129,6 +129,55 @@
       </div>
     </section>
 
+    <!-- ============ PANTALLA: MODO CLÁSICO (MAPA DE MUNDOS) ============ -->
+    <section class="screen screen-worlds" id="screen-worlds" aria-labelledby="worlds-title" hidden>
+      <header class="topbar">
+        <button class="icon-btn" id="worlds-back" aria-label="Volver">←</button>
+        <div class="topbar-econ" aria-label="Recursos">
+          <span class="econ-pill econ-coins" data-econ="coins">🪙 0</span>
+          <span class="econ-pill econ-gems" data-econ="gems">💎 0</span>
+          <span class="econ-pill econ-streak" data-econ="streak">🔥 0</span>
+        </div>
+        <button class="icon-btn" id="worlds-settings" aria-label="Ajustes">⚙️</button>
+      </header>
+
+      <h2 id="worlds-title" class="worlds-title" data-i18n="classic_title">Modo Clásico</h2>
+
+      <div class="worlds-body">
+        <!-- Columna principal: cabecera del mundo + mapa de niveles -->
+        <div class="worlds-main">
+          <div class="world-head">
+            <span class="world-glyph" id="world-glyph" aria-hidden="true">🌲</span>
+            <div class="world-head-tx">
+              <span class="world-name" id="world-name">Bosque Verde</span>
+              <span class="world-stars" id="world-stars">⭐ 0/150</span>
+            </div>
+          </div>
+          <div class="world-map" id="world-map" role="list" aria-label="Niveles"></div>
+          <div class="world-nov-wrap">
+            <h3 class="group-title" data-i18n="world_news">Novedades de este mundo</h3>
+            <div class="world-nov" id="world-nov"></div>
+          </div>
+        </div>
+
+        <!-- Panel lateral: lista de mundos -->
+        <aside class="worlds-side">
+          <h3 class="group-title" data-i18n="worlds_label">Mundos</h3>
+          <div class="world-rail" id="world-rail" role="list" aria-label="Mundos"></div>
+          <button class="btn btn-ghost btn-sm world-rewards" id="world-rewards" data-i18n="all_rewards">🎁 Ver recompensas</button>
+        </aside>
+      </div>
+
+      <!-- Barra de navegación inferior (estilo Supercell) -->
+      <nav class="worlds-tabs" aria-label="Navegación">
+        <button class="tab" id="wt-shop"><span class="tab-ic">🛒</span><small data-i18n="tab_shop">Tienda</small></button>
+        <button class="tab" id="wt-missions"><span class="tab-ic">🎯</span><small data-i18n="tab_missions">Misiones</small></button>
+        <button class="tab tab-home" id="wt-play" aria-current="page"><span class="tab-ic">🎮</span><small data-i18n="tab_play">Jugar</small></button>
+        <button class="tab" id="wt-chests"><span class="tab-ic">🎁</span><small data-i18n="tab_chests">Cofres</small></button>
+        <button class="tab" id="wt-rank"><span class="tab-ic">🏆</span><small data-i18n="tab_rank">Clasificación</small></button>
+      </nav>
+    </section>
+
     <!-- ============ PANTALLA: JUEGO ============ -->
     <section class="screen screen-game" id="screen-game" aria-label="Partida" hidden>
       <!-- Cabecera de estado (solo lectura): contexto + puntuación héroe + controles meta -->
@@ -250,8 +299,9 @@
         <div class="stats" id="level-stats"></div>
         <div class="next-info" id="level-next"></div>
       </div>
-      <div class="modal-actions">
+      <div class="modal-actions modal-buttons">
         <button class="btn btn-primary btn-lg" id="btn-next-level">Siguiente nivel →</button>
+        <button class="btn btn-ghost" id="btn-level-map" hidden data-i18n="to_map">🗺️ Volver al mapa</button>
       </div>
     </div>
 
