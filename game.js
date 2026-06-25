@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.2.2';
+  const VERSION = '1.2.3';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -223,7 +223,7 @@
         chests_title: '🎁 Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre contiene monedas, gemas o tickets.', chests_none: 'No tienes cofres', chest_reward: '¡Recompensa! {r}', open_chest: '🎁 Abrir cofre',
         soon_badge: '🚧 Próximamente', notify_me: '🔔 Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
         edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
-        home_classic: 'Partida clásica', home_classic_sub: 'Juega en el tablero contra amigos o bots', home_tourneys: 'Torneos', home_tourneys_sub: 'Compite y gana recompensas', home_multi_sub: 'Desafía a jugadores en línea',
+        home_classic: 'Partida clásica', home_classic_sub: 'Juega en el tablero contra amigos o bots', home_tourneys: 'Torneos', home_tourneys_sub: 'Compite y gana recompensas', home_surv_sub: 'Sobrevive a oleadas infinitas', home_multi_sub: 'Desafía a jugadores en línea',
         q_missions: 'Misiones', q_daily: 'Diario', q_chests: 'Cofres', q_league: 'Liga', q_friends: 'Amigos', best_score: 'Mejor puntuación', play_word: 'Jugar',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
         how_title: '¿Cómo se juega?', how1: 'Toca una <strong>casilla vacía</strong>.', how2: 'Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).',
@@ -274,7 +274,7 @@
         chests_title: '🎁 Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest contains coins, gems or tickets.', chests_none: 'You have no chests', chest_reward: 'Reward! {r}', open_chest: '🎁 Open chest',
         soon_badge: '🚧 Coming soon', notify_me: '🔔 Notify me', notify_ok: "We'll let you know when it's ready!",
         edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
-        home_classic: 'Classic game', home_classic_sub: 'Play on the board against friends or bots', home_tourneys: 'Tournaments', home_tourneys_sub: 'Compete and win rewards', home_multi_sub: 'Challenge players online',
+        home_classic: 'Classic game', home_classic_sub: 'Play on the board against friends or bots', home_tourneys: 'Tournaments', home_tourneys_sub: 'Compete and win rewards', home_surv_sub: 'Survive endless waves', home_multi_sub: 'Challenge players online',
         q_missions: 'Missions', q_daily: 'Daily', q_chests: 'Chests', q_league: 'League', q_friends: 'Friends', best_score: 'Best score', play_word: 'Play',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
         how_title: 'How to play?', how1: 'Tap an <strong>empty cell</strong>.', how2: 'It looks at the nearest icon in each direction (up, down, left, right).',
@@ -3273,7 +3273,7 @@
       <span class="econ-pill econ-coins"><span class="econ-ic">${Art.coin()}</span><b data-econ-num="coins">0</b><span class="econ-plus" data-act="buy-coins" role="button" aria-label="Conseguir monedas">${Art.plus()}</span></span>
       <span class="econ-pill econ-gems"><span class="econ-ic">${Art.gem()}</span><b data-econ-num="gems">0</b><span class="econ-plus" data-act="buy-gems" role="button" aria-label="Conseguir gemas">${Art.plus()}</span></span>
       <span class="econ-pill econ-streak"><span class="econ-ic">${Art.fire()}</span><b data-econ-num="streak">0</b></span>
-      <button class="appbar-icon" data-act="settings" aria-label="Ajustes">${Art.gear()}</button>
+      <button class="appbar-icon appbar-bell" data-act="bell" aria-label="Notificaciones">${Art.bell()}<span class="bell-dot"></span></button>
     </div>`;
   function mountTopBars() { document.querySelectorAll('[data-topbar]').forEach((el) => { el.innerHTML = TOPBAR_HTML; }); }
   // Rellena los placeholders <span data-art="nombre"> con el SVG de Art (una sola vez).
@@ -3514,6 +3514,10 @@
 
   /* ===================== init / wiring ===================== */
   function init() {
+    // Inmersión: bloquear zoom por gestos (iOS Safari ignora user-scalable=no a veces).
+    document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
+    document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
+    document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
     Render.buildBoard();
     FX.init();
     applyReducedFx();
@@ -3578,7 +3582,8 @@
       else if (a === 'buy-gems' || a === 'bell') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
       else if (a === 'play') { Sound.ensure(); Screens.show('modes'); }
       else if (a === 'home-classic') { Sound.ui(); Worlds.open(); }
-      else if (a === 'home-tourneys' || a === 'q-league' || a === 'q-friends') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
+      else if (a === 'home-surv') { Sound.ensure(); Game.start('supervivencia', 'normal'); }
+      else if (a === 'q-league' || a === 'q-friends') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
       else if (a === 'home-multi') { Sound.ui(); openMultiplayer(); }
       else if (a === 'q-missions') { Sound.ui(); Modal.open('modal-missions'); }
       else if (a === 'q-daily') { Sound.ui(); Meta.rewardReady() ? claimDailyReward() : Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
