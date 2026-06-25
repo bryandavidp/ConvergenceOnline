@@ -241,7 +241,7 @@
         st_points: 'Puntos', st_level: 'Nivel', st_combo: 'Combo máx.', st_removed: 'Eliminados', st_time: 'Tiempo', st_record: 'Récord', st_wave: 'Oleada', st_surv: 'Sobreviviste', st_best: 'Mejor',
         st_games: 'Partidas', st_bestcombo: 'Mejor combo', st_totaltime: 'Tiempo total',
         surv_new_icons: '¡Nuevos iconos! Sube la dificultad',
-        aim_hint: 'Toca dónde aplicarlo', pu_freeze: 'Spawns congelados', pu_x2: '¡Puntos x2!', pu_bomb: '¡Boom!', pu_ray: '¡Rayo!', pu_icons: 'iconos',
+        aim_hint: 'Toca dónde aplicarlo', pu_freeze: 'Spawns congelados', pu_x2: '¡Puntos x2!', pu_bomb: '¡Boom!', pu_ray: '¡Rayo!', pu_icons: 'iconos', chain_boom: 'Cadena ×{n}',
         coins: 'monedas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
         next: 'Próximo', new_icons: 'Nuevos iconos', chapter: 'Capítulo', next_to: 'Ir al nivel {n} →', lets_play: '¡A jugar!',
         obj_clear: 'Vacía el tablero', obj_score: 'Consigue {n} pts', obj_survive: 'Sobrevive {n}s', obj_boss: 'JEFE · rompe los 💎', obj_boss_live: 'JEFE · rompe los 💎 ({n})',
@@ -294,7 +294,7 @@
         st_points: 'Score', st_level: 'Level', st_combo: 'Max combo', st_removed: 'Cleared', st_time: 'Time', st_record: 'Best', st_wave: 'Wave', st_surv: 'Survived', st_best: 'Best',
         st_games: 'Games', st_bestcombo: 'Best combo', st_totaltime: 'Total time',
         surv_new_icons: 'New icons! Difficulty up',
-        aim_hint: 'Tap where to use it', pu_freeze: 'Spawns frozen', pu_x2: 'Double points!', pu_bomb: 'Boom!', pu_ray: 'Ray!', pu_icons: 'icons',
+        aim_hint: 'Tap where to use it', pu_freeze: 'Spawns frozen', pu_x2: 'Double points!', pu_bomb: 'Boom!', pu_ray: 'Ray!', pu_icons: 'icons', chain_boom: 'Chain ×{n}',
         coins: 'coins', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
         next: 'Next', new_icons: 'New icons', chapter: 'Chapter', next_to: 'Go to level {n} →', lets_play: "Let's play!",
         obj_clear: 'Clear the board', obj_score: 'Reach {n} pts', obj_survive: 'Survive {n}s', obj_boss: 'BOSS · break the 💎', obj_boss_live: 'BOSS · break the 💎 ({n})',
@@ -1816,7 +1816,7 @@
       Toasts.show(`+1 ${Boosters.DEFS[id].name}`, 'good', 1500, BOOSTER_IMG[id] || Boosters.DEFS[id].glyph);
       Sound.milestone(); this.buildBar();
     },
-    setup() { const tn = this.tune(); if (this.wave >= 2) this._traps(Math.min(tn.trapCap, tn.trapBase * this.wave)); },
+    setup() { const tn = this.tune(); if (this.wave >= 2) this._traps(Math.min(tn.trapCap, tn.trapBase * this.wave)); this._placeBombs(1); },
     frozen() { return performance.now() < this.freezeUntil; },
     locked() { return performance.now() < this.lockUntil; },
     blockSpawn() { return this.frozen() || this.locked(); },
@@ -1828,6 +1828,16 @@
     _emptyIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) a.push(i); return a; },
     _filledIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) a.push(i); return a; },
     _rockIdx() { const a = []; for (let i = 0; i < State.board.length; i++) { const t = State.tiles[i]; if (t && t.type === 'rock') a.push(i); } return a; },
+    BOMB_CAP: 6,
+    _bombIdx() { const a = []; for (let i = 0; i < State.tiles.length; i++) { const t = State.tiles[i]; if (t && t.trigger === 'bomb') a.push(i); } return a; },
+    // Coloca pickups-bomba en casillas vacías (tope para no saturar). Detonan al
+    // eliminar un icono adyacente (encadenan) o al tocarlas.
+    _placeBombs(n) {
+      const room = this.BOMB_CAP - this._bombIdx().length; if (room <= 0) return;
+      const e = this._emptyIdx(), k = Math.min(n, room, e.length); const placed = [];
+      for (let x = 0; x < k; x++) { const idx = e.splice(rand(e.length), 1)[0]; State.tiles[idx] = Tiles.make('bomb'); placed.push(idx); }
+      if (placed.length) { Render.syncAll(); placed.forEach((i) => Render.cellPulse(i, 'bomb-cleared', 600)); }
+    },
     _traps(density) {
       const e = this._emptyIdx(); let n = Math.floor(e.length * density);
       let rocks = this._rockIdx().length;   // tope de cobertura: el tablero nunca se "brickea"
@@ -1862,6 +1872,7 @@
       }
       Toasts.show('🌊 ' + I18n.t('st_wave') + ' ' + this.wave, 'warn', 1400); Sound.danger();
       this._traps(Math.min(tn.trapCap, tn.trapBase * this.wave));
+      this._placeBombs(1 + Math.floor(this.wave / 6));
       if (this.wave % tn.bossEvery === 0) this.bossEvent();
       this.render();
     },
@@ -2753,6 +2764,8 @@
       Render.hudSoon();
       announce(`+${points} puntos.${State.combo >= 3 ? ' Combo ' + State.combo + '.' : ''}`);
       if (Coach.active) { Coach.notify(); return; }
+      // Pickups-bomba del tablero: detonan si una eliminación queda adyacente (encadenan).
+      this._chainDetonate(conv);
       Rules.call('onConverge', { removed, combo: State.combo, cells: conv, center: i });
       this.evaluate();
     },
@@ -2803,6 +2816,33 @@
       cells.forEach((idx) => { if (State.board[idx] !== null) { State.board[idx] = null; State.iconCount--; } });
       Render.clearAnim(cells);
       cells.forEach((idx) => { Render.setTile(idx); Render.syncCell(idx); });
+    },
+    // Pickups-bomba del tablero: si una eliminación (convergencia/detonación) queda
+    // adyacente a una bomba, esta detona limpiando su 3×3, y encadena con otras bombas
+    // que alcance. Reutiliza _adjacent/_area/_removeCells.
+    _chainDetonate(seedCells) {
+      const isBomb = (j) => { const t = State.tiles[j]; return !!(t && t.trigger === 'bomb'); };
+      const seen = new Set(), queue = [];
+      const enqueueAdj = (cells) => cells.forEach((idx) => this._adjacent(idx).forEach((j) => { if (isBomb(j) && !seen.has(j)) { seen.add(j); queue.push(j); } }));
+      enqueueAdj(seedCells);
+      if (!queue.length) return;
+      let pts = 0; const detonated = [];
+      while (queue.length) {
+        const b = queue.shift();
+        State.tiles[b] = null; Render.setTile(b); detonated.push(b);
+        FX.celebrate(b); Render.cellPulse(b, 'bomb-cleared', 760);
+        const foot = this._area(b, 1);   // huella 3×3 completa (para limpiar y para encadenar)
+        const area = foot.filter((j) => State.board[j] !== null && !(State.tiles[j] && State.tiles[j].solid));
+        pts += area.length * 10 * State.level;
+        this._removeCells(area);
+        area.forEach((j) => Render.cellPulse(j, 'bomb-cleared', 760));
+        enqueueAdj(foot);   // encadena con bombas dentro/adyacentes a la huella
+      }
+      State.score += pts; State.removedTotal += detonated.length;
+      if (detonated.length && State.lastActionCell == null) State.lastActionCell = detonated[0];
+      Render.syncAll(); Render.bump($('#hud-score'));
+      Sound.booster('bomb'); Haptics.milestone();
+      Toasts.show('💣 ' + I18n.t('chain_boom').replace('{n}', detonated.length), 'good', 1300);
     },
     // Objeto especial: efecto al tocar (bonus +30 / portal / caja mágica / bomba oculta).
     _triggerTile(i, ti) {
