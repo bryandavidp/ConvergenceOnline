@@ -209,6 +209,7 @@
         to_map: '🗺️ Volver al mapa', classic_lvl_sub: 'Nivel {n} · {w}', classic_next: 'Siguiente nivel →',
         locked_level: '🔒 Completa el nivel anterior', locked_world: '🔒 Mundo bloqueado', reward_locked: 'Completa todos los niveles del mundo', reward_claimed: 'Recompensa ya reclamada', reward_got: '¡Recompensa del mundo! 🎁 +1 cofre · 💎 +20',
         coming_soon: 'Próximamente', tab_missions: 'Misiones', tab_play: 'Jugar', tab_chests: 'Cofres', tab_rank: 'Clasificación',
+        powerup_empty: 'No te quedan de este power-up',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
         how_title: '¿Cómo se juega?', how1: 'Toca una <strong>casilla vacía</strong>.', how2: 'Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).',
         how3: 'Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!', how4: 'Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.',
@@ -250,6 +251,7 @@
         to_map: '🗺️ Back to map', classic_lvl_sub: 'Level {n} · {w}', classic_next: 'Next level →',
         locked_level: '🔒 Complete the previous level', locked_world: '🔒 World locked', reward_locked: 'Complete all levels in the world', reward_claimed: 'Reward already claimed', reward_got: 'World reward! 🎁 +1 chest · 💎 +20',
         coming_soon: 'Coming soon', tab_missions: 'Missions', tab_play: 'Play', tab_chests: 'Chests', tab_rank: 'Leaderboard',
+        powerup_empty: 'No more of this power-up',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
         how_title: 'How to play?', how1: 'Tap an <strong>empty cell</strong>.', how2: 'It looks at the nearest icon in each direction (up, down, left, right).',
         how3: 'If <strong>2 or more match</strong>, they converge and vanish!', how4: 'Chain quick clears to raise the <strong>combo</strong> and multiply points.',
@@ -1455,11 +1457,11 @@
    */
   const Boosters = {
     DEFS: {
-      bomb:      { name: 'Bomba',    glyph: '💣', cost: 80,  charge: 12, desc: 'Limpia una zona' },
-      freeze:    { name: 'Congelar', glyph: '❄️', cost: 60,  charge: 10, desc: 'Pausa los spawns' },
-      x2:        { name: 'Doble',    glyph: '⚡', cost: 70,  charge: 14, desc: 'Puntos x2 temporal' },
-      clearLine: { name: 'Limpiar',  glyph: '🧹', cost: 90,  charge: 16, desc: 'Vacía fila o columna' },
-      wild:      { name: 'Comodín',  glyph: '🃏', cost: 100, charge: 18, desc: 'Limpia el grupo más repetido' },
+      bomb:      { name: 'Bomba',       glyph: '💣', cost: 80,  start: 2, desc: 'Elimina una zona 3×3' },
+      freeze:    { name: 'Congelación', glyph: '❄️', cost: 60,  start: 2, desc: 'Pausa la aparición de figuras' },
+      clearLine: { name: 'Rayo',        glyph: '⚡', cost: 90,  start: 3, desc: 'Elimina una fila o columna' },
+      wild:      { name: 'Escoba',       glyph: '🧹', cost: 100, start: 2, desc: 'Limpia el grupo más repetido' },
+      x2:        { name: 'Comodín',      glyph: '🃏', cost: 70,  start: 1, desc: 'Duplica los puntos un tiempo' },
     },
     order: ['bomb', 'freeze', 'x2', 'clearLine', 'wild'],
   };
@@ -1590,14 +1592,24 @@
 
   /* ===================== Survival (Supervivencia 2.0: oleadas, vidas, boosters, trampas) ===================== */
   const Survival = {
-    WAVE_MS: 22000, MAX_LIVES: 3, CHARGE_PER: 9, BOOSTERS: ['bomb', 'freeze', 'x2', 'clearLine', 'wild'],
+    WAVE_MS: 22000, MAX_LIVES: 3, CHARGE_PER: 9, BOOSTERS: ['bomb', 'freeze', 'clearLine', 'wild', 'x2'],
     ROCK_CAP: 10, ROCK_HITS: 2,   // las rocas NO son permanentes: tope de cobertura + se rompen por convergencia adyacente
     lives: 3, wave: 1, waveAcc: 0, survSec: 0, charge: 0, freezeUntil: 0, x2Until: 0, lockUntil: 0,
+    inv: {},
     _r: {},
     start() {
       this.lives = this.MAX_LIVES; this.wave = 1; this.waveAcc = 0; this.survSec = 0; this.charge = 0;
       this.freezeUntil = 0; this.x2Until = 0; this.lockUntil = 0; State.tempMult = 1; this._r = {};
+      // Inventario inicial de power-ups (consumibles por partida), según el mockup.
+      this.inv = {}; this.BOOSTERS.forEach((id) => { this.inv[id] = Boosters.DEFS[id].start || 0; });
       this.buildBar(); this.render();
+    },
+    // Goteo de power-ups: al llenarse la barra de carga, regala uno aleatorio.
+    grantRandom() {
+      const id = this.BOOSTERS[rand(this.BOOSTERS.length)];
+      this.inv[id] = (this.inv[id] || 0) + 1;
+      Toasts.show(`${Boosters.DEFS[id].glyph} +1 ${Boosters.DEFS[id].name}`, 'good', 1500);
+      Sound.milestone(); this.buildBar();
     },
     setup() { if (this.wave >= 2) this._traps(Math.min(0.10, 0.02 * this.wave)); },
     frozen() { return performance.now() < this.freezeUntil; },
@@ -1683,7 +1695,8 @@
     },
     onConverge(ctx) {
       const combo = ctx ? ctx.combo : 0;
-      this.charge = Math.min(100, this.charge + this.CHARGE_PER + Math.min(combo || 0, 6));
+      this.charge += this.CHARGE_PER + Math.min(combo || 0, 6);
+      if (this.charge >= 100) { this.charge -= 100; this.grantRandom(); }
       // Romper rocas (con hits) ortogonalmente adyacentes a la acción: la casilla
       // central tocada + cada icono eliminado. Da agencia y evita el bloqueo permanente.
       if (ctx) {
@@ -1754,15 +1767,15 @@
     },
     giveUp() { Modal.close(); Game.gameOver(I18n.t('reason_surv').replace('{s}', Math.floor(this.survSec))); },
     useBooster(id) {
-      if (this.charge < 100) { Toasts.show('Potenciador cargando…', 'warn', 1000); Sound.ui(); return; }
-      this.charge = 0;
+      if ((this.inv[id] || 0) <= 0) { Toasts.show(I18n.t('powerup_empty'), 'warn', 1100); Sound.ui(); return; }
+      this.inv[id]--;
       Render.boosterPulse(id);
       if (id === 'bomb') { this._lock(520, 'boost-bomb'); this._bomb(); }
       else if (id === 'freeze') { this.freezeUntil = performance.now() + 7000; Toasts.show('❄️ Spawns congelados', 'info', 1500); Render.boardEvent('boost-freeze', 1200); }
-      else if (id === 'x2') { this.x2Until = performance.now() + 11000; State.tempMult = 2; Toasts.show('⚡ ¡Puntos x2!', 'good', 1500); Render.boardEvent('boost-x2', 1200); }
+      else if (id === 'x2') { this.x2Until = performance.now() + 11000; State.tempMult = 2; Toasts.show('🃏 ¡Puntos x2!', 'good', 1500); Render.boardEvent('boost-x2', 1200); }
       else if (id === 'clearLine') { this._lock(520, 'boost-clearLine'); this._clearLine(); }
       else if (id === 'wild') { this._lock(520, 'boost-wild'); this._wild(); }
-      Sound.booster(id); Haptics.combo(); this.render();
+      Sound.booster(id); Haptics.combo(); this.buildBar(); this.render();
       if (State.status === 'playing') Game.evaluate();
     },
     _powerClear(j, cleared, fxN = 5) {
@@ -1865,7 +1878,10 @@
     },
     buildBar() {
       const el = $('#boosters'); if (!el) return;
-      el.innerHTML = this.BOOSTERS.map((id) => { const d = Boosters.DEFS[id]; return `<button class="booster" data-b="${id}" aria-label="${d.name}"><span class="b-ic">${d.glyph}</span></button>`; }).join('');
+      el.innerHTML = this.BOOSTERS.map((id) => {
+        const d = Boosters.DEFS[id], n = this.inv[id] || 0;
+        return `<button class="booster${n <= 0 ? ' empty' : ''}" data-b="${id}" aria-label="${d.name}: ${n}" ${n <= 0 ? 'aria-disabled="true"' : ''}><span class="b-ic">${d.glyph}</span><span class="b-count" data-bc="${id}">${n}</span></button>`;
+      }).join('');
       el.querySelectorAll('.booster').forEach((b) => b.addEventListener('click', () => this.useBooster(b.dataset.b)));
     },
     render() {
