@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0a1128" />
   <meta name="description" content="Convergencia — junta iconos iguales tocando la casilla vacía entre ellos. Combos, niveles y varios modos de juego." />
   <title>Convergence</title>
@@ -21,7 +21,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=v122" />
+  <link rel="stylesheet" href="styles.css?v=v123" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -61,10 +61,10 @@
 
     <!-- ============ PANTALLA: INICIO ============ -->
     <section class="screen home" id="screen-start" aria-labelledby="start-title" hidden>
-      <!-- Top bar reutilizable (perfil + economía + ajustes) -->
+      <!-- Top bar reutilizable (perfil + economía + notificaciones) -->
       <header class="appbar" data-topbar></header>
-      <button class="appbar-bell" data-act="bell" aria-label="Notificaciones"><span class="art-ic" data-art="bell"></span><span class="bell-dot"></span></button>
 
+      <!-- Zona superior (rellena el alto disponible) -->
       <div class="home-scroll">
         <!-- Recompensa diaria -->
         <div class="daily-banner" id="btn-reward">
@@ -73,9 +73,6 @@
           <button class="db-claim" data-act="claim-daily"><span data-i18n="claim">Reclamar</span><span class="db-badge">1</span></button>
           <span class="db-rocket" data-art="rocket" aria-hidden="true"></span>
         </div>
-
-        <!-- CTA Jugar (hero) -->
-        <button class="btn-hero" id="btn-play"><span class="play-ic" aria-hidden="true">▶</span><span data-i18n="play_word">Jugar</span></button>
 
         <!-- Chip nivel + mejor puntuación -->
         <div class="level-chip">
@@ -91,15 +88,22 @@
             <span class="ac-tx"><b data-i18n="home_classic">Partida clásica</b><small data-i18n="home_classic_sub">Juega en el tablero contra amigos o bots</small></span>
             <span class="ac-art" data-art="boardMini" aria-hidden="true"></span>
           </button>
-          <button class="app-card card-green" data-act="home-tourneys">
-            <span class="ac-tx"><b data-i18n="home_tourneys">Torneos</b><small data-i18n="home_tourneys_sub">Compite y gana recompensas</small></span>
-            <span class="ac-art" data-art="trophy" aria-hidden="true"></span>
+          <button class="app-card card-red" data-act="home-surv">
+            <span class="ac-tx"><b data-i18n="card_surv">Supervivencia</b><small data-i18n="home_surv_sub">Sobrevive a oleadas infinitas</small></span>
+            <span class="ac-art" data-art="heartFoes" aria-hidden="true"></span>
           </button>
           <button class="app-card card-orange" data-act="home-multi">
             <span class="ac-tx"><b data-i18n="card_multi">Multijugador</b><small data-i18n="home_multi_sub">Desafía a jugadores en línea</small></span>
             <span class="ac-art" data-art="vsPeople" aria-hidden="true"></span>
           </button>
         </div>
+
+        <button class="btn btn-ghost btn-sm home-install" id="btn-install" hidden data-i18n="install">📲 Instalar app</button>
+      </div>
+
+      <!-- Pie anclado abajo: Jugar (encima) + menús -->
+      <div class="home-foot">
+        <button class="btn-hero" id="btn-play"><span class="play-ic" aria-hidden="true">▶</span><span data-i18n="play_word">Jugar</span></button>
 
         <!-- Fila rápida -->
         <div class="quick-row">
@@ -110,18 +114,15 @@
           <button class="quick" data-act="q-friends"><span class="q-ic" data-art="friends"></span><small data-i18n="q_friends">Amigos</small></button>
         </div>
 
-        <button class="btn btn-ghost btn-sm home-install" id="btn-install" hidden data-i18n="install">📲 Instalar app</button>
-        <p class="version-line">v<span id="app-version">1.2.2</span></p>
+        <!-- Bottom nav (anclado) -->
+        <nav class="bottom-nav" aria-label="Navegación">
+          <button class="bnav" data-act="nav-medals"><span class="bn-ic" data-art="medal"></span><small data-i18n="tab_log">Logros</small></button>
+          <button class="bnav" data-act="nav-shop"><span class="bn-ic" data-art="cart"></span><small data-i18n="tab_shop">Tienda</small></button>
+          <button class="bnav bnav-center" data-act="nav-home" aria-current="page"><span class="bn-ic" data-art="home"></span><small data-i18n="tab_home">Inicio</small></button>
+          <button class="bnav" data-act="nav-guide"><span class="bn-ic" data-art="book"></span><small data-i18n="tab_guide">Guía</small></button>
+          <button class="bnav" data-act="settings"><span class="bn-ic" data-art="gear"></span><small data-i18n="tab_set">Ajustes</small></button>
+        </nav>
       </div>
-
-      <!-- Bottom nav -->
-      <nav class="bottom-nav" aria-label="Navegación">
-        <button class="bnav" data-act="nav-medals"><span class="bn-ic" data-art="medal"></span><small data-i18n="tab_log">Logros</small></button>
-        <button class="bnav" data-act="nav-shop"><span class="bn-ic" data-art="cart"></span><small data-i18n="tab_shop">Tienda</small></button>
-        <button class="bnav bnav-center" data-act="nav-home" aria-current="page"><span class="bn-ic" data-art="home"></span><small data-i18n="tab_home">Inicio</small></button>
-        <button class="bnav" data-act="nav-guide"><span class="bn-ic" data-art="book"></span><small data-i18n="tab_guide">Guía</small></button>
-        <button class="bnav" data-act="settings"><span class="bn-ic" data-art="gear"></span><small data-i18n="tab_set">Ajustes</small></button>
-      </nav>
     </section>
 
     <!-- ============ PANTALLA: SELECCIÓN DE MODO ============ -->
@@ -443,6 +444,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=v122" defer></script>
+  <script src="game.js?v=v123" defer></script>
 </body>
 </html>
