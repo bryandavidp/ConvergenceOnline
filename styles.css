@@ -1138,6 +1138,17 @@ body.mode-timed .lvl-chip { display: none; }
 .chest-count { font-weight: 800; font-size: 1.05rem; }
 .chest-hint { color: var(--muted); font-size: .82rem; text-align: center; }
 
+/* Multijugador (próximamente) */
+.multi-vs { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 4px 0 12px; }
+.multi-p { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; font-size: 2rem;
+  background: radial-gradient(circle at 50% 35%, rgba(255,255,255,.18), rgba(0,0,0,.3)); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 4px 12px rgba(0,0,0,.4); }
+.multi-p1 { box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 18px rgba(75,139,255,.5); }
+.multi-p2 { box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 18px rgba(255,91,110,.5); }
+.multi-vs-tag { font-weight: 900; font-size: 1.4rem; color: var(--level); text-shadow: 0 0 12px color-mix(in srgb, var(--level) 60%, transparent); }
+.multi-feats { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.multi-feat { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,.05); border: 1px solid var(--line); font-weight: 700; font-size: .85rem; }
+.multi-soon-badge { text-align: center; font-weight: 900; color: var(--warn); background: rgba(255,178,77,.12); border: 1px dashed rgba(255,178,77,.5); border-radius: 999px; padding: 8px; }
+
 /* Recompensa diaria (botón destacado) */
 .btn-reward { min-height: 48px; background: linear-gradient(180deg, #ffe27a, #ffc23d 55%, #ff9e2e); color: #2a1a00; font-weight: 900; text-shadow: 0 1px 0 rgba(255,255,255,.4); box-shadow: 0 5px 0 #b06a12, 0 10px 20px rgba(255,180,60,.45); animation: rewardPulse 1.8s ease-in-out infinite; }
 .btn-reward:active { transform: translateY(3px); box-shadow: 0 1px 0 #b06a12, 0 4px 10px rgba(255,180,60,.4); }
