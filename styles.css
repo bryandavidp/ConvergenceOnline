@@ -1582,6 +1582,14 @@ body.mode-timed .lvl-chip { display: none; }
 .booster[data-b="wild"].fired { border-color: var(--level); box-shadow: 0 0 18px rgba(143,123,255,.6); }
 @keyframes booster-fired { 40% { transform: translateY(-3px) scale(1.16); } }
 
+/* Modo apuntar power-up (Supervivencia): atenúa el tablero, resalta el botón armado y el área */
+body.aiming .board-wrap { box-shadow: 0 0 0 2px var(--accent-2), 0 0 26px rgba(0,208,255,.4); border-radius: 18px; }
+body.aiming .board { cursor: crosshair; }
+.booster.arming { border-color: var(--accent-2); box-shadow: 0 0 0 2px var(--accent-2) inset, 0 0 16px rgba(0,208,255,.55); animation: armPulse 1s ease-in-out infinite; }
+@keyframes armPulse { 50% { box-shadow: 0 0 0 2px var(--accent-2) inset, 0 0 24px rgba(0,208,255,.8); } }
+.cell.aim-target { box-shadow: 0 0 0 2px var(--accent-2) inset, 0 0 12px rgba(0,208,255,.55); z-index: 2; }
+.cell.aim-target::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: rgba(0,208,255,.18); pointer-events: none; }
+
 /* Mapa de Aventura */
 .adventure-map { display: flex; align-items: center; gap: 4px; overflow-x: auto; padding: 10px 2px; margin: 8px 0 16px; }
 .adv-node { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 92px; padding: 12px 8px; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.24)); border: 1px solid var(--line); opacity: .5; flex: 0 0 auto; }

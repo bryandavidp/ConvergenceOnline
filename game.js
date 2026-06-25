@@ -241,6 +241,7 @@
         st_points: 'Puntos', st_level: 'Nivel', st_combo: 'Combo máx.', st_removed: 'Eliminados', st_time: 'Tiempo', st_record: 'Récord', st_wave: 'Oleada', st_surv: 'Sobreviviste', st_best: 'Mejor',
         st_games: 'Partidas', st_bestcombo: 'Mejor combo', st_totaltime: 'Tiempo total',
         surv_new_icons: '¡Nuevos iconos! Sube la dificultad',
+        aim_hint: 'Toca dónde aplicarlo', pu_freeze: 'Spawns congelados', pu_x2: '¡Puntos x2!', pu_bomb: '¡Boom!', pu_ray: '¡Rayo!', pu_icons: 'iconos',
         coins: 'monedas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
         next: 'Próximo', new_icons: 'Nuevos iconos', chapter: 'Capítulo', next_to: 'Ir al nivel {n} →', lets_play: '¡A jugar!',
         obj_clear: 'Vacía el tablero', obj_score: 'Consigue {n} pts', obj_survive: 'Sobrevive {n}s', obj_boss: 'JEFE · rompe los 💎', obj_boss_live: 'JEFE · rompe los 💎 ({n})',
@@ -293,6 +294,7 @@
         st_points: 'Score', st_level: 'Level', st_combo: 'Max combo', st_removed: 'Cleared', st_time: 'Time', st_record: 'Best', st_wave: 'Wave', st_surv: 'Survived', st_best: 'Best',
         st_games: 'Games', st_bestcombo: 'Best combo', st_totaltime: 'Total time',
         surv_new_icons: 'New icons! Difficulty up',
+        aim_hint: 'Tap where to use it', pu_freeze: 'Spawns frozen', pu_x2: 'Double points!', pu_bomb: 'Boom!', pu_ray: 'Ray!', pu_icons: 'icons',
         coins: 'coins', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
         next: 'Next', new_icons: 'New icons', chapter: 'Chapter', next_to: 'Go to level {n} →', lets_play: "Let's play!",
         obj_clear: 'Clear the board', obj_score: 'Reach {n} pts', obj_survive: 'Survive {n}s', obj_boss: 'BOSS · break the 💎', obj_boss_live: 'BOSS · break the 💎 ({n})',
@@ -1799,6 +1801,7 @@
       this.WAVE_MS = tn.waveMs; this.MAX_LIVES = tn.lives;
       this.lives = this.MAX_LIVES; this.wave = 1; this.waveAcc = 0; this.survSec = 0; this.charge = 0;
       this.freezeUntil = 0; this.x2Until = 0; this.lockUntil = 0; State.tempMult = 1; this._r = {};
+      this.armed = null; this._preview = null; document.body.classList.remove('aiming');
       // Progresión de iconos desde la oleada 1: la puntuación base usa State.level (= dlevel).
       State.level = this.dlevel();
       State.pool = Engine.poolForLevel(State.level);
@@ -1978,16 +1981,84 @@
       this.render();
     },
     giveUp() { Modal.close(); Game.gameOver(I18n.t('reason_surv').replace('{s}', Math.floor(this.survSec))); },
-    useBooster(id) {
+    // Power-ups ESPACIALES (el jugador elige dónde) vs GLOBALES (efecto instantáneo).
+    SPATIAL: ['bomb', 'clearLine', 'wild'],
+    isSpatial(id) { return this.SPATIAL.indexOf(id) !== -1; },
+    // Pulsar un power-up: los globales se aplican ya; los espaciales entran en
+    // "modo apuntar" (toca una casilla para aplicarlo ahí).
+    armBooster(id) {
       if ((this.inv[id] || 0) <= 0) { Toasts.show(I18n.t('powerup_empty'), 'warn', 1100); Sound.ui(); return; }
+      if (this.locked()) { Sound.ui(); return; }
+      if (!this.isSpatial(id)) { this._applyGlobal(id); return; }
+      if (this.armed === id) { this.disarm(); return; }   // volver a pulsar = cancelar
+      this.armed = id;
+      document.body.classList.add('aiming');
+      this.buildBar();
+      Toasts.show(I18n.t('aim_hint'), 'info', 1600, Boosters.DEFS[id].glyph);
+      Sound.ui();
+    },
+    disarm() {
+      if (!this.armed) return;
+      this.armed = null;
+      document.body.classList.remove('aiming');
+      this._clearPreview();
+      this.buildBar();
+    },
+    _applyGlobal(id) {
       this.inv[id]--;
       Render.boosterPulse(id);
-      if (id === 'bomb') { this._lock(520, 'boost-bomb'); this._bomb(); }
-      else if (id === 'freeze') { this.freezeUntil = performance.now() + 7000; Toasts.show('❄️ Spawns congelados', 'info', 1500); Render.boardEvent('boost-freeze', 1200); }
-      else if (id === 'x2') { this.x2Until = performance.now() + 11000; State.tempMult = 2; Toasts.show('🃏 ¡Puntos x2!', 'good', 1500); Render.boardEvent('boost-x2', 1200); }
-      else if (id === 'clearLine') { this._lock(520, 'boost-clearLine'); this._clearLine(); }
-      else if (id === 'wild') { this._lock(520, 'boost-wild'); this._wild(); }
+      if (id === 'freeze') { this.freezeUntil = performance.now() + 7000; Toasts.show('❄️ ' + I18n.t('pu_freeze'), 'info', 1500); Render.boardEvent('boost-freeze', 1200); }
+      else if (id === 'x2') { this.x2Until = performance.now() + 11000 * (Boards.fx().x2Boost || 1); State.tempMult = 2; Toasts.show('🃏 ' + I18n.t('pu_x2'), 'good', 1500); Render.boardEvent('boost-x2', 1200); }
       Sound.booster(id); Haptics.combo(); this.buildBar(); this.render();
+      if (State.status === 'playing') Game.evaluate();
+    },
+    // Celdas afectadas por un power-up espacial centrado en `i` (para previsualizar y aplicar).
+    _affectedCells(id, i) {
+      const size = State.size, r = i / size | 0, c = i % size, out = [];
+      if (id === 'bomb') {
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { const rr = r + dr, cc = c + dc; if (rr >= 0 && cc >= 0 && rr < size && cc < size) out.push(rr * size + cc); }
+      } else if (id === 'clearLine') {
+        this._lineCells('row', r).forEach((j) => out.push(j));
+        this._lineCells('col', c).forEach((j) => { if (out.indexOf(j) === -1) out.push(j); });
+      } else if (id === 'wild') {
+        const type = State.board[i];
+        if (type != null) for (let j = 0; j < State.board.length; j++) if (State.board[j] === type) out.push(j);
+      }
+      return out;
+    },
+    previewAt(i) {
+      this._clearPreview();
+      if (!this.armed || i == null) return;
+      const cells = this._affectedCells(this.armed, i);
+      this._preview = cells;
+      cells.forEach((j) => { const el = Render.cells[j]; if (el) el.classList.add('aim-target'); });
+    },
+    _clearPreview() {
+      if (this._preview) this._preview.forEach((j) => { const el = Render.cells[j]; if (el) el.classList.remove('aim-target'); });
+      this._preview = null;
+    },
+    // Aplica el power-up espacial armado en la casilla elegida por el jugador.
+    applyBoosterAt(id, i) {
+      if ((this.inv[id] || 0) <= 0) { this.disarm(); return; }
+      // Escoba sobre casilla vacía: barrido automático del grupo más repetido.
+      if (id === 'wild' && State.board[i] == null) {
+        this.inv[id]--; Render.boosterPulse(id); this._lock(420, 'boost-wild'); this._wild();
+        Sound.booster(id); Haptics.combo(); this.disarm(); this.render();
+        if (State.status === 'playing') Game.evaluate();
+        return;
+      }
+      const cells = this._affectedCells(id, i);
+      this.inv[id]--; Render.boosterPulse(id); this._lock(420, 'boost-' + id);
+      const cleared = []; let icons = 0;
+      const fxN = id === 'bomb' ? 5 : id === 'clearLine' ? 4 : 6;
+      cells.forEach((j) => { icons += this._powerClear(j, cleared, fxN); });
+      State.removedTotal += icons; State.lastActionCell = i;
+      Render.syncAll();
+      const msg = id === 'bomb' ? '💣 ' + I18n.t('pu_bomb') : id === 'clearLine' ? '⚡ ' + I18n.t('pu_ray') : '🧹 ' + icons + ' ' + I18n.t('pu_icons');
+      Toasts.show(msg, 'good', 1200);
+      const pulse = id === 'bomb' ? 'bomb-cleared' : id === 'clearLine' ? 'line-cleared' : 'wild-cleared';
+      cleared.forEach((j) => Render.cellPulse(j, pulse, 760));
+      Sound.booster(id); Haptics.combo(); this.disarm(); this.render();
       if (State.status === 'playing') Game.evaluate();
     },
     _powerClear(j, cleared, fxN = 5) {
@@ -2092,9 +2163,10 @@
       const el = $('#boosters'); if (!el) return;
       el.innerHTML = this.BOOSTERS.map((id) => {
         const d = Boosters.DEFS[id], n = this.inv[id] || 0;
-        return `<button class="booster${n <= 0 ? ' empty' : ''}" data-b="${id}" aria-label="${d.name}: ${n}" ${n <= 0 ? 'aria-disabled="true"' : ''}><span class="b-ic">${BOOSTER_IMG[id] ? iconAnyInline(BOOSTER_IMG[id]) : d.glyph}</span><span class="b-count" data-bc="${id}">${n}</span></button>`;
+        const arming = this.armed === id ? ' arming' : '';
+        return `<button class="booster${n <= 0 ? ' empty' : ''}${arming}" data-b="${id}" aria-label="${d.name}: ${n}" ${n <= 0 ? 'aria-disabled="true"' : ''}><span class="b-ic">${BOOSTER_IMG[id] ? iconAnyInline(BOOSTER_IMG[id]) : d.glyph}</span><span class="b-count" data-bc="${id}">${n}</span></button>`;
       }).join('');
-      el.querySelectorAll('.booster').forEach((b) => b.addEventListener('click', () => this.useBooster(b.dataset.b)));
+      el.querySelectorAll('.booster').forEach((b) => b.addEventListener('click', () => this.armBooster(b.dataset.b)));
     },
     render() {
       const r = this._r;
@@ -2555,6 +2627,7 @@
       if (Coach.active) return Coach.skip();
       Loop.stop(); Music.stop(); State.status = 'idle'; Modal.close();
       document.body.classList.remove('mode-surv'); this.clearHintHighlight();
+      if (typeof Survival !== 'undefined') Survival.disarm();
       // Clásico: salir devuelve al mapa de mundos (su hub natural).
       if (State.mode === 'clasico') { Worlds.open(); return; }
       refreshStart(); Screens.show('start');
@@ -3167,14 +3240,24 @@
   const Input = {
     init() {
       const board = $('#board');
+      const armed = () => State.mode === 'supervivencia' && Survival.armed;
       // Activación rápida por pointerdown (sin retardo)
       board.addEventListener('pointerdown', (e) => {
         const cell = e.target.closest('.cell');
         if (!cell) return;
         e.preventDefault();
         Sound.ensure();
+        // Power-up apuntado armado: aplicar en la casilla elegida en vez de jugar.
+        if (armed()) { Survival.applyBoosterAt(Survival.armed, +cell.dataset.i); return; }
         Game.activate(+cell.dataset.i);
       });
+      // Previsualización del área afectada mientras se apunta (hover ratón / arrastre táctil).
+      board.addEventListener('pointermove', (e) => {
+        if (!armed()) return;
+        const cell = e.target.closest('.cell');
+        Survival.previewAt(cell ? +cell.dataset.i : null);
+      });
+      board.addEventListener('pointerleave', () => { if (armed()) Survival.previewAt(null); });
       // Teclado: roving tabindex + flechas + Enter/Espacio
       board.addEventListener('keydown', (e) => {
         const cell = e.target.closest('.cell'); if (!cell) return;
@@ -3184,7 +3267,7 @@
         else if (e.key === 'ArrowLeft') n = i % s === 0 ? i : i - 1;
         else if (e.key === 'ArrowUp') n = i - s < 0 ? i : i - s;
         else if (e.key === 'ArrowDown') n = i + s >= s * s ? i : i + s;
-        else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); Sound.ensure(); Game.activate(i); return; }
+        else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); Sound.ensure(); if (armed()) { Survival.applyBoosterAt(Survival.armed, i); } else { Game.activate(i); } return; }
         else return;
         e.preventDefault();
         if (n !== i) { Render.cells[i].tabIndex = -1; Render.cells[n].tabIndex = 0; Render.cells[n].focus(); }
