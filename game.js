@@ -205,9 +205,9 @@
         menu_settings: '⚙️ Ajustes', how: '¿Cómo se juega?', install: '📲 Instalar app', sound: 'Sonido', best: 'Mejor puntuación:',
         tab_log: 'Logros', tab_shop: 'Tienda', tab_home: 'Inicio', tab_guide: 'Guía', tab_set: 'Ajustes', missions_title: '🎯 Misiones',
         modes_title: 'Elige tu modo', modes_sub: 'Cada modo, una forma diferente de jugar', group_mode: 'Modo', group_diff: 'Dificultad',
-        card_surv: 'Supervivencia', card_surv_badge: 'OLEADAS INFINITAS', card_surv_desc: 'Enfréntate a oleadas crecientes de enemigos. Cada vez son más fuertes. ¿Cuánto tiempo podrás sobrevivir?',
-        card_classic: 'Clásico', card_classic_badge: 'POR NIVELES', card_classic_desc: 'Supera niveles con diferentes mapas y desafíos únicos. Nuevos obstáculos, mecánicas y objetos te esperan en cada uno.',
-        card_multi: 'Multijugador', card_multi_badge: 'COMPITE EN LÍNEA', card_multi_desc: 'Compite contra otro jugador en el mismo tablero. Cada uno por su lado. Gana quien termine primero y consiga la mejor puntuación.',
+        card_surv: 'Supervivencia', card_surv_badge: 'OLEADAS INFINITAS', card_surv_desc: 'Aguanta oleadas cada vez más intensas y supera tu mejor marca.',
+        card_classic: 'Clásico', card_classic_badge: 'POR NIVELES', card_classic_desc: 'Supera mapas con objetivos, obstáculos y desafíos nuevos.',
+        card_multi: 'Multijugador', card_multi_badge: 'PRÓXIMAMENTE', card_multi_desc: 'Desafía a otros jugadores en línea cuando esté disponible.',
         card_feat_locks: 'Bloqueos', card_feat_objects: 'Objetos', card_feat_events: 'Eventos', card_feat_more: '¡Y mucho más!',
         card_feat_first: 'Termina primero el tablero', card_feat_best: 'Mejor puntuación', card_feat_online: 'Partidas en línea',
         how_card_desc: 'Repasa las reglas, consejos y todo lo que necesitas saber para dominar el juego.', how_card_cta: 'Ver información', multi_soon: 'Multijugador en línea: ¡muy pronto!',
@@ -219,7 +219,7 @@
         coming_soon: 'Próximamente', tab_missions: 'Misiones', tab_play: 'Jugar', tab_chests: 'Cofres', tab_rank: 'Clasificación',
         powerup_empty: 'No te quedan de este power-up',
         equipped: 'Equipado', equip: 'Equipar', free: 'Gratis', no_coins: 'Monedas insuficientes',
-        shop_boards: 'Tableros comprables', shop_themes: 'Temas de color', shop_hint2: 'Cada tablero tiene un diseño y efectos únicos. ¡Desbloquéalos con monedas!', board_unlocked: '¡Tablero desbloqueado!',
+        shop_boards: 'Tableros visuales', shop_themes: 'Temas de color', shop_hint2: 'Los tableros son solo cambios visuales: no dan ventajas ni desventajas. Equipa tu estilo favorito para jugar.', board_unlocked: '¡Tablero desbloqueado!',
         chests_title: '🎁 Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre contiene monedas, gemas o tickets.', chests_none: 'No tienes cofres', chest_reward: '¡Recompensa! {r}', open_chest: '🎁 Abrir cofre',
         soon_badge: '🚧 Próximamente', notify_me: '🔔 Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
         edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
@@ -256,9 +256,9 @@
         menu_settings: '⚙️ Settings', how: 'How to play?', install: '📲 Install app', sound: 'Sound', best: 'Best score:',
         tab_log: 'Trophies', tab_shop: 'Shop', tab_home: 'Home', tab_guide: 'Guide', tab_set: 'Settings', missions_title: '🎯 Missions',
         modes_title: 'Choose your mode', modes_sub: 'Each mode, a different way to play', group_mode: 'Mode', group_diff: 'Difficulty',
-        card_surv: 'Survival', card_surv_badge: 'ENDLESS WAVES', card_surv_desc: 'Face rising waves of enemies. They get stronger every time. How long can you survive?',
-        card_classic: 'Classic', card_classic_badge: 'BY LEVELS', card_classic_desc: 'Beat levels across different maps and unique challenges. New obstacles, mechanics and objects await in each one.',
-        card_multi: 'Multiplayer', card_multi_badge: 'COMPETE ONLINE', card_multi_desc: 'Compete against another player on the same board. Each on their own side. Whoever finishes first with the best score wins.',
+        card_surv: 'Survival', card_surv_badge: 'ENDLESS WAVES', card_surv_desc: 'Survive rising waves and beat your best run.',
+        card_classic: 'Classic', card_classic_badge: 'BY LEVELS', card_classic_desc: 'Clear maps with fresh goals, obstacles and challenges.',
+        card_multi: 'Multiplayer', card_multi_badge: 'COMING SOON', card_multi_desc: 'Challenge other players online when it is available.',
         card_feat_locks: 'Locks', card_feat_objects: 'Objects', card_feat_events: 'Events', card_feat_more: 'And much more!',
         card_feat_first: 'Finish the board first', card_feat_best: 'Best score', card_feat_online: 'Online matches',
         how_card_desc: 'Review the rules, tips and everything you need to master the game.', how_card_cta: 'See info', multi_soon: 'Online multiplayer: coming soon!',
@@ -270,7 +270,7 @@
         coming_soon: 'Coming soon', tab_missions: 'Missions', tab_play: 'Play', tab_chests: 'Chests', tab_rank: 'Leaderboard',
         powerup_empty: 'No more of this power-up',
         equipped: 'Equipped', equip: 'Equip', free: 'Free', no_coins: 'Not enough coins',
-        shop_boards: 'Boards for sale', shop_themes: 'Color themes', shop_hint2: 'Each board has a unique design and effects. Unlock them with coins!', board_unlocked: 'Board unlocked!',
+        shop_boards: 'Visual boards', shop_themes: 'Color themes', shop_hint2: 'Boards are visual-only cosmetics: no advantages or disadvantages. Equip your favorite style before playing.', board_unlocked: 'Board unlocked!',
         chests_title: '🎁 Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest contains coins, gems or tickets.', chests_none: 'You have no chests', chest_reward: 'Reward! {r}', open_chest: '🎁 Open chest',
         soon_badge: '🚧 Coming soon', notify_me: '🔔 Notify me', notify_ok: "We'll let you know when it's ready!",
         edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
@@ -1679,43 +1679,29 @@
   };
 
   /* ===================== Boards (tableros comprables de la tienda) =====================
-   * 10 tableros del mockup. Cada uno aporta una apariencia (swatch/skin del tablero) y,
-   * a futuro (Fase 5), efectos mecánicos descritos en `chars`. El equipado se guarda en
-   * Meta.boards.equipped y se aplica como data-board en el #board.
+   * Son cosmeticos puros: cambian marco, patron y color de casillas, sin tocar reglas,
+   * puntuacion, economia, spawns, dificultad ni power-ups.
    */
   const Boards = {
     DEFS: {
-      classic:   { name: 'Tablero Clásico',    cost: 0,    sw: 'linear-gradient(135deg,#1b2a52,#2f6bff)', chars: ['Sin efectos especiales', 'Ideal para aprender'] },
-      madera:    { name: 'Tablero de Madera',  cost: 500,  sw: 'linear-gradient(135deg,#5a3a1e,#a86a36)', chars: ['Las cadenas duran 1 turno menos', 'Bonificación de puntos +5%'] },
-      hielo:     { name: 'Tablero de Hielo',   cost: 800,  sw: 'linear-gradient(135deg,#2a6a9e,#9fe6ff)', chars: ['Aparecen más casillas de hielo', 'Las oleadas son más rápidas'] },
-      lava:      { name: 'Tablero de Lava',    cost: 1200, sw: 'linear-gradient(135deg,#7a1e10,#ff5b2e)', chars: ['Aumenta la velocidad de oleadas', 'Menos tiempo en Supervivencia'] },
-      cristal:   { name: 'Tablero de Cristal', cost: 1500, sw: 'linear-gradient(135deg,#5a2a8e,#c08bff)', chars: ['Los combos otorgan +10% más puntos', 'Aparecen portales aleatorios'] },
-      magico:    { name: 'Tablero Mágico',     cost: 2000, sw: 'linear-gradient(135deg,#3a1e6e,#8a5cff)', chars: ['Probabilidad de figuras especiales', 'Los comodines duran más'] },
-      futurista: { name: 'Tablero Futurista',  cost: 2500, sw: 'linear-gradient(135deg,#0e3a4a,#19f0d0)', chars: ['Genera chips de energía aleatorios', 'Power-ups recargan más rápido'] },
-      dorado:    { name: 'Tablero Dorado',     cost: 3000, sw: 'linear-gradient(135deg,#7a5a10,#ffd84d)', chars: ['Bonificación de monedas +10%', 'Más puntos por combos largos'] },
-      bosque:    { name: 'Tablero del Bosque', cost: 1800, sw: 'linear-gradient(135deg,#1e4a2a,#6bd36b)', chars: ['Aparecen más tréboles y flores', 'Aumenta la probabilidad de extras'] },
-      cosmico:   { name: 'Tablero Cósmico',    cost: 2200, sw: 'linear-gradient(135deg,#2a1a5e,#a06bff)', chars: ['Figuras cósmicas exclusivas', 'Efectos visuales espectaculares'] },
+      classic:   { name: 'Tablero Clásico',    cost: 0,    sw: 'linear-gradient(135deg,#1b2a52,#2f6bff)', chars: ['Marco espacial azul', 'Casillas limpias y legibles'] },
+      madera:    { name: 'Tablero de Madera',  cost: 500,  sw: 'linear-gradient(135deg,#5a3a1e,#a86a36)', chars: ['Vetas cálidas de madera', 'Marco artesanal'] },
+      hielo:     { name: 'Tablero de Hielo',   cost: 800,  sw: 'linear-gradient(135deg,#2a6a9e,#9fe6ff)', chars: ['Cristal frío y brillo polar', 'Casillas translúcidas'] },
+      lava:      { name: 'Tablero de Lava',    cost: 1200, sw: 'linear-gradient(135deg,#7a1e10,#ff5b2e)', chars: ['Roca oscura y magma', 'Borde incandescente'] },
+      cristal:   { name: 'Tablero de Cristal', cost: 1500, sw: 'linear-gradient(135deg,#5a2a8e,#c08bff)', chars: ['Prismas violetas', 'Destellos de vidrio'] },
+      magico:    { name: 'Tablero Mágico',     cost: 2000, sw: 'linear-gradient(135deg,#3a1e6e,#8a5cff)', chars: ['Runas arcanas sutiles', 'Brillo encantado'] },
+      futurista: { name: 'Tablero Futurista',  cost: 2500, sw: 'linear-gradient(135deg,#0e3a4a,#19f0d0)', chars: ['Circuitos neón', 'Paneles tecnológicos'] },
+      dorado:    { name: 'Tablero Dorado',     cost: 3000, sw: 'linear-gradient(135deg,#7a5a10,#ffd84d)', chars: ['Oro pulido', 'Detalles premium'] },
+      bosque:    { name: 'Tablero del Bosque', cost: 1800, sw: 'linear-gradient(135deg,#1e4a2a,#6bd36b)', chars: ['Textura de hojas', 'Tonos naturales'] },
+      cosmico:   { name: 'Tablero Cósmico',    cost: 2200, sw: 'linear-gradient(135deg,#2a1a5e,#a06bff)', chars: ['Nebulosa profunda', 'Estrellas en el marco'] },
     },
     order: ['classic', 'madera', 'hielo', 'lava', 'cristal', 'magico', 'futurista', 'dorado', 'bosque', 'cosmico'],
-    apply() { const b = $('#board'); if (b) b.dataset.board = Meta.equippedBoard(); },
-    // Efectos mecánicos por tablero (Fase 5). Valores normalizados; 1 = neutro.
-    EFFECTS: {
-      classic:   {},
-      madera:    { score: 1.05, chainTurns: -1 },
-      hielo:     { spawn: 0.9, iceBoost: 1.6 },
-      lava:      { spawn: 0.82, survTime: 0.85 },
-      cristal:   { combo: 1.10, portalBoost: true },
-      magico:    { charge: 1.2, x2Boost: 1.5 },
-      futurista: { charge: 1.45 },
-      dorado:    { coin: 1.10, score: 1.04 },
-      bosque:    { extras: 1.6 },
-      cosmico:   { score: 1.06, combo: 1.05 },
-    },
-    fx() {
-      return Object.assign(
-        { score: 1, coin: 1, spawn: 1, combo: 1, charge: 1, iceBoost: 1, chainTurns: 0, extras: 1, survTime: 1, x2Boost: 1, portalBoost: false },
-        this.EFFECTS[Meta.equippedBoard()] || {}
-      );
+    apply(id) {
+      const current = id || Meta.equippedBoard();
+      ['#screen-game', '.board-wrap', '#board'].forEach((sel) => {
+        const el = $(sel);
+        if (el) el.dataset.board = current;
+      });
     },
   };
 
@@ -1905,8 +1891,7 @@
     },
     onConverge(ctx) {
       const combo = ctx ? ctx.combo : 0;
-      // Tableros Futurista/Mágico: los power-ups se recargan más rápido (fx.charge).
-      this.charge += (this.CHARGE_PER + Math.min(combo || 0, 6)) * Boards.fx().charge;
+      this.charge += this.CHARGE_PER + Math.min(combo || 0, 6);
       if (this.charge >= 100) { this.charge -= 100; this.grantRandom(); }
       // Romper rocas (con hits) ortogonalmente adyacentes a la acción: la casilla
       // central tocada + cada icono eliminado. Da agencia y evita el bloqueo permanente.
@@ -1983,7 +1968,7 @@
       Render.boosterPulse(id);
       if (id === 'bomb') { this._lock(520, 'boost-bomb'); this._bomb(); }
       else if (id === 'freeze') { this.freezeUntil = performance.now() + 7000; Toasts.show('❄️ Spawns congelados', 'info', 1500); Render.boardEvent('boost-freeze', 1200); }
-      else if (id === 'x2') { this.x2Until = performance.now() + 11000 * Boards.fx().x2Boost; State.tempMult = 2; Toasts.show('🃏 ¡Puntos x2!', 'good', 1500); Render.boardEvent('boost-x2', 1200); }
+      else if (id === 'x2') { this.x2Until = performance.now() + 11000; State.tempMult = 2; Toasts.show('🃏 ¡Puntos x2!', 'good', 1500); Render.boardEvent('boost-x2', 1200); }
       else if (id === 'clearLine') { this._lock(520, 'boost-clearLine'); this._clearLine(); }
       else if (id === 'wild') { this._lock(520, 'boost-wild'); this._wild(); }
       Sound.booster(id); Haptics.combo(); this.buildBar(); this.render();
@@ -2242,19 +2227,16 @@
       for (let x = 0; x < k && f.length; x++) { const j = f.splice(rand(f.length), 1)[0]; const t = Tiles.make(type); if (init) init(t); State.tiles[j] = t; }
     },
     // setupLevel ya fijó pool/spawn y colocó iconos iniciales desde State.level (= n).
-    // Aquí añadimos los obstáculos y objetos especiales propios del mundo + efectos del tablero.
+    // Aqui anadimos los obstaculos y objetos especiales propios del mundo; los tableros de tienda no alteran reglas.
     setup() {
       const w = Worlds.get(State.world), wi = Worlds.idx(State.world), n = State.worldLevel || 1;
-      const fx = Boards.fx();
       const dens = Math.min(0.13, 0.015 + n * 0.0021 + wi * 0.008);
       const k = (base) => base + Math.floor(n / 12);   // escala suave con el nivel
-      // Cadenas con menos turnos si el tablero lo indica (Madera: -1).
-      const chainInit = (t) => { if (fx.chainTurns) t.taps = Math.max(1, (t.taps || 2) + fx.chainTurns); };
       (w.mods || []).forEach((mod) => {
         if (mod === 'rocks') Adventure._placeOnEmpty('rock', dens);
-        else if (mod === 'ice') Adventure._placeFrozen(dens * fx.iceBoost);  // Hielo: más casillas heladas
+        else if (mod === 'ice') Adventure._placeFrozen(dens);
         else if (mod === 'crystals') Adventure._placeCrystals(2 + Math.min(8, Math.floor(n / 6)));
-        else if (mod === 'chains') this._onFilled('chains', k(1), chainInit);
+        else if (mod === 'chains') this._onFilled('chains', k(1));
         else if (mod === 'web') this._onFilled('web', k(1));
         else if (mod === 'barrier') this._onEmpty('barrier', k(1));
         else if (mod === 'portal') this._onEmpty('portal', 1);
@@ -2262,10 +2244,7 @@
         else if (mod === 'bomb') this._onEmpty('bomb', 1);
         else if (mod === 'rush') State.spawnRate = Math.max(420, Math.round(State.spawnRate * 0.85));
       });
-      // Cristal: portales aleatorios extra en cualquier mundo.
-      if (fx.portalBoost && Math.random() < 0.5) this._onEmpty('portal', 1);
-      // Objeto Bonus +30 ocasional; el Bosque aumenta la probabilidad de extras.
-      if (n >= 2 && Math.random() < Math.min(0.95, 0.6 * fx.extras)) this._onEmpty('bonus', 1);
+      if (n >= 2 && Math.random() < 0.6) this._onEmpty('bonus', 1);
       Render.syncAll();
     },
   };
@@ -2492,7 +2471,7 @@
     setupLevel() {
       const m = Config.MODES[State.mode];
       State.pool = Engine.poolForLevel(State.level);
-      State.spawnRate = Math.round(Engine.spawnRateForLevel(State.level) * Boards.fx().spawn);
+      State.spawnRate = Engine.spawnRateForLevel(State.level);
       State.comboWindow = Config.DIFFICULTY[State.diff].comboWindow;
       State.hintsLeft = Config.HINTS_PER_LEVEL;
       State.hintReadyAt = 0;
@@ -2623,10 +2602,8 @@
       State.removedTotal += removed;
       State.lastActionCell = i;
       const d = Config.DIFFICULTY[State.diff], m = Config.MODES[State.mode];
-      const bfx = Boards.fx();
       const base = removed * 10 * State.level;
-      const comboBoost = State.comboMult > 1 ? bfx.combo : 1;   // tablero de cristal/cósmico: combos +%
-      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * bfx.score * comboBoost * (State.fever ? Config.FEVER_BOOST : 1) * (State.tempMult || 1));
+      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * (State.fever ? Config.FEVER_BOOST : 1) * (State.tempMult || 1));
       State.score += points;
       if (Config.MILESTONES[State.combo]) { State.score += Config.MILESTONES[State.combo]; Toasts.show(`¡Combo ×${State.combo}! +${Config.MILESTONES[State.combo]}`, 'good'); Sound.milestone(); Haptics.milestone(); }
 
@@ -2866,7 +2843,7 @@
       const combo = Math.min(State.combo || 1, 12);
       const raw = Config.EMPTY_BOARD_BONUS + chain * 90 + combo * 28 + (State.mode === 'supervivencia' ? wave * 45 : 0);
       const points = Math.max(250, Math.round(raw * d.scoreMult * m.mult * (State.fever ? Config.FEVER_BOOST : 1) * (State.tempMult || 1)));
-      const coins = Math.round(clamp(Math.round(points / 220), 3, 16) * Boards.fx().coin);
+      const coins = clamp(Math.round(points / 220), 3, 16);
       const extra = [];
       const center = State.lastActionCell != null
         ? State.lastActionCell
@@ -2958,7 +2935,7 @@
       const n = State.worldLevel || 1, w = Worlds.get(State.world);
       const stars = this.starsForMistakes(State.mistakes);
       const gained = Meta.setLevelStars(State.world, n, stars);
-      const coins = Math.round((20 + stars * 10 + Math.round(State.score / 60)) * Boards.fx().coin);
+      const coins = 20 + stars * 10 + Math.round(State.score / 60);
       Meta.addCoins(coins);
       const modal = $('#modal-level'); if (modal) modal.style.setProperty('--modal-accent', w.accent);
       const emb = $('#level-emblem'); if (emb) emb.textContent = stars >= 3 ? '🌟' : w.glyph;
@@ -3209,9 +3186,9 @@
       i18n: 'card_classic', badge: 'card_classic_badge', desc: 'card_classic_desc',
       feats: [['🔒', 'card_feat_locks'], ['◎', 'card_feat_objects'], ['⚡', 'card_feat_events'], ['✦', 'card_feat_more']],
       action: () => openWorldsMap() },
-    { key: 'multi', accent: '#7a5cff', svg: 'vsBalls', art: 'multi',
+    { key: 'multi', accent: '#7a5cff', svg: 'vsBalls', art: 'multi', disabled: true,
       i18n: 'card_multi', badge: 'card_multi_badge', desc: 'card_multi_desc',
-      feats: [['🏆', 'card_feat_first'], ['⭐', 'card_feat_best'], ['📶', 'card_feat_online']],
+      feats: [],
       action: () => openMultiplayer() },
   ];
   function buildModeMenu() {
@@ -3219,7 +3196,7 @@
     const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
     const featsHTML = (feats) => feats && feats.length
       ? `<span class="mc-feats">${feats.map(f => `<span class="mc-feat"><span class="mc-feat-ic">${f[0]}</span>${esc(I18n.t(f[1]))}</span>`).join('')}</span>` : '';
-    const cardHTML = (c) => `<button type="button" class="mode-hero" role="listitem" data-mode="${c.key}" style="--mode-accent:${c.accent}" aria-label="${esc(I18n.t(c.i18n))}">
+    const cardHTML = (c) => `<button type="button" class="mode-hero${c.disabled ? ' mode-disabled' : ''}" role="listitem" data-mode="${c.key}" style="--mode-accent:${c.accent}" aria-label="${esc(I18n.t(c.i18n))}" ${c.disabled ? 'aria-disabled="true" disabled' : ''}>
         <span class="mc-art mc-art-${c.art}" aria-hidden="true">${Art[c.svg] ? Art[c.svg]() : ''}</span>
         <span class="mc-body">
           <span class="mc-titlerow"><span class="mc-title">${esc(I18n.t(c.i18n))}</span><span class="mc-badge">${esc(I18n.t(c.badge))}</span></span>
@@ -3239,7 +3216,7 @@
     cont.innerHTML = MODE_CARDS.map(cardHTML).join('') + howHTML;
     MODE_CARDS.forEach((c) => {
       const el = cont.querySelector(`[data-mode="${c.key}"]`);
-      if (el) el.addEventListener('click', () => { Sound.ui(); c.action(); });
+      if (el && !c.disabled) el.addEventListener('click', () => { Sound.ui(); c.action(); });
     });
     const hb = cont.querySelector('[data-mode="how"]');
     if (hb) hb.addEventListener('click', () => { Sound.ui(); Modal.open('modal-how'); });
@@ -3272,9 +3249,7 @@
     <div class="appbar-econ">
       <span class="econ-pill econ-coins"><span class="econ-ic">${Art.coin()}</span><b data-econ-num="coins">0</b><span class="econ-plus" data-act="buy-coins" role="button" aria-label="Conseguir monedas">${Art.plus()}</span></span>
       <span class="econ-pill econ-gems"><span class="econ-ic">${Art.gem()}</span><b data-econ-num="gems">0</b><span class="econ-plus" data-act="buy-gems" role="button" aria-label="Conseguir gemas">${Art.plus()}</span></span>
-      <span class="econ-pill econ-streak"><span class="econ-ic">${Art.fire()}</span><b data-econ-num="streak">0</b></span>
-    </div>
-    <button class="appbar-icon appbar-bell" data-act="bell" aria-label="Notificaciones">${Art.bell()}<span class="bell-dot"></span></button>`;
+    </div>`;
   function mountTopBars() { document.querySelectorAll('[data-topbar]').forEach((el) => { el.innerHTML = TOPBAR_HTML; }); }
   // Rellena los placeholders <span data-art="nombre"> con el SVG de Art (una sola vez).
   function fillArt(root) {
@@ -3429,7 +3404,7 @@
         : (b.cost === 0 ? `<button class="btn btn-primary btn-sm" data-beq="${id}">${esc(I18n.t('free'))}</button>`
           : `<button class="btn btn-primary btn-sm" data-bbuy="${id}">🪙 ${b.cost}</button>`);
       return `<div class="board-card${eq ? ' on' : ''}" data-board="${id}">
-        <span class="board-thumb" style="background:${b.sw}"></span>
+        <span class="board-thumb" data-board="${id}" aria-hidden="true"></span>
         <span class="board-name">${esc(b.name)}</span>
         <span class="board-chars">${b.chars.map((c) => `<span class="board-char">✦ ${esc(c)}</span>`).join('')}</span>
         ${btn}
@@ -3447,7 +3422,7 @@
     list.innerHTML =
       `<h3 class="group-title">${esc(I18n.t('shop_boards'))}</h3><div class="board-grid">${boardsHTML}</div>` +
       `<h3 class="group-title">${esc(I18n.t('shop_themes'))}</h3><div class="themes-grid">${themesHTML}</div>`;
-    // Tableros: comprar / equipar (cosmético ahora; efectos mecánicos en Fase 5)
+    // Tableros: comprar / equipar. Son cosmeticos puros.
     list.querySelectorAll('[data-bbuy]').forEach((b) => b.addEventListener('click', () => {
       const id = b.dataset.bbuy;
       if (Meta.buyBoard(id, Boards.DEFS[id].cost)) { Sound.success(); Meta.equipBoard(id); Boards.apply(); buildShop(); Toasts.show(I18n.t('board_unlocked'), 'good', 1600); }
@@ -3526,6 +3501,7 @@
     fillArt();
     I18n.apply();
     Cosmetics.apply();
+    Boards.apply();
     Input.init();
     buildModeMenu();
     PWA.init();
