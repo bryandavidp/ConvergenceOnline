@@ -58,7 +58,8 @@
     },
     MODES: {
       tutorial:      { name: 'Tutorial',     emoji: '🎓', timed: false, penalties: false, mult: 0.5, single: true, fixedDiff: 'facil', accent: '#ffd23f', goal: 'Junta dos iguales', desc: 'Aprende la mecánica sin prisa ni penalizaciones.' },
-      clasico:       { name: 'Clásico',      emoji: '♟️', timed: false, penalties: true,  mult: 1.0, accent: '#00d0ff', goal: 'Vacía el tablero', desc: 'Vacía el tablero para superar el nivel. Cuidado: errar añade iconos.' },
+      clasico:       { name: 'Clásico',      emoji: '🗺️', timed: false, penalties: true,  mult: 1.0, accent: '#2f6bff', goal: 'Vacía el tablero', desc: 'Supera niveles con diferentes mapas y desafíos únicos.',
+        onSetupLevel(ctx) { Classic.setup(ctx.level); } },
       aventura:      { name: 'Aventura',     emoji: '🚀', timed: false, penalties: true,  mult: 1.1, accent: '#7a5cff', desc: 'Viaje infinito por biomas con reglas propias, objetivos y mini-jefes. ¿Hasta dónde llegarás?',
         onSetupLevel(ctx) { Adventure.setup(ctx.level); },
         winCheck() { Adventure.refreshGoal(State.level); return Adventure.winCheck(); },
@@ -189,6 +190,10 @@
         card_feat_locks: 'Bloqueos', card_feat_objects: 'Objetos', card_feat_events: 'Eventos', card_feat_more: '¡Y mucho más!',
         card_feat_first: 'Termina primero el tablero', card_feat_best: 'Mejor puntuación', card_feat_online: 'Partidas en línea',
         how_card_desc: 'Repasa las reglas, consejos y todo lo que necesitas saber para dominar el juego.', how_card_cta: 'Ver información', multi_soon: 'Multijugador en línea: ¡muy pronto!',
+        classic_title: 'Modo Clásico', world_news: 'Novedades de este mundo', worlds_label: 'Mundos', all_rewards: '🎁 Ver recompensas',
+        to_map: '🗺️ Volver al mapa', classic_lvl_sub: 'Nivel {n} · {w}', classic_next: 'Siguiente nivel →',
+        locked_level: '🔒 Completa el nivel anterior', locked_world: '🔒 Mundo bloqueado', reward_locked: 'Completa todos los niveles del mundo', reward_claimed: 'Recompensa ya reclamada', reward_got: '¡Recompensa del mundo! 🎁 +1 cofre · 💎 +20',
+        coming_soon: 'Próximamente', tab_missions: 'Misiones', tab_play: 'Jugar', tab_chests: 'Cofres', tab_rank: 'Clasificación',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
         how_title: '¿Cómo se juega?', how1: 'Toca una <strong>casilla vacía</strong>.', how2: 'Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).',
         how3: 'Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!', how4: 'Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.',
@@ -226,6 +231,10 @@
         card_feat_locks: 'Locks', card_feat_objects: 'Objects', card_feat_events: 'Events', card_feat_more: 'And much more!',
         card_feat_first: 'Finish the board first', card_feat_best: 'Best score', card_feat_online: 'Online matches',
         how_card_desc: 'Review the rules, tips and everything you need to master the game.', how_card_cta: 'See info', multi_soon: 'Online multiplayer: coming soon!',
+        classic_title: 'Classic Mode', world_news: "This world's news", worlds_label: 'Worlds', all_rewards: '🎁 See rewards',
+        to_map: '🗺️ Back to map', classic_lvl_sub: 'Level {n} · {w}', classic_next: 'Next level →',
+        locked_level: '🔒 Complete the previous level', locked_world: '🔒 World locked', reward_locked: 'Complete all levels in the world', reward_claimed: 'Reward already claimed', reward_got: 'World reward! 🎁 +1 chest · 💎 +20',
+        coming_soon: 'Coming soon', tab_missions: 'Missions', tab_play: 'Play', tab_chests: 'Chests', tab_rank: 'Leaderboard',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
         how_title: 'How to play?', how1: 'Tap an <strong>empty cell</strong>.', how2: 'It looks at the nearest icon in each direction (up, down, left, right).',
         how3: 'If <strong>2 or more match</strong>, they converge and vanish!', how4: 'Chain quick clears to raise the <strong>combo</strong> and multiply points.',
@@ -1843,6 +1852,149 @@
     },
   };
 
+  /* ===================== Worlds (modo Clásico: mundos × niveles) =====================
+   * Datos de los 5 mundos del mockup + render del mapa serpenteante (nodos 1..50 con
+   * estrellas/candados, cofre de recompensa, novedades) y panel de mundos. Cada nivel
+   * se lanza como una partida 'clasico' que reutiliza los obstáculos de Adventure
+   * (Classic.setup) escalando por mundo y número de nivel.
+   */
+  const Worlds = {
+    PER_WORLD: 50,
+    REWARD_EVERY: 50,            // cofre de recompensa al completar el mundo
+    LIST: [
+      { id: 'bosque',   name: 'Bosque Verde',     glyph: '🌲', accent: '#3ad07f', mods: [],
+        nov: [['🧊', 'Hielo aromático', 'Combina 3 veces para eliminarlo'], ['⛓️', 'Cadenas', 'Toca la figura 2 veces'], ['🎯', 'Nuevos objetivos', 'Alcanza la meta en cada nivel']] },
+      { id: 'desierto', name: 'Desierto Dorado',  glyph: '🏜️', accent: '#ffb24d', mods: ['rocks'],
+        nov: [['🪨', 'Rocas', 'Estorban y no convergen'], ['☀️', 'Calor', 'El tablero se llena más rápido'], ['💰', 'Tesoros', 'Más monedas por combo']] },
+      { id: 'montana',  name: 'Montaña Helada',   glyph: '🏔️', accent: '#7ad7ff', mods: ['ice'],
+        nov: [['🧊', 'Hielo', 'Casillas heladas: tócalas para romperlas'], ['❄️', 'Ventiscas', 'Aparece hielo durante la partida'], ['🎯', 'Objetivos', 'Despeja el tablero helado']] },
+      { id: 'cueva',    name: 'Cueva Misteriosa', glyph: '🔮', accent: '#a06bff', mods: ['crystals'],
+        nov: [['💎', 'Cristales', 'Valen puntos extra'], ['🕳️', 'Oscuridad', 'Menos pistas disponibles'], ['🎯', 'Objetivos', 'Rompe los cristales']] },
+      { id: 'neon',     name: 'Ciudad Neón',      glyph: '🏙️', accent: '#ff5cf0', mods: ['rush'],
+        nov: [['⚡', 'Sobrecarga', 'Los iconos aparecen más rápido'], ['🌈', 'Neón', 'Efectos visuales intensos'], ['🏆', 'Élite', 'El reto definitivo']] },
+    ],
+    sel: 'bosque',
+    idx(wid) { return this.LIST.findIndex(w => w.id === wid); },
+    get(wid) { return this.LIST.find(w => w.id === wid) || this.LIST[0]; },
+    // Desbloqueo de mundo: el primero siempre; el resto al limpiar >=25 niveles del previo.
+    unlocked(wid) {
+      const i = this.idx(wid); if (i <= 0) return true;
+      return Meta.worldCleared(this.LIST[i - 1].id) >= 25;
+    },
+    // Desbloqueo de nivel: el 1 siempre; el resto si el anterior tiene >=1 estrella.
+    levelUnlocked(wid, n) { return n <= 1 || Meta.levelStars(wid, n - 1) > 0; },
+    rewardClaimed(wid) { return !!(Meta.worldData(wid).reward); },
+    open() {
+      if (!this.unlocked(this.sel)) this.sel = 'bosque';
+      this.render(); Screens.show('worlds'); Econ.refresh();
+    },
+    starsRow(n) { return '★★★'.slice(0, n) + '☆☆☆'.slice(0, 3 - n); },
+    render() {
+      const w = this.get(this.sel); const wi = this.idx(this.sel);
+      const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+      const root = document.documentElement; root.style.setProperty('--world-accent', w.accent);
+      // Cabecera del mundo
+      const stars = Meta.worldStars(this.sel), maxStars = this.PER_WORLD * 3;
+      { const t = $('#world-name'); if (t) t.textContent = w.name; }
+      { const g = $('#world-glyph'); if (g) g.textContent = w.glyph; }
+      { const s = $('#world-stars'); if (s) s.textContent = `⭐ ${stars}/${maxStars}`; }
+      // Mapa de niveles (serpenteante: filas de 5, alternas)
+      const map = $('#world-map'); if (map) {
+        const cur = Meta.worldMaxLevel(this.sel);
+        let html = '';
+        for (let n = 1; n <= this.PER_WORLD; n++) {
+          const unlocked = this.levelUnlocked(this.sel, n);
+          const st = Meta.levelStars(this.sel, n);
+          const isCur = n === cur && unlocked && st === 0;
+          const cls = `lvl-node${unlocked ? '' : ' locked'}${isCur ? ' current' : ''}${st > 0 ? ' done' : ''}`;
+          html += `<button type="button" class="${cls}" data-lvl="${n}" ${unlocked ? '' : 'aria-disabled="true"'} aria-label="Nivel ${n}">
+            <span class="ln-num">${unlocked ? n : '🔒'}</span>
+            <span class="ln-stars" aria-hidden="true">${st > 0 ? this.starsRow(st) : ''}</span>
+          </button>`;
+        }
+        // Nodo de recompensa del mundo (al final)
+        const rc = Meta.worldCleared(this.sel) >= this.PER_WORLD;
+        html += `<button type="button" class="lvl-reward${rc && !this.rewardClaimed(this.sel) ? ' ready' : ''}" data-reward="1" aria-label="Recompensa del mundo">👑</button>`;
+        map.innerHTML = html;
+      }
+      // Novedades del mundo
+      const nov = $('#world-nov'); if (nov) {
+        nov.innerHTML = w.nov.map(([ic, t, d]) => `<div class="nov-item"><span class="nov-ic">${ic}</span><div class="nov-tx"><b>${esc(t)}</b><small>${esc(d)}</small></div></div>`).join('');
+      }
+      // Panel lateral de mundos
+      const rail = $('#world-rail'); if (rail) {
+        rail.innerHTML = this.LIST.map((x, i) => {
+          const unl = this.unlocked(x.id);
+          const cleared = Meta.worldCleared(x.id);
+          return `<button type="button" class="wr-item${x.id === this.sel ? ' sel' : ''}${unl ? '' : ' locked'}" data-world="${x.id}" style="--wa:${x.accent}" ${unl ? '' : 'aria-disabled="true"'}>
+            <span class="wr-glyph">${x.glyph}</span>
+            <span class="wr-tx"><b>${i + 1} · ${esc(x.name)}</b><small>${unl ? '⭐ ' + cleared + '/' + this.PER_WORLD : '🔒 Bloqueado'}</small></span>
+          </button>`;
+        }).join('');
+      }
+      this.wire();
+    },
+    wire() {
+      const map = $('#world-map');
+      if (map && !map._wired) {
+        map._wired = true;
+        map.addEventListener('click', (e) => {
+          const node = e.target.closest('.lvl-node'); const rew = e.target.closest('.lvl-reward');
+          if (node) {
+            const n = +node.dataset.lvl;
+            if (!this.levelUnlocked(this.sel, n)) { Sound.tap(); Toasts.show(I18n.t('locked_level'), 'warn', 1300); return; }
+            Sound.ui(); Game.startClassic(this.sel, n);
+          } else if (rew) { this.claimReward(); }
+        });
+      }
+      const rail = $('#world-rail');
+      if (rail && !rail._wired) {
+        rail._wired = true;
+        rail.addEventListener('click', (e) => {
+          const it = e.target.closest('.wr-item'); if (!it) return;
+          const id = it.dataset.world;
+          if (!this.unlocked(id)) { Sound.tap(); Toasts.show(I18n.t('locked_world'), 'warn', 1500); return; }
+          Sound.ui(); this.sel = id; this.render(); Econ.refresh();
+        });
+      }
+    },
+    claimReward() {
+      const cleared = Meta.worldCleared(this.sel) >= this.PER_WORLD;
+      if (!cleared) { Toasts.show(I18n.t('reward_locked'), 'warn', 1600); return; }
+      if (this.rewardClaimed(this.sel)) { Toasts.show(I18n.t('reward_claimed'), 'info', 1400); return; }
+      Meta.worldData(this.sel).reward = today2();
+      Meta.addChest(1); Meta.addGems(20);
+      Toasts.show(I18n.t('reward_got'), 'good', 2200, '👑');
+      Sound.milestone(); FX.confetti(80); Econ.refresh(); this.render();
+    },
+    // Llamado por Game al completar un nivel Clásico: guarda estrellas y desbloqueos.
+    recordLevel(stars) {
+      Meta.setLevelStars(State.world, State.worldLevel, stars);
+    },
+  };
+  // Fecha corta reutilizable (Meta usa una privada; aquí una equivalente para Worlds).
+  function today2() { return new Date().toISOString().slice(0, 10); }
+
+  /* ===================== Classic (setup de nivel del modo Clásico) =====================
+   * Reutiliza los colocadores de obstáculos de Adventure escalando por mundo (bioma)
+   * y número de nivel. Objetivo: vaciar el tablero (regla por defecto de Game).
+   */
+  const Classic = {
+    // setupLevel ya fijó pool/spawn y colocó iconos iniciales desde State.level (= n).
+    // Aquí solo añadimos los obstáculos propios del mundo, escalando con el nivel.
+    setup() {
+      const w = Worlds.get(State.world), wi = Worlds.idx(State.world), n = State.worldLevel || 1;
+      const dens = Math.min(0.13, 0.015 + n * 0.0021 + wi * 0.008);
+      (w.mods || []).forEach((mod) => {
+        if (mod === 'rocks') Adventure._placeOnEmpty('rock', dens);
+        else if (mod === 'ice') Adventure._placeFrozen(dens);
+        else if (mod === 'crystals') Adventure._placeCrystals(2 + Math.min(8, Math.floor(n / 6)));
+        else if (mod === 'rush') State.spawnRate = Math.max(420, Math.round(State.spawnRate * 0.85));
+      });
+      Render.syncAll();
+    },
+  };
+
   /* ===================== Rules (hooks por modo) =====================
    * Punto de extensión: un modo puede definir funciones (onSetupLevel, onTick,
    * onActivate, winCheck, loseCheck, objective...) en su descriptor de Config.MODES
@@ -2084,7 +2236,13 @@
       Render.hud();
     },
 
-    start(mode, diff) {
+    // Lanza un nivel concreto del modo Clásico desde el mapa de mundos.
+    startClassic(worldId, n) {
+      State.world = worldId; State.worldLevel = n;
+      this.start('clasico', 'normal', n);
+    },
+
+    start(mode, diff, startLevel) {
       State.mode = mode;
       State.diff = Config.MODES[mode].fixedDiff || diff;
       State.score = 0; State.displayScore = 0; State.level = 1; State.elapsed = 0; State.timeLeft = 0;
@@ -2095,6 +2253,8 @@
       State.status = 'playing'; this.ended = false;
       // Aventura: reanuda en el nivel más lejano alcanzado; el resto empieza en 1.
       if (mode === 'aventura') State.level = Meta.advMax();
+      // Clásico: arranca en el nivel elegido del mundo (HUD y escalado usan State.level).
+      if (mode === 'clasico' && startLevel) State.level = startLevel;
       // Supervivencia 2.0: vidas, oleadas, boosters.
       const isSurv = mode === 'supervivencia';
       document.body.classList.toggle('mode-surv', isSurv);
@@ -2116,7 +2276,14 @@
     },
 
     restart() { if (Coach.active) return Coach.skip(); Modal.close(); this.start(State.mode, State.diff); },
-    quit() { if (Coach.active) return Coach.skip(); Loop.stop(); Music.stop(); State.status = 'idle'; Modal.close(); document.body.classList.remove('mode-surv'); this.clearHintHighlight(); refreshStart(); Screens.show('start'); },
+    quit() {
+      if (Coach.active) return Coach.skip();
+      Loop.stop(); Music.stop(); State.status = 'idle'; Modal.close();
+      document.body.classList.remove('mode-surv'); this.clearHintHighlight();
+      // Clásico: salir devuelve al mapa de mundos (su hub natural).
+      if (State.mode === 'clasico') { Worlds.open(); return; }
+      refreshStart(); Screens.show('start');
+    },
 
     pause() {
       if (Coach.active) return Coach.skip();
@@ -2391,6 +2558,9 @@
       const m = Config.MODES[State.mode];
       if (m.single) { this.win(perfect ? '¡Tutorial completado con tablero perfecto!' : '¡Tutorial completado!'); return; }
       Sound.level(); Haptics.level(); FX.confetti(perfect ? 90 : 60);
+      // Modo Clásico: nivel del mapa. Calcula estrellas, guarda progreso y ofrece
+      // "Siguiente nivel" / "Volver al mapa" (el mapa es el hub, no se auto-encadena).
+      if (State.mode === 'clasico') { this._classicComplete(); return; }
 
       const next = State.level + 1;
       // Acento del modal: color del bioma siguiente (Aventura) o del modo.
@@ -2414,8 +2584,43 @@
       $('#level-next').innerHTML = this._nextPreview(next, m);
       $('#btn-next-level').textContent = I18n.t('next_to').replace('{n}', next);
 
+      { const mb = $('#btn-level-map'); if (mb) mb.hidden = true; }
+      { const nb = $('#btn-next-level'); if (nb) nb.hidden = false; }
       Modal.open('modal-level');
       announce(`Nivel ${State.level} completado. ${State.score} puntos. Siguiente: nivel ${next}.`);
+    },
+
+    // Fin de nivel del modo Clásico: estrellas (según errores), recompensa y desbloqueo.
+    _classicComplete() {
+      const n = State.worldLevel || 1, w = Worlds.get(State.world);
+      const stars = State.mistakes === 0 ? 3 : State.mistakes <= 3 ? 2 : 1;
+      const gained = Meta.setLevelStars(State.world, n, stars);
+      const coins = 20 + stars * 10 + Math.round(State.score / 60);
+      Meta.addCoins(coins);
+      const modal = $('#modal-level'); if (modal) modal.style.setProperty('--modal-accent', w.accent);
+      const emb = $('#level-emblem'); if (emb) emb.textContent = stars >= 3 ? '🌟' : w.glyph;
+      $('#level-title').textContent = I18n.t('level_done');
+      $('#level-sub').textContent = I18n.t('classic_lvl_sub').replace('{n}', n).replace('{w}', w.name);
+      const starsHtml = `<div class="classic-stars" aria-label="${stars}/3">` +
+        [1, 2, 3].map(k => `<span class="cs${k <= stars ? ' on' : ''}">★</span>`).join('') + '</div>';
+      $('#level-stats').innerHTML = starsHtml + statRow([
+        [State.score, I18n.t('st_points'), 'var(--score)'],
+        ['×' + State.maxCombo, I18n.t('st_combo'), 'var(--gold)'],
+        [State.removedTotal, I18n.t('st_removed'), 'var(--good)'],
+      ]);
+      $('#level-next').innerHTML = `<div class="m-card-h">🪙 +${coins}${gained > 0 ? ' · ⭐ +' + gained : ''}</div>`;
+      const last = n >= Worlds.PER_WORLD;
+      { const nb = $('#btn-next-level'); if (nb) { nb.hidden = last; nb.textContent = I18n.t('classic_next'); } }
+      { const mb = $('#btn-level-map'); if (mb) mb.hidden = false; }
+      Modal.open('modal-level');
+      announce(`Nivel ${n} completado. ${stars} estrellas. ${State.score} puntos.`);
+    },
+
+    // Vuelve al mapa de mundos desde el modal de fin de nivel.
+    toWorldsMap() {
+      Loop.stop(); Music.stop(); State.status = 'idle'; this.ended = true;
+      Modal.close(); document.body.classList.remove('mode-surv'); this.clearHintHighlight();
+      Worlds.open();
     },
 
     // Construye el HTML del preview del siguiente nivel, consciente del modo.
@@ -2444,6 +2649,15 @@
     },
 
     nextLevel() {
+      // Clásico: avanza al siguiente nivel del mundo (ya desbloqueado) y sigue jugando.
+      if (State.mode === 'clasico') {
+        State.worldLevel = (State.worldLevel || 1) + 1;
+        State.level = State.worldLevel;
+        State.status = 'playing'; Modal.close();
+        this.setupLevel(); this.showGoalBanner(); Loop.start();
+        Toasts.show(`${I18n.t('lvl')} ${State.worldLevel}`, 'info', 1300);
+        return;
+      }
       const prevChapter = State.mode === 'aventura' ? Adventure.chapterOf(State.level) : -1;
       State.level++;
       State.status = 'playing';
@@ -2894,6 +3108,17 @@
     $('#modes-back').addEventListener('click', () => Screens.show('start'));
     { const ms = $('#modes-settings'); if (ms) ms.addEventListener('click', () => { Sound.ui(); openSettings(); }); }
     { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { Modal.close(); Game.start('aventura', selDiff); }); }
+
+    // Modo Clásico (mapa de mundos)
+    { const wb = $('#worlds-back'); if (wb) wb.addEventListener('click', () => Screens.show('modes')); }
+    { const ws = $('#worlds-settings'); if (ws) ws.addEventListener('click', () => { Sound.ui(); openSettings(); }); }
+    { const wr = $('#world-rewards'); if (wr) wr.addEventListener('click', () => Worlds.claimReward()); }
+    { const b = $('#wt-shop'); if (b) b.addEventListener('click', () => { Sound.ui(); openShop(); }); }
+    { const b = $('#wt-missions'); if (b) b.addEventListener('click', () => { Sound.ui(); Modal.open('modal-missions'); }); }
+    { const b = $('#wt-play'); if (b) b.addEventListener('click', () => Sound.ui()); }
+    { const b = $('#wt-chests'); if (b) b.addEventListener('click', () => { Sound.ui(); (typeof openChests === 'function' ? openChests() : Toasts.show(I18n.t('coming_soon'), 'info', 1500)); }); }
+    { const b = $('#wt-rank'); if (b) b.addEventListener('click', () => { Sound.ui(); openMedals(); }); }
+    { const lm = $('#btn-level-map'); if (lm) lm.addEventListener('click', () => Game.toWorldsMap()); }
 
     // Juego
     $('#btn-hint').addEventListener('click', () => Game.hint());

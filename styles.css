@@ -398,6 +398,79 @@ body.reduced-fx #btn-play { animation: none; }
 .mode-how .mc-title { font-size: 1.05rem; }
 .mc-how-cta { flex: 0 0 auto; font-weight: 800; font-size: .82rem; color: #04122e; background: linear-gradient(180deg, var(--accent-2), var(--accent)); border-radius: 999px; padding: 8px 14px; white-space: nowrap; }
 
+/* ---------- Modo Clásico: mapa de mundos (mockup 2) ---------- */
+.screen-worlds { justify-content: flex-start; align-items: stretch; padding: max(10px, env(safe-area-inset-top)) 12px 0; }
+.worlds-title { text-align: center; font-size: clamp(1.4rem, 5.5vw, 1.9rem); font-weight: 800; margin: 4px 0 10px;
+  background: linear-gradient(90deg, var(--accent-2), #fff 55%, var(--level)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.worlds-body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 14px; width: min(840px, 100%); margin: 0 auto; padding-bottom: 12px; }
+.worlds-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.world-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px;
+  background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--world-accent, #3ad07f) 34%, transparent), transparent 60%), linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.2));
+  border: 1px solid color-mix(in srgb, var(--world-accent, #3ad07f) 50%, var(--line)); }
+.world-glyph { font-size: 2.2rem; filter: drop-shadow(0 3px 8px rgba(0,0,0,.5)); }
+.world-head-tx { display: flex; flex-direction: column; }
+.world-name { font-weight: 800; font-size: 1.2rem; }
+.world-stars { color: var(--gold); font-weight: 700; font-size: .85rem; }
+
+.world-map { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px 9px; padding: 14px; border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.2)); border: 1px solid var(--line); }
+.lvl-node { position: relative; aspect-ratio: 1; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  font-weight: 800; color: #04122e; border: 0; cursor: pointer;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--world-accent, #3ad07f) 86%, #fff 10%), var(--world-accent, #3ad07f));
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--world-accent, #3ad07f) 55%, #000), 0 6px 14px rgba(0,0,0,.35);
+  transition: transform .1s, box-shadow .1s; }
+.lvl-node .ln-num { font-size: 1.1rem; line-height: 1; }
+.lvl-node .ln-stars { font-size: .58rem; color: #4a2c00; letter-spacing: -1px; }
+.lvl-node:not(.locked):active { transform: translateY(2px); box-shadow: 0 2px 0 color-mix(in srgb, var(--world-accent, #3ad07f) 55%, #000), 0 4px 10px rgba(0,0,0,.3); }
+.lvl-node.locked { background: rgba(255,255,255,.05); color: var(--muted); box-shadow: none; border: 1px solid var(--line); cursor: not-allowed; }
+.lvl-node.locked .ln-num { font-size: .95rem; }
+.lvl-node.current { box-shadow: 0 4px 0 color-mix(in srgb, var(--world-accent, #3ad07f) 55%, #000), 0 0 0 3px color-mix(in srgb, var(--world-accent, #3ad07f) 70%, transparent), 0 6px 16px rgba(0,0,0,.4); animation: nodepulse 1.5s ease-in-out infinite; }
+@keyframes nodepulse { 50% { box-shadow: 0 4px 0 color-mix(in srgb, var(--world-accent, #3ad07f) 55%, #000), 0 0 0 5px color-mix(in srgb, var(--world-accent, #3ad07f) 45%, transparent), 0 6px 18px rgba(0,0,0,.45); } }
+.lvl-node.current::before { content: '📍'; position: absolute; top: -16px; font-size: 1rem; filter: drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+.lvl-reward { grid-column: 1 / -1; height: 54px; border-radius: 14px; font-size: 1.7rem; border: 0; cursor: pointer; color: #2a1a00;
+  background: linear-gradient(180deg, #ffe27a, var(--gold)); box-shadow: 0 4px 0 #b9892a, 0 8px 18px rgba(255,216,77,.4); }
+.lvl-reward.ready { animation: nodepulse 1.3s ease-in-out infinite; }
+
+.world-nov { display: flex; flex-direction: column; gap: 8px; }
+.nov-item { display: flex; align-items: center; gap: 10px; padding: 8px 11px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid var(--line); }
+.nov-ic { font-size: 1.35rem; flex: 0 0 auto; }
+.nov-tx { display: flex; flex-direction: column; min-width: 0; }
+.nov-tx b { font-size: .85rem; }
+.nov-tx small { color: var(--muted); font-size: .74rem; }
+
+.worlds-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.world-rail { display: flex; flex-direction: column; gap: 8px; }
+.wr-item { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 14px; text-align: left; color: var(--text);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.18)); border: 1px solid var(--line); cursor: pointer; transition: border-color .15s, transform .1s; }
+.wr-item:active { transform: scale(.98); }
+.wr-item.sel { border-color: var(--wa, var(--accent-2)); box-shadow: 0 0 0 2px var(--wa, var(--accent-2)) inset; }
+.wr-item.locked { opacity: .55; cursor: not-allowed; }
+.wr-glyph { font-size: 1.4rem; width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 11px;
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--wa, #3ad07f) 50%, #000), color-mix(in srgb, var(--wa, #3ad07f) 14%, #04081c)); }
+.wr-tx { display: flex; flex-direction: column; min-width: 0; }
+.wr-tx b { font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wr-tx small { color: var(--muted); font-size: .72rem; }
+.world-rewards { margin-top: 4px; }
+
+.worlds-tabs { display: flex; align-items: stretch; gap: 2px; width: 100%; flex: 0 0 auto;
+  padding: 4px 4px max(4px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(10,16,38,0), rgba(8,12,30,.7)); }
+
+/* Estrellas en el modal de fin de nivel (Clásico) */
+.classic-stars { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; }
+.classic-stars .cs { font-size: 2.1rem; color: rgba(255,255,255,.16); }
+.classic-stars .cs.on { color: var(--gold); text-shadow: 0 0 14px color-mix(in srgb, var(--gold) 60%, transparent); animation: starpop .45s ease both; }
+.classic-stars .cs.on:nth-child(2) { animation-delay: .1s; }
+.classic-stars .cs.on:nth-child(3) { animation-delay: .2s; }
+@keyframes starpop { from { transform: scale(0) rotate(-30deg); } 60% { transform: scale(1.3) rotate(8deg); } }
+
+/* Dos columnas en pantallas anchas: mapa + panel de mundos */
+@media (min-width: 720px) {
+  .worlds-body { display: grid; grid-template-columns: 1fr 250px; align-items: start; }
+  .worlds-main { grid-column: 1; }
+  .worlds-side { grid-column: 2; position: sticky; top: 0; }
+}
+
 /* ============ JUEGO ============ */
 /* Tablero = HÉROE en posición FIJA para TODOS los modos. Rejilla de 3 bandas:
    [status+contexto] · [TABLERO] · [boosters/pulgar]. El tablero (fila 2, auto =
