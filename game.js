@@ -201,8 +201,8 @@
       es: {
         welcome_sub: 'Junta iconos iguales en el espacio', name_q: '¿Cómo te llamas?', optional: '(opcional)',
         begin: '¡Empezar!', guest: 'Jugar como invitado', start_sub: '¿List@ para conquistar el tablero?',
-        play: '▶ Jugar', reward: '🎁 Recompensa diaria', menu_profile: '🏅 Logros', menu_shop: '🛍️ Tienda',
-        menu_settings: '⚙️ Ajustes', how: '¿Cómo se juega?', install: '📲 Instalar app', sound: 'Sonido', best: 'Mejor puntuación:',
+        play: 'Jugar', reward: 'Recompensa diaria', menu_profile: 'Logros', menu_shop: 'Tienda',
+        menu_settings: 'Ajustes', how: '¿Cómo se juega?', install: 'Instalar app', sound: 'Sonido', best: 'Mejor puntuación:',
         tab_log: 'Logros', tab_shop: 'Tienda', tab_home: 'Inicio', tab_guide: 'Guía', tab_set: 'Ajustes', missions_title: '🎯 Misiones',
         modes_title: 'Elige tu modo', modes_sub: 'Cada modo, una forma diferente de jugar', group_mode: 'Modo', group_diff: 'Dificultad',
         card_surv: 'Supervivencia', card_surv_badge: 'OLEADAS INFINITAS', card_surv_desc: 'Aguanta oleadas cada vez más intensas y supera tu mejor marca.',
@@ -212,7 +212,7 @@
         card_feat_first: 'Termina primero el tablero', card_feat_best: 'Mejor puntuación', card_feat_online: 'Partidas en línea',
         how_card_desc: 'Repasa las reglas, consejos y todo lo que necesitas saber para dominar el juego.', how_card_cta: 'Ver información', multi_soon: 'Multijugador en línea: ¡muy pronto!',
         classic_title: 'Modo Clásico', world_news: 'Novedades de este mundo', worlds_label: 'Mundos', all_rewards: '🎁 Ver recompensas',
-        to_map: '🗺️ Volver al mapa', classic_lvl_sub: 'Nivel {n} · {w}', classic_next: 'Siguiente nivel →',
+        to_map: 'Volver al mapa', classic_lvl_sub: 'Nivel {n} · {w}', classic_next: 'Siguiente nivel →',
         locked_level: '🔒 Completa el nivel anterior', locked_world: '🔒 Mundo bloqueado', reward_locked: 'Completa todos los niveles del mundo', reward_claimed: 'Recompensa ya reclamada', reward_got: '¡Recompensa del mundo! 🎁 +1 cofre · 💎 +20',
         stars_label: 'Estrellas del nivel', stars_help: '3★ sin errores · 2★ hasta 2 errores · 1★ más errores', star_lost: '−1 estrella · ¡evita los errores!',
         star_c3: 'Sin errores', star_c2: 'Hasta {n} errores', star_c1: 'Más errores', star_mine: 'Tus errores: {n}',
@@ -221,7 +221,7 @@
         equipped: 'Equipado', equip: 'Equipar', free: 'Gratis', no_coins: 'Monedas insuficientes',
         shop_boards: 'Tableros visuales', shop_themes: 'Temas de color', shop_hint2: 'Los tableros son solo cambios visuales: no dan ventajas ni desventajas. Equipa tu estilo favorito para jugar.', board_unlocked: '¡Tablero desbloqueado!',
         chests_title: '🎁 Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre contiene monedas, gemas o tickets.', chests_none: 'No tienes cofres', chest_reward: '¡Recompensa! {r}', open_chest: '🎁 Abrir cofre',
-        soon_badge: '🚧 Próximamente', notify_me: '🔔 Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
+        soon_badge: 'Próximamente', notify_me: 'Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
         edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
         home_classic: 'Partida clásica', home_classic_sub: 'Juega en el tablero contra amigos o bots', home_tourneys: 'Torneos', home_tourneys_sub: 'Compite y gana recompensas', home_surv_sub: 'Sobrevive a oleadas infinitas', home_multi_sub: 'Desafía a jugadores en línea',
         q_missions: 'Misiones', q_daily: 'Diario', q_chests: 'Cofres', q_league: 'Liga', q_friends: 'Amigos', best_score: 'Mejor puntuación', play_word: 'Jugar',
@@ -229,15 +229,15 @@
         how_title: '¿Cómo se juega?', how1: 'Toca una <strong>casilla vacía</strong>.', how2: 'Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).',
         how3: 'Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!', how4: 'Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.',
         how5: 'Los iconos aparecen solos: vacía el tablero antes de que se llene.',
-        tutorial_btn: '▶ Tutorial interactivo', understood: 'Entendido',
-        pause: 'Pausa', resume: '▶ Reanudar', restart: '↻ Reiniciar', menu: '✕ Menú', close: 'Cerrar', back: 'Volver', retry: '↻ Reintentar', share: '📤 Compartir',
+        tutorial_btn: 'Tutorial interactivo', understood: 'Entendido',
+        pause: 'Pausa', resume: 'Reanudar', restart: 'Reiniciar', menu: 'Menú', close: 'Cerrar', back: 'Volver', retry: 'Reintentar', share: 'Compartir',
         settings_title: '⚙️ Ajustes', shop_title: '🛍️ Tienda', shop_hint: 'Temas del tablero. Pulsa para previsualizar.',
         profile_title: '📊 Perfil', best_by_mode: 'Mejores marcas por modo', achievements: 'Logros',
         adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
         revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
         coach_skip: 'Saltar tutorial',
         diff_facil: 'Fácil', diff_normal: 'Normal', diff_dificil: 'Difícil',
-        set_sfx: '🔊 Efectos de sonido', set_music: '🎵 Música', set_haptics: '📳 Vibración', set_reduced: '✨ Reducir efectos', set_large: '🔠 Texto grande', set_lang: '🌐 Idioma',
+        set_sfx: 'Efectos de sonido', set_music: 'Música', set_haptics: 'Vibración', set_reduced: 'Reducir efectos', set_large: 'Texto grande', set_lang: 'Idioma',
         st_points: 'Puntos', st_level: 'Nivel', st_combo: 'Combo máx.', st_removed: 'Eliminados', st_time: 'Tiempo', st_record: 'Récord', st_wave: 'Oleada', st_surv: 'Sobreviviste', st_best: 'Mejor',
         st_games: 'Partidas', st_bestcombo: 'Mejor combo', st_totaltime: 'Tiempo total',
         coins: 'monedas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
@@ -252,8 +252,8 @@
       en: {
         welcome_sub: 'Match equal icons across space', name_q: "What's your name?", optional: '(optional)',
         begin: 'Start!', guest: 'Play as guest', start_sub: 'Ready to conquer the board?',
-        play: '▶ Play', reward: '🎁 Daily reward', menu_profile: '🏅 Profile', menu_shop: '🛍️ Shop',
-        menu_settings: '⚙️ Settings', how: 'How to play?', install: '📲 Install app', sound: 'Sound', best: 'Best score:',
+        play: 'Play', reward: 'Daily reward', menu_profile: 'Profile', menu_shop: 'Shop',
+        menu_settings: 'Settings', how: 'How to play?', install: 'Install app', sound: 'Sound', best: 'Best score:',
         tab_log: 'Trophies', tab_shop: 'Shop', tab_home: 'Home', tab_guide: 'Guide', tab_set: 'Settings', missions_title: '🎯 Missions',
         modes_title: 'Choose your mode', modes_sub: 'Each mode, a different way to play', group_mode: 'Mode', group_diff: 'Difficulty',
         card_surv: 'Survival', card_surv_badge: 'ENDLESS WAVES', card_surv_desc: 'Survive rising waves and beat your best run.',
@@ -263,7 +263,7 @@
         card_feat_first: 'Finish the board first', card_feat_best: 'Best score', card_feat_online: 'Online matches',
         how_card_desc: 'Review the rules, tips and everything you need to master the game.', how_card_cta: 'See info', multi_soon: 'Online multiplayer: coming soon!',
         classic_title: 'Classic Mode', world_news: "This world's news", worlds_label: 'Worlds', all_rewards: '🎁 See rewards',
-        to_map: '🗺️ Back to map', classic_lvl_sub: 'Level {n} · {w}', classic_next: 'Next level →',
+        to_map: 'Back to map', classic_lvl_sub: 'Level {n} · {w}', classic_next: 'Next level →',
         locked_level: '🔒 Complete the previous level', locked_world: '🔒 World locked', reward_locked: 'Complete all levels in the world', reward_claimed: 'Reward already claimed', reward_got: 'World reward! 🎁 +1 chest · 💎 +20',
         stars_label: 'Level stars', stars_help: '3★ no mistakes · 2★ up to 2 mistakes · 1★ more mistakes', star_lost: '−1 star · avoid mistakes!',
         star_c3: 'No mistakes', star_c2: 'Up to {n} mistakes', star_c1: 'More mistakes', star_mine: 'Your mistakes: {n}',
@@ -272,7 +272,7 @@
         equipped: 'Equipped', equip: 'Equip', free: 'Free', no_coins: 'Not enough coins',
         shop_boards: 'Visual boards', shop_themes: 'Color themes', shop_hint2: 'Boards are visual-only cosmetics: no advantages or disadvantages. Equip your favorite style before playing.', board_unlocked: 'Board unlocked!',
         chests_title: '🎁 Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest contains coins, gems or tickets.', chests_none: 'You have no chests', chest_reward: 'Reward! {r}', open_chest: '🎁 Open chest',
-        soon_badge: '🚧 Coming soon', notify_me: '🔔 Notify me', notify_ok: "We'll let you know when it's ready!",
+        soon_badge: 'Coming soon', notify_me: 'Notify me', notify_ok: "We'll let you know when it's ready!",
         edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
         home_classic: 'Classic game', home_classic_sub: 'Play on the board against friends or bots', home_tourneys: 'Tournaments', home_tourneys_sub: 'Compete and win rewards', home_surv_sub: 'Survive endless waves', home_multi_sub: 'Challenge players online',
         q_missions: 'Missions', q_daily: 'Daily', q_chests: 'Chests', q_league: 'League', q_friends: 'Friends', best_score: 'Best score', play_word: 'Play',
@@ -280,15 +280,15 @@
         how_title: 'How to play?', how1: 'Tap an <strong>empty cell</strong>.', how2: 'It looks at the nearest icon in each direction (up, down, left, right).',
         how3: 'If <strong>2 or more match</strong>, they converge and vanish!', how4: 'Chain quick clears to raise the <strong>combo</strong> and multiply points.',
         how5: 'Icons spawn on their own: clear the board before it fills up.',
-        tutorial_btn: '▶ Interactive tutorial', understood: 'Got it',
-        pause: 'Paused', resume: '▶ Resume', restart: '↻ Restart', menu: '✕ Menu', close: 'Close', back: 'Back', retry: '↻ Retry', share: '📤 Share',
+        tutorial_btn: 'Interactive tutorial', understood: 'Got it',
+        pause: 'Paused', resume: 'Resume', restart: 'Restart', menu: 'Menu', close: 'Close', back: 'Back', retry: 'Retry', share: 'Share',
         settings_title: '⚙️ Settings', shop_title: '🛍️ Shop', shop_hint: 'Board themes. Tap to preview.',
         profile_title: '📊 Profile', best_by_mode: 'Best by mode', achievements: 'Achievements',
         adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
         revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
         coach_skip: 'Skip tutorial',
         diff_facil: 'Easy', diff_normal: 'Normal', diff_dificil: 'Hard',
-        set_sfx: '🔊 Sound effects', set_music: '🎵 Music', set_haptics: '📳 Vibration', set_reduced: '✨ Reduce effects', set_large: '🔠 Large text', set_lang: '🌐 Language',
+        set_sfx: 'Sound effects', set_music: 'Music', set_haptics: 'Vibration', set_reduced: 'Reduce effects', set_large: 'Large text', set_lang: 'Language',
         st_points: 'Score', st_level: 'Level', st_combo: 'Max combo', st_removed: 'Cleared', st_time: 'Time', st_record: 'Best', st_wave: 'Wave', st_surv: 'Survived', st_best: 'Best',
         st_games: 'Games', st_bestcombo: 'Best combo', st_totaltime: 'Total time',
         coins: 'coins', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
@@ -853,10 +853,15 @@
   /* ===================== Toasts y lector de pantalla ===================== */
   const announce = (msg) => { $('#sr-status').textContent = msg; };
   const Toasts = {
-    ICON: { info: 'ℹ️', good: '✅', warn: '⚠️', bad: '✖️' },
-    show(msg, kind = 'info', ms = 2800, icon) {
+    ICON: { info: 'info', good: 'check', warn: 'warning', bad: 'close' },
+    show(msg, kind = 'info', ms = 2800, iconArg) {
       const el = $('#toasts'); if (!el) return;
-      const ic = icon != null ? icon : (this.ICON[kind] || '');
+      // Si el mensaje empieza por un emoji (y no se pasó icono), úsalo como icono del toast.
+      if (iconArg == null) {
+        const m = msg.match(/^(\p{Extended_Pictographic}️?)\s+/u);
+        if (m) { iconArg = m[1]; msg = msg.slice(m[0].length); }
+      }
+      const ic = iconArg != null ? iconArg : (this.ICON[kind] || '');
       // Fusión de repetidos aún visibles: incrementa ×N y reinicia el temporizador.
       const dup = Array.prototype.find.call(el.children, c => c.dataset.msg === msg && !c.classList.contains('out'));
       if (dup) {
@@ -870,7 +875,12 @@
       }
       const t = document.createElement('div');
       t.className = 'toast ' + kind; t.dataset.msg = msg; t.dataset.n = '1';
-      if (ic) { const s = document.createElement('span'); s.className = 'toast-ic'; s.textContent = ic; t.appendChild(s); }
+      if (ic) {
+        const s = document.createElement('span'); s.className = 'toast-ic';
+        const tok = EMOJI_IMG[ic] || (/^(v2:)?[a-z][a-z0-9-]*$/.test(ic) ? ic : null);
+        if (tok) s.innerHTML = iconAny(tok); else s.textContent = ic;
+        t.appendChild(s);
+      }
       const tx = document.createElement('span'); tx.className = 'toast-tx'; tx.textContent = msg; t.appendChild(tx);
       el.appendChild(t);
       t._t = setTimeout(() => this._out(t), ms);
@@ -1454,7 +1464,7 @@
    * Econ.refresh() sincroniza todas las píldoras visibles con el estado de Meta.
    */
   const Econ = {
-    ICONS: { coins: '🪙', gems: '💎', streak: '🔥', tickets: '🎟️', chests: '🎁' },
+    ICONS: { coins: 'coin', gems: 'gem', streak: 'fire', tickets: 'ticket', chests: 'chest' },
     valueOf(kind) {
       switch (kind) {
         case 'coins': return Meta.coins();
@@ -1469,12 +1479,69 @@
       const scope = root || document;
       scope.querySelectorAll('[data-econ]').forEach((el) => {
         const kind = el.dataset.econ;
-        el.textContent = (this.ICONS[kind] || '') + ' ' + this.valueOf(kind);
+        el.innerHTML = (this.ICONS[kind] ? iconInline(this.ICONS[kind]) + ' ' : '') + this.valueOf(kind);
       });
       // Pills del nuevo sistema base: solo el número (el icono es un SVG aparte).
       scope.querySelectorAll('[data-econ-num]').forEach((el) => { el.textContent = this.valueOf(el.dataset.econNum); });
     },
   };
+
+  /* ===================== Iconos PNG (pack "Free Icon Pack" de @gvesster, en img/ui) =====================
+   * Reemplazan a los emojis por toda la UI. `icon()` rellena su contenedor (data-art,
+   * .econ-ic, emblemas de modal…); `iconInline()` se mete dentro de texto (precios,
+   * toasts, leaderboard). Las fichas del tablero siguen siendo SVG (ver Icons).
+   */
+  const ICONS_DIR = 'img/ui';
+  const icon = (name, cls) => `<img class="ic${cls ? ' ' + cls : ''}" src="${ICONS_DIR}/${name}.png" alt="" draggable="false">`;
+  const iconInline = (name) => icon(name, 'ic-inline');
+  const ICONS_V2_DIR = 'img/icons-v2';
+  const V2_ICONS = {
+    'mode-classic': '8-ui/grid',
+    'mode-survival': '3-gear/shield',
+    'mode-multi': '8-ui/user-group',
+    cactus: '4-nature/cactus',
+    mountain: '4-nature/mountain',
+    town: '6-buildings/town',
+    meteor: '4-nature/meteor',
+    snowflake: '4-nature/snowflake',
+    'circle-ring': '8-ui/circle-ring',
+    rest: '8-ui/rest',
+    brush: '10-editing/brush',
+    double: '1-game/double',
+    'mobile-phone': '9-media/mobile-phone',
+    font: '10-editing/font',
+    radiation: '12-misc/radiation',
+    link: '9-media/link',
+    connection: '9-media/connection',
+    prohibited: '8-ui/prohibited',
+    drought: '4-nature/drought',
+    download: '9-media/download',
+    share: '9-media/share',
+    notification: '9-media/notification',
+    'wi-fi': '9-media/wi-fi',
+    'four-pointed-star': '12-misc/four-pointed-star',
+    flag: '6-buildings/flag',
+    'arrow-left': '8-ui/arrow-left',
+    play: '9-media/play',
+    pause: '9-media/pause',
+    refresh: '8-ui/refresh',
+    cross: '8-ui/cross',
+  };
+  const iconV2Path = (name) => `${ICONS_V2_DIR}/${V2_ICONS[name] || name}.svg`;
+  const iconV2 = (name, cls) => `<span class="icv2${cls ? ' ' + cls : ''}" style="--icv2-url:url('${iconV2Path(name)}')" aria-hidden="true"></span>`;
+  const iconV2Inline = (name) => iconV2(name, 'icv2-inline');
+  const isV2Icon = (name) => typeof name === 'string' && name.startsWith('v2:');
+  const iconAny = (name, cls) => isV2Icon(name) ? iconV2(name.slice(3), cls) : icon(name, cls);
+  const iconAnyInline = (name) => isV2Icon(name) ? iconV2Inline(name.slice(3)) : iconInline(name);
+  // Estructuras que guardan un glyph emoji: si la id tiene equivalente PNG se usa; si no, se mantiene el emoji.
+  const MODE_IMG    = { tutorial: 'book', clasico: 'pin', aventura: 'rocket', contrarreloj: 'clock', supervivencia: 'heart', zen: 'v2:rest' };
+  const BIOME_IMG   = { nebula: 'planet', asteroid: 'v2:meteor', ice: 'v2:snowflake', core: 'planet-hell', void: 'v2:circle-ring', crystal: 'crystal' };
+  const WORLD_IMG   = { bosque: 'leaf', desierto: 'v2:cactus', montana: 'v2:mountain', cueva: 'potion', neon: 'v2:town' };
+  const BOOSTER_IMG = { bomb: 'bomb', freeze: 'v2:snowflake', clearLine: 'bolt', wild: 'v2:brush', x2: 'v2:double' };
+  // Emojis sueltos (novedades de mundo, toasts, resúmenes) con icono equivalente en el pack.
+  const EMOJI_IMG   = { '🎯': 'target', '💎': 'crystal', '🌀': 'teleporter', '💣': 'bomb', '🎁': 'gift', '⚡': 'bolt', '➕': 'plus', '🔒': 'lock', '🏆': 'trophy', '🪙': 'coin', '🏅': 'medal', '⬆️': 'upgrade', '🗓️': 'calendar', '✅': 'check', '🔥': 'fire', '⭐': 'star', '🌟': 'star', '👑': 'crown', '🧊': 'v2:snowflake', '❄️': 'v2:snowflake', '☣️': 'v2:radiation', '⛓️': 'v2:link', '🕸️': 'v2:connection', '🚧': 'v2:prohibited', '🟫': 'v2:drought', '🏜️': 'v2:cactus', '🏔️': 'v2:mountain', '🏙️': 'v2:town', '🪨': 'v2:meteor', '🕳️': 'v2:circle-ring', '🧹': 'v2:brush', '🃏': 'v2:double', '📳': 'v2:mobile-phone', '🔠': 'v2:font', '📲': 'v2:download', '📤': 'v2:share', '🔔': 'v2:notification', '📶': 'v2:wi-fi', '🎉': 'v2:four-pointed-star', '✨': 'v2:four-pointed-star', '🏁': 'v2:flag' };
+  // <img> en línea si el emoji tiene equivalente; si no, el propio emoji (texto).
+  const emojiIcon = (e) => EMOJI_IMG[e] ? iconAnyInline(EMOJI_IMG[e]) : e;
 
   /* ===================== Art (ilustraciones SVG hechas a mano, 0 imágenes externas) =====================
    * Librería de SVGs fieles a los mockups: avatar robot, cohete, regalo, trofeo,
@@ -1484,117 +1551,35 @@
    */
   const Art = {
     _s(inner, vb) { return `<svg viewBox="${vb || '0 0 100 100'}" width="100%" height="100%" fill="none" aria-hidden="true" focusable="false">${inner}</svg>`; },
-    // Avatar robot (cara azul, visor cian, antena, casco). Color de acento opcional.
-    avatar() {
-      return this._s(`
-        <defs>
-          <radialGradient id="av-face" cx="50%" cy="38%" r="70%"><stop offset="0%" stop-color="#cfe6ff"/><stop offset="100%" stop-color="#7fb0e8"/></radialGradient>
-          <linearGradient id="av-helm" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a4f8f"/><stop offset="100%" stop-color="#1d2a55"/></linearGradient>
-        </defs>
-        <circle cx="50" cy="50" r="6" fill="#16306a"/><rect x="47" y="14" width="6" height="14" rx="3" fill="#9fb6e8"/><circle cx="50" cy="13" r="6" fill="#2bd4e6"/>
-        <rect x="18" y="24" width="64" height="58" rx="22" fill="url(#av-helm)" stroke="#5b74c4" stroke-width="2"/>
-        <rect x="26" y="34" width="48" height="40" rx="17" fill="url(#av-face)"/>
-        <rect x="33" y="44" width="34" height="20" rx="10" fill="#0c1f44"/>
-        <circle cx="43" cy="54" r="5.5" fill="#34e2ff"/><circle cx="58" cy="54" r="5.5" fill="#34e2ff"/>
-        <circle cx="44.5" cy="52.5" r="1.8" fill="#fff"/><circle cx="59.5" cy="52.5" r="1.8" fill="#fff"/>
-        <circle cx="22" cy="56" r="5" fill="#2bd4e6"/><circle cx="78" cy="56" r="5" fill="#2bd4e6"/>`);
-    },
-    plus() { return this._s(`<circle cx="50" cy="50" r="42" fill="#27c24a" stroke="#1c8f37" stroke-width="6"/><path d="M50 30 V70 M30 50 H70" stroke="#fff" stroke-width="11" stroke-linecap="round"/>`); },
-    coin() { return this._s(`<circle cx="50" cy="50" r="40" fill="#ffb224" stroke="#cf8410" stroke-width="4"/><circle cx="50" cy="50" r="29" fill="#ffd84d"/><path d="M50 34 l4.6 9.4 10.4.9-7.9 6.8 2.4 10.1L50 65.8 40.1 71.2l2.4-10.1-7.9-6.8 10.4-.9z" fill="#e0a020"/>`); },
-    gem() { return this._s(`<path d="M28 26 H72 L88 44 L50 86 L12 44 Z" fill="#2bd4e6" stroke="#0e9fc0" stroke-width="3"/><path d="M28 26 L50 44 L72 26 M12 44 H88 M50 44 V86" stroke="#bff3ff" stroke-width="2.5" fill="none"/><path d="M28 26 L50 44 L12 44 Z" fill="#7fe8f5"/>`); },
-    fire() { return this._s(`<path d="M50 12 C58 30 74 34 70 56 C68 74 58 84 50 84 C42 84 30 76 30 58 C30 46 40 44 42 34 C50 40 46 24 50 12 Z" fill="#ff7a30"/><path d="M50 40 C56 50 60 56 56 66 C54 74 50 78 46 76 C42 74 40 66 44 58 C46 52 48 48 50 40 Z" fill="#ffd84d"/>`); },
+    // --- Tokens de 1 concepto: ahora PNG del pack (img/ui) ---
+    avatar() { return icon('player'); },
+    plus() { return icon('plus'); },
+    coin() { return icon('coin'); },
+    gem() { return icon('gem'); },
+    fire() { return icon('fire'); },
+    pencil() { return icon('pencil'); },
+    gift() { return icon('gift'); },
+    rocket() { return icon('rocket'); },
+    trophy() { return icon('trophy'); },
+    chest() { return icon('chest'); },
+    book() { return icon('book'); },
+    target() { return icon('target'); },
+    calendar() { return icon('calendar'); },
+    crownLock() { return icon('crown'); },
+    friends() { return icon('friend'); },
+    medal() { return icon('medal'); },
+    cart() { return icon('cart'); },
+    home() { return icon('house'); },
+    gear() { return icon('settings'); },
+    // --- Sin equivalente de 1 icono en el pack: se mantienen como SVG propio ---
     bell() { return this._s(`<path d="M50 18 C36 18 30 28 30 42 C30 60 22 64 22 70 H78 C78 64 70 60 70 42 C70 28 64 18 50 18 Z" fill="#d7e2ff" stroke="#9fb0e0" stroke-width="3"/><circle cx="50" cy="78" r="7" fill="#d7e2ff"/><rect x="46" y="10" width="8" height="8" rx="4" fill="#d7e2ff"/>`); },
-    pencil() { return this._s(`<path d="M22 70 L66 26 L78 38 L34 82 L20 84 Z" fill="#7fa0e8"/><path d="M62 22 L70 14 L82 26 L74 34 Z" fill="#ffd84d"/>`); },
-    // Banner: regalo + cohete
-    gift() {
-      return this._s(`
-        <rect x="20" y="44" width="60" height="44" rx="6" fill="#ff5b6e"/><rect x="20" y="36" width="60" height="16" rx="5" fill="#ff7a88"/>
-        <rect x="44" y="36" width="12" height="52" fill="#ffd84d"/>
-        <path d="M50 36 C40 36 32 30 36 22 C40 16 50 24 50 36 Z" fill="#ffd84d"/><path d="M50 36 C60 36 68 30 64 22 C60 16 50 24 50 36 Z" fill="#ffe27a"/>`);
-    },
-    rocket() {
-      return this._s(`
-        <defs><linearGradient id="rk-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#eef4ff"/><stop offset="100%" stop-color="#b9c9ee"/></linearGradient></defs>
-        <path d="M50 8 C66 22 70 44 66 66 H34 C30 44 34 22 50 8 Z" fill="url(#rk-b)"/>
-        <path d="M50 8 C58 16 62 28 62 40 H38 C38 28 42 16 50 8 Z" fill="#ff5b6e"/>
-        <circle cx="50" cy="40" r="9" fill="#2bd4e6" stroke="#0c2f6a" stroke-width="3"/>
-        <path d="M34 56 L22 74 L36 68 Z" fill="#ff5b6e"/><path d="M66 56 L78 74 L64 68 Z" fill="#ff5b6e"/>
-        <path d="M42 68 H58 L52 92 L50 84 L48 92 Z" fill="#ffb24d"/><path d="M46 68 H54 L50 86 Z" fill="#ffd84d"/>`);
-    },
-    trophy() {
-      return this._s(`
-        <defs><linearGradient id="tr-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe27a"/><stop offset="100%" stop-color="#e0a020"/></linearGradient></defs>
-        <path d="M30 20 H70 V40 C70 56 60 64 50 64 C40 64 30 56 30 40 Z" fill="url(#tr-g)" stroke="#b9892a" stroke-width="2"/>
-        <path d="M30 24 H18 V32 C18 42 26 46 32 46" fill="none" stroke="#e0a020" stroke-width="5"/>
-        <path d="M70 24 H82 V32 C82 42 74 46 68 46" fill="none" stroke="#e0a020" stroke-width="5"/>
-        <rect x="44" y="64" width="12" height="12" fill="#cf9420"/><rect x="34" y="76" width="32" height="9" rx="3" fill="#e0a020"/>
-        <path d="M50 28 l3.4 7 7.6.6-5.8 5 1.8 7.4L50 50.6 42.8 55l1.8-7.4-5.8-5 7.6-.6z" fill="#fff7d6"/>`);
-    },
-    chest() {
-      return this._s(`
-        <path d="M22 44 C22 34 34 28 50 28 C66 28 78 34 78 44 V48 H22 Z" fill="#a8702f"/>
-        <rect x="22" y="48" width="56" height="34" rx="4" fill="#8a5a24"/>
-        <rect x="22" y="56" width="56" height="8" fill="#ffd84d"/><rect x="44" y="48" width="12" height="34" fill="#c98a3a"/>
-        <rect x="46" y="60" width="8" height="12" rx="2" fill="#6a4316"/>`);
-    },
-    book() {
-      return this._s(`
-        <rect x="22" y="22" width="56" height="58" rx="6" fill="#2f6bff"/><rect x="22" y="22" width="12" height="58" rx="5" fill="#1c4cc0"/>
-        <rect x="40" y="32" width="30" height="6" rx="3" fill="#bcd0ff"/><rect x="40" y="44" width="30" height="6" rx="3" fill="#bcd0ff"/>
-        <text x="55" y="72" font-size="26" font-weight="900" fill="#ffd84d" text-anchor="middle">?</text>`);
-    },
-    // Tableros / mundos
-    boardMini() {
-      return this._s(`
-        <rect x="14" y="14" width="72" height="72" rx="12" fill="#0c1838" stroke="#2a3a78" stroke-width="3"/>
-        <g stroke="#1c2a55" stroke-width="2">
-          <path d="M14 38 H86 M14 62 H86 M38 14 V86 M62 14 V86"/></g>
-        <path d="M26 22 l3 6 6 .5-4.6 4 1.4 6L26 35.5 20.2 38.5l1.4-6-4.6-4 6-.5z" fill="#ffd84d"/>
-        <path d="M68 26 l8 14 H60 Z" fill="#3ad07f"/>
-        <circle cx="30" cy="70" r="8" fill="#ff5b6e"/>
-        <path d="M62 62 l8 14 H54 Z" fill="#3ad07f"/><rect x="64" y="64" width="14" height="14" rx="4" fill="#4b8bff"/>`);
-    },
-    island() {
-      return this._s(`
-        <ellipse cx="50" cy="74" rx="34" ry="12" fill="#1b6fae"/>
-        <path d="M24 64 C24 50 36 42 50 42 C64 42 76 50 76 64 C68 72 58 74 50 74 C42 74 32 72 24 64 Z" fill="#3ad07f"/>
-        <path d="M24 64 C32 70 42 72 50 72 C58 72 68 70 76 64 L74 60 C66 66 56 66 50 66 C44 66 34 66 26 60 Z" fill="#8a5a2a"/>
-        <rect x="48" y="22" width="4" height="22" fill="#cfd8ee"/><path d="M52 24 H68 L62 30 L68 36 H52 Z" fill="#4b8bff"/>
-        <path d="M58 27 l1.6 3.4 3.4.3-2.6 2.2.8 3.3-3.2-1.8-3.2 1.8.8-3.3-2.6-2.2 3.4-.3z" fill="#ffd84d"/>`);
-    },
-    // Supervivencia: corazón con pulso + enemigos
-    heartFoes() {
-      return this._s(`
-        <path d="M50 80 C16 56 22 28 42 28 C49 28 50 34 50 37 C50 34 51 28 58 28 C78 28 84 56 50 80 Z" fill="#ff5b6e" stroke="#c8324a" stroke-width="2"/>
-        <path d="M30 54 H42 L46 44 L52 64 L57 52 L62 54 H72" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        <g><circle cx="22" cy="70" r="9" fill="#a06bff"/><circle cx="19" cy="68" r="1.6" fill="#fff"/><circle cx="25" cy="68" r="1.6" fill="#fff"/></g>
-        <g><rect x="70" y="62" width="16" height="16" rx="4" fill="#3ad07f"/><circle cx="75" cy="69" r="1.6" fill="#0a2a16"/><circle cx="81" cy="69" r="1.6" fill="#0a2a16"/></g>`);
-    },
-    // Multijugador (modo): dos bolas con cara sobre un tablero + VS
-    vsBalls() {
-      return this._s(`
-        <rect x="14" y="58" width="72" height="30" rx="8" fill="#0c1838" stroke="#2a3a78" stroke-width="2"/>
-        <g stroke="#1c2a55" stroke-width="2"><path d="M38 58 V88 M62 58 V88 M14 73 H86"/></g>
-        <circle cx="34" cy="40" r="20" fill="#4b8bff"/><circle cx="28" cy="36" r="3" fill="#fff"/><circle cx="40" cy="36" r="3" fill="#fff"/><path d="M28 46 Q34 50 40 46" stroke="#fff" stroke-width="2.5" fill="none"/>
-        <circle cx="66" cy="40" r="20" fill="#ff5b6e"/><circle cx="60" cy="36" r="3" fill="#fff"/><circle cx="72" cy="36" r="3" fill="#fff"/><path d="M60 46 Q66 50 72 46" stroke="#fff" stroke-width="2.5" fill="none"/>
-        <text x="50" y="46" font-size="16" font-weight="900" fill="#ffd84d" text-anchor="middle" stroke="#7a3000" stroke-width="1">VS</text>`);
-    },
-    // Multijugador (home card): dos personas + VS
-    vsPeople() {
-      return this._s(`
-        <g><circle cx="30" cy="34" r="12" fill="#ffb24d"/><path d="M12 78 C12 60 22 52 30 52 C38 52 48 60 48 78 Z" fill="#ffb24d"/></g>
-        <g><circle cx="70" cy="34" r="12" fill="#4b8bff"/><path d="M52 78 C52 60 62 52 70 52 C78 52 88 60 88 78 Z" fill="#4b8bff"/></g>
-        <text x="50" y="56" font-size="18" font-weight="900" fill="#fff" text-anchor="middle" stroke="#0c2f6a" stroke-width="1.4">VS</text>`);
-    },
-    // Iconos de navegación (rellenos, fieles a la barra inferior y fila rápida)
-    target() { return this._s(`<circle cx="50" cy="50" r="34" fill="none" stroke="#ff5b6e" stroke-width="8"/><circle cx="50" cy="50" r="20" fill="none" stroke="#ffb24d" stroke-width="8"/><circle cx="50" cy="50" r="7" fill="#ff5b6e"/>`); },
-    calendar() { return this._s(`<rect x="20" y="24" width="60" height="56" rx="8" fill="#4b8bff"/><rect x="20" y="24" width="60" height="16" rx="8" fill="#2f55c0"/><rect x="30" y="16" width="7" height="16" rx="3" fill="#cfd8ee"/><rect x="63" y="16" width="7" height="16" rx="3" fill="#cfd8ee"/><rect x="30" y="48" width="40" height="24" rx="4" fill="#dce6ff"/>`); },
-    crownLock() { return this._s(`<path d="M22 40 L34 52 L50 32 L66 52 L78 40 L72 70 H28 Z" fill="#ffd84d" stroke="#b9892a" stroke-width="2"/><rect x="40" y="60" width="20" height="18" rx="4" fill="#8a6a18"/><path d="M44 60 V55 a6 6 0 0 1 12 0 V60" fill="none" stroke="#8a6a18" stroke-width="3"/>`); },
-    friends() { return this._s(`<circle cx="36" cy="38" r="13" fill="#ffb24d"/><path d="M16 80 C16 60 26 54 36 54 C46 54 56 60 56 80 Z" fill="#ffb24d"/><circle cx="66" cy="42" r="11" fill="#4b8bff"/><path d="M50 80 C50 62 58 57 66 57 C74 57 84 62 84 80 Z" fill="#4b8bff"/>`); },
-    medal() { return this._s(`<path d="M36 16 L50 44 L64 16" stroke="#4b8bff" stroke-width="8" fill="none"/><circle cx="50" cy="62" r="22" fill="#ffd84d" stroke="#b9892a" stroke-width="3"/><path d="M50 50 l3.4 7 7.6.6-5.8 5 1.8 7.4L50 72.6 42.8 77l1.8-7.4-5.8-5 7.6-.6z" fill="#fff7d6"/>`); },
-    cart() { return this._s(`<path d="M16 22 H28 L36 62 H72 L80 34 H32" fill="none" stroke="#3ad07f" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="40" cy="76" r="7" fill="#3ad07f"/><circle cx="68" cy="76" r="7" fill="#3ad07f"/>`); },
-    home() { return this._s(`<path d="M50 18 L84 48 H74 V82 H26 V48 H16 Z" fill="#2bd4e6"/><rect x="42" y="58" width="16" height="24" fill="#0c2f6a"/>`); },
-    gear() { return this._s(`<path d="M50 20 l6 2 4-4 6 4-1 6 5 4 6-1 2 7-5 3 0 6 5 3-2 7-6-1-5 4 1 6-6 4-4-4-6 2-6-2-4 4-6-4 1-6-5-4-6 1-2-7 5-3 0-6-5-3 2-7 6 1 5-4-1-6 6-4 4 4z" fill="#9fb0e0"/><circle cx="50" cy="50" r="12" fill="#0c1838"/>`); },
+    // Ilustraciones compuestas (tarjetas de modo / inicio): se mantienen como SVG
+    boardMini() { return iconV2('mode-classic'); },
+    island() { return iconV2('mode-classic'); },
+    heartFoes() { return iconV2('mode-survival'); },
+    vsBalls() { return iconV2('mode-multi'); },
+    vsPeople() { return iconV2('mode-multi'); },
+    // (target/calendar/crownLock/friends/medal/cart/home/gear → ya definidos arriba como icon())
   };
 
 
@@ -1781,7 +1766,7 @@
       const el = $('#obj-banner'); if (!el) return;
       const biome = this.biomeOf(level);
       el.hidden = false; el.style.borderColor = '';
-      el.innerHTML = `<span class="obj-biome">${biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>`;
+      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>`;
     },
     refreshGoal() { const g = $('#obj-goal'); if (g) g.textContent = this.objectiveText(); },
   };
@@ -1804,7 +1789,7 @@
     grantRandom() {
       const id = this.BOOSTERS[rand(this.BOOSTERS.length)];
       this.inv[id] = (this.inv[id] || 0) + 1;
-      Toasts.show(`${Boosters.DEFS[id].glyph} +1 ${Boosters.DEFS[id].name}`, 'good', 1500);
+      Toasts.show(`+1 ${Boosters.DEFS[id].name}`, 'good', 1500, BOOSTER_IMG[id] || Boosters.DEFS[id].glyph);
       Sound.milestone(); this.buildBar();
     },
     setup() { if (this.wave >= 2) this._traps(Math.min(0.10, 0.02 * this.wave)); },
@@ -2061,7 +2046,7 @@
         State.lastActionCell = idx;
         State.removedTotal += this._powerClear(idx, cleared, 6);
         Render.syncAll(); cleared.forEach(i => Render.cellPulse(i, 'wild-cleared', 820));
-        Toasts.show('🃏 Comodín · despeje de emergencia', 'good', 1300);
+        Toasts.show('Comodín · despeje de emergencia', 'good', 1300, BOOSTER_IMG.x2);
         return;
       }
       const cleared = best.arr.slice(0, 8);
@@ -2070,19 +2055,19 @@
       cleared.forEach(i => { icons += this._powerClear(i, pulsed, 6); });
       State.removedTotal += icons;
       Render.syncAll(); pulsed.forEach(i => Render.cellPulse(i, 'wild-cleared', 820));
-      Toasts.show(`🃏 Comodín · ${icons} iconos`, 'good', 1400);
+      Toasts.show(`Comodín · ${icons} iconos`, 'good', 1400, BOOSTER_IMG.x2);
     },
     buildBar() {
       const el = $('#boosters'); if (!el) return;
       el.innerHTML = this.BOOSTERS.map((id) => {
         const d = Boosters.DEFS[id], n = this.inv[id] || 0;
-        return `<button class="booster${n <= 0 ? ' empty' : ''}" data-b="${id}" aria-label="${d.name}: ${n}" ${n <= 0 ? 'aria-disabled="true"' : ''}><span class="b-ic">${d.glyph}</span><span class="b-count" data-bc="${id}">${n}</span></button>`;
+        return `<button class="booster${n <= 0 ? ' empty' : ''}" data-b="${id}" aria-label="${d.name}: ${n}" ${n <= 0 ? 'aria-disabled="true"' : ''}><span class="b-ic">${BOOSTER_IMG[id] ? iconAnyInline(BOOSTER_IMG[id]) : d.glyph}</span><span class="b-count" data-bc="${id}">${n}</span></button>`;
       }).join('');
       el.querySelectorAll('.booster').forEach((b) => b.addEventListener('click', () => this.useBooster(b.dataset.b)));
     },
     render() {
       const r = this._r;
-      if (r.lives !== this.lives) { r.lives = this.lives; const lv = $('#surv-lives'); if (lv) lv.textContent = this.lives > 0 ? '❤️'.repeat(this.lives) : '💀'; }
+      if (r.lives !== this.lives) { r.lives = this.lives; const lv = $('#surv-lives'); if (lv) lv.innerHTML = this.lives > 0 ? iconInline('heart').repeat(this.lives) : iconInline('skull'); }
       if (r.wave !== this.wave) { r.wave = this.wave; const w = $('#surv-wave'); if (w) w.textContent = I18n.t('st_wave') + ' ' + this.wave; }
       const sec = Math.floor(this.survSec); if (r.sec !== sec) { r.sec = sec; const t = $('#surv-time'); if (t) t.textContent = sec + 's'; }
       const ch = Math.round(this.charge); if (r.charge !== ch) { r.charge = ch; const cf = $('#charge-fill'); if (cf) cf.style.width = ch + '%'; }
@@ -2126,7 +2111,7 @@
       if (!this.unlocked(this.sel)) this.sel = 'bosque';
       this.render(); Screens.show('worlds'); Econ.refresh();
     },
-    starsRow(n) { return '★★★'.slice(0, n) + '☆☆☆'.slice(0, 3 - n); },
+    starsRow(n) { return iconInline('star').repeat(n) + iconInline('star-empty').repeat(3 - n); },
     render() {
       const w = this.get(this.sel); const wi = this.idx(this.sel);
       const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
@@ -2134,8 +2119,8 @@
       // Cabecera del mundo
       const stars = Meta.worldStars(this.sel), maxStars = this.PER_WORLD * 3;
       { const t = $('#world-name'); if (t) t.textContent = w.name; }
-      { const g = $('#world-glyph'); if (g) g.textContent = w.glyph; }
-      { const s = $('#world-stars'); if (s) s.textContent = `⭐ ${stars}/${maxStars}`; }
+      { const g = $('#world-glyph'); if (g) g.innerHTML = WORLD_IMG[w.id] ? iconAnyInline(WORLD_IMG[w.id]) : w.glyph; }
+      { const s = $('#world-stars'); if (s) s.innerHTML = `${iconInline('star')} ${stars}/${maxStars}`; }
       // Mapa de niveles (serpenteante: filas de 5, alternas)
       const map = $('#world-map'); if (map) {
         const cur = Meta.worldMaxLevel(this.sel);
@@ -2146,18 +2131,18 @@
           const isCur = n === cur && unlocked && st === 0;
           const cls = `lvl-node${unlocked ? '' : ' locked'}${isCur ? ' current' : ''}${st > 0 ? ' done' : ''}`;
           html += `<button type="button" class="${cls}" data-lvl="${n}" ${unlocked ? '' : 'aria-disabled="true"'} aria-label="Nivel ${n}">
-            <span class="ln-num">${unlocked ? n : '🔒'}</span>
+            <span class="ln-num">${unlocked ? n : iconInline('lock')}</span>
             <span class="ln-stars" aria-hidden="true">${st > 0 ? this.starsRow(st) : ''}</span>
           </button>`;
         }
         // Nodo de recompensa del mundo (al final)
         const rc = Meta.worldCleared(this.sel) >= this.PER_WORLD;
-        html += `<button type="button" class="lvl-reward${rc && !this.rewardClaimed(this.sel) ? ' ready' : ''}" data-reward="1" aria-label="Recompensa del mundo">👑</button>`;
+        html += `<button type="button" class="lvl-reward${rc && !this.rewardClaimed(this.sel) ? ' ready' : ''}" data-reward="1" aria-label="Recompensa del mundo">${iconInline('crown')}</button>`;
         map.innerHTML = html;
       }
       // Novedades del mundo
       const nov = $('#world-nov'); if (nov) {
-        nov.innerHTML = w.nov.map(([ic, t, d]) => `<div class="nov-item"><span class="nov-ic">${ic}</span><div class="nov-tx"><b>${esc(t)}</b><small>${esc(d)}</small></div></div>`).join('');
+        nov.innerHTML = w.nov.map(([ic, t, d]) => `<div class="nov-item"><span class="nov-ic">${emojiIcon(ic)}</span><div class="nov-tx"><b>${esc(t)}</b><small>${esc(d)}</small></div></div>`).join('');
       }
       // Panel lateral de mundos
       const rail = $('#world-rail'); if (rail) {
@@ -2165,8 +2150,8 @@
           const unl = this.unlocked(x.id);
           const cleared = Meta.worldCleared(x.id);
           return `<button type="button" class="wr-item${x.id === this.sel ? ' sel' : ''}${unl ? '' : ' locked'}" data-world="${x.id}" style="--wa:${x.accent}" ${unl ? '' : 'aria-disabled="true"'}>
-            <span class="wr-glyph">${x.glyph}</span>
-            <span class="wr-tx"><b>${i + 1} · ${esc(x.name)}</b><small>${unl ? '⭐ ' + cleared + '/' + this.PER_WORLD : '🔒 Bloqueado'}</small></span>
+            <span class="wr-glyph">${WORLD_IMG[x.id] ? iconAnyInline(WORLD_IMG[x.id]) : x.glyph}</span>
+            <span class="wr-tx"><b>${i + 1} · ${esc(x.name)}</b><small>${unl ? iconInline('star') + ' ' + cleared + '/' + this.PER_WORLD : iconInline('lock') + ' Bloqueado'}</small></span>
           </button>`;
         }).join('');
       }
@@ -2304,7 +2289,7 @@
       } else {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         if (isIOS) {
-          Toasts.show('Para instalar: toca Compartir 📤 y "Añadir a inicio"', 'info', 4500);
+          Toasts.show('Para instalar: toca Compartir y "Añadir a inicio"', 'info', 4500, 'v2:share');
         } else {
           Toasts.show('Instala desde el menú de opciones del navegador (⋮)', 'info', 4500);
         }
@@ -2787,7 +2772,7 @@
       el.style.borderColor = m.accent || '';
       const stars = State.mode === 'clasico'
         ? `<span class="obj-stars" id="obj-stars" title="${I18n.t('stars_help')}" aria-label="${I18n.t('stars_label')}"></span>` : '';
-      el.innerHTML = `<span class="obj-biome" style="color:${m.accent || 'var(--accent-2)'}">${m.emoji} ${I18n.modeT(State.mode, 'name')}</span><span class="obj-goal">${I18n.modeT(State.mode, 'goal')}</span>${stars}`;
+      el.innerHTML = `<span class="obj-biome" style="color:${m.accent || 'var(--accent-2)'}">${MODE_IMG[State.mode] ? iconAnyInline(MODE_IMG[State.mode]) : m.emoji} ${I18n.modeT(State.mode, 'name')}</span><span class="obj-goal">${I18n.modeT(State.mode, 'goal')}</span>${stars}`;
       this.updateLiveStars();
     },
 
@@ -2906,7 +2891,7 @@
       // Acento del modal: color del bioma siguiente (Aventura) o del modo.
       const accent = State.mode === 'aventura' ? Adventure.biomeOf(next).accent : (m.accent || '#00d0ff');
       const modal = $('#modal-level'); if (modal) modal.style.setProperty('--modal-accent', accent);
-      const emb = $('#level-emblem'); if (emb) emb.textContent = perfect ? '✨' : (State.mode === 'aventura' ? Adventure.biomeOf(State.level).glyph : (m.emoji || '⭐'));
+      const emb = $('#level-emblem'); if (emb) emb.innerHTML = perfect ? icon('star') : (State.mode === 'aventura' ? (BIOME_IMG[Adventure.biomeOf(State.level).id] ? iconAny(BIOME_IMG[Adventure.biomeOf(State.level).id]) : Adventure.biomeOf(State.level).glyph) : (MODE_IMG[State.mode] ? iconAny(MODE_IMG[State.mode]) : (m.emoji || '⭐')));
 
       $('#level-title').textContent = perfect ? I18n.t('perfect_done') : I18n.t('level_done');
       $('#level-sub').textContent = perfect
@@ -2938,7 +2923,7 @@
       const coins = 20 + stars * 10 + Math.round(State.score / 60);
       Meta.addCoins(coins);
       const modal = $('#modal-level'); if (modal) modal.style.setProperty('--modal-accent', w.accent);
-      const emb = $('#level-emblem'); if (emb) emb.textContent = stars >= 3 ? '🌟' : w.glyph;
+      const emb = $('#level-emblem'); if (emb) emb.innerHTML = stars >= 3 ? icon('star') : (WORLD_IMG[w.id] ? iconAny(WORLD_IMG[w.id]) : w.glyph);
       $('#level-title').textContent = I18n.t('level_done');
       $('#level-sub').textContent = I18n.t('classic_lvl_sub').replace('{n}', n).replace('{w}', w.name);
       const e = Config.STAR_ERR;
@@ -2949,14 +2934,14 @@
         { s: 1, txt: I18n.t('star_c1') },
       ].map((c) => `<span class="sc-row${c.s === stars ? ' got' : ''}${c.s > stars ? ' missed' : ''}"><span class="sc-st">${'★'.repeat(c.s)}</span>${c.txt}</span>`).join('');
       const starsHtml = `<div class="classic-stars" aria-label="${stars}/3">` +
-        [1, 2, 3].map(k => `<span class="cs${k <= stars ? ' on' : ''}">★</span>`).join('') + '</div>' +
+        [1, 2, 3].map(k => `<span class="cs${k <= stars ? ' on' : ''}">${k <= stars ? iconInline('star') : iconInline('star-empty')}</span>`).join('') + '</div>' +
         `<div class="star-criteria">${crit}<span class="sc-mine">${I18n.t('star_mine').replace('{n}', State.mistakes)}</span></div>`;
       $('#level-stats').innerHTML = starsHtml + statRow([
         [State.score, I18n.t('st_points'), 'var(--score)'],
         ['×' + State.maxCombo, I18n.t('st_combo'), 'var(--gold)'],
         [State.removedTotal, I18n.t('st_removed'), 'var(--good)'],
       ]);
-      $('#level-next').innerHTML = `<div class="m-card-h">🪙 +${coins}${gained > 0 ? ' · ⭐ +' + gained : ''}</div>`;
+      $('#level-next').innerHTML = `<div class="m-card-h">${iconInline('coin')} +${coins}${gained > 0 ? ' · ' + iconInline('star') + ' +' + gained : ''}</div>`;
       const last = n >= Worlds.PER_WORLD;
       { const nb = $('#btn-next-level'); if (nb) { nb.hidden = last; nb.textContent = I18n.t('classic_next'); } }
       { const mb = $('#btn-level-map'); if (mb) mb.hidden = false; }
@@ -2981,15 +2966,15 @@
       if (State.mode === 'aventura') {
         const bi = Adventure.biomeOf(next), ch = Adventure.chapterOf(next), boss = Adventure.isBoss(next);
         const newChapter = ch !== Adventure.chapterOf(State.level);
-        head = `${bi.glyph} ${I18n.t('chapter')} ${ch + 1} · ${Adventure.biomeName(bi)}`;
-        extra = `<div class="m-goal${boss ? ' boss' : ''}">${boss ? '⚠️ ' : '🎯 '}${Adventure.previewObjective(next)}</div>`;
+        head = `${BIOME_IMG[bi.id] ? iconAnyInline(BIOME_IMG[bi.id]) : bi.glyph} ${I18n.t('chapter')} ${ch + 1} · ${Adventure.biomeName(bi)}`;
+        extra = `<div class="m-goal${boss ? ' boss' : ''}">${boss ? iconInline('warning') + ' ' : iconInline('target') + ' '}${Adventure.previewObjective(next)}</div>`;
         if (newChapter && bi.mods.length) extra += `<div class="m-mod">${Adventure.biomeModText(bi)}</div>`;
       } else {
         head = `${I18n.t('next')} · ${I18n.t('lvl')} ${next}`;
       }
       // (Contrarreloj ya no progresa por niveles, así que no hay preview de tiempo.)
-      const deltas = `<span class="delta">⚡ ${curSpawn.toFixed(1)}s → <strong>${nxtSpawn.toFixed(1)}s</strong></span>` +
-        `<span class="delta">🎲 ${curVar} → <strong>${nxtVar}</strong></span>`;
+      const deltas = `<span class="delta">${iconInline('bolt')} ${curSpawn.toFixed(1)}s → <strong>${nxtSpawn.toFixed(1)}s</strong></span>` +
+        `<span class="delta">${iconInline('dice')} ${curVar} → <strong>${nxtVar}</strong></span>`;
       return `<div class="m-card-h">${head}</div>` +
         `<div class="ic-label">${I18n.t('new_icons')}</div>` +
         `<div class="ic-row">${icons}</div>` +
@@ -3021,7 +3006,7 @@
       if (State.mode === 'aventura') {
         Meta.advReach(State.level);
         const ch = Adventure.chapterOf(State.level);
-        if (ch !== prevChapter) { const bi = Adventure.biomeOf(State.level); Toasts.show(`${I18n.t('chapter')} ${ch + 1}: ${Adventure.biomeName(bi)}`, 'good', 2200, bi.glyph); }
+        if (ch !== prevChapter) { const bi = Adventure.biomeOf(State.level); Toasts.show(`${I18n.t('chapter')} ${ch + 1}: ${Adventure.biomeName(bi)}`, 'good', 2200, BIOME_IMG[bi.id] || bi.glyph); }
         else Toasts.show(`${I18n.t('lvl')} ${State.level}`, 'info', 1200);
       } else {
         Toasts.show(`${I18n.t('lvl')} ${State.level}`, 'info', 1400);
@@ -3029,8 +3014,8 @@
     },
 
     // Aplica emblema y color de acento al modal de fin de partida.
-    _overChrome(emoji, accent) {
-      const e = $('#over-emblem'); if (e) e.textContent = emoji;
+    _overChrome(iconName, accent, fallbackEmoji) {
+      const e = $('#over-emblem'); if (e) { if (iconName) e.innerHTML = iconAny(iconName); else e.textContent = fallbackEmoji || ''; }
       const mo = $('#modal-over'); if (mo) mo.style.setProperty('--modal-accent', this.newRecord || this._survNew ? 'var(--gold)' : accent);
     },
 
@@ -3038,7 +3023,7 @@
       this.endGame();
       Sound.level(); Haptics.level(); FX.confetti(110);
       $('#over-title').textContent = I18n.t('over_victory').replace(/^[^A-Za-z0-9¿¡]+/, '').trim();
-      this._overChrome('🏆', 'var(--gold)');
+      this._overChrome('trophy', 'var(--gold)');
       $('#over-reason').textContent = reason;
       this.fillStats(); Modal.open('modal-over');
       announce(`¡Victoria! Puntuación ${State.score}.`);
@@ -3053,7 +3038,7 @@
       Sound.over(); Haptics.error(); Render.boardShake();
       const m = Config.MODES[State.mode];
       $('#over-title').textContent = (State.mode === 'supervivencia' ? I18n.t('over_surv') : I18n.t('over_fail')).replace(/^[^A-Za-z0-9¿¡]+/, '').trim();
-      this._overChrome(State.mode === 'supervivencia' ? '🛡️' : (m.emoji || '🏁'), m.accent || '#ff5d73');
+      this._overChrome(State.mode === 'supervivencia' ? 'shield' : MODE_IMG[State.mode], m.accent || '#ff5d73', m.emoji || '🏁');
       $('#over-reason').textContent = reason;
       this.fillStats(); Modal.open('modal-over');
       announce(`Fin de la partida. ${reason} Puntuación ${State.score}.`);
@@ -3074,7 +3059,7 @@
 
     fillStats() {
       $('#over-record').hidden = !this.newRecord && !this._survNew;
-      if (this._survNew) { const rec = $('#over-record'); if (rec) rec.textContent = '🛡️ ¡Récord de supervivencia!'; }
+      if (this._survNew) { const rec = $('#over-record'); if (rec) rec.innerHTML = iconInline('shield') + ' ¡Récord de supervivencia!'; }
       const m = Config.MODES[State.mode], d = Config.DIFFICULTY[State.diff];
       // Resumen coherente por modo
       let summary;
@@ -3103,15 +3088,15 @@
       const r = this.metaResult || { xpGained: 0, coinsGained: 0, leveledUp: 0, newAch: [], missionDone: false };
       const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
       $('#over-xp').innerHTML =
-        `<div class="xp-line"><span class="xp-gain">+${r.xpGained} XP</span><span class="xp-coins">🪙 +${r.coinsGained || 0}</span><span class="xp-rank">${Meta.rank()} · ${I18n.t('lvl')} ${lvl}</span></div>` +
+        `<div class="xp-line"><span class="xp-gain">+${r.xpGained} XP</span><span class="xp-coins">${iconInline('coin')} <span class="xp-coins-n">+${r.coinsGained || 0}</span></span><span class="xp-rank">${Meta.rank()} · ${I18n.t('lvl')} ${lvl}</span></div>` +
         `<div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>` +
-        (r.leveledUp ? `<div class="xp-up">⬆️ ${I18n.t('lvl')} ${lvl}!</div>` : '') +
-        (r.missionDone ? `<div class="mission-done">✅ ${I18n.t('daily_done')} · +150 XP</div>` : '') +
-        (r.weeklyDone ? `<div class="mission-done">🗓️ ${I18n.t('weekly_done')} · +400 XP</div>` : '');
+        (r.leveledUp ? `<div class="xp-up">${iconInline('upgrade')} ${I18n.t('lvl')} ${lvl}!</div>` : '') +
+        (r.missionDone ? `<div class="mission-done">${iconInline('check')} ${I18n.t('daily_done')} · +150 XP</div>` : '') +
+        (r.weeklyDone ? `<div class="mission-done">${iconInline('calendar')} ${I18n.t('weekly_done')} · +400 XP</div>` : '');
       countUp($('#over-xp .xp-gain'), r.xpGained, 700, '+', ' XP');
-      countUp($('#over-xp .xp-coins'), r.coinsGained || 0, 700, '🪙 +', '');
+      countUp($('#over-xp .xp-coins-n'), r.coinsGained || 0, 700, '+', '');
       $('#over-ach').innerHTML = r.newAch.length
-        ? '<div class="ach-new">🏅 ' + r.newAch.map(a => a.name).join(' · ') + '</div>' : '';
+        ? '<div class="ach-new">' + iconInline('medal') + ' ' + r.newAch.map(a => a.name).join(' · ') + '</div>' : '';
       if (r.leveledUp) { setTimeout(() => { Sound.record(); FX.confetti(60); }, 350); }
       if (r.newAch.length) { setTimeout(() => { Sound.milestone(); Toasts.show(I18n.t('ach_unlocked').replace('{n}', r.newAch[0].name), 'good', 2400); }, 600); }
     },
@@ -3184,7 +3169,7 @@
       action: () => Game.start('supervivencia', 'normal') },
     { key: 'clasico', accent: '#2f6bff', svg: 'island', art: 'classic',
       i18n: 'card_classic', badge: 'card_classic_badge', desc: 'card_classic_desc',
-      feats: [['🔒', 'card_feat_locks'], ['◎', 'card_feat_objects'], ['⚡', 'card_feat_events'], ['✦', 'card_feat_more']],
+      feats: [['lock', 'card_feat_locks'], ['target', 'card_feat_objects'], ['bolt', 'card_feat_events'], ['v2:four-pointed-star', 'card_feat_more']],
       action: () => openWorldsMap() },
     { key: 'multi', accent: '#7a5cff', svg: 'vsBalls', art: 'multi', disabled: true,
       i18n: 'card_multi', badge: 'card_multi_badge', desc: 'card_multi_desc',
@@ -3194,8 +3179,12 @@
   function buildModeMenu() {
     const cont = $('#mode-cards'); if (!cont) return;
     const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+    const featIcon = (tok) => {
+      const mapped = EMOJI_IMG[tok] || (/^(v2:)?[a-z][a-z0-9-]*$/.test(tok) ? tok : null);
+      return mapped ? iconAnyInline(mapped) : tok;
+    };
     const featsHTML = (feats) => feats && feats.length
-      ? `<span class="mc-feats">${feats.map(f => `<span class="mc-feat"><span class="mc-feat-ic">${f[0]}</span>${esc(I18n.t(f[1]))}</span>`).join('')}</span>` : '';
+      ? `<span class="mc-feats">${feats.map(f => `<span class="mc-feat"><span class="mc-feat-ic">${featIcon(f[0])}</span>${esc(I18n.t(f[1]))}</span>`).join('')}</span>` : '';
     const cardHTML = (c) => `<button type="button" class="mode-hero${c.disabled ? ' mode-disabled' : ''}" role="listitem" data-mode="${c.key}" style="--mode-accent:${c.accent}" aria-label="${esc(I18n.t(c.i18n))}" ${c.disabled ? 'aria-disabled="true" disabled' : ''}>
         <span class="mc-art mc-art-${c.art}" aria-hidden="true">${Art[c.svg] ? Art[c.svg]() : ''}</span>
         <span class="mc-body">
@@ -3332,17 +3321,17 @@
   // Panel de ajustes (toggles persistentes)
   function buildSettings() {
     const rows = [
-      { k: 'sfx', label: I18n.t('set_sfx') },
-      { k: 'music', label: I18n.t('set_music') },
-      { k: 'haptics', label: I18n.t('set_haptics'), show: Haptics.ok },
-      { k: 'reducedFx', label: I18n.t('set_reduced') },
-      { k: 'largeText', label: I18n.t('set_large') },
+      { k: 'sfx', label: I18n.t('set_sfx'), icon: Settings.sfx ? 'sound-on' : 'sound-off' },
+      { k: 'music', label: I18n.t('set_music'), icon: Settings.music ? 'music-on' : 'music-off' },
+      { k: 'haptics', label: I18n.t('set_haptics'), show: Haptics.ok, icon: 'v2:mobile-phone' },
+      { k: 'reducedFx', label: I18n.t('set_reduced'), icon: 'aura' },
+      { k: 'largeText', label: I18n.t('set_large'), icon: 'v2:font' },
     ];
     const list = $('#settings-list'); if (!list) return;
     let html = rows.filter(r => r.show !== false).map(r =>
-      `<div class="set-row"><span>${r.label}</span><button class="switch" role="switch" data-set="${r.k}" aria-checked="${Settings[r.k]}" aria-label="${r.label}"><span class="switch-dot"></span></button></div>`
+      `<div class="set-row"><span class="set-row-l"><span class="set-ic">${r.icon ? iconAny(r.icon) : (r.emoji || '')}</span><span>${r.label}</span></span><button class="switch" role="switch" data-set="${r.k}" aria-checked="${Settings[r.k]}" aria-label="${r.label}"><span class="switch-dot"></span></button></div>`
     ).join('');
-    html += `<div class="set-row"><span>${I18n.t('set_lang')}</span><div class="lang-pick">` +
+    html += `<div class="set-row"><span class="set-row-l"><span class="set-ic">${icon('planet')}</span><span>${I18n.t('set_lang')}</span></span><div class="lang-pick">` +
       `<button class="lang-btn${Settings.lang !== 'en' ? ' on' : ''}" data-lang="es">ES</button>` +
       `<button class="lang-btn${Settings.lang === 'en' ? ' on' : ''}" data-lang="en">EN</button></div></div>`;
     list.innerHTML = html;
@@ -3352,6 +3341,7 @@
       if (k === 'music') { Settings.music && State.status === 'playing' ? Music.start() : Music.stop(); }
       if (k === 'reducedFx') applyReducedFx();
       if (k === 'largeText') applyLargeText();
+      if (k === 'sfx' || k === 'music') { const si = btn.closest('.set-row').querySelector('.set-ic'); if (si) si.innerHTML = icon(k === 'sfx' ? (Settings.sfx ? 'sound-on' : 'sound-off') : (Settings.music ? 'music-on' : 'music-off')); }
       const sw = $('#btn-sound'); if (sw) sw.setAttribute('aria-checked', String(Settings.sfx));
     }));
     list.querySelectorAll('[data-lang]').forEach(btn => btn.addEventListener('click', () => {
@@ -3377,14 +3367,14 @@
         const mo = Config.MODES[k];
         const best = k === 'supervivencia' ? (Meta.survBest() + 's') : Meta.modeBest(k);
         const plays = Meta.modePlays(k);
-        return `<div class="lb-row"><span class="lb-mode">${mo.emoji} ${I18n.modeT(k, 'name')}</span><span class="lb-best">${best}</span><span class="lb-plays">${plays}</span></div>`;
+        return `<div class="lb-row"><span class="lb-mode">${MODE_IMG[k] ? iconAnyInline(MODE_IMG[k]) : mo.emoji} ${I18n.modeT(k, 'name')}</span><span class="lb-best">${best}</span><span class="lb-plays">${plays}</span></div>`;
       }).join('');
       lbEl.innerHTML = rows;
     }
     // Logros
     const list = $('#medals-list');
     if (list) list.innerHTML = Meta.achievements().map(a =>
-      `<div class="medal ${a.unlocked ? 'on' : ''}"><span class="medal-ic">${a.unlocked ? '🏅' : '🔒'}</span><span class="medal-tx"><strong>${a.name}</strong><small>${a.desc}</small></span></div>`
+      `<div class="medal ${a.unlocked ? 'on' : ''}"><span class="medal-ic">${a.unlocked ? iconInline('medal') : iconInline('lock')}</span><span class="medal-tx"><strong>${a.name}</strong><small>${a.desc}</small></span></div>`
     ).join('');
     Modal.open('modal-medals');
   }
@@ -3402,7 +3392,7 @@
       const btn = eq ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
         : owned ? `<button class="btn btn-primary btn-sm" data-beq="${id}">${esc(I18n.t('equip'))}</button>`
         : (b.cost === 0 ? `<button class="btn btn-primary btn-sm" data-beq="${id}">${esc(I18n.t('free'))}</button>`
-          : `<button class="btn btn-primary btn-sm" data-bbuy="${id}">🪙 ${b.cost}</button>`);
+          : `<button class="btn btn-primary btn-sm" data-bbuy="${id}">${iconInline('coin')} ${b.cost}</button>`);
       return `<div class="board-card${eq ? ' on' : ''}" data-board="${id}">
         <span class="board-thumb" data-board="${id}" aria-hidden="true"></span>
         <span class="board-name">${esc(b.name)}</span>
@@ -3416,7 +3406,7 @@
       const t = Themes.DEFS[id], owned = Meta.owns(id), eq = curT === id;
       const btn = eq ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
         : owned ? `<button class="btn btn-primary btn-sm" data-equip="${id}">${esc(I18n.t('equip'))}</button>`
-        : `<button class="btn btn-primary btn-sm" data-buy="${id}">🪙 ${t.cost}</button>`;
+        : `<button class="btn btn-primary btn-sm" data-buy="${id}">${iconInline('coin')} ${t.cost}</button>`;
       return `<div class="shop-item${eq ? ' on' : ''}" data-theme="${id}" role="button" tabindex="0"><span class="shop-sw" style="background:${Themes.swatch(id)}"></span><span class="shop-name">${t.name}</span>${btn}</div>`;
     }).join('');
     list.innerHTML =
@@ -3449,7 +3439,7 @@
     const el = $('#chests-body'); if (!el) return;
     Econ.refresh();
     const n = Meta.chests();
-    el.innerHTML = `<div class="chest-big${n > 0 ? ' ready' : ''}">🎁</div>
+    el.innerHTML = `<div class="chest-big${n > 0 ? ' ready' : ''}">${iconInline('chest')}</div>
       <p class="chest-count">${I18n.t('chests_have').replace('{n}', n)}</p>
       <p class="chest-hint">${I18n.t('chests_hint')}</p>`;
     const ob = $('#btn-open-chest'); if (ob) ob.disabled = n <= 0;
@@ -3473,7 +3463,7 @@
       const bi = Adventure.BIOMES[ch % Adventure.BIOMES.length];
       const cls = ch < curCh ? 'done' : (ch === curCh ? 'cur' : 'next');
       if (ch > 0) html += '<span class="adv-link"></span>';
-      html += `<div class="adv-node ${cls}"><span class="adv-glyph">${bi.glyph}</span><span class="adv-name">Cap. ${ch + 1}<small>${bi.name}</small></span></div>`;
+      html += `<div class="adv-node ${cls}"><span class="adv-glyph">${BIOME_IMG[bi.id] ? iconAnyInline(BIOME_IMG[bi.id]) : bi.glyph}</span><span class="adv-name">Cap. ${ch + 1}<small>${bi.name}</small></span></div>`;
     }
     wrap.innerHTML = html;
     const btn = $('#adventure-continue');

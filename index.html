@@ -21,7 +21,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=v130" />
+  <link rel="stylesheet" href="styles.css?v=v133" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -76,7 +76,7 @@
 
         <!-- Chip nivel + mejor puntuación -->
         <div class="level-chip">
-          <span class="lc-ic" aria-hidden="true">🚀</span>
+          <span class="lc-ic" aria-hidden="true"><img class="ic ic-inline" src="img/ui/rocket.png" alt=""></span>
           <b id="home-chip-lvl">Nivel 1</b>
           <span class="lc-sep">·</span>
           <span class="lc-best"><span data-i18n="best_score">Mejor puntuación</span>: <b id="start-best">0</b></span>
@@ -98,7 +98,7 @@
           </button>
         </div>
 
-        <button class="btn btn-ghost btn-sm home-install" id="btn-install" hidden data-i18n="install">📲 Instalar app</button>
+        <button class="btn btn-ghost btn-sm home-install btn-icon" id="btn-install" hidden><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/download.svg')" aria-hidden="true"></span><span data-i18n="install">Instalar app</span></button>
       </div>
 
       <!-- Pie anclado abajo: Jugar (encima) + menús -->
@@ -118,7 +118,7 @@
           </button>
         </div>
 
-        <button class="btn-hero" id="btn-play"><span class="play-ic" aria-hidden="true">▶</span><span data-i18n="play_word">Jugar</span></button>
+        <button class="btn-hero" id="btn-play"><span class="play-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="play_word">Jugar</span></button>
 
         <!-- Fila rápida -->
         <div class="quick-row">
@@ -147,7 +147,7 @@
 
       <div class="modes-body">
         <div class="modes-head">
-          <button class="back-btn" id="modes-back" aria-label="Volver">←</button>
+          <button class="back-btn" id="modes-back" aria-label="Volver"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/arrow-left.svg')" aria-hidden="true"></span></button>
           <h2 id="modes-title" data-i18n="modes_title">Elige tu modo</h2>
           <p class="modes-sub" data-i18n="modes_sub">Cada modo, una forma diferente de jugar</p>
         </div>
@@ -159,12 +159,12 @@
     <!-- ============ PANTALLA: MODO CLÁSICO (MAPA DE MUNDOS) ============ -->
     <section class="screen screen-worlds" id="screen-worlds" aria-labelledby="worlds-title" hidden>
       <header class="topbar">
-        <button class="icon-btn" id="worlds-back" aria-label="Volver">←</button>
+        <button class="icon-btn" id="worlds-back" aria-label="Volver"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/arrow-left.svg')" aria-hidden="true"></span></button>
         <div class="topbar-econ" aria-label="Recursos">
           <span class="econ-pill econ-coins" data-econ="coins">🪙 0</span>
           <span class="econ-pill econ-gems" data-econ="gems">💎 0</span>
         </div>
-        <button class="icon-btn" id="worlds-settings" aria-label="Ajustes">⚙️</button>
+        <button class="icon-btn" id="worlds-settings" aria-label="Ajustes"><img class="ic ic-inline" src="img/ui/settings.png" alt=""></button>
       </header>
 
       <h2 id="worlds-title" class="worlds-title" data-i18n="classic_title">Modo Clásico</h2>
@@ -196,11 +196,11 @@
 
       <!-- Barra de navegación inferior (estilo Supercell) -->
       <nav class="worlds-tabs" aria-label="Navegación">
-        <button class="tab" id="wt-shop"><span class="tab-ic">🛒</span><small data-i18n="tab_shop">Tienda</small></button>
-        <button class="tab" id="wt-missions"><span class="tab-ic">🎯</span><small data-i18n="tab_missions">Misiones</small></button>
+        <button class="tab" id="wt-shop"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/cart.png" alt=""></span><small data-i18n="tab_shop">Tienda</small></button>
+        <button class="tab" id="wt-missions"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/target.png" alt=""></span><small data-i18n="tab_missions">Misiones</small></button>
         <button class="tab tab-home" id="wt-play" aria-current="page"><span class="tab-ic">🎮</span><small data-i18n="tab_play">Jugar</small></button>
-        <button class="tab" id="wt-chests"><span class="tab-ic">🎁</span><small data-i18n="tab_chests">Cofres</small></button>
-        <button class="tab" id="wt-rank"><span class="tab-ic">🏆</span><small data-i18n="tab_rank">Clasificación</small></button>
+        <button class="tab" id="wt-chests"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/chest.png" alt=""></span><small data-i18n="tab_chests">Cofres</small></button>
+        <button class="tab" id="wt-rank"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/trophy.png" alt=""></span><small data-i18n="tab_rank">Clasificación</small></button>
       </nav>
     </section>
 
@@ -212,13 +212,13 @@
           <div class="gctx">
             <span class="g-chip lvl-chip"><span class="g-k" data-i18n="hud_level">Nivel</span> <b id="hud-level">1</b></span>
             <span class="g-chip time-chip"><b id="hud-time">0:00</b></span>
-            <span class="g-chip rec-chip">🏆 <b id="hud-best">0</b></span>
+            <span class="g-chip rec-chip"><img class="ic ic-inline" src="img/ui/trophy.png" alt=""> <b id="hud-best">0</b></span>
           </div>
           <div class="gscore"><span class="hud-value" id="hud-score">0</span></div>
           <div class="controls">
-            <button class="icon-btn" id="btn-pause" aria-label="Pausa">⏸</button>
-            <button class="icon-btn" id="btn-restart" aria-label="Reiniciar">↻</button>
-            <button class="icon-btn" id="btn-quit" aria-label="Salir al menú">✕</button>
+            <button class="icon-btn" id="btn-pause" aria-label="Pausa"><span class="icv2" style="--icv2-url:url('img/icons-v2/9-media/pause.svg')" aria-hidden="true"></span></button>
+            <button class="icon-btn" id="btn-restart" aria-label="Reiniciar"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/refresh.svg')" aria-hidden="true"></span></button>
+            <button class="icon-btn" id="btn-quit" aria-label="Salir al menú"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/cross.svg')" aria-hidden="true"></span></button>
           </div>
         </div>
 
@@ -272,7 +272,7 @@
       </div>
 
       <!-- Pista: FAB en la zona natural del pulgar (acción usada en juego) -->
-      <button class="icon-btn hint-btn hint-fab" id="btn-hint" aria-label="Pista">💡<span class="badge" id="hint-badge">3</span></button>
+      <button class="icon-btn hint-btn hint-fab" id="btn-hint" aria-label="Pista"><img class="ic ic-inline" src="img/ui/search.png" alt=""><span class="badge" id="hint-badge">3</span></button>
     </section>
 
   </main>
@@ -281,7 +281,7 @@
   <div class="overlay" id="overlay" hidden>
     <!-- Misiones (lanzadas desde el FAB lateral del inicio) -->
     <div class="modal" id="modal-missions" role="dialog" aria-modal="true" aria-labelledby="missions-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true">🎯</span><h2 id="missions-title" data-i18n="missions_title">Misiones</h2></div>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/target.png" alt=""></span><h2 id="missions-title" data-i18n="missions_title">Misiones</h2></div>
       <div class="modal-body">
         <div class="start-missions" id="start-missions"></div>
       </div>
@@ -291,35 +291,35 @@
     </div>
     <!-- Cómo jugar -->
     <div class="modal" id="modal-how" role="dialog" aria-modal="true" aria-labelledby="how-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true">?</span><h2 id="how-title" data-i18n="how_title">¿Cómo se juega?</h2></div>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/question.png" alt=""></span><h2 id="how-title" data-i18n="how_title">¿Cómo se juega?</h2></div>
       <div class="modal-body">
         <ul class="how-list">
-          <li>🎯 <span data-i18n-html="how1">Toca una <strong>casilla vacía</strong>.</span></li>
+          <li><img class="ic ic-inline" src="img/ui/target.png" alt=""> <span data-i18n-html="how1">Toca una <strong>casilla vacía</strong>.</span></li>
           <li>👀 <span data-i18n-html="how2">Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).</span></li>
           <li>✨ <span data-i18n-html="how3">Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!</span></li>
-          <li>🔥 <span data-i18n-html="how4">Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.</span></li>
-          <li>⚠️ <span data-i18n-html="how5">Los iconos aparecen solos: vacía el tablero antes de que se llene.</span></li>
+          <li><img class="ic ic-inline" src="img/ui/fire.png" alt=""> <span data-i18n-html="how4">Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.</span></li>
+          <li><img class="ic ic-inline" src="img/ui/warning.png" alt=""> <span data-i18n-html="how5">Los iconos aparecen solos: vacía el tablero antes de que se llene.</span></li>
         </ul>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-primary" id="btn-tutorial" data-i18n="tutorial_btn">▶ Tutorial interactivo</button>
+        <button class="btn btn-primary btn-icon" id="btn-tutorial"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="tutorial_btn">Tutorial interactivo</span></button>
         <button class="btn btn-ghost" data-close data-i18n="understood">Entendido</button>
       </div>
     </div>
 
     <!-- Pausa -->
     <div class="modal" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true">Ⅱ</span><h2 id="pause-title" data-i18n="pause">Pausa</h2></div>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><span class="icv2" style="--icv2-url:url('img/icons-v2/9-media/pause.svg')"></span></span><h2 id="pause-title" data-i18n="pause">Pausa</h2></div>
       <div class="modal-actions modal-buttons">
-        <button class="btn btn-primary" id="btn-resume" data-i18n="resume">▶ Reanudar</button>
-        <button class="btn btn-ghost" id="btn-pause-restart" data-i18n="restart">↻ Reiniciar</button>
-        <button class="btn btn-ghost" id="btn-pause-quit" data-i18n="menu">✕ Menú</button>
+        <button class="btn btn-primary btn-icon" id="btn-resume"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="resume">Reanudar</span></button>
+        <button class="btn btn-ghost btn-icon" id="btn-pause-restart"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/8-ui/refresh.svg')" aria-hidden="true"></span><span data-i18n="restart">Reiniciar</span></button>
+        <button class="btn btn-ghost btn-icon" id="btn-pause-quit"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/8-ui/cross.svg')" aria-hidden="true"></span><span data-i18n="menu">Menú</span></button>
       </div>
     </div>
 
     <!-- Nivel completado -->
     <div class="modal modal-win" id="modal-level" role="dialog" aria-modal="true" aria-labelledby="level-title" hidden>
-      <div class="m-head"><span class="m-emblem" id="level-emblem" aria-hidden="true">⭐</span><h2 id="level-title">¡Nivel completado!</h2></div>
+      <div class="m-head"><span class="m-emblem" id="level-emblem" aria-hidden="true"><img class="ic" src="img/ui/star.png" alt=""></span><h2 id="level-title">¡Nivel completado!</h2></div>
       <div class="modal-body">
         <p class="modal-sub" id="level-sub"></p>
         <div class="stats" id="level-stats"></div>
@@ -327,15 +327,15 @@
       </div>
       <div class="modal-actions modal-buttons">
         <button class="btn btn-primary btn-lg" id="btn-next-level">Siguiente nivel →</button>
-        <button class="btn btn-ghost" id="btn-level-map" hidden data-i18n="to_map">🗺️ Volver al mapa</button>
+        <button class="btn btn-ghost btn-icon" id="btn-level-map" hidden><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/2-items/map.svg')" aria-hidden="true"></span><span data-i18n="to_map">Volver al mapa</span></button>
       </div>
     </div>
 
     <!-- Fin de partida -->
     <div class="modal modal-over" id="modal-over" role="dialog" aria-modal="true" aria-labelledby="over-title" hidden>
-      <div class="m-head"><span class="m-emblem" id="over-emblem" aria-hidden="true">🏁</span><h2 id="over-title">¡Misión fallida!</h2></div>
+      <div class="m-head"><span class="m-emblem" id="over-emblem" aria-hidden="true"><span class="icv2" style="--icv2-url:url('img/icons-v2/6-buildings/flag.svg')"></span></span><h2 id="over-title">¡Misión fallida!</h2></div>
       <div class="modal-body">
-        <p class="record-badge" id="over-record" hidden>🎉 ¡Nuevo récord!</p>
+        <p class="record-badge" id="over-record" hidden><span class="icv2 icv2-inline" style="--icv2-url:url('img/icons-v2/12-misc/four-pointed-star.svg')" aria-hidden="true"></span> ¡Nuevo récord!</p>
         <p class="modal-sub" id="over-reason"></p>
         <p class="modal-meta" id="over-meta"></p>
         <div class="stats" id="over-stats"></div>
@@ -343,15 +343,15 @@
         <div class="over-ach" id="over-ach"></div>
       </div>
       <div class="modal-actions modal-buttons">
-        <button class="btn btn-primary" id="btn-retry" data-i18n="retry">↻ Reintentar</button>
-        <button class="btn btn-ghost" id="btn-share" data-i18n="share">📤 Compartir</button>
-        <button class="btn btn-ghost" id="btn-over-quit" data-i18n="menu">✕ Menú</button>
+        <button class="btn btn-primary btn-icon" id="btn-retry"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/8-ui/refresh.svg')" aria-hidden="true"></span><span data-i18n="retry">Reintentar</span></button>
+        <button class="btn btn-ghost btn-icon" id="btn-share"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/share.svg')" aria-hidden="true"></span><span data-i18n="share">Compartir</span></button>
+        <button class="btn btn-ghost btn-icon" id="btn-over-quit"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/8-ui/cross.svg')" aria-hidden="true"></span><span data-i18n="menu">Menú</span></button>
       </div>
     </div>
 
     <!-- Ajustes -->
     <div class="modal" id="modal-settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true">⚙</span><h2 id="settings-title" data-i18n="settings_title">Ajustes</h2></div>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/settings.png" alt=""></span><h2 id="settings-title" data-i18n="settings_title">Ajustes</h2></div>
       <div class="modal-body">
         <div class="settings-list" id="settings-list"></div>
       </div>
@@ -362,19 +362,19 @@
 
     <!-- Última oportunidad (Supervivencia) -->
     <div class="modal modal-revive" id="modal-revive" role="dialog" aria-modal="true" aria-labelledby="revive-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true">♡</span><h2 id="revive-title" data-i18n="revive_title">¡Última oportunidad!</h2></div>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/heart.png" alt=""></span><h2 id="revive-title" data-i18n="revive_title">¡Última oportunidad!</h2></div>
       <div class="modal-body">
         <p class="modal-sub" data-i18n="revive_sub">Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?</p>
       </div>
       <div class="modal-actions modal-buttons">
-        <button class="btn btn-primary" id="btn-revive">🪙 Revivir (<span id="revive-cost">120</span>)</button>
+        <button class="btn btn-primary" id="btn-revive"><img class="ic ic-inline" src="img/ui/coin.png" alt=""> Revivir (<span id="revive-cost">120</span>)</button>
         <button class="btn btn-ghost" id="btn-giveup" data-i18n="giveup">Rendirse</button>
       </div>
     </div>
 
     <!-- Mapa de Aventura -->
     <div class="modal modal-adventure" id="modal-adventure" role="dialog" aria-modal="true" aria-labelledby="adventure-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true">🚀</span><h2 id="adventure-title" data-i18n="adventure_title">Aventura</h2></div>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/rocket.png" alt=""></span><h2 id="adventure-title" data-i18n="adventure_title">Aventura</h2></div>
       <div class="modal-body">
         <p class="modal-sub" data-i18n="adventure_sub">Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.</p>
         <div class="adventure-map" id="adventure-map"></div>
@@ -387,7 +387,7 @@
 
     <!-- Tienda: tableros + temas -->
     <div class="modal modal-shop" id="modal-shop" role="dialog" aria-modal="true" aria-labelledby="shop-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true">▣</span><h2 id="shop-title" data-i18n="shop_title">Tienda</h2></div>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/cart.png" alt=""></span><h2 id="shop-title" data-i18n="shop_title">Tienda</h2></div>
       <div class="shop-econ">
         <span class="econ-pill econ-coins" data-econ="coins">🪙 0</span>
         <span class="econ-pill econ-gems" data-econ="gems">💎 0</span>
@@ -404,7 +404,7 @@
 
     <!-- Cofres -->
     <div class="modal modal-chests" id="modal-chests" role="dialog" aria-modal="true" aria-labelledby="chests-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true">🎁</span><h2 id="chests-title" data-i18n="chests_title">Cofres</h2></div>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/chest.png" alt=""></span><h2 id="chests-title" data-i18n="chests_title">Cofres</h2></div>
       <div class="shop-econ">
         <span class="econ-pill econ-coins" data-econ="coins">🪙 0</span>
         <span class="econ-pill econ-gems" data-econ="gems">💎 0</span>
@@ -421,30 +421,30 @@
 
     <!-- Multijugador (próximamente) -->
     <div class="modal modal-multi" id="modal-multi" role="dialog" aria-modal="true" aria-labelledby="multi-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true">🆚</span><h2 id="multi-title" data-i18n="card_multi">Multijugador</h2></div>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/players.png" alt=""></span><h2 id="multi-title" data-i18n="card_multi">Multijugador</h2></div>
       <div class="modal-body">
         <div class="multi-vs" aria-hidden="true">
-          <span class="multi-p multi-p1">🔵</span>
+          <span class="multi-p multi-p1"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/user.svg')" aria-hidden="true"></span></span>
           <span class="multi-vs-tag">VS</span>
-          <span class="multi-p multi-p2">🔴</span>
+          <span class="multi-p multi-p2"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/user.svg')" aria-hidden="true"></span></span>
         </div>
         <p class="modal-sub" data-i18n="card_multi_desc">Compite contra otro jugador en el mismo tablero. Gana quien termine primero y consiga la mejor puntuación.</p>
         <div class="multi-feats">
-          <div class="multi-feat"><span>🏆</span><span data-i18n="card_feat_first">Termina primero el tablero</span></div>
-          <div class="multi-feat"><span>⭐</span><span data-i18n="card_feat_best">Mejor puntuación</span></div>
-          <div class="multi-feat"><span>📶</span><span data-i18n="card_feat_online">Partidas en línea</span></div>
+          <div class="multi-feat"><span class="feat-ic"><img class="ic ic-inline" src="img/ui/trophy.png" alt=""></span><span data-i18n="card_feat_first">Termina primero el tablero</span></div>
+          <div class="multi-feat"><span class="feat-ic"><img class="ic ic-inline" src="img/ui/star.png" alt=""></span><span data-i18n="card_feat_best">Mejor puntuación</span></div>
+          <div class="multi-feat"><span class="feat-ic"><span class="icv2 icv2-inline" style="--icv2-url:url('img/icons-v2/9-media/wi-fi.svg')" aria-hidden="true"></span></span><span data-i18n="card_feat_online">Partidas en línea</span></div>
         </div>
-        <p class="multi-soon-badge" data-i18n="soon_badge">🚧 Próximamente</p>
+        <p class="multi-soon-badge"><span class="icv2 icv2-inline" style="--icv2-url:url('img/icons-v2/8-ui/prohibited.svg')" aria-hidden="true"></span> <span data-i18n="soon_badge">Próximamente</span></p>
       </div>
       <div class="modal-actions modal-buttons">
-        <button class="btn btn-primary" id="btn-multi-notify" data-i18n="notify_me">🔔 Avísame</button>
+        <button class="btn btn-primary btn-icon" id="btn-multi-notify"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/notification.svg')" aria-hidden="true"></span><span data-i18n="notify_me">Avísame</span></button>
         <button class="btn btn-ghost" data-close data-i18n="close">Cerrar</button>
       </div>
     </div>
 
     <!-- Perfil: estadísticas + leaderboard + logros -->
     <div class="modal modal-profile" id="modal-medals" role="dialog" aria-modal="true" aria-labelledby="medals-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true">▥</span><h2 id="medals-title" data-i18n="profile_title">Perfil</h2></div>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/player.png" alt=""></span><h2 id="medals-title" data-i18n="profile_title">Perfil</h2></div>
       <div class="modal-body">
         <div class="stats" id="profile-stats"></div>
         <h3 class="group-title" data-i18n="best_by_mode">Mejores marcas por modo</h3>
@@ -458,6 +458,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=v123" defer></script>
+  <script src="game.js?v=v125" defer></script>
 </body>
 </html>

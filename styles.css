@@ -944,7 +944,16 @@ body.mode-timed .time-chip { display: inline-flex; }
     linear-gradient(35deg, transparent 42%, rgba(255,255,255,.88) 44%, transparent 48%),
     linear-gradient(120deg, transparent 46%, rgba(255,255,255,.58) 48%, transparent 51%);
 }
-.cell.tile-frozen::after { content: '❄️'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.5em; opacity: .9; }
+.cell.tile-frozen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: #dffbff;
+  -webkit-mask: url(img/icons-v2/4-nature/snowflake.svg) center / 58% no-repeat;
+  mask: url(img/icons-v2/4-nature/snowflake.svg) center / 58% no-repeat;
+  filter: drop-shadow(0 0 10px rgba(120,220,255,.8));
+  opacity: .9;
+}
 .cell.tile-frozen.ice-3 { filter: saturate(1.08); }
 .cell.tile-frozen.ice-2 { background: linear-gradient(145deg, rgba(190,245,255,.22), rgba(80,150,230,.14)); box-shadow: 0 0 0 2px rgba(150, 220, 255, .38) inset; }
 .cell.tile-frozen.ice-2::before { opacity: .78; transform: rotate(8deg); }
@@ -965,29 +974,77 @@ body.mode-timed .time-chip { display: inline-flex; }
 @keyframes ice-hit { 25% { transform: scale(.95) rotate(-2deg); } 55% { transform: scale(1.05) rotate(2deg); } }
 @keyframes ice-shatter { to { opacity: 0; transform: scale(1.55) rotate(18deg); } }
 .cell.tile-crystal { box-shadow: 0 0 0 2px rgba(255, 215, 90, .7) inset, 0 0 12px rgba(255, 215, 90, .35); }
-.cell.tile-crystal::after { content: '💎'; position: absolute; top: 1px; right: 2px; font-size: .62em; }
+.cell.tile-crystal::after { content: ''; position: absolute; top: 2px; right: 2px; width: 40%; height: 40%; background: center / contain no-repeat url(img/ui/crystal.png); filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
 .cell.tile-locked { background: #2a2f3c; }
-.cell.tile-locked::after { content: '🔒'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.3em; }
+.cell.tile-locked::after { content: ''; position: absolute; inset: 0; background: center / 54% no-repeat url(img/ui/lock.png); filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.55)); }
 .cell.tile-infected { box-shadow: 0 0 0 2px rgba(120, 230, 120, .6) inset; }
-.cell.tile-infected::after { content: '☣️'; position: absolute; top: 1px; right: 2px; font-size: .62em; }
+.cell.tile-infected::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 38%;
+  height: 38%;
+  background-color: #78e678;
+  -webkit-mask: url(img/icons-v2/12-misc/radiation.svg) center / contain no-repeat;
+  mask: url(img/icons-v2/12-misc/radiation.svg) center / contain no-repeat;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.55));
+}
 
 /* --- Obstáculos del mockup --- */
 /* Cadenas: bloquean la figura; toca 2 veces para liberar */
 .cell.tile-chains .glyph { display: none; }
 .cell.tile-chains { background: linear-gradient(145deg, rgba(150,160,180,.18), rgba(40,46,60,.5)); box-shadow: 0 0 0 2px rgba(170,180,200,.45) inset; }
-.cell.tile-chains::after { content: '⛓️'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.45em; opacity: .92; }
+.cell.tile-chains::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: #c2cbe0;
+  -webkit-mask: url(img/icons-v2/9-media/link.svg) center / 60% no-repeat;
+  mask: url(img/icons-v2/9-media/link.svg) center / 60% no-repeat;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.55));
+  opacity: .92;
+}
 /* Telaraña: atrapa; toca 2 veces para liberar */
 .cell.tile-web .glyph { display: none; }
 .cell.tile-web { background: linear-gradient(145deg, rgba(220,230,245,.10), rgba(30,34,48,.45)); box-shadow: 0 0 0 1px rgba(220,230,245,.3) inset; }
-.cell.tile-web::after { content: '🕸️'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.5em; opacity: .85; }
+.cell.tile-web::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: #dce6f5;
+  -webkit-mask: url(img/icons-v2/9-media/connection.svg) center / 62% no-repeat;
+  mask: url(img/icons-v2/9-media/connection.svg) center / 62% no-repeat;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.55));
+  opacity: .85;
+}
 /* Barrera: sólida, sólo se quita con objetos especiales */
 .cell.tile-barrier .glyph { display: none; }
 .cell.tile-barrier { background: repeating-linear-gradient(45deg, #2a2f3c 0 8px, #3a4150 8px 16px); box-shadow: 0 0 0 2px rgba(255,180,77,.45) inset; }
-.cell.tile-barrier::after { content: '🚧'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.3em; }
+.cell.tile-barrier::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: #ffb24d;
+  -webkit-mask: url(img/icons-v2/8-ui/prohibited.svg) center / 58% no-repeat;
+  mask: url(img/icons-v2/8-ui/prohibited.svg) center / 58% no-repeat;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.55));
+}
 /* Lodo: ralentiza; no es sólido (la figura sigue debajo) */
 .cell.tile-mud { box-shadow: 0 0 0 2px rgba(150, 110, 70, .6) inset; }
 .cell.tile-mud::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(circle at 50% 60%, rgba(120,80,45,.55), rgba(80,55,30,.3)); pointer-events: none; }
-.cell.tile-mud::after { content: '🟫'; position: absolute; bottom: 1px; right: 2px; font-size: .6em; opacity: .8; }
+.cell.tile-mud::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 38%;
+  height: 38%;
+  background-color: #c0844f;
+  -webkit-mask: url(img/icons-v2/4-nature/drought.svg) center / contain no-repeat;
+  mask: url(img/icons-v2/4-nature/drought.svg) center / contain no-repeat;
+  opacity: .86;
+}
 
 /* --- Objetos especiales del mockup (tap = efecto) --- */
 .cell.tile-bonus, .cell.tile-portal, .cell.tile-magicbox, .cell.tile-bomb { animation: special-pulse 1.6s ease-in-out infinite; }
@@ -995,11 +1052,11 @@ body.mode-timed .time-chip { display: inline-flex; }
 .cell.tile-bonus { color: var(--good); background: radial-gradient(circle, rgba(52,226,155,.28), rgba(52,226,155,.08)); box-shadow: 0 0 0 2px rgba(52,226,155,.6) inset; }
 .cell.tile-bonus::after { content: '+30'; position: absolute; inset: 0; display: grid; place-items: center; font-weight: 900; font-size: .82em; color: var(--good); text-shadow: 0 1px 3px rgba(0,0,0,.6); }
 .cell.tile-portal { color: var(--accent-2); box-shadow: 0 0 0 2px rgba(0,208,255,.6) inset; }
-.cell.tile-portal::after { content: '🌀'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.45em; }
+.cell.tile-portal::after { content: ''; position: absolute; inset: 0; background: center / 62% no-repeat url(img/ui/teleporter.png); filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
 .cell.tile-magicbox { color: var(--gold); box-shadow: 0 0 0 2px rgba(255,216,77,.6) inset; }
-.cell.tile-magicbox::after { content: '🎁'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.4em; }
+.cell.tile-magicbox::after { content: ''; position: absolute; inset: 0; background: center / 62% no-repeat url(img/ui/luckyblock.png); filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
 .cell.tile-bomb { color: var(--bad); box-shadow: 0 0 0 2px rgba(255,93,115,.6) inset; }
-.cell.tile-bomb::after { content: '💣'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.4em; }
+.cell.tile-bomb::after { content: ''; position: absolute; inset: 0; background: center / 62% no-repeat url(img/ui/bomb.png); filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
 
 /* Icono SVG dentro de la celda */
 .cell .glyph {
@@ -1010,6 +1067,38 @@ body.mode-timed .time-chip { display: inline-flex; }
   pointer-events: none;
 }
 .cell .glyph svg { width: 100%; height: 100%; display: block; }
+
+/* ===== Iconos PNG (pack en img/ui) ===== */
+/* .ic rellena su contenedor (data-art, .econ-ic, emblemas, navegación…). */
+.ic { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
+/* .ic-inline: dentro de una línea de texto (precios, toasts, estrellas, vidas). */
+.ic-inline { width: 1em; height: 1em; vertical-align: -0.16em; display: inline-block; }
+/* Iconos SVG monocromos de img/icons-v2. Usan máscara para heredar currentColor. */
+.icv2 {
+  width: 100%;
+  height: 100%;
+  display: block;
+  flex: 0 0 auto;
+  background-color: currentColor;
+  -webkit-mask: var(--icv2-url) center / contain no-repeat;
+  mask: var(--icv2-url) center / contain no-repeat;
+  pointer-events: none;
+}
+.icv2-inline { width: 1em; height: 1em; vertical-align: -0.16em; display: inline-block; }
+.btn-icon { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-ic { width: 1.05em; height: 1.05em; }
+.btn-hero .play-ic { width: 1.05em; height: 1.05em; }
+.icon-btn .icv2, .back-btn .icv2 { width: 48%; height: 48%; }
+.ac-art .icv2, .mc-art .icv2 { width: 72%; height: 72%; color: #fff; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)); position: relative; z-index: 1; }
+.world-glyph .icv2-inline, .wr-glyph .icv2-inline, .adv-glyph .icv2-inline { width: 1em; height: 1em; }
+/* Icono en una fila de ajustes. */
+.set-ic { width: 22px; height: 22px; flex: 0 0 auto; display: inline-grid; place-items: center; font-size: 1.15rem; line-height: 1; }
+.set-ic .ic, .set-ic .icv2 { width: 100%; height: 100%; }
+.set-row-l { display: flex; align-items: center; gap: 9px; min-width: 0; }
+/* Emblema de modal: icono centrado a ~72% del chip de 46px. */
+.m-emblem .ic, .m-emblem .icv2 { width: 72%; height: 72%; }
+/* Chips del HUD e iconos de botón: un poco mayores que el texto adyacente. */
+.g-chip .ic-inline, .g-chip .icv2-inline, .icon-btn .ic-inline, .icon-btn .icv2-inline, .lc-ic .ic-inline, .lc-ic .icv2-inline { width: 1.25em; height: 1.25em; }
 .cell.spawn .glyph { animation: glyph-in .28s cubic-bezier(.2,.9,.3,1.3) both; }
 /* Desaparición del icono = "POP SECO": desde su tamaño base se mantiene OPACO y
    luego desaparece de GOLPE (encoge un poco, NUNCA crece). El chasquido coincide
@@ -1198,6 +1287,7 @@ body.mode-timed .time-chip { display: inline-flex; }
   font-size: 1rem; line-height: 1; background: color-mix(in srgb, var(--tc) 45%, rgba(0,0,0,.35));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tc) 70%, transparent);
 }
+.toast .toast-ic .ic, .toast .toast-ic .icv2 { width: 74%; height: 74%; }
 .toast .toast-tx { min-width: 0; flex: 1; text-shadow: 0 1px 2px rgba(0,0,0,.6); white-space: normal; overflow-wrap: anywhere; }
 .toast .toast-x { margin-left: 2px; font-size: .78rem; font-weight: 900; color: #07101c; background: var(--tc); border-radius: 999px; padding: 2px 8px; flex: 0 0 auto; align-self: center; }
 .toast.info { --tc: var(--accent-2); }
@@ -1695,11 +1785,13 @@ body.mode-timed .lvl-chip { display: none; }
 .multi-vs { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 4px 0 12px; }
 .multi-p { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; font-size: 2rem;
   background: radial-gradient(circle at 50% 35%, rgba(255,255,255,.18), rgba(0,0,0,.3)); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 4px 12px rgba(0,0,0,.4); }
-.multi-p1 { box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 18px rgba(75,139,255,.5); }
-.multi-p2 { box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 18px rgba(255,91,110,.5); }
+.multi-p .icv2 { width: 58%; height: 58%; }
+.multi-p1 { color: #4b8bff; box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 18px rgba(75,139,255,.5); }
+.multi-p2 { color: #ff5b6e; box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 18px rgba(255,91,110,.5); }
 .multi-vs-tag { font-weight: 900; font-size: 1.4rem; color: var(--level); text-shadow: 0 0 12px color-mix(in srgb, var(--level) 60%, transparent); }
 .multi-feats { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
 .multi-feat { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,.05); border: 1px solid var(--line); font-weight: 700; font-size: .85rem; }
+.multi-feat .feat-ic { width: 1.15em; height: 1.15em; display: inline-grid; place-items: center; color: var(--accent-2); flex: 0 0 auto; }
 .multi-soon-badge { text-align: center; font-weight: 900; color: var(--warn); background: rgba(255,178,77,.12); border: 1px dashed rgba(255,178,77,.5); border-radius: 999px; padding: 8px; }
 
 /* Recompensa diaria (botón destacado) */

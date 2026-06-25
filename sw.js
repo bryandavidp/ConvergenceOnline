@@ -1,13 +1,82 @@
 /* Convergencia — Service Worker (offline-first).
  * Sube CACHE al publicar una versión nueva para invalidar la caché anterior. */
-const CACHE = 'cv-cache-v1.3.1';
+const CACHE = 'cv-cache-v1.6.0';
 const ASSETS = [
   './', './index.html', './styles.css', './game.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
 ];
+// Iconos de UI (pack en img/ui). Se precachean en best-effort: si alguno falla,
+// no rompe la instalación (de todos modos el fetch los cachea en runtime).
+const UI_ICONS = ['aura','bolt','bomb','book','calendar','cart','check','chest','clock','close','coin','crown','crystal','dice','fire','friend','gem','gift','heart','house','info','leaf','lock','luckyblock','magnet','medal','minus','music-off','music-on','pencil','pin','planet','planet-hell','player','players','plus','potion','question','rocket','search','settings','shield','skull','sound-off','sound-on','star','star-empty','stats','target','teleporter','ticket','trophy','upgrade','verify','warning'].map((n) => './img/ui/' + n + '.png');
+const V2_ICONS = [
+  './img/icons-v2/1-game/double.svg',
+  './img/icons-v2/2-items/map.svg',
+  './img/icons-v2/3-gear/shield.svg',
+  './img/icons-v2/4-nature/cactus.svg',
+  './img/icons-v2/4-nature/drought.svg',
+  './img/icons-v2/4-nature/meteor.svg',
+  './img/icons-v2/4-nature/mountain.svg',
+  './img/icons-v2/4-nature/snowflake.svg',
+  './img/icons-v2/6-buildings/flag.svg',
+  './img/icons-v2/6-buildings/town.svg',
+  './img/icons-v2/8-ui/arrow-left.svg',
+  './img/icons-v2/8-ui/circle-ring.svg',
+  './img/icons-v2/8-ui/cross.svg',
+  './img/icons-v2/8-ui/grid.svg',
+  './img/icons-v2/8-ui/prohibited.svg',
+  './img/icons-v2/8-ui/refresh.svg',
+  './img/icons-v2/8-ui/rest.svg',
+  './img/icons-v2/8-ui/user.svg',
+  './img/icons-v2/8-ui/user-group.svg',
+  './img/icons-v2/9-media/connection.svg',
+  './img/icons-v2/9-media/download.svg',
+  './img/icons-v2/9-media/link.svg',
+  './img/icons-v2/9-media/mobile-phone.svg',
+  './img/icons-v2/9-media/notification.svg',
+  './img/icons-v2/9-media/pause.svg',
+  './img/icons-v2/9-media/play.svg',
+  './img/icons-v2/9-media/share.svg',
+  './img/icons-v2/9-media/wi-fi.svg',
+  './img/icons-v2/10-editing/brush.svg',
+  './img/icons-v2/10-editing/font.svg',
+  './img/icons-v2/12-misc/four-pointed-star.svg',
+  './img/icons-v2/12-misc/radiation.svg',
+];
+const UI_SYSTEM = [
+  './img/ui-system/button-square-hover.png',
+  './img/ui-system/button-square-pressed.png',
+  './img/ui-system/button-square.png',
+  './img/ui-system/button-wide-hover.png',
+  './img/ui-system/button-wide-pressed.png',
+  './img/ui-system/button-wide.png',
+  './img/ui-system/button-wider-hover.png',
+  './img/ui-system/button-wider-pressed.png',
+  './img/ui-system/button-wider.png',
+  './img/ui-system/checkbox-checked.png',
+  './img/ui-system/checkbox-empty.png',
+  './img/ui-system/checkbox-tick.png',
+  './img/ui-system/icon-panel-big.png',
+  './img/ui-system/icon-panel-small.png',
+  './img/ui-system/ribbon-blue.png',
+  './img/ui-system/scrollbar-slider.png',
+  './img/ui-system/scrollbar-vertical.png',
+  './img/ui-system/toggle-box.png',
+  './img/ui-system/toggle-circle.png',
+  './img/ui-system/window-blue.png',
+  './img/ui-system/window-sci-fi.png',
+  './img/ui-system/window-white.png',
+];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => c.addAll(ASSETS).then(() => Promise.all([
+        c.addAll(UI_ICONS).catch(() => {}),
+        c.addAll(V2_ICONS).catch(() => {}),
+        c.addAll(UI_SYSTEM).catch(() => {}),
+      ])))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
