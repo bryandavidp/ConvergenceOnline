@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.2.1';
+  const VERSION = '1.2.2';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -45,6 +45,9 @@
     // Ayuda de vaciado: con el tablero casi vacío (<= threshold iconos), sesga el icono
     // que aparece hacia los que ya están (prioriza solitarios) para no alargar el vaciado.
     CLEAR_ASSIST: { threshold: 6, pMax: 0.9, decay: 0.1, pMin: 0.25 },
+    // Estrellas del nivel (Clásico): máximo de ERRORES permitidos para 3★ y 2★.
+    // 0 errores -> 3★ · hasta 2 errores -> 2★ · más -> 1★.
+    STAR_ERR: [0, 2],
     FEVER_COMBO: 10,          // combo para entrar en modo Fever
     FEVER_BOOST: 1.25,        // multiplicador extra de puntos en Fever
     // Contrarreloj (score attack): el reloj tiene TOPE -> el tiempo ganado no se
@@ -211,6 +214,8 @@
         classic_title: 'Modo Clásico', world_news: 'Novedades de este mundo', worlds_label: 'Mundos', all_rewards: '🎁 Ver recompensas',
         to_map: '🗺️ Volver al mapa', classic_lvl_sub: 'Nivel {n} · {w}', classic_next: 'Siguiente nivel →',
         locked_level: '🔒 Completa el nivel anterior', locked_world: '🔒 Mundo bloqueado', reward_locked: 'Completa todos los niveles del mundo', reward_claimed: 'Recompensa ya reclamada', reward_got: '¡Recompensa del mundo! 🎁 +1 cofre · 💎 +20',
+        stars_label: 'Estrellas del nivel', stars_help: '3★ sin errores · 2★ hasta 2 errores · 1★ más errores', star_lost: '−1 estrella · ¡evita los errores!',
+        star_c3: 'Sin errores', star_c2: 'Hasta {n} errores', star_c1: 'Más errores', star_mine: 'Tus errores: {n}',
         coming_soon: 'Próximamente', tab_missions: 'Misiones', tab_play: 'Jugar', tab_chests: 'Cofres', tab_rank: 'Clasificación',
         powerup_empty: 'No te quedan de este power-up',
         equipped: 'Equipado', equip: 'Equipar', free: 'Gratis', no_coins: 'Monedas insuficientes',
@@ -260,6 +265,8 @@
         classic_title: 'Classic Mode', world_news: "This world's news", worlds_label: 'Worlds', all_rewards: '🎁 See rewards',
         to_map: '🗺️ Back to map', classic_lvl_sub: 'Level {n} · {w}', classic_next: 'Next level →',
         locked_level: '🔒 Complete the previous level', locked_world: '🔒 World locked', reward_locked: 'Complete all levels in the world', reward_claimed: 'Reward already claimed', reward_got: 'World reward! 🎁 +1 chest · 💎 +20',
+        stars_label: 'Level stars', stars_help: '3★ no mistakes · 2★ up to 2 mistakes · 1★ more mistakes', star_lost: '−1 star · avoid mistakes!',
+        star_c3: 'No mistakes', star_c2: 'Up to {n} mistakes', star_c1: 'More mistakes', star_mine: 'Your mistakes: {n}',
         coming_soon: 'Coming soon', tab_missions: 'Missions', tab_play: 'Play', tab_chests: 'Chests', tab_rank: 'Leaderboard',
         powerup_empty: 'No more of this power-up',
         equipped: 'Equipped', equip: 'Equip', free: 'Free', no_coins: 'Not enough coins',
@@ -2682,7 +2689,17 @@
 
     /* Error del jugador: penalización (salvo modos sin penalización) */
     mistake(i) {
+      const prevStars = State.mode === 'clasico' ? this.starsForMistakes(State.mistakes) : 0;
       Render.miss(i); Sound.miss(); Haptics.error(); State.mistakes++;
+      // Clásico: refresca estrellas en vivo y avisa si se ha perdido una (transparencia).
+      if (State.mode === 'clasico') {
+        this.updateLiveStars();
+        const now = this.starsForMistakes(State.mistakes);
+        if (now < prevStars) {
+          const el = $('#obj-stars'); if (el) { el.classList.remove('lost'); void el.offsetWidth; el.classList.add('lost'); }
+          Toasts.show(I18n.t('star_lost'), 'bad', 1600, '★');
+        }
+      }
       const m = Config.MODES[State.mode];
       if (!m.penalties) return;
       Render.boardShake();
@@ -2791,7 +2808,24 @@
       if (State.mode === 'supervivencia' || !m.goal) { el.hidden = true; el.style.borderColor = ''; return; }
       el.hidden = false;
       el.style.borderColor = m.accent || '';
-      el.innerHTML = `<span class="obj-biome" style="color:${m.accent || 'var(--accent-2)'}">${m.emoji} ${I18n.modeT(State.mode, 'name')}</span><span class="obj-goal">${I18n.modeT(State.mode, 'goal')}</span>`;
+      const stars = State.mode === 'clasico'
+        ? `<span class="obj-stars" id="obj-stars" title="${I18n.t('stars_help')}" aria-label="${I18n.t('stars_label')}"></span>` : '';
+      el.innerHTML = `<span class="obj-biome" style="color:${m.accent || 'var(--accent-2)'}">${m.emoji} ${I18n.modeT(State.mode, 'name')}</span><span class="obj-goal">${I18n.modeT(State.mode, 'goal')}</span>${stars}`;
+      this.updateLiveStars();
+    },
+
+    // Estrellas según errores cometidos (criterio único y transparente).
+    starsForMistakes(mistakes) {
+      const e = Config.STAR_ERR;
+      return mistakes <= e[0] ? 3 : mistakes <= e[1] ? 2 : 1;
+    },
+    // Refresca el indicador de estrellas en vivo del banner (solo Clásico).
+    updateLiveStars() {
+      if (State.mode !== 'clasico') return;
+      const el = $('#obj-stars'); if (!el) return;
+      const s = this.starsForMistakes(State.mistakes);
+      el.innerHTML = [1, 2, 3].map((k) => `<span class="ols${k <= s ? ' on' : ''}">★</span>`).join('');
+      el.dataset.stars = s;
     },
 
     /* Win/Lose: se evalúa tras cada cambio del tablero */
@@ -2922,7 +2956,7 @@
     // Fin de nivel del modo Clásico: estrellas (según errores), recompensa y desbloqueo.
     _classicComplete() {
       const n = State.worldLevel || 1, w = Worlds.get(State.world);
-      const stars = State.mistakes === 0 ? 3 : State.mistakes <= 3 ? 2 : 1;
+      const stars = this.starsForMistakes(State.mistakes);
       const gained = Meta.setLevelStars(State.world, n, stars);
       const coins = Math.round((20 + stars * 10 + Math.round(State.score / 60)) * Boards.fx().coin);
       Meta.addCoins(coins);
@@ -2930,8 +2964,16 @@
       const emb = $('#level-emblem'); if (emb) emb.textContent = stars >= 3 ? '🌟' : w.glyph;
       $('#level-title').textContent = I18n.t('level_done');
       $('#level-sub').textContent = I18n.t('classic_lvl_sub').replace('{n}', n).replace('{w}', w.name);
+      const e = Config.STAR_ERR;
+      // Criterio de cada estrella, resaltando la que el jugador NO logró por errores.
+      const crit = [
+        { s: 3, txt: I18n.t('star_c3') },
+        { s: 2, txt: I18n.t('star_c2').replace('{n}', e[1]) },
+        { s: 1, txt: I18n.t('star_c1') },
+      ].map((c) => `<span class="sc-row${c.s === stars ? ' got' : ''}${c.s > stars ? ' missed' : ''}"><span class="sc-st">${'★'.repeat(c.s)}</span>${c.txt}</span>`).join('');
       const starsHtml = `<div class="classic-stars" aria-label="${stars}/3">` +
-        [1, 2, 3].map(k => `<span class="cs${k <= stars ? ' on' : ''}">★</span>`).join('') + '</div>';
+        [1, 2, 3].map(k => `<span class="cs${k <= stars ? ' on' : ''}">★</span>`).join('') + '</div>' +
+        `<div class="star-criteria">${crit}<span class="sc-mine">${I18n.t('star_mine').replace('{n}', State.mistakes)}</span></div>`;
       $('#level-stats').innerHTML = starsHtml + statRow([
         [State.score, I18n.t('st_points'), 'var(--score)'],
         ['×' + State.maxCombo, I18n.t('st_combo'), 'var(--gold)'],
@@ -2982,6 +3024,11 @@
       if (State.mode === 'clasico') {
         State.worldLevel = (State.worldLevel || 1) + 1;
         State.level = State.worldLevel;
+        // Estadísticas POR NIVEL: cada nivel se puntúa/valora desde cero (las estrellas
+        // dependen solo de los errores de ESE nivel, no de los acumulados del mundo).
+        State.score = 0; State.displayScore = 0; State.mistakes = 0;
+        State.combo = 0; State.comboMult = 1; State.comboAt = 0; State.maxCombo = 0; State.removedTotal = 0;
+        State.fever = false; Render.fever(false);
         State.status = 'playing'; Modal.close();
         this.setupLevel(); this.showGoalBanner(); Loop.start();
         Toasts.show(`${I18n.t('lvl')} ${State.worldLevel}`, 'info', 1300);
