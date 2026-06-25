@@ -3224,17 +3224,20 @@
 
   /* ===================== Top bar reutilizable (sistema base) ===================== */
   const TOPBAR_HTML = `
-    <button class="appbar-profile" data-act="profile" aria-label="Perfil">
-      <span class="avatar"><span class="avatar-art">${Art.avatar()}</span><span class="avatar-badge">1</span></span>
-      <span class="appbar-id">
-        <span class="appbar-name-row"><b class="appbar-name">Jugador</b><span class="appbar-edit" data-act="edit-name" role="button" aria-label="Editar nombre">${Art.pencil()}</span></span>
-        <span class="appbar-lvl">
-          <span class="appbar-lvl-star">⭐</span><span class="appbar-lvl-txt">Nivel 1</span>
-          <span class="appbar-xp"><span class="appbar-xp-fill"></span></span>
-          <span class="appbar-xp-num">0 / 0</span>
+    <div class="appbar-profile">
+      <button class="appbar-profile-main" type="button" data-act="profile" aria-label="Perfil">
+        <span class="avatar"><span class="avatar-art">${Art.avatar()}</span><span class="avatar-badge">1</span></span>
+        <span class="appbar-id">
+          <span class="appbar-name-row"><b class="appbar-name">Jugador</b></span>
+          <span class="appbar-lvl">
+            <span class="appbar-lvl-star">⭐</span><span class="appbar-lvl-txt">Nivel 1</span>
+            <span class="appbar-xp"><span class="appbar-xp-fill"></span></span>
+            <span class="appbar-xp-num">0 / 0</span>
+          </span>
         </span>
-      </span>
-    </button>
+      </button>
+      <button class="appbar-edit" type="button" data-act="edit-name" aria-label="Editar nombre">${Art.pencil()}</button>
+    </div>
     <div class="appbar-econ">
       <span class="econ-pill econ-coins"><span class="econ-ic">${Art.coin()}</span><b data-econ-num="coins">0</b><span class="econ-plus" data-act="buy-coins" role="button" aria-label="Conseguir monedas">${Art.plus()}</span></span>
       <span class="econ-pill econ-gems"><span class="econ-ic">${Art.gem()}</span><b data-econ-num="gems">0</b><span class="econ-plus" data-act="buy-gems" role="button" aria-label="Conseguir gemas">${Art.plus()}</span></span>
@@ -3268,8 +3271,6 @@
   function refreshStart() {
     updateTopBars();
     { const sb = $('#start-best'); if (sb) sb.textContent = Storage.best; }
-    // Chip de nivel (progresión de Aventura/Clásico) + mejor puntuación.
-    { const lc = $('#home-chip-lvl'); if (lc) lc.textContent = I18n.t('lvl') + ' ' + ((Meta.advMax && Meta.advMax()) || 1); }
     // Banner de recompensa diaria: visible siempre; badge/botón activos si toca reclamar.
     { const ready = Meta.rewardReady(); const bn = $('#btn-reward'); if (bn) bn.classList.toggle('claimed', !ready);
       const bd = bn && bn.querySelector('.db-badge'); if (bd) bd.hidden = !ready; }
@@ -3543,21 +3544,18 @@
       const el = e.target.closest('[data-act]'); if (!el) return;
       const a = el.dataset.act;
       if (a === 'settings') { Sound.ensure(); openSettings(); }
-      else if (a === 'profile' || a === 'edit-name') { Sound.ui(); renameProfile(); }
+      else if (a === 'profile') { Sound.ensure(); openMedals(); }
+      else if (a === 'edit-name') { e.preventDefault(); e.stopPropagation(); Sound.ui(); renameProfile(); }
       else if (a === 'buy-coins') { Sound.ensure(); openShop(); }
       else if (a === 'buy-gems' || a === 'bell') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
       else if (a === 'play') { Sound.ensure(); Screens.show('modes'); }
       else if (a === 'home-classic') { Sound.ui(); Worlds.open(); }
       else if (a === 'home-surv') { Sound.ensure(); Game.start('supervivencia', 'normal'); }
-      else if (a === 'q-league' || a === 'q-friends') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
       else if (a === 'home-multi') { Sound.ui(); openMultiplayer(); }
-      else if (a === 'q-missions') { Sound.ui(); Modal.open('modal-missions'); }
-      else if (a === 'q-daily') { Sound.ui(); Meta.rewardReady() ? claimDailyReward() : Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
-      else if (a === 'q-chests') { Sound.ui(); openChests(); }
       else if (a === 'claim-daily') claimDailyReward();
       else if (a === 'nav-medals') { Sound.ensure(); openMedals(); }
       else if (a === 'nav-shop') { Sound.ensure(); openShop(); }
-      else if (a === 'nav-guide') { Sound.ui(); Modal.open('modal-how'); }
+      else if (a === 'nav-missions') { Sound.ui(); Modal.open('modal-missions'); }
       else if (a === 'nav-home') Sound.ui();
     });
 
