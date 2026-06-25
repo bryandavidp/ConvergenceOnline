@@ -1069,9 +1069,13 @@ body.mode-timed .lvl-chip { display: none; }
 .charge { height: 6px; border-radius: 6px; background: rgba(0,0,0,.4); overflow: hidden; margin-bottom: 8px; }
 .charge-fill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, var(--accent-2), var(--gold)); transition: width .2s ease; }
 .boosters { display: flex; gap: 10px; justify-content: center; }
-.booster { width: 56px; height: 46px; border-radius: 12px; background: rgba(0,0,0,.28); border: 1px solid var(--line); font-size: 1.5rem; opacity: .45; transition: transform .1s ease, opacity .2s ease; touch-action: manipulation; }
-.booster-bar.ready .booster { opacity: 1; border-color: var(--accent-2); box-shadow: 0 0 10px rgba(0,208,255,.3); }
-.booster-bar.ready .booster:active { transform: scale(.9); }
+/* Power-ups: inventario con contador (mockup 3). Disponibles si quedan usos. */
+.booster { position: relative; width: 58px; height: 56px; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.3)); border: 1px solid var(--line-strong); font-size: 1.55rem; opacity: 1; transition: transform .1s ease, opacity .2s ease, box-shadow .2s ease; touch-action: manipulation; }
+.booster:active { transform: scale(.9); }
+.booster.empty { opacity: .4; filter: grayscale(.6); }
+.booster .b-count { position: absolute; bottom: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; display: grid; place-items: center; border-radius: 999px; background: linear-gradient(180deg, #ff7a59, var(--bad)); color: #fff; font-size: .72rem; font-weight: 900; box-shadow: 0 2px 5px rgba(0,0,0,.45); }
+.booster.empty .b-count { background: rgba(120,130,160,.6); }
+.booster-bar.ready .booster:not(.empty) { border-color: var(--accent-2); box-shadow: 0 0 10px rgba(0,208,255,.3); }
 .booster.fired { animation: booster-fired .5s cubic-bezier(.2,.9,.3,1.25); }
 .booster[data-b="bomb"].fired { border-color: var(--bad); box-shadow: 0 0 18px rgba(255,93,115,.55); }
 .booster[data-b="freeze"].fired { border-color: var(--accent-2); box-shadow: 0 0 18px rgba(120,220,255,.6); }
