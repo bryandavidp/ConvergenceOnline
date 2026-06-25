@@ -218,7 +218,10 @@
           <!-- Barra de Supervivencia: vidas + oleada + tiempo sobrevivido -->
           <div class="surv-bar" id="surv-bar" hidden>
             <span class="surv-lives" id="surv-lives">❤️❤️❤️</span>
-            <span class="surv-wave" id="surv-wave">Oleada 1</span>
+            <div class="surv-wave-wrap">
+              <span class="surv-wave-row"><span class="surv-wave" id="surv-wave">Oleada 1</span><span class="surv-tier" id="surv-tier" aria-label="Tier de dificultad">N1</span></span>
+              <span class="surv-waveprog" aria-hidden="true"><span class="surv-waveprog-fill" id="surv-waveprog-fill"></span></span>
+            </div>
             <span class="surv-time" id="surv-time">0s</span>
           </div>
 
