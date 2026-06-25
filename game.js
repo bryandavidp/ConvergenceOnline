@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.2.0';
+  const VERSION = '1.2.1';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -42,6 +42,9 @@
     COMBO_MULTIPLIERS: [[30,10],[20,8],[15,5],[10,3],[6,2],[3,1.5]], // [umbral, multiplicador], desc
     MILESTONES: { 10: 500, 20: 1000, 30: 2000 },
     EMPTY_BOARD_BONUS: 500,   // bonus por dejar el tablero vacío
+    // Ayuda de vaciado: con el tablero casi vacío (<= threshold iconos), sesga el icono
+    // que aparece hacia los que ya están (prioriza solitarios) para no alargar el vaciado.
+    CLEAR_ASSIST: { threshold: 6, pMax: 0.9, decay: 0.1, pMin: 0.25 },
     FEVER_COMBO: 10,          // combo para entrar en modo Fever
     FEVER_BOOST: 1.25,        // multiplicador extra de puntos en Fever
     // Contrarreloj (score attack): el reloj tiene TOPE -> el tiempo ganado no se
@@ -538,11 +541,37 @@
       }
     },
 
+    // Elige el id del próximo icono a aparecer. Con el tablero casi vacío sesga hacia
+    // un icono igual a los presentes (prioriza el de menor count = solitarios) para
+    // facilitar la convergencia; en el resto de casos, aleatorio del pool del nivel.
+    _pickSpawnId() {
+      const pool = State.pool;
+      const randomId = () => pool[rand(pool.length)];
+      const cfg = Config.CLEAR_ASSIST;
+      if (State.iconCount <= 0 || State.iconCount > cfg.threshold) return randomId();
+      // Cuenta los iconos presentes (ignora celdas con tile sólido por seguridad).
+      const counts = Object.create(null);
+      for (let i = 0; i < State.board.length; i++) {
+        const v = State.board[i];
+        if (v !== null && !(State.tiles[i] && State.tiles[i].solid)) counts[v] = (counts[v] || 0) + 1;
+      }
+      const ids = Object.keys(counts);
+      if (!ids.length) return randomId();
+      const p = clamp(cfg.pMax - (State.iconCount - 1) * cfg.decay, cfg.pMin, cfg.pMax);
+      if (Math.random() >= p) return randomId();
+      // Elige entre los id presentes con el MENOR count (empates al azar): empareja
+      // primero los solitarios, que son los que bloquean el vaciado.
+      let min = Infinity;
+      for (const id of ids) if (counts[id] < min) min = counts[id];
+      const candidates = ids.filter((id) => counts[id] === min);
+      return candidates[rand(candidates.length)];
+    },
+
     spawnOne() {
       const empties = this.emptyCells();
       if (!empties.length) return -1;
       const idx = empties[rand(empties.length)];
-      State.board[idx] = State.pool[rand(State.pool.length)];
+      State.board[idx] = this._pickSpawnId();
       State.iconCount++;
       return idx;
     },
