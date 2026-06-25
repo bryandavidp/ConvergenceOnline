@@ -21,7 +21,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=v123" />
+  <link rel="stylesheet" href="styles.css?v=v124" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -103,6 +103,21 @@
 
       <!-- Pie anclado abajo: Jugar (encima) + menús -->
       <div class="home-foot">
+        <div class="home-cards">
+          <button class="app-card card-blue" data-act="home-classic">
+            <span class="ac-tx"><b data-i18n="home_classic">Partida clasica</b><small data-i18n="home_classic_sub">Juega en el tablero contra amigos o bots</small></span>
+            <span class="ac-art" data-art="boardMini" aria-hidden="true"></span>
+          </button>
+          <button class="app-card card-red" data-act="home-surv">
+            <span class="ac-tx"><b data-i18n="card_surv">Supervivencia</b><small data-i18n="home_surv_sub">Sobrevive a oleadas infinitas</small></span>
+            <span class="ac-art" data-art="heartFoes" aria-hidden="true"></span>
+          </button>
+          <button class="app-card card-orange" data-act="home-multi">
+            <span class="ac-tx"><b data-i18n="card_multi">Multijugador</b><small data-i18n="home_multi_sub">Desafia a jugadores en linea</small></span>
+            <span class="ac-art" data-art="vsPeople" aria-hidden="true"></span>
+          </button>
+        </div>
+
         <button class="btn-hero" id="btn-play"><span class="play-ic" aria-hidden="true">▶</span><span data-i18n="play_word">Jugar</span></button>
 
         <!-- Fila rápida -->

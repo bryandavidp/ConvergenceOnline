@@ -3273,8 +3273,8 @@
       <span class="econ-pill econ-coins"><span class="econ-ic">${Art.coin()}</span><b data-econ-num="coins">0</b><span class="econ-plus" data-act="buy-coins" role="button" aria-label="Conseguir monedas">${Art.plus()}</span></span>
       <span class="econ-pill econ-gems"><span class="econ-ic">${Art.gem()}</span><b data-econ-num="gems">0</b><span class="econ-plus" data-act="buy-gems" role="button" aria-label="Conseguir gemas">${Art.plus()}</span></span>
       <span class="econ-pill econ-streak"><span class="econ-ic">${Art.fire()}</span><b data-econ-num="streak">0</b></span>
-      <button class="appbar-icon appbar-bell" data-act="bell" aria-label="Notificaciones">${Art.bell()}<span class="bell-dot"></span></button>
-    </div>`;
+    </div>
+    <button class="appbar-icon appbar-bell" data-act="bell" aria-label="Notificaciones">${Art.bell()}<span class="bell-dot"></span></button>`;
   function mountTopBars() { document.querySelectorAll('[data-topbar]').forEach((el) => { el.innerHTML = TOPBAR_HTML; }); }
   // Rellena los placeholders <span data-art="nombre"> con el SVG de Art (una sola vez).
   function fillArt(root) {
