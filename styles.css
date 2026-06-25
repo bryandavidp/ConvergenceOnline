@@ -657,6 +657,36 @@ body.mode-timed .time-chip { display: inline-flex; }
 .cell.tile-infected { box-shadow: 0 0 0 2px rgba(120, 230, 120, .6) inset; }
 .cell.tile-infected::after { content: '☣️'; position: absolute; top: 1px; right: 2px; font-size: .62em; }
 
+/* --- Obstáculos del mockup --- */
+/* Cadenas: bloquean la figura; toca 2 veces para liberar */
+.cell.tile-chains .glyph { display: none; }
+.cell.tile-chains { background: linear-gradient(145deg, rgba(150,160,180,.18), rgba(40,46,60,.5)); box-shadow: 0 0 0 2px rgba(170,180,200,.45) inset; }
+.cell.tile-chains::after { content: '⛓️'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.45em; opacity: .92; }
+/* Telaraña: atrapa; toca 2 veces para liberar */
+.cell.tile-web .glyph { display: none; }
+.cell.tile-web { background: linear-gradient(145deg, rgba(220,230,245,.10), rgba(30,34,48,.45)); box-shadow: 0 0 0 1px rgba(220,230,245,.3) inset; }
+.cell.tile-web::after { content: '🕸️'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.5em; opacity: .85; }
+/* Barrera: sólida, sólo se quita con objetos especiales */
+.cell.tile-barrier .glyph { display: none; }
+.cell.tile-barrier { background: repeating-linear-gradient(45deg, #2a2f3c 0 8px, #3a4150 8px 16px); box-shadow: 0 0 0 2px rgba(255,180,77,.45) inset; }
+.cell.tile-barrier::after { content: '🚧'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.3em; }
+/* Lodo: ralentiza; no es sólido (la figura sigue debajo) */
+.cell.tile-mud { box-shadow: 0 0 0 2px rgba(150, 110, 70, .6) inset; }
+.cell.tile-mud::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(circle at 50% 60%, rgba(120,80,45,.55), rgba(80,55,30,.3)); pointer-events: none; }
+.cell.tile-mud::after { content: '🟫'; position: absolute; bottom: 1px; right: 2px; font-size: .6em; opacity: .8; }
+
+/* --- Objetos especiales del mockup (tap = efecto) --- */
+.cell.tile-bonus, .cell.tile-portal, .cell.tile-magicbox, .cell.tile-bomb { animation: special-pulse 1.6s ease-in-out infinite; }
+@keyframes special-pulse { 50% { box-shadow: 0 0 0 2px currentColor inset, 0 0 12px color-mix(in srgb, currentColor 60%, transparent); } }
+.cell.tile-bonus { color: var(--good); background: radial-gradient(circle, rgba(52,226,155,.28), rgba(52,226,155,.08)); box-shadow: 0 0 0 2px rgba(52,226,155,.6) inset; }
+.cell.tile-bonus::after { content: '+30'; position: absolute; inset: 0; display: grid; place-items: center; font-weight: 900; font-size: .82em; color: var(--good); text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.cell.tile-portal { color: var(--accent-2); box-shadow: 0 0 0 2px rgba(0,208,255,.6) inset; }
+.cell.tile-portal::after { content: '🌀'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.45em; }
+.cell.tile-magicbox { color: var(--gold); box-shadow: 0 0 0 2px rgba(255,216,77,.6) inset; }
+.cell.tile-magicbox::after { content: '🎁'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.4em; }
+.cell.tile-bomb { color: var(--bad); box-shadow: 0 0 0 2px rgba(255,93,115,.6) inset; }
+.cell.tile-bomb::after { content: '💣'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.4em; }
+
 /* Icono SVG dentro de la celda */
 .cell .glyph {
   width: 76%; height: 76%;
