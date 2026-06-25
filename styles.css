@@ -202,6 +202,130 @@ body.reduced-fx .hero-orbit::after { animation: none; }
 .daily-prog { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--muted); align-self: center; }
 .menu-tile { display: flex; flex-direction: column; gap: 3px; font-size: .82rem; padding: 11px 6px; min-height: 58px; align-items: center; justify-content: center; line-height: 1.15; }
 
+/* ============================================================
+   SISTEMA BASE 2.0 — Inicio + Selección de modo (mockups)
+   Top bar, banner, botón hero, tarjetas, fila rápida, bottom nav.
+   Reutilizable como base del resto del juego.
+   ============================================================ */
+:root {
+  --card-blue:   linear-gradient(160deg, #20428f, #122152);
+  --card-green:  linear-gradient(160deg, #1f7a45, #0f3a26);
+  --card-orange: linear-gradient(160deg, #9a5a22, #543012);
+  --card-red:    linear-gradient(160deg, #8a2331, #45141d);
+  --card-purple: linear-gradient(160deg, #4a2a8a, #25134e);
+  --grad-play:   linear-gradient(180deg, #38bdff, #1f6fe0 58%, #1657c6);
+}
+
+/* ---------- Top bar reutilizable (.appbar) ---------- */
+.appbar { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 2px 8px; }
+.appbar svg { display: block; width: 100%; height: 100%; }
+.appbar-profile { display: flex; align-items: center; gap: 9px; background: none; border: 0; padding: 2px; color: var(--text); flex: 1 1 auto; min-width: 0; text-align: left; }
+.avatar { position: relative; width: 48px; height: 48px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 35%, #1a2c5e, #0a1430);
+  box-shadow: 0 0 0 2px #2bd4e6, 0 0 14px rgba(43,212,230,.5), inset 0 1px 0 rgba(255,255,255,.15); }
+.avatar-art { width: 82%; height: 82%; }
+.avatar-badge { position: absolute; left: -3px; bottom: -3px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 999px;
+  background: linear-gradient(180deg, #38bdff, #1f6fe0); color: #fff; font-size: .62rem; font-weight: 900; display: grid; place-items: center; border: 2px solid var(--bg-1); }
+.appbar-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.appbar-name-row { display: flex; align-items: center; gap: 6px; }
+.appbar-name { font-size: 1rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 34vw; }
+.appbar-edit { width: 15px; height: 15px; flex: 0 0 auto; opacity: .8; }
+.appbar-lvl { display: flex; align-items: center; gap: 5px; }
+.appbar-lvl-star { font-size: .68rem; }
+.appbar-lvl-txt { font-size: .64rem; font-weight: 800; color: var(--accent-2); white-space: nowrap; }
+.appbar-xp { width: 58px; height: 6px; border-radius: 999px; background: rgba(255,255,255,.14); overflow: hidden; }
+.appbar-xp-fill { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #38bdff, #2bd4e6); }
+.appbar-xp-num { font-size: .56rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.appbar-econ { display: flex; align-items: center; gap: 5px; flex: 0 0 auto; }
+.appbar .econ-pill { position: relative; display: inline-flex; align-items: center; gap: 3px; font-weight: 800; font-size: .8rem; color: #fff;
+  background: linear-gradient(180deg, rgba(12,22,50,.96), rgba(6,10,28,.96)); border: 1px solid var(--line-strong); border-radius: 999px; padding: 3px 4px; box-shadow: none; }
+.appbar .econ-ic { width: 17px; height: 17px; flex: 0 0 auto; }
+.appbar .econ-pill b { font-variant-numeric: tabular-nums; padding: 0 1px; }
+.appbar .econ-plus { width: 17px; height: 17px; flex: 0 0 auto; padding: 0; border: 0; background: none; }
+.appbar-icon { width: 36px; height: 36px; flex: 0 0 auto; border-radius: 11px; padding: 7px; background: rgba(255,255,255,.06); border: 1px solid var(--line); color: var(--muted); }
+
+/* Campana (Inicio): flota a la derecha bajo el engranaje */
+.appbar-bell { position: absolute; top: 60px; right: 12px; z-index: 6; width: 38px; height: 38px; border-radius: 11px; padding: 8px;
+  background: rgba(255,255,255,.06); border: 1px solid var(--line); }
+.appbar-bell .art-ic { display: block; width: 100%; height: 100%; }
+.bell-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 6px var(--bad); }
+
+/* ---------- Inicio (layout) ---------- */
+.screen.home { justify-content: flex-start; align-items: stretch; gap: 0; position: relative;
+  padding: max(8px, env(safe-area-inset-top)) 12px 0; }
+.home-scroll { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 13px; padding: 6px 2px 14px; }
+.home-install { align-self: center; }
+.home .version-line { text-align: center; opacity: .35; font-size: .62rem; margin: 2px 0 0; }
+
+/* Banner recompensa diaria */
+.daily-banner { position: relative; overflow: hidden; display: flex; align-items: center; gap: 11px; padding: 12px 66px 12px 14px; border-radius: 18px;
+  background: linear-gradient(120deg, #3a2170, #25134c); border: 1px solid rgba(160,107,255,.42); box-shadow: 0 8px 22px rgba(70,35,150,.3); }
+.db-gift { width: 44px; height: 44px; flex: 0 0 auto; }
+.db-tx { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.db-tx b { font-size: .96rem; font-weight: 800; }
+.db-tx small { font-size: .7rem; color: #cabfff; line-height: 1.2; }
+.db-claim { position: relative; flex: 0 0 auto; border: 0; border-radius: 12px; padding: 9px 13px; font-weight: 800; font-size: .82rem; color: #fff;
+  background: linear-gradient(180deg, #9a6bff, #6a3fd0); box-shadow: 0 4px 0 #492a96; }
+.db-claim:active { transform: translateY(2px); box-shadow: 0 2px 0 #492a96; }
+.db-badge { position: absolute; top: -7px; right: -7px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 999px; background: var(--bad); color: #fff; font-size: .62rem; font-weight: 900; display: grid; place-items: center; }
+.db-rocket { position: absolute; right: 2px; top: 50%; width: 66px; height: 66px; transform: translateY(-50%) rotate(14deg); pointer-events: none; opacity: .95; }
+.daily-banner.claimed { opacity: .72; }
+.daily-banner.claimed .db-claim { filter: grayscale(.55); }
+
+/* Botón Jugar (hero) */
+.btn-hero { width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; border: 2px solid rgba(130,225,255,.5); border-radius: 22px;
+  padding: 22px; font-size: 2.1rem; font-weight: 900; letter-spacing: .5px; color: #fff; background: var(--grad-play);
+  box-shadow: 0 8px 0 #0f49a8, 0 16px 32px rgba(40,120,255,.5), inset 0 2px 0 rgba(255,255,255,.35); text-shadow: 0 2px 5px rgba(0,40,100,.45); }
+.btn-hero:active { transform: translateY(4px); box-shadow: 0 4px 0 #0f49a8, 0 10px 22px rgba(40,120,255,.45), inset 0 2px 0 rgba(255,255,255,.35); }
+.btn-hero .play-ic { font-size: 1.3rem; }
+
+/* Chip nivel + mejor puntuación */
+.level-chip { align-self: center; display: inline-flex; align-items: center; gap: 7px; padding: 7px 16px; border-radius: 999px; font-size: .8rem; font-weight: 700; color: var(--muted);
+  background: rgba(10,18,42,.82); border: 1px solid var(--line-strong); box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+.level-chip b { color: var(--text); }
+.level-chip .lc-ic { font-size: 1rem; }
+.level-chip .lc-sep { opacity: .5; }
+.level-chip .lc-best b { color: var(--gold); }
+
+/* 3 tarjetas de atajo */
+.home-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.app-card { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; justify-content: flex-start;
+  padding: 13px 8px 12px; border-radius: 18px; color: #fff; border: 1px solid rgba(255,255,255,.13); min-height: 156px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.12); }
+.app-card:active { transform: scale(.97); }
+.card-blue { background: var(--card-blue); } .card-green { background: var(--card-green); } .card-orange { background: var(--card-orange); }
+.ac-tx { display: flex; flex-direction: column; gap: 3px; }
+.ac-tx b { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; line-height: 1.15; }
+.ac-tx small { font-size: .6rem; color: rgba(255,255,255,.82); line-height: 1.2; }
+.ac-art { width: 60px; height: 60px; flex: 0 0 auto; margin-top: auto; }
+
+/* Fila rápida */
+.quick-row { display: flex; justify-content: space-between; gap: 4px; padding: 9px 6px; border-radius: 18px; background: rgba(10,18,42,.55); border: 1px solid var(--line); }
+.quick { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; background: none; border: 0; color: var(--muted); padding: 2px; }
+.quick:active { transform: scale(.92); }
+.q-ic { width: 34px; height: 34px; }
+.quick small { font-size: .58rem; font-weight: 700; }
+.q-dot { position: absolute; top: -1px; right: 24%; width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 6px var(--good); }
+
+/* Bottom nav */
+.bottom-nav { flex: 0 0 auto; display: flex; align-items: flex-end; gap: 2px; width: 100%;
+  padding: 6px 6px max(6px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(10,16,38,.2), rgba(6,10,26,.92)); }
+.bnav { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; color: var(--muted); padding: 5px 2px; }
+.bnav:active { transform: scale(.92); }
+.bn-ic { width: 28px; height: 28px; }
+.bnav small { font-size: .58rem; font-weight: 700; }
+.bnav[aria-current="page"] { color: var(--accent-2); }
+.bnav-center { color: var(--accent-2); }
+.bnav-center .bn-ic { width: 56px; height: 56px; margin-top: -22px; padding: 13px; border-radius: 50%;
+  background: linear-gradient(180deg, #38bdff, #1f6fe0); box-shadow: 0 5px 0 #0f49a8, 0 10px 18px rgba(40,120,255,.5); }
+
+/* Botón volver (Selección de modo) */
+.back-btn { position: absolute; left: 0; top: 0; width: 46px; height: 46px; border-radius: 14px; font-size: 1.4rem; font-weight: 800; color: var(--text);
+  background: linear-gradient(180deg, #243160, #141c3c); border: 1px solid var(--line-strong); box-shadow: 0 4px 0 rgba(0,0,0,.4); }
+.back-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.4); }
+.screen-modes .modes-head { position: relative; padding-top: 6px; }
+
 /* ---------- Botones "chunky" (arcade: relieve pulsable estilo Clash Royale) ---------- */
 .btn {
   position: relative; overflow: hidden;
@@ -369,12 +493,12 @@ body.reduced-fx #btn-play { animation: none; }
 .mode-hero:active { transform: scale(.985); }
 .mode-hero:focus-visible { outline: 2px solid var(--mode-accent, var(--accent-2)); outline-offset: 2px; }
 .mc-art {
-  position: relative; flex: 0 0 auto; width: 76px; height: 76px; border-radius: 18px; display: grid; place-items: center;
-  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--mode-accent, #00d0ff) 55%, #000), color-mix(in srgb, var(--mode-accent, #00d0ff) 18%, #04081c));
+  position: relative; flex: 0 0 auto; width: 80px; height: 80px; border-radius: 18px; display: grid; place-items: center; padding: 7px;
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--mode-accent, #00d0ff) 42%, #000), color-mix(in srgb, var(--mode-accent, #00d0ff) 14%, #04081c));
   box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 6px 16px rgba(0,0,0,.4);
 }
-.mc-art::after { content: ''; position: absolute; inset: 0; border-radius: 18px; box-shadow: inset 0 0 22px color-mix(in srgb, var(--mode-accent, #00d0ff) 50%, transparent); }
-.mc-glyph { font-size: 2.2rem; line-height: 1; filter: drop-shadow(0 3px 8px rgba(0,0,0,.55)); }
+.mc-art::after { content: ''; position: absolute; inset: 0; border-radius: 18px; box-shadow: inset 0 0 22px color-mix(in srgb, var(--mode-accent, #00d0ff) 45%, transparent); pointer-events: none; }
+.mc-art svg { width: 100%; height: 100%; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)); position: relative; z-index: 1; }
 .mc-body { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .mc-titlerow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .mc-title { font-size: 1.25rem; font-weight: 800; }
@@ -383,7 +507,10 @@ body.reduced-fx #btn-play { animation: none; }
 .mc-feats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .mc-feat { display: inline-flex; align-items: center; gap: 4px; font-size: .7rem; font-weight: 700; color: var(--text); background: rgba(255,255,255,.07); border: 1px solid var(--line); border-radius: 999px; padding: 3px 8px; }
 .mc-feat-ic { font-size: .85em; }
-.mc-go { flex: 0 0 auto; font-size: 1.7rem; font-weight: 900; color: var(--mode-accent, var(--accent-2)); opacity: .9; }
+.mc-go { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 1.4rem; font-weight: 900; line-height: 1;
+  color: #fff; background: color-mix(in srgb, var(--mode-accent, #00d0ff) 30%, rgba(255,255,255,.06)); border: 1px solid color-mix(in srgb, var(--mode-accent, #00d0ff) 60%, var(--line)); }
+/* La tarjeta "¿Cómo se juega?" usa SVG de libro */
+.mc-how-ic svg { width: 100%; height: 100%; }
 
 /* Tarjeta "¿Cómo se juega?" (variante sobria, ancho completo) */
 .mode-how {

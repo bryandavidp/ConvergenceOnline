@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.1.0';
+  const VERSION = '1.2.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -214,6 +214,9 @@
         shop_boards: 'Tableros comprables', shop_themes: 'Temas de color', shop_hint2: 'Cada tablero tiene un diseño y efectos únicos. ¡Desbloquéalos con monedas!', board_unlocked: '¡Tablero desbloqueado!',
         chests_title: '🎁 Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre contiene monedas, gemas o tickets.', chests_none: 'No tienes cofres', chest_reward: '¡Recompensa! {r}', open_chest: '🎁 Abrir cofre',
         soon_badge: '🚧 Próximamente', notify_me: '🔔 Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
+        edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
+        home_classic: 'Partida clásica', home_classic_sub: 'Juega en el tablero contra amigos o bots', home_tourneys: 'Torneos', home_tourneys_sub: 'Compite y gana recompensas', home_multi_sub: 'Desafía a jugadores en línea',
+        q_missions: 'Misiones', q_daily: 'Diario', q_chests: 'Cofres', q_league: 'Liga', q_friends: 'Amigos', best_score: 'Mejor puntuación', play_word: 'Jugar',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
         how_title: '¿Cómo se juega?', how1: 'Toca una <strong>casilla vacía</strong>.', how2: 'Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).',
         how3: 'Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!', how4: 'Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.',
@@ -260,6 +263,9 @@
         shop_boards: 'Boards for sale', shop_themes: 'Color themes', shop_hint2: 'Each board has a unique design and effects. Unlock them with coins!', board_unlocked: 'Board unlocked!',
         chests_title: '🎁 Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest contains coins, gems or tickets.', chests_none: 'You have no chests', chest_reward: 'Reward! {r}', open_chest: '🎁 Open chest',
         soon_badge: '🚧 Coming soon', notify_me: '🔔 Notify me', notify_ok: "We'll let you know when it's ready!",
+        edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
+        home_classic: 'Classic game', home_classic_sub: 'Play on the board against friends or bots', home_tourneys: 'Tournaments', home_tourneys_sub: 'Compete and win rewards', home_multi_sub: 'Challenge players online',
+        q_missions: 'Missions', q_daily: 'Daily', q_chests: 'Chests', q_league: 'League', q_friends: 'Friends', best_score: 'Best score', play_word: 'Play',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
         how_title: 'How to play?', how1: 'Tap an <strong>empty cell</strong>.', how2: 'It looks at the nearest icon in each direction (up, down, left, right).',
         how3: 'If <strong>2 or more match</strong>, they converge and vanish!', how4: 'Chain quick clears to raise the <strong>combo</strong> and multiply points.',
@@ -1429,14 +1435,133 @@
         const kind = el.dataset.econ;
         el.textContent = (this.ICONS[kind] || '') + ' ' + this.valueOf(kind);
       });
+      // Pills del nuevo sistema base: solo el número (el icono es un SVG aparte).
+      scope.querySelectorAll('[data-econ-num]').forEach((el) => { el.textContent = this.valueOf(el.dataset.econNum); });
     },
   };
 
-  /* ===================== Tiles (casillas especiales) =====================
-   * Registro de tipos de casilla. `solid` corta la línea de visión y no converge
-   * (lo consulta Engine.converging). El resto de propiedades las usan los modos
-   * que las emplean (Aventura/Supervivencia) y Render para el overlay visual.
+  /* ===================== Art (ilustraciones SVG hechas a mano, 0 imágenes externas) =====================
+   * Librería de SVGs fieles a los mockups: avatar robot, cohete, regalo, trofeo,
+   * tableros, VS, isla, corazón+enemigos, libro e iconos de navegación. Cada función
+   * devuelve un <svg> inline que rellena su contenedor. Se reutilizan en Inicio,
+   * Selección de modo y (a futuro) el resto del juego.
    */
+  const Art = {
+    _s(inner, vb) { return `<svg viewBox="${vb || '0 0 100 100'}" width="100%" height="100%" fill="none" aria-hidden="true" focusable="false">${inner}</svg>`; },
+    // Avatar robot (cara azul, visor cian, antena, casco). Color de acento opcional.
+    avatar() {
+      return this._s(`
+        <defs>
+          <radialGradient id="av-face" cx="50%" cy="38%" r="70%"><stop offset="0%" stop-color="#cfe6ff"/><stop offset="100%" stop-color="#7fb0e8"/></radialGradient>
+          <linearGradient id="av-helm" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a4f8f"/><stop offset="100%" stop-color="#1d2a55"/></linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="6" fill="#16306a"/><rect x="47" y="14" width="6" height="14" rx="3" fill="#9fb6e8"/><circle cx="50" cy="13" r="6" fill="#2bd4e6"/>
+        <rect x="18" y="24" width="64" height="58" rx="22" fill="url(#av-helm)" stroke="#5b74c4" stroke-width="2"/>
+        <rect x="26" y="34" width="48" height="40" rx="17" fill="url(#av-face)"/>
+        <rect x="33" y="44" width="34" height="20" rx="10" fill="#0c1f44"/>
+        <circle cx="43" cy="54" r="5.5" fill="#34e2ff"/><circle cx="58" cy="54" r="5.5" fill="#34e2ff"/>
+        <circle cx="44.5" cy="52.5" r="1.8" fill="#fff"/><circle cx="59.5" cy="52.5" r="1.8" fill="#fff"/>
+        <circle cx="22" cy="56" r="5" fill="#2bd4e6"/><circle cx="78" cy="56" r="5" fill="#2bd4e6"/>`);
+    },
+    plus() { return this._s(`<circle cx="50" cy="50" r="42" fill="#27c24a" stroke="#1c8f37" stroke-width="6"/><path d="M50 30 V70 M30 50 H70" stroke="#fff" stroke-width="11" stroke-linecap="round"/>`); },
+    coin() { return this._s(`<circle cx="50" cy="50" r="40" fill="#ffb224" stroke="#cf8410" stroke-width="4"/><circle cx="50" cy="50" r="29" fill="#ffd84d"/><path d="M50 34 l4.6 9.4 10.4.9-7.9 6.8 2.4 10.1L50 65.8 40.1 71.2l2.4-10.1-7.9-6.8 10.4-.9z" fill="#e0a020"/>`); },
+    gem() { return this._s(`<path d="M28 26 H72 L88 44 L50 86 L12 44 Z" fill="#2bd4e6" stroke="#0e9fc0" stroke-width="3"/><path d="M28 26 L50 44 L72 26 M12 44 H88 M50 44 V86" stroke="#bff3ff" stroke-width="2.5" fill="none"/><path d="M28 26 L50 44 L12 44 Z" fill="#7fe8f5"/>`); },
+    fire() { return this._s(`<path d="M50 12 C58 30 74 34 70 56 C68 74 58 84 50 84 C42 84 30 76 30 58 C30 46 40 44 42 34 C50 40 46 24 50 12 Z" fill="#ff7a30"/><path d="M50 40 C56 50 60 56 56 66 C54 74 50 78 46 76 C42 74 40 66 44 58 C46 52 48 48 50 40 Z" fill="#ffd84d"/>`); },
+    bell() { return this._s(`<path d="M50 18 C36 18 30 28 30 42 C30 60 22 64 22 70 H78 C78 64 70 60 70 42 C70 28 64 18 50 18 Z" fill="#d7e2ff" stroke="#9fb0e0" stroke-width="3"/><circle cx="50" cy="78" r="7" fill="#d7e2ff"/><rect x="46" y="10" width="8" height="8" rx="4" fill="#d7e2ff"/>`); },
+    pencil() { return this._s(`<path d="M22 70 L66 26 L78 38 L34 82 L20 84 Z" fill="#7fa0e8"/><path d="M62 22 L70 14 L82 26 L74 34 Z" fill="#ffd84d"/>`); },
+    // Banner: regalo + cohete
+    gift() {
+      return this._s(`
+        <rect x="20" y="44" width="60" height="44" rx="6" fill="#ff5b6e"/><rect x="20" y="36" width="60" height="16" rx="5" fill="#ff7a88"/>
+        <rect x="44" y="36" width="12" height="52" fill="#ffd84d"/>
+        <path d="M50 36 C40 36 32 30 36 22 C40 16 50 24 50 36 Z" fill="#ffd84d"/><path d="M50 36 C60 36 68 30 64 22 C60 16 50 24 50 36 Z" fill="#ffe27a"/>`);
+    },
+    rocket() {
+      return this._s(`
+        <defs><linearGradient id="rk-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#eef4ff"/><stop offset="100%" stop-color="#b9c9ee"/></linearGradient></defs>
+        <path d="M50 8 C66 22 70 44 66 66 H34 C30 44 34 22 50 8 Z" fill="url(#rk-b)"/>
+        <path d="M50 8 C58 16 62 28 62 40 H38 C38 28 42 16 50 8 Z" fill="#ff5b6e"/>
+        <circle cx="50" cy="40" r="9" fill="#2bd4e6" stroke="#0c2f6a" stroke-width="3"/>
+        <path d="M34 56 L22 74 L36 68 Z" fill="#ff5b6e"/><path d="M66 56 L78 74 L64 68 Z" fill="#ff5b6e"/>
+        <path d="M42 68 H58 L52 92 L50 84 L48 92 Z" fill="#ffb24d"/><path d="M46 68 H54 L50 86 Z" fill="#ffd84d"/>`);
+    },
+    trophy() {
+      return this._s(`
+        <defs><linearGradient id="tr-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe27a"/><stop offset="100%" stop-color="#e0a020"/></linearGradient></defs>
+        <path d="M30 20 H70 V40 C70 56 60 64 50 64 C40 64 30 56 30 40 Z" fill="url(#tr-g)" stroke="#b9892a" stroke-width="2"/>
+        <path d="M30 24 H18 V32 C18 42 26 46 32 46" fill="none" stroke="#e0a020" stroke-width="5"/>
+        <path d="M70 24 H82 V32 C82 42 74 46 68 46" fill="none" stroke="#e0a020" stroke-width="5"/>
+        <rect x="44" y="64" width="12" height="12" fill="#cf9420"/><rect x="34" y="76" width="32" height="9" rx="3" fill="#e0a020"/>
+        <path d="M50 28 l3.4 7 7.6.6-5.8 5 1.8 7.4L50 50.6 42.8 55l1.8-7.4-5.8-5 7.6-.6z" fill="#fff7d6"/>`);
+    },
+    chest() {
+      return this._s(`
+        <path d="M22 44 C22 34 34 28 50 28 C66 28 78 34 78 44 V48 H22 Z" fill="#a8702f"/>
+        <rect x="22" y="48" width="56" height="34" rx="4" fill="#8a5a24"/>
+        <rect x="22" y="56" width="56" height="8" fill="#ffd84d"/><rect x="44" y="48" width="12" height="34" fill="#c98a3a"/>
+        <rect x="46" y="60" width="8" height="12" rx="2" fill="#6a4316"/>`);
+    },
+    book() {
+      return this._s(`
+        <rect x="22" y="22" width="56" height="58" rx="6" fill="#2f6bff"/><rect x="22" y="22" width="12" height="58" rx="5" fill="#1c4cc0"/>
+        <rect x="40" y="32" width="30" height="6" rx="3" fill="#bcd0ff"/><rect x="40" y="44" width="30" height="6" rx="3" fill="#bcd0ff"/>
+        <text x="55" y="72" font-size="26" font-weight="900" fill="#ffd84d" text-anchor="middle">?</text>`);
+    },
+    // Tableros / mundos
+    boardMini() {
+      return this._s(`
+        <rect x="14" y="14" width="72" height="72" rx="12" fill="#0c1838" stroke="#2a3a78" stroke-width="3"/>
+        <g stroke="#1c2a55" stroke-width="2">
+          <path d="M14 38 H86 M14 62 H86 M38 14 V86 M62 14 V86"/></g>
+        <path d="M26 22 l3 6 6 .5-4.6 4 1.4 6L26 35.5 20.2 38.5l1.4-6-4.6-4 6-.5z" fill="#ffd84d"/>
+        <path d="M68 26 l8 14 H60 Z" fill="#3ad07f"/>
+        <circle cx="30" cy="70" r="8" fill="#ff5b6e"/>
+        <path d="M62 62 l8 14 H54 Z" fill="#3ad07f"/><rect x="64" y="64" width="14" height="14" rx="4" fill="#4b8bff"/>`);
+    },
+    island() {
+      return this._s(`
+        <ellipse cx="50" cy="74" rx="34" ry="12" fill="#1b6fae"/>
+        <path d="M24 64 C24 50 36 42 50 42 C64 42 76 50 76 64 C68 72 58 74 50 74 C42 74 32 72 24 64 Z" fill="#3ad07f"/>
+        <path d="M24 64 C32 70 42 72 50 72 C58 72 68 70 76 64 L74 60 C66 66 56 66 50 66 C44 66 34 66 26 60 Z" fill="#8a5a2a"/>
+        <rect x="48" y="22" width="4" height="22" fill="#cfd8ee"/><path d="M52 24 H68 L62 30 L68 36 H52 Z" fill="#4b8bff"/>
+        <path d="M58 27 l1.6 3.4 3.4.3-2.6 2.2.8 3.3-3.2-1.8-3.2 1.8.8-3.3-2.6-2.2 3.4-.3z" fill="#ffd84d"/>`);
+    },
+    // Supervivencia: corazón con pulso + enemigos
+    heartFoes() {
+      return this._s(`
+        <path d="M50 80 C16 56 22 28 42 28 C49 28 50 34 50 37 C50 34 51 28 58 28 C78 28 84 56 50 80 Z" fill="#ff5b6e" stroke="#c8324a" stroke-width="2"/>
+        <path d="M30 54 H42 L46 44 L52 64 L57 52 L62 54 H72" stroke="#fff" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <g><circle cx="22" cy="70" r="9" fill="#a06bff"/><circle cx="19" cy="68" r="1.6" fill="#fff"/><circle cx="25" cy="68" r="1.6" fill="#fff"/></g>
+        <g><rect x="70" y="62" width="16" height="16" rx="4" fill="#3ad07f"/><circle cx="75" cy="69" r="1.6" fill="#0a2a16"/><circle cx="81" cy="69" r="1.6" fill="#0a2a16"/></g>`);
+    },
+    // Multijugador (modo): dos bolas con cara sobre un tablero + VS
+    vsBalls() {
+      return this._s(`
+        <rect x="14" y="58" width="72" height="30" rx="8" fill="#0c1838" stroke="#2a3a78" stroke-width="2"/>
+        <g stroke="#1c2a55" stroke-width="2"><path d="M38 58 V88 M62 58 V88 M14 73 H86"/></g>
+        <circle cx="34" cy="40" r="20" fill="#4b8bff"/><circle cx="28" cy="36" r="3" fill="#fff"/><circle cx="40" cy="36" r="3" fill="#fff"/><path d="M28 46 Q34 50 40 46" stroke="#fff" stroke-width="2.5" fill="none"/>
+        <circle cx="66" cy="40" r="20" fill="#ff5b6e"/><circle cx="60" cy="36" r="3" fill="#fff"/><circle cx="72" cy="36" r="3" fill="#fff"/><path d="M60 46 Q66 50 72 46" stroke="#fff" stroke-width="2.5" fill="none"/>
+        <text x="50" y="46" font-size="16" font-weight="900" fill="#ffd84d" text-anchor="middle" stroke="#7a3000" stroke-width="1">VS</text>`);
+    },
+    // Multijugador (home card): dos personas + VS
+    vsPeople() {
+      return this._s(`
+        <g><circle cx="30" cy="34" r="12" fill="#ffb24d"/><path d="M12 78 C12 60 22 52 30 52 C38 52 48 60 48 78 Z" fill="#ffb24d"/></g>
+        <g><circle cx="70" cy="34" r="12" fill="#4b8bff"/><path d="M52 78 C52 60 62 52 70 52 C78 52 88 60 88 78 Z" fill="#4b8bff"/></g>
+        <text x="50" y="56" font-size="18" font-weight="900" fill="#fff" text-anchor="middle" stroke="#0c2f6a" stroke-width="1.4">VS</text>`);
+    },
+    // Iconos de navegación (rellenos, fieles a la barra inferior y fila rápida)
+    target() { return this._s(`<circle cx="50" cy="50" r="34" fill="none" stroke="#ff5b6e" stroke-width="8"/><circle cx="50" cy="50" r="20" fill="none" stroke="#ffb24d" stroke-width="8"/><circle cx="50" cy="50" r="7" fill="#ff5b6e"/>`); },
+    calendar() { return this._s(`<rect x="20" y="24" width="60" height="56" rx="8" fill="#4b8bff"/><rect x="20" y="24" width="60" height="16" rx="8" fill="#2f55c0"/><rect x="30" y="16" width="7" height="16" rx="3" fill="#cfd8ee"/><rect x="63" y="16" width="7" height="16" rx="3" fill="#cfd8ee"/><rect x="30" y="48" width="40" height="24" rx="4" fill="#dce6ff"/>`); },
+    crownLock() { return this._s(`<path d="M22 40 L34 52 L50 32 L66 52 L78 40 L72 70 H28 Z" fill="#ffd84d" stroke="#b9892a" stroke-width="2"/><rect x="40" y="60" width="20" height="18" rx="4" fill="#8a6a18"/><path d="M44 60 V55 a6 6 0 0 1 12 0 V60" fill="none" stroke="#8a6a18" stroke-width="3"/>`); },
+    friends() { return this._s(`<circle cx="36" cy="38" r="13" fill="#ffb24d"/><path d="M16 80 C16 60 26 54 36 54 C46 54 56 60 56 80 Z" fill="#ffb24d"/><circle cx="66" cy="42" r="11" fill="#4b8bff"/><path d="M50 80 C50 62 58 57 66 57 C74 57 84 62 84 80 Z" fill="#4b8bff"/>`); },
+    medal() { return this._s(`<path d="M36 16 L50 44 L64 16" stroke="#4b8bff" stroke-width="8" fill="none"/><circle cx="50" cy="62" r="22" fill="#ffd84d" stroke="#b9892a" stroke-width="3"/><path d="M50 50 l3.4 7 7.6.6-5.8 5 1.8 7.4L50 72.6 42.8 77l1.8-7.4-5.8-5 7.6-.6z" fill="#fff7d6"/>`); },
+    cart() { return this._s(`<path d="M16 22 H28 L36 62 H72 L80 34 H32" fill="none" stroke="#3ad07f" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="40" cy="76" r="7" fill="#3ad07f"/><circle cx="68" cy="76" r="7" fill="#3ad07f"/>`); },
+    home() { return this._s(`<path d="M50 18 L84 48 H74 V82 H26 V48 H16 Z" fill="#2bd4e6"/><rect x="42" y="58" width="16" height="24" fill="#0c2f6a"/>`); },
+    gear() { return this._s(`<path d="M50 20 l6 2 4-4 6 4-1 6 5 4 6-1 2 7-5 3 0 6 5 3-2 7-6-1-5 4 1 6-6 4-4-4-6 2-6-2-4 4-6-4 1-6-5-4-6 1-2-7 5-3 0-6-5-3 2-7 6 1 5-4-1-6 6-4 4 4z" fill="#9fb0e0"/><circle cx="50" cy="50" r="12" fill="#0c1838"/>`); },
+  };
+
+
   const Tiles = {
     DEFS: {
       rock:     { glyph: '🪨', solid: true,  cls: 'tile-rock',     desc: 'Roca: estorba y no converge' },
@@ -3001,14 +3126,14 @@
   // directamente (sin paso de dificultad). El catálogo de modos internos (tutorial,
   // contrarreloj, zen, aventura) sigue existiendo y se alcanza desde estos flujos.
   const MODE_CARDS = [
-    { key: 'supervivencia', accent: '#ff5b6e', glyph: '❤️', art: 'surv',
+    { key: 'supervivencia', accent: '#ff5b6e', svg: 'heartFoes', art: 'surv',
       i18n: 'card_surv', badge: 'card_surv_badge', desc: 'card_surv_desc', feats: [],
       action: () => Game.start('supervivencia', 'normal') },
-    { key: 'clasico', accent: '#2f6bff', glyph: '🗺️', art: 'classic',
+    { key: 'clasico', accent: '#2f6bff', svg: 'island', art: 'classic',
       i18n: 'card_classic', badge: 'card_classic_badge', desc: 'card_classic_desc',
       feats: [['🔒', 'card_feat_locks'], ['◎', 'card_feat_objects'], ['⚡', 'card_feat_events'], ['✦', 'card_feat_more']],
       action: () => openWorldsMap() },
-    { key: 'multi', accent: '#7a5cff', glyph: '🆚', art: 'multi',
+    { key: 'multi', accent: '#7a5cff', svg: 'vsBalls', art: 'multi',
       i18n: 'card_multi', badge: 'card_multi_badge', desc: 'card_multi_desc',
       feats: [['🏆', 'card_feat_first'], ['⭐', 'card_feat_best'], ['📶', 'card_feat_online']],
       action: () => openMultiplayer() },
@@ -3019,7 +3144,7 @@
     const featsHTML = (feats) => feats && feats.length
       ? `<span class="mc-feats">${feats.map(f => `<span class="mc-feat"><span class="mc-feat-ic">${f[0]}</span>${esc(I18n.t(f[1]))}</span>`).join('')}</span>` : '';
     const cardHTML = (c) => `<button type="button" class="mode-hero" role="listitem" data-mode="${c.key}" style="--mode-accent:${c.accent}" aria-label="${esc(I18n.t(c.i18n))}">
-        <span class="mc-art mc-art-${c.art}" aria-hidden="true"><span class="mc-glyph">${c.glyph}</span></span>
+        <span class="mc-art mc-art-${c.art}" aria-hidden="true">${Art[c.svg] ? Art[c.svg]() : ''}</span>
         <span class="mc-body">
           <span class="mc-titlerow"><span class="mc-title">${esc(I18n.t(c.i18n))}</span><span class="mc-badge">${esc(I18n.t(c.badge))}</span></span>
           <span class="mc-desc">${esc(I18n.t(c.desc))}</span>
@@ -3028,7 +3153,7 @@
         <span class="mc-go" aria-hidden="true">›</span>
       </button>`;
     const howHTML = `<button type="button" class="mode-how" role="listitem" data-mode="how">
-        <span class="mc-how-ic" aria-hidden="true">📘</span>
+        <span class="mc-how-ic" aria-hidden="true">${Art.book()}</span>
         <span class="mc-body">
           <span class="mc-title">${esc(I18n.t('how_title'))}</span>
           <span class="mc-desc">${esc(I18n.t('how_card_desc'))}</span>
@@ -3055,9 +3180,59 @@
     Toasts.show(I18n.t('multi_soon'), 'info', 1900);
   }
 
+  /* ===================== Top bar reutilizable (sistema base) ===================== */
+  const TOPBAR_HTML = `
+    <button class="appbar-profile" data-act="profile" aria-label="Perfil">
+      <span class="avatar"><span class="avatar-art">${Art.avatar()}</span><span class="avatar-badge">1</span></span>
+      <span class="appbar-id">
+        <span class="appbar-name-row"><b class="appbar-name">Jugador</b><span class="appbar-edit" data-act="edit-name" role="button" aria-label="Editar nombre">${Art.pencil()}</span></span>
+        <span class="appbar-lvl">
+          <span class="appbar-lvl-star">⭐</span><span class="appbar-lvl-txt">Nivel 1</span>
+          <span class="appbar-xp"><span class="appbar-xp-fill"></span></span>
+          <span class="appbar-xp-num">0 / 0</span>
+        </span>
+      </span>
+    </button>
+    <div class="appbar-econ">
+      <span class="econ-pill econ-coins"><span class="econ-ic">${Art.coin()}</span><b data-econ-num="coins">0</b><span class="econ-plus" data-act="buy-coins" role="button" aria-label="Conseguir monedas">${Art.plus()}</span></span>
+      <span class="econ-pill econ-gems"><span class="econ-ic">${Art.gem()}</span><b data-econ-num="gems">0</b><span class="econ-plus" data-act="buy-gems" role="button" aria-label="Conseguir gemas">${Art.plus()}</span></span>
+      <span class="econ-pill econ-streak"><span class="econ-ic">${Art.fire()}</span><b data-econ-num="streak">0</b></span>
+      <button class="appbar-icon" data-act="settings" aria-label="Ajustes">${Art.gear()}</button>
+    </div>`;
+  function mountTopBars() { document.querySelectorAll('[data-topbar]').forEach((el) => { el.innerHTML = TOPBAR_HTML; }); }
+  // Rellena los placeholders <span data-art="nombre"> con el SVG de Art (una sola vez).
+  function fillArt(root) {
+    (root || document).querySelectorAll('[data-art]').forEach((el) => {
+      const name = el.dataset.art;
+      if (typeof Art[name] === 'function' && el.dataset.arted !== '1') { el.innerHTML = Art[name](); el.dataset.arted = '1'; }
+    });
+  }
+  function updateTopBars() {
+    const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
+    const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
+    document.querySelectorAll('[data-topbar]').forEach((bar) => {
+      const n = bar.querySelector('.appbar-name'); if (n) n.textContent = prof.name;
+      const l = bar.querySelector('.appbar-lvl-txt'); if (l) l.textContent = I18n.t('lvl') + ' ' + lvl;
+      const xf = bar.querySelector('.appbar-xp-fill'); if (xf) xf.style.width = Math.min(100, have / need * 100).toFixed(0) + '%';
+      const xn = bar.querySelector('.appbar-xp-num'); if (xn) xn.textContent = have + ' / ' + need;
+      const bd = bar.querySelector('.avatar-badge'); if (bd) bd.textContent = lvl;
+    });
+    Econ.refresh();
+  }
+  function renameProfile() {
+    const cur = (Storage.profile && Storage.profile.name) || 'Jugador';
+    const name = (window.prompt(I18n.t('edit_name'), cur) || '').trim().slice(0, 16);
+    if (name) { const p = Storage.profile || { color: '#00d0ff' }; p.name = name; Storage.profile = p; Storage.user = name; updateTopBars(); refreshStart(); }
+  }
+
   function refreshStart() {
-    $('#start-best').textContent = Storage.best;
-    const br = $('#btn-reward'); if (br) br.hidden = !Meta.rewardReady();
+    updateTopBars();
+    { const sb = $('#start-best'); if (sb) sb.textContent = Storage.best; }
+    // Chip de nivel (progresión de Aventura/Clásico) + mejor puntuación.
+    { const lc = $('#home-chip-lvl'); if (lc) lc.textContent = I18n.t('lvl') + ' ' + ((Meta.advMax && Meta.advMax()) || 1); }
+    // Banner de recompensa diaria: visible siempre; badge/botón activos si toca reclamar.
+    { const ready = Meta.rewardReady(); const bn = $('#btn-reward'); if (bn) bn.classList.toggle('claimed', !ready);
+      const bd = bn && bn.querySelector('.db-badge'); if (bd) bd.hidden = !ready; }
     const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
     // Cabecera compacta: perfil (izq) + economía (der), sin tarjeta.
     const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
@@ -3267,6 +3442,8 @@
     FX.init();
     applyReducedFx();
     applyLargeText();
+    mountTopBars();
+    fillArt();
     I18n.apply();
     Cosmetics.apply();
     Input.init();
@@ -3315,18 +3492,31 @@
     }
     Storage.lastVersion = VERSION;
 
-    // Inicio
-    $('#btn-play').addEventListener('click', () => { Sound.ensure(); Screens.show('modes'); });
-    $('#btn-how').addEventListener('click', () => Modal.open('modal-how'));
+    // Acciones del sistema base (top bar reutilizable + atajos): delegación por data-act.
+    document.addEventListener('click', (e) => {
+      const el = e.target.closest('[data-act]'); if (!el) return;
+      const a = el.dataset.act;
+      if (a === 'settings') { Sound.ensure(); openSettings(); }
+      else if (a === 'profile' || a === 'edit-name') { Sound.ui(); renameProfile(); }
+      else if (a === 'buy-coins') { Sound.ensure(); openShop(); }
+      else if (a === 'buy-gems' || a === 'bell') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
+      else if (a === 'play') { Sound.ensure(); Screens.show('modes'); }
+      else if (a === 'home-classic') { Sound.ui(); Worlds.open(); }
+      else if (a === 'home-tourneys' || a === 'q-league' || a === 'q-friends') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
+      else if (a === 'home-multi') { Sound.ui(); openMultiplayer(); }
+      else if (a === 'q-missions') { Sound.ui(); Modal.open('modal-missions'); }
+      else if (a === 'q-daily') { Sound.ui(); Meta.rewardReady() ? claimDailyReward() : Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
+      else if (a === 'q-chests') { Sound.ui(); openChests(); }
+      else if (a === 'claim-daily') claimDailyReward();
+      else if (a === 'nav-medals') { Sound.ensure(); openMedals(); }
+      else if (a === 'nav-shop') { Sound.ensure(); openShop(); }
+      else if (a === 'nav-guide') { Sound.ui(); Modal.open('modal-how'); }
+      else if (a === 'nav-home') Sound.ui();
+    });
+
+    // Inicio (el grueso del cableado vive en el handler delegado data-act de arriba).
+    { const bp = $('#btn-play'); if (bp) bp.addEventListener('click', () => { Sound.ensure(); Screens.show('modes'); }); }
     { const bi = $('#btn-install'); if (bi) bi.addEventListener('click', () => PWA.promptInstall()); }
-    // Misiones: panel lanzado desde el FAB lateral (sonido ahora vive en Ajustes).
-    { const bmi = $('#btn-missions'); if (bmi) bmi.addEventListener('click', () => { Sound.ui(); Modal.open('modal-missions'); }); }
-    // Pestaña "Inicio" de la barra: ya estamos en inicio (feedback sutil, sin navegar).
-    { const bh = $('#btn-home'); if (bh) bh.addEventListener('click', () => Sound.ui()); }
-    const bs = $('#btn-settings'); if (bs) bs.addEventListener('click', () => { Sound.ensure(); openSettings(); });
-    const bm = $('#btn-medals'); if (bm) bm.addEventListener('click', openMedals);
-    { const bsh = $('#btn-shop'); if (bsh) bsh.addEventListener('click', () => { Sound.ensure(); openShop(); }); }
-    { const br = $('#btn-reward'); if (br) br.addEventListener('click', claimDailyReward); }
     // Al cerrar la tienda, revertir cualquier previsualización al tema equipado.
     { const sc = $('#shop-close'); if (sc) sc.addEventListener('click', () => Cosmetics.apply()); }
 
