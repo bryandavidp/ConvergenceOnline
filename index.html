@@ -359,16 +359,37 @@
       </div>
     </div>
 
-    <!-- Tienda de cosméticos -->
+    <!-- Tienda: tableros + temas -->
     <div class="modal modal-shop" id="modal-shop" role="dialog" aria-modal="true" aria-labelledby="shop-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true">▣</span><h2 id="shop-title" data-i18n="shop_title">Tienda</h2></div>
-      <p class="shop-coins">🪙 <span id="shop-coins">0</span> <span data-i18n="coins">monedas</span></p>
-      <p class="shop-hint" data-i18n="shop_hint">Temas del tablero. Pulsa para previsualizar.</p>
+      <div class="shop-econ">
+        <span class="econ-pill econ-coins" data-econ="coins">🪙 0</span>
+        <span class="econ-pill econ-gems" data-econ="gems">💎 0</span>
+        <span class="econ-pill econ-tickets" data-econ="tickets">🎟️ 0</span>
+      </div>
+      <p class="shop-hint" data-i18n="shop_hint2">Cada tablero tiene un diseño y efectos únicos. ¡Desbloquéalos con monedas!</p>
       <div class="modal-body">
         <div class="shop-list" id="shop-list"></div>
       </div>
       <div class="modal-actions">
         <button class="btn btn-primary" id="shop-close" data-close data-i18n="close">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- Cofres -->
+    <div class="modal modal-chests" id="modal-chests" role="dialog" aria-modal="true" aria-labelledby="chests-title" hidden>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true">🎁</span><h2 id="chests-title" data-i18n="chests_title">Cofres</h2></div>
+      <div class="shop-econ">
+        <span class="econ-pill econ-coins" data-econ="coins">🪙 0</span>
+        <span class="econ-pill econ-gems" data-econ="gems">💎 0</span>
+        <span class="econ-pill econ-tickets" data-econ="tickets">🎟️ 0</span>
+      </div>
+      <div class="modal-body">
+        <div class="chests-body" id="chests-body"></div>
+      </div>
+      <div class="modal-actions modal-buttons">
+        <button class="btn btn-primary btn-lg" id="btn-open-chest" data-i18n="open_chest">🎁 Abrir cofre</button>
+        <button class="btn btn-ghost" data-close data-i18n="close">Cerrar</button>
       </div>
     </div>
 

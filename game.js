@@ -210,6 +210,9 @@
         locked_level: '🔒 Completa el nivel anterior', locked_world: '🔒 Mundo bloqueado', reward_locked: 'Completa todos los niveles del mundo', reward_claimed: 'Recompensa ya reclamada', reward_got: '¡Recompensa del mundo! 🎁 +1 cofre · 💎 +20',
         coming_soon: 'Próximamente', tab_missions: 'Misiones', tab_play: 'Jugar', tab_chests: 'Cofres', tab_rank: 'Clasificación',
         powerup_empty: 'No te quedan de este power-up',
+        equipped: 'Equipado', equip: 'Equipar', free: 'Gratis', no_coins: 'Monedas insuficientes',
+        shop_boards: 'Tableros comprables', shop_themes: 'Temas de color', shop_hint2: 'Cada tablero tiene un diseño y efectos únicos. ¡Desbloquéalos con monedas!', board_unlocked: '¡Tablero desbloqueado!',
+        chests_title: '🎁 Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre contiene monedas, gemas o tickets.', chests_none: 'No tienes cofres', chest_reward: '¡Recompensa! {r}', open_chest: '🎁 Abrir cofre',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
         how_title: '¿Cómo se juega?', how1: 'Toca una <strong>casilla vacía</strong>.', how2: 'Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).',
         how3: 'Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!', how4: 'Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.',
@@ -252,6 +255,9 @@
         locked_level: '🔒 Complete the previous level', locked_world: '🔒 World locked', reward_locked: 'Complete all levels in the world', reward_claimed: 'Reward already claimed', reward_got: 'World reward! 🎁 +1 chest · 💎 +20',
         coming_soon: 'Coming soon', tab_missions: 'Missions', tab_play: 'Play', tab_chests: 'Chests', tab_rank: 'Leaderboard',
         powerup_empty: 'No more of this power-up',
+        equipped: 'Equipped', equip: 'Equip', free: 'Free', no_coins: 'Not enough coins',
+        shop_boards: 'Boards for sale', shop_themes: 'Color themes', shop_hint2: 'Each board has a unique design and effects. Unlock them with coins!', board_unlocked: 'Board unlocked!',
+        chests_title: '🎁 Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest contains coins, gems or tickets.', chests_none: 'You have no chests', chest_reward: 'Reward! {r}', open_chest: '🎁 Open chest',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
         how_title: 'How to play?', how1: 'Tap an <strong>empty cell</strong>.', how2: 'It looks at the nearest icon in each direction (up, down, left, right).',
         how3: 'If <strong>2 or more match</strong>, they converge and vanish!', how4: 'Chain quick clears to raise the <strong>combo</strong> and multiply points.',
@@ -1509,6 +1515,28 @@
     previewTheme(id) { this._set(id); },
   };
 
+  /* ===================== Boards (tableros comprables de la tienda) =====================
+   * 10 tableros del mockup. Cada uno aporta una apariencia (swatch/skin del tablero) y,
+   * a futuro (Fase 5), efectos mecánicos descritos en `chars`. El equipado se guarda en
+   * Meta.boards.equipped y se aplica como data-board en el #board.
+   */
+  const Boards = {
+    DEFS: {
+      classic:   { name: 'Tablero Clásico',    cost: 0,    sw: 'linear-gradient(135deg,#1b2a52,#2f6bff)', chars: ['Sin efectos especiales', 'Ideal para aprender'] },
+      madera:    { name: 'Tablero de Madera',  cost: 500,  sw: 'linear-gradient(135deg,#5a3a1e,#a86a36)', chars: ['Las cadenas duran 1 turno menos', 'Bonificación de puntos +5%'] },
+      hielo:     { name: 'Tablero de Hielo',   cost: 800,  sw: 'linear-gradient(135deg,#2a6a9e,#9fe6ff)', chars: ['Aparecen más casillas de hielo', 'Las oleadas son más rápidas'] },
+      lava:      { name: 'Tablero de Lava',    cost: 1200, sw: 'linear-gradient(135deg,#7a1e10,#ff5b2e)', chars: ['Aumenta la velocidad de oleadas', 'Menos tiempo en Supervivencia'] },
+      cristal:   { name: 'Tablero de Cristal', cost: 1500, sw: 'linear-gradient(135deg,#5a2a8e,#c08bff)', chars: ['Los combos otorgan +10% más puntos', 'Aparecen portales aleatorios'] },
+      magico:    { name: 'Tablero Mágico',     cost: 2000, sw: 'linear-gradient(135deg,#3a1e6e,#8a5cff)', chars: ['Probabilidad de figuras especiales', 'Los comodines duran más'] },
+      futurista: { name: 'Tablero Futurista',  cost: 2500, sw: 'linear-gradient(135deg,#0e3a4a,#19f0d0)', chars: ['Genera chips de energía aleatorios', 'Power-ups recargan más rápido'] },
+      dorado:    { name: 'Tablero Dorado',     cost: 3000, sw: 'linear-gradient(135deg,#7a5a10,#ffd84d)', chars: ['Bonificación de monedas +10%', 'Más puntos por combos largos'] },
+      bosque:    { name: 'Tablero del Bosque', cost: 1800, sw: 'linear-gradient(135deg,#1e4a2a,#6bd36b)', chars: ['Aparecen más tréboles y flores', 'Aumenta la probabilidad de extras'] },
+      cosmico:   { name: 'Tablero Cósmico',    cost: 2200, sw: 'linear-gradient(135deg,#2a1a5e,#a06bff)', chars: ['Figuras cósmicas exclusivas', 'Efectos visuales espectaculares'] },
+    },
+    order: ['classic', 'madera', 'hielo', 'lava', 'cristal', 'magico', 'futurista', 'dorado', 'bosque', 'cosmico'],
+    apply() { const b = $('#board'); if (b) b.dataset.board = Meta.equippedBoard(); },
+  };
+
   /* ===================== Adventure (modo Aventura: biomas procedurales infinitos) =====================
    * Capítulos infinitos; cada capítulo = `perChapter` niveles de un bioma (paleta +
    * modificadores + objetivo) y termina en un nodo de mini-jefe. La dificultad escala
@@ -2326,6 +2354,7 @@
       this.setupLevel();
       this.showGoalBanner();
       Render.combo();
+      Boards.apply();
       Screens.show('game');
       FX.resize();
       Loop.start();
@@ -3108,26 +3137,77 @@
   // Tienda de temas (compra/equipa con monedas; previsualización en vivo)
   function buildShop() {
     const list = $('#shop-list'); if (!list) return;
-    const co = $('#shop-coins'); if (co) co.textContent = Meta.coins();
-    const cur = Meta.cosmetics().theme;
-    list.innerHTML = Themes.order.map((id) => {
-      const t = Themes.DEFS[id], owned = Meta.owns(id), eq = cur === id;
-      const btn = eq ? `<button class="btn btn-ghost" disabled>Equipado</button>`
-        : owned ? `<button class="btn btn-primary" data-equip="${id}">Equipar</button>`
-        : `<button class="btn btn-primary" data-buy="${id}">🪙 ${t.cost}</button>`;
+    const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+    Econ.refresh();
+    { const co = $('#shop-coins'); if (co) co.textContent = Meta.coins(); }
+    // --- Tableros (principal, mockup 5) ---
+    const eqB = Meta.equippedBoard();
+    const boardsHTML = Boards.order.map((id) => {
+      const b = Boards.DEFS[id], owned = Meta.ownsBoard(id), eq = eqB === id;
+      const btn = eq ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
+        : owned ? `<button class="btn btn-primary btn-sm" data-beq="${id}">${esc(I18n.t('equip'))}</button>`
+        : (b.cost === 0 ? `<button class="btn btn-primary btn-sm" data-beq="${id}">${esc(I18n.t('free'))}</button>`
+          : `<button class="btn btn-primary btn-sm" data-bbuy="${id}">🪙 ${b.cost}</button>`);
+      return `<div class="board-card${eq ? ' on' : ''}" data-board="${id}">
+        <span class="board-thumb" style="background:${b.sw}"></span>
+        <span class="board-name">${esc(b.name)}</span>
+        <span class="board-chars">${b.chars.map((c) => `<span class="board-char">✦ ${esc(c)}</span>`).join('')}</span>
+        ${btn}
+      </div>`;
+    }).join('');
+    // --- Temas de color (secundario, sistema previo) ---
+    const curT = Meta.cosmetics().theme;
+    const themesHTML = Themes.order.map((id) => {
+      const t = Themes.DEFS[id], owned = Meta.owns(id), eq = curT === id;
+      const btn = eq ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
+        : owned ? `<button class="btn btn-primary btn-sm" data-equip="${id}">${esc(I18n.t('equip'))}</button>`
+        : `<button class="btn btn-primary btn-sm" data-buy="${id}">🪙 ${t.cost}</button>`;
       return `<div class="shop-item${eq ? ' on' : ''}" data-theme="${id}" role="button" tabindex="0"><span class="shop-sw" style="background:${Themes.swatch(id)}"></span><span class="shop-name">${t.name}</span>${btn}</div>`;
     }).join('');
+    list.innerHTML =
+      `<h3 class="group-title">${esc(I18n.t('shop_boards'))}</h3><div class="board-grid">${boardsHTML}</div>` +
+      `<h3 class="group-title">${esc(I18n.t('shop_themes'))}</h3><div class="themes-grid">${themesHTML}</div>`;
+    // Tableros: comprar / equipar (cosmético ahora; efectos mecánicos en Fase 5)
+    list.querySelectorAll('[data-bbuy]').forEach((b) => b.addEventListener('click', () => {
+      const id = b.dataset.bbuy;
+      if (Meta.buyBoard(id, Boards.DEFS[id].cost)) { Sound.success(); Meta.equipBoard(id); Boards.apply(); buildShop(); Toasts.show(I18n.t('board_unlocked'), 'good', 1600); }
+      else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); }
+    }));
+    list.querySelectorAll('[data-beq]').forEach((b) => b.addEventListener('click', () => {
+      Meta.equipBoard(b.dataset.beq); Boards.apply(); Sound.ui(); buildShop();
+    }));
+    // Temas: preview / comprar / equipar
     list.querySelectorAll('.shop-item').forEach((it) => it.addEventListener('click', () => Cosmetics.previewTheme(it.dataset.theme)));
     list.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', (e) => {
       e.stopPropagation(); const id = b.dataset.buy;
       if (Meta.buy(id, Themes.DEFS[id].cost)) { Sound.success(); Meta.equip('theme', id); Cosmetics.apply(); refreshStart(); buildShop(); Toasts.show('¡Tema desbloqueado!', 'good', 1600); }
-      else { Sound.miss(); Toasts.show('Monedas insuficientes', 'warn', 1600); }
+      else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); }
     }));
     list.querySelectorAll('[data-equip]').forEach((b) => b.addEventListener('click', (e) => {
       e.stopPropagation(); Meta.equip('theme', b.dataset.equip); Cosmetics.apply(); Sound.ui(); refreshStart(); buildShop();
     }));
   }
   function openShop() { buildShop(); Modal.open('modal-shop'); }
+
+  // --- Cofres: abrir y entregar recompensa aleatoria ---
+  function buildChests() {
+    const el = $('#chests-body'); if (!el) return;
+    Econ.refresh();
+    const n = Meta.chests();
+    el.innerHTML = `<div class="chest-big${n > 0 ? ' ready' : ''}">🎁</div>
+      <p class="chest-count">${I18n.t('chests_have').replace('{n}', n)}</p>
+      <p class="chest-hint">${I18n.t('chests_hint')}</p>`;
+    const ob = $('#btn-open-chest'); if (ob) ob.disabled = n <= 0;
+  }
+  function openChests() { buildChests(); Modal.open('modal-chests'); }
+  function doOpenChest() {
+    const r = Meta.openChest();
+    if (!r) { Sound.miss(); Toasts.show(I18n.t('chests_none'), 'warn', 1400); return; }
+    Sound.success(); FX.confetti(90);
+    const txt = r.kind === 'coins' ? `🪙 +${r.amount}` : r.kind === 'gems' ? `💎 +${r.amount}` : `🎟️ +${r.amount}`;
+    Toasts.show(I18n.t('chest_reward').replace('{r}', txt), 'good', 2200, '🎁');
+    Econ.refresh(); buildChests();
+  }
 
   // Mapa de capítulos de Aventura (nodos hasta el capítulo alcanzado + el siguiente)
   function buildAdventureMap() {
@@ -3233,7 +3313,8 @@
     { const b = $('#wt-shop'); if (b) b.addEventListener('click', () => { Sound.ui(); openShop(); }); }
     { const b = $('#wt-missions'); if (b) b.addEventListener('click', () => { Sound.ui(); Modal.open('modal-missions'); }); }
     { const b = $('#wt-play'); if (b) b.addEventListener('click', () => Sound.ui()); }
-    { const b = $('#wt-chests'); if (b) b.addEventListener('click', () => { Sound.ui(); (typeof openChests === 'function' ? openChests() : Toasts.show(I18n.t('coming_soon'), 'info', 1500)); }); }
+    { const b = $('#wt-chests'); if (b) b.addEventListener('click', () => { Sound.ui(); openChests(); }); }
+    { const oc = $('#btn-open-chest'); if (oc) oc.addEventListener('click', doOpenChest); }
     { const b = $('#wt-rank'); if (b) b.addEventListener('click', () => { Sound.ui(); openMedals(); }); }
     { const lm = $('#btn-level-map'); if (lm) lm.addEventListener('click', () => Game.toWorldsMap()); }
 
