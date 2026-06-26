@@ -58,9 +58,9 @@
     HINT_COOLDOWN: 10000,     // ms
     HINT_DURATION: 2000,      // ms
     DIFFICULTY: {
-      facil:   { label: 'Fácil',   initialIcons: 16, comboWindow: 5000, spawnStart: 3200, spawnMin: 1000, scoreMult: 0.8, penaltyBase: 1 },
-      normal:  { label: 'Normal',  initialIcons: 26, comboWindow: 3500, spawnStart: 2600, spawnMin: 700,  scoreMult: 1.0, penaltyBase: 2 },
-      dificil: { label: 'Difícil', initialIcons: 34, comboWindow: 2500, spawnStart: 2100, spawnMin: 500,  scoreMult: 1.3, penaltyBase: 3 },
+      facil:   { label: 'Fácil',   initialIcons: 12, comboWindow: 5000, spawnStart: 3200, spawnMin: 1000, scoreMult: 0.8, penaltyBase: 1 },
+      normal:  { label: 'Normal',  initialIcons: 18, comboWindow: 3500, spawnStart: 2600, spawnMin: 700,  scoreMult: 1.0, penaltyBase: 2 },
+      dificil: { label: 'Difícil', initialIcons: 24, comboWindow: 2500, spawnStart: 2100, spawnMin: 500,  scoreMult: 1.3, penaltyBase: 3 },
     },
     MODES: {
       tutorial:      { name: 'Tutorial',     emoji: '🎓', timed: false, penalties: false, mult: 0.5, single: true, fixedDiff: 'facil', accent: '#ffd23f', goal: 'Junta dos iguales', desc: 'Aprende la mecánica sin prisa ni penalizaciones.' },
@@ -471,30 +471,21 @@
     inside: (r, c) => r >= 0 && c >= 0 && r < State.size && c < State.size,
 
     // Nº de iconos distintos del nivel (variedad creciente => más difícil)
+    // Sube 1 icono cada 3 niveles (antes cada 2) para un ritmo más suave.
     varietyFor(level) {
-      return clamp(4 + Math.floor((level - 1) / 2), 4, Math.min(8, Icons.CATALOG.length));
-    },
-    // Desplazamiento acumulado en el catálogo (ventanas contiguas por nivel)
-    _offset(level) {
-      let o = 0; for (let lv = 1; lv < level; lv++) o += this.varietyFor(lv);
-      return o % Icons.CATALOG.length;
+      return clamp(4 + Math.floor((level - 1) / 3), 4, Math.min(8, Icons.CATALOG.length));
     },
     _window(off, n) {
       const L = Icons.CATALOG.length, a = [];
       for (let i = 0; i < n; i++) a.push(Icons.CATALOG[(off + i) % L]);
       return a;
     },
-    // Conjunto de iconos del nivel: ventana del catálogo (dificultad creciente)
-    // garantizando que NO comparte ningún icono con el nivel anterior.
+    // Ventana deslizante aditiva: avanza 1 posición por nivel, por lo que comparte
+    // (n-1) iconos con el nivel anterior → introducción GRADUAL (entra 1 nuevo,
+    // sale 1 viejo). Mantiene formas distintas dentro de la ventana (período 16 > 8).
     poolForLevel(level) {
-      const L = Icons.CATALOG.length, n = this.varietyFor(level);
-      const prev = level > 1 ? new Set(this._window(this._offset(level - 1), this.varietyFor(level - 1))) : new Set();
-      let off = this._offset(level);
-      for (let t = 0; t < L; t++) {
-        const w = this._window(off, n);
-        if (!w.some(id => prev.has(id))) return w;
-        off = (off + 1) % L;
-      }
+      const n = this.varietyFor(level);
+      const off = (level - 1) % Icons.CATALOG.length;
       return this._window(off, n);
     },
 
@@ -508,7 +499,7 @@
       const d = Config.DIFFICULTY[State.diff];
       const m = Config.MODES[State.mode];
       let base = d.spawnStart * Math.pow(0.9, level - 1);
-      if (m.fast) base *= 0.8;        // supervivencia: más rápido
+      if (m.fast) base *= 0.9;        // supervivencia: ligeramente más rápido
       if (m.relaxed) base *= 1.25;    // zen: más lento
       return Math.round(clamp(base, d.spawnMin, 6000));
     },
@@ -1608,7 +1599,7 @@
     DEFS: {
       rock:     { glyph: '🪨', solid: true,  cls: 'tile-rock',     desc: 'Roca: estorba y no converge' },
       locked:   { glyph: '🔒', solid: true,  cls: 'tile-locked',   desc: 'Bloqueada' },
-      frozen:   { glyph: '🧊', solid: true,  cls: 'tile-frozen', taps: 3, breakable: true, desc: 'Helada: toca para descongelar' },
+      frozen:   { glyph: '🧊', solid: true,  cls: 'tile-frozen', taps: 2, breakable: true, desc: 'Helada: toca para descongelar' },
       infected: { glyph: '☣️', solid: false, cls: 'tile-infected', desc: 'Se propaga si no la limpias' },
       crystal:  { glyph: '💎', solid: false, cls: 'tile-crystal', bonus: 3, desc: 'Vale puntos extra' },
       // --- Obstáculos del mockup ---
@@ -1801,9 +1792,9 @@
     // trapBase/Cap: densidad de trampas (·oleada) · varEvery: cada cuántas oleadas suben los iconos ·
     // bossEvery: cadencia de jefe · coinMult: multiplicador de recompensa.
     TUNE: {
-      facil:   { waveMs: 26000, lives: 4, spawnDecay: 0.91, spawnFloor: 480, trapBase: 0.015, trapCap: 0.09, varEvery: 3, bossEvery: 5, coinMult: 0.85 },
-      normal:  { waveMs: 22000, lives: 3, spawnDecay: 0.88, spawnFloor: 360, trapBase: 0.02,  trapCap: 0.12, varEvery: 2, bossEvery: 4, coinMult: 1.0 },
-      dificil: { waveMs: 18000, lives: 3, spawnDecay: 0.85, spawnFloor: 300, trapBase: 0.03,  trapCap: 0.16, varEvery: 2, bossEvery: 3, coinMult: 1.3 },
+      facil:   { waveMs: 30000, lives: 4, spawnDecay: 0.95, spawnFloor: 800, trapBase: 0.010, trapCap: 0.06, varEvery: 4, bossEvery: 6, coinMult: 0.85 },
+      normal:  { waveMs: 26000, lives: 3, spawnDecay: 0.93, spawnFloor: 600, trapBase: 0.012, trapCap: 0.08, varEvery: 3, bossEvery: 5, coinMult: 1.0 },
+      dificil: { waveMs: 20000, lives: 3, spawnDecay: 0.90, spawnFloor: 460, trapBase: 0.020, trapCap: 0.12, varEvery: 2, bossEvery: 4, coinMult: 1.3 },
     },
     tune() { return this.TUNE[State.diff] || this.TUNE.normal; },
     // Nivel efectivo de dificultad: sube con las oleadas y MANDA sobre el catálogo de
@@ -1891,7 +1882,16 @@
       Toasts.show(`+1 ${Boosters.DEFS[id].name}`, 'good', 1500, BOOSTER_IMG[id] || Boosters.DEFS[id].glyph);
       Sound.milestone(); this.buildBar();
     },
-    setup() { const tn = this.tune(); if (this.wave >= 2) this._traps(Math.min(tn.trapCap, tn.trapBase * this.wave)); this._placeBombs(1); },
+    // Convierte iconos huérfanos (del pool anterior) a iconos del pool actual para que
+    // el tablero siempre sea 100% vaciable tras un cambio de tanda.
+    _reconcileOrphans() {
+      const set = new Set(State.pool);
+      for (let i = 0; i < State.board.length; i++) {
+        const v = State.board[i];
+        if (v !== null && !set.has(v)) { State.board[i] = State.pool[rand(State.pool.length)]; Render.syncCell(i); }
+      }
+    },
+    setup() { const tn = this.tune(); if (this.wave >= 3) this._traps(Math.min(tn.trapCap, tn.trapBase * (this.wave - 2))); this._placeBombs(1); },
     frozen() { return performance.now() < this.freezeUntil; },
     locked() { return performance.now() < this.lockUntil; },
     blockSpawn() { return this.frozen() || this.locked(); },
@@ -1952,11 +1952,12 @@
       if (lvl !== State.level) {
         State.level = lvl;
         State.pool = Engine.poolForLevel(lvl);
+        this._reconcileOrphans();
         Toasts.show(I18n.t('surv_new_icons'), 'info', 1500, 'v2:four-pointed-star');
       }
       Toasts.show(I18n.t('st_wave') + ' ' + this.wave, 'warn', 1400, 'fire'); Sound.danger();
       this.addFrenzy(8 + this.frenzyTier() * 3);
-      this._traps(Math.min(tn.trapCap, tn.trapBase * this.wave));
+      this._traps(Math.min(tn.trapCap, tn.trapBase * Math.max(0, this.wave - 2)));
       this._placeBombs(1 + Math.floor(this.wave / 6));
       if (this.wave % tn.bossEvery === 0) this.bossEvent();
       this._checkWaveRecord();
@@ -1992,7 +1993,7 @@
     frostSurge() {
       this._lock(760, 'surv-frost');
       const f = this._filledIdx(), placed = [];
-      const n = Math.min(5 + Math.floor(this.wave / 3), f.length);
+      const n = Math.min(3 + Math.floor(this.wave / 4), f.length);
       for (let k = 0; k < n && f.length; k++) {
         const idx = f.splice(rand(f.length), 1)[0];
         if (!State.tiles[idx]) { State.tiles[idx] = Tiles.make('frozen'); placed.push(idx); }
@@ -2909,7 +2910,7 @@
       const placed = Engine.addPenalty(n);
       if (placed.length) Render.penalty(placed);
       // Subir velocidad de aparición
-      State.spawnRate = Math.max(d.spawnMin, Math.round(State.spawnRate * 0.9));
+      State.spawnRate = Math.max(d.spawnMin, Math.round(State.spawnRate * 0.95));
       Toasts.show(`Error · +${placed.length} iconos · más rápido`, 'bad', 1800);
       Render.hud();
       this.evaluate();
@@ -3017,7 +3018,7 @@
         State.spawnRate = clamp(Math.round(d.spawnStart * Math.pow(0.92, State.elapsed / 10)), 300, d.spawnStart);
       } else {
         // Aceleración progresiva suave dentro del nivel
-        State.spawnRate = Math.max(Config.DIFFICULTY[State.diff].spawnMin, State.spawnRate - 6);
+        State.spawnRate = Math.max(Config.DIFFICULTY[State.diff].spawnMin, State.spawnRate - 3);
       }
       Render.hudSoon();
       this.evaluate();
