@@ -974,38 +974,40 @@ body.mode-timed .time-chip { display: inline-flex; }
 .cell.tile-rock.rock-cracked::after { filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.6)); opacity: .5; transform: scale(.86); }
 .cell.tile-frozen {
   background:
-    radial-gradient(circle at 30% 20%, rgba(255,255,255,.34), transparent 22%),
-    linear-gradient(145deg, rgba(190,245,255,.28), rgba(80,150,230,.18));
-  border-color: rgba(174,235,255,.72);
-  box-shadow: 0 0 0 2px rgba(150, 220, 255, .55) inset, 0 0 14px rgba(120,220,255,.22);
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,.45), transparent 25%),
+    linear-gradient(145deg, rgba(170,240,255,.40), rgba(70,140,225,.30));
+  border-color: rgba(140,220,255,.85);
+  box-shadow: 0 0 0 2px rgba(140, 215, 255, .70) inset, 0 0 18px rgba(100,200,255,.30);
 }
 .cell.tile-frozen::before {
   content: '';
   position: absolute; inset: 6%;
   border-radius: inherit;
   pointer-events: none;
-  opacity: .45;
+  opacity: .50;
   background:
     linear-gradient(35deg, transparent 42%, rgba(255,255,255,.88) 44%, transparent 48%),
     linear-gradient(120deg, transparent 46%, rgba(255,255,255,.58) 48%, transparent 51%);
 }
+/* Snowflake overlay: opacity low so the underlying icon remains readable */
 .cell.tile-frozen::after {
   content: '';
   position: absolute;
   inset: 0;
-  background-color: #dffbff;
+  background-color: #c8f4ff;
   -webkit-mask: url(img/icons-v2/4-nature/snowflake.svg) center / 58% no-repeat;
   mask: url(img/icons-v2/4-nature/snowflake.svg) center / 58% no-repeat;
   filter: drop-shadow(0 0 10px rgba(120,220,255,.8));
-  opacity: .9;
+  opacity: .35;
 }
-.cell.tile-frozen.ice-3 { filter: saturate(1.08); }
-.cell.tile-frozen.ice-2 { background: linear-gradient(145deg, rgba(190,245,255,.22), rgba(80,150,230,.14)); box-shadow: 0 0 0 2px rgba(150, 220, 255, .38) inset; }
-.cell.tile-frozen.ice-2::before { opacity: .78; transform: rotate(8deg); }
-.cell.tile-frozen.ice-2::after { opacity: .72; transform: scale(.92); }
-.cell.tile-frozen.ice-1 { background: linear-gradient(145deg, rgba(190,245,255,.15), rgba(80,150,230,.10)); box-shadow: 0 0 0 1px rgba(150, 220, 255, .35) inset; }
-.cell.tile-frozen.ice-1::before { opacity: 1; transform: rotate(-8deg) scale(1.08); }
-.cell.tile-frozen.ice-1::after { opacity: .48; transform: scale(.72) rotate(-8deg); }
+/* ice-2 = fresh freeze (taps=2, just placed) */
+.cell.tile-frozen.ice-2 { background: linear-gradient(145deg, rgba(170,240,255,.38), rgba(70,140,225,.28)); box-shadow: 0 0 0 2px rgba(140, 215, 255, .65) inset, 0 0 16px rgba(100,200,255,.25); }
+.cell.tile-frozen.ice-2::before { opacity: .55; transform: rotate(5deg); }
+.cell.tile-frozen.ice-2::after { opacity: .35; }
+/* ice-1 = damaged (taps=1, one more hit to break) */
+.cell.tile-frozen.ice-1 { background: linear-gradient(145deg, rgba(190,240,255,.22), rgba(80,150,230,.16)); box-shadow: 0 0 0 1px rgba(150, 220, 255, .40) inset; }
+.cell.tile-frozen.ice-1::before { opacity: .70; transform: rotate(-8deg) scale(1.08); }
+.cell.tile-frozen.ice-1::after { opacity: .18; transform: scale(.72) rotate(-8deg); }
 .cell.ice-hit { animation: ice-hit .34s ease; }
 .cell.ice-shatter::after {
   content: '✦';
@@ -1102,6 +1104,9 @@ body.mode-timed .time-chip { display: inline-flex; }
 .cell.tile-magicbox::after { content: ''; position: absolute; inset: 0; background: center / 62% no-repeat url(img/ui/luckyblock.png); filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
 .cell.tile-bomb { color: var(--bad); box-shadow: 0 0 0 2px rgba(255,93,115,.6) inset; }
 .cell.tile-bomb::after { content: ''; position: absolute; inset: 0; background: center / 62% no-repeat url(img/ui/bomb.png); filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+.cell.tile-slowdown { color: #00e5cc; background: radial-gradient(circle, rgba(0,229,204,.22), rgba(0,180,160,.08)); box-shadow: 0 0 0 2px rgba(0,229,204,.65) inset; animation: special-pulse 1.6s ease-in-out infinite; }
+.cell.tile-slowdown::after { content: '⏳'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.4em; filter: drop-shadow(0 1px 4px rgba(0,229,204,.7)); animation: slowdown-bob 2.2s ease-in-out infinite; }
+@keyframes slowdown-bob { 0%,100% { transform: scale(1) rotate(-4deg); } 50% { transform: scale(1.12) rotate(4deg); } }
 
 /* Icono SVG dentro de la celda */
 .cell .glyph {

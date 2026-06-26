@@ -58,9 +58,9 @@
     HINT_COOLDOWN: 10000,     // ms
     HINT_DURATION: 2000,      // ms
     DIFFICULTY: {
-      facil:   { label: 'Fácil',   initialIcons: 12, comboWindow: 5000, spawnStart: 3200, spawnMin: 1000, scoreMult: 0.8, penaltyBase: 1 },
-      normal:  { label: 'Normal',  initialIcons: 18, comboWindow: 3500, spawnStart: 2600, spawnMin: 700,  scoreMult: 1.0, penaltyBase: 2 },
-      dificil: { label: 'Difícil', initialIcons: 24, comboWindow: 2500, spawnStart: 2100, spawnMin: 500,  scoreMult: 1.3, penaltyBase: 3 },
+      facil:   { label: 'Fácil',   initialIcons: 12, comboWindow: 5000, spawnStart: 6000, spawnMin: 2000, scoreMult: 0.8, penaltyBase: 1 },
+      normal:  { label: 'Normal',  initialIcons: 18, comboWindow: 3500, spawnStart: 5000, spawnMin: 1400, scoreMult: 1.0, penaltyBase: 2 },
+      dificil: { label: 'Difícil', initialIcons: 24, comboWindow: 2500, spawnStart: 3800, spawnMin: 900,  scoreMult: 1.3, penaltyBase: 3 },
     },
     MODES: {
       tutorial:      { name: 'Tutorial',     emoji: '🎓', timed: false, penalties: false, mult: 0.5, single: true, fixedDiff: 'facil', accent: '#ffd23f', goal: 'Junta dos iguales', desc: 'Aprende la mecánica sin prisa ni penalizaciones.' },
@@ -498,8 +498,7 @@
     spawnRateForLevel(level) {
       const d = Config.DIFFICULTY[State.diff];
       const m = Config.MODES[State.mode];
-      let base = d.spawnStart * Math.pow(0.9, level - 1);
-      if (m.fast) base *= 0.9;        // supervivencia: ligeramente más rápido
+      let base = d.spawnStart * Math.pow(0.95, level - 1);
       if (m.relaxed) base *= 1.25;    // zen: más lento
       return Math.round(clamp(base, d.spawnMin, 6000));
     },
@@ -1611,10 +1610,11 @@
       bonus:    { glyph: '+30', trigger: 'bonus',    cls: 'tile-bonus',    desc: 'Bonus: +30 puntos al instante' },
       portal:   { glyph: '🌀',  trigger: 'portal',   cls: 'tile-portal',   desc: 'Portal: teletransporta una figura' },
       magicbox: { glyph: '🎁',  trigger: 'magicbox', cls: 'tile-magicbox', desc: 'Caja mágica: libera figuras cercanas' },
-      bomb:     { glyph: '💣',  trigger: 'bomb',     cls: 'tile-bomb',     desc: 'Bomba oculta: detona figuras cercanas' },
+      bomb:      { glyph: '💣',  trigger: 'bomb',      cls: 'tile-bomb',      desc: 'Bomba oculta: detona figuras cercanas' },
+      slowdown:  { glyph: '⏳',  trigger: 'slowdown',  cls: 'tile-slowdown',  desc: 'Ralentizador: reduce la velocidad de aparición' },
     },
     // Lista de clases CSS de casilla (para limpiar/aplicar en Render.setTile).
-    CLASSES: ['tile-rock', 'tile-locked', 'tile-frozen', 'tile-infected', 'tile-crystal', 'tile-chains', 'tile-web', 'tile-barrier', 'tile-mud', 'tile-bonus', 'tile-portal', 'tile-magicbox', 'tile-bomb'],
+    CLASSES: ['tile-rock', 'tile-locked', 'tile-frozen', 'tile-infected', 'tile-crystal', 'tile-chains', 'tile-web', 'tile-barrier', 'tile-mud', 'tile-bonus', 'tile-portal', 'tile-magicbox', 'tile-bomb', 'tile-slowdown'],
     make(type) { const d = this.DEFS[type]; return d ? Object.assign({ type }, d) : null; },
   };
 
@@ -1792,9 +1792,9 @@
     // trapBase/Cap: densidad de trampas (·oleada) · varEvery: cada cuántas oleadas suben los iconos ·
     // bossEvery: cadencia de jefe · coinMult: multiplicador de recompensa.
     TUNE: {
-      facil:   { waveMs: 30000, lives: 4, spawnDecay: 0.95, spawnFloor: 800, trapBase: 0.010, trapCap: 0.06, varEvery: 4, bossEvery: 6, coinMult: 0.85 },
-      normal:  { waveMs: 26000, lives: 3, spawnDecay: 0.93, spawnFloor: 600, trapBase: 0.012, trapCap: 0.08, varEvery: 3, bossEvery: 5, coinMult: 1.0 },
-      dificil: { waveMs: 20000, lives: 3, spawnDecay: 0.90, spawnFloor: 460, trapBase: 0.020, trapCap: 0.12, varEvery: 2, bossEvery: 4, coinMult: 1.3 },
+      facil:   { waveMs: 32000, lives: 4, spawnDecay: 0.985, spawnFloor: 2000, trapBase: 0.008, trapCap: 0.05, varEvery: 8, bossEvery: 8, coinMult: 0.85 },
+      normal:  { waveMs: 28000, lives: 3, spawnDecay: 0.975, spawnFloor: 1400, trapBase: 0.010, trapCap: 0.07, varEvery: 6, bossEvery: 6, coinMult: 1.0 },
+      dificil: { waveMs: 22000, lives: 3, spawnDecay: 0.960, spawnFloor: 900,  trapBase: 0.016, trapCap: 0.10, varEvery: 5, bossEvery: 5, coinMult: 1.3 },
     },
     tune() { return this.TUNE[State.diff] || this.TUNE.normal; },
     // Nivel efectivo de dificultad: sube con las oleadas y MANDA sobre el catálogo de
@@ -1913,6 +1913,15 @@
       for (let x = 0; x < k; x++) { const idx = e.splice(rand(e.length), 1)[0]; State.tiles[idx] = Tiles.make('bomb'); placed.push(idx); }
       if (placed.length) { Render.syncAll(); placed.forEach((i) => Render.cellPulse(i, 'bomb-cleared', 600)); }
     },
+    SLOWDOWN_CAP: 1,
+    _slowdownIdx() { return State.tiles.map((t, i) => (t && t.type === 'slowdown' ? i : -1)).filter((i) => i >= 0); },
+    _placeSlowdown() {
+      if (this._slowdownIdx().length >= this.SLOWDOWN_CAP) return;
+      const e = this._emptyIdx(); if (!e.length) return;
+      const idx = e[rand(e.length)];
+      State.tiles[idx] = Tiles.make('slowdown');
+      Render.syncAll(); Render.cellPulse(idx, 'slowdown-placed', 700);
+    },
     _traps(density) {
       const e = this._emptyIdx(); let n = Math.floor(e.length * density);
       let rocks = this._rockIdx().length;   // tope de cobertura: el tablero nunca se "brickea"
@@ -1959,6 +1968,7 @@
       this.addFrenzy(8 + this.frenzyTier() * 3);
       this._traps(Math.min(tn.trapCap, tn.trapBase * Math.max(0, this.wave - 2)));
       this._placeBombs(1 + Math.floor(this.wave / 6));
+      if (this.wave >= 2 && Math.random() < 0.25) this._placeSlowdown();
       if (this.wave % tn.bossEvery === 0) this.bossEvent();
       this._checkWaveRecord();
       this._setFrenzyClass(); this._syncIntensity();
@@ -2994,6 +3004,12 @@
         if (State.mode === 'supervivencia') Survival.addFrenzy(Math.min(28, 8 + cells.length * 2));
         if (cells.length) Render.popup(i, '+' + pts, 'var(--warn)');
         FX.celebrate(i); Sound.booster('bomb'); Haptics.milestone();
+      } else if (eff === 'slowdown') {
+        const d = Config.DIFFICULTY[State.diff];
+        State.spawnRate = Math.min(d.spawnStart, Math.round(State.spawnRate * 1.6));
+        Render.popup(i, '⏳ −Vel', 'var(--accent-2)'); Render.bump($('#hud-speed'));
+        Sound.booster('freeze'); Haptics.milestone();
+        Toasts.show('⏳ ¡Ralentizado!', 'good', 1200, 'v2:hourglass');
       }
       Render.setTile(i); Render.syncCell(i); Render.hud();
       if (!opts.defer) this.evaluate();
