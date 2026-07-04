@@ -36,6 +36,7 @@ Estos documentos existen precisamente para que **no tengas que releer el código
 - **`docs/REQUIREMENTS.md`** — requisitos funcionales/no funcionales derivados del código (útil para saber "qué debería pasar" sin adivinar).
 - **`docs/MIGRATION_SPEC.md`** — especificación exhaustiva y autocontenida de reglas de juego, fórmulas exactas, modelo de datos (`localStorage`), economía, progresión, combos, boosters, i18n, con checklist de paridad. Es la fuente de verdad para valores numéricos exactos.
 - **`docs/DESIGN_SYSTEM.md`** — tokens de color/tipografía, inventario de componentes CSS, las ~50 animaciones (`@keyframes`) con su trigger, sistema de iconografía, accesibilidad.
+- **`docs/ROADMAP.md`** — plan de trabajo priorizado (bugs conocidos, deuda pendiente, mejoras por dificultad/beneficio, arquitectura de nube). Consultarlo antes de proponer trabajo nuevo: probablemente ya esté priorizado ahí.
 
 ## Cómo trabajar eficientemente en este repo
 
