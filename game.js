@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.9.0';
+  const VERSION = '2.0.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -32,8 +32,58 @@
       } catch (_) {}
     },
   };
-  window.addEventListener('error', (e) => ErrLog.push('error', e.message, { src: e.filename, line: e.lineno }));
-  window.addEventListener('unhandledrejection', (e) => ErrLog.push('promise', (e.reason && e.reason.message) || e.reason));
+  window.addEventListener('error', (e) => { ErrLog.push('error', e.message, { src: e.filename, line: e.lineno }); showFatalError(); });
+  window.addEventListener('unhandledrejection', (e) => { ErrLog.push('promise', (e.reason && e.reason.message) || e.reason); showFatalError(); });
+  // Banner de recuperación: un fallo de JS no debe dejar una pantalla muerta. Se muestra
+  // una sola vez (anti-bucle) con un botón para recargar. Texto en fallback si I18n aún
+  // no existe (error muy temprano en el arranque).
+  let _fatalShown = false;
+  function showFatalError() {
+    if (_fatalShown || !document.body) return;
+    _fatalShown = true;
+    const tt = (k, fb) => { try { return (typeof I18n !== 'undefined' && I18n.t(k)) || fb; } catch (_) { return fb; } };
+    const box = document.createElement('div');
+    box.className = 'fatal-error';
+    box.setAttribute('role', 'alert');
+    const msg = document.createElement('span');
+    msg.textContent = tt('err_fatal', 'Algo ha fallado.');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary btn-sm';
+    btn.textContent = tt('err_reload', 'Recargar');
+    btn.addEventListener('click', () => location.reload());
+    box.appendChild(msg); box.appendChild(btn);
+    document.body.appendChild(box);
+  }
+  // Banner de navegador no soportado (sin color-mix): texto plano, sin depender de la
+  // feature que falta. Detiene el arranque del juego.
+  function showBrowserWarn() {
+    if (!document.body) return;
+    const box = document.createElement('div');
+    box.className = 'browser-warn';
+    box.setAttribute('role', 'alert');
+    try { box.textContent = I18n.t('browser_old'); } catch (_) { box.textContent = 'Your browser is too old to play. Please update it.'; }
+    document.body.appendChild(box);
+  }
+  // Aviso accionable de nueva versión del Service Worker: botón "Actualizar" que recarga
+  // para servir los assets nuevos (RunSave conserva la partida en curso al recargar).
+  let _updateShown = false;
+  function showUpdateBanner(reg) {
+    if (_updateShown || !document.body) return;
+    _updateShown = true;
+    const box = document.createElement('div');
+    box.className = 'update-banner'; box.setAttribute('role', 'status');
+    const msg = document.createElement('span');
+    msg.textContent = I18n.t('update_ready');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary btn-sm';
+    btn.textContent = I18n.t('update_btn');
+    btn.addEventListener('click', () => {
+      try { if (reg && reg.waiting) reg.waiting.postMessage('skipWaiting'); } catch (_) {}
+      location.reload();
+    });
+    box.appendChild(msg); box.appendChild(btn);
+    document.body.appendChild(box);
+  }
 
   /* ===================== Config ===================== */
   const Config = {
@@ -174,6 +224,8 @@
     set lastVersion(v) { localStorage.setItem('cv_ver', v); },
     get survDiff() { return localStorage.getItem('cv_surv_diff') || 'normal'; },
     set survDiff(v) { localStorage.setItem('cv_surv_diff', v || 'normal'); },
+    get lastMode() { return localStorage.getItem('cv_last_mode') || ''; },
+    set lastMode(v) { v ? localStorage.setItem('cv_last_mode', v) : localStorage.removeItem('cv_last_mode'); },
   };
 
   /* ===================== Settings (persistentes) ===================== */
@@ -209,6 +261,8 @@
         modes_title: 'Elige tu modo', modes_sub: 'Cada modo, una forma diferente de jugar', group_mode: 'Modo', group_diff: 'Dificultad',
         card_surv: 'Supervivencia', card_surv_badge: 'OLEADAS INFINITAS', card_surv_desc: 'Aguanta oleadas cada vez más intensas y supera tu mejor marca.',
         card_classic: 'Clásico', card_classic_badge: 'POR NIVELES', card_classic_desc: 'Supera mapas con objetivos, obstáculos y desafíos nuevos.',
+        group_prog: 'Progresión', group_score: 'Puntuación', group_relax: 'Relax',
+        card_adv_badge: 'INFINITO', card_contra_badge: 'CONTRARRELOJ', card_zen_badge: 'RELAX', card_contra_daily: 'Incluye el Reto del día',
         card_multi: 'Multijugador', card_multi_badge: 'PRÓXIMAMENTE', card_multi_desc: 'Desafía a otros jugadores en línea cuando esté disponible.',
         card_feat_locks: 'Bloqueos', card_feat_objects: 'Objetos', card_feat_events: 'Eventos', card_feat_more: '¡Y mucho más!',
         card_feat_first: 'Termina primero el tablero', card_feat_best: 'Mejor puntuación', card_feat_online: 'Partidas en línea',
@@ -225,7 +279,7 @@
         chests_title: '🎁 Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre contiene monedas, gemas o tickets.', chests_none: 'No tienes cofres', chest_reward: '¡Recompensa! {r}', open_chest: '🎁 Abrir cofre',
         soon_badge: 'Próximamente', notify_me: 'Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
         edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
-        home_classic: 'Partida clásica', home_classic_sub: 'Juega en el tablero contra amigos o bots', home_tourneys: 'Torneos', home_tourneys_sub: 'Compite y gana recompensas', home_surv_sub: 'Sobrevive a oleadas infinitas', home_multi_sub: 'Desafía a jugadores en línea',
+        home_classic: 'Partida clásica', home_classic_sub: 'Supera niveles y gana estrellas', home_surv_sub: 'Sobrevive a oleadas infinitas',
         q_missions: 'Misiones', q_daily: 'Diario', q_chests: 'Cofres', q_league: 'Liga', q_friends: 'Amigos', best_score: 'Mejor puntuación', play_word: 'Jugar',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
         how_title: '¿Cómo se juega?', how1: 'Toca una <strong>casilla vacía</strong>.', how2: 'Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).',
@@ -238,11 +292,26 @@
         adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
         revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
         coach_skip: 'Saltar tutorial',
+        coach1: '👆 Toca la casilla VACÍA que brilla, entre dos iconos iguales, para juntarlos.',
+        coach2: '✨ ¡Eso es! Si coinciden en varias direcciones, eliminas más de golpe.',
+        coach3: '⚡ Ahora encadena: junta las dos parejas rápido, antes de que se agote el círculo, para subir el combo.',
+        coach_done: '¡Listo! Ya sabes jugar 🎉', coach_play1: 'Jugar nivel 1', coach_menu: 'Ir al menú',
         quit_confirm: '¿Salir? Toca de nuevo para confirmar', confirm_buy: '¿Confirmar?',
         resume_run: 'Continuar partida', run_resumed: 'Partida recuperada',
         premium_chest: 'Cofre premium', no_gems: '¡No tienes gemas suficientes!',
         reroll_mission: 'Cambiar misión (1)', mission_rerolled: '¡Misión nueva!',
         daily_challenge: 'Reto del día', daily_play: 'Jugar', daily_best: 'Mejor de hoy: {n}',
+        daily_pending: 'Tablero de hoy · ¡juégalo!', daily_done_state: '✅ Hecho · Mejor: {n}',
+        empty_chests_title: 'Aún no tienes cofres', empty_chests_sub: 'Gana un cofre cada 10 oleadas en Supervivencia', empty_cta_surv: 'Jugar Supervivencia',
+        empty_medals_title: 'Tu primera medalla te espera', empty_medals_sub: 'Juega una partida para empezar a desbloquear logros',
+        empty_lb_title: 'Sin marcas todavía', empty_lb_sub: 'Juega cualquier modo para registrar tu primera marca', empty_cta_play: 'Elegir modo',
+        err_fatal: 'Algo ha fallado.', err_reload: 'Recargar', browser_old: 'Tu navegador es demasiado antiguo para jugar. Actualízalo, por favor.',
+        update_ready: '✨ Nueva versión disponible', update_btn: 'Actualizar',
+        sr_combo: 'Combo de {n}', sr_converge: '{n} iconos convergen', sr_wave: 'Oleada {n}', sr_life: 'Vida perdida, quedan {n}',
+        sr_over: 'Fin de la partida, {n} puntos', sr_level: 'Nivel completado, {n} puntos', sr_stars: 'Nivel completado, {s} de 3 estrellas, {n} puntos',
+        surv_sys_title: 'Cómo funciona', surv_sys_charge: 'Encadena convergencias para llenar la barra y ganar un potenciador gratis.', surv_sys_frenzy: 'Llena el medidor de frenesí para multiplicar tus puntos un rato.', surv_sys_lives: 'Pierdes una vida si el tablero se desborda; revive por 120 monedas.',
+        pause_no_save: 'Este modo no guarda la partida al salir.',
+        ci_tap: 'Toca para empezar', ci_no_mods: 'Sin modificadores especiales',
         daily_first_reward: '+5 💎 · primer intento del día', daily_new_best: '¡Nueva marca del día! {n}',
         no_moves_wait: 'Sin jugadas ahora mismo: espera al siguiente icono',
         challenge_start: 'Reto compartido: ¡mismo tablero!',
@@ -276,6 +345,8 @@
         modes_title: 'Choose your mode', modes_sub: 'Each mode, a different way to play', group_mode: 'Mode', group_diff: 'Difficulty',
         card_surv: 'Survival', card_surv_badge: 'ENDLESS WAVES', card_surv_desc: 'Survive rising waves and beat your best run.',
         card_classic: 'Classic', card_classic_badge: 'BY LEVELS', card_classic_desc: 'Clear maps with fresh goals, obstacles and challenges.',
+        group_prog: 'Progression', group_score: 'Score', group_relax: 'Relax',
+        card_adv_badge: 'ENDLESS', card_contra_badge: 'TIME ATTACK', card_zen_badge: 'RELAX', card_contra_daily: 'Includes the Daily challenge',
         card_multi: 'Multiplayer', card_multi_badge: 'COMING SOON', card_multi_desc: 'Challenge other players online when it is available.',
         card_feat_locks: 'Locks', card_feat_objects: 'Objects', card_feat_events: 'Events', card_feat_more: 'And much more!',
         card_feat_first: 'Finish the board first', card_feat_best: 'Best score', card_feat_online: 'Online matches',
@@ -292,7 +363,7 @@
         chests_title: '🎁 Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest contains coins, gems or tickets.', chests_none: 'You have no chests', chest_reward: 'Reward! {r}', open_chest: '🎁 Open chest',
         soon_badge: 'Coming soon', notify_me: 'Notify me', notify_ok: "We'll let you know when it's ready!",
         edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
-        home_classic: 'Classic game', home_classic_sub: 'Play on the board against friends or bots', home_tourneys: 'Tournaments', home_tourneys_sub: 'Compete and win rewards', home_surv_sub: 'Survive endless waves', home_multi_sub: 'Challenge players online',
+        home_classic: 'Classic game', home_classic_sub: 'Beat levels and earn stars', home_surv_sub: 'Survive endless waves',
         q_missions: 'Missions', q_daily: 'Daily', q_chests: 'Chests', q_league: 'League', q_friends: 'Friends', best_score: 'Best score', play_word: 'Play',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
         how_title: 'How to play?', how1: 'Tap an <strong>empty cell</strong>.', how2: 'It looks at the nearest icon in each direction (up, down, left, right).',
@@ -305,11 +376,26 @@
         adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
         revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
         coach_skip: 'Skip tutorial',
+        coach1: '👆 Tap the glowing EMPTY cell between two matching icons to merge them.',
+        coach2: "✨ That's it! If they match in several directions, you clear more at once.",
+        coach3: '⚡ Now chain them: clear both pairs quickly, before the ring runs out, to build your combo.',
+        coach_done: 'Done! You know how to play 🎉', coach_play1: 'Play level 1', coach_menu: 'Go to menu',
         quit_confirm: 'Leave the game? Tap again to confirm', confirm_buy: 'Confirm?',
         resume_run: 'Resume game', run_resumed: 'Game restored',
         premium_chest: 'Premium chest', no_gems: 'Not enough gems!',
         reroll_mission: 'Swap mission (1)', mission_rerolled: 'New mission!',
         daily_challenge: 'Daily challenge', daily_play: 'Play', daily_best: "Today's best: {n}",
+        daily_pending: "Today's board · play it!", daily_done_state: '✅ Done · Best: {n}',
+        empty_chests_title: 'No chests yet', empty_chests_sub: 'Earn a chest every 10 waves in Survival', empty_cta_surv: 'Play Survival',
+        empty_medals_title: 'Your first medal awaits', empty_medals_sub: 'Play a game to start unlocking achievements',
+        empty_lb_title: 'No scores yet', empty_lb_sub: 'Play any mode to set your first score', empty_cta_play: 'Choose a mode',
+        err_fatal: 'Something went wrong.', err_reload: 'Reload', browser_old: 'Your browser is too old to play. Please update it.',
+        update_ready: '✨ New version available', update_btn: 'Update',
+        sr_combo: 'Combo of {n}', sr_converge: '{n} icons converge', sr_wave: 'Wave {n}', sr_life: 'Life lost, {n} remaining',
+        sr_over: 'Game over, {n} points', sr_level: 'Level complete, {n} points', sr_stars: 'Level complete, {s} of 3 stars, {n} points',
+        surv_sys_title: 'How it works', surv_sys_charge: 'Chain convergences to fill the bar and earn a free power-up.', surv_sys_frenzy: 'Fill the frenzy meter to multiply your points for a while.', surv_sys_lives: 'You lose a life if the board overflows; revive for 120 coins.',
+        pause_no_save: 'This mode does not save your game when you leave.',
+        ci_tap: 'Tap to start', ci_no_mods: 'No special modifiers',
         daily_first_reward: '+5 💎 · first try of the day', daily_new_best: 'New daily best! {n}',
         no_moves_wait: 'No moves right now: wait for the next icon',
         challenge_start: 'Shared challenge: same board!',
@@ -938,6 +1024,10 @@
 
   /* ===================== Toasts y lector de pantalla ===================== */
   const announce = (msg) => { $('#sr-status').textContent = msg; };
+  // Variante con throttle para eventos de juego frecuentes (convergencias): evita saturar
+  // al lector de pantalla en cadenas rápidas. Los hitos importantes usan announce() directo.
+  let _srLast = 0;
+  const announceGame = (msg, ms = 1400) => { const t = Date.now(); if (t - _srLast < ms) return; _srLast = t; announce(msg); };
   const Toasts = {
     ICON: { info: 'info', good: 'check', warn: 'warning', bad: 'close' },
     show(msg, kind = 'info', ms = 2800, iconArg) {
@@ -1532,6 +1622,9 @@
       rewardDay: () => m.reward.day || 0,
       advMax: () => (m.adventure && m.adventure.maxLevel) || 1,
       advReach(level) { if (level > ((m.adventure && m.adventure.maxLevel) || 1)) { m.adventure.maxLevel = level; save(); } },
+      // Intro de capítulo vista (una vez por capítulo). Campo nuevo tolerante a esquema.
+      advChapterSeen(ch) { return !!(m.adventure && m.adventure.seen && m.adventure.seen[ch]); },
+      markAdvChapterSeen(ch) { if (!m.adventure.seen) m.adventure.seen = {}; if (!m.adventure.seen[ch]) { m.adventure.seen[ch] = 1; save(); } },
       survBest: () => m.survBest || 0,
       survRecord(sec) { sec = Math.floor(sec); if (sec > (m.survBest || 0)) { m.survBest = sec; save(); return true; } return false; },
       survBestWave: () => m.survBestWave || 0,
@@ -1615,8 +1708,22 @@
       });
       // Pills del nuevo sistema base: solo el número (el icono es un SVG aparte).
       scope.querySelectorAll('[data-econ-num]').forEach((el) => { el.textContent = this.valueOf(el.dataset.econNum); });
+      updateSinkBadges();
     },
   };
+  // Badges de descubribilidad de sumideros de economía: avisan de que puedes gastar gemas
+  // (cofre premium, 25💎) o tickets (reroll de misión diaria). Se recalculan en cada
+  // Econ.refresh, así que reaccionan a cualquier cambio de la economía sin cableado extra.
+  function updateSinkBadges() {
+    const md = $('#missions-dot');
+    if (md) {
+      const d = Meta.dailyMission(), w = Meta.weeklyChallenge();
+      const rerollable = d && !d.done && Meta.tickets() > 0;
+      md.hidden = !((d && d.done) || (w && w.done) || rerollable);
+    }
+    const cd = $('#chests-dot');
+    if (cd) cd.hidden = Meta.gems() < Meta.PREMIUM_CHEST_GEMS;
+  }
 
   /* ===================== Iconos PNG (pack "Free Icon Pack" de @gvesster, en img/ui) =====================
    * Reemplazan a los emojis por toda la UI. `icon()` rellena su contenedor (data-art,
@@ -1720,7 +1827,7 @@
       rock:     { glyph: '🪨', solid: true,  cls: 'tile-rock',     desc: 'Roca: estorba y no converge' },
       locked:   { glyph: '🔒', solid: true,  cls: 'tile-locked',   desc: 'Bloqueada' },
       frozen:   { glyph: '🧊', solid: true,  cls: 'tile-frozen', taps: 2, breakable: true, desc: 'Helada: toca para descongelar' },
-      infected: { glyph: '☣️', solid: false, cls: 'tile-infected', desc: 'Se propaga si no la limpias' },
+      // `infected` retirado en V1 (nunca tuvo lógica de propagación). Reintroducir con ROADMAP 3.4.
       crystal:  { glyph: '💎', solid: false, cls: 'tile-crystal', bonus: 3, desc: 'Vale puntos extra' },
       // --- Obstáculos del mockup ---
       chains:   { glyph: '⛓️', solid: true,  cls: 'tile-chains', taps: 2, breakable: true, desc: 'Cadenas: toca 2 veces para liberar' },
@@ -1735,7 +1842,7 @@
       slowdown:  { glyph: '⏳',  trigger: 'slowdown',  cls: 'tile-slowdown',  desc: 'Ralentizador: reduce la velocidad de aparición' },
     },
     // Lista de clases CSS de casilla (para limpiar/aplicar en Render.setTile).
-    CLASSES: ['tile-rock', 'tile-locked', 'tile-frozen', 'tile-infected', 'tile-crystal', 'tile-chains', 'tile-web', 'tile-barrier', 'tile-mud', 'tile-bonus', 'tile-portal', 'tile-magicbox', 'tile-bomb', 'tile-slowdown'],
+    CLASSES: ['tile-rock', 'tile-locked', 'tile-frozen', 'tile-crystal', 'tile-chains', 'tile-web', 'tile-barrier', 'tile-mud', 'tile-bonus', 'tile-portal', 'tile-magicbox', 'tile-bomb', 'tile-slowdown'],
     make(type) { const d = this.DEFS[type]; return d ? Object.assign({ type }, d) : null; },
   };
 
@@ -1902,6 +2009,32 @@
       el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>`;
     },
     refreshGoal() { const g = $('#obj-goal'); if (g) g.textContent = this.objectiveText(); },
+    // Intro de capítulo: una tarjeta de bioma (nombre, modificadores, objetivo) mostrada
+    // una sola vez la primera vez que se entra en un capítulo. Congela el juego hasta
+    // descartarla (tap). Se salta si ya se vio o si no es el primer nivel del capítulo.
+    maybeChapterIntro(level) {
+      const ov = $('#chapter-intro'); if (!ov) return;
+      if (this.licOf(level) !== 0) return;
+      const chapter = this.chapterOf(level);
+      if (Meta.advChapterSeen(chapter)) return;
+      Meta.markAdvChapterSeen(chapter);
+      const biome = this.biomeOf(level);
+      ov.style.setProperty('--mode-accent', biome.accent);
+      const set = (sel, html) => { const e = ov.querySelector(sel); if (e) e.innerHTML = html; };
+      set('.ci-glyph', BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph);
+      set('.ci-chapter', esc(I18n.t('chapter') + ' ' + (chapter + 1)));
+      set('.ci-name', esc(this.biomeName(biome)));
+      set('.ci-mods', esc(this.biomeModText(biome) || I18n.t('ci_no_mods')));
+      set('.ci-goal', esc(this.objectiveText()));
+      ov.hidden = false;
+      State.status = 'paused'; // congela spawns/reloj mientras se lee la intro
+      const close = () => {
+        ov.hidden = true;
+        ov.removeEventListener('click', close);
+        if (State.status === 'paused') State.status = 'playing';
+      };
+      ov.addEventListener('click', close);
+    },
   };
 
   /* ===================== Survival (Supervivencia 2.0: oleadas, vidas, boosters, trampas) ===================== */
@@ -2086,6 +2219,7 @@
         Toasts.show(I18n.t('surv_new_icons'), 'info', 1500, 'v2:four-pointed-star');
       }
       Toasts.show(I18n.t('st_wave') + ' ' + this.wave, 'warn', 1400, 'fire'); Sound.danger();
+      announce(I18n.t('sr_wave').replace('{n}', this.wave));
       this.addFrenzy(8 + this.frenzyTier() * 3);
       this._traps(Math.min(tn.trapCap, tn.trapBase * Math.max(0, this.wave - 2)));
       this._placeBombs(1 + Math.floor(this.wave / 6));
@@ -2179,6 +2313,7 @@
       this.lives--;
       if (this.lives <= 0) { this.lastChance(); return; }
       Toasts.show(I18n.t('surv_life_lost'), 'bad', 1700, 'heart');
+      announce(I18n.t('sr_life').replace('{n}', this.lives));
       Sound.lifeBlast(); Haptics.life(); this._lock(880, 'life-blast');
       this._relief(0.4); this.render();
       if (State.status === 'playing') Game.evaluate();
@@ -2613,7 +2748,7 @@
               const nw = reg.installing; if (!nw) return;
               nw.addEventListener('statechange', () => {
                 if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-                  Toasts.show('✨ Nueva versión lista — reábrela para actualizar', 'info', 5000);
+                  showUpdateBanner(reg);
                 }
               });
             });
@@ -2696,59 +2831,91 @@
    * Se auto-lanza en el primer arranque y es rejugable desde "¿Cómo se juega?".
    */
   const Coach = {
-    active: false, step: 0, target: -1,
+    active: false, step: 0, targets: [], tIdx: 0,
     STEPS: [
-      {
-        text: '👆 Toca la casilla VACÍA que brilla, entre dos iconos iguales, para juntarlos.',
-        build() { State.board[26] = 'circle_red'; State.board[28] = 'circle_red'; State.iconCount = 2; return 27; },
-      },
-      {
-        text: '✨ ¡Eso es! Si coinciden en varias direcciones, eliminas más de golpe. Encadénalas rápido para subir el combo.',
-        build() { State.board[19] = 'star_yellow'; State.board[35] = 'star_yellow'; State.board[26] = 'star_yellow'; State.board[28] = 'star_yellow'; State.iconCount = 4; return 27; },
-      },
+      { textKey: 'coach1',
+        build() { State.board[26] = 'circle_red'; State.board[28] = 'circle_red'; State.iconCount = 2; return 27; } },
+      { textKey: 'coach2',
+        build() { State.board[19] = 'star_yellow'; State.board[35] = 'star_yellow'; State.board[26] = 'star_yellow'; State.board[28] = 'star_yellow'; State.iconCount = 4; return 27; } },
+      // Paso 3: dos parejas independientes (fila 1 y fila 6, sin columnas compartidas para
+      // que no se crucen las líneas de visión); encadenarlas rápido enseña la ventana de combo.
+      { textKey: 'coach3',
+        build() { State.board[10] = 'circle_red'; State.board[12] = 'circle_red'; State.board[53] = 'circle_red'; State.board[55] = 'circle_red'; State.iconCount = 4; return [11, 54]; } },
     ],
     start() {
-      this.active = true; this.step = 0; this.target = -1;
+      this.active = true; this.step = 0; this.targets = []; this.tIdx = 0;
       Loop.stop(); Music.stop(true);
       State.mode = 'tutorial'; State.diff = 'facil'; State.level = 1;
+      State.comboWindow = Config.DIFFICULTY.facil.comboWindow; // para que el paso 3 encadene combo
       State.score = 0; State.displayScore = 0; State.combo = 0; State.comboMult = 1; State.comboAt = 0;
       State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.elapsed = 0; State.timeLeft = 0;
       State.fever = false; State.recordHit = false;
       Render.fever(false); Render.danger(0);
       Game.ended = false; State.status = 'playing';
       Screens.show('game'); FX.resize();
-      $('#coach').hidden = false;
+      { const c = $('#coach'); if (c) c.hidden = false; }
+      { const pl = $('#coach-play'); if (pl) pl.hidden = true; }
+      { const sk = $('#coach-skip'); if (sk) { sk.hidden = false; sk.textContent = I18n.t('coach_skip'); } }
       this._render();
     },
+    _clearHint() { const t = this.targets[this.tIdx]; if (t != null && t >= 0) Render.hint([t], false); },
     _render() {
       const s = this.STEPS[this.step];
       State.board = new Array(State.size * State.size).fill(null);
       State.tiles = new Array(State.size * State.size).fill(null);
       State.iconCount = 0; State.combo = 0; State.comboMult = 1;
-      this.target = s.build();
+      const r = s.build();
+      this.targets = Array.isArray(r) ? r : [r];
+      this.tIdx = 0;
       State.displayScore = State.score;
       Render.syncAll(); Render.combo(); Render.hud();
-      Render.hint([this.target], true);
-      $('#coach-text').textContent = s.text;
+      Render.hint([this.targets[0]], true);
+      $('#coach-text').textContent = I18n.t(s.textKey);
     },
     notify() {
       if (!this.active) return;
-      if (this.target >= 0) { Render.hint([this.target], false); this.target = -1; }
+      this._clearHint();
+      this.tIdx++;
+      // ¿Quedan más objetivos en este paso? (encadenar dentro de la ventana de combo)
+      if (this.tIdx < this.targets.length) {
+        const nx = this.targets[this.tIdx];
+        setTimeout(() => { if (this.active) Render.hint([nx], true); }, 220);
+        return;
+      }
       this.step++;
       if (this.step >= this.STEPS.length) { setTimeout(() => this.finish(), 950); return; }
       setTimeout(() => { State.displayScore = State.score; this._render(); }, 800);
     },
+    // Fin del tutorial: en vez de soltar al jugador en el menú, ofrecer arrancar ya en
+    // el nivel 1 de Clásico (arranque dirigido) o ir al menú.
     finish() {
       if (!this.active) return;
       this.active = false;
-      if (this.target >= 0) { Render.hint([this.target], false); this.target = -1; }
-      $('#coach').hidden = true;
+      this._clearHint();
       State.status = 'idle'; Game.ended = true;
       Storage.tutorialDone = true;
-      Toasts.show('¡Listo! Ya sabes jugar 🎉', 'good', 2400);
+      Sound.success();
+      { const ct = $('#coach-text'); if (ct) ct.textContent = I18n.t('coach_done'); }
+      { const pl = $('#coach-play'); if (pl) { pl.hidden = false; pl.textContent = I18n.t('coach_play1'); } }
+      { const sk = $('#coach-skip'); if (sk) sk.textContent = I18n.t('coach_menu'); }
+    },
+    // CTA "Jugar nivel 1": lanza Clásico mundo 1, nivel 1.
+    play1() {
+      { const c = $('#coach'); if (c) c.hidden = true; }
+      { const pl = $('#coach-play'); if (pl) pl.hidden = true; }
+      { const sk = $('#coach-skip'); if (sk) sk.textContent = I18n.t('coach_skip'); }
+      Game.startClassic(Worlds.LIST[0].id, 1);
+    },
+    // Saltar (durante los pasos) o "Ir al menú" (al terminar): cerrar y volver al inicio.
+    skip() {
+      this.active = false;
+      this._clearHint();
+      { const c = $('#coach'); if (c) c.hidden = true; }
+      { const pl = $('#coach-play'); if (pl) pl.hidden = true; }
+      { const sk = $('#coach-skip'); if (sk) sk.textContent = I18n.t('coach_skip'); }
+      State.status = 'idle'; Game.ended = true; Storage.tutorialDone = true;
       refreshStart(); Screens.show('start');
     },
-    skip() { this.finish(); },
   };
 
   /* ===================== Loop (un único requestAnimationFrame) ===================== */
@@ -2883,6 +3050,7 @@
 
     start(mode, diff, startLevel, seed) {
       State.mode = mode;
+      if (mode !== 'tutorial') Storage.lastMode = mode; // para marcar el modo actual en el catálogo
       State.diff = Config.MODES[mode].fixedDiff || diff;
       // Semilla de partida: reproducible si viene dada (reto diario/replay), aleatoria si no.
       // Normaliza semillas numéricas que llegan como string (p. ej. desde ?challenge= en
@@ -2921,6 +3089,8 @@
       if (Settings.music) Music.start();
       announce(`Partida iniciada. Modo ${Config.MODES[mode].name}.`);
       Toasts.show(I18n.t('lets_play'), 'good', 1400);
+      // Aventura: intro de bioma una vez por capítulo (congela hasta descartar).
+      if (mode === 'aventura') Adventure.maybeChapterIntro(State.level);
     },
 
     // Reto del día: tablero de Contrarreloj idéntico para todos (semilla = fecha).
@@ -2968,6 +3138,9 @@
     pause() {
       if (Coach.active) return Coach.skip();
       if (State.status !== 'playing') return;
+      // Aviso: Supervivencia no se guarda al salir (RunSave excluye este modo). Se muestra
+      // solo aquí para que el jugador sepa que salir pierde la oleada en curso.
+      { const pn = $('#pause-note'); if (pn) pn.hidden = State.mode !== 'supervivencia'; }
       State.status = 'paused'; Music.stop(true); Modal.open('modal-pause'); announce('Juego en pausa.');
     },
     resume() {
@@ -3092,7 +3265,10 @@
       }
 
       Render.hudSoon();
-      announce(`+${points} puntos.${State.combo >= 3 ? ' Combo ' + State.combo + '.' : ''}`);
+      // Anuncio a lector de pantalla: los hitos de combo (10/20/30) siempre; las
+      // convergencias grandes (≥3 iconos) con throttle; las sueltas se omiten (spam).
+      if (Config.MILESTONES[State.combo] != null) announce(I18n.t('sr_combo').replace('{n}', State.combo));
+      else if (removed >= 3) announceGame(I18n.t('sr_converge').replace('{n}', removed));
       if (Coach.active) { Coach.notify(); return; }
       // Pickups-bomba del tablero: detonan si una eliminación queda adyacente (encadenan).
       this._chainDetonate(conv);
@@ -3417,7 +3593,7 @@
       { const mb = $('#btn-level-map'); if (mb) mb.hidden = true; }
       { const nb = $('#btn-next-level'); if (nb) nb.hidden = false; }
       Modal.open('modal-level');
-      announce(`Nivel ${State.level} completado. ${State.score} puntos. Siguiente: nivel ${next}.`);
+      announce(I18n.t('sr_level').replace('{n}', State.score));
     },
 
     // Fin de nivel del modo Clásico: estrellas (según errores), recompensa y desbloqueo.
@@ -3451,7 +3627,7 @@
       { const nb = $('#btn-next-level'); if (nb) { nb.hidden = last; nb.textContent = I18n.t('classic_next'); } }
       { const mb = $('#btn-level-map'); if (mb) mb.hidden = false; }
       Modal.open('modal-level');
-      announce(`Nivel ${n} completado. ${stars} estrellas. ${State.score} puntos.`);
+      announce(I18n.t('sr_stars').replace('{s}', stars).replace('{n}', State.score));
     },
 
     // Vuelve al mapa de mundos desde el modal de fin de nivel.
@@ -3555,7 +3731,7 @@
       this._overChrome(State.mode === 'supervivencia' ? 'shield' : MODE_IMG[State.mode], m.accent || '#ff5d73', m.emoji || '🏁');
       $('#over-reason').textContent = reason;
       this.fillStats(); Modal.open('modal-over');
-      announce(`Fin de la partida. ${reason} Puntuación ${State.score}.`);
+      announce(reason + ' ' + I18n.t('sr_over').replace('{n}', State.score));
     },
 
     endGame() {
@@ -3694,40 +3870,57 @@
 
   /* ===================== Construcción de menús ===================== */
   // Dificultad por defecto al lanzar desde las tarjetas (los modos escalan solos).
-  let selMode = 'clasico', selDiff = 'normal';
-  // Tarjetas de la pantalla "Elige tu modo" (mockup 1). Cada tarjeta lanza su flujo
-  // directamente (sin paso de dificultad). El catálogo de modos internos (tutorial,
-  // contrarreloj, zen, aventura) sigue existiendo y se alcanza desde estos flujos.
+  let selDiff = 'normal';
+  // Catálogo completo de la pantalla "Elige tu modo": los 5 modos jugables agrupados
+  // (Progresión / Puntuación / Relax). El Tutorial NO es una tarjeta aquí — vive en el
+  // modal "¿Cómo se juega?". Multijugador queda fuera de V1 (volverá con la capa online).
   const MODE_CARDS = [
-    { key: 'supervivencia', accent: '#ff5b6e', svg: 'heartFoes', art: 'surv',
-      i18n: 'card_surv', badge: 'card_surv_badge', desc: 'card_surv_desc', feats: [],
-      action: () => openSurvivalDiff() },
-    { key: 'clasico', accent: '#2f6bff', svg: 'island', art: 'classic',
+    { group: 'group_prog', key: 'clasico', accent: '#2f6bff', svg: 'island', art: 'classic',
       i18n: 'card_classic', badge: 'card_classic_badge', desc: 'card_classic_desc',
       feats: [['lock', 'card_feat_locks'], ['target', 'card_feat_objects'], ['bolt', 'card_feat_events'], ['v2:four-pointed-star', 'card_feat_more']],
       action: () => openWorldsMap() },
-    { key: 'multi', accent: '#7a5cff', svg: 'vsBalls', art: 'multi', disabled: true,
-      i18n: 'card_multi', badge: 'card_multi_badge', desc: 'card_multi_desc',
-      feats: [],
-      action: () => openMultiplayer() },
+    { group: 'group_prog', key: 'aventura', accent: '#7a5cff', mode: 'aventura',
+      badge: 'card_adv_badge', feats: [],
+      action: () => openAdventure() },
+    { group: 'group_score', key: 'supervivencia', accent: '#ff5b6e', svg: 'heartFoes', art: 'surv',
+      i18n: 'card_surv', badge: 'card_surv_badge', desc: 'card_surv_desc', feats: [],
+      action: () => openSurvivalDiff() },
+    { group: 'group_score', key: 'contrarreloj', accent: '#ff6cb0', mode: 'contrarreloj',
+      badge: 'card_contra_badge', feats: [['target', 'card_contra_daily']],
+      action: () => { Modal.close(); Game.start('contrarreloj', 'normal'); } },
+    { group: 'group_relax', key: 'zen', accent: '#9be15d', mode: 'zen',
+      badge: 'card_zen_badge', feats: [],
+      action: () => { Modal.close(); Game.start('zen', selDiff); } },
   ];
+  const MODE_GROUPS = ['group_prog', 'group_score', 'group_relax'];
   function buildModeMenu() {
     const cont = $('#mode-cards'); if (!cont) return;
+    const cardTitle = (c) => c.i18n ? I18n.t(c.i18n) : I18n.modeT(c.mode, 'name');
+    const cardDesc = (c) => c.desc ? I18n.t(c.desc) : I18n.modeT(c.mode, 'desc');
     const featIcon = (tok) => {
       const mapped = EMOJI_IMG[tok] || (/^(v2:)?[a-z][a-z0-9-]*$/.test(tok) ? tok : null);
       return mapped ? iconAnyInline(mapped) : tok;
     };
     const featsHTML = (feats) => feats && feats.length
       ? `<span class="mc-feats">${feats.map(f => `<span class="mc-feat"><span class="mc-feat-ic">${featIcon(f[0])}</span>${esc(I18n.t(f[1]))}</span>`).join('')}</span>` : '';
-    const cardHTML = (c) => `<button type="button" class="mode-hero${c.disabled ? ' mode-disabled' : ''}" role="listitem" data-mode="${c.key}" style="--mode-accent:${c.accent}" aria-label="${esc(I18n.t(c.i18n))}" ${c.disabled ? 'aria-disabled="true" disabled' : ''}>
-        <span class="mc-art mc-art-${c.art}" aria-hidden="true">${Art[c.svg] ? Art[c.svg]() : ''}</span>
+    const artHTML = (c) => (c.svg && Art[c.svg])
+      ? `<span class="mc-art mc-art-${c.art}" aria-hidden="true">${Art[c.svg]()}</span>`
+      : `<span class="mc-art mc-art-icon" aria-hidden="true">${MODE_IMG[c.key] ? iconAnyInline(MODE_IMG[c.key]) : ''}</span>`;
+    const current = Storage.lastMode;
+    const cardHTML = (c) => `<button type="button" class="mode-hero${c.key === current ? ' mode-current' : ''}" role="listitem" data-mode="${c.key}" style="--mode-accent:${c.accent}" aria-label="${esc(cardTitle(c))}"${c.key === current ? ' aria-current="true"' : ''}>
+        ${artHTML(c)}
         <span class="mc-body">
-          <span class="mc-titlerow"><span class="mc-title">${esc(I18n.t(c.i18n))}</span><span class="mc-badge">${esc(I18n.t(c.badge))}</span></span>
-          <span class="mc-desc">${esc(I18n.t(c.desc))}</span>
+          <span class="mc-titlerow"><span class="mc-title">${esc(cardTitle(c))}</span><span class="mc-badge">${esc(I18n.t(c.badge))}</span></span>
+          <span class="mc-desc">${esc(cardDesc(c))}</span>
           ${featsHTML(c.feats)}
         </span>
         <span class="mc-go" aria-hidden="true">›</span>
       </button>`;
+    const groupsHTML = MODE_GROUPS.map((g) => {
+      const cards = MODE_CARDS.filter((c) => c.group === g);
+      if (!cards.length) return '';
+      return `<h3 class="group-title mode-group-title">${esc(I18n.t(g))}</h3>${cards.map(cardHTML).join('')}`;
+    }).join('');
     const howHTML = `<button type="button" class="mode-how" role="listitem" data-mode="how">
         <span class="mc-how-ic" aria-hidden="true">${Art.book()}</span>
         <span class="mc-body">
@@ -3736,25 +3929,31 @@
         </span>
         <span class="mc-how-cta">${esc(I18n.t('how_card_cta'))} ›</span>
       </button>`;
-    cont.innerHTML = MODE_CARDS.map(cardHTML).join('') + howHTML;
+    cont.innerHTML = groupsHTML + howHTML;
     MODE_CARDS.forEach((c) => {
       const el = cont.querySelector(`[data-mode="${c.key}"]`);
-      if (el && !c.disabled) el.addEventListener('click', () => { Sound.ui(); c.action(); });
+      if (el) el.addEventListener('click', () => { Sound.ui(); c.action(); });
     });
     const hb = cont.querySelector('[data-mode="how"]');
     if (hb) hb.addEventListener('click', () => { Sound.ui(); Modal.open('modal-how'); });
     Econ.refresh();
+  }
+  // Aventura → mapa de capítulos (modal-adventure); su botón "Continuar" lanza la partida.
+  function openAdventure() { buildAdventureMap(); Modal.open('modal-adventure'); }
+  // Estado vacío reutilizable: icono (opcional) + título + subtítulo + CTA (data-act delegado).
+  // Evita que cofres/logros/clasificación se vean "rotos" cuando aún no hay datos.
+  function emptyState(icon, title, sub, ctaText, ctaAct) {
+    const ic = icon ? `<span class="empty-ic" aria-hidden="true">${iconAnyInline(icon)}</span>` : '';
+    const cta = ctaText ? `<button class="btn btn-primary btn-sm empty-cta" data-act="${ctaAct}">${esc(ctaText)}</button>` : '';
+    return `<div class="empty-state">${ic}<p class="empty-title">${esc(title)}</p><p class="empty-sub">${esc(sub)}</p>${cta}</div>`;
   }
   // Clásico → mapa de mundos (Fase 2 lo sustituye por la pantalla dedicada).
   function openWorldsMap() {
     if (typeof Worlds !== 'undefined' && Worlds.open) { Worlds.open(); return; }
     buildAdventureMap(); Modal.open('modal-adventure');
   }
-  // Multijugador → UI "Próximamente" (Fase 6 construye el modal completo).
-  function openMultiplayer() {
-    if ($('#modal-multi')) { Modal.open('modal-multi'); return; }
-    Toasts.show(I18n.t('multi_soon'), 'info', 1900);
-  }
+  // Multijugador: fuera de V1 (volverá con la capa online, ROADMAP §8). El modal-multi
+  // queda latente en el HTML pero ninguna superficie de V1 lo abre.
   let survDiff = Config.DIFF_ORDER.indexOf(Storage.survDiff) >= 0 ? Storage.survDiff : 'normal';
   function renderSurvivalDiff() {
     document.querySelectorAll('[data-surv-diff]').forEach((btn) => {
@@ -3794,7 +3993,7 @@
     </div>
     <div class="appbar-econ">
       <span class="econ-pill econ-coins"><span class="econ-ic">${Art.coin()}</span><b data-econ-num="coins">0</b><span class="econ-plus" data-act="buy-coins" role="button" aria-label="Conseguir monedas">${Art.plus()}</span></span>
-      <span class="econ-pill econ-gems"><span class="econ-ic">${Art.gem()}</span><b data-econ-num="gems">0</b><span class="econ-plus" data-act="buy-gems" role="button" aria-label="Conseguir gemas">${Art.plus()}</span></span>
+      <span class="econ-pill econ-gems"><span class="econ-ic">${Art.gem()}</span><b data-econ-num="gems">0</b></span>
     </div>`;
   function mountTopBars() { document.querySelectorAll('[data-topbar]').forEach((el) => { el.innerHTML = TOPBAR_HTML; }); }
   // Rellena los placeholders <span data-art="nombre"> con el SVG de Art (una sola vez).
@@ -3830,6 +4029,15 @@
       const bd = bn && bn.querySelector('.db-badge'); if (bd) bd.hidden = !ready; }
     // Botón "Continuar partida": solo si hay un snapshot reanudable.
     { const rr = $('#btn-resume-run'); if (rr) rr.hidden = !RunSave.load(); }
+    // Tarjeta "Reto del día" del home: estado (sin jugar / hecho + mejor marca de hoy).
+    { const card = $('#home-daily-card'), st = $('#home-daily-state');
+      if (card && st) {
+        const dr = Meta.dailyRunInfo();
+        const played = (dr.plays || 0) > 0;
+        card.classList.toggle('done', played);
+        if (played) { st.textContent = I18n.t('daily_done_state').replace('{n}', dr.best); st.removeAttribute('data-i18n'); }
+        else { st.textContent = I18n.t('daily_pending'); st.setAttribute('data-i18n', 'daily_pending'); }
+      } }
     // Cabecera compacta: perfil (izq) + economía (der), sin tarjeta.
     const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
     const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
@@ -3837,9 +4045,7 @@
     { const n = $('#home-name'); if (n) n.textContent = prof.name; }
     { const l = $('#home-level'); if (l) l.textContent = I18n.t('lvl') + ' ' + lvl; }
     { const xf = $('#home-xp-fill'); if (xf) xf.style.width = Math.min(100, have / need * 100).toFixed(0) + '%'; }
-    Econ.refresh();
-    // Aviso en el FAB de misiones cuando alguna está completada (positivo).
-    { const md = $('#missions-dot'); if (md) { const d = Meta.dailyMission(), w = Meta.weeklyChallenge(); md.hidden = !((d && d.done) || (w && w.done)); } }
+    Econ.refresh(); // recalcula pills y badges de sumideros (misiones/cofres) vía updateSinkBadges
     // Misiones (gancho de retención) con barra de progreso visible, en el panel lateral.
     const mi = $('#start-missions');
     if (mi) {
@@ -3934,22 +4140,33 @@
       [st.totalRemoved, I18n.t('st_removed'), 'var(--good)'],
       [fmtTime(st.totalTime), I18n.t('st_totaltime'), 'var(--time)'],
     ]);
-    // Leaderboard local por modo (mejor marca)
+    // Leaderboard local por modo (mejor marca). Estado vacío si nunca se ha jugado.
     const lbEl = $('#profile-lb');
     if (lbEl) {
-      const rows = Config.MODE_ORDER.filter(k => k !== 'tutorial').map(k => {
-        const mo = Config.MODES[k];
-        const best = k === 'supervivencia' ? (Meta.survBest() + 's · ' + I18n.t('st_wave') + ' ' + Meta.survBestWave()) : Meta.modeBest(k);
-        const plays = Meta.modePlays(k);
-        return `<div class="lb-row"><span class="lb-mode">${MODE_IMG[k] ? iconAnyInline(MODE_IMG[k]) : mo.emoji} ${I18n.modeT(k, 'name')}</span><span class="lb-best">${best}</span><span class="lb-plays">${plays}</span></div>`;
-      }).join('');
-      lbEl.innerHTML = rows;
+      const modes = Config.MODE_ORDER.filter(k => k !== 'tutorial');
+      const totalPlays = modes.reduce((s, k) => s + Meta.modePlays(k), 0);
+      if (totalPlays === 0) {
+        lbEl.innerHTML = emptyState('trophy', I18n.t('empty_lb_title'), I18n.t('empty_lb_sub'), I18n.t('empty_cta_play'), 'go-play');
+      } else {
+        lbEl.innerHTML = modes.map(k => {
+          const mo = Config.MODES[k];
+          const best = k === 'supervivencia' ? (Meta.survBest() + 's · ' + I18n.t('st_wave') + ' ' + Meta.survBestWave()) : Meta.modeBest(k);
+          const plays = Meta.modePlays(k);
+          return `<div class="lb-row"><span class="lb-mode">${MODE_IMG[k] ? iconAnyInline(MODE_IMG[k]) : mo.emoji} ${I18n.modeT(k, 'name')}</span><span class="lb-best">${best}</span><span class="lb-plays">${plays}</span></div>`;
+        }).join('');
+      }
     }
-    // Logros
+    // Logros: lista completa (bloqueados incluidos); si no hay ninguno desbloqueado,
+    // una guía en la cabecera en vez de una parrilla de candados sin contexto.
     const list = $('#medals-list');
-    if (list) list.innerHTML = Meta.achievements().map(a =>
-      `<div class="medal ${a.unlocked ? 'on' : ''}"><span class="medal-ic">${a.unlocked ? iconInline('medal') : iconInline('lock')}</span><span class="medal-tx"><strong>${a.name}</strong><small>${a.desc}</small></span></div>`
-    ).join('');
+    if (list) {
+      const achs = Meta.achievements();
+      const noneUnlocked = !achs.some(a => a.unlocked);
+      const hint = noneUnlocked ? emptyState('medal', I18n.t('empty_medals_title'), I18n.t('empty_medals_sub'), I18n.t('empty_cta_play'), 'go-play') : '';
+      list.innerHTML = hint + achs.map(a =>
+        `<div class="medal ${a.unlocked ? 'on' : ''}"><span class="medal-ic">${a.unlocked ? iconInline('medal') : iconInline('lock')}</span><span class="medal-tx"><strong>${a.name}</strong><small>${a.desc}</small></span></div>`
+      ).join('');
+    }
     Modal.open('modal-medals');
   }
 
@@ -4026,9 +4243,12 @@
     const el = $('#chests-body'); if (!el) return;
     Econ.refresh();
     const n = Meta.chests();
+    // Sin cofres: en vez de solo el contador a 0, una guía accionable de cómo ganarlos.
+    const guide = n <= 0
+      ? emptyState('', I18n.t('empty_chests_title'), I18n.t('empty_chests_sub'), I18n.t('empty_cta_surv'), 'go-surv')
+      : `<p class="chest-hint">${I18n.t('chests_hint')}</p>`;
     el.innerHTML = `<div class="chest-big${n > 0 ? ' ready' : ''}">${iconInline('chest')}</div>
-      <p class="chest-count">${I18n.t('chests_have').replace('{n}', n)}</p>
-      <p class="chest-hint">${I18n.t('chests_hint')}</p>`;
+      <p class="chest-count">${I18n.t('chests_have').replace('{n}', n)}</p>${guide}`;
     const ob = $('#btn-open-chest'); if (ob) ob.disabled = n <= 0;
     const pb = $('#btn-open-premium');
     if (pb) {
@@ -4079,6 +4299,13 @@
 
   /* ===================== init / wiring ===================== */
   function init() {
+    // Puerta de compatibilidad: la app usa color-mix() sin fallback (ver DESIGN_SYSTEM §9).
+    // En navegadores sin soporte (Safari <16.2) los acentos se romperían: mejor avisar y
+    // no arrancar que mostrar una UI a medias.
+    if (!(window.CSS && window.CSS.supports && window.CSS.supports('color', 'color-mix(in srgb, red 50%, blue)'))) {
+      showBrowserWarn();
+      return;
+    }
     // Inmersión: bloquear zoom por gestos (iOS Safari ignora user-scalable=no a veces).
     document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
     document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
@@ -4132,6 +4359,7 @@
     { const g = $('#btn-guest'); if (g) g.addEventListener('click', () => enterApp('Invitado')); }
     { const bt = $('#btn-tutorial'); if (bt) bt.addEventListener('click', () => { Modal.close(); Coach.start(); }); }
     { const cs = $('#coach-skip'); if (cs) cs.addEventListener('click', () => Coach.skip()); }
+    { const cp = $('#coach-play'); if (cp) cp.addEventListener('click', () => { Sound.ensure(); Coach.play1(); }); }
     // "Novedades" al actualizar de versión (no en el primer arranque).
     if (Storage.user && Storage.lastVersion && Storage.lastVersion !== VERSION) {
       setTimeout(() => Toasts.show('✨ Actualizado a v' + VERSION, 'info', 3000), 900);
@@ -4146,11 +4374,13 @@
       else if (a === 'profile') { Sound.ensure(); openMedals(); }
       else if (a === 'edit-name') { e.preventDefault(); e.stopPropagation(); Sound.ui(); renameProfile(); }
       else if (a === 'buy-coins') { Sound.ensure(); openShop(); }
-      else if (a === 'buy-gems' || a === 'bell') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
+      else if (a === 'bell') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
       else if (a === 'play') { Sound.ensure(); Screens.show('modes'); }
       else if (a === 'home-classic') { Sound.ui(); Worlds.open(); }
       else if (a === 'home-surv') { Sound.ensure(); openSurvivalDiff(); }
-      else if (a === 'home-multi') { Sound.ui(); openMultiplayer(); }
+      else if (a === 'home-daily') { Sound.ensure(); Game.startDaily(); }
+      else if (a === 'go-surv') { Sound.ensure(); Modal.close(); openSurvivalDiff(); }
+      else if (a === 'go-play') { Sound.ensure(); Modal.close(); Screens.show('modes'); }
       else if (a === 'claim-daily') claimDailyReward();
       else if (a === 'nav-medals') { Sound.ensure(); openMedals(); }
       else if (a === 'nav-shop') { Sound.ensure(); openShop(); }
