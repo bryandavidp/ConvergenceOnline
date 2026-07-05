@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=v139" />
+  <link rel="stylesheet" href="styles.css?v=v140" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -104,6 +104,7 @@
 
       <!-- Pie anclado abajo: Jugar (encima) + menús -->
       <div class="home-foot">
+        <button class="btn btn-ghost btn-icon home-resume" id="btn-resume-run" hidden><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/8-ui/refresh.svg')" aria-hidden="true"></span><span data-i18n="resume_run">Continuar partida</span></button>
         <button class="btn-hero" id="btn-play"><span class="play-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="play_word">Jugar</span></button>
 
         <!-- Bottom nav (anclado) -->
@@ -414,6 +415,7 @@
       </div>
       <div class="modal-actions modal-buttons">
         <button class="btn btn-primary btn-lg" id="btn-open-chest" data-i18n="open_chest">🎁 Abrir cofre</button>
+        <button class="btn btn-ghost" id="btn-open-premium">💎 Cofre premium (25)</button>
         <button class="btn btn-ghost" data-close data-i18n="close">Cerrar</button>
       </div>
     </div>
@@ -457,6 +459,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=v131" defer></script>
+  <script src="game.js?v=v132" defer></script>
 </body>
 </html>

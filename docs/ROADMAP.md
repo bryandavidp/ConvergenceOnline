@@ -11,7 +11,10 @@
 - **Prioridad:** P0 (bug/riesgo, hacer ya) · P1 (siguiente iteración) · P2 (medio plazo) · P3 (largo plazo / opcional).
 - Regla operativa del repo: cualquier cambio en `game.js`/`styles.css` exige subir `?v=` en `index.html` + `CACHE` en `sw.js` — automatizado con `tools/bump-version.sh` (ver `CLAUDE.md`).
 
-**Estado:** ✅ **Fase A completada** (v1.7.2): 1.1 (fix booster ×2), 1.2, 1.4, 1.5, 1.7 (`tools/bump-version.sh`), 2.1 (19 tests del núcleo, `tests/`), 2.3 (ESLint + CI), 5.3/5.4 (confirmación doble-toque en salir/comprar), 6.1 (CSP), 6.2 (`esc()` global consolidado), 7.3 (flujo de release). Pendiente de Fase A: nada. Siguiente: **Fase B**.
+**Estado:**
+- ✅ **Fase A completada** (v1.7.2): 1.1 (fix booster ×2), 1.2, 1.4, 1.5, 1.7 (`tools/bump-version.sh`), 2.1 (tests del núcleo, `tests/`), 2.3 (ESLint + CI), 5.3/5.4 (confirmación doble-toque en salir/comprar), 6.1 (CSP), 6.2 (`esc()` global consolidado), 7.3 (flujo de release).
+- ✅ **Fase B completada en su núcleo** (v1.8.0): 2.6 (PRNG mulberry32 seedeable, `RNG`, semilla por partida en `State.seed`), 2.5 (guardado/reanudación de partida, `RunSave` + botón "Continuar partida"; v1 excluye supervivencia/tutorial), 3.1 (cofre premium por 25 gemas), 3.2 (reroll de misión diaria por 1 ticket), 4.1 (vuelo de convergencia hacia la casilla tocada, `.fly-glyph`). 32 tests en CI.
+- ⏳ De Fase B queda pendiente: 2.4 (JSDoc/@ts-check), 3.3 (reto diario jugable — el PRNG ya lo habilita), 3.9 (compartir con semilla), 7.1 (telemetría — requiere decidir hosting/endpoint, ver 8.1/8.2), 8.1 (hosting formal — decisión del propietario). Siguiente: cerrar estos flecos o pasar a **Fase C**.
 
 ---
 
