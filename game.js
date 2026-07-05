@@ -54,6 +54,16 @@
     box.appendChild(msg); box.appendChild(btn);
     document.body.appendChild(box);
   }
+  // Banner de navegador no soportado (sin color-mix): texto plano, sin depender de la
+  // feature que falta. Detiene el arranque del juego.
+  function showBrowserWarn() {
+    if (!document.body) return;
+    const box = document.createElement('div');
+    box.className = 'browser-warn';
+    box.setAttribute('role', 'alert');
+    try { box.textContent = I18n.t('browser_old'); } catch (_) { box.textContent = 'Your browser is too old to play. Please update it.'; }
+    document.body.appendChild(box);
+  }
   // Aviso accionable de nueva versión del Service Worker: botón "Actualizar" que recarga
   // para servir los assets nuevos (RunSave conserva la partida en curso al recargar).
   let _updateShown = false;
@@ -4216,6 +4226,13 @@
 
   /* ===================== init / wiring ===================== */
   function init() {
+    // Puerta de compatibilidad: la app usa color-mix() sin fallback (ver DESIGN_SYSTEM §9).
+    // En navegadores sin soporte (Safari <16.2) los acentos se romperían: mejor avisar y
+    // no arrancar que mostrar una UI a medias.
+    if (!(window.CSS && CSS.supports && CSS.supports('color', 'color-mix(in srgb, red 50%, blue)'))) {
+      showBrowserWarn();
+      return;
+    }
     // Inmersión: bloquear zoom por gestos (iOS Safari ignora user-scalable=no a veces).
     document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
     document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });

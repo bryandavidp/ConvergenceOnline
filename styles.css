@@ -1932,6 +1932,14 @@ body.reduced-fx .board-card:hover .board-thumb, body.reduced-fx .board-card:focu
 }
 .update-banner button { flex: 0 0 auto; }
 
+/* Aviso de navegador no soportado (sin color-mix ni dvh: debe funcionar en navegadores viejos) */
+.browser-warn {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 10000;
+  padding: 16px 18px; padding-top: max(16px, env(safe-area-inset-top));
+  background: #101a3e; border-bottom: 2px solid #ff5d73; color: #eaf0ff;
+  font-size: .95rem; font-weight: 700; text-align: center; line-height: 1.4;
+}
+
 /* Multijugador (próximamente) */
 .multi-vs { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 4px 0 12px; }
 .multi-p { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; font-size: 2rem;
