@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.0.0';
+  const VERSION = '2.0.1';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -512,6 +512,12 @@
     success() { this.tone(660, 0.09, 'sine', 0.15); this.tone(990, 0.09, 'sine', 0.09, 0.03); },
     // Pitch sube con el combo (eliminaciones encadenadas). Throttle anti-acumulación.
     eliminate(n) { const t = performance.now(); if (t - (this._lastElim || 0) < 30) return; this._lastElim = t; const base = 520 + Math.min(n, 24) * 16; this.tone(base, 0.07, 'triangle', 0.12); this.tone(base * 1.5, 0.08, 'sine', 0.07, 0.03); },
+    match(removed, combo, mult) {
+      this.eliminate(combo);
+      const tier = removed >= 4 ? 4 : removed >= 3 ? 3 : mult >= 2 ? 2 : combo >= 3 ? 1 : 0;
+      if (tier >= 2) this.combo(Math.min(4, tier - 1));
+      if (removed >= 4) this.tone(1760, 0.07, 'sine', 0.055, 0.11);
+    },
     combo(l) { const roots = [523, 587, 659, 784, 988]; const r = roots[clamp(l, 0, 4)]; this.chord([r, r * 1.26, r * 1.5], 0.14, 'sine', 0.10, 0.02); },
     rank() { this.chord([784, 1047, 1319], 0.2, 'sine', 0.12, 0.05); },
     fever() { this.chord([330, 415, 554, 659], 0.3, 'sawtooth', 0.06, 0.04); },
@@ -902,6 +908,11 @@
       w.classList.remove(cls); void w.offsetWidth; w.classList.add(cls);
       setTimeout(() => w.classList.remove(cls), ms);
     },
+    impact(tier = 1) {
+      if (Settings.reducedFx) return;
+      const cls = tier >= 3 ? 'impact-heavy' : tier >= 2 ? 'impact-mid' : 'impact-soft';
+      this.boardEvent(cls, tier >= 3 ? 360 : 260);
+    },
     lifeClear(indices) {
       this.boardEvent('life-blast', 900);
       indices.forEach(i => this.cellPulse(i, 'life-cleared', 820));
@@ -911,6 +922,13 @@
       this.boardEvent('boost-' + id, id === 'freeze' || id === 'x2' ? 1100 : 780);
       const b = document.querySelector(`.booster[data-b="${id}"]`);
       if (b) { b.classList.remove('fired'); void b.offsetWidth; b.classList.add('fired'); setTimeout(() => b.classList.remove('fired'), 520); }
+    },
+    boosterReady(id) {
+      if (Settings.reducedFx) return;
+      const bar = $('#booster-bar');
+      if (bar) { bar.classList.remove('grant'); void bar.offsetWidth; bar.classList.add('grant'); setTimeout(() => bar.classList.remove('grant'), 720); }
+      const b = document.querySelector(`.booster[data-b="${id}"]`);
+      if (b) { b.classList.remove('just-granted'); void b.offsetWidth; b.classList.add('just-granted'); setTimeout(() => b.classList.remove('just-granted'), 760); }
     },
 
     hint(indices, on) { indices.forEach(i => this.cells[i].classList.toggle('hint', on)); },
@@ -980,7 +998,7 @@
 
     combo() {
       const el = $('#combo');
-      if (State.combo < 3) { el.hidden = true; el.setAttribute('aria-hidden', 'true'); return; }
+      if (State.combo < 3) { el.hidden = true; el.setAttribute('aria-hidden', 'true'); el.classList.remove('urgent'); return; }
       el.hidden = false;
       $('#combo-mult').textContent = 'x' + (State.comboMult % 1 === 0 ? State.comboMult : State.comboMult.toFixed(1));
       $('#combo-count').textContent = State.combo;
@@ -993,6 +1011,8 @@
     comboRing(frac) {
       const C = 119.38;
       $('#combo-ring-fill').style.strokeDashoffset = (C * (1 - clamp(frac, 0, 1))).toFixed(1);
+      const el = $('#combo');
+      if (el) el.classList.toggle('urgent', State.combo >= 3 && frac < 0.24);
     },
 
     // Flash de rango central (¡BIEN!, ¡GENIAL!…)
@@ -1186,7 +1206,7 @@
       el.style.borderRadius = shape === 1 ? '1px' : '50%';
       // Partículas redondas/cuadradas: sin estrella ni glow. Se resetea SIEMPRE
       // para no contaminar ranuras reutilizadas por las estrellas (burst, confeti…).
-      this._setStar(el, false); el.style.filter = 'none';
+      this._setStar(el, false); el.style.filter = 'none'; el.style.transformOrigin = '50% 50%';
       // Muestreo parabólico de la trayectoria -> keyframes (el compositor interpola).
       const N = 5, frames = [];
       for (let k = 0; k <= N; k++) {
@@ -1276,7 +1296,7 @@
       const el = p.el;
       el.style.width = size + 'px'; el.style.height = size + 'px';
       el.style.background = color;
-      this._setStar(el, true); el.style.filter = 'none';
+      this._setStar(el, true); el.style.filter = 'none'; el.style.transformOrigin = '50% 50%';
       const ox = (x - size / 2).toFixed(1), oy = (y - size / 2).toFixed(1);
       const tr = (sc, rot) => 'translate3d(' + ox + 'px,' + oy + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
       const dur = Math.max(140, this.DUR_CLEAR - delay);
@@ -1305,7 +1325,7 @@
       const el = p.el;
       el.style.width = size + 'px'; el.style.height = size + 'px';
       el.style.background = color;
-      this._setStar(el, true); el.style.filter = 'drop-shadow(0 0 3px ' + color + ')';
+      this._setStar(el, true); el.style.filter = 'drop-shadow(0 0 3px ' + color + ')'; el.style.transformOrigin = '50% 50%';
       const tr = (x, y, sc, rot) => 'translate3d(' + (x - size / 2).toFixed(1) + 'px,' + (y - size / 2).toFixed(1) + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
       const mx = x0 + (x1 - x0) * 0.62, my = y0 + (y1 - y0) * 0.62;
       const frames = [
@@ -1336,6 +1356,35 @@
         this._flyStar(cx, cy, cx + Math.cos(a) * d, cy + Math.sin(a) * d, size, color, delay, dur);
       }
     },
+    _beam(x0, y0, x1, y1, color, delay, dur) {
+      if (!this.supported || this.active >= this.cap) return;
+      const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy);
+      if (len < 8) return;
+      const p = this._slot(); if (!p) return;
+      const el = p.el;
+      el.style.width = len.toFixed(1) + 'px';
+      el.style.height = '3px';
+      el.style.borderRadius = '999px';
+      el.style.background = 'linear-gradient(90deg, rgba(255,255,255,.08), ' + color + ', rgba(255,255,255,.04))';
+      el.style.transformOrigin = '0 50%';
+      el.style.filter = 'drop-shadow(0 0 5px ' + color + ')';
+      this._setStar(el, false);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      const tr = (sc) => 'translate3d(' + x0.toFixed(1) + 'px,' + y0.toFixed(1) + 'px,0) rotate(' + angle.toFixed(2) + 'deg) scaleX(' + sc + ')';
+      p.busy = true; this.active++;
+      let anim;
+      try {
+        anim = el.animate([
+          { transform: tr(0.05), opacity: 0, offset: 0 },
+          { transform: tr(1), opacity: .9, offset: .18, easing: 'ease-out' },
+          { transform: tr(1), opacity: .35, offset: .58 },
+          { transform: tr(.98), opacity: 0, offset: 1 },
+        ], { duration: dur || this.DUR_CLEAR, delay: delay || 0, fill: 'both' });
+      } catch (_) { p.busy = false; this.active--; return; }
+      p.anim = anim;
+      const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
+      anim.onfinish = done; anim.oncancel = done;
+    },
     // Estallido del icono al "reventar": esquirlas que salen disparadas en todas
     // direcciones. La cantidad y la velocidad CRECEN con la racha de combo (suave
     // en combos bajos, violento al subir). delay = momento del chasquido del icono.
@@ -1347,6 +1396,29 @@
       for (let k = 0; k < n; k++) {
         const a = Math.random() * 6.283, sp = spMax * (0.4 + Math.random() * 0.6);
         this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp, 280, life, 4 + Math.random() * 4, color, 0, 0);
+      }
+    },
+    scoreToHud(centerIdx, color, tier) {
+      if (Settings.reducedFx || !this.supported) return;
+      this.syncBoardRect();
+      const hud = $('#hud-score');
+      if (!hud) return;
+      const hr = hud.getBoundingClientRect();
+      if (!hr.width) return;
+      const from = this.cellXY(centerIdx);
+      const tx = hr.left + hr.width / 2, ty = hr.top + hr.height / 2;
+      const n = Math.min(6, 2 + Math.max(0, tier || 0));
+      for (let k = 0; k < n; k++) {
+        this._flyStar(
+          from.x + (Math.random() - 0.5) * 10,
+          from.y + (Math.random() - 0.5) * 10,
+          tx + (Math.random() - 0.5) * 20,
+          ty + (Math.random() - 0.5) * 14,
+          5 + Math.random() * 4,
+          color || '#ffd84d',
+          80 + k * 36,
+          460 + Math.random() * 120
+        );
       }
     },
     // Convergencia (un solo efecto, SINCRONIZADO con glyph-out = DUR_CLEAR):
@@ -1389,6 +1461,7 @@
       for (const idx of cells) {
         const ir = (idx / sz) | 0, ic = idx % sz;
         const ip = rcXY(ir, ic);
+        this._beam(C.x, C.y, ip.x, ip.y, color, 0, this.DUR_CLEAR * 0.78);
         this._iconBurst(ip.x, ip.y, color);
         const dr = Math.sign(ir - cr), dc = Math.sign(ic - cc);
         const N = Math.max(Math.abs(ir - cr), Math.abs(ic - cc));  // distancia en celdas
@@ -2134,7 +2207,7 @@
       const id = this.BOOSTERS[rand(this.BOOSTERS.length)];
       this.inv[id] = (this.inv[id] || 0) + 1;
       Toasts.show(`+1 ${Boosters.DEFS[id].name}`, 'good', 1500, BOOSTER_IMG[id] || Boosters.DEFS[id].glyph);
-      Sound.milestone(); this.buildBar();
+      Sound.milestone(); this.buildBar(); Render.boosterReady(id);
     },
     // Convierte iconos huérfanos (del pool anterior) a iconos del pool actual para que
     // el tablero siempre sea 100% vaciable tras un cambio de tanda.
@@ -2604,7 +2677,7 @@
     },
     starsRow(n) { return iconInline('star').repeat(n) + iconInline('star-empty').repeat(3 - n); },
     render() {
-      const w = this.get(this.sel); const wi = this.idx(this.sel);
+      const w = this.get(this.sel);
       const root = document.documentElement; root.style.setProperty('--world-accent', w.accent);
       // Cabecera del mundo
       const stars = Meta.worldStars(this.sel), maxStars = this.PER_WORLD * 3;
@@ -3224,6 +3297,7 @@
         const before = State.timeLeft;
         State.timeLeft = Math.min(Config.TIMED_CAP, State.timeLeft + raw);
         const got = Math.round(State.timeLeft - before);
+        if (got > 0) Render.bump($('#hud-time'));
         Toasts.show(got > 0 ? `+${got}s` : '⏱️ tope', 'info', 1100);
       }
 
@@ -3232,6 +3306,9 @@
       // la desaparición de los iconos (glyph-out). Se lanza en el mismo frame que
       // Render.clearAnim para que empiecen y terminen exactamente a la vez.
       FX.converge(i, conv, color);
+      const rewardTier = removed >= 4 ? 3 : removed >= 3 ? 2 : (State.comboMult >= 2 || State.combo >= 3 ? 1 : 0);
+      if (rewardTier) Render.impact(rewardTier);
+      FX.scoreToHud(i, color, rewardTier);
 
       // Aplicar al tablero (limpia también la casilla especial; cristal = bonus)
       conv.forEach(idx => {
@@ -3253,8 +3330,8 @@
       }
 
       // Sonido + háptica de eliminación
-      Sound.eliminate(State.combo);
-      if (State.combo >= 3) Haptics.combo(); else Haptics.tap();
+      Sound.match(removed, State.combo, State.comboMult);
+      if (removed >= 4) Haptics.milestone(); else if (State.combo >= 3) Haptics.combo(); else Haptics.tap();
       if (Settings.music) Music.setIntensity(clamp(State.combo / 18, 0, 1));
 
       // Récord en vivo (una sola vez por partida): confeti desde la última
@@ -3756,7 +3833,7 @@
         else if (this._survNew) rec.innerHTML = iconInline('shield') + ' ' + I18n.t('surv_time_record');
         else if (this.newRecord) rec.innerHTML = iconInline('trophy') + ' ¡Nuevo récord!';
       }
-      const m = Config.MODES[State.mode], d = Config.DIFFICULTY[State.diff];
+      const m = Config.MODES[State.mode];
       // Resumen coherente por modo
       let summary;
       if (State.mode === 'supervivencia') summary = I18n.t('sum_wave').replace('{w}', Survival.wave).replace('{s}', Math.floor(Survival.survSec));
