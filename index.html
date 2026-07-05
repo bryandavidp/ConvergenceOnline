@@ -177,7 +177,7 @@
         <button class="tab" id="wt-shop"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/cart.png" alt=""></span><small data-i18n="tab_shop">Tienda</small></button>
         <button class="tab" id="wt-missions"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/target.png" alt=""></span><small data-i18n="tab_missions">Misiones</small></button>
         <button class="tab tab-home" id="wt-play" aria-current="page"><span class="tab-ic">🎮</span><small data-i18n="tab_play">Jugar</small></button>
-        <button class="tab" id="wt-chests"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/chest.png" alt=""></span><small data-i18n="tab_chests">Cofres</small></button>
+        <button class="tab" id="wt-chests"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/chest.png" alt=""></span><span class="q-dot q-dot-gold" id="chests-dot" hidden></span><small data-i18n="tab_chests">Cofres</small></button>
         <button class="tab" id="wt-rank"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/trophy.png" alt=""></span><small data-i18n="tab_rank">Clasificación</small></button>
       </nav>
     </section>
@@ -365,6 +365,12 @@
           <button class="diff-chip" type="button" data-surv-diff="normal" role="radio"><span data-i18n="diff_normal">Normal</span></button>
           <button class="diff-chip" type="button" data-surv-diff="dificil" role="radio"><span data-i18n="diff_dificil">Difícil</span></button>
         </div>
+        <h3 class="group-title surv-sys-title" data-i18n="surv_sys_title">Cómo funciona</h3>
+        <ul class="surv-systems">
+          <li><span class="ss-ic" aria-hidden="true">⚡</span><span data-i18n="surv_sys_charge">Encadena convergencias para llenar la barra y ganar un potenciador gratis.</span></li>
+          <li><span class="ss-ic" aria-hidden="true">🔥</span><span data-i18n="surv_sys_frenzy">Llena el medidor de frenesí para multiplicar tus puntos un rato.</span></li>
+          <li><span class="ss-ic" aria-hidden="true">❤️</span><span data-i18n="surv_sys_lives">Pierdes una vida si el tablero se desborda; revive por 120 monedas.</span></li>
+        </ul>
       </div>
       <div class="modal-actions modal-buttons">
         <button class="btn btn-primary btn-icon" id="btn-surv-start"><span class="btn-ic"><img class="ic" src="img/ui/heart.png" alt=""></span><span data-i18n="surv_start">Empezar supervivencia</span></button>

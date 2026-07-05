@@ -295,6 +295,7 @@
         update_ready: '✨ Nueva versión disponible', update_btn: 'Actualizar',
         sr_combo: 'Combo de {n}', sr_converge: '{n} iconos convergen', sr_wave: 'Oleada {n}', sr_life: 'Vida perdida, quedan {n}',
         sr_over: 'Fin de la partida, {n} puntos', sr_level: 'Nivel completado, {n} puntos', sr_stars: 'Nivel completado, {s} de 3 estrellas, {n} puntos',
+        surv_sys_title: 'Cómo funciona', surv_sys_charge: 'Encadena convergencias para llenar la barra y ganar un potenciador gratis.', surv_sys_frenzy: 'Llena el medidor de frenesí para multiplicar tus puntos un rato.', surv_sys_lives: 'Pierdes una vida si el tablero se desborda; revive por 120 monedas.',
         daily_first_reward: '+5 💎 · primer intento del día', daily_new_best: '¡Nueva marca del día! {n}',
         no_moves_wait: 'Sin jugadas ahora mismo: espera al siguiente icono',
         challenge_start: 'Reto compartido: ¡mismo tablero!',
@@ -372,6 +373,7 @@
         update_ready: '✨ New version available', update_btn: 'Update',
         sr_combo: 'Combo of {n}', sr_converge: '{n} icons converge', sr_wave: 'Wave {n}', sr_life: 'Life lost, {n} remaining',
         sr_over: 'Game over, {n} points', sr_level: 'Level complete, {n} points', sr_stars: 'Level complete, {s} of 3 stars, {n} points',
+        surv_sys_title: 'How it works', surv_sys_charge: 'Chain convergences to fill the bar and earn a free power-up.', surv_sys_frenzy: 'Fill the frenzy meter to multiply your points for a while.', surv_sys_lives: 'You lose a life if the board overflows; revive for 120 coins.',
         daily_first_reward: '+5 💎 · first try of the day', daily_new_best: 'New daily best! {n}',
         no_moves_wait: 'No moves right now: wait for the next icon',
         challenge_start: 'Shared challenge: same board!',
@@ -1681,8 +1683,22 @@
       });
       // Pills del nuevo sistema base: solo el número (el icono es un SVG aparte).
       scope.querySelectorAll('[data-econ-num]').forEach((el) => { el.textContent = this.valueOf(el.dataset.econNum); });
+      updateSinkBadges();
     },
   };
+  // Badges de descubribilidad de sumideros de economía: avisan de que puedes gastar gemas
+  // (cofre premium, 25💎) o tickets (reroll de misión diaria). Se recalculan en cada
+  // Econ.refresh, así que reaccionan a cualquier cambio de la economía sin cableado extra.
+  function updateSinkBadges() {
+    const md = $('#missions-dot');
+    if (md) {
+      const d = Meta.dailyMission(), w = Meta.weeklyChallenge();
+      const rerollable = d && !d.done && Meta.tickets() > 0;
+      md.hidden = !((d && d.done) || (w && w.done) || rerollable);
+    }
+    const cd = $('#chests-dot');
+    if (cd) cd.hidden = Meta.gems() < Meta.PREMIUM_CHEST_GEMS;
+  }
 
   /* ===================== Iconos PNG (pack "Free Icon Pack" de @gvesster, en img/ui) =====================
    * Reemplazan a los emojis por toda la UI. `icon()` rellena su contenedor (data-art,
@@ -3941,9 +3957,7 @@
     { const n = $('#home-name'); if (n) n.textContent = prof.name; }
     { const l = $('#home-level'); if (l) l.textContent = I18n.t('lvl') + ' ' + lvl; }
     { const xf = $('#home-xp-fill'); if (xf) xf.style.width = Math.min(100, have / need * 100).toFixed(0) + '%'; }
-    Econ.refresh();
-    // Aviso en el FAB de misiones cuando alguna está completada (positivo).
-    { const md = $('#missions-dot'); if (md) { const d = Meta.dailyMission(), w = Meta.weeklyChallenge(); md.hidden = !((d && d.done) || (w && w.done)); } }
+    Econ.refresh(); // recalcula pills y badges de sumideros (misiones/cofres) vía updateSinkBadges
     // Misiones (gancho de retención) con barra de progreso visible, en el panel lateral.
     const mi = $('#start-missions');
     if (mi) {
