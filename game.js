@@ -296,6 +296,7 @@
         sr_combo: 'Combo de {n}', sr_converge: '{n} iconos convergen', sr_wave: 'Oleada {n}', sr_life: 'Vida perdida, quedan {n}',
         sr_over: 'Fin de la partida, {n} puntos', sr_level: 'Nivel completado, {n} puntos', sr_stars: 'Nivel completado, {s} de 3 estrellas, {n} puntos',
         surv_sys_title: 'Cómo funciona', surv_sys_charge: 'Encadena convergencias para llenar la barra y ganar un potenciador gratis.', surv_sys_frenzy: 'Llena el medidor de frenesí para multiplicar tus puntos un rato.', surv_sys_lives: 'Pierdes una vida si el tablero se desborda; revive por 120 monedas.',
+        pause_no_save: 'Este modo no guarda la partida al salir.',
         daily_first_reward: '+5 💎 · primer intento del día', daily_new_best: '¡Nueva marca del día! {n}',
         no_moves_wait: 'Sin jugadas ahora mismo: espera al siguiente icono',
         challenge_start: 'Reto compartido: ¡mismo tablero!',
@@ -374,6 +375,7 @@
         sr_combo: 'Combo of {n}', sr_converge: '{n} icons converge', sr_wave: 'Wave {n}', sr_life: 'Life lost, {n} remaining',
         sr_over: 'Game over, {n} points', sr_level: 'Level complete, {n} points', sr_stars: 'Level complete, {s} of 3 stars, {n} points',
         surv_sys_title: 'How it works', surv_sys_charge: 'Chain convergences to fill the bar and earn a free power-up.', surv_sys_frenzy: 'Fill the frenzy meter to multiply your points for a while.', surv_sys_lives: 'You lose a life if the board overflows; revive for 120 coins.',
+        pause_no_save: 'This mode does not save your game when you leave.',
         daily_first_reward: '+5 💎 · first try of the day', daily_new_best: 'New daily best! {n}',
         no_moves_wait: 'No moves right now: wait for the next icon',
         challenge_start: 'Shared challenge: same board!',
@@ -3053,6 +3055,9 @@
     pause() {
       if (Coach.active) return Coach.skip();
       if (State.status !== 'playing') return;
+      // Aviso: Supervivencia no se guarda al salir (RunSave excluye este modo). Se muestra
+      // solo aquí para que el jugador sepa que salir pierde la oleada en curso.
+      { const pn = $('#pause-note'); if (pn) pn.hidden = State.mode !== 'supervivencia'; }
       State.status = 'paused'; Music.stop(true); Modal.open('modal-pause'); announce('Juego en pausa.');
     },
     resume() {
