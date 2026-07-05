@@ -54,6 +54,26 @@
     box.appendChild(msg); box.appendChild(btn);
     document.body.appendChild(box);
   }
+  // Aviso accionable de nueva versión del Service Worker: botón "Actualizar" que recarga
+  // para servir los assets nuevos (RunSave conserva la partida en curso al recargar).
+  let _updateShown = false;
+  function showUpdateBanner(reg) {
+    if (_updateShown || !document.body) return;
+    _updateShown = true;
+    const box = document.createElement('div');
+    box.className = 'update-banner'; box.setAttribute('role', 'status');
+    const msg = document.createElement('span');
+    msg.textContent = I18n.t('update_ready');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary btn-sm';
+    btn.textContent = I18n.t('update_btn');
+    btn.addEventListener('click', () => {
+      try { if (reg && reg.waiting) reg.waiting.postMessage('skipWaiting'); } catch (_) {}
+      location.reload();
+    });
+    box.appendChild(msg); box.appendChild(btn);
+    document.body.appendChild(box);
+  }
 
   /* ===================== Config ===================== */
   const Config = {
@@ -272,6 +292,9 @@
         empty_medals_title: 'Tu primera medalla te espera', empty_medals_sub: 'Juega una partida para empezar a desbloquear logros',
         empty_lb_title: 'Sin marcas todavía', empty_lb_sub: 'Juega cualquier modo para registrar tu primera marca', empty_cta_play: 'Elegir modo',
         err_fatal: 'Algo ha fallado.', err_reload: 'Recargar', browser_old: 'Tu navegador es demasiado antiguo para jugar. Actualízalo, por favor.',
+        update_ready: '✨ Nueva versión disponible', update_btn: 'Actualizar',
+        sr_combo: 'Combo de {n}', sr_converge: '{n} iconos convergen', sr_wave: 'Oleada {n}', sr_life: 'Vida perdida, quedan {n}',
+        sr_over: 'Fin de la partida, {n} puntos', sr_level: 'Nivel completado, {n} puntos', sr_stars: 'Nivel completado, {s} de 3 estrellas, {n} puntos',
         daily_first_reward: '+5 💎 · primer intento del día', daily_new_best: '¡Nueva marca del día! {n}',
         no_moves_wait: 'Sin jugadas ahora mismo: espera al siguiente icono',
         challenge_start: 'Reto compartido: ¡mismo tablero!',
@@ -346,6 +369,9 @@
         empty_medals_title: 'Your first medal awaits', empty_medals_sub: 'Play a game to start unlocking achievements',
         empty_lb_title: 'No scores yet', empty_lb_sub: 'Play any mode to set your first score', empty_cta_play: 'Choose a mode',
         err_fatal: 'Something went wrong.', err_reload: 'Reload', browser_old: 'Your browser is too old to play. Please update it.',
+        update_ready: '✨ New version available', update_btn: 'Update',
+        sr_combo: 'Combo of {n}', sr_converge: '{n} icons converge', sr_wave: 'Wave {n}', sr_life: 'Life lost, {n} remaining',
+        sr_over: 'Game over, {n} points', sr_level: 'Level complete, {n} points', sr_stars: 'Level complete, {s} of 3 stars, {n} points',
         daily_first_reward: '+5 💎 · first try of the day', daily_new_best: 'New daily best! {n}',
         no_moves_wait: 'No moves right now: wait for the next icon',
         challenge_start: 'Shared challenge: same board!',
@@ -974,6 +1000,10 @@
 
   /* ===================== Toasts y lector de pantalla ===================== */
   const announce = (msg) => { $('#sr-status').textContent = msg; };
+  // Variante con throttle para eventos de juego frecuentes (convergencias): evita saturar
+  // al lector de pantalla en cadenas rápidas. Los hitos importantes usan announce() directo.
+  let _srLast = 0;
+  const announceGame = (msg, ms = 1400) => { const t = Date.now(); if (t - _srLast < ms) return; _srLast = t; announce(msg); };
   const Toasts = {
     ICON: { info: 'info', good: 'check', warn: 'warning', bad: 'close' },
     show(msg, kind = 'info', ms = 2800, iconArg) {
@@ -2122,6 +2152,7 @@
         Toasts.show(I18n.t('surv_new_icons'), 'info', 1500, 'v2:four-pointed-star');
       }
       Toasts.show(I18n.t('st_wave') + ' ' + this.wave, 'warn', 1400, 'fire'); Sound.danger();
+      announce(I18n.t('sr_wave').replace('{n}', this.wave));
       this.addFrenzy(8 + this.frenzyTier() * 3);
       this._traps(Math.min(tn.trapCap, tn.trapBase * Math.max(0, this.wave - 2)));
       this._placeBombs(1 + Math.floor(this.wave / 6));
@@ -2215,6 +2246,7 @@
       this.lives--;
       if (this.lives <= 0) { this.lastChance(); return; }
       Toasts.show(I18n.t('surv_life_lost'), 'bad', 1700, 'heart');
+      announce(I18n.t('sr_life').replace('{n}', this.lives));
       Sound.lifeBlast(); Haptics.life(); this._lock(880, 'life-blast');
       this._relief(0.4); this.render();
       if (State.status === 'playing') Game.evaluate();
@@ -2649,7 +2681,7 @@
               const nw = reg.installing; if (!nw) return;
               nw.addEventListener('statechange', () => {
                 if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-                  Toasts.show('✨ Nueva versión lista — reábrela para actualizar', 'info', 5000);
+                  showUpdateBanner(reg);
                 }
               });
             });
@@ -3129,7 +3161,10 @@
       }
 
       Render.hudSoon();
-      announce(`+${points} puntos.${State.combo >= 3 ? ' Combo ' + State.combo + '.' : ''}`);
+      // Anuncio a lector de pantalla: los hitos de combo (10/20/30) siempre; las
+      // convergencias grandes (≥3 iconos) con throttle; las sueltas se omiten (spam).
+      if (Config.MILESTONES[State.combo] != null) announce(I18n.t('sr_combo').replace('{n}', State.combo));
+      else if (removed >= 3) announceGame(I18n.t('sr_converge').replace('{n}', removed));
       if (Coach.active) { Coach.notify(); return; }
       // Pickups-bomba del tablero: detonan si una eliminación queda adyacente (encadenan).
       this._chainDetonate(conv);
@@ -3454,7 +3489,7 @@
       { const mb = $('#btn-level-map'); if (mb) mb.hidden = true; }
       { const nb = $('#btn-next-level'); if (nb) nb.hidden = false; }
       Modal.open('modal-level');
-      announce(`Nivel ${State.level} completado. ${State.score} puntos. Siguiente: nivel ${next}.`);
+      announce(I18n.t('sr_level').replace('{n}', State.score));
     },
 
     // Fin de nivel del modo Clásico: estrellas (según errores), recompensa y desbloqueo.
@@ -3488,7 +3523,7 @@
       { const nb = $('#btn-next-level'); if (nb) { nb.hidden = last; nb.textContent = I18n.t('classic_next'); } }
       { const mb = $('#btn-level-map'); if (mb) mb.hidden = false; }
       Modal.open('modal-level');
-      announce(`Nivel ${n} completado. ${stars} estrellas. ${State.score} puntos.`);
+      announce(I18n.t('sr_stars').replace('{s}', stars).replace('{n}', State.score));
     },
 
     // Vuelve al mapa de mundos desde el modal de fin de nivel.
@@ -3592,7 +3627,7 @@
       this._overChrome(State.mode === 'supervivencia' ? 'shield' : MODE_IMG[State.mode], m.accent || '#ff5d73', m.emoji || '🏁');
       $('#over-reason').textContent = reason;
       this.fillStats(); Modal.open('modal-over');
-      announce(`Fin de la partida. ${reason} Puntuación ${State.score}.`);
+      announce(reason + ' ' + I18n.t('sr_over').replace('{n}', State.score));
     },
 
     endGame() {

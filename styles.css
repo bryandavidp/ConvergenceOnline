@@ -375,9 +375,9 @@ body.reduced-fx .board-thumb::before { animation: none !important; }
 /* Tarjeta del home con estado "hecho" (p. ej. Reto del día ya jugado hoy) */
 .app-card.done { border-color: rgba(52,226,155,.5); box-shadow: 0 8px 20px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.12), 0 0 0 1px rgba(52,226,155,.28); }
 .app-card.done .ac-daily-state { color: var(--good); }
-.ac-tx { display: flex; flex-direction: column; gap: 3px; }
-.ac-tx b { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; line-height: 1.15; }
-.ac-tx small { font-size: .6rem; color: rgba(255,255,255,.82); line-height: 1.2; }
+.ac-tx { display: flex; flex-direction: column; gap: 3px; min-width: 0; max-width: 100%; }
+.ac-tx b { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; line-height: 1.15; overflow-wrap: anywhere; }
+.ac-tx small { font-size: .6rem; color: rgba(255,255,255,.82); line-height: 1.2; overflow-wrap: anywhere; }
 .ac-art { width: 60px; height: 60px; flex: 0 0 auto; margin-top: auto; }
 
 /* Fila rápida */
@@ -1741,7 +1741,9 @@ body.aiming .board { cursor: crosshair; }
   --board-glow: rgba(116,222,255,.36);
   --cell-empty-bg: rgba(17,56,88,.56);
   --cell-empty-border: rgba(178,239,255,.22);
-  --cell-filled-bg: rgba(111,190,224,.34);
+  /* Oscurecido para contraste: los iconos oscuros (rojo/azul/morado/índigo) sobre el cian
+     claro original caían por debajo de 3:1 (WCAG). Ahora todos ≥3:1. Ver V1-07. */
+  --cell-filled-bg: rgba(64,110,150,.42);
   --cell-filled-border: rgba(225,252,255,.42);
   --cell-hover-bg: rgba(142,231,255,.28);
   --clear-animation: clear-ice .34s ease-out forwards;
@@ -1898,6 +1900,19 @@ body.aiming .board { cursor: crosshair; }
   font-size: .85rem; font-weight: 600; box-shadow: 0 12px 30px rgba(0,0,0,.5);
 }
 .fatal-error button { flex: 0 0 auto; }
+
+/* Aviso accionable de nueva versión de la app (PWA) */
+.update-banner {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: 12px; bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 9998; display: flex; align-items: center; gap: 12px;
+  max-width: min(440px, calc(100% - 24px));
+  padding: 10px 14px; border-radius: 14px;
+  background: var(--surface-mid); border: 1px solid var(--line-strong); color: var(--text);
+  font-size: .85rem; font-weight: 600; box-shadow: var(--shadow-deep);
+  animation: toast-in .3s ease both;
+}
+.update-banner button { flex: 0 0 auto; }
 
 /* Multijugador (próximamente) */
 .multi-vs { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 4px 0 12px; }
