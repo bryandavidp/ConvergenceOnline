@@ -14,7 +14,10 @@
 **Estado:**
 - ✅ **Fase A completada** (v1.7.2): 1.1 (fix booster ×2), 1.2, 1.4, 1.5, 1.7 (`tools/bump-version.sh`), 2.1 (tests del núcleo, `tests/`), 2.3 (ESLint + CI), 5.3/5.4 (confirmación doble-toque en salir/comprar), 6.1 (CSP), 6.2 (`esc()` global consolidado), 7.3 (flujo de release).
 - ✅ **Fase B completada en su núcleo** (v1.8.0): 2.6 (PRNG mulberry32 seedeable, `RNG`, semilla por partida en `State.seed`), 2.5 (guardado/reanudación de partida, `RunSave` + botón "Continuar partida"; v1 excluye supervivencia/tutorial), 3.1 (cofre premium por 25 gemas), 3.2 (reroll de misión diaria por 1 ticket), 4.1 (vuelo de convergencia hacia la casilla tocada, `.fly-glyph`). 32 tests en CI.
-- ⏳ De Fase B queda pendiente: 2.4 (JSDoc/@ts-check), 3.3 (reto diario jugable — el PRNG ya lo habilita), 3.9 (compartir con semilla), 7.1 (telemetría — requiere decidir hosting/endpoint, ver 8.1/8.2), 8.1 (hosting formal — decisión del propietario). Siguiente: cerrar estos flecos o pasar a **Fase C**.
+- ✅ **Fase B ampliada** (v1.9.0): 3.3 (Reto del día: tablero de Contrarreloj seedeado por fecha, igual para todos; mejor marca diaria en `Meta.dailyRun`; +5 💎 el primer intento del día), 3.9 (compartir con semilla: el enlace de compartir en modos de puntuación lleva `?challenge=SEED` y reproduce el mismo tablero en el receptor), 5.6 (aviso "sin jugadas ahora mismo" con throttle), 5.2 parcial (el aviso también se anuncia a lector de pantalla).
+- ✏️ Corrección al roadmap: **5.1 (teclado en tablero) ya estaba implementado** en el código original (`Input.init`: roving tabindex + flechas + Enter/Espacio) — el análisis inicial lo pasó por alto; no hay trabajo pendiente ahí.
+- ⏳ Pendiente que NO requiere decisión del propietario: 2.4 (JSDoc/@ts-check, barrido gradual), 2.2 (partición en ES modules — Fase C, refactor grande), 3.4/3.10 (mecánica infected + mundo 6), 4.4/4.5, 5.5/5.7.
+- 🔒 Bloqueado hasta decisión del propietario: 7.1 (telemetría — necesita endpoint), 8.1+ (hosting/proveedor de nube → habilita 8.2 API, 3.6 leaderboard online, 8.3 sync, 8.4 multijugador).
 
 ---
 

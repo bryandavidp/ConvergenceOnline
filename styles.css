@@ -2263,6 +2263,12 @@ body.reduced-fx.surv-frenzy-active .board-wrap { animation: none !important; }
   filter: brightness(1.12);
 }
 
+/* ---------- Reto del día (fila en el panel de misiones) ---------- */
+.daily-run { align-items: center; }
+.daily-run .btn { flex: 0 0 auto; }
+.daily-run-best { display: block; color: var(--muted); font-size: .78rem; }
+.mission-reroll { margin: 2px 0 8px; width: 100%; }
+
 /* ---------- Vuelo de convergencia: iconos viajando hacia la casilla tocada ---------- */
 .fly-glyph {
   position: absolute;
