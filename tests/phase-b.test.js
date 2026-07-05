@@ -166,3 +166,44 @@ test('rerollDaily: sin tickets → null y sin cambios', () => {
   assert.equal(Meta.rerollDaily(), null);
   assert.equal(Meta.dailyMission().id, cur.id);
 });
+
+/* ================= Reto del día ================= */
+
+test('recordDailyRun: primer intento del día premia gemas y fija la marca', () => {
+  // fuerza estado "sin jugar hoy"
+  Meta.state.dailyRun = { date: '', best: 0, plays: 0 };
+  const gems0 = Meta.gems();
+  const r1 = Meta.recordDailyRun(800);
+  assert.equal(r1.firstToday, true);
+  assert.equal(r1.newBest, true);
+  assert.equal(r1.best, 800);
+  assert.equal(Meta.gems(), gems0 + Meta.DAILY_FIRST_GEMS);
+  // segundo intento peor: sin gemas extra, la marca no baja
+  const r2 = Meta.recordDailyRun(500);
+  assert.equal(r2.firstToday, false);
+  assert.equal(r2.newBest, false);
+  assert.equal(r2.best, 800);
+  assert.equal(Meta.gems(), gems0 + Meta.DAILY_FIRST_GEMS);
+  // tercer intento mejor: nueva marca
+  const r3 = Meta.recordDailyRun(950);
+  assert.equal(r3.newBest, true);
+  assert.equal(Meta.dailyRunInfo().best, 950);
+  assert.equal(Meta.dailyRunInfo().plays, 3);
+});
+
+/* ================= Semilla compartida (?challenge=) ================= */
+
+test('la semilla numérica en forma de string produce el mismo tablero (normalización URL)', () => {
+  State.pool = Engine.poolForLevel(1);
+  const runWith = (seed) => {
+    freshBoard();
+    // replica la normalización de Game.start sin tocar el DOM
+    if (typeof seed === 'string' && /^\d+$/.test(seed)) seed = +seed;
+    RNG.seed(seed);
+    const seq = [];
+    for (let k = 0; k < 12; k++) { const idx = Engine.spawnOne(); seq.push(idx + ':' + State.board[idx]); }
+    return seq.join('|');
+  };
+  assert.equal(runWith(987654), runWith('987654'),
+    'la semilla que viaja por la URL como string debe reproducir el tablero del retador');
+});

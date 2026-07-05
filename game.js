@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.8.0';
+  const VERSION = '1.9.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -242,6 +242,10 @@
         resume_run: 'Continuar partida', run_resumed: 'Partida recuperada',
         premium_chest: 'Cofre premium', no_gems: '¡No tienes gemas suficientes!',
         reroll_mission: 'Cambiar misión (1)', mission_rerolled: '¡Misión nueva!',
+        daily_challenge: 'Reto del día', daily_play: 'Jugar', daily_best: 'Mejor de hoy: {n}',
+        daily_first_reward: '+5 💎 · primer intento del día', daily_new_best: '¡Nueva marca del día! {n}',
+        no_moves_wait: 'Sin jugadas ahora mismo: espera al siguiente icono',
+        challenge_start: 'Reto compartido: ¡mismo tablero!',
         diff_facil: 'Fácil', diff_normal: 'Normal', diff_dificil: 'Difícil',
         set_sfx: 'Efectos de sonido', set_music: 'Música', set_haptics: 'Vibración', set_reduced: 'Reducir efectos', set_large: 'Texto grande', set_lang: 'Idioma',
         st_points: 'Puntos', st_level: 'Nivel', st_combo: 'Combo máx.', st_removed: 'Eliminados', st_time: 'Tiempo', st_record: 'Récord', st_wave: 'Oleada', st_surv: 'Sobreviviste', st_best: 'Mejor',
@@ -305,6 +309,10 @@
         resume_run: 'Resume game', run_resumed: 'Game restored',
         premium_chest: 'Premium chest', no_gems: 'Not enough gems!',
         reroll_mission: 'Swap mission (1)', mission_rerolled: 'New mission!',
+        daily_challenge: 'Daily challenge', daily_play: 'Play', daily_best: "Today's best: {n}",
+        daily_first_reward: '+5 💎 · first try of the day', daily_new_best: 'New daily best! {n}',
+        no_moves_wait: 'No moves right now: wait for the next icon',
+        challenge_start: 'Shared challenge: same board!',
         diff_facil: 'Easy', diff_normal: 'Normal', diff_dificil: 'Hard',
         set_sfx: 'Sound effects', set_music: 'Music', set_haptics: 'Vibration', set_reduced: 'Reduce effects', set_large: 'Large text', set_lang: 'Language',
         st_points: 'Score', st_level: 'Level', st_combo: 'Max combo', st_removed: 'Cleared', st_time: 'Time', st_record: 'Best', st_wave: 'Wave', st_surv: 'Survived', st_best: 'Best',
@@ -1356,6 +1364,7 @@
     if (!m.stats) m.stats = { totalScore: 0, bestCombo: 0, totalTime: 0 };
     if (!m.modes) m.modes = {};
     if (!m.weekly) m.weekly = { week: '', id: '', progress: 0, done: false };
+    if (!m.dailyRun) m.dailyRun = { date: '', best: 0, plays: 0 }; // reto diario (tablero seedeado por fecha)
     if (typeof m.coins !== 'number') m.coins = 0;
     if (typeof m.survBestWave !== 'number') m.survBestWave = 0;
     // Esquema 3: economía ampliada (gemas/tickets/cofres), tableros de tienda y mundos del modo Clásico.
@@ -1461,6 +1470,24 @@
         else m.tickets = (m.tickets || 0) + reward.amount;
         save();
         return reward;
+      },
+      // ---- Reto diario: mismo tablero para todos (semilla = fecha). ----
+      DAILY_FIRST_GEMS: 5,
+      dailyRunInfo() {
+        const d = today();
+        if (m.dailyRun.date !== d) return { date: d, best: 0, plays: 0 };
+        return Object.assign({}, m.dailyRun);
+      },
+      recordDailyRun(score) {
+        const d = today();
+        const fresh = m.dailyRun.date !== d;
+        if (fresh) m.dailyRun = { date: d, best: 0, plays: 0 };
+        m.dailyRun.plays++;
+        const newBest = score > m.dailyRun.best;
+        if (newBest) m.dailyRun.best = score | 0;
+        if (fresh) m.gems = (m.gems || 0) + this.DAILY_FIRST_GEMS; // premio por el primer intento del día
+        save();
+        return { firstToday: fresh, newBest, best: m.dailyRun.best };
       },
       // ---- Reroll de la misión diaria: sumidero de tickets (1 por cambio). ----
       rerollDaily() {
@@ -2651,9 +2678,13 @@
       try {
         const blob = await this.card();
         const text = `¡${State.score} puntos en Convergencia (${Config.MODES[State.mode].name})! Combo ×${State.maxCombo}. ¿Puedes superarlo?`;
+        // Duelo por semilla: en modos de puntuación el enlace reproduce EXACTAMENTE
+        // el mismo tablero (misma semilla → mismos spawns) para retar al receptor.
+        const url = Config.MODES[State.mode].scoreAttack && State.seed != null
+          ? `${location.origin}${location.pathname}?challenge=${encodeURIComponent(State.seed)}` : undefined;
         const file = blob ? new File([blob], 'convergencia.png', { type: 'image/png' }) : null;
-        if (file && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text, title: 'Convergencia' }); return; }
-        if (navigator.share) { await navigator.share({ text, title: 'Convergencia' }); return; }
+        if (file && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text, title: 'Convergencia', url }); return; }
+        if (navigator.share) { await navigator.share({ text, title: 'Convergencia', url }); return; }
         if (blob) { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'convergencia.png'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000); Toasts.show('Imagen guardada 📥', 'good', 1800); }
       } catch (e) { if (e && e.name === 'AbortError') return; ErrLog.push('share', e && e.message); Toasts.show('No se pudo compartir', 'warn', 1800); }
     },
@@ -2854,6 +2885,9 @@
       State.mode = mode;
       State.diff = Config.MODES[mode].fixedDiff || diff;
       // Semilla de partida: reproducible si viene dada (reto diario/replay), aleatoria si no.
+      // Normaliza semillas numéricas que llegan como string (p. ej. desde ?challenge= en
+      // la URL): "12345" debe producir el mismo tablero que 12345.
+      if (typeof seed === 'string' && /^\d+$/.test(seed)) seed = +seed;
       State.seed = seed != null ? seed : (Math.random() * 0xffffffff) >>> 0;
       RNG.seed(State.seed);
       State.score = 0; State.displayScore = 0; State.level = 1; State.elapsed = 0; State.timeLeft = 0;
@@ -2861,6 +2895,7 @@
       State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.coinsRun = 0; State.tempMult = 1;
       State.emptyBonusClaimed = false; State.emptyBoards = 0; State.lastActionCell = null;
       State.fever = false; State.feverEver = false; State.perfectEver = false; State.recordHit = false;
+      State.isDaily = false; // startDaily() lo activa tras llamar aquí
       State.status = 'playing'; this.ended = false;
       // Aventura: reanuda en el nivel más lejano alcanzado; el resto empieza en 1.
       if (mode === 'aventura') State.level = Meta.advMax();
@@ -2886,6 +2921,15 @@
       if (Settings.music) Music.start();
       announce(`Partida iniciada. Modo ${Config.MODES[mode].name}.`);
       Toasts.show(I18n.t('lets_play'), 'good', 1400);
+    },
+
+    // Reto del día: tablero de Contrarreloj idéntico para todos (semilla = fecha).
+    // El primer intento del día premia gemas; se guarda la mejor marca diaria.
+    startDaily() {
+      const d = new Date().toISOString().slice(0, 10);
+      this.start('contrarreloj', 'normal', undefined, 'daily:' + d);
+      State.isDaily = true;
+      Toasts.show(I18n.t('daily_challenge'), 'info', 1800, '🎯');
     },
 
     // Reanuda la partida guardada por RunSave (si existe). Devuelve true si lo hizo.
@@ -3197,6 +3241,16 @@
       }
       Render.hudSoon();
       this.evaluate();
+      // Aviso anti-desconcierto: si tras el spawn sigue sin haber jugada posible,
+      // dilo (el jugador no sabe si está ciego o atascado). Throttle de 9s.
+      if (State.status === 'playing' && State.iconCount >= 2 && !Engine.hasMoves()) {
+        const now = performance.now();
+        if (now - (this._stuckAt || 0) > 9000) {
+          this._stuckAt = now;
+          Toasts.show(I18n.t('no_moves_wait'), 'info', 2200, '⏳');
+          announce(I18n.t('no_moves_wait'));
+        }
+      }
     },
 
     // Limpieza suave de una fracción de iconos (Zen: respiro sin fin de partida).
@@ -3487,6 +3541,12 @@
       if (State.mode === 'supervivencia') {
         this._survNew = Meta.survRecord(Survival.survSec);
         this._survWaveNew = Survival.newWaveRecord || Meta.survWaveRecord(Survival.wave);
+      }
+      // Reto diario: registra la marca y premia el primer intento del día.
+      if (State.isDaily) {
+        const r = Meta.recordDailyRun(State.score);
+        if (r.firstToday) Toasts.show(I18n.t('daily_first_reward'), 'good', 2400, '💎');
+        else if (r.newBest) Toasts.show(I18n.t('daily_new_best').replace('{n}', r.best), 'good', 2200, '🎯');
       }
       this.endGame();
       Sound.over(); Haptics.error(); Render.boardShake();
@@ -3789,11 +3849,17 @@
         const prog = m.done ? '✅' : `${cur}/${tgt}`;
         return `<div class="daily ${cls} ${m.done ? 'done' : ''}"><span class="daily-icon">${icon}</span><div class="daily-main"><span class="daily-text">${m.done ? doneTxt : esc(m.text)}</span><div class="daily-bar"><div class="daily-bar-fill" style="width:${pct.toFixed(0)}%"></div></div></div><span class="daily-prog">${prog}</span></div>`;
       };
+      // Reto del día (tablero seedeado por fecha, igual para todos los jugadores).
+      const dr = Meta.dailyRunInfo();
+      const drBest = dr.best > 0 ? `<small class="daily-run-best">${esc(I18n.t('daily_best').replace('{n}', dr.best))}</small>` : '';
+      const daily = `<div class="daily daily-run"><span class="daily-icon">🎯</span><div class="daily-main"><span class="daily-text">${esc(I18n.t('daily_challenge'))}</span>${drBest}</div><button class="btn btn-primary btn-sm" data-daily-run>${esc(I18n.t('daily_play'))}</button></div>`;
       const dm = Meta.dailyMission();
       // Reroll de misión diaria (sumidero de tickets): solo si no está hecha y hay ticket.
       const reroll = (!dm.done && Meta.tickets() > 0)
         ? `<button class="btn btn-ghost btn-sm mission-reroll" data-reroll>🎟️ ${esc(I18n.t('reroll_mission'))}</button>` : '';
-      mi.innerHTML = row('', '🎯', dm, I18n.t('daily_done')) + reroll + row('weekly', '🗓️', Meta.weeklyChallenge(), I18n.t('weekly_done'));
+      mi.innerHTML = daily + row('', '🎯', dm, I18n.t('daily_done')) + reroll + row('weekly', '🗓️', Meta.weeklyChallenge(), I18n.t('weekly_done'));
+      const db = mi.querySelector('[data-daily-run]');
+      if (db) db.addEventListener('click', () => { Sound.ensure(); Modal.close(); Game.startDaily(); });
       const rb = mi.querySelector('[data-reroll]');
       if (rb) rb.addEventListener('click', () => {
         const next = Meta.rerollDaily();
@@ -4170,6 +4236,16 @@
       RunSave.save();
     });
     window.addEventListener('pagehide', () => RunSave.save());
+
+    // Enlace de duelo (?challenge=SEED): arranca Contrarreloj con el MISMO tablero
+    // que el retador (misma semilla → mismos spawns). Solo si ya hay perfil creado.
+    {
+      const ch = new URLSearchParams(location.search).get('challenge');
+      if (ch && Storage.user) {
+        Toasts.show(I18n.t('challenge_start'), 'info', 2200, '🎯');
+        Game.start('contrarreloj', 'normal', undefined, ch);
+      }
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

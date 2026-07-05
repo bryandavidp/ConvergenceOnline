@@ -18,7 +18,7 @@ export default [
         performance: 'readonly', requestAnimationFrame: 'readonly', cancelAnimationFrame: 'readonly',
         setTimeout: 'readonly', clearTimeout: 'readonly', setInterval: 'readonly', clearInterval: 'readonly',
         AudioContext: 'readonly', webkitAudioContext: 'readonly',
-        URL: 'readonly', Blob: 'readonly', Image: 'readonly',
+        URL: 'readonly', URLSearchParams: 'readonly', Blob: 'readonly', Image: 'readonly',
         Element: 'readonly', File: 'readonly',
         console: 'readonly', alert: 'readonly',
       },
