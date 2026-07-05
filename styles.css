@@ -2262,3 +2262,16 @@ body.reduced-fx.surv-frenzy-active .board-wrap { animation: none !important; }
   outline-offset: 1px;
   filter: brightness(1.12);
 }
+
+/* ---------- Vuelo de convergencia: iconos viajando hacia la casilla tocada ---------- */
+.fly-glyph {
+  position: absolute;
+  z-index: var(--z-popup);
+  width: calc(88% / var(--size, 8));
+  aspect-ratio: 1 / 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.fly-glyph svg { width: 100%; height: 100%; display: block; }
+body.reduced-fx .fly-glyph { display: none; }

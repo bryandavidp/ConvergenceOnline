@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.7.2';
+  const VERSION = '1.8.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -239,6 +239,9 @@
         revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
         coach_skip: 'Saltar tutorial',
         quit_confirm: '¿Salir? Toca de nuevo para confirmar', confirm_buy: '¿Confirmar?',
+        resume_run: 'Continuar partida', run_resumed: 'Partida recuperada',
+        premium_chest: 'Cofre premium', no_gems: '¡No tienes gemas suficientes!',
+        reroll_mission: 'Cambiar misión (1)', mission_rerolled: '¡Misión nueva!',
         diff_facil: 'Fácil', diff_normal: 'Normal', diff_dificil: 'Difícil',
         set_sfx: 'Efectos de sonido', set_music: 'Música', set_haptics: 'Vibración', set_reduced: 'Reducir efectos', set_large: 'Texto grande', set_lang: 'Idioma',
         st_points: 'Puntos', st_level: 'Nivel', st_combo: 'Combo máx.', st_removed: 'Eliminados', st_time: 'Tiempo', st_record: 'Récord', st_wave: 'Oleada', st_surv: 'Sobreviviste', st_best: 'Mejor',
@@ -299,6 +302,9 @@
         revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
         coach_skip: 'Skip tutorial',
         quit_confirm: 'Leave the game? Tap again to confirm', confirm_buy: 'Confirm?',
+        resume_run: 'Resume game', run_resumed: 'Game restored',
+        premium_chest: 'Premium chest', no_gems: 'Not enough gems!',
+        reroll_mission: 'Swap mission (1)', mission_rerolled: 'New mission!',
         diff_facil: 'Easy', diff_normal: 'Normal', diff_dificil: 'Hard',
         set_sfx: 'Sound effects', set_music: 'Music', set_haptics: 'Vibration', set_reduced: 'Reduce effects', set_large: 'Large text', set_lang: 'Language',
         st_points: 'Score', st_level: 'Level', st_combo: 'Max combo', st_removed: 'Cleared', st_time: 'Time', st_record: 'Best', st_wave: 'Wave', st_surv: 'Survived', st_best: 'Best',
@@ -444,7 +450,25 @@
   /* ===================== Helpers ===================== */
   const $ = (s) => document.querySelector(s);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const rand = (n) => (Math.random() * n) | 0;
+  /* PRNG seedeable (mulberry32). El GAMEPLAY (spawns, trampas, bonus) tira de
+   * RNG.random() para que un mismo seed reproduzca el mismo tablero (reto diario,
+   * replays, validación anti-trampas futura). Los efectos visuales (FX) y la
+   * economía meta (cofres) siguen usando Math.random a propósito: no son reglas
+   * de partida y un cofre seedeable sería explotable. */
+  const RNG = {
+    _s: (Math.random() * 0xffffffff) >>> 0,
+    seed(v) {
+      if (typeof v === 'string') { let h = 0; for (let i = 0; i < v.length; i++) h = (Math.imul(h, 31) + v.charCodeAt(i)) | 0; v = h; }
+      this._s = v >>> 0;
+    },
+    random() {
+      let t = (this._s += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    },
+  };
+  const rand = (n) => (RNG.random() * n) | 0;
   const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   // Escapado HTML único para TODO texto interpolado en template strings que acaben en
   // innerHTML. Cualquier dato de usuario o texto variable debe pasar por aquí.
@@ -579,7 +603,7 @@
       const ids = Object.keys(counts);
       if (!ids.length) return randomId();
       const p = clamp(cfg.pMax - (State.iconCount - 1) * cfg.decay, cfg.pMin, cfg.pMax);
-      if (Math.random() >= p) return randomId();
+      if (RNG.random() >= p) return randomId();
       // Elige entre los id presentes con el MENOR count (empates al azar): empareja
       // primero los solitarios, que son los que bloquean el vaciado.
       let min = Infinity;
@@ -622,6 +646,7 @@
       this.boardEl = $('#board');
       this.popupsEl = $('#popups');
       this.boardEl.style.setProperty('--size', State.size);
+      this.popupsEl.style.setProperty('--size', State.size); // para dimensionar .fly-glyph
       this.boardEl.innerHTML = '';
       this.cells = []; this.glyphs = []; this._cellId = []; this._cellTile = [];
       const frag = document.createDocumentFragment();
@@ -698,7 +723,10 @@
       void el.offsetWidth;
       el.classList.add('spawn');
     },
-    clearAnim(indices) {
+    clearAnim(indices, target) {
+      // Vuelo de convergencia: si se conoce la casilla tocada, los iconos "viajan"
+      // hacia ella antes del estallido (visualiza la metáfora del juego).
+      if (target != null) this.convergeFly(indices, target);
       // La explosión del icono crece con la racha de combo (frenesí en el tablero):
       // suave en combos bajos y cada vez más violenta/llamativa al subir. SIN giro,
       // solo escala de "boom" (estallido) y overshoot.
@@ -722,6 +750,42 @@
         }, { once: true });
       });
     },
+    // Clones de los iconos convergentes volando hacia la casilla tocada (WAAPI,
+    // compositor-only: solo transform/opacity). Pool propio en la capa de popups.
+    _flyPool: null, _flyNext: 0,
+    convergeFly(indices, target) {
+      if (Settings.reducedFx) return;
+      if (!this._flyPool) {
+        this._flyPool = [];
+        for (let k = 0; k < 8; k++) {
+          const s = document.createElement('span');
+          s.className = 'fly-glyph';
+          s.setAttribute('aria-hidden', 'true');
+          this.popupsEl.appendChild(s);
+          this._flyPool.push(s);
+        }
+      }
+      const size = State.size;
+      const w = this.popupsEl.clientWidth || 0; if (!w) return;
+      const cellPx = w / size;
+      const tr = (target / size | 0), tc = target % size;
+      indices.forEach((i) => {
+        const id = this._cellId[i]; if (!id) return;   // aún no borrado (se borra al final del pop)
+        const r = (i / size | 0), c = i % size;
+        const s = this._flyPool[this._flyNext = (this._flyNext + 1) % this._flyPool.length];
+        s.innerHTML = Icons.svg(id);
+        s.style.left = ((c + 0.5) / size * 100) + '%';
+        s.style.top = ((r + 0.5) / size * 100) + '%';
+        const dx = (tc - c) * cellPx, dy = (tr - r) * cellPx;
+        s.getAnimations().forEach((a) => a.cancel());
+        s.animate([
+          { opacity: .95, transform: 'translate(-50%,-50%) scale(.92)' },
+          { opacity: .8, transform: `translate(calc(-50% + ${dx * 0.85}px), calc(-50% + ${dy * 0.85}px)) scale(.5)`, offset: .8 },
+          { opacity: 0, transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.2)` },
+        ], { duration: 230, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'forwards' });
+      });
+    },
+
     miss(i) { const el = this.cells[i]; el.classList.remove('miss'); void el.offsetWidth; el.classList.add('miss'); },
 
     iceHit(i) {
@@ -1384,6 +1448,30 @@
         save();
         return reward;
       },
+      // ---- Cofre premium: sumidero de gemas. Mejor tabla, sin gemas (sería circular). ----
+      PREMIUM_CHEST_GEMS: 25,
+      openPremiumChest() {
+        if (!this.spendGems(this.PREMIUM_CHEST_GEMS)) return null;
+        const roll = Math.random();
+        let reward;
+        if (roll < 0.55) reward = { kind: 'coins', amount: 200 + Math.floor(Math.random() * 300) };
+        else if (roll < 0.85) reward = { kind: 'ticket', amount: 2 };
+        else reward = { kind: 'coins', amount: 600 + Math.floor(Math.random() * 400) }; // jackpot
+        if (reward.kind === 'coins') m.coins = (m.coins || 0) + reward.amount;
+        else m.tickets = (m.tickets || 0) + reward.amount;
+        save();
+        return reward;
+      },
+      // ---- Reroll de la misión diaria: sumidero de tickets (1 por cambio). ----
+      rerollDaily() {
+        const cur = dailyMission(); // asegura que exista la misión de hoy
+        if (cur.done || !this.spendTicket(1)) return null;
+        const idx = MISSIONS.findIndex((x) => x.id === cur.id);
+        const next = MISSIONS[(idx + 1) % MISSIONS.length];
+        m.daily = { date: today(), id: next.id, progress: 0, done: false };
+        save();
+        return Object.assign({}, next, m.daily);
+      },
       // ---- Cosméticos (propiedad y equipado) ----
       cosmetics: () => m.cosmetics,
       owns: (id) => id === 'default' || !!(m.cosmetics.owned && m.cosmetics.owned[id]),
@@ -1934,7 +2022,7 @@
       for (let k = 0; k < n && e.length; k++) {
         const idx = e.splice(rand(e.length), 1)[0];
         // Las rocas (ahora ROMPIBLES, con hits) bajan de proporción a ~45% y respetan el tope.
-        if (rocks < this.ROCK_CAP && Math.random() < 0.45) {
+        if (rocks < this.ROCK_CAP && RNG.random() < 0.45) {
           const t = Tiles.make('rock'); t.hits = this.ROCK_HITS; State.tiles[idx] = t; rocks++;
         } else { State.tiles[idx] = Tiles.make('frozen'); State.board[idx] = State.pool[rand(State.pool.length)]; State.iconCount++; }
       }
@@ -1974,7 +2062,7 @@
       this.addFrenzy(8 + this.frenzyTier() * 3);
       this._traps(Math.min(tn.trapCap, tn.trapBase * Math.max(0, this.wave - 2)));
       this._placeBombs(1 + Math.floor(this.wave / 6));
-      if (this.wave >= 2 && Math.random() < 0.25) this._placeSlowdown();
+      if (this.wave >= 2 && RNG.random() < 0.25) this._placeSlowdown();
       if (this.wave % tn.bossEvery === 0) this.bossEvent();
       this._checkWaveRecord();
       this._setFrenzyClass(); this._syncIntensity();
@@ -2240,7 +2328,7 @@
       for (const axis of ['row', 'col']) {
         for (let n = 0; n < State.size; n++) {
           const cells = this._lineCells(axis, n), score = this._lineScore(cells);
-          if (score > best.score || (score === best.score && Math.random() < 0.5)) best = { axis, n, cells, score };
+          if (score > best.score || (score === best.score && RNG.random() < 0.5)) best = { axis, n, cells, score };
         }
       }
       const cleared = []; let icons = 0;
@@ -2469,7 +2557,7 @@
         else if (mod === 'bomb') this._onEmpty('bomb', 1);
         else if (mod === 'rush') State.spawnRate = Math.max(420, Math.round(State.spawnRate * 0.85));
       });
-      if (n >= 2 && Math.random() < 0.6) this._onEmpty('bonus', 1);
+      if (n >= 2 && RNG.random() < 0.6) this._onEmpty('bonus', 1);
       Render.syncAll();
     },
   };
@@ -2689,6 +2777,47 @@
     },
   };
 
+  /* ===================== RunSave (guardado de partida en curso) =====================
+   * Snapshot de la partida activa a localStorage para poder reanudar tras cerrar la
+   * app (interrupciones de móvil). Se guarda al ocultarse la pestaña/página y se
+   * limpia al terminar/abandonar. v1: excluye supervivencia (su estado de oleadas/
+   * boosters/timers no es serializable de forma fiable todavía) y el tutorial.
+   * Nota: no se guarda la posición del stream del RNG; al reanudar se re-seedea con
+   * la semilla original (los spawns futuros divergen — no se exige replay exacto). */
+  const RunSave = {
+    KEY: 'cv_run',
+    EXCLUDED: { supervivencia: 1, tutorial: 1 },
+    save() {
+      try {
+        const playing = State.status === 'playing' || State.status === 'paused';
+        if (!playing || Coach.active || this.EXCLUDED[State.mode]) { this.clear(); return; }
+        const s = {
+          v: 1, t: Date.now(),
+          mode: State.mode, diff: State.diff, level: State.level, seed: State.seed,
+          world: State.world, worldLevel: State.worldLevel,
+          score: State.score, board: State.board, tiles: State.tiles,
+          iconCount: State.iconCount, spawnRate: State.spawnRate,
+          elapsed: State.elapsed, timeLeft: State.timeLeft,
+          hintsLeft: State.hintsLeft, mistakes: State.mistakes,
+          maxCombo: State.maxCombo, removedTotal: State.removedTotal,
+          emptyBoards: State.emptyBoards, coinsRun: State.coinsRun,
+        };
+        localStorage.setItem(this.KEY, JSON.stringify(s));
+      } catch (e) { /* cuota llena o similar: nunca romper el juego por guardar */ }
+    },
+    load() {
+      try {
+        const raw = localStorage.getItem(this.KEY);
+        if (!raw) return null;
+        const s = JSON.parse(raw);
+        if (!s || s.v !== 1 || !Config.MODES[s.mode] || this.EXCLUDED[s.mode]) return null;
+        if (!Array.isArray(s.board) || s.board.length !== Config.SIZE * Config.SIZE) return null;
+        return s;
+      } catch (e) { return null; }
+    },
+    clear() { try { localStorage.removeItem(this.KEY); } catch (e) { /* no-op */ } },
+  };
+
   /* ===================== Game (orquestador) ===================== */
   const Game = {
     hintCells: [], hintHideTimer: 0, ended: false,
@@ -2721,9 +2850,12 @@
       this.start('clasico', 'normal', n);
     },
 
-    start(mode, diff, startLevel) {
+    start(mode, diff, startLevel, seed) {
       State.mode = mode;
       State.diff = Config.MODES[mode].fixedDiff || diff;
+      // Semilla de partida: reproducible si viene dada (reto diario/replay), aleatoria si no.
+      State.seed = seed != null ? seed : (Math.random() * 0xffffffff) >>> 0;
+      RNG.seed(State.seed);
       State.score = 0; State.displayScore = 0; State.level = 1; State.elapsed = 0; State.timeLeft = 0;
       State.combo = 0; State.comboMult = 1; State.comboAt = 0;
       State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.coinsRun = 0; State.tempMult = 1;
@@ -2754,6 +2886,28 @@
       if (Settings.music) Music.start();
       announce(`Partida iniciada. Modo ${Config.MODES[mode].name}.`);
       Toasts.show(I18n.t('lets_play'), 'good', 1400);
+    },
+
+    // Reanuda la partida guardada por RunSave (si existe). Devuelve true si lo hizo.
+    resumeSaved() {
+      const s = RunSave.load();
+      if (!s) return false;
+      RunSave.clear();
+      if (s.mode === 'clasico') { State.world = s.world; State.worldLevel = s.worldLevel; }
+      // start() monta el nivel desde cero (objetivos/hooks de modo incluidos)...
+      this.start(s.mode, s.diff, s.mode === 'clasico' ? s.worldLevel : undefined, s.seed);
+      // ...y el snapshot pisa tablero y progreso con lo que había al interrumpirse.
+      State.level = s.level;
+      State.pool = Engine.poolForLevel(s.level);
+      State.board = s.board; State.tiles = s.tiles; State.iconCount = s.iconCount;
+      State.score = s.score; State.displayScore = s.score;
+      State.spawnRate = s.spawnRate; State.elapsed = s.elapsed; State.timeLeft = s.timeLeft;
+      State.hintsLeft = s.hintsLeft; State.mistakes = s.mistakes;
+      State.maxCombo = s.maxCombo; State.removedTotal = s.removedTotal;
+      State.emptyBoards = s.emptyBoards; State.coinsRun = s.coinsRun;
+      Render.syncAll(); Render.hud(); this.showGoalBanner();
+      Toasts.show(I18n.t('run_resumed'), 'good', 1600);
+      return true;
     },
 
     restart() { if (Coach.active) return Coach.skip(); Modal.close(); this.start(State.mode, State.diff); },
@@ -2868,7 +3022,7 @@
         if (t) { if (t.type === 'crystal') State.score += 50; State.tiles[idx] = null; }
         State.board[idx] = null; State.iconCount--;
       });
-      Render.clearAnim(conv);
+      Render.clearAnim(conv, i);
       conv.forEach(idx => { Render.setTile(idx); Render.cells[idx].setAttribute('aria-label', Render.cellLabel(idx)); });
 
       Render.popup(i, State.comboMult > 1 ? `+${points} ×${State.comboMult}` : `+${points}`, color);
@@ -3614,6 +3768,8 @@
     // Banner de recompensa diaria: visible siempre; badge/botón activos si toca reclamar.
     { const ready = Meta.rewardReady(); const bn = $('#btn-reward'); if (bn) bn.classList.toggle('claimed', !ready);
       const bd = bn && bn.querySelector('.db-badge'); if (bd) bd.hidden = !ready; }
+    // Botón "Continuar partida": solo si hay un snapshot reanudable.
+    { const rr = $('#btn-resume-run'); if (rr) rr.hidden = !RunSave.load(); }
     // Cabecera compacta: perfil (izq) + economía (der), sin tarjeta.
     const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
     const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
@@ -3633,7 +3789,18 @@
         const prog = m.done ? '✅' : `${cur}/${tgt}`;
         return `<div class="daily ${cls} ${m.done ? 'done' : ''}"><span class="daily-icon">${icon}</span><div class="daily-main"><span class="daily-text">${m.done ? doneTxt : esc(m.text)}</span><div class="daily-bar"><div class="daily-bar-fill" style="width:${pct.toFixed(0)}%"></div></div></div><span class="daily-prog">${prog}</span></div>`;
       };
-      mi.innerHTML = row('', '🎯', Meta.dailyMission(), I18n.t('daily_done')) + row('weekly', '🗓️', Meta.weeklyChallenge(), I18n.t('weekly_done'));
+      const dm = Meta.dailyMission();
+      // Reroll de misión diaria (sumidero de tickets): solo si no está hecha y hay ticket.
+      const reroll = (!dm.done && Meta.tickets() > 0)
+        ? `<button class="btn btn-ghost btn-sm mission-reroll" data-reroll>🎟️ ${esc(I18n.t('reroll_mission'))}</button>` : '';
+      mi.innerHTML = row('', '🎯', dm, I18n.t('daily_done')) + reroll + row('weekly', '🗓️', Meta.weeklyChallenge(), I18n.t('weekly_done'));
+      const rb = mi.querySelector('[data-reroll]');
+      if (rb) rb.addEventListener('click', () => {
+        const next = Meta.rerollDaily();
+        if (!next) { Sound.miss(); return; }
+        Sound.ui(); Toasts.show(I18n.t('mission_rerolled'), 'good', 1800, '🎯');
+        refreshStart();
+      });
     }
     // Hint de continuar Aventura (gancho de progresión) bajo el botón Jugar.
     const ph = $('#play-hint');
@@ -3797,6 +3964,19 @@
       <p class="chest-count">${I18n.t('chests_have').replace('{n}', n)}</p>
       <p class="chest-hint">${I18n.t('chests_hint')}</p>`;
     const ob = $('#btn-open-chest'); if (ob) ob.disabled = n <= 0;
+    const pb = $('#btn-open-premium');
+    if (pb) {
+      pb.innerHTML = `💎 ${esc(I18n.t('premium_chest'))} (${Meta.PREMIUM_CHEST_GEMS})`;
+      pb.disabled = Meta.gems() < Meta.PREMIUM_CHEST_GEMS;
+    }
+  }
+  function doOpenPremiumChest() {
+    const r = Meta.openPremiumChest();
+    if (!r) { Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 1600); return; }
+    Sound.success(); FX.confetti(140);
+    const txt = r.kind === 'coins' ? `🪙 +${r.amount}` : `🎟️ +${r.amount}`;
+    Toasts.show(I18n.t('chest_reward').replace('{r}', txt), 'good', 2400, '💎');
+    Econ.refresh(); buildChests();
   }
   function openChests() { buildChests(); Modal.open('modal-chests'); }
   function doOpenChest() {
@@ -3914,6 +4094,7 @@
 
     // Inicio (el grueso del cableado vive en el handler delegado data-act de arriba).
     { const bp = $('#btn-play'); if (bp) bp.addEventListener('click', () => { Sound.ensure(); Screens.show('modes'); }); }
+    { const rr = $('#btn-resume-run'); if (rr) rr.addEventListener('click', () => { Sound.ensure(); if (!Game.resumeSaved()) { rr.hidden = true; Sound.miss(); } }); }
     { const bi = $('#btn-install'); if (bi) bi.addEventListener('click', () => PWA.promptInstall()); }
     // Al cerrar la tienda, revertir cualquier previsualización al tema equipado.
     { const sc = $('#shop-close'); if (sc) sc.addEventListener('click', () => Cosmetics.apply()); }
@@ -3939,6 +4120,7 @@
     { const b = $('#wt-play'); if (b) b.addEventListener('click', () => Sound.ui()); }
     { const b = $('#wt-chests'); if (b) b.addEventListener('click', () => { Sound.ui(); openChests(); }); }
     { const oc = $('#btn-open-chest'); if (oc) oc.addEventListener('click', doOpenChest); }
+    { const op = $('#btn-open-premium'); if (op) op.addEventListener('click', doOpenPremiumChest); }
     { const b = $('#wt-rank'); if (b) b.addEventListener('click', () => { Sound.ui(); openMedals(); }); }
     { const lm = $('#btn-level-map'); if (lm) lm.addEventListener('click', () => Game.toWorldsMap()); }
     { const mn = $('#btn-multi-notify'); if (mn) mn.addEventListener('click', () => { Sound.success(); Toasts.show(I18n.t('notify_ok'), 'good', 1800); Modal.close(); }); }
@@ -3981,13 +4163,18 @@
       }
     });
 
-    // Pausar al ocultar la pestaña
-    document.addEventListener('visibilitychange', () => { if (document.hidden && State.status === 'playing') Game.pause(); });
+    // Pausar al ocultar la pestaña + snapshot de la partida (reanudable al volver)
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) return;
+      if (State.status === 'playing') Game.pause();
+      RunSave.save();
+    });
+    window.addEventListener('pagehide', () => RunSave.save());
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Share, I18n, Toasts, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Share, I18n, Toasts, RNG, RunSave, refreshStart, applyLanguage };
 })();
