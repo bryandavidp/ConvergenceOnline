@@ -55,7 +55,7 @@ export default [
       globals: {
         require: 'readonly', module: 'writable', globalThis: 'readonly',
         console: 'readonly', setTimeout: 'readonly', process: 'readonly',
-        __dirname: 'readonly', Promise: 'readonly',
+        __dirname: 'readonly', Promise: 'readonly', localStorage: 'readonly',
       },
     },
     rules: {
