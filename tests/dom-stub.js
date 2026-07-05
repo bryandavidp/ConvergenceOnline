@@ -6,7 +6,7 @@
 'use strict';
 
 /* ---------- Elemento falso ---------- */
-function makeClassList(el) {
+function makeClassList() {
   const set = new Set();
   return {
     add: (...cs) => cs.forEach((c) => set.add(c)),
