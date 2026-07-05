@@ -1692,6 +1692,15 @@ body.aiming .board { cursor: crosshair; }
     linear-gradient(var(--cell-empty-bg, rgba(0,0,0,.22)), var(--cell-empty-bg, rgba(0,0,0,.22)));
   box-shadow: inset 0 0 0 1px var(--cell-empty-border, rgba(255,255,255,.15));
 }
+/* Realce al pasar el ratón/enfocar una tarjeta de tablero: destaca el skin (la animación
+   ambiental ya corre siempre en el thumb). Se anula bajo reduced-fx. */
+.board-thumb { transition: transform .2s ease, box-shadow .2s ease; }
+.board-card:hover .board-thumb, .board-card:focus-within .board-thumb {
+  transform: scale(1.045);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), inset 0 0 0 4px rgba(0,0,0,.18), 0 5px 14px rgba(0,0,0,.45), 0 0 26px var(--board-glow, transparent);
+}
+body.reduced-fx .board-thumb { transition: none; }
+body.reduced-fx .board-card:hover .board-thumb, body.reduced-fx .board-card:focus-within .board-thumb { transform: none; }
 .board-name { font-weight: 800; font-size: .92rem; }
 .board-chars { display: flex; flex-direction: column; gap: 3px; flex: 1; }
 .board-char { font-size: .68rem; color: var(--muted); line-height: 1.25; }
