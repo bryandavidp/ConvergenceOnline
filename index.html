@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0a1128" />
+  <!-- CSP estricta: app 100% self-contained (sin CDNs ni terceros). 'unsafe-inline' solo
+       en style-src por los atributos style="--icv2-url:..." del sistema de iconos v2. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'" />
   <meta name="description" content="Convergencia — junta iconos iguales tocando la casilla vacía entre ellos. Combos, niveles y varios modos de juego." />
   <title>Convergence</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌌</text></svg>" />
@@ -21,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=v138" />
+  <link rel="stylesheet" href="styles.css?v=v139" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -454,6 +457,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=v130" defer></script>
+  <script src="game.js?v=v131" defer></script>
 </body>
 </html>

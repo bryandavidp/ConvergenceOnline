@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.7.1';
+  const VERSION = '1.7.2';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -238,6 +238,7 @@
         adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
         revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
         coach_skip: 'Saltar tutorial',
+        quit_confirm: '¿Salir? Toca de nuevo para confirmar', confirm_buy: '¿Confirmar?',
         diff_facil: 'Fácil', diff_normal: 'Normal', diff_dificil: 'Difícil',
         set_sfx: 'Efectos de sonido', set_music: 'Música', set_haptics: 'Vibración', set_reduced: 'Reducir efectos', set_large: 'Texto grande', set_lang: 'Idioma',
         st_points: 'Puntos', st_level: 'Nivel', st_combo: 'Combo máx.', st_removed: 'Eliminados', st_time: 'Tiempo', st_record: 'Récord', st_wave: 'Oleada', st_surv: 'Sobreviviste', st_best: 'Mejor',
@@ -297,6 +298,7 @@
         adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
         revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
         coach_skip: 'Skip tutorial',
+        quit_confirm: 'Leave the game? Tap again to confirm', confirm_buy: 'Confirm?',
         diff_facil: 'Easy', diff_normal: 'Normal', diff_dificil: 'Hard',
         set_sfx: 'Sound effects', set_music: 'Music', set_haptics: 'Vibration', set_reduced: 'Reduce effects', set_large: 'Large text', set_lang: 'Language',
         st_points: 'Score', st_level: 'Level', st_combo: 'Max combo', st_removed: 'Cleared', st_time: 'Time', st_record: 'Best', st_wave: 'Wave', st_surv: 'Survived', st_best: 'Best',
@@ -328,6 +330,7 @@
     };
     const FIELD = { name: 'n', desc: 'd', goal: 'g' };
     return {
+      DICT, // expuesto para QA/tests (paridad de claves ES/EN)
       get lang() { return Settings.lang === 'en' ? 'en' : 'es'; },
       t(key) { const d = DICT[this.lang] || DICT.es; return d[key] != null ? d[key] : (DICT.es[key] != null ? DICT.es[key] : key); },
       modeT(id, field) {
@@ -443,6 +446,9 @@
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const rand = (n) => (Math.random() * n) | 0;
   const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  // Escapado HTML único para TODO texto interpolado en template strings que acaben en
+  // innerHTML. Cualquier dato de usuario o texto variable debe pasar por aquí.
+  const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
   const DIRS = [-1, 0, 1, 0, 0, 1, 0, -1]; // pares (dr,dc): arriba, derecha, abajo, izquierda
 
   /* ===================== State ===================== */
@@ -1623,11 +1629,11 @@
    */
   const Boosters = {
     DEFS: {
-      bomb:      { name: 'Bomba',       glyph: '💣', cost: 80,  start: 2, desc: 'Elimina una zona 3×3' },
-      freeze:    { name: 'Congelación', glyph: '❄️', cost: 60,  start: 2, desc: 'Pausa la aparición de figuras' },
-      clearLine: { name: 'Rayo',        glyph: '⚡', cost: 90,  start: 3, desc: 'Elimina una fila o columna' },
-      wild:      { name: 'Escoba',       glyph: '🧹', cost: 100, start: 2, desc: 'Limpia el grupo más repetido' },
-      x2:        { name: 'Comodín',      glyph: '🃏', cost: 70,  start: 1, desc: 'Duplica los puntos un tiempo' },
+      bomb:      { name: 'Bomba',       glyph: '💣', start: 2, desc: 'Elimina una zona 3×3' },
+      freeze:    { name: 'Congelación', glyph: '❄️', start: 2, desc: 'Pausa la aparición de figuras' },
+      clearLine: { name: 'Rayo',        glyph: '⚡', start: 3, desc: 'Elimina una fila o columna' },
+      wild:      { name: 'Escoba',       glyph: '🧹', start: 2, desc: 'Limpia el grupo más repetido' },
+      x2:        { name: 'Comodín',      glyph: '🃏', start: 1, desc: 'Duplica los puntos un tiempo' },
     },
     order: ['bomb', 'freeze', 'x2', 'clearLine', 'wild'],
   };
@@ -2121,7 +2127,7 @@
       this.inv[id]--;
       Render.boosterPulse(id);
       if (id === 'freeze') { this.freezeUntil = performance.now() + 7000; Toasts.show(I18n.t('pu_freeze'), 'info', 1500, BOOSTER_IMG.freeze); Render.boardEvent('boost-freeze', 1200); }
-      else if (id === 'x2') { this.x2Until = performance.now() + 11000 * (Boards.fx().x2Boost || 1); this._syncMult(); Toasts.show(I18n.t('pu_x2'), 'good', 1500, BOOSTER_IMG.x2); Render.boardEvent('boost-x2', 1200); }
+      else if (id === 'x2') { this.x2Until = performance.now() + 11000; this._syncMult(); Toasts.show(I18n.t('pu_x2'), 'good', 1500, BOOSTER_IMG.x2); Render.boardEvent('boost-x2', 1200); }
       Sound.booster(id); Haptics.combo(); this.buildBar(); this.render();
       if (State.status === 'playing') Game.evaluate();
     },
@@ -2349,7 +2355,6 @@
     starsRow(n) { return iconInline('star').repeat(n) + iconInline('star-empty').repeat(3 - n); },
     render() {
       const w = this.get(this.sel); const wi = this.idx(this.sel);
-      const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
       const root = document.documentElement; root.style.setProperty('--world-accent', w.accent);
       // Cabecera del mundo
       const stars = Meta.worldStars(this.sel), maxStars = this.PER_WORLD * 3;
@@ -3494,7 +3499,6 @@
   ];
   function buildModeMenu() {
     const cont = $('#mode-cards'); if (!cont) return;
-    const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
     const featIcon = (tok) => {
       const mapped = EMOJI_IMG[tok] || (/^(v2:)?[a-z][a-z0-9-]*$/.test(tok) ? tok : null);
       return mapped ? iconAnyInline(mapped) : tok;
@@ -3610,7 +3614,6 @@
     // Banner de recompensa diaria: visible siempre; badge/botón activos si toca reclamar.
     { const ready = Meta.rewardReady(); const bn = $('#btn-reward'); if (bn) bn.classList.toggle('claimed', !ready);
       const bd = bn && bn.querySelector('.db-badge'); if (bd) bd.hidden = !ready; }
-    const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
     // Cabecera compacta: perfil (izq) + economía (der), sin tarjeta.
     const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
     const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
@@ -3720,7 +3723,6 @@
   // Tienda de temas (compra/equipa con monedas; previsualización en vivo)
   function buildShop() {
     const list = $('#shop-list'); if (!list) return;
-    const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
     Econ.refresh();
     { const co = $('#shop-coins'); if (co) co.textContent = Meta.coins(); }
     // --- Tableros (principal, mockup 5) ---
@@ -3750,8 +3752,20 @@
     list.innerHTML =
       `<h3 class="group-title">${esc(I18n.t('shop_boards'))}</h3><div class="board-grid">${boardsHTML}</div>` +
       `<h3 class="group-title">${esc(I18n.t('shop_themes'))}</h3><div class="themes-grid">${themesHTML}</div>`;
+    // Compra en dos toques: el primero arma el botón (muestra confirmación con el precio
+    // visible), el segundo dentro de 3s compra de verdad. Evita gastos accidentales.
+    const armBuy = (b) => {
+      if (b.dataset.armed) return true;
+      b.dataset.armed = '1';
+      b.classList.add('confirming');
+      const prev = b.innerHTML;
+      b.innerHTML = `${esc(I18n.t('confirm_buy'))} ${prev}`;
+      setTimeout(() => { if (b.isConnected && b.dataset.armed) { delete b.dataset.armed; b.classList.remove('confirming'); b.innerHTML = prev; } }, 3000);
+      return false;
+    };
     // Tableros: comprar / equipar. Son cosmeticos puros.
     list.querySelectorAll('[data-bbuy]').forEach((b) => b.addEventListener('click', () => {
+      if (!armBuy(b)) { Sound.ui(); return; }
       const id = b.dataset.bbuy;
       if (Meta.buyBoard(id, Boards.DEFS[id].cost)) { Sound.success(); Meta.equipBoard(id); Boards.apply(); buildShop(); Toasts.show(I18n.t('board_unlocked'), 'good', 1600); }
       else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); }
@@ -3762,7 +3776,9 @@
     // Temas: preview / comprar / equipar
     list.querySelectorAll('.shop-item').forEach((it) => it.addEventListener('click', () => Cosmetics.previewTheme(it.dataset.theme)));
     list.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', (e) => {
-      e.stopPropagation(); const id = b.dataset.buy;
+      e.stopPropagation();
+      if (!armBuy(b)) { Sound.ui(); return; }
+      const id = b.dataset.buy;
       if (Meta.buy(id, Themes.DEFS[id].cost)) { Sound.success(); Meta.equip('theme', id); Cosmetics.apply(); refreshStart(); buildShop(); Toasts.show('¡Tema desbloqueado!', 'good', 1600); }
       else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); }
     }));
@@ -3931,7 +3947,15 @@
     $('#btn-hint').addEventListener('click', () => Game.hint());
     $('#btn-pause').addEventListener('click', () => Game.pause());
     $('#btn-restart').addEventListener('click', () => Game.restart());
-    $('#btn-quit').addEventListener('click', () => Game.quit());
+    { // Salir en plena partida: doble toque para evitar abandonos accidentales.
+      let quitArm = 0;
+      $('#btn-quit').addEventListener('click', () => {
+        if (State.status !== 'playing' && State.status !== 'paused') return Game.quit();
+        const now = performance.now();
+        if (now - quitArm < 2500) { quitArm = 0; Game.quit(); }
+        else { quitArm = now; Toasts.show(I18n.t('quit_confirm'), 'warn', 2200); Sound.ui(); }
+      });
+    }
 
     // Modales
     $('#btn-resume').addEventListener('click', () => Game.resume());
