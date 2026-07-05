@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=v141" />
+  <link rel="stylesheet" href="styles.css?v=v142" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -40,6 +40,7 @@
   <!-- Tutorial interactivo (coach-marks) -->
   <div class="coach" id="coach" hidden>
     <p class="coach-text" id="coach-text" aria-live="polite"></p>
+    <button class="btn btn-primary coach-play" id="coach-play" hidden>Jugar nivel 1</button>
     <button class="btn btn-ghost coach-skip" id="coach-skip" data-i18n="coach_skip">Saltar tutorial</button>
   </div>
 
@@ -85,17 +86,17 @@
 
         <!-- 3 tarjetas de atajo -->
         <div class="home-cards">
+          <button class="app-card card-purple" data-act="home-daily" id="home-daily-card">
+            <span class="ac-tx"><b data-i18n="daily_challenge">Reto del día</b><small class="ac-daily-state" id="home-daily-state" data-i18n="daily_pending">Tablero de hoy · ¡juégalo!</small></span>
+            <span class="ac-art" data-art="target" aria-hidden="true"></span>
+          </button>
           <button class="app-card card-blue" data-act="home-classic">
-            <span class="ac-tx"><b data-i18n="home_classic">Partida clásica</b><small data-i18n="home_classic_sub">Juega en el tablero contra amigos o bots</small></span>
+            <span class="ac-tx"><b data-i18n="home_classic">Partida clásica</b><small data-i18n="home_classic_sub">Supera niveles y gana estrellas</small></span>
             <span class="ac-art" data-art="boardMini" aria-hidden="true"></span>
           </button>
           <button class="app-card card-red" data-act="home-surv">
             <span class="ac-tx"><b data-i18n="card_surv">Supervivencia</b><small data-i18n="home_surv_sub">Sobrevive a oleadas infinitas</small></span>
             <span class="ac-art" data-art="heartFoes" aria-hidden="true"></span>
-          </button>
-          <button class="app-card card-orange" data-act="home-multi">
-            <span class="ac-tx"><b data-i18n="card_multi">Multijugador</b><small data-i18n="home_multi_sub">Desafía a jugadores en línea</small></span>
-            <span class="ac-art" data-art="vsPeople" aria-hidden="true"></span>
           </button>
         </div>
 
@@ -177,7 +178,7 @@
         <button class="tab" id="wt-shop"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/cart.png" alt=""></span><small data-i18n="tab_shop">Tienda</small></button>
         <button class="tab" id="wt-missions"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/target.png" alt=""></span><small data-i18n="tab_missions">Misiones</small></button>
         <button class="tab tab-home" id="wt-play" aria-current="page"><span class="tab-ic">🎮</span><small data-i18n="tab_play">Jugar</small></button>
-        <button class="tab" id="wt-chests"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/chest.png" alt=""></span><small data-i18n="tab_chests">Cofres</small></button>
+        <button class="tab" id="wt-chests"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/chest.png" alt=""></span><span class="q-dot q-dot-gold" id="chests-dot" hidden></span><small data-i18n="tab_chests">Cofres</small></button>
         <button class="tab" id="wt-rank"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/trophy.png" alt=""></span><small data-i18n="tab_rank">Clasificación</small></button>
       </nav>
     </section>
@@ -247,6 +248,18 @@
         </div>
       </div>
 
+      <!-- Intro de capítulo (Aventura): tarjeta de bioma mostrada una vez por capítulo -->
+      <div class="chapter-intro" id="chapter-intro" hidden>
+        <div class="ci-card" role="dialog" aria-label="Nuevo capítulo">
+          <span class="ci-glyph" aria-hidden="true"></span>
+          <span class="ci-chapter"></span>
+          <h2 class="ci-name"></h2>
+          <p class="ci-mods"></p>
+          <p class="ci-goal"></p>
+          <span class="ci-tap" data-i18n="ci_tap">Toca para empezar</span>
+        </div>
+      </div>
+
       <!-- Barra de potenciadores (Supervivencia): zona inferior, al alcance del pulgar -->
       <div class="booster-bar" id="booster-bar" hidden>
         <div class="charge"><div class="charge-fill" id="charge-fill"></div></div>
@@ -293,6 +306,7 @@
     <!-- Pausa -->
     <div class="modal" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><span class="icv2" style="--icv2-url:url('img/icons-v2/9-media/pause.svg')"></span></span><h2 id="pause-title" data-i18n="pause">Pausa</h2></div>
+      <p class="modal-sub pause-note" id="pause-note" data-i18n="pause_no_save" hidden>Este modo no guarda la partida al salir.</p>
       <div class="modal-actions modal-buttons">
         <button class="btn btn-primary btn-icon" id="btn-resume"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="resume">Reanudar</span></button>
         <button class="btn btn-ghost btn-icon" id="btn-pause-restart"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/8-ui/refresh.svg')" aria-hidden="true"></span><span data-i18n="restart">Reiniciar</span></button>
@@ -365,6 +379,12 @@
           <button class="diff-chip" type="button" data-surv-diff="normal" role="radio"><span data-i18n="diff_normal">Normal</span></button>
           <button class="diff-chip" type="button" data-surv-diff="dificil" role="radio"><span data-i18n="diff_dificil">Difícil</span></button>
         </div>
+        <h3 class="group-title surv-sys-title" data-i18n="surv_sys_title">Cómo funciona</h3>
+        <ul class="surv-systems">
+          <li><span class="ss-ic" aria-hidden="true">⚡</span><span data-i18n="surv_sys_charge">Encadena convergencias para llenar la barra y ganar un potenciador gratis.</span></li>
+          <li><span class="ss-ic" aria-hidden="true">🔥</span><span data-i18n="surv_sys_frenzy">Llena el medidor de frenesí para multiplicar tus puntos un rato.</span></li>
+          <li><span class="ss-ic" aria-hidden="true">❤️</span><span data-i18n="surv_sys_lives">Pierdes una vida si el tablero se desborda; revive por 120 monedas.</span></li>
+        </ul>
       </div>
       <div class="modal-actions modal-buttons">
         <button class="btn btn-primary btn-icon" id="btn-surv-start"><span class="btn-ic"><img class="ic" src="img/ui/heart.png" alt=""></span><span data-i18n="surv_start">Empezar supervivencia</span></button>
@@ -459,6 +479,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=v133" defer></script>
+  <script src="game.js?v=v134" defer></script>
 </body>
 </html>

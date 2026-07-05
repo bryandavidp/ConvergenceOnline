@@ -372,14 +372,20 @@ body.reduced-fx .board-thumb::before { animation: none !important; }
 .app-card:active { transform: scale(.97); }
 .card-blue { background: var(--card-blue); } .card-green { background: var(--card-green); } .card-orange { background: var(--card-orange); }
 .card-red { background: var(--card-red); } .card-purple { background: var(--card-purple); }
-.ac-tx { display: flex; flex-direction: column; gap: 3px; }
-.ac-tx b { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; line-height: 1.15; }
-.ac-tx small { font-size: .6rem; color: rgba(255,255,255,.82); line-height: 1.2; }
+/* Tarjeta del home con estado "hecho" (p. ej. Reto del día ya jugado hoy) */
+.app-card.done { border-color: rgba(52,226,155,.5); box-shadow: 0 8px 20px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.12), 0 0 0 1px rgba(52,226,155,.28); }
+.app-card.done .ac-daily-state { color: var(--good); }
+.ac-tx { display: flex; flex-direction: column; gap: 3px; min-width: 0; max-width: 100%; }
+.ac-tx b { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; line-height: 1.15; overflow-wrap: anywhere; }
+.ac-tx small { font-size: .6rem; color: rgba(255,255,255,.82); line-height: 1.2; overflow-wrap: anywhere; }
 .ac-art { width: 60px; height: 60px; flex: 0 0 auto; margin-top: auto; }
 
 /* Fila rápida */
 .q-dot { position: absolute; top: -1px; right: 24%; width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 6px var(--good); }
+.q-dot-gold { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
 .bnav .q-dot { top: 6px; right: 28%; }
+.worlds-tabs .tab { position: relative; }
+.worlds-tabs .tab .q-dot { top: 4px; right: 26%; }
 
 /* Bottom nav */
 .bottom-nav { flex: 0 0 auto; display: flex; align-items: flex-end; gap: 2px; width: 100%;
@@ -613,7 +619,15 @@ body.reduced-fx #btn-play { animation: none; }
 #modes-title::before, #modes-title::after { content: '✦'; color: var(--level); -webkit-text-fill-color: var(--level); margin: 0 6px; font-size: .72em; opacity: .9; }
 .modes-sub { color: var(--muted); margin-top: 2px; font-size: .78rem; }
 .screen-modes .modes-body { width: min(430px, 100%); margin: 0 auto; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
-.mode-cards { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: clamp(7px, 1.1svh, 11px); padding-bottom: 0; overflow: hidden; }
+.mode-cards { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: clamp(7px, 1.1svh, 11px); padding: 2px 2px 8px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* Encabezado de grupo del catálogo de modos (Progresión / Puntuación / Relax) */
+.mode-group-title { margin: 4px 2px 0; font-size: .74rem; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: var(--muted); }
+.mode-group-title:first-child { margin-top: 0; }
+/* Arte de tarjeta cuando es un icono de modo (aventura/contrarreloj/zen) en vez de ilustración SVG */
+.mc-art-icon { font-size: clamp(2rem, 8vw, 3rem); color: #fff; }
+.mc-art-icon .icv2-inline, .mc-art-icon .ic-inline { width: 1em; height: 1em; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
+/* Modo jugado por última vez: resaltado sutil en el catálogo */
+.mode-current { box-shadow: 0 0 0 2px var(--mode-accent, var(--accent-2)), inset 0 1px 0 rgba(255,255,255,.14), 0 6px 16px rgba(0,0,0,.4); }
 
 /* Tarjeta héroe: arte (izq) + cuerpo + chevron. Acento por modo (--mode-accent). */
 .mode-hero {
@@ -1678,6 +1692,15 @@ body.aiming .board { cursor: crosshair; }
     linear-gradient(var(--cell-empty-bg, rgba(0,0,0,.22)), var(--cell-empty-bg, rgba(0,0,0,.22)));
   box-shadow: inset 0 0 0 1px var(--cell-empty-border, rgba(255,255,255,.15));
 }
+/* Realce al pasar el ratón/enfocar una tarjeta de tablero: destaca el skin (la animación
+   ambiental ya corre siempre en el thumb). Se anula bajo reduced-fx. */
+.board-thumb { transition: transform .2s ease, box-shadow .2s ease; }
+.board-card:hover .board-thumb, .board-card:focus-within .board-thumb {
+  transform: scale(1.045);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), inset 0 0 0 4px rgba(0,0,0,.18), 0 5px 14px rgba(0,0,0,.45), 0 0 26px var(--board-glow, transparent);
+}
+body.reduced-fx .board-thumb { transition: none; }
+body.reduced-fx .board-card:hover .board-thumb, body.reduced-fx .board-card:focus-within .board-thumb { transform: none; }
 .board-name { font-weight: 800; font-size: .92rem; }
 .board-chars { display: flex; flex-direction: column; gap: 3px; flex: 1; }
 .board-char { font-size: .68rem; color: var(--muted); line-height: 1.25; }
@@ -1730,7 +1753,9 @@ body.aiming .board { cursor: crosshair; }
   --board-glow: rgba(116,222,255,.36);
   --cell-empty-bg: rgba(17,56,88,.56);
   --cell-empty-border: rgba(178,239,255,.22);
-  --cell-filled-bg: rgba(111,190,224,.34);
+  /* Oscurecido para contraste: los iconos oscuros (rojo/azul/morado/índigo) sobre el cian
+     claro original caían por debajo de 3:1 (WCAG). Ahora todos ≥3:1. Ver V1-07. */
+  --cell-filled-bg: rgba(64,110,150,.42);
   --cell-filled-border: rgba(225,252,255,.42);
   --cell-hover-bg: rgba(142,231,255,.28);
   --clear-animation: clear-ice .34s ease-out forwards;
@@ -1867,6 +1892,69 @@ body.aiming .board { cursor: crosshair; }
 @keyframes chestWobble { 25% { transform: rotate(-6deg) scale(1.04); } 75% { transform: rotate(6deg) scale(1.04); } }
 .chest-count { font-weight: 800; font-size: 1.05rem; }
 .chest-hint { color: var(--muted); font-size: .82rem; text-align: center; }
+
+/* Estado vacío reutilizable (cofres/logros/clasificación sin datos aún) */
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; padding: 14px 12px; }
+.empty-state .empty-ic { font-size: 2.4rem; opacity: .85; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); }
+.empty-state .empty-ic .ic-inline, .empty-state .empty-ic .icv2-inline { width: 1em; height: 1em; }
+.empty-title { font-weight: 800; font-size: .95rem; color: var(--text); }
+.empty-sub { color: var(--muted); font-size: .8rem; line-height: 1.3; max-width: 34ch; }
+.empty-state .empty-cta { margin-top: 3px; }
+
+/* Intro de capítulo de Aventura: overlay dentro de la pantalla de juego, una vez por capítulo */
+.chapter-intro { position: absolute; inset: 0; z-index: var(--z-overlay); display: grid; place-items: center;
+  padding: 24px; background: rgba(4,8,20,.82); animation: screen-in .25s ease both; cursor: pointer; }
+.chapter-intro .ci-card { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  max-width: 340px; padding: 24px 22px; border-radius: 20px;
+  background: var(--surface-mid); border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-deep), 0 0 28px color-mix(in srgb, var(--mode-accent, var(--accent-2)) 40%, transparent); }
+.chapter-intro .ci-glyph { font-size: 3.2rem; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,.5)); }
+.chapter-intro .ci-glyph .ic-inline, .chapter-intro .ci-glyph .icv2-inline { width: 1em; height: 1em; }
+.chapter-intro .ci-chapter { font-size: .8rem; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--mode-accent, var(--accent-2)); }
+.chapter-intro .ci-name { font-size: 1.5rem; font-weight: 900; }
+.chapter-intro .ci-mods { font-size: .85rem; color: var(--text); }
+.chapter-intro .ci-goal { font-size: .82rem; color: var(--muted); }
+.chapter-intro .ci-tap { margin-top: 8px; font-size: .75rem; font-weight: 700; color: var(--muted); opacity: .85; animation: ctaPulse 2s ease-in-out infinite; }
+body.reduced-fx .chapter-intro, body.reduced-fx .chapter-intro .ci-tap { animation: none; }
+
+/* Explicación de sistemas de Supervivencia (bajo el selector de dificultad) */
+.surv-sys-title { margin: 12px 2px 6px; }
+.surv-systems { list-style: none; display: flex; flex-direction: column; gap: 7px; text-align: left; }
+.surv-systems li { display: flex; align-items: flex-start; gap: 9px; font-size: .82rem; line-height: 1.28; color: var(--muted); }
+.surv-systems .ss-ic { flex: 0 0 auto; font-size: 1.05rem; line-height: 1.15; }
+
+/* Banner de recuperación ante un fallo de JS (sin color-mix: debe funcionar siempre) */
+.fatal-error {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: 12px; bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 9999; display: flex; align-items: center; gap: 12px;
+  max-width: min(440px, calc(100% - 24px));
+  padding: 11px 14px; border-radius: 14px;
+  background: #2a1420; border: 1px solid #ff5d73; color: #ffe3e8;
+  font-size: .85rem; font-weight: 600; box-shadow: 0 12px 30px rgba(0,0,0,.5);
+}
+.fatal-error button { flex: 0 0 auto; }
+
+/* Aviso accionable de nueva versión de la app (PWA) */
+.update-banner {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: 12px; bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 9998; display: flex; align-items: center; gap: 12px;
+  max-width: min(440px, calc(100% - 24px));
+  padding: 10px 14px; border-radius: 14px;
+  background: var(--surface-mid); border: 1px solid var(--line-strong); color: var(--text);
+  font-size: .85rem; font-weight: 600; box-shadow: var(--shadow-deep);
+  animation: toast-in .3s ease both;
+}
+.update-banner button { flex: 0 0 auto; }
+
+/* Aviso de navegador no soportado (sin color-mix ni dvh: debe funcionar en navegadores viejos) */
+.browser-warn {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 10000;
+  padding: 16px 18px; padding-top: max(16px, env(safe-area-inset-top));
+  background: #101a3e; border-bottom: 2px solid #ff5d73; color: #eaf0ff;
+  font-size: .95rem; font-weight: 700; text-align: center; line-height: 1.4;
+}
 
 /* Multijugador (próximamente) */
 .multi-vs { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 4px 0 12px; }
