@@ -307,6 +307,7 @@
         sr_over: 'Fin de la partida, {n} puntos', sr_level: 'Nivel completado, {n} puntos', sr_stars: 'Nivel completado, {s} de 3 estrellas, {n} puntos',
         surv_sys_title: 'Cómo funciona', surv_sys_charge: 'Encadena convergencias para llenar la barra y ganar un potenciador gratis.', surv_sys_frenzy: 'Llena el medidor de frenesí para multiplicar tus puntos un rato.', surv_sys_lives: 'Pierdes una vida si el tablero se desborda; revive por 120 monedas.',
         pause_no_save: 'Este modo no guarda la partida al salir.',
+        ci_tap: 'Toca para empezar', ci_no_mods: 'Sin modificadores especiales',
         daily_first_reward: '+5 💎 · primer intento del día', daily_new_best: '¡Nueva marca del día! {n}',
         no_moves_wait: 'Sin jugadas ahora mismo: espera al siguiente icono',
         challenge_start: 'Reto compartido: ¡mismo tablero!',
@@ -386,6 +387,7 @@
         sr_over: 'Game over, {n} points', sr_level: 'Level complete, {n} points', sr_stars: 'Level complete, {s} of 3 stars, {n} points',
         surv_sys_title: 'How it works', surv_sys_charge: 'Chain convergences to fill the bar and earn a free power-up.', surv_sys_frenzy: 'Fill the frenzy meter to multiply your points for a while.', surv_sys_lives: 'You lose a life if the board overflows; revive for 120 coins.',
         pause_no_save: 'This mode does not save your game when you leave.',
+        ci_tap: 'Tap to start', ci_no_mods: 'No special modifiers',
         daily_first_reward: '+5 💎 · first try of the day', daily_new_best: 'New daily best! {n}',
         no_moves_wait: 'No moves right now: wait for the next icon',
         challenge_start: 'Shared challenge: same board!',
@@ -1612,6 +1614,9 @@
       rewardDay: () => m.reward.day || 0,
       advMax: () => (m.adventure && m.adventure.maxLevel) || 1,
       advReach(level) { if (level > ((m.adventure && m.adventure.maxLevel) || 1)) { m.adventure.maxLevel = level; save(); } },
+      // Intro de capítulo vista (una vez por capítulo). Campo nuevo tolerante a esquema.
+      advChapterSeen(ch) { return !!(m.adventure && m.adventure.seen && m.adventure.seen[ch]); },
+      markAdvChapterSeen(ch) { if (!m.adventure.seen) m.adventure.seen = {}; if (!m.adventure.seen[ch]) { m.adventure.seen[ch] = 1; save(); } },
       survBest: () => m.survBest || 0,
       survRecord(sec) { sec = Math.floor(sec); if (sec > (m.survBest || 0)) { m.survBest = sec; save(); return true; } return false; },
       survBestWave: () => m.survBestWave || 0,
@@ -1996,6 +2001,32 @@
       el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>`;
     },
     refreshGoal() { const g = $('#obj-goal'); if (g) g.textContent = this.objectiveText(); },
+    // Intro de capítulo: una tarjeta de bioma (nombre, modificadores, objetivo) mostrada
+    // una sola vez la primera vez que se entra en un capítulo. Congela el juego hasta
+    // descartarla (tap). Se salta si ya se vio o si no es el primer nivel del capítulo.
+    maybeChapterIntro(level) {
+      const ov = $('#chapter-intro'); if (!ov) return;
+      if (this.licOf(level) !== 0) return;
+      const chapter = this.chapterOf(level);
+      if (Meta.advChapterSeen(chapter)) return;
+      Meta.markAdvChapterSeen(chapter);
+      const biome = this.biomeOf(level);
+      ov.style.setProperty('--mode-accent', biome.accent);
+      const set = (sel, html) => { const e = ov.querySelector(sel); if (e) e.innerHTML = html; };
+      set('.ci-glyph', BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph);
+      set('.ci-chapter', esc(I18n.t('chapter') + ' ' + (chapter + 1)));
+      set('.ci-name', esc(this.biomeName(biome)));
+      set('.ci-mods', esc(this.biomeModText(biome) || I18n.t('ci_no_mods')));
+      set('.ci-goal', esc(this.objectiveText()));
+      ov.hidden = false;
+      State.status = 'paused'; // congela spawns/reloj mientras se lee la intro
+      const close = () => {
+        ov.hidden = true;
+        ov.removeEventListener('click', close);
+        if (State.status === 'paused') State.status = 'playing';
+      };
+      ov.addEventListener('click', close);
+    },
   };
 
   /* ===================== Survival (Supervivencia 2.0: oleadas, vidas, boosters, trampas) ===================== */
@@ -3018,6 +3049,8 @@
       if (Settings.music) Music.start();
       announce(`Partida iniciada. Modo ${Config.MODES[mode].name}.`);
       Toasts.show(I18n.t('lets_play'), 'good', 1400);
+      // Aventura: intro de bioma una vez por capítulo (congela hasta descartar).
+      if (mode === 'aventura') Adventure.maybeChapterIntro(State.level);
     },
 
     // Reto del día: tablero de Contrarreloj idéntico para todos (semilla = fecha).
@@ -4229,7 +4262,7 @@
     // Puerta de compatibilidad: la app usa color-mix() sin fallback (ver DESIGN_SYSTEM §9).
     // En navegadores sin soporte (Safari <16.2) los acentos se romperían: mejor avisar y
     // no arrancar que mostrar una UI a medias.
-    if (!(window.CSS && CSS.supports && CSS.supports('color', 'color-mix(in srgb, red 50%, blue)'))) {
+    if (!(window.CSS && window.CSS.supports && window.CSS.supports('color', 'color-mix(in srgb, red 50%, blue)'))) {
       showBrowserWarn();
       return;
     }
