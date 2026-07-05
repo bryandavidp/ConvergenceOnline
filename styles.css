@@ -21,7 +21,6 @@
   --accent-2: #00d0ff;
   --score: #18e6e6;
   --level: #8f7bff;
-  --time: #ff6 b9; /* corregido abajo */
   --time: #ff6cb0;
   --speed: #ffe14d;
   --good: #34e29b;
@@ -2255,4 +2254,11 @@ body.reduced-fx.surv-frenzy-active .board-wrap { animation: none !important; }
     transition-duration: .01ms !important;
   }
   .stars { display: none; }
+}
+
+/* ---------- Compra en dos toques (tienda): botón armado esperando confirmación ---------- */
+.btn.confirming {
+  outline: 2px solid var(--warn);
+  outline-offset: 1px;
+  filter: brightness(1.12);
 }

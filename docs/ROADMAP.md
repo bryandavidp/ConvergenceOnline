@@ -9,7 +9,9 @@
 - **Dificultad:** 🟢 Baja (horas) · 🟡 Media (días) · 🔴 Alta (semanas / requiere infraestructura).
 - **Beneficio:** ⭐ Bajo · ⭐⭐ Medio · ⭐⭐⭐ Alto (impacto en jugador, mantenibilidad o riesgo evitado).
 - **Prioridad:** P0 (bug/riesgo, hacer ya) · P1 (siguiente iteración) · P2 (medio plazo) · P3 (largo plazo / opcional).
-- Regla operativa del repo: cualquier cambio en `game.js`/`styles.css` exige subir `?v=` en `index.html` + `CACHE` en `sw.js` (ver `CLAUDE.md`).
+- Regla operativa del repo: cualquier cambio en `game.js`/`styles.css` exige subir `?v=` en `index.html` + `CACHE` en `sw.js` — automatizado con `tools/bump-version.sh` (ver `CLAUDE.md`).
+
+**Estado:** ✅ **Fase A completada** (v1.7.2): 1.1 (fix booster ×2), 1.2, 1.4, 1.5, 1.7 (`tools/bump-version.sh`), 2.1 (19 tests del núcleo, `tests/`), 2.3 (ESLint + CI), 5.3/5.4 (confirmación doble-toque en salir/comprar), 6.1 (CSP), 6.2 (`esc()` global consolidado), 7.3 (flujo de release). Pendiente de Fase A: nada. Siguiente: **Fase B**.
 
 ---
 
