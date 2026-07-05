@@ -292,6 +292,10 @@
         adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
         revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
         coach_skip: 'Saltar tutorial',
+        coach1: '👆 Toca la casilla VACÍA que brilla, entre dos iconos iguales, para juntarlos.',
+        coach2: '✨ ¡Eso es! Si coinciden en varias direcciones, eliminas más de golpe.',
+        coach3: '⚡ Ahora encadena: junta las dos parejas rápido, antes de que se agote el círculo, para subir el combo.',
+        coach_done: '¡Listo! Ya sabes jugar 🎉', coach_play1: 'Jugar nivel 1', coach_menu: 'Ir al menú',
         quit_confirm: '¿Salir? Toca de nuevo para confirmar', confirm_buy: '¿Confirmar?',
         resume_run: 'Continuar partida', run_resumed: 'Partida recuperada',
         premium_chest: 'Cofre premium', no_gems: '¡No tienes gemas suficientes!',
@@ -372,6 +376,10 @@
         adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
         revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
         coach_skip: 'Skip tutorial',
+        coach1: '👆 Tap the glowing EMPTY cell between two matching icons to merge them.',
+        coach2: "✨ That's it! If they match in several directions, you clear more at once.",
+        coach3: '⚡ Now chain them: clear both pairs quickly, before the ring runs out, to build your combo.',
+        coach_done: 'Done! You know how to play 🎉', coach_play1: 'Play level 1', coach_menu: 'Go to menu',
         quit_confirm: 'Leave the game? Tap again to confirm', confirm_buy: 'Confirm?',
         resume_run: 'Resume game', run_resumed: 'Game restored',
         premium_chest: 'Premium chest', no_gems: 'Not enough gems!',
@@ -2823,59 +2831,91 @@
    * Se auto-lanza en el primer arranque y es rejugable desde "¿Cómo se juega?".
    */
   const Coach = {
-    active: false, step: 0, target: -1,
+    active: false, step: 0, targets: [], tIdx: 0,
     STEPS: [
-      {
-        text: '👆 Toca la casilla VACÍA que brilla, entre dos iconos iguales, para juntarlos.',
-        build() { State.board[26] = 'circle_red'; State.board[28] = 'circle_red'; State.iconCount = 2; return 27; },
-      },
-      {
-        text: '✨ ¡Eso es! Si coinciden en varias direcciones, eliminas más de golpe. Encadénalas rápido para subir el combo.',
-        build() { State.board[19] = 'star_yellow'; State.board[35] = 'star_yellow'; State.board[26] = 'star_yellow'; State.board[28] = 'star_yellow'; State.iconCount = 4; return 27; },
-      },
+      { textKey: 'coach1',
+        build() { State.board[26] = 'circle_red'; State.board[28] = 'circle_red'; State.iconCount = 2; return 27; } },
+      { textKey: 'coach2',
+        build() { State.board[19] = 'star_yellow'; State.board[35] = 'star_yellow'; State.board[26] = 'star_yellow'; State.board[28] = 'star_yellow'; State.iconCount = 4; return 27; } },
+      // Paso 3: dos parejas independientes (fila 1 y fila 6, sin columnas compartidas para
+      // que no se crucen las líneas de visión); encadenarlas rápido enseña la ventana de combo.
+      { textKey: 'coach3',
+        build() { State.board[10] = 'circle_red'; State.board[12] = 'circle_red'; State.board[53] = 'circle_red'; State.board[55] = 'circle_red'; State.iconCount = 4; return [11, 54]; } },
     ],
     start() {
-      this.active = true; this.step = 0; this.target = -1;
+      this.active = true; this.step = 0; this.targets = []; this.tIdx = 0;
       Loop.stop(); Music.stop(true);
       State.mode = 'tutorial'; State.diff = 'facil'; State.level = 1;
+      State.comboWindow = Config.DIFFICULTY.facil.comboWindow; // para que el paso 3 encadene combo
       State.score = 0; State.displayScore = 0; State.combo = 0; State.comboMult = 1; State.comboAt = 0;
       State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.elapsed = 0; State.timeLeft = 0;
       State.fever = false; State.recordHit = false;
       Render.fever(false); Render.danger(0);
       Game.ended = false; State.status = 'playing';
       Screens.show('game'); FX.resize();
-      $('#coach').hidden = false;
+      { const c = $('#coach'); if (c) c.hidden = false; }
+      { const pl = $('#coach-play'); if (pl) pl.hidden = true; }
+      { const sk = $('#coach-skip'); if (sk) { sk.hidden = false; sk.textContent = I18n.t('coach_skip'); } }
       this._render();
     },
+    _clearHint() { const t = this.targets[this.tIdx]; if (t != null && t >= 0) Render.hint([t], false); },
     _render() {
       const s = this.STEPS[this.step];
       State.board = new Array(State.size * State.size).fill(null);
       State.tiles = new Array(State.size * State.size).fill(null);
       State.iconCount = 0; State.combo = 0; State.comboMult = 1;
-      this.target = s.build();
+      const r = s.build();
+      this.targets = Array.isArray(r) ? r : [r];
+      this.tIdx = 0;
       State.displayScore = State.score;
       Render.syncAll(); Render.combo(); Render.hud();
-      Render.hint([this.target], true);
-      $('#coach-text').textContent = s.text;
+      Render.hint([this.targets[0]], true);
+      $('#coach-text').textContent = I18n.t(s.textKey);
     },
     notify() {
       if (!this.active) return;
-      if (this.target >= 0) { Render.hint([this.target], false); this.target = -1; }
+      this._clearHint();
+      this.tIdx++;
+      // ¿Quedan más objetivos en este paso? (encadenar dentro de la ventana de combo)
+      if (this.tIdx < this.targets.length) {
+        const nx = this.targets[this.tIdx];
+        setTimeout(() => { if (this.active) Render.hint([nx], true); }, 220);
+        return;
+      }
       this.step++;
       if (this.step >= this.STEPS.length) { setTimeout(() => this.finish(), 950); return; }
       setTimeout(() => { State.displayScore = State.score; this._render(); }, 800);
     },
+    // Fin del tutorial: en vez de soltar al jugador en el menú, ofrecer arrancar ya en
+    // el nivel 1 de Clásico (arranque dirigido) o ir al menú.
     finish() {
       if (!this.active) return;
       this.active = false;
-      if (this.target >= 0) { Render.hint([this.target], false); this.target = -1; }
-      $('#coach').hidden = true;
+      this._clearHint();
       State.status = 'idle'; Game.ended = true;
       Storage.tutorialDone = true;
-      Toasts.show('¡Listo! Ya sabes jugar 🎉', 'good', 2400);
+      Sound.success();
+      { const ct = $('#coach-text'); if (ct) ct.textContent = I18n.t('coach_done'); }
+      { const pl = $('#coach-play'); if (pl) { pl.hidden = false; pl.textContent = I18n.t('coach_play1'); } }
+      { const sk = $('#coach-skip'); if (sk) sk.textContent = I18n.t('coach_menu'); }
+    },
+    // CTA "Jugar nivel 1": lanza Clásico mundo 1, nivel 1.
+    play1() {
+      { const c = $('#coach'); if (c) c.hidden = true; }
+      { const pl = $('#coach-play'); if (pl) pl.hidden = true; }
+      { const sk = $('#coach-skip'); if (sk) sk.textContent = I18n.t('coach_skip'); }
+      Game.startClassic(Worlds.LIST[0].id, 1);
+    },
+    // Saltar (durante los pasos) o "Ir al menú" (al terminar): cerrar y volver al inicio.
+    skip() {
+      this.active = false;
+      this._clearHint();
+      { const c = $('#coach'); if (c) c.hidden = true; }
+      { const pl = $('#coach-play'); if (pl) pl.hidden = true; }
+      { const sk = $('#coach-skip'); if (sk) sk.textContent = I18n.t('coach_skip'); }
+      State.status = 'idle'; Game.ended = true; Storage.tutorialDone = true;
       refreshStart(); Screens.show('start');
     },
-    skip() { this.finish(); },
   };
 
   /* ===================== Loop (un único requestAnimationFrame) ===================== */
@@ -4319,6 +4359,7 @@
     { const g = $('#btn-guest'); if (g) g.addEventListener('click', () => enterApp('Invitado')); }
     { const bt = $('#btn-tutorial'); if (bt) bt.addEventListener('click', () => { Modal.close(); Coach.start(); }); }
     { const cs = $('#coach-skip'); if (cs) cs.addEventListener('click', () => Coach.skip()); }
+    { const cp = $('#coach-play'); if (cp) cp.addEventListener('click', () => { Sound.ensure(); Coach.play1(); }); }
     // "Novedades" al actualizar de versión (no en el primer arranque).
     if (Storage.user && Storage.lastVersion && Storage.lastVersion !== VERSION) {
       setTimeout(() => Toasts.show('✨ Actualizado a v' + VERSION, 'info', 3000), 900);
