@@ -1,6 +1,6 @@
 /* Convergencia — Service Worker (offline-first).
  * Sube CACHE al publicar una versión nueva para invalidar la caché anterior. */
-const CACHE = 'cv-cache-v1.7.1';
+const CACHE = 'cv-cache-v1.7.2';
 const ASSETS = [
   './', './index.html', './styles.css', './game.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
@@ -42,38 +42,12 @@ const V2_ICONS = [
   './img/icons-v2/12-misc/four-pointed-star.svg',
   './img/icons-v2/12-misc/radiation.svg',
 ];
-const UI_SYSTEM = [
-  './img/ui-system/button-square-hover.png',
-  './img/ui-system/button-square-pressed.png',
-  './img/ui-system/button-square.png',
-  './img/ui-system/button-wide-hover.png',
-  './img/ui-system/button-wide-pressed.png',
-  './img/ui-system/button-wide.png',
-  './img/ui-system/button-wider-hover.png',
-  './img/ui-system/button-wider-pressed.png',
-  './img/ui-system/button-wider.png',
-  './img/ui-system/checkbox-checked.png',
-  './img/ui-system/checkbox-empty.png',
-  './img/ui-system/checkbox-tick.png',
-  './img/ui-system/icon-panel-big.png',
-  './img/ui-system/icon-panel-small.png',
-  './img/ui-system/ribbon-blue.png',
-  './img/ui-system/scrollbar-slider.png',
-  './img/ui-system/scrollbar-vertical.png',
-  './img/ui-system/toggle-box.png',
-  './img/ui-system/toggle-circle.png',
-  './img/ui-system/window-blue.png',
-  './img/ui-system/window-sci-fi.png',
-  './img/ui-system/window-white.png',
-];
-
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE)
       .then((c) => c.addAll(ASSETS).then(() => Promise.all([
         c.addAll(UI_ICONS).catch(() => {}),
         c.addAll(V2_ICONS).catch(() => {}),
-        c.addAll(UI_SYSTEM).catch(() => {}),
       ])))
       .then(() => self.skipWaiting())
   );

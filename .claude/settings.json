@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git status:*)",
+      "Bash(git diff)",
+      "Bash(git diff:*)",
+      "Bash(git log)",
+      "Bash(git log:*)",
+      "Bash(git branch)",
+      "Bash(git branch:*)",
+      "Bash(git show:*)",
+      "Bash(python3 -m http.server:*)",
+      "Bash(ls)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(find .:*)"
+    ]
+  }
+}
