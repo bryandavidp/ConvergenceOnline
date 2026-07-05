@@ -160,4 +160,8 @@ python3 -m http.server 8080   # como en .claude/launch.json
 
 Para depurar módulos internos en consola del navegador, abrir con `?dev` en la URL (expone `window.__cv` con todos los módulos, ver game.js línea ~3968).
 
-No existe suite de tests, linter ni CI configurada en el repo.
+**Tests y lint** (añadidos en Fase A del roadmap):
+- `node --test 'tests/*.test.js'` — suite del núcleo puro (convergencia, pools, clear-assist, fórmulas, paridad i18n). Carga `game.js` completo en Node sobre un stub de DOM (`tests/dom-stub.js`) y accede a los módulos vía el hook `window.__cv`.
+- `npx --yes eslint@9 .` — lint con `eslint.config.mjs` (flat config); el repo sigue sin `package.json` deliberadamente.
+- CI en `.github/workflows/ci.yml`: tests + lint + `node --check` de `game.js`/`sw.js` en cada push/PR.
+- Release: `tools/bump-version.sh X.Y.Z` automatiza el triple bump (VERSION/CACHE/`?v=`) descrito en §9.

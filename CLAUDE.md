@@ -9,9 +9,9 @@ Contexto de proyecto para Claude Code. **Léelo antes de explorar el repo** — 
 ## Stack y comandos
 
 - **Sin build.** Se sirve estático. Servidor de desarrollo: `python3 -m http.server 8080` (config en `.claude/launch.json`), abrir `http://localhost:8080/index.html`.
-- **Sin tests automatizados, sin linter, sin CI** configurados en el repo.
+- **Tests:** `node --test 'tests/*.test.js'` (núcleo puro vía stub de DOM en `tests/dom-stub.js` + hook `?dev`). **Lint:** `npx --yes eslint@9 .` (config en `eslint.config.mjs`, sin package.json a propósito). Ambos corren en CI (`.github/workflows/ci.yml`) en cada push.
 - Debug en consola del navegador: abrir con `?dev` en la URL → expone todos los módulos internos en `window.__cv`.
-- Cache-busting manual: al cambiar `styles.css` o `game.js`, subir los query strings `?v=vNNN` en `index.html` **y** la constante `CACHE = 'cv-cache-vX.Y.Z'` en `sw.js`. El patrón de commit habitual es "Bump version to X.Y.Z; update cache version and stylesheet link".
+- **Release / cache-busting:** al cambiar `styles.css` o `game.js`, ejecutar `tools/bump-version.sh X.Y.Z` — sube a la vez `VERSION` (game.js), `CACHE` (sw.js) y los `?v=` de `index.html`. No hacerlo a mano: olvidar uno de los tres deja a los usuarios con la versión vieja. Commit habitual: "Bump version to X.Y.Z; update cache version and asset links".
 
 ## Mapa de archivos
 

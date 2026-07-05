@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  test:
+    name: Lint + tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # El repo no tiene package.json a propósito (app 100% vanilla, sin dependencias).
+      # Los tests usan solo node:test; ESLint se ejecuta vía npx.
+      - name: Tests del núcleo
+        run: node --test 'tests/*.test.js'
+
+      - name: Lint
+        run: npx --yes eslint@9 .
+
+      # Coherencia de release: los ?v= de index.html y el CACHE de sw.js deben moverse
+      # juntos cuando cambian game.js/styles.css (ver tools/bump-version.sh).
+      - name: Verificar sintaxis de sw.js y game.js
+        run: node --check game.js && node --check sw.js
