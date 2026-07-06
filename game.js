@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.0.2';
+  const VERSION = '2.0.3';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -312,6 +312,17 @@
         result_focus_contrarreloj: 'El mejor ritmo nace de combos cortos y constantes.', result_focus_supervivencia: 'Guarda un booster para el tramo final de cada oleada.', result_focus_zen: 'Buen modo para practicar rutas largas sin presión.',
         classic_streak: 'Racha perfecta ×{n}', classic_best_streak: 'Mejor racha: ×{n}', classic_streak_lost: 'Racha perfecta reiniciada',
         time_pressure: '¡Últimos segundos!', surv_wave_soon: 'Oleada en camino',
+        next_title: 'Siguiente paso', next_open_chest: 'Abrir cofre', next_open_chest_sub: 'Tienes recompensa guardada lista para abrir.',
+        next_missions: 'Ver misiones', next_missions_sub: 'Hay progreso o recompensa cerca en misiones.',
+        next_daily: 'Mejorar reto diario', next_daily_sub: 'Busca la siguiente medalla del día con el mismo tablero.',
+        next_shop: 'Elegir cosmético', next_shop_sub: 'Ya puedes desbloquear o equipar algo visual.',
+        next_classic: 'Volver al mapa', next_classic_sub: 'Sigue una ruta de 3★ y racha perfecta.',
+        next_surv: 'Ir a Supervivencia', next_surv_sub: 'Gana cofres cada 10 oleadas y prueba boosters.',
+        next_adventure: 'Continuar Aventura', next_adventure_sub: 'Descubre el siguiente bioma y su objetivo.',
+        next_modes: 'Probar otro modo', next_modes_sub: 'Completa tu variedad de modos para desbloquear mastery.',
+        progress_title: 'Progreso cercano', progress_daily: 'Misión diaria', progress_weekly: 'Reto semanal',
+        progress_variety: 'Variedad de modos', progress_chests: 'Cofres listos', progress_cosmetic: 'Cosmético cercano',
+        progress_ready: 'Listo', progress_left: 'faltan {n}', progress_modes_left: '{n} por probar',
         empty_chests_title: 'Aún no tienes cofres', empty_chests_sub: 'Gana un cofre cada 10 oleadas en Supervivencia', empty_cta_surv: 'Jugar Supervivencia',
         empty_medals_title: 'Tu primera medalla te espera', empty_medals_sub: 'Juega una partida para empezar a desbloquear logros',
         empty_lb_title: 'Sin marcas todavía', empty_lb_sub: 'Juega cualquier modo para registrar tu primera marca', empty_cta_play: 'Elegir modo',
@@ -406,6 +417,17 @@
         result_focus_contrarreloj: 'The best pace comes from short, steady combos.', result_focus_supervivencia: 'Keep one booster for the final stretch of each wave.', result_focus_zen: 'A good mode for practicing long routes without pressure.',
         classic_streak: 'Perfect streak ×{n}', classic_best_streak: 'Best streak: ×{n}', classic_streak_lost: 'Perfect streak reset',
         time_pressure: 'Last seconds!', surv_wave_soon: 'Wave incoming',
+        next_title: 'Next step', next_open_chest: 'Open chest', next_open_chest_sub: 'You have a saved reward ready to open.',
+        next_missions: 'View missions', next_missions_sub: 'Mission progress or a reward is close.',
+        next_daily: 'Improve daily run', next_daily_sub: 'Chase the next daily medal on the same board.',
+        next_shop: 'Choose cosmetic', next_shop_sub: 'You can unlock or equip something visual.',
+        next_classic: 'Back to map', next_classic_sub: 'Keep building 3★ clears and perfect streaks.',
+        next_surv: 'Play Survival', next_surv_sub: 'Earn chests every 10 waves and try boosters.',
+        next_adventure: 'Continue Adventure', next_adventure_sub: 'Discover the next biome and its goal.',
+        next_modes: 'Try another mode', next_modes_sub: 'Complete mode variety to unlock mastery.',
+        progress_title: 'Nearby progress', progress_daily: 'Daily mission', progress_weekly: 'Weekly challenge',
+        progress_variety: 'Mode variety', progress_chests: 'Ready chests', progress_cosmetic: 'Nearby cosmetic',
+        progress_ready: 'Ready', progress_left: '{n} left', progress_modes_left: '{n} to try',
         empty_chests_title: 'No chests yet', empty_chests_sub: 'Earn a chest every 10 waves in Survival', empty_cta_surv: 'Play Survival',
         empty_medals_title: 'Your first medal awaits', empty_medals_sub: 'Play a game to start unlocking achievements',
         empty_lb_title: 'No scores yet', empty_lb_sub: 'Play any mode to set your first score', empty_cta_play: 'Choose a mode',
@@ -1589,6 +1611,7 @@
       { id: 'remove200', name: 'Demoledor', desc: 'Elimina 200 iconos (total)', t: c => m.totalRemoved >= 200 },
       { id: 'fever', name: '¡Fiebre!', desc: 'Entra en modo Fever', t: c => c.fever },
       { id: 'streak3', name: 'Constante', desc: 'Juega 3 días seguidos', t: c => m.streak.count >= 3 },
+      { id: 'variety5', name: 'Explorador', desc: 'Juega los 5 modos principales', t: () => ['clasico', 'aventura', 'contrarreloj', 'supervivencia', 'zen'].every(k => ((m.modes[k] && m.modes[k].plays) || 0) > 0) },
     ];
     const MISSIONS = [
       { id: 'm_combo', text: 'Consigue un combo ×8', target: 8, kind: 'combo' },
@@ -2934,6 +2957,71 @@
     },
   };
 
+  const NextActions = {
+    mainModes: ['clasico', 'aventura', 'contrarreloj', 'supervivencia', 'zen'],
+    shopGoal() {
+      const coins = Meta.coins();
+      const goals = [];
+      if (typeof Boards !== 'undefined') {
+        Boards.order.forEach((id) => {
+          const b = Boards.DEFS[id];
+          if (b && !Meta.ownsBoard(id) && b.cost > 0) goals.push({ name: b.name, cost: b.cost, kind: 'board' });
+        });
+      }
+      if (typeof Themes !== 'undefined') {
+        Themes.order.forEach((id) => {
+          const t = Themes.DEFS[id];
+          if (t && !Meta.owns(id) && t.cost > 0) goals.push({ name: t.name, cost: t.cost, kind: 'theme' });
+        });
+      }
+      goals.sort((a, b) => a.cost - b.cost);
+      const goal = goals[0];
+      return goal ? Object.assign(goal, { have: coins, ready: coins >= goal.cost, left: Math.max(0, goal.cost - coins) }) : null;
+    },
+    variety() {
+      const played = this.mainModes.filter((k) => Meta.modePlays(k) > 0);
+      return { played: played.length, total: this.mainModes.length, left: this.mainModes.length - played.length };
+    },
+    progressRow(iconName, label, value, current, target, act) {
+      const pct = target > 0 ? clamp(current / target * 100, 0, 100) : 0;
+      const body = `<span class="npr-ic">${iconAnyInline(iconName)}</span><span class="npr-main"><span class="npr-top"><b>${esc(label)}</b><small>${esc(value)}</small></span><span class="npr-bar"><span style="width:${pct.toFixed(0)}%"></span></span></span>`;
+      return act ? `<button class="next-progress-row" data-act="${act}" type="button">${body}</button>` : `<div class="next-progress-row">${body}</div>`;
+    },
+    progressHtml() {
+      const rows = [];
+      const dm = Meta.dailyMission(), wk = Meta.weeklyChallenge();
+      const dCur = dm.done ? dm.target : Math.min(dm.progress || 0, dm.target || 1);
+      const wCur = wk.done ? wk.target : Math.min(wk.progress || 0, wk.target || 1);
+      rows.push(this.progressRow('target', I18n.t('progress_daily'), dm.done ? I18n.t('progress_ready') : `${dCur}/${dm.target}`, dCur, dm.target || 1, 'open-missions'));
+      rows.push(this.progressRow('calendar', I18n.t('progress_weekly'), wk.done ? I18n.t('progress_ready') : `${wCur}/${wk.target}`, wCur, wk.target || 1, 'open-missions'));
+      const variety = this.variety();
+      rows.push(this.progressRow('medal', I18n.t('progress_variety'), variety.left <= 0 ? I18n.t('progress_ready') : I18n.t('progress_modes_left').replace('{n}', variety.left), variety.played, variety.total, variety.left > 0 ? 'go-play' : 'profile'));
+      if (Meta.chests() > 0) rows.push(this.progressRow('chest', I18n.t('progress_chests'), I18n.t('progress_ready') + ' · ' + Meta.chests(), 1, 1, 'open-chests'));
+      const shop = this.shopGoal();
+      if (shop) rows.push(this.progressRow('cart', I18n.t('progress_cosmetic'), shop.ready ? I18n.t('progress_ready') : I18n.t('progress_left').replace('{n}', shop.left), Math.min(shop.have, shop.cost), shop.cost, 'open-shop'));
+      return `<div class="next-progress"><h3>${esc(I18n.t('progress_title'))}</h3>${rows.slice(0, 4).join('')}</div>`;
+    },
+    recommendation(ctx = {}) {
+      const dm = Meta.dailyMission(), wk = Meta.weeklyChallenge();
+      if (Meta.chests() > 0) return { icon: 'chest', title: I18n.t('next_open_chest'), sub: I18n.t('next_open_chest_sub'), act: 'open-chests' };
+      if (ctx.missionDone || ctx.weeklyDone || dm.done || wk.done || (!dm.done && Meta.tickets() > 0)) return { icon: 'target', title: I18n.t('next_missions'), sub: I18n.t('next_missions_sub'), act: 'open-missions' };
+      if (State.isDaily && Meta.dailyMedal(State.score) !== 'gold') return { icon: 'medal', title: I18n.t('next_daily'), sub: I18n.t('next_daily_sub'), act: 'go-daily' };
+      const shop = this.shopGoal();
+      if (shop && shop.ready) return { icon: 'cart', title: I18n.t('next_shop'), sub: I18n.t('next_shop_sub'), act: 'open-shop' };
+      if (State.mode === 'clasico') return { icon: 'pin', title: I18n.t('next_classic'), sub: I18n.t('next_classic_sub'), act: 'go-classic' };
+      if (State.mode === 'aventura') return { icon: 'rocket', title: I18n.t('next_adventure'), sub: I18n.t('next_adventure_sub'), act: 'go-adventure' };
+      if (State.mode === 'supervivencia') return { icon: 'heart', title: I18n.t('next_surv'), sub: I18n.t('next_surv_sub'), act: 'go-surv' };
+      const variety = this.variety();
+      if (variety.left > 0) return { icon: 'target', title: I18n.t('next_modes'), sub: I18n.t('next_modes_sub'), act: 'go-play' };
+      return { icon: MODE_IMG[State.mode] || 'v2:play', title: I18n.t('next_modes'), sub: I18n.t('next_modes_sub'), act: 'go-play' };
+    },
+    html(ctx) {
+      const r = this.recommendation(ctx);
+      const card = `<div class="next-card"><span class="next-card-ic">${iconAnyInline(r.icon)}</span><span class="next-card-copy"><b>${esc(I18n.t('next_title'))}: ${esc(r.title)}</b><small>${esc(r.sub)}</small></span><button class="btn btn-primary btn-sm" data-act="${r.act}">${esc(r.title)}</button></div>`;
+      return card + this.progressHtml();
+    },
+  };
+
   /* ===================== PWA (instalable + offline + actualización) ===================== */
   const PWA = {
     deferredPrompt: null,
@@ -3326,7 +3414,7 @@
       return true;
     },
 
-    restart() { if (Coach.active) return Coach.skip(); Modal.close(); this.start(State.mode, State.diff); },
+    restart() { if (Coach.active) return Coach.skip(); Modal.close(); if (State.isDaily) return this.startDaily(); this.start(State.mode, State.diff); },
     quit() {
       if (Coach.active) return Coach.skip();
       Loop.stop(); Music.stop(); State.status = 'idle'; Modal.close();
@@ -4015,6 +4103,7 @@
       countUp($('#over-xp .xp-coins-n'), r.coinsGained || 0, 700, '+', '');
       $('#over-ach').innerHTML = r.newAch.length
         ? '<div class="ach-new">' + iconInline('medal') + ' ' + r.newAch.map(a => a.name).join(' · ') + '</div>' : '';
+      { const nx = $('#over-next'); if (nx) nx.innerHTML = NextActions.html(r); }
       if (r.leveledUp) { setTimeout(() => { Sound.record(); FX.confetti(60); }, 350); }
       if (r.newAch.length) { setTimeout(() => { Sound.milestone(); Toasts.show(I18n.t('ach_unlocked').replace('{n}', r.newAch[0].name), 'good', 2400); }, 600); }
     },
@@ -4607,6 +4696,12 @@
       else if (a === 'home-daily') { Sound.ensure(); Game.startDaily(); }
       else if (a === 'go-surv') { Sound.ensure(); Modal.close(); openSurvivalDiff(); }
       else if (a === 'go-play') { Sound.ensure(); Modal.close(); Screens.show('modes'); }
+      else if (a === 'go-daily') { Sound.ensure(); Modal.close(); Game.startDaily(); }
+      else if (a === 'go-classic') { Sound.ensure(); Modal.close(); Worlds.open(); }
+      else if (a === 'go-adventure') { Sound.ensure(); Modal.close(); openAdventure(); }
+      else if (a === 'open-chests') { Sound.ensure(); Modal.close(); openChests(); }
+      else if (a === 'open-shop') { Sound.ensure(); Modal.close(); openShop(); }
+      else if (a === 'open-missions') { Sound.ui(); refreshStart(); Modal.close(); Modal.open('modal-missions'); }
       else if (a === 'claim-daily') claimDailyReward();
       else if (a === 'nav-medals') { Sound.ensure(); openMedals(); }
       else if (a === 'nav-shop') { Sound.ensure(); openShop(); }
