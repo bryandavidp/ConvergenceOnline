@@ -62,10 +62,10 @@ Objetivo: subir la satisfaccion por jugada sin cambiar balance.
 
 ### Fase 3 - Retencion etica y siguiente accion
 
-- Final de partida con recomendacion contextual.
-- Progreso visible hacia misiones y recompensas cercanas.
-- Maestria por modo y recompensas por variedad.
-- Descubribilidad de cofres, tickets, gemas y cosmeticos sin popups agresivos.
+- Final de partida con recomendacion contextual. Estado: implementada tarjeta `NextActions` en resultados.
+- Progreso visible hacia misiones y recompensas cercanas. Estado: implementadas barras compactas para diaria, semanal, variedad, cofres y cosmetico cercano.
+- Maestria por modo y recompensas por variedad. Estado: implementado progreso de variedad y logro `Explorador` por jugar los 5 modos principales.
+- Descubribilidad de cofres, tickets, gemas y cosmeticos sin popups agresivos. Estado: implementados CTAs contextuales a cofres, misiones y tienda desde resultados, sin popups nuevos.
 
 ### Fase 4 - Audio y musica por intensidad
 
@@ -128,3 +128,18 @@ Objetivo: subir la satisfaccion por jugada sin cambiar balance.
 - Smoke visual en navegador completado: home carga `styles.css?v=v144` y `game.js?v=v136`; Reto diario abre `screen-game` con clases `mode-contrarreloj mode-timed mode-daily`, banner con nota de medallas y sin errores de consola.
 - Smoke visual de Clasico completado: flujo modos -> mapa -> nivel 1 abre `screen-game` con `mode-clasico`, estrellas vivas y nota de maestria en banner, sin errores de consola.
 - Fase 2 cerrada salvo pendientes explicitamente diferidos: ghost/capsulas de Contrarreloj y comparacion social del Reto diario quedan para una fase posterior porque requieren mas superficie de datos/UX.
+
+### 2026-07-06 - Fase 3 implementada
+
+- Se crea `NextActions` como capa centralizada de siguiente accion: elige un CTA principal segun cofres listos, misiones/tickets, reto diario, tienda, modo actual o variedad pendiente.
+- El modal de fin de partida incluye `#over-next` con tarjeta de siguiente paso y progreso cercano.
+- El progreso cercano muestra diaria, semanal, variedad de modos, cofres listos y cosmetico cercano con barras compactas y acciones directas.
+- Las filas de progreso permiten segunda linea en etiquetas largas para evitar elipsis agresivas y mantener legibilidad en el modal.
+- Se anade el logro `Explorador` por jugar los 5 modos principales. Es reconocimiento de variedad; no cambia economia ni ventajas.
+- `Reintentar` en Reto del dia vuelve a lanzar `Game.startDaily()` para conservar tablero/semilla diaria.
+- Se anaden acciones delegadas `go-daily`, `go-classic`, `go-adventure`, `open-chests`, `open-shop` y `open-missions`.
+- Balance intacto: no se han cambiado puntos, spawn, dificultad, economia, recompensas ni probabilidades.
+- Version/cache actualizados a mano por falta de distro WSL disponible para ejecutar `tools/bump-version.sh`: `VERSION = 2.0.3`, `sw.js` cache `cv-cache-v2.0.3`, `styles.css?v=v146` y `game.js?v=v138`.
+- Verificacion automatizada completada: `node --check game.js`, `node --check sw.js`, `node --test 'tests/*.test.js'` y `npx --yes eslint@9 .` pasan sin errores.
+- Smoke visual final en navegador completado con reto compartido real: el modal de fin muestra `#over-next`, tarjeta principal, 4 filas de progreso, CTAs `go-play`/`open-missions`/`open-shop`, `styles.css?v=v146`, `game.js?v=v138` y cero errores de consola.
+- Fase 3 cerrada.
