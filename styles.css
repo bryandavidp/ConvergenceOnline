@@ -375,6 +375,10 @@ body.reduced-fx .board-thumb::before { animation: none !important; }
 /* Tarjeta del home con estado "hecho" (p. ej. Reto del día ya jugado hoy) */
 .app-card.done { border-color: rgba(52,226,155,.5); box-shadow: 0 8px 20px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.12), 0 0 0 1px rgba(52,226,155,.28); }
 .app-card.done .ac-daily-state { color: var(--good); }
+.app-card.medal-bronze { border-color: rgba(205,127,50,.75); }
+.app-card.medal-silver { border-color: rgba(205,218,235,.72); }
+.app-card.medal-gold { border-color: rgba(255,216,77,.85); box-shadow: 0 8px 20px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.12), 0 0 0 1px rgba(255,216,77,.36), 0 0 18px rgba(255,216,77,.18); }
+.app-card.medal-gold .ac-daily-state { color: var(--gold); }
 .ac-tx { display: flex; flex-direction: column; gap: 3px; min-width: 0; max-width: 100%; }
 .ac-tx b { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; line-height: 1.15; overflow-wrap: anywhere; }
 .ac-tx small { font-size: .6rem; color: rgba(255,255,255,.82); line-height: 1.2; overflow-wrap: anywhere; }
@@ -788,6 +792,9 @@ body.reduced-fx #btn-play { animation: none; }
 .sc-row.missed { opacity: .38; }
 .sc-row.missed .sc-st { color: rgba(255,255,255,.3); }
 .sc-mine { margin-top: 4px; font-weight: 800; color: var(--text); align-self: center; }
+.classic-mastery { margin-top: 8px; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--gold); font-weight: 900; }
+.classic-mastery small { color: var(--muted); font-size: .72rem; font-weight: 800; }
+.classic-mastery.reset { color: var(--muted); }
 
 /* Estrellas en vivo en el banner de objetivo (Clásico) */
 .obj-stars { display: inline-flex; gap: 3px; flex: 0 0 auto; font-size: .95rem; line-height: 1; }
@@ -838,6 +845,12 @@ body.reduced-fx #btn-play { animation: none; }
 .time-chip { display: none; }                       /* visible solo en Contrarreloj */
 body.mode-timed .time-chip { display: inline-flex; }
 .time-chip b { color: var(--time); font-size: .95rem; }
+.time-chip.urgent { border-color: color-mix(in srgb, var(--bad) 70%, var(--line)); box-shadow: 0 0 18px rgba(255,93,115,.24); }
+body.time-pressure .time-chip b { color: var(--warn); }
+body.time-critical .time-chip { animation: time-critical-chip .52s ease-in-out infinite alternate; }
+body.time-critical .time-chip b { color: var(--bad); }
+body.time-critical .board-wrap { box-shadow: 0 0 0 1px rgba(255,93,115,.38), 0 0 24px rgba(255,93,115,.18); }
+@keyframes time-critical-chip { from { transform: scale(1); } to { transform: scale(1.08); } }
 /* Puntuación = dato HÉROE: centrada, grande y dominante */
 .gscore { flex: 1; display: flex; justify-content: center; align-items: baseline; min-width: 0; padding: 0 4px; }
 .gscore .hud-value { font-size: clamp(1.4rem, 7vw, 2.4rem); font-weight: 900; color: var(--score);
@@ -1230,11 +1243,15 @@ body.mode-timed .time-chip { display: inline-flex; }
 @keyframes board-impact-soft { 45% { transform: scale(1.006); filter: brightness(1.04); } }
 @keyframes board-impact-mid { 36% { transform: scale(1.012); filter: saturate(1.1) brightness(1.06); } 72% { transform: scale(.997); } }
 @keyframes board-impact-heavy { 28% { transform: scale(1.018); filter: saturate(1.18) brightness(1.09); } 58% { transform: scale(.994); } }
+.board-wrap.time-pressure { animation: time-pressure-board .52s ease-out; border-color: rgba(255,93,115,.82); }
+@keyframes time-pressure-board { 35% { transform: scale(1.012); filter: brightness(1.08) saturate(1.1); } }
 .board-wrap.surv-penalty { animation: surv-penalty .5s ease; border-color: rgba(255,93,115,.88); }
 .board-wrap.surv-quake { animation: surv-quake 1.12s cubic-bezier(.18,.8,.22,1); border-color: rgba(255,178,77,.85); }
 .board-wrap.surv-quake-settle { animation: surv-settle .42s ease-out; }
 .board-wrap.surv-rain { animation: surv-rain .9s ease; border-color: rgba(255,93,115,.78); }
 .board-wrap.surv-wave-up { animation: surv-wave-up .9s ease-out; border-color: rgba(255,216,77,.82); }
+.board-wrap.surv-wave-soon { animation: surv-wave-soon .56s ease-out; border-color: rgba(255,178,77,.76); }
+@keyframes surv-wave-soon { 45% { transform: translateY(-1px) scale(1.008); filter: saturate(1.14); } }
 .board-wrap.surv-frost,
 .board-wrap.boost-freeze { animation: frost-field 1.05s ease; border-color: rgba(140,235,255,.82); }
 .board-wrap.life-blast { animation: life-blast .88s ease-out; border-color: rgba(255,216,77,.88); }
@@ -1580,9 +1597,12 @@ body.reduced-fx .coach-text { animation: none; }
 .medal-tx small { color: var(--muted); }
 
 /* Banner de objetivo (Aventura) */
-.obj-banner { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 auto 6px; width: min(96vw, 620px); max-width: 100%; background: linear-gradient(180deg, rgba(40,52,96,.6), rgba(18,26,56,.7)); border: 1px solid rgba(120,150,255,.28); border-radius: 12px; padding: 7px 14px; font-size: .82rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+.obj-banner { display: flex; justify-content: space-between; align-items: center; gap: 8px 10px; margin: 0 auto 6px; width: min(96vw, 620px); max-width: 100%; background: linear-gradient(180deg, rgba(40,52,96,.6), rgba(18,26,56,.7)); border: 1px solid rgba(120,150,255,.28); border-radius: 12px; padding: 7px 14px; font-size: .82rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
 .obj-biome { color: var(--accent-2); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; }
 .obj-goal { color: var(--gold); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+.obj-mode-note { flex: 0 1 auto; min-width: 0; max-width: 42%; color: color-mix(in srgb, var(--mode-accent, var(--accent-2)) 72%, #fff); font-size: .68rem; font-weight: 900; text-transform: uppercase; letter-spacing: .35px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.mode-aventura .obj-mode-note { color: color-mix(in srgb, var(--level) 76%, #fff); }
+body.mode-zen .obj-banner { border-color: rgba(155,225,93,.34); background: linear-gradient(180deg, rgba(42,88,58,.42), rgba(14,34,36,.72)); }
 
 /* Supervivencia 2.0 */
 body.mode-surv .lvl-chip { display: none; }
@@ -1597,6 +1617,9 @@ body.mode-timed .lvl-chip { display: none; }
 .surv-best-wave { font-size: .62rem; color: rgba(255,216,77,.88); font-weight: 800; text-transform: uppercase; letter-spacing: .25px; line-height: 1; }
 .surv-waveprog { width: min(180px, 42vw); height: 4px; border-radius: 999px; background: rgba(255,255,255,.12); overflow: hidden; }
 .surv-waveprog-fill { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--warn), var(--bad)); transition: width .25s linear; }
+.surv-bar.soon { border-color: rgba(255,178,77,.58); box-shadow: 0 0 18px rgba(255,178,77,.18); }
+.surv-bar.soon .surv-wave { color: var(--bad); }
+.surv-bar.soon .surv-waveprog-fill { background: linear-gradient(90deg, var(--bad), var(--gold)); }
 .surv-time { color: var(--accent-2); font-variant-numeric: tabular-nums; }
 .booster-bar { width: min(96vw, 620px); max-width: 100%; margin: 8px auto 0; }
 .charge { height: 6px; border-radius: 6px; background: rgba(0,0,0,.4); overflow: hidden; margin-bottom: 8px; }
@@ -2011,6 +2034,23 @@ body.reduced-fx .btn-reward { animation: none; }
 .xp-gain { color: var(--good); } .xp-rank { color: var(--accent-2); }
 .xp-up { color: var(--gold); font-weight: 800; margin-top: 6px; }
 .mission-done { color: var(--good); margin-top: 6px; font-size: .9rem; }
+.daily-medal-result,
+.mode-result-note {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.055);
+  line-height: 1.25;
+}
+.daily-medal-result { display: flex; flex-direction: column; gap: 2px; align-items: center; font-weight: 900; }
+.daily-medal-result small { color: var(--muted); font-size: .72rem; font-weight: 800; }
+.daily-medal-result.medal-bronze { color: #d99b56; border-color: rgba(217,155,86,.42); background: rgba(217,155,86,.10); }
+.daily-medal-result.medal-silver { color: #dce9f8; border-color: rgba(220,233,248,.38); background: rgba(220,233,248,.08); }
+.daily-medal-result.medal-gold { color: var(--gold); border-color: rgba(255,216,77,.45); background: rgba(255,216,77,.10); }
+.mode-result-note { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--muted); font-size: .82rem; font-weight: 800; text-align: center; }
+.mode-result-note .ic-inline,
+.mode-result-note .icv2-inline { width: 18px; height: 18px; flex: 0 0 auto; }
 .over-ach .ach-new { color: var(--gold); margin: 8px 0 2px; font-weight: 700; }
 
 /* ===================== Polish visual final ===================== */
@@ -2352,9 +2392,12 @@ body.reduced-fx .board-wrap.boost-freeze,
 body.reduced-fx .board-wrap.impact-soft,
 body.reduced-fx .board-wrap.impact-mid,
 body.reduced-fx .board-wrap.impact-heavy,
+body.reduced-fx .board-wrap.time-pressure,
+body.reduced-fx .board-wrap.surv-wave-soon,
 body.reduced-fx .combo.urgent,
 body.reduced-fx .booster-bar.grant,
-body.reduced-fx .booster.just-granted {
+body.reduced-fx .booster.just-granted,
+body.reduced-fx.time-critical .time-chip {
   animation: none !important;
 }
 body.reduced-fx.surv-frenzy-active .board-wrap { animation: none !important; }
@@ -2379,6 +2422,10 @@ body.reduced-fx.surv-frenzy-active .board-wrap { animation: none !important; }
 .daily-run { align-items: center; }
 .daily-run .btn { flex: 0 0 auto; }
 .daily-run-best { display: block; color: var(--muted); font-size: .78rem; }
+.daily-run-best.medal-bronze { color: #d99b56; }
+.daily-run-best.medal-silver { color: #dce9f8; }
+.daily-run-best.medal-gold { color: var(--gold); }
+.daily-run.medal-gold { border-color: rgba(255,216,77,.34); }
 .mission-reroll { margin: 2px 0 8px; width: 100%; }
 
 /* ---------- Vuelo de convergencia: iconos viajando hacia la casilla tocada ---------- */
