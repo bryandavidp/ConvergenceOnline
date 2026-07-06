@@ -53,12 +53,12 @@ Objetivo: subir la satisfaccion por jugada sin cambiar balance.
 
 ### Fase 2 - Identidad por modo
 
-- Clasico: maestria, estrellas, objetivos secundarios y rachas perfectas.
-- Aventura: descubrimiento, capitulos, modificadores elegibles y mini-jefes mas claros.
-- Contrarreloj: adrenalina, ultimos segundos, ghost personal y capsulas de tiempo.
-- Supervivencia: intensidad, sinergias de boosters, oleadas mas telegrafiadas.
-- Zen: calma, coleccion cosmetica y feedback menos agresivo.
-- Reto del dia: medallas bronce/plata/oro y comparacion con marca personal.
+- Clasico: maestria, estrellas, objetivos secundarios y rachas perfectas. Estado: implementada racha perfecta persistente y senal de mastery en banner/modal.
+- Aventura: descubrimiento, capitulos, modificadores elegibles y mini-jefes mas claros. Estado: implementada nota de modificador/objetivo en banner.
+- Contrarreloj: adrenalina, ultimos segundos, ghost personal y capsulas de tiempo. Estado: implementada presion visual/audio de ultimos segundos; ghost/capsulas quedan pendientes.
+- Supervivencia: intensidad, sinergias de boosters, oleadas mas telegrafiadas. Estado: implementada alerta de oleada entrante y estado visual `soon`.
+- Zen: calma, coleccion cosmetica y feedback menos agresivo. Estado: implementada identidad calmada en banner.
+- Reto del dia: medallas bronce/plata/oro y comparacion con marca personal. Estado: implementadas medallas visuales de marca diaria; comparacion social queda fuera de V1.
 
 ### Fase 3 - Retencion etica y siguiente accion
 
@@ -111,3 +111,20 @@ Objetivo: subir la satisfaccion por jugada sin cambiar balance.
 - Smoke visual en navegador completado: carga `screen-login`, no hay errores de consola, y estan activos `styles.css?v=v143` y `game.js?v=v135`.
 - Smoke de flujo jugable completado: invitado -> inicio -> modos -> clasico -> nivel 1 -> tablero; una convergencia real de 2 iconos sube el marcador a 20 y deja las celdas objetivo vacias sin errores de consola.
 - Fase 1 cerrada. Siguiente bloque recomendado: Fase 2, progresion emocional y goals inmediatos dentro/fuera de partida.
+
+### 2026-07-06 - Fase 2 implementada
+
+- Se crea `ModeSignals` como capa centralizada de identidad por modo: clases `mode-*`, acento CSS `--mode-accent`, notas de banner, brief inicial y nota contextual de resultado.
+- Clasico registra `Meta.recordClassicPerfect()` y muestra racha perfecta/mejor racha en el modal de nivel. La racha se reinicia si la partida clasica termina en fallo.
+- Aventura muestra en el banner una senal de descubrimiento con modificador de bioma u objetivo del nivel.
+- Contrarreloj activa `time-pressure` / `time-critical` al bajar de 20s/10s, con pulso del chip de tiempo, evento visual de tablero y aviso sonoro solo al entrar en estado critico.
+- Supervivencia avisa cuando la oleada supera el 78% de progreso con toast, pulso de tablero y estado `.surv-bar.soon`.
+- Zen muestra una lectura calmada del modo en el banner sin feedback agresivo.
+- Reto del dia calcula medallas visuales bronce/plata/oro segun score (`750/1500/2500`) sin premios extra; se muestran en home, misiones y resultado.
+- Se anaden notas contextuales al resultado para orientar el siguiente intento por modo.
+- Balance intacto: no se han cambiado puntos, spawn, dificultad, economia, recompensas ni probabilidades.
+- Version/cache actualizados a mano por falta de distro WSL disponible para ejecutar `tools/bump-version.sh`: `VERSION = 2.0.2`, `sw.js` cache `cv-cache-v2.0.2`, `styles.css?v=v144` y `game.js?v=v136`.
+- Verificacion automatizada completada: `node --check game.js`, `node --check sw.js`, `node --test 'tests/*.test.js'` y `npx --yes eslint@9 .` pasan sin errores.
+- Smoke visual en navegador completado: home carga `styles.css?v=v144` y `game.js?v=v136`; Reto diario abre `screen-game` con clases `mode-contrarreloj mode-timed mode-daily`, banner con nota de medallas y sin errores de consola.
+- Smoke visual de Clasico completado: flujo modos -> mapa -> nivel 1 abre `screen-game` con `mode-clasico`, estrellas vivas y nota de maestria en banner, sin errores de consola.
+- Fase 2 cerrada salvo pendientes explicitamente diferidos: ghost/capsulas de Contrarreloj y comparacion social del Reto diario quedan para una fase posterior porque requieren mas superficie de datos/UX.

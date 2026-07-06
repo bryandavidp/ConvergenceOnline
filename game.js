@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.0.1';
+  const VERSION = '2.0.2';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -302,6 +302,16 @@
         reroll_mission: 'Cambiar misión (1)', mission_rerolled: '¡Misión nueva!',
         daily_challenge: 'Reto del día', daily_play: 'Jugar', daily_best: 'Mejor de hoy: {n}',
         daily_pending: 'Tablero de hoy · ¡juégalo!', daily_done_state: '✅ Hecho · Mejor: {n}',
+        daily_done_medal: '{m} · Mejor: {n}', daily_medal_none: 'Sin medalla', daily_medal_bronze: 'Bronce', daily_medal_silver: 'Plata', daily_medal_gold: 'Oro',
+        daily_medal_result: 'Medalla diaria: {m}', daily_next_medal: 'Siguiente medalla: supera {n}',
+        mode_note_clasico: 'Maestría: termina sin errores para 3★', mode_note_clasico_streak: 'Racha perfecta: ×{n}',
+        mode_note_aventura: 'Descubre: {m}', mode_note_contrarreloj: 'Cada convergencia compra segundos', mode_note_daily: 'Reto diario: bronce, plata u oro', mode_note_zen: 'Respira: sin castigo',
+        mode_brief_clasico: 'Clásico · busca 3 estrellas', mode_brief_aventura: 'Aventura · lee el bioma y adapta la ruta',
+        mode_brief_contrarreloj: 'Contrarreloj · prioriza combos para comprar tiempo', mode_brief_supervivencia: 'Supervivencia · carga boosters antes de la oleada', mode_brief_zen: 'Zen · calma, limpieza y colección',
+        result_focus_clasico: 'Repite niveles sin errores para encadenar perfectos.', result_focus_aventura: 'El siguiente bioma cambia el objetivo: mira el banner antes de actuar.',
+        result_focus_contrarreloj: 'El mejor ritmo nace de combos cortos y constantes.', result_focus_supervivencia: 'Guarda un booster para el tramo final de cada oleada.', result_focus_zen: 'Buen modo para practicar rutas largas sin presión.',
+        classic_streak: 'Racha perfecta ×{n}', classic_best_streak: 'Mejor racha: ×{n}', classic_streak_lost: 'Racha perfecta reiniciada',
+        time_pressure: '¡Últimos segundos!', surv_wave_soon: 'Oleada en camino',
         empty_chests_title: 'Aún no tienes cofres', empty_chests_sub: 'Gana un cofre cada 10 oleadas en Supervivencia', empty_cta_surv: 'Jugar Supervivencia',
         empty_medals_title: 'Tu primera medalla te espera', empty_medals_sub: 'Juega una partida para empezar a desbloquear logros',
         empty_lb_title: 'Sin marcas todavía', empty_lb_sub: 'Juega cualquier modo para registrar tu primera marca', empty_cta_play: 'Elegir modo',
@@ -386,6 +396,16 @@
         reroll_mission: 'Swap mission (1)', mission_rerolled: 'New mission!',
         daily_challenge: 'Daily challenge', daily_play: 'Play', daily_best: "Today's best: {n}",
         daily_pending: "Today's board · play it!", daily_done_state: '✅ Done · Best: {n}',
+        daily_done_medal: '{m} · Best: {n}', daily_medal_none: 'No medal', daily_medal_bronze: 'Bronze', daily_medal_silver: 'Silver', daily_medal_gold: 'Gold',
+        daily_medal_result: 'Daily medal: {m}', daily_next_medal: 'Next medal: beat {n}',
+        mode_note_clasico: 'Mastery: finish with no mistakes for 3★', mode_note_clasico_streak: 'Perfect streak: ×{n}',
+        mode_note_aventura: 'Discover: {m}', mode_note_contrarreloj: 'Every convergence buys seconds', mode_note_daily: 'Daily run: bronze, silver or gold', mode_note_zen: 'Breathe: no punishment',
+        mode_brief_clasico: 'Classic · chase 3 stars', mode_brief_aventura: 'Adventure · read the biome and adapt',
+        mode_brief_contrarreloj: 'Time Attack · use combos to buy time', mode_brief_supervivencia: 'Survival · charge boosters before the wave', mode_brief_zen: 'Zen · calm, clearing and collection',
+        result_focus_clasico: 'Replay levels with no mistakes to chain perfect clears.', result_focus_aventura: 'The next biome changes the goal: read the banner before acting.',
+        result_focus_contrarreloj: 'The best pace comes from short, steady combos.', result_focus_supervivencia: 'Keep one booster for the final stretch of each wave.', result_focus_zen: 'A good mode for practicing long routes without pressure.',
+        classic_streak: 'Perfect streak ×{n}', classic_best_streak: 'Best streak: ×{n}', classic_streak_lost: 'Perfect streak reset',
+        time_pressure: 'Last seconds!', surv_wave_soon: 'Wave incoming',
         empty_chests_title: 'No chests yet', empty_chests_sub: 'Earn a chest every 10 waves in Survival', empty_cta_surv: 'Play Survival',
         empty_medals_title: 'Your first medal awaits', empty_medals_sub: 'Play a game to start unlocking achievements',
         empty_lb_title: 'No scores yet', empty_lb_sub: 'Play any mode to set your first score', empty_cta_play: 'Choose a mode',
@@ -590,6 +610,7 @@
     recordHit: false,       // récord superado en vivo (una vez por partida)
     emptyBonusClaimed: false, emptyBoards: 0, lastActionCell: null,
     lastDangerAt: 0,        // throttle del aviso de peligro
+    timePressure: 0,        // 0 normal, 1 presion, 2 critico (Contrarreloj)
     pool: [], // iconos disponibles este nivel
     tiles: [],              // capa de casillas especiales (paralela a board): null=normal
     coinsRun: 0,            // monedas ganadas en la partida en curso
@@ -959,7 +980,16 @@
       $('#hud-best').textContent = Storage.best;
       $('#hud-speed').textContent = (State.spawnRate / 1000).toFixed(1) + 's';
       const timeEl = $('#hud-time');
-      timeEl.textContent = Config.MODES[State.mode].timed ? fmtTime(State.timeLeft) : fmtTime(State.elapsed);
+      const timed = Config.MODES[State.mode].timed;
+      timeEl.textContent = timed ? fmtTime(State.timeLeft) : fmtTime(State.elapsed);
+      const pressure = timed && State.status === 'playing' ? (State.timeLeft <= 10 ? 2 : State.timeLeft <= 20 ? 1 : 0) : 0;
+      if (pressure !== State.timePressure) {
+        State.timePressure = pressure;
+        document.body.classList.toggle('time-pressure', pressure > 0);
+        document.body.classList.toggle('time-critical', pressure === 2);
+        if (pressure === 2) { this.boardEvent('time-pressure', 520); Sound.danger(); }
+      }
+      if (timeEl.parentElement) timeEl.parentElement.classList.toggle('urgent', pressure === 2);
       // Barra de ocupación = medidor de peligro (cuanto más llena, peor)
       const occ = Engine.occupation();
       const fill = $('#hud-progress-fill');
@@ -1516,7 +1546,7 @@
   const Meta = (() => {
     const KEY = 'cv_meta';
     const SCHEMA = 3;
-    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, gems: 0, tickets: 0, chests: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, worlds: {}, boards: { owned: { classic: 1 }, equipped: 'classic' }, survBest: 0, survBestWave: 0, stats: { totalScore: 0, bestCombo: 0, totalTime: 0 }, modes: {}, weekly: { week: '', id: '', progress: 0, done: false }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
+    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, gems: 0, tickets: 0, chests: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, worlds: {}, boards: { owned: { classic: 1 }, equipped: 'classic' }, survBest: 0, survBestWave: 0, stats: { totalScore: 0, bestCombo: 0, totalTime: 0 }, modes: {}, weekly: { week: '', id: '', progress: 0, done: false }, mastery: { classicPerfect: 0, bestClassicPerfect: 0 }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
     let m;
     try { m = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); }
     catch (_) { m = JSON.parse(JSON.stringify(def)); }
@@ -1527,6 +1557,9 @@
     if (!m.stats) m.stats = { totalScore: 0, bestCombo: 0, totalTime: 0 };
     if (!m.modes) m.modes = {};
     if (!m.weekly) m.weekly = { week: '', id: '', progress: 0, done: false };
+    if (!m.mastery) m.mastery = { classicPerfect: 0, bestClassicPerfect: 0 };
+    if (typeof m.mastery.classicPerfect !== 'number') m.mastery.classicPerfect = 0;
+    if (typeof m.mastery.bestClassicPerfect !== 'number') m.mastery.bestClassicPerfect = 0;
     if (!m.dailyRun) m.dailyRun = { date: '', best: 0, plays: 0 }; // reto diario (tablero seedeado por fecha)
     if (typeof m.coins !== 'number') m.coins = 0;
     if (typeof m.survBestWave !== 'number') m.survBestWave = 0;
@@ -1590,6 +1623,15 @@
       stats: () => ({ games: m.games || 0, totalRemoved: m.totalRemoved || 0, totalScore: m.stats.totalScore || 0, bestCombo: m.stats.bestCombo || 0, totalTime: m.stats.totalTime || 0 }),
       modeBest: (mode) => (m.modes[mode] && m.modes[mode].best) || 0,
       modePlays: (mode) => (m.modes[mode] && m.modes[mode].plays) || 0,
+      classicPerfectStreak: () => m.mastery.classicPerfect || 0,
+      classicBestPerfectStreak: () => m.mastery.bestClassicPerfect || 0,
+      recordClassicPerfect(perfect) {
+        const before = m.mastery.classicPerfect || 0;
+        m.mastery.classicPerfect = perfect ? before + 1 : 0;
+        if (m.mastery.classicPerfect > (m.mastery.bestClassicPerfect || 0)) m.mastery.bestClassicPerfect = m.mastery.classicPerfect;
+        save();
+        return { streak: m.mastery.classicPerfect, best: m.mastery.bestClassicPerfect || 0, changed: before !== m.mastery.classicPerfect, perfect: !!perfect };
+      },
       // ---- Economía (monedas) ----
       coins: () => m.coins || 0,
       addCoins(n) { m.coins = (m.coins || 0) + Math.max(0, n | 0); save(); return m.coins; },
@@ -1636,10 +1678,16 @@
       },
       // ---- Reto diario: mismo tablero para todos (semilla = fecha). ----
       DAILY_FIRST_GEMS: 5,
+      dailyMedal(score) {
+        score = Math.max(0, score | 0);
+        return score >= 2500 ? 'gold' : score >= 1500 ? 'silver' : score >= 750 ? 'bronze' : 'none';
+      },
       dailyRunInfo() {
         const d = today();
         if (m.dailyRun.date !== d) return { date: d, best: 0, plays: 0 };
-        return Object.assign({}, m.dailyRun);
+        const info = Object.assign({}, m.dailyRun);
+        info.medal = this.dailyMedal(info.best);
+        return info;
       },
       recordDailyRun(score) {
         const d = today();
@@ -1650,7 +1698,7 @@
         if (newBest) m.dailyRun.best = score | 0;
         if (fresh) m.gems = (m.gems || 0) + this.DAILY_FIRST_GEMS; // premio por el primer intento del día
         save();
-        return { firstToday: fresh, newBest, best: m.dailyRun.best };
+        return { firstToday: fresh, newBest, best: m.dailyRun.best, medal: this.dailyMedal(score), bestMedal: this.dailyMedal(m.dailyRun.best) };
       },
       // ---- Reroll de la misión diaria: sumidero de tickets (1 por cambio). ----
       rerollDaily() {
@@ -2079,7 +2127,7 @@
       const el = $('#obj-banner'); if (!el) return;
       const biome = this.biomeOf(level);
       el.hidden = false; el.style.borderColor = '';
-      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>`;
+      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>${ModeSignals.noteHtml('aventura')}`;
     },
     refreshGoal() { const g = $('#obj-goal'); if (g) g.textContent = this.objectiveText(); },
     // Intro de capítulo: una tarjeta de bioma (nombre, modificadores, objetivo) mostrada
@@ -2136,7 +2184,7 @@
       const tn = this.tune();
       this.WAVE_MS = tn.waveMs; this.MAX_LIVES = tn.lives;
       this.lives = this.MAX_LIVES; this.wave = 1; this.waveAcc = 0; this.survSec = 0; this.charge = 0; this.frenzy = 0;
-      this.freezeUntil = 0; this.x2Until = 0; this.frenzyUntil = 0; this.lockUntil = 0; this.runCoins = 0; this.runGems = 0; this.runChests = 0; this.newWaveRecord = false; State.tempMult = 1; this._r = {};
+      this.freezeUntil = 0; this.x2Until = 0; this.frenzyUntil = 0; this.lockUntil = 0; this.runCoins = 0; this.runGems = 0; this.runChests = 0; this.newWaveRecord = false; State.tempMult = 1; this._r = { waveWarned: false };
       this.armed = null; this._preview = null; document.body.classList.remove('aiming');
       this._setFrenzyClass();
       // Progresión de iconos desde la oleada 1: la puntuación base usa State.level (= dlevel).
@@ -2269,6 +2317,12 @@
       if (this.frenzyUntil && !this.frenzyActive()) { this.frenzyUntil = 0; this._syncMult(); }
       this.waveAcc += dt;
       if (this.waveAcc >= this.WAVE_MS) { this.waveAcc -= this.WAVE_MS; this.newWave(); }
+      else if (!this._r.waveWarned && this.waveAcc / this.WAVE_MS >= 0.78) {
+        this._r.waveWarned = true;
+        Toasts.show(I18n.t('surv_wave_soon'), 'warn', 1400, 'fire');
+        Render.boardEvent('surv-wave-soon', 560);
+        Sound.danger();
+      }
       const isFrenzy = this.frenzyActive();
       if (wasFrenzy !== isFrenzy || this._r.intWave !== this.wave) {
         this._r.frenzyActive = isFrenzy; this._r.intWave = this.wave;
@@ -2280,6 +2334,7 @@
       const clearedWave = this.wave;
       this._waveReward(clearedWave);
       this.wave++;
+      this._r.waveWarned = false;
       const tn = this.tune();
       State.spawnRate = Math.max(tn.spawnFloor, Math.round(State.spawnRate * tn.spawnDecay));
       // Progresión de iconos: al subir el nivel efectivo, avanza la ventana del catálogo
@@ -2623,7 +2678,11 @@
       const sec = Math.floor(this.survSec); if (r.sec !== sec) { r.sec = sec; const t = $('#surv-time'); if (t) t.textContent = sec + 's'; }
       // Progreso a la siguiente oleada (telegrafía que la presión va a subir).
       const wp = Math.min(100, Math.round(this.waveAcc / this.WAVE_MS * 100));
-      if (r.wp !== wp) { r.wp = wp; const wf = $('#surv-waveprog-fill'); if (wf) wf.style.width = wp + '%'; }
+      if (r.wp !== wp) {
+        r.wp = wp;
+        const wf = $('#surv-waveprog-fill'); if (wf) wf.style.width = wp + '%';
+        const sb = $('#surv-bar'); if (sb) sb.classList.toggle('soon', wp >= 78);
+      }
       const ch = Math.round(this.charge); if (r.charge !== ch) { r.charge = ch; const cf = $('#charge-fill'); if (cf) cf.style.width = ch + '%'; }
       const bestWave = Meta.survBestWave();
       const bestTxt = bestWave > 0 ? I18n.t('surv_best_wave') + ' ' + bestWave : '';
@@ -2807,6 +2866,71 @@
       const mode = Config.MODES[State.mode];
       const fn = mode && mode[name];
       return typeof fn === 'function' ? fn(ctx) : undefined;
+    },
+  };
+
+  /* ===================== ModeSignals (identidad emocional por modo) =====================
+   * Capa fina de feedback: no cambia reglas ni economía, solo hace más legible qué
+   * persigue cada modo y qué debería intentar el jugador en la siguiente partida.
+   */
+  const ModeSignals = {
+    classes: Config.MODE_ORDER.map((k) => 'mode-' + k).concat(['mode-daily', 'mode-surv', 'mode-timed', 'time-pressure', 'time-critical']),
+    clear() {
+      document.body.classList.remove(...this.classes);
+      State.timePressure = 0;
+      const time = $('#hud-time');
+      if (time && time.parentElement) time.parentElement.classList.remove('urgent');
+    },
+    apply(mode) {
+      this.clear();
+      const m = Config.MODES[mode];
+      if (!m) return;
+      document.body.classList.add('mode-' + mode);
+      document.documentElement.style.setProperty('--mode-accent', m.accent || 'var(--accent-2)');
+    },
+    markDaily(on) { document.body.classList.toggle('mode-daily', !!on); },
+    icon(mode) {
+      const key = MODE_IMG[mode];
+      return key ? iconAnyInline(key) : esc((Config.MODES[mode] && Config.MODES[mode].emoji) || '');
+    },
+    dailyMedalLabel(medal) { return I18n.t('daily_medal_' + (medal || 'none')); },
+    noteText(mode) {
+      if (mode === 'clasico') {
+        const streak = Meta.classicPerfectStreak();
+        return streak > 0 ? I18n.t('mode_note_clasico_streak').replace('{n}', streak) : I18n.t('mode_note_clasico');
+      }
+      if (mode === 'aventura') {
+        const bi = Adventure.biomeOf(State.level);
+        const mod = Adventure.biomeModText(bi) || Adventure.previewObjective(State.level);
+        return I18n.t('mode_note_aventura').replace('{m}', mod);
+      }
+      if (mode === 'contrarreloj') return State.isDaily ? I18n.t('mode_note_daily') : I18n.t('mode_note_contrarreloj');
+      if (mode === 'zen') return I18n.t('mode_note_zen');
+      return '';
+    },
+    noteHtml(mode) {
+      const text = this.noteText(mode || State.mode);
+      return text ? `<span class="obj-mode-note">${esc(text)}</span>` : '';
+    },
+    brief(mode) {
+      if (mode === 'tutorial') return;
+      const key = 'mode_brief_' + mode;
+      const msg = I18n.t(key);
+      if (msg && msg !== key) Toasts.show(msg, 'info', 1700, MODE_IMG[mode] || (Config.MODES[mode] && Config.MODES[mode].emoji));
+    },
+    resultHtml() {
+      const key = 'result_focus_' + State.mode;
+      const msg = I18n.t(key);
+      if (!msg || msg === key) return '';
+      return `<div class="mode-result-note">${this.icon(State.mode)} <span>${esc(msg)}</span></div>`;
+    },
+    dailyResultHtml(result) {
+      if (!State.isDaily || !result) return '';
+      const medal = result.medal || 'none';
+      const next = State.score < 750 ? 750 : State.score < 1500 ? 1500 : State.score < 2500 ? 2500 : 0;
+      const medalLine = I18n.t('daily_medal_result').replace('{m}', this.dailyMedalLabel(medal));
+      const nextLine = next ? `<small>${esc(I18n.t('daily_next_medal').replace('{n}', next))}</small>` : '';
+      return `<div class="daily-medal-result medal-${medal}"><strong>${esc(medalLine)}</strong>${nextLine}</div>`;
     },
   };
 
@@ -3136,8 +3260,10 @@
       State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.coinsRun = 0; State.tempMult = 1;
       State.emptyBonusClaimed = false; State.emptyBoards = 0; State.lastActionCell = null;
       State.fever = false; State.feverEver = false; State.perfectEver = false; State.recordHit = false;
+      State.timePressure = 0;
       State.isDaily = false; // startDaily() lo activa tras llamar aquí
-      State.status = 'playing'; this.ended = false;
+      State.status = 'playing'; this.ended = false; this.dailyRunResult = null; this.classicMastery = null;
+      ModeSignals.apply(mode);
       // Aventura: reanuda en el nivel más lejano alcanzado; el resto empieza en 1.
       if (mode === 'aventura') State.level = Meta.advMax();
       // Clásico: arranca en el nivel elegido del mundo (HUD y escalado usan State.level).
@@ -3162,6 +3288,7 @@
       if (Settings.music) Music.start();
       announce(`Partida iniciada. Modo ${Config.MODES[mode].name}.`);
       Toasts.show(I18n.t('lets_play'), 'good', 1400);
+      ModeSignals.brief(mode);
       // Aventura: intro de bioma una vez por capítulo (congela hasta descartar).
       if (mode === 'aventura') Adventure.maybeChapterIntro(State.level);
     },
@@ -3172,6 +3299,8 @@
       const d = new Date().toISOString().slice(0, 10);
       this.start('contrarreloj', 'normal', undefined, 'daily:' + d);
       State.isDaily = true;
+      ModeSignals.markDaily(true);
+      this.showGoalBanner();
       Toasts.show(I18n.t('daily_challenge'), 'info', 1800, '🎯');
     },
 
@@ -3201,7 +3330,7 @@
     quit() {
       if (Coach.active) return Coach.skip();
       Loop.stop(); Music.stop(); State.status = 'idle'; Modal.close();
-      document.body.classList.remove('mode-surv'); this.clearHintHighlight();
+      ModeSignals.clear(); this.clearHintHighlight();
       if (typeof Survival !== 'undefined') Survival.cleanup();
       // Clásico: salir devuelve al mapa de mundos (su hub natural).
       if (State.mode === 'clasico') { Worlds.open(); return; }
@@ -3525,7 +3654,7 @@
       el.style.borderColor = m.accent || '';
       const stars = State.mode === 'clasico'
         ? `<span class="obj-stars" id="obj-stars" title="${I18n.t('stars_help')}" aria-label="${I18n.t('stars_label')}"></span>` : '';
-      el.innerHTML = `<span class="obj-biome" style="color:${m.accent || 'var(--accent-2)'}">${MODE_IMG[State.mode] ? iconAnyInline(MODE_IMG[State.mode]) : m.emoji} ${I18n.modeT(State.mode, 'name')}</span><span class="obj-goal">${I18n.modeT(State.mode, 'goal')}</span>${stars}`;
+      el.innerHTML = `<span class="obj-biome" style="color:${m.accent || 'var(--accent-2)'}">${MODE_IMG[State.mode] ? iconAnyInline(MODE_IMG[State.mode]) : m.emoji} ${I18n.modeT(State.mode, 'name')}</span><span class="obj-goal">${I18n.modeT(State.mode, 'goal')}</span>${stars}${ModeSignals.noteHtml(State.mode)}`;
       this.updateLiveStars();
     },
 
@@ -3677,6 +3806,8 @@
     _classicComplete() {
       const n = State.worldLevel || 1, w = Worlds.get(State.world);
       const stars = this.starsForMistakes(State.mistakes);
+      const mastery = Meta.recordClassicPerfect(stars >= 3);
+      this.classicMastery = mastery;
       const gained = Meta.setLevelStars(State.world, n, stars);
       const coins = 20 + stars * 10 + Math.round(State.score / 60);
       Meta.addCoins(coins);
@@ -3699,7 +3830,11 @@
         ['×' + State.maxCombo, I18n.t('st_combo'), 'var(--gold)'],
         [State.removedTotal, I18n.t('st_removed'), 'var(--good)'],
       ]);
-      $('#level-next').innerHTML = `<div class="m-card-h">${iconInline('coin')} +${coins}${gained > 0 ? ' · ' + iconInline('star') + ' +' + gained : ''}</div>`;
+      const masteryHtml = mastery.streak > 0
+        ? `<div class="classic-mastery">${iconInline('star')} ${esc(I18n.t('classic_streak').replace('{n}', mastery.streak))}<small>${esc(I18n.t('classic_best_streak').replace('{n}', mastery.best))}</small></div>`
+        : `<div class="classic-mastery reset">${esc(I18n.t('classic_streak_lost'))}<small>${esc(I18n.t('classic_best_streak').replace('{n}', mastery.best))}</small></div>`;
+      $('#level-next').innerHTML = `<div class="m-card-h">${iconInline('coin')} +${coins}${gained > 0 ? ' · ' + iconInline('star') + ' +' + gained : ''}</div>${masteryHtml}`;
+      if (mastery.streak >= 2) Toasts.show(I18n.t('classic_streak').replace('{n}', mastery.streak), 'good', 1700, 'star');
       const last = n >= Worlds.PER_WORLD;
       { const nb = $('#btn-next-level'); if (nb) { nb.hidden = last; nb.textContent = I18n.t('classic_next'); } }
       { const mb = $('#btn-level-map'); if (mb) mb.hidden = false; }
@@ -3710,7 +3845,7 @@
     // Vuelve al mapa de mundos desde el modal de fin de nivel.
     toWorldsMap() {
       Loop.stop(); Music.stop(); State.status = 'idle'; this.ended = true;
-      Modal.close(); document.body.classList.remove('mode-surv'); this.clearHintHighlight();
+      Modal.close(); ModeSignals.clear(); this.clearHintHighlight();
       Worlds.open();
     },
 
@@ -3798,9 +3933,12 @@
       // Reto diario: registra la marca y premia el primer intento del día.
       if (State.isDaily) {
         const r = Meta.recordDailyRun(State.score);
+        this.dailyRunResult = r;
         if (r.firstToday) Toasts.show(I18n.t('daily_first_reward'), 'good', 2400, '💎');
         else if (r.newBest) Toasts.show(I18n.t('daily_new_best').replace('{n}', r.best), 'good', 2200, '🎯');
+        if (r.medal !== 'none') Toasts.show(I18n.t('daily_medal_result').replace('{m}', ModeSignals.dailyMedalLabel(r.medal)), 'good', 2200, 'medal');
       }
+      if (State.mode === 'clasico') this.classicMastery = Meta.recordClassicPerfect(false);
       this.endGame();
       Sound.over(); Haptics.error(); Render.boardShake();
       const m = Config.MODES[State.mode];
@@ -3864,13 +4002,15 @@
       const survRewards = State.mode === 'supervivencia'
         ? `<div class="mission-done surv-rewards">${iconInline('coin')} ${I18n.t('surv_reward_line').replace('{c}', Survival.runCoins).replace('{g}', Survival.runGems).replace('{ch}', Survival.runChests)}</div>`
         : '';
+      const dailyResult = ModeSignals.dailyResultHtml(this.dailyRunResult);
+      const modeResult = ModeSignals.resultHtml();
       $('#over-xp').innerHTML =
         `<div class="xp-line"><span class="xp-gain">+${r.xpGained} XP</span><span class="xp-coins">${iconInline('coin')} <span class="xp-coins-n">+${r.coinsGained || 0}</span></span><span class="xp-rank">${Meta.rank()} · ${I18n.t('lvl')} ${lvl}</span></div>` +
         `<div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>` +
         (r.leveledUp ? `<div class="xp-up">${iconInline('upgrade')} ${I18n.t('lvl')} ${lvl}!</div>` : '') +
         (r.missionDone ? `<div class="mission-done">${iconInline('check')} ${I18n.t('daily_done')} · +150 XP</div>` : '') +
         (r.weeklyDone ? `<div class="mission-done">${iconInline('calendar')} ${I18n.t('weekly_done')} · +400 XP</div>` : '') +
-        survRewards;
+        survRewards + dailyResult + modeResult;
       countUp($('#over-xp .xp-gain'), r.xpGained, 700, '+', ' XP');
       countUp($('#over-xp .xp-coins-n'), r.coinsGained || 0, 700, '+', '');
       $('#over-ach').innerHTML = r.newAch.length
@@ -4111,8 +4251,15 @@
       if (card && st) {
         const dr = Meta.dailyRunInfo();
         const played = (dr.plays || 0) > 0;
+        const medal = Meta.dailyMedal(dr.best || 0);
         card.classList.toggle('done', played);
-        if (played) { st.textContent = I18n.t('daily_done_state').replace('{n}', dr.best); st.removeAttribute('data-i18n'); }
+        card.classList.remove('medal-bronze', 'medal-silver', 'medal-gold');
+        if (played && medal !== 'none') card.classList.add('medal-' + medal);
+        if (played) {
+          const key = medal !== 'none' ? 'daily_done_medal' : 'daily_done_state';
+          st.textContent = I18n.t(key).replace('{n}', dr.best).replace('{m}', ModeSignals.dailyMedalLabel(medal));
+          st.removeAttribute('data-i18n');
+        }
         else { st.textContent = I18n.t('daily_pending'); st.setAttribute('data-i18n', 'daily_pending'); }
       } }
     // Cabecera compacta: perfil (izq) + economía (der), sin tarjeta.
@@ -4134,8 +4281,10 @@
       };
       // Reto del día (tablero seedeado por fecha, igual para todos los jugadores).
       const dr = Meta.dailyRunInfo();
-      const drBest = dr.best > 0 ? `<small class="daily-run-best">${esc(I18n.t('daily_best').replace('{n}', dr.best))}</small>` : '';
-      const daily = `<div class="daily daily-run"><span class="daily-icon">🎯</span><div class="daily-main"><span class="daily-text">${esc(I18n.t('daily_challenge'))}</span>${drBest}</div><button class="btn btn-primary btn-sm" data-daily-run>${esc(I18n.t('daily_play'))}</button></div>`;
+      const medal = Meta.dailyMedal(dr.best || 0);
+      const medalText = medal !== 'none' ? ModeSignals.dailyMedalLabel(medal) + ' · ' : '';
+      const drBest = dr.best > 0 ? `<small class="daily-run-best medal-${medal}">${esc(medalText + I18n.t('daily_best').replace('{n}', dr.best))}</small>` : '';
+      const daily = `<div class="daily daily-run medal-${medal}"><span class="daily-icon">🎯</span><div class="daily-main"><span class="daily-text">${esc(I18n.t('daily_challenge'))}</span>${drBest}</div><button class="btn btn-primary btn-sm" data-daily-run>${esc(I18n.t('daily_play'))}</button></div>`;
       const dm = Meta.dailyMission();
       // Reroll de misión diaria (sumidero de tickets): solo si no está hecha y hay ticket.
       const reroll = (!dm.done && Meta.tickets() > 0)
