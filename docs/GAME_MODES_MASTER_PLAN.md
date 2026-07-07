@@ -381,6 +381,8 @@ Orden pensado para: valor visible temprano, dependencias respetadas, y cero camb
 
 **Trabajo explícitamente NO incluido** (pertenece a otros planes): multijugador/leaderboard online (ROADMAP §8), Fase 4 de audio (plan de engagement — aquí solo se definen sus puntos de enganche), mundo 6 y mecánica `infected` (ROADMAP 3.4/3.10 — encajarían como bioma/ruta nueva tras GM-06), monetización (no existe y no se propone).
 
+> **Post-ejecución (2026-07-07):** con las 4 fases completadas, el cierre de calidad (pendientes QP-*, caza de bugs del flujo nuevo con hallazgos confirmados, y rendimiento móvil medido con plan de corrección) vive en [`QA_PERF_PLAN.md`](./QA_PERF_PLAN.md).
+
 # 12. Riesgos y guardarraíles
 
 | Riesgo | Mitigación |
