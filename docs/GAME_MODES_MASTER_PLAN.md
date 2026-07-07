@@ -369,12 +369,13 @@ Orden pensado para: valor visible temprano, dependencias respetadas, y cero camb
 19. **GM-24** HUD zen + ritmo (🟢) — ✅ v2.3.0: sin Fiebre/combo/multiplicador, score atenuado, ritmo Sereno/Fluido · `selDiff` muerto retirado — ✅.
 
 ### Fase GM-δ — Ritual y variedad a largo plazo
-20. **GM-14** Calendario y racha del reto (🟡).
-21. **GM-12** Ghost personal (🟡).
-22. **GM-15** Mutador del día (🟡) → **GM-22** mutador semanal de Supervivencia (🟢).
-23. **GM-08** Jefes con comportamiento en Aventura (🟡) · **GM-09** registro de expedición (🟢).
-24. **GM-13** Cápsulas de tiempo (🟢) · **GM-23** Jardín zen (🟡) · **GM-04** niveles estrella (🟡).
-25. **GM-20** Marea reemplaza quake (🟢).
+> ✅ **Fase completada el 2026-07-07 (v2.4.0)** salvo GM-04, diferido con justificación (abajo). Detalle en el registro al final.
+20. **GM-14** Calendario y racha del reto (🟡) — ✅ v2.4.0: historial de medallas (60 días), racha con congelación ética (1 + 1/7 días), +1 cofre cada 7 días, calendario de puntos en misiones y racha en home.
+21. **GM-12** Ghost personal (🟡) — ✅ v2.4.0: línea de tiempo del mejor intento (modo y reto de hoy); chip ▲/▼ en el HUD cada segundo.
+22. **GM-15** Mutador del día (🟡) — ✅ v2.4.0: 8 variantes deterministas por fecha → **GM-22** mutador semanal de Supervivencia (🟢) — ✅: hielo/caos/furia/ninguna por semana ISO.
+23. **GM-08** Jefes con comportamiento en Aventura (🟡) — ✅ v2.4.0: ataque de bioma cada 20s con aviso a 3s · **GM-09** registro de expedición (🟢) — ✅: cadena de rutas/reliquias en el resumen.
+24. **GM-13** Cápsulas de tiempo (🟢) — ✅ v2.4.0: 1/partida, momento seedeado, +5s por adyacencia · **GM-23** Jardín zen (🟡) — ✅: flores permanentes, cofre a las 10, skin exclusivo a las 50 · **GM-04** niveles estrella (🟡) — ⏸️ **diferido**: los puzles finitos sin spawns exigen un generador con solvabilidad garantizada (construcción inversa + tests) que merece sesión propia; hacerlo sin él arriesga niveles imposibles, el peor bug de confianza posible. Única tarea del plan pendiente.
+25. **GM-20** Marea reemplaza quake (🟢) — ✅ v2.4.0: amenaza legible con counterplay; el quake queda como tema de la "semana del caos".
 
 **Regla de corte:** cada fase termina con `tools/bump-version.sh`, tests+lint verdes, checklist GM-31 del modo tocado, y actualización de `MIGRATION_SPEC.md` (fórmulas) + este documento (estado). Si hay que recortar, se recorta de δ hacia α, nunca al revés — α y β son la base de percepción y seguridad de todo lo demás.
 
@@ -432,3 +433,19 @@ Orden pensado para: valor visible temprano, dependencias respetadas, y cero camb
 - **GM-24**: Zen con `noFever` (umbral infinito), combo/chip ocultos y score atenuado por CSS; lanzador con ritmo Sereno (`facil`)/Fluido (`normal`) persistido en `cv_zen_diff`. El `selDiff` global muerto queda eliminado (la Aventura usa `normal` explícito).
 - **Simulador**: los bots resuelven `Picker` (primera opción en elecciones, rechazo en ofertas con gasto). Batería v2.3.0: **Clásico, Contrarreloj y Zen idénticos bit a bit** (control ✅ — los cambios no se filtraron fuera de su modo); Aventura baja ~34% en bots skilled/average porque SIEMPRE eligen la ruta exigente — señal de que el trade-off es real (la ruta dura no domina); Supervivencia ±1%.
 - i18n nuevas (ES+EN): 12 claves de bendiciones, 5 de rutas, 11 de reliquias, 6 de continuar, `classic_win_streak`, 5 de ritmo zen, 8 de PreLevel.
+
+### 2026-07-07 — Fase GM-δ implementada (v2.4.0)
+
+- **GM-20**: `Survival.tideSurge()` — marca las 2 filas exteriores 1.2s y las llena; sustituye al quake en el pool base de jefes (`_bossPool()` por id, pre-roll compatible con el telegrafiado GM-18). El quake vuelve solo en la semana del caos.
+- **GM-22**: `Survival.weeklyMut()` — `hash32(lunes ISO) % 4`: hielo (trampas heladas, monedas ×1.15) / caos (quake al pool) / furia (frenesí ×1.3) / ninguna. Toast al empezar; `_mutOverride` para el simulador.
+- **GM-15**: `DailyMut` — `hash32(fecha) % 8` elige el tema del reto (puro/hielo/combos exigentes/variedad/rocas/veloz/cristales/sin pistas); se aplica tras montar el nivel con RNG seedeado (idéntico para todos); nombre en la tarjeta del home y toast al empezar.
+- **GM-14**: `dailyRun.history` (60 días FIFO) + `Meta.dailyStreak()` con congelación ética (1 de regalo +1 por cada 7 días — perder un día pausa, no borra) + cofre cada 7 días de racha (una vez por hito, con re-armado si la racha se reinicia). Calendario de 14 puntos en el panel de misiones y racha `🔥n` en la tarjeta del home y el resultado.
+- **GM-12**: muestreo de score cada 10s en scoreAttack; el mejor intento guarda su línea de tiempo (`modes[].ghost` / `dailyRun.ghost`); chip `#hud-ghost` ▲/▼ contra la muestra del mismo minuto de partida.
+- **GM-13**: tile `timecap` (⏰, +5s al detonar por adyacencia, tope de reloj de siempre), 1 por partida en un segundo seedeado (40–80s).
+- **GM-08**: `Adventure.onTick` — en niveles jefe, ataque de bioma cada 20s con aviso a 3s (nebulosa andanada / rocas / hielo / aceleración / roba-pista / regeneración de cristal con tope 6). El jefe por fin HACE cosas.
+- **GM-09**: `Adventure.log` + `expeditionHtml()` — la cadena capítulo·ruta → reliquias de la run, renderizada en `#over-exped` del resumen (narrativiza la derrota).
+- **GM-23**: `Meta.zen.flowers` — +1 flor por tablero limpio en Zen (visible en banner); 10 flores → +1 cofre; 50 → skin exclusivo «Jardín Zen» (`exclusive: true`, la tienda lo muestra bloqueado, no comprable). *Desviación documentada: el plan proponía regalar un tema comprable a las 10 flores; se cambia por cofre para no interferir con la economía de temas.*
+- **GM-04 diferido**: los niveles estrella (puzles sin spawn) requieren generación con solvabilidad garantizada; sin ella hay riesgo de puzles imposibles. Se pospone a una sesión dedicada (generador por construcción inversa + tests de solvabilidad).
+- **Guardarraíl recalibrado**: 60649 → 52964 (la cápsula desplaza el stream RNG y añade tiempo); la banda ±40% lo absorbió sin fallar — funcionó exactamente como se diseñó.
+- **Simulador**: batería v2.4.0 — Clásico y Zen idénticos bit a bit (control ✅); Contrarreloj +2–11% (cápsula, esperado); limitación documentada: los efectos diferidos por `setTimeout` de los eventos jefe (marea/quake) no se ejecutan dentro del bucle síncrono del sim.
+- i18n nuevas (ES+EN): marea (2), mutador semanal (3), mutador diario (14), racha/calendario (2), cápsula (1), jefe de Aventura (7), expedición (1), jardín (2), `board_excl`.

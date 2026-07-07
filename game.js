@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.3.0';
+  const VERSION = '2.4.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -136,6 +136,7 @@
         blockSpawn() { return Survival.frozen() || Survival.locked(); } },
       aventura:      { name: 'Aventura',     emoji: '🚀', timed: false, penalties: true,  mult: 1.1, accent: '#7a5cff', desc: 'Viaje infinito por biomas con reglas propias, objetivos y mini-jefes. ¿Hasta dónde llegarás?',
         onSetupLevel(ctx) { Adventure.setup(ctx.level); },
+        onTick(dt) { Adventure.onTick(dt); },
         winCheck() { Adventure.refreshGoal(State.level); return Adventure.winCheck(); },
         // El objetivo MANDA: solo en niveles 'clear' se gana vaciando el tablero;
         // en score/survive/boss vaciar NO completa el nivel antes de tiempo.
@@ -392,6 +393,17 @@
         pl_sub: 'Lleva hasta 2 potenciadores (opcional)', pl_play: 'Jugar', pl_play_cost: 'Jugar · {c} monedas',
         pl_skip: 'Sin potenciadores', pl_first: 'Nuevo: puedes llevar potenciadores a los niveles. Se usan tocando su botón en partida.',
         pl_max: 'Máximo {n} potenciadores', pl_no_coins: 'Monedas insuficientes',
+        surv_tide: '¡Marea de figuras!', surv_boss_tide_warn: '¡Marea inminente: despeja los bordes!',
+        survmut_ice: 'Semana del hielo: trampas heladas · monedas ×1.15', survmut_chaos: 'Semana del caos: el terremoto ha vuelto', survmut_frenzy: 'Semana de la furia: frenesí +30%',
+        dmut_ice: 'Reto de hoy: tablero helado', dmut_window: 'Reto de hoy: combos más exigentes', dmut_variety: 'Reto de hoy: más variedad de figuras', dmut_rocks: 'Reto de hoy: campo de rocas', dmut_fast: 'Reto de hoy: ritmo veloz', dmut_crystal: 'Reto de hoy: cristales dobles', dmut_nohints: 'Reto de hoy: sin pistas',
+        dmut_ice_n: 'Hielo', dmut_window_n: 'Combos exigentes', dmut_variety_n: 'Variedad', dmut_rocks_n: 'Rocas', dmut_fast_n: 'Veloz', dmut_crystal_n: 'Cristales', dmut_nohints_n: 'Sin pistas',
+        daily_streak_chest: '¡{n} días de medalla seguidos! +1 cofre', daily_cal_al: 'Calendario de medallas de los últimos 14 días',
+        timecap_hint: 'Cápsula de tiempo: detónala por adyacencia (+5s)',
+        advboss_warn: 'El jefe carga su ataque…',
+        advboss_nebula: '¡Andanada del jefe!', advboss_asteroid: '¡El jefe lanza rocas!', advboss_ice: '¡El jefe congela!', advboss_core: '¡El jefe acelera el núcleo!', advboss_void: '¡El vacío devora una pista!', advboss_crystal: '¡El jefe se regenera!',
+        exped_title: 'Tu expedición',
+        garden_10: '¡10 flores en tu jardín! +1 cofre', garden_50: '¡50 flores! Skin «Jardín Zen» desbloqueado',
+        board_excl: 'Exclusivo',
         pu_row: '¡Fila despejada!', pu_col: '¡Columna despejada!', pu_no_target: 'Sin objetivo', pu_wild_emergency: 'Comodín · despeje de emergencia', pu_wild_icons: 'Comodín · {n} iconos',
         surv_diff_title: 'Supervivencia', surv_diff_sub: 'Elige el ritmo de la partida', surv_start: 'Empezar supervivencia',
         surv_frenzy: 'Frenesí', surv_frenzy_ready: '¡Frenesí activado!', surv_wave_reward: 'Oleada {w} · +{c} monedas',
@@ -523,6 +535,17 @@
         pl_sub: 'Bring up to 2 power-ups (optional)', pl_play: 'Play', pl_play_cost: 'Play · {c} coins',
         pl_skip: 'No power-ups', pl_first: 'New: you can bring power-ups into levels. Tap their button in-game to use them.',
         pl_max: 'Max {n} power-ups', pl_no_coins: 'Not enough coins',
+        surv_tide: 'Icon tide!', surv_boss_tide_warn: 'Tide incoming: clear the edges!',
+        survmut_ice: 'Ice week: frozen traps · coins ×1.15', survmut_chaos: 'Chaos week: the quake is back', survmut_frenzy: 'Fury week: frenzy +30%',
+        dmut_ice: "Today's twist: frozen board", dmut_window: "Today's twist: tighter combos", dmut_variety: "Today's twist: more icon variety", dmut_rocks: "Today's twist: rock field", dmut_fast: "Today's twist: fast pace", dmut_crystal: "Today's twist: double crystals", dmut_nohints: "Today's twist: no hints",
+        dmut_ice_n: 'Ice', dmut_window_n: 'Tight combos', dmut_variety_n: 'Variety', dmut_rocks_n: 'Rocks', dmut_fast_n: 'Fast', dmut_crystal_n: 'Crystals', dmut_nohints_n: 'No hints',
+        daily_streak_chest: '{n} medal days in a row! +1 chest', daily_cal_al: 'Medal calendar for the last 14 days',
+        timecap_hint: 'Time capsule: detonate it by adjacency (+5s)',
+        advboss_warn: 'The boss is charging its attack…',
+        advboss_nebula: 'Boss volley!', advboss_asteroid: 'The boss hurls rocks!', advboss_ice: 'The boss freezes!', advboss_core: 'The boss speeds up the core!', advboss_void: 'The void devours a hint!', advboss_crystal: 'The boss regenerates!',
+        exped_title: 'Your expedition',
+        garden_10: '10 flowers in your garden! +1 chest', garden_50: '50 flowers! "Zen Garden" skin unlocked',
+        board_excl: 'Exclusive',
         pu_row: 'Row cleared!', pu_col: 'Column cleared!', pu_no_target: 'No target', pu_wild_emergency: 'Wildcard · emergency clear', pu_wild_icons: 'Wildcard · {n} icons',
         surv_diff_title: 'Survival', surv_diff_sub: 'Choose the run pace', surv_start: 'Start survival',
         surv_frenzy: 'Frenzy', surv_frenzy_ready: 'Frenzy active!', surv_wave_reward: 'Wave {w} · +{c} coins',
@@ -686,6 +709,9 @@
     },
   };
   const rand = (n) => (RNG.random() * n) | 0;
+  // Hash polinomial de 32 bits (mismo algoritmo que el hashStr interno de Meta):
+  // elección determinista de mutadores diarios/semanales sin servidor (GM-15/22).
+  const hash32 = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0; return Math.abs(h); };
   const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   // Escapado HTML único para TODO texto interpolado en template strings que acaben en
   // innerHTML. Cualquier dato de usuario o texto variable debe pasar por aquí.
@@ -1101,6 +1127,22 @@
         }
       }
       if (timeEl.parentElement) timeEl.parentElement.classList.toggle('urgent', pressure === 2);
+      // Ghost personal (GM-12): ¿vas por delante o por detrás de tu mejor intento?
+      { const gEl = $('#hud-ghost');
+        if (gEl) {
+          let show = false;
+          if (Config.MODES[State.mode].scoreAttack && State.status === 'playing' && State.elapsed >= 10) {
+            const ref = State.isDaily ? Meta.dailyGhost() : Meta.modeGhost(State.mode);
+            if (ref && ref.length) {
+              const gi = Math.min(ref.length - 1, Math.max(0, Math.floor(State.elapsed / 10) - 1));
+              const diff = State.score - ref[gi];
+              gEl.textContent = (diff >= 0 ? '▲ +' : '▼ −') + Math.abs(diff);
+              gEl.classList.toggle('up', diff >= 0);
+              show = true;
+            }
+          }
+          gEl.hidden = !show;
+        } }
       // Barra de ocupación = medidor de peligro (cuanto más llena, peor)
       const occ = Engine.occupation();
       const fill = $('#hud-progress-fill');
@@ -1851,14 +1893,70 @@
       recordDailyRun(score) {
         const d = today();
         const fresh = m.dailyRun.date !== d;
-        if (fresh) m.dailyRun = { date: d, best: 0, plays: 0 };
+        // El historial y el ghost sobreviven al cambio de día (GM-14/12).
+        const hist = m.dailyRun.history || {};
+        const rewarded = m.dailyRun.streakRewarded || 0;
+        if (fresh) m.dailyRun = { date: d, best: 0, plays: 0, history: hist, streakRewarded: rewarded };
+        if (!m.dailyRun.history) m.dailyRun.history = hist;
         m.dailyRun.plays++;
         const newBest = score > m.dailyRun.best;
         if (newBest) m.dailyRun.best = score | 0;
         if (fresh) m.gems = (m.gems || 0) + this.DAILY_FIRST_GEMS; // premio por el primer intento del día
+        // Calendario de medallas (GM-14): la mejor medalla de cada día, tope 60 días FIFO.
+        m.dailyRun.history[d] = this.dailyMedal(m.dailyRun.best);
+        const keys = Object.keys(m.dailyRun.history).sort();
+        while (keys.length > 60) delete m.dailyRun.history[keys.shift()];
+        // Racha de medallas: hito cada 7 días seguidos → +1 cofre (una sola vez por hito).
+        const streak = this.dailyStreak();
+        let streakChest = false;
+        if (streak < (m.dailyRun.streakRewarded || 0)) m.dailyRun.streakRewarded = 0; // racha nueva: re-armar hitos
+        if (streak > 0 && streak % 7 === 0 && (m.dailyRun.streakRewarded || 0) < streak) {
+          m.dailyRun.streakRewarded = streak;
+          m.chests = (m.chests || 0) + 1;
+          streakChest = true;
+        }
         save();
-        return { firstToday: fresh, newBest, best: m.dailyRun.best, medal: this.dailyMedal(score), bestMedal: this.dailyMedal(m.dailyRun.best) };
+        return { firstToday: fresh, newBest, best: m.dailyRun.best, medal: this.dailyMedal(score), bestMedal: this.dailyMedal(m.dailyRun.best), streak, streakChest };
       },
+      // Racha de medallas del reto (GM-14): días consecutivos con medalla ≥ bronce.
+      // ÉTICA: 1 "congelación" de regalo + 1 extra por cada 7 días de racha — un día
+      // perdido no borra la racha (se pausa); dos seguidos sin margen, sí.
+      dailyStreak() {
+        const h = (m.dailyRun && m.dailyRun.history) || {};
+        const key = (dt) => dt.toISOString().slice(0, 10);
+        let day = new Date();
+        const todayMedal = h[key(day)];
+        if (!todayMedal || todayMedal === 'none') day = new Date(day.getTime() - 86400000);
+        let streak = 0, freezes = 1;
+        for (let i = 0; i < 90; i++) {
+          const med = h[key(day)];
+          if (med && med !== 'none') { streak++; if (streak % 7 === 0) freezes++; }
+          else if (freezes > 0) freezes--;
+          else break;
+          day = new Date(day.getTime() - 86400000);
+        }
+        return streak;
+      },
+      // Últimos `n` días como [{date, medal}] para el calendario compacto (GM-14).
+      dailyCalendar(n) {
+        const h = (m.dailyRun && m.dailyRun.history) || {};
+        const out = [];
+        for (let i = (n || 14) - 1; i >= 0; i--) {
+          const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+          out.push({ date: d, medal: h[d] || 'none' });
+        }
+        return out;
+      },
+      // ---- Ghost personal (GM-12): línea de tiempo de score del mejor intento. ----
+      modeGhost: (mode) => (m.modes[mode] && m.modes[mode].ghost) || null,
+      setModeGhost(mode, samples) { const md = m.modes[mode] || (m.modes[mode] = { best: 0, plays: 0 }); md.ghost = (samples || []).slice(0, 60); save(); },
+      dailyGhost() { return (m.dailyRun && m.dailyRun.date === today() && m.dailyRun.ghost) || null; },
+      setDailyGhost(samples) { m.dailyRun.ghost = (samples || []).slice(0, 60); save(); },
+      // ---- Jardín zen (GM-23): colección sin fallo posible — cada tablero limpio
+      // en Zen suma una flor; los hitos regalan (cofre a las 10, skin a las 50). ----
+      zenFlowers: () => (m.zen && m.zen.flowers) || 0,
+      addZenFlower() { if (!m.zen) m.zen = { flowers: 0 }; m.zen.flowers++; save(); return m.zen.flowers; },
+      grantBoard(id) { if (!m.boards.owned[id]) { m.boards.owned[id] = 1; save(); return true; } return false; },
       // ---- Reroll de la misión diaria: sumidero de tickets (1 por cambio). ----
       rerollDaily() {
         const cur = dailyMission(); // asegura que exista la misión de hoy
@@ -2120,9 +2218,10 @@
       magicbox: { glyph: '🎁',  trigger: 'magicbox', cls: 'tile-magicbox', desc: 'Caja mágica: libera figuras cercanas' },
       bomb:      { glyph: '💣',  trigger: 'bomb',      cls: 'tile-bomb',      desc: 'Bomba oculta: detona figuras cercanas' },
       slowdown:  { glyph: '⏳',  trigger: 'slowdown',  cls: 'tile-slowdown',  desc: 'Ralentizador: reduce la velocidad de aparición' },
+      timecap:   { glyph: '⏰',  trigger: 'timecap',   cls: 'tile-timecap',   desc: 'Cápsula: +5s al detonarla por adyacencia' },
     },
     // Lista de clases CSS de casilla (para limpiar/aplicar en Render.setTile).
-    CLASSES: ['tile-rock', 'tile-locked', 'tile-frozen', 'tile-crystal', 'tile-chains', 'tile-web', 'tile-barrier', 'tile-mud', 'tile-bonus', 'tile-portal', 'tile-magicbox', 'tile-bomb', 'tile-slowdown'],
+    CLASSES: ['tile-rock', 'tile-locked', 'tile-frozen', 'tile-crystal', 'tile-chains', 'tile-web', 'tile-barrier', 'tile-mud', 'tile-bonus', 'tile-portal', 'tile-magicbox', 'tile-bomb', 'tile-slowdown', 'tile-timecap'],
     make(type) { const d = this.DEFS[type]; return d ? Object.assign({ type }, d) : null; },
   };
 
@@ -2190,6 +2289,8 @@
   const Boards = {
     DEFS: {
       classic:   { name: 'Tablero Clásico',    cost: 0,    sw: 'linear-gradient(135deg,#1b2a52,#2f6bff)', chars: ['Marco espacial azul', 'Casillas limpias y legibles'] },
+      // Exclusivo del Jardín Zen (GM-23): se gana con 50 flores, no se compra.
+      jardin:    { name: 'Jardín Zen',        cost: 0, exclusive: true, sw: 'linear-gradient(135deg,#1d3a24,#9be15d 60%,#ffb7d5)', chars: ['Se gana con 50 flores zen', 'Pétalos y musgo en calma'] },
       madera:    { name: 'Tablero de Madera',  cost: 500,  sw: 'linear-gradient(135deg,#5a3a1e,#a86a36)', chars: ['Vetas cálidas de madera', 'Marco artesanal'] },
       hielo:     { name: 'Tablero de Hielo',   cost: 800,  sw: 'linear-gradient(135deg,#2a6a9e,#9fe6ff)', chars: ['Cristal frío y brillo polar', 'Casillas translúcidas'] },
       lava:      { name: 'Tablero de Lava',    cost: 1200, sw: 'linear-gradient(135deg,#7a1e10,#ff5b2e)', chars: ['Roca oscura y magma', 'Borde incandescente'] },
@@ -2200,7 +2301,7 @@
       bosque:    { name: 'Tablero del Bosque', cost: 1800, sw: 'linear-gradient(135deg,#1e4a2a,#6bd36b)', chars: ['Textura de hojas', 'Tonos naturales'] },
       cosmico:   { name: 'Tablero Cósmico',    cost: 2200, sw: 'linear-gradient(135deg,#2a1a5e,#a06bff)', chars: ['Nebulosa profunda', 'Estrellas en el marco'] },
     },
-    order: ['classic', 'madera', 'hielo', 'lava', 'cristal', 'magico', 'futurista', 'dorado', 'bosque', 'cosmico'],
+    order: ['classic', 'madera', 'hielo', 'lava', 'cristal', 'magico', 'futurista', 'dorado', 'bosque', 'cosmico', 'jardin'],
     apply(id) {
       const current = id || Meta.equippedBoard();
       ['#screen-game', '.board-wrap', '#board'].forEach((sel) => {
@@ -2248,8 +2349,8 @@
       { id: 'hint', icon: '🔍' },    // +1 pista por nivel
       { id: 'shield', icon: '🛡️' },  // 1ª derrota del capítulo: despeje 30% en vez de fin
     ],
-    route: null, relics: [], shieldUsed: false, _routeChapter: -1,
-    resetRun() { this.route = null; this.relics = []; this.shieldUsed = false; this._routeChapter = -1; },
+    route: null, relics: [], shieldUsed: false, _routeChapter: -1, log: [],
+    resetRun() { this.route = null; this.relics = []; this.shieldUsed = false; this._routeChapter = -1; this.log = []; this.bossAcc = 0; this._bossWarned = false; },
     hasRelic(id) { return this.relics.indexOf(id) !== -1; },
     _applyRoute() {
       if (this.route === 'calm') State.spawnRate = Math.round(State.spawnRate * 1.15);
@@ -2275,6 +2376,7 @@
         onPick: (id) => {
           this.route = id;
           this._applyRoute();
+          this.log.push({ t: 'ch', n: ch + 1, biome: biome.id, route: id }); // registro (GM-09)
           Toasts.show(I18n.t('route_' + id), 'good', 1600, '🧭');
           this.banner(level);
         },
@@ -2294,16 +2396,60 @@
           if (this.relics.length >= 3) this.relics.shift(); // se sustituye la más antigua
           this.relics.push(id);
           if (id === 'combo') State.comboWindow += 400; // efecto inmediato; setup lo re-deriva por nivel
+          this.log.push({ t: 'relic', id }); // registro (GM-09)
           Toasts.show(I18n.t('relic_' + id), 'good', 1900, '🏺');
           Sound.record(); Haptics.milestone();
           if (then) then();
         },
       });
     },
+    // Registro de expedición (GM-09): la run como historia contable en el resumen.
+    expeditionHtml() {
+      if (!this.log.length) return '';
+      const parts = this.log.map((e) => {
+        if (e.t === 'ch') {
+          const bi = this.BIOMES.find((b) => b.id === e.biome) || {};
+          return `${bi.glyph || ''} C${e.n} · ${esc(I18n.t('route_' + e.route))}`;
+        }
+        const relic = this.RELICS.find((r) => r.id === e.id) || {};
+        return `${relic.icon || '🏺'} ${esc(I18n.t('relic_' + e.id))}`;
+      });
+      return `<b>${esc(I18n.t('exped_title'))}</b><span>${parts.join(' → ')}</span>`;
+    },
+    // Jefe con comportamiento (GM-08): en niveles jefe, cada 20s el bioma ACTÚA
+    // (telegrafiado 3s antes). El jefe deja de ser "más cristales": hace cosas.
+    BOSS_MS: 20000, bossAcc: 0, _bossWarned: false,
+    onTick(dt) {
+      if (this.objective !== 'boss' || State.status !== 'playing') return;
+      this.bossAcc += dt;
+      if (!this._bossWarned && this.bossAcc >= this.BOSS_MS - 3000) {
+        this._bossWarned = true;
+        Toasts.show(I18n.t('advboss_warn'), 'warn', 1900, '⚠️');
+        Render.boardEvent('surv-wave-soon', 620);
+        Sound.danger();
+      }
+      if (this.bossAcc >= this.BOSS_MS) { this.bossAcc -= this.BOSS_MS; this._bossWarned = false; this.bossAction(); }
+    },
+    _placeK(type, k) { const e = this._emptyIdx(); for (let x = 0; x < k && e.length; x++) State.tiles[e.splice(rand(e.length), 1)[0]] = Tiles.make(type); },
+    _freezeK(k) { const f = this._filledIdx(); for (let x = 0; x < k && f.length; x++) State.tiles[f.splice(rand(f.length), 1)[0]] = Tiles.make('frozen'); },
+    bossAction() {
+      const b = this.biomeOf(State.level).id;
+      if (b === 'asteroid') this._placeK('rock', 2);
+      else if (b === 'ice') this._freezeK(2);
+      else if (b === 'core') State.spawnRate = Math.max(300, Math.round(State.spawnRate * 0.9));
+      else if (b === 'void') { State.hintsLeft = Math.max(0, State.hintsLeft - 1); Render.hud(); }
+      else if (b === 'crystal') { if (this.crystalsLeft() < 6) { this._placeCrystals(1); this.refreshGoal(); } }
+      else { for (let k = 0; k < 3; k++) Engine.spawnOne(); } // nebulosa: andanada
+      Render.syncAll(); Render.boardShake();
+      Toasts.show(I18n.t('advboss_' + b), 'bad', 1800, this.biomeOf(State.level).glyph);
+      Sound.quake(); Haptics.quake();
+      if (State.status === 'playing') Game.evaluate();
+    },
 
     setup(level) {
       const biome = this.biomeOf(level), lic = this.licOf(level), chapter = this.chapterOf(level), boss = this.isBoss(level);
       this.levelScore0 = State.score; this.levelStart = State.elapsed;
+      this.bossAcc = 0; this._bossWarned = false; // reloj del jefe activo (GM-08)
       // Frontera de capítulo: la ruta anterior caduca (se vuelve a elegir) y el
       // escudo de reliquia se recarga (es "1ª derrota DEL CAPÍTULO", GM-06/07).
       if (lic === 0 && chapter !== this._routeChapter) { this.route = null; State.tempMult = 1; this.shieldUsed = false; }
@@ -2428,6 +2574,8 @@
       this.freezeUntil = 0; this.x2Until = 0; this.frenzyUntil = 0; this.lockUntil = 0; this.runCoins = 0; this.runGems = 0; this.runChests = 0; this.newWaveRecord = false; this.revives = 0; State.tempMult = 1; this._r = { waveWarned: false, bossWarned: false };
       this.armed = null; this._preview = null; document.body.classList.remove('aiming');
       this.slowWaves = 0; this._boonAt = 0;
+      this.mut = this.weeklyMut(); // mutador semanal (GM-22)
+      if (this.mut.id !== 'none') Toasts.show(I18n.t('survmut_' + this.mut.id), 'info', 2400, '📅');
       this._planBoss();
       this._setFrenzyClass();
       // Progresión de iconos desde la oleada 1: la puntuación base usa State.level (= dlevel).
@@ -2447,9 +2595,32 @@
     // ya el tipo (pre-roll) para poder avisar de forma específica antes de que llegue.
     // La anticipación es la mitad del valor emocional del jefe; sin aviso solo hay susto.
     bossNext: false, _nextBoss: null,
+    // Pool de eventos jefe (GM-20): la Marea sustituye al terremoto — amenaza
+    // legible con counterplay (despejar las filas marcadas) en vez de azar
+    // bidireccional. El quake solo vuelve en la "semana del caos" (GM-22).
+    _bossPool() {
+      const pool = ['meteor', 'tide', 'frost'];
+      if (this.weeklyMut().id === 'chaos') pool.push('quake');
+      return pool;
+    },
     _planBoss() {
       this.bossNext = (this.wave + 1) % this.tune().bossEvery === 0;
-      this._nextBoss = this.bossNext ? rand(3) : null;
+      const pool = this._bossPool();
+      this._nextBoss = this.bossNext ? pool[rand(pool.length)] : null;
+    },
+    // Mutador semanal (GM-22): hashStr(semana ISO) elige un tema determinista sin
+    // servidor — cada semana el modo tiene una razón nueva de visita.
+    WEEKLY_MUTS: [
+      { id: 'none' },
+      { id: 'ice', coinMult: 1.15 },   // trampas siempre heladas · monedas ×1.15
+      { id: 'chaos' },                 // el terremoto vuelve al pool de jefes
+      { id: 'frenzy', frenzyDur: 1.3 },// frenesí +30% de duración
+    ],
+    _mutOverride: null,                // el simulador fija 'none' (reproducibilidad)
+    _weekKey() { const d = new Date(); const day = (d.getDay() + 6) % 7; return new Date(d - day * 86400000).toISOString().slice(0, 10); },
+    weeklyMut() {
+      if (this._mutOverride) return this.WEEKLY_MUTS.find((x) => x.id === this._mutOverride) || this.WEEKLY_MUTS[0];
+      return this.WEEKLY_MUTS[hash32('survmut:' + this._weekKey()) % this.WEEKLY_MUTS.length];
     },
     // Bendiciones post-jefe (GM-17): sobrevivir a un evento jefe abre una elección
     // de 1 entre 3 mejoras. El jefe pasa de molestia aleatoria a ciclo miedo→codicia,
@@ -2461,7 +2632,7 @@
       { id: 'slow', icon: '🐌' },     // spawn ×1.15 más lento 2 oleadas
       { id: 'frenzy', icon: '🔥' },   // frenesí instantáneo
     ],
-    slowWaves: 0, _boonAt: 0,
+    slowWaves: 0, _boonAt: 0, mut: { id: 'none' },
     spawnFactor() { return this.slowWaves > 0 ? 1.15 : 1; },
     offerBoons() {
       const pool = this.BOONS.filter((b) => b.id !== 'life' || this.lives < this.MAX_LIVES + 1);
@@ -2508,7 +2679,7 @@
     },
     activateFrenzy() {
       this.frenzy = 0;
-      this.frenzyUntil = performance.now() + 7200 + this.frenzyTier() * 900;
+      this.frenzyUntil = performance.now() + (7200 + this.frenzyTier() * 900) * (this.mut.frenzyDur || 1);
       this._syncMult(); this._setFrenzyClass(); this._syncIntensity();
       for (let k = 0; k < 2 + this.frenzyTier(); k++) Engine.spawnOne();
       Render.syncAll(); Render.fever(true); Render.flash(); FX.confetti(36);
@@ -2517,7 +2688,7 @@
     },
     _waveReward(clearedWave) {
       if (clearedWave <= 0) return;
-      const coins = Math.max(3, Math.round((4 + clearedWave * 1.45) * this.tune().coinMult));
+      const coins = Math.max(3, Math.round((4 + clearedWave * 1.45) * this.tune().coinMult * (this.mut.coinMult || 1)));
       Meta.addCoins(coins); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
       Toasts.show(I18n.t('surv_wave_reward').replace('{w}', clearedWave).replace('{c}', coins), 'good', 1700, 'coin');
       if (clearedWave % 5 === 0) {
@@ -2588,7 +2759,8 @@
       for (let k = 0; k < n && e.length; k++) {
         const idx = e.splice(rand(e.length), 1)[0];
         // Las rocas (ahora ROMPIBLES, con hits) bajan de proporción a ~45% y respetan el tope.
-        if (rocks < this.ROCK_CAP && RNG.random() < 0.45) {
+        // Semana del hielo (GM-22): todas las trampas son heladas.
+        if (this.mut.id !== 'ice' && rocks < this.ROCK_CAP && RNG.random() < 0.45) {
           const t = Tiles.make('rock'); t.hits = this.ROCK_HITS; State.tiles[idx] = t; rocks++;
         } else { State.tiles[idx] = Tiles.make('frozen'); State.board[idx] = State.pool[rand(State.pool.length)]; State.iconCount++; }
       }
@@ -2612,11 +2784,13 @@
       // (guardar un freeze, despejar zona) y convierte el susto en tensión anticipada.
       if (this.bossNext && !this._r.bossWarned && this.WAVE_MS - this.waveAcc <= 3000) {
         this._r.bossWarned = true;
-        const warn = [
-          ['surv_boss_meteor_warn', 'v2:meteor'],
-          ['surv_boss_quake_warn', 'teleporter'],
-          ['surv_boss_frost_warn', 'v2:snowflake'],
-        ][this._nextBoss != null ? this._nextBoss : 0];
+        const WARNS = {
+          meteor: ['surv_boss_meteor_warn', 'v2:meteor'],
+          tide: ['surv_boss_tide_warn', '🌊'],
+          quake: ['surv_boss_quake_warn', 'teleporter'],
+          frost: ['surv_boss_frost_warn', 'v2:snowflake'],
+        };
+        const warn = WARNS[this._nextBoss] || WARNS.meteor;
         Toasts.show(I18n.t(warn[0]), 'bad', 2400, warn[1]);
         announce(I18n.t(warn[0]));
         Render.boardEvent('surv-wave-soon', 700);
@@ -2664,14 +2838,38 @@
     },
     bossEvent() {
       // Usa el evento pre-decidido por _planBoss (para que el aviso previo coincida).
-      const event = this._nextBoss != null ? this._nextBoss : rand(3);
+      const pool = this._bossPool();
+      const ev = this._nextBoss != null ? this._nextBoss : pool[rand(pool.length)];
       this._nextBoss = null;
-      if (event === 0) this.meteorRain();
-      else if (event === 1) this.quake();
+      if (ev === 'meteor') this.meteorRain();
+      else if (ev === 'tide') this.tideSurge();
+      else if (ev === 'quake') this.quake();
       else this.frostSurge();
       Haptics.milestone();
       // Sobrevivir al jefe premia con una elección (GM-17), tras asentarse el evento.
       this._boonAt = performance.now() + 1700;
+    },
+    // Marea (GM-20): marca las 2 filas exteriores y 1.2s después las llena de
+    // iconos. Amenaza legible con counterplay: despeja esas zonas antes.
+    tideSurge() {
+      this._lock(900, 'surv-rain');
+      const size = State.size, cells = [];
+      [0, size - 1].forEach((r) => { for (let c = 0; c < size; c++) cells.push(r * size + c); });
+      cells.forEach((j) => Render.cellPulse(j, 'tide-warn', 1200));
+      Toasts.show(I18n.t('surv_tide'), 'bad', 1800, '🌊');
+      Sound.rain();
+      setTimeout(() => {
+        if (State.status !== 'playing') return;
+        let filled = 0;
+        cells.forEach((j) => {
+          if (State.board[j] === null && !State.tiles[j]) {
+            State.board[j] = State.pool[rand(State.pool.length)];
+            State.iconCount++; filled++;
+            Render.syncCell(j); Render.spawnAnim(j);
+          }
+        });
+        if (filled) { Render.hudSoon(); if (State.status === 'playing') Game.evaluate(); }
+      }, 1200);
     },
     meteorRain() {
       this._lock(900, 'surv-rain');
@@ -3243,7 +3441,10 @@
         return I18n.t('mode_note_aventura').replace('{m}', mod);
       }
       if (mode === 'contrarreloj') return State.isDaily ? I18n.t('mode_note_daily') : I18n.t('mode_note_contrarreloj');
-      if (mode === 'zen') return I18n.t('mode_note_zen');
+      if (mode === 'zen') {
+        const fl = Meta.zenFlowers();
+        return I18n.t('mode_note_zen') + (fl > 0 ? ' · 🌸 ' + fl : '');
+      }
       return '';
     },
     noteHtml(mode) {
@@ -3466,6 +3667,36 @@
     },
   };
 
+  /* ===================== DailyMut (mutador del Reto del día, GM-15) =====================
+   * La fecha elige (hash determinista, sin servidor) 1 de 8 variantes del tablero
+   * diario: cada día tiene tema, conversación y screenshot distintos, y el reto
+   * sigue siendo idéntico para todos. Se aplican tras montar el nivel (consumen
+   * RNG seedeado ⇒ mismas posiciones para todo el mundo). Las medallas no cambian:
+   * unos días son más duros que otros, como un crucigrama.
+   */
+  const DailyMut = {
+    LIST: ['pure', 'ice', 'window', 'variety', 'rocks', 'fast', 'crystal', 'nohints'],
+    pick(dateStr) { return this.LIST[hash32('mut:' + dateStr) % this.LIST.length]; },
+    apply(id) {
+      if (id === 'ice') this._onFilled('frozen', 4);
+      else if (id === 'window') State.comboWindow = Math.max(1500, State.comboWindow - 500);
+      else if (id === 'variety') State.pool = Engine.poolForLevel(7); // ventana de 6 iconos
+      else if (id === 'rocks') this._onEmpty('rock', 3);
+      else if (id === 'fast') State.mutFast = true; // doSpawn acelera la curva un 10%
+      else if (id === 'crystal') this._onFilled('crystal', 2);
+      else if (id === 'nohints') { State.hintsLeft = 0; Render.hud(); }
+      if (id !== 'pure') Render.syncAll();
+    },
+    _onEmpty(type, k) {
+      const e = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) e.push(i);
+      for (let x = 0; x < k && e.length; x++) State.tiles[e.splice(rand(e.length), 1)[0]] = Tiles.make(type);
+    },
+    _onFilled(type, k) {
+      const f = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) f.push(i);
+      for (let x = 0; x < k && f.length; x++) State.tiles[f.splice(rand(f.length), 1)[0]] = Tiles.make(type);
+    },
+  };
+
   /* ===================== PWA (instalable + offline + actualización) ===================== */
   const PWA = {
     deferredPrompt: null,
@@ -3674,6 +3905,12 @@
           }
           // Aventura: revisar objetivos por tiempo (sobrevivir) cada segundo.
           if (State.mode === 'aventura' && State.status === 'playing') Game.evaluate();
+          if (Config.MODES[State.mode].scoreAttack && State.status === 'playing') {
+            Game.maybeTimecap(); // cápsula de tiempo (GM-13)
+            // Ghost personal (GM-12): muestra de score cada 10s de partida.
+            const gi = Math.floor(State.elapsed / 10);
+            while (gi > 0 && State.ghostSamples.length < gi) State.ghostSamples.push(State.score);
+          }
           Render.hud();
         }
         L.spawnAcc += dt;
@@ -3761,6 +3998,8 @@
       State.hintReadyAt = 0;
       // Contrarreloj (score attack): reloj inicial fijo; se extiende con tope al jugar.
       if (m.timed) State.timeLeft = Config.TIMED_START;
+      // Cápsula de tiempo (GM-13): 1 por partida, en un momento seedeado (40-80s).
+      if (m.scoreAttack) { State.capAt = 40 + rand(40); State.capPlaced = false; }
       // Tablero fresco con la variedad de iconos del nivel actual
       State.board = new Array(State.size * State.size).fill(null);
       State.tiles = new Array(State.size * State.size).fill(null);
@@ -3803,6 +4042,7 @@
       State.fever = false; State.feverEver = false; State.perfectEver = false; State.recordHit = false;
       State.timePressure = 0;
       State.minIcons = 99; State.bestPlay = null; State.spawnHoldUntil = 0;
+      State.mutFast = false; State.ghostSamples = []; // mutador diario (GM-15) · ghost (GM-12)
       State.isDaily = false; // startDaily() lo activa tras llamar aquí
       State.status = 'playing'; this.ended = false; this.dailyRunResult = null; this.classicMastery = null; this._nearMiss = null;
       ModeSignals.apply(mode);
@@ -3851,8 +4091,12 @@
       this.start('contrarreloj', 'normal', undefined, 'daily:' + d);
       State.isDaily = true;
       ModeSignals.markDaily(true);
+      // Mutador del día (GM-15): mismo tema para todos, elegido por la fecha.
+      const mut = DailyMut.pick(d);
+      DailyMut.apply(mut);
       this.showGoalBanner();
       Toasts.show(I18n.t('daily_challenge'), 'info', 1800, '🎯');
+      if (mut !== 'pure') Toasts.show(I18n.t('dmut_' + mut), 'warn', 2800, '🎲');
     },
 
     // Reanuda la partida guardada por RunSave (si existe). Devuelve true si lo hizo.
@@ -4199,6 +4443,13 @@
         Render.popup(i, '⏳ −Vel', 'var(--accent-2)'); Render.bump($('#hud-speed'));
         Sound.booster('freeze'); Haptics.milestone();
         Toasts.show('⏳ ¡Ralentizado!', 'good', 1200, 'v2:hourglass');
+      } else if (eff === 'timecap') {
+        // Cápsula de tiempo (GM-13, Contrarreloj): +5s con el tope de reloj de siempre.
+        const before = State.timeLeft;
+        State.timeLeft = Math.min(Config.TIMED_CAP, State.timeLeft + 5);
+        const got = Math.round(State.timeLeft - before);
+        Render.popup(i, got > 0 ? `+${got}s` : '⏱️', 'var(--time)'); Render.bump($('#hud-time'));
+        Sound.milestone(); Haptics.milestone();
       }
       Render.setTile(i); Render.syncCell(i); Render.hud();
       if (!opts.defer) this.evaluate();
@@ -4252,8 +4503,9 @@
       if (m.scoreAttack) {
         // Contrarreloj: presión CRECIENTE con el tiempo => la partida es finita
         // aunque ganes tiempo (los spawns acaban superando al jugador).
+        // `mutFast` = mutador diario "veloz" (GM-15): toda la curva un 10% más rápida.
         const d = Config.DIFFICULTY[State.diff];
-        State.spawnRate = clamp(Math.round(d.spawnStart * Math.pow(0.92, State.elapsed / 10)), 300, d.spawnStart);
+        State.spawnRate = clamp(Math.round(d.spawnStart * (State.mutFast ? 0.9 : 1) * Math.pow(0.92, State.elapsed / 10)), 300, d.spawnStart);
       } else {
         // Aceleración progresiva suave dentro del nivel
         State.spawnRate = Math.max(Config.DIFFICULTY[State.diff].spawnMin, State.spawnRate - 3);
@@ -4270,6 +4522,19 @@
           announce(I18n.t('no_moves_wait'));
         }
       }
+    },
+
+    // Cápsula de tiempo (GM-13): coloca el pickup ⏰ cuando llega su momento seedeado.
+    maybeTimecap() {
+      if (State.capPlaced || State.elapsed < State.capAt) return;
+      const e = [];
+      for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) e.push(i);
+      if (!e.length) return; // sin hueco: reintenta el próximo segundo
+      State.capPlaced = true;
+      const idx = e[rand(e.length)];
+      State.tiles[idx] = Tiles.make('timecap');
+      Render.setTile(idx); Render.syncCell(idx); Render.cellPulse(idx, 'slowdown-placed', 700);
+      Toasts.show(I18n.t('timecap_hint'), 'info', 1800, '⏰');
     },
 
     // Derrota real por tablero lleno (Clásico/Aventura), con el encuadre near-miss
@@ -4383,6 +4648,11 @@
       if (State.mode === 'zen') {
         State.hintsLeft = Math.min(9, State.hintsLeft + 1);
         extra.push('+1 pista');
+        // Jardín zen (GM-23): cada tablero limpio hace crecer una flor (para siempre).
+        const fl = Meta.addZenFlower();
+        extra.push('🌸 ' + fl);
+        if (fl === 10) { Meta.addChest(1); Toasts.show(I18n.t('garden_10'), 'good', 2800, 'chest'); Econ.refresh(); }
+        if (fl === 50 && Meta.grantBoard('jardin')) { Toasts.show(I18n.t('garden_50'), 'good', 3400, '🌸'); Sound.record(); FX.confetti(90); }
       }
 
       const msg = `Tablero limpio · +${points} · +${coins} ${I18n.t('coins')}${extra.length ? ' · ' + extra.join(' · ') : ''}`;
@@ -4599,6 +4869,13 @@
         if (r.firstToday) Toasts.show(I18n.t('daily_first_reward'), 'good', 2400, '💎');
         else if (r.newBest) Toasts.show(I18n.t('daily_new_best').replace('{n}', r.best), 'good', 2200, '🎯');
         if (r.medal !== 'none') Toasts.show(I18n.t('daily_medal_result').replace('{m}', ModeSignals.dailyMedalLabel(r.medal)), 'good', 2200, 'medal');
+        if (r.streakChest) { Toasts.show(I18n.t('daily_streak_chest').replace('{n}', r.streak), 'good', 2800, 'chest'); Sound.record(); FX.confetti(70); }
+        // Ghost del día (GM-12): si es la mejor marca de hoy, guarda su línea de tiempo.
+        if (r.newBest) { State.ghostSamples.push(State.score); Meta.setDailyGhost(State.ghostSamples); }
+      } else if (Config.MODES[State.mode].scoreAttack && State.score > Meta.modeBest(State.mode)) {
+        // Ghost de Contrarreloj libre (GM-12): línea de tiempo del récord del modo.
+        State.ghostSamples.push(State.score);
+        Meta.setModeGhost(State.mode, State.ghostSamples);
       }
       if (State.mode === 'clasico') { this.classicMastery = Meta.recordClassicPerfect(false); Meta.recordClassicWin(false); }
       this.endGame();
@@ -4696,6 +4973,11 @@
       countUp($('#over-xp .xp-coins-n'), r.coinsGained || 0, 700, '+', '');
       $('#over-ach').innerHTML = r.newAch.length
         ? '<div class="ach-new">' + iconInline('medal') + ' ' + r.newAch.map(a => a.name).join(' · ') + '</div>' : '';
+      // Registro de expedición (GM-09): la run de Aventura como historia contable.
+      { const ex = $('#over-exped'); if (ex) {
+        const html = State.mode === 'aventura' ? Adventure.expeditionHtml() : '';
+        ex.hidden = !html; ex.innerHTML = html;
+      } }
       { const nx = $('#over-next'); if (nx) nx.innerHTML = NextActions.html(r); }
       if (r.leveledUp) { setTimeout(() => { Sound.record(); FX.confetti(60); }, 350); }
       if (r.newAch.length) { setTimeout(() => { Sound.milestone(); Toasts.show(I18n.t('ach_unlocked').replace('{n}', r.newAch[0].name), 'good', 2400); }, 600); }
@@ -4952,12 +5234,17 @@
         card.classList.toggle('done', played);
         card.classList.remove('medal-bronze', 'medal-silver', 'medal-gold');
         if (played && medal !== 'none') card.classList.add('medal-' + medal);
+        // Racha de medallas (GM-14) y mutador del día (GM-15) en la tarjeta.
+        const streak = Meta.dailyStreak();
+        const streakTxt = streak > 0 ? ' · 🔥' + streak : '';
+        const mut = DailyMut.pick(new Date().toISOString().slice(0, 10));
+        const mutTxt = mut !== 'pure' ? ' · 🎲 ' + I18n.t('dmut_' + mut + '_n') : '';
         if (played) {
           const key = medal !== 'none' ? 'daily_done_medal' : 'daily_done_state';
-          st.textContent = I18n.t(key).replace('{n}', dr.best).replace('{m}', ModeSignals.dailyMedalLabel(medal));
+          st.textContent = I18n.t(key).replace('{n}', dr.best).replace('{m}', ModeSignals.dailyMedalLabel(medal)) + streakTxt;
           st.removeAttribute('data-i18n');
         }
-        else { st.textContent = I18n.t('daily_pending'); st.setAttribute('data-i18n', 'daily_pending'); }
+        else { st.textContent = I18n.t('daily_pending') + mutTxt + streakTxt; st.removeAttribute('data-i18n'); }
       } }
     // Cabecera compacta: perfil (izq) + economía (der), sin tarjeta.
     const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
@@ -4981,7 +5268,11 @@
       const medal = Meta.dailyMedal(dr.best || 0);
       const medalText = medal !== 'none' ? ModeSignals.dailyMedalLabel(medal) + ' · ' : '';
       const drBest = dr.best > 0 ? `<small class="daily-run-best medal-${medal}">${esc(medalText + I18n.t('daily_best').replace('{n}', dr.best))}</small>` : '';
-      const daily = `<div class="daily daily-run medal-${medal}"><span class="daily-icon">🎯</span><div class="daily-main"><span class="daily-text">${esc(I18n.t('daily_challenge'))}</span>${drBest}</div><button class="btn btn-primary btn-sm" data-daily-run>${esc(I18n.t('daily_play'))}</button></div>`;
+      // Calendario compacto de medallas (GM-14): 14 días + racha con congelación ética.
+      const streak = Meta.dailyStreak();
+      const calDots = Meta.dailyCalendar(14).map((c) => `<span class="cal-dot m-${c.medal}" title="${c.date}"></span>`).join('');
+      const calHtml = `<span class="daily-cal" aria-label="${esc(I18n.t('daily_cal_al'))}">${calDots}${streak > 0 ? `<b class="daily-streak-n">🔥${streak}</b>` : ''}</span>`;
+      const daily = `<div class="daily daily-run medal-${medal}"><span class="daily-icon">🎯</span><div class="daily-main"><span class="daily-text">${esc(I18n.t('daily_challenge'))}</span>${drBest}${calHtml}</div><button class="btn btn-primary btn-sm" data-daily-run>${esc(I18n.t('daily_play'))}</button></div>`;
       const dm = Meta.dailyMission();
       // Reroll de misión diaria (sumidero de tickets): solo si no está hecha y hay ticket.
       const reroll = (!dm.done && Meta.tickets() > 0)
@@ -5102,8 +5393,10 @@
     const eqB = Meta.equippedBoard();
     const boardsHTML = Boards.order.map((id) => {
       const b = Boards.DEFS[id], owned = Meta.ownsBoard(id), eq = eqB === id;
+      // Skins exclusivos (GM-23): no comprables — se GANAN (p. ej. Jardín Zen, 50 flores).
       const btn = eq ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
         : owned ? `<button class="btn btn-primary btn-sm" data-beq="${id}">${esc(I18n.t('equip'))}</button>`
+        : b.exclusive ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('board_excl'))}</button>`
         : (b.cost === 0 ? `<button class="btn btn-primary btn-sm" data-beq="${id}">${esc(I18n.t('free'))}</button>`
           : `<button class="btn btn-primary btn-sm" data-bbuy="${id}">${iconInline('coin')} ${b.cost}</button>`);
       return `<div class="board-card${eq ? ' on' : ''}" data-board="${id}">
