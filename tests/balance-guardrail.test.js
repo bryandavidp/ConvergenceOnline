@@ -1,0 +1,47 @@
+/* Guardarraíl de balance (GAME_MODES_MASTER_PLAN §7.3).
+ *
+ * Las medallas del Reto del día (750/1500/2500) dependen de la fórmula de score
+ * con dificultad normal: cualquier cambio de balance que mueva el score medio
+ * cambia SILENCIOSAMENTE la dificultad de las medallas. Este test lo grita antes
+ * que los usuarios: corre el bot estándar del simulador (determinista: reloj
+ * virtual + RNG seedeado) y exige que su mediana quede en una banda de ±40%
+ * respecto a la constante calibrada.
+ *
+ * Si este test falla tras un cambio de balance DELIBERADO: recalibrar la
+ * constante en el mismo PR, revisar los umbrales de medalla si hace falta, y
+ * documentarlo en GAME_MODES_MASTER_PLAN (registro) y MIGRATION_SPEC.
+ */
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+// El simulador carga game.js sobre el dom-stub con reloj virtual propio.
+// node --test aísla cada archivo en su proceso: no interfiere con core.test.js.
+const sim = require('../tools/balance-sim.js');
+
+test('medallas del reto diario: umbrales verbatim (750/1500/2500)', () => {
+  const M = sim.cv.Meta;
+  assert.equal(M.dailyMedal(0), 'none');
+  assert.equal(M.dailyMedal(749), 'none');
+  assert.equal(M.dailyMedal(750), 'bronze');
+  assert.equal(M.dailyMedal(1499), 'bronze');
+  assert.equal(M.dailyMedal(1500), 'silver');
+  assert.equal(M.dailyMedal(2499), 'silver');
+  assert.equal(M.dailyMedal(2500), 'gold');
+});
+
+test('deriva de fórmula: bot estándar en Contrarreloj dentro de banda ±40%', () => {
+  // Configuración FIJA — no cambiar sin recalibrar la constante.
+  const r = sim.runBatch(
+    { mode: 'contrarreloj', diff: 'normal', profile: 'average', maxMinutes: 3, seedBase: 20260707 },
+    9,
+  );
+  // Calibrado en v2.2.0 (tras GM-10 sprint, GM-11 error=tiempo, GM-26 warm-up).
+  const BASELINE_P50 = 60649;
+  assert.ok(
+    r.score.p50 >= BASELINE_P50 * 0.6 && r.score.p50 <= BASELINE_P50 * 1.4,
+    `score p50 del bot (${r.score.p50}) fuera de la banda [${Math.round(BASELINE_P50 * 0.6)}, ${Math.round(BASELINE_P50 * 1.4)}] — ` +
+    'la fórmula de score o el pacing de Contrarreloj han derivado; si el cambio es deliberado, recalibra BASELINE_P50 y revisa los umbrales de medalla',
+  );
+});

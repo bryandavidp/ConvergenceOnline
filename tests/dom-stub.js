@@ -71,7 +71,11 @@ function makeEl(tag = 'div') {
     animate: () => ({ cancel() {}, finished: Promise.resolve(), onfinish: null, addEventListener() {} }),
     getAnimations: () => [],
     getContext: () => null,
-    firstChild: null, lastChild: null, firstElementChild: null, lastElementChild: null, nextSibling: null,
+    get firstChild() { return el.childNodes[0] || null; },
+    get lastChild() { return el.childNodes[el.childNodes.length - 1] || null; },
+    get firstElementChild() { return el.children[0] || null; },
+    get lastElementChild() { return el.children[el.children.length - 1] || null; },
+    nextSibling: null,
   };
   el.classList = makeClassList(el);
   return el;

@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.1.0';
+  const VERSION = '2.2.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -104,6 +104,13 @@
     // acumula sin límite (evita partidas infinitas a base de combos).
     TIMED_START: 60,          // s reloj inicial
     TIMED_CAP: 90,            // s máximo en el reloj (tope duro)
+    TIMED_MISTAKE_S: 3,       // GM-11: el error en score-attack cuesta segundos, no iconos
+    SPRINT_WINDOW: 10,        // GM-10: sprint final — con <=10s en el reloj...
+    SPRINT_MULT: 1.5,         // ...todos los puntos ×1.5 (riesgo-recompensa: cabalgar el borde)
+    // GM-26: warm-up de apertura — el intervalo de spawn se multiplica ×0.55 los
+    // primeros 10s del nivel (o hasta la 3ª convergencia) y sale con rampa de 2s.
+    // Material temprano => primer combo antes (ataca el "arranque frío", D2 del plan).
+    WARMUP: { ms: 10000, convs: 3, factor: 0.55, rampMs: 2000 },
     HINTS_PER_LEVEL: 3,
     HINT_COOLDOWN: 10000,     // ms
     HINT_DURATION: 2000,      // ms
@@ -330,7 +337,7 @@
         update_ready: '✨ Nueva versión disponible', update_btn: 'Actualizar',
         sr_combo: 'Combo de {n}', sr_converge: '{n} iconos convergen', sr_wave: 'Oleada {n}', sr_life: 'Vida perdida, quedan {n}',
         sr_over: 'Fin de la partida, {n} puntos', sr_level: 'Nivel completado, {n} puntos', sr_stars: 'Nivel completado, {s} de 3 estrellas, {n} puntos',
-        surv_sys_title: 'Cómo funciona', surv_sys_charge: 'Encadena convergencias para llenar el anillo interior y ganar un potenciador gratis.', surv_sys_frenzy: 'Llena el anillo de frenesí para multiplicar tus puntos un rato.', surv_sys_lives: 'Pierdes una vida si el tablero se desborda; revive por 120 monedas.',
+        surv_sys_title: 'Cómo funciona', surv_sys_charge: 'Encadena convergencias para llenar el anillo interior y ganar un potenciador gratis.', surv_sys_frenzy: 'Llena el anillo de frenesí para multiplicar tus puntos un rato.', surv_sys_lives: 'Pierdes una vida si el tablero se desborda; revivir cuesta monedas y sube de precio con cada uso.',
         pause_no_save: 'Este modo no guarda la partida al salir.',
         ci_tap: 'Toca para empezar', ci_no_mods: 'Sin modificadores especiales',
         daily_first_reward: '+5 💎 · primer intento del día', daily_new_best: '¡Nueva marca del día! {n}',
@@ -345,6 +352,7 @@
         surv_meteor: '¡Lluvia de iconos!', surv_quake: '¡Terremoto!', surv_frost: 'Frente helado', surv_life_lost: 'Vida liberada · -1',
         surv_boss_soon: '⚠ Jefe', surv_boss_meteor_warn: '¡Lluvia de iconos inminente!', surv_boss_quake_warn: '¡Terremoto inminente!', surv_boss_frost_warn: '¡Frente helado inminente!',
         near_miss: '¡Te quedaste a {n} figuras de lograrlo!', peak_moment: 'Tu mejor momento: +{p} con combo ×{c}',
+        sprint_on: '¡Sprint final! Puntos ×1.5', mistake_time: 'Error · −{n}s',
         pu_row: '¡Fila despejada!', pu_col: '¡Columna despejada!', pu_no_target: 'Sin objetivo', pu_wild_emergency: 'Comodín · despeje de emergencia', pu_wild_icons: 'Comodín · {n} iconos',
         surv_diff_title: 'Supervivencia', surv_diff_sub: 'Elige el ritmo de la partida', surv_start: 'Empezar supervivencia',
         surv_frenzy: 'Frenesí', surv_frenzy_ready: '¡Frenesí activado!', surv_wave_reward: 'Oleada {w} · +{c} monedas',
@@ -437,7 +445,7 @@
         update_ready: '✨ New version available', update_btn: 'Update',
         sr_combo: 'Combo of {n}', sr_converge: '{n} icons converge', sr_wave: 'Wave {n}', sr_life: 'Life lost, {n} remaining',
         sr_over: 'Game over, {n} points', sr_level: 'Level complete, {n} points', sr_stars: 'Level complete, {s} of 3 stars, {n} points',
-        surv_sys_title: 'How it works', surv_sys_charge: 'Chain convergences to fill the inner ring and earn a free power-up.', surv_sys_frenzy: 'Fill the frenzy ring to multiply your points for a while.', surv_sys_lives: 'You lose a life if the board overflows; revive for 120 coins.',
+        surv_sys_title: 'How it works', surv_sys_charge: 'Chain convergences to fill the inner ring and earn a free power-up.', surv_sys_frenzy: 'Fill the frenzy ring to multiply your points for a while.', surv_sys_lives: 'You lose a life if the board overflows; reviving costs coins and gets pricier each use.',
         pause_no_save: 'This mode does not save your game when you leave.',
         ci_tap: 'Tap to start', ci_no_mods: 'No special modifiers',
         daily_first_reward: '+5 💎 · first try of the day', daily_new_best: 'New daily best! {n}',
@@ -452,6 +460,7 @@
         surv_meteor: 'Icon rain!', surv_quake: 'Quake!', surv_frost: 'Frozen front', surv_life_lost: 'Life blast · -1',
         surv_boss_soon: '⚠ Boss', surv_boss_meteor_warn: 'Icon rain incoming!', surv_boss_quake_warn: 'Quake incoming!', surv_boss_frost_warn: 'Frozen front incoming!',
         near_miss: 'You were just {n} icons away!', peak_moment: 'Your best moment: +{p} with a ×{c} combo',
+        sprint_on: 'Final sprint! Points ×1.5', mistake_time: 'Miss · −{n}s',
         pu_row: 'Row cleared!', pu_col: 'Column cleared!', pu_no_target: 'No target', pu_wild_emergency: 'Wildcard · emergency clear', pu_wild_icons: 'Wildcard · {n} icons',
         surv_diff_title: 'Survival', surv_diff_sub: 'Choose the run pace', surv_start: 'Start survival',
         surv_frenzy: 'Frenzy', surv_frenzy_ready: 'Frenzy active!', surv_wave_reward: 'Wave {w} · +{c} coins',
@@ -637,6 +646,8 @@
     minIcons: 99,           // mínimo de iconos alcanzado en el nivel (near-miss, GM-01)
     bestPlay: null,         // jugada pico de la partida {points, combo, removed, wave, level} (GM-28)
     spawnHoldUntil: 0,      // pausa breve de spawns (entrada en Fiebre, GM-27)
+    warmupUntil: 0, warmupConvs: 0, warmupEndAt: 0, warmupDone: true, // warm-up de apertura (GM-26)
+    sprintToastAt: 0,       // throttle del aviso de sprint final (GM-10)
     emptyBonusClaimed: false, emptyBoards: 0, lastActionCell: null,
     lastDangerAt: 0,        // throttle del aviso de peligro
     timePressure: 0,        // 0 normal, 1 presion, 2 critico (Contrarreloj)
@@ -1016,7 +1027,16 @@
         State.timePressure = pressure;
         document.body.classList.toggle('time-pressure', pressure > 0);
         document.body.classList.toggle('time-critical', pressure === 2);
-        if (pressure === 2) { this.boardEvent('time-pressure', 520); Sound.danger(); }
+        if (pressure === 2) {
+          this.boardEvent('time-pressure', 520); Sound.danger();
+          // Sprint final (GM-10): anunciar el ×1.5 al entrar en zona crítica. Con
+          // throttle: cabalgar el borde hace oscilar la presión y no debe spamear.
+          const now = performance.now();
+          if (Config.MODES[State.mode].scoreAttack && now - State.sprintToastAt > 6000) {
+            State.sprintToastAt = now;
+            Toasts.show(I18n.t('sprint_on'), 'warn', 1700, 'fire');
+          }
+        }
       }
       if (timeEl.parentElement) timeEl.parentElement.classList.toggle('urgent', pressure === 2);
       // Barra de ocupación = medidor de peligro (cuanto más llena, peor)
@@ -1041,7 +1061,7 @@
     _lastMult: 1,
     multChip() {
       const el = $('#hud-mult'); if (!el) return;
-      const v = State.comboMult * Game.feverBoost() * (State.tempMult || 1);
+      const v = State.comboMult * Game.feverBoost() * (State.tempMult || 1) * Game.sprintMult();
       const txt = '×' + (v % 1 === 0 ? v : +v.toFixed(1));
       const on = v > 1.001 && State.status === 'playing';
       if (el.textContent !== txt) {
@@ -2251,7 +2271,7 @@
       const tn = this.tune();
       this.WAVE_MS = tn.waveMs; this.MAX_LIVES = tn.lives;
       this.lives = this.MAX_LIVES; this.wave = 1; this.waveAcc = 0; this.survSec = 0; this.charge = 0; this.frenzy = 0;
-      this.freezeUntil = 0; this.x2Until = 0; this.frenzyUntil = 0; this.lockUntil = 0; this.runCoins = 0; this.runGems = 0; this.runChests = 0; this.newWaveRecord = false; State.tempMult = 1; this._r = { waveWarned: false, bossWarned: false };
+      this.freezeUntil = 0; this.x2Until = 0; this.frenzyUntil = 0; this.lockUntil = 0; this.runCoins = 0; this.runGems = 0; this.runChests = 0; this.newWaveRecord = false; this.revives = 0; State.tempMult = 1; this._r = { waveWarned: false, bossWarned: false };
       this.armed = null; this._preview = null; document.body.classList.remove('aiming');
       this._planBoss();
       this._setFrenzyClass();
@@ -2559,14 +2579,24 @@
       Render.lifeClear(cleared);
       if (cleared.length) State.lastActionCell = cleared[0];
     },
+    // GM-19: el precio de revivir CRECE con cada uso en la misma run (120→240→480,
+    // máx. 3). Plano a 120 trivializaba la muerte en runs largas (a oleada 20+ se
+    // recupera en ~4 oleadas); la escalada restaura el peso emocional de morir sin
+    // castigar la primera muerte del jugador nuevo.
+    REVIVE_BASE: 120, REVIVE_CAP: 480, REVIVE_MAX: 3,
+    revives: 0,
+    reviveCost() { return Math.min(this.REVIVE_CAP, this.REVIVE_BASE * Math.pow(2, this.revives)); },
     lastChance() {
+      if (this.revives >= this.REVIVE_MAX) { this.giveUp(); return; }
       State.status = 'paused'; Loop.stop(); Music.stop(true);
-      const cost = 120; const cc = $('#revive-cost'); if (cc) cc.textContent = cost;
+      const cost = this.reviveCost(); const cc = $('#revive-cost'); if (cc) cc.textContent = cost;
       const rb = $('#btn-revive'); if (rb) rb.disabled = Meta.coins() < cost;
       Modal.open('modal-revive');
     },
     revive() {
-      if (!Meta.spend(120)) { Toasts.show('Monedas insuficientes', 'warn', 1500); return; }
+      const cost = this.reviveCost();
+      if (!Meta.spend(cost)) { Toasts.show('Monedas insuficientes', 'warn', 1500); return; }
+      this.revives++;
       this.lives = 1; Sound.lifeBlast(); Haptics.life(); this._lock(900, 'life-blast'); this._relief(0.6);
       Modal.close(); State.status = 'playing'; Loop.start(); if (Settings.music) Music.start();
       this.render();
@@ -3319,7 +3349,9 @@
           Render.hud();
         }
         L.spawnAcc += dt;
-        if (L.spawnAcc >= State.spawnRate) { L.spawnAcc -= State.spawnRate; Game.doSpawn(); }
+        // Intervalo efectivo = spawnRate × warm-up (GM-26: apertura más generosa).
+        const sr = Math.max(120, Math.round(State.spawnRate * Game.warmupFactor(now)));
+        if (L.spawnAcc >= sr) { L.spawnAcc -= sr; Game.doSpawn(); }
         if (State.combo > 0) {
           const left = State.comboWindow - (now - State.comboAt);
           if (left <= 0) Game.resetCombo();
@@ -3407,6 +3439,10 @@
       State.combo = 0; State.comboMult = 1;
       Engine.placeInitial(Config.DIFFICULTY[State.diff].initialIcons);
       State.minIcons = State.iconCount; // referencia near-miss del nivel (GM-01)
+      // Warm-up de apertura (GM-26): por nivel, se desactiva solo en modos de calma.
+      State.warmupUntil = performance.now() + Config.WARMUP.ms;
+      State.warmupConvs = 0; State.warmupEndAt = 0;
+      State.warmupDone = !!(m.relaxed || m.single);
       // Hook de modo: permite a Aventura/Supervivencia sembrar tiles/objetivos.
       Rules.call('onSetupLevel', { level: State.level, mode: m });
       Render.syncAll();
@@ -3536,6 +3572,25 @@
       if (!State.fever) return 1;
       return Config.FEVER_BOOST + (State.mode === 'supervivencia' ? Survival.frenzyTier() * 0.06 : 0);
     },
+    // Sprint final (GM-10): en score-attack, con el reloj a <=10s todos los puntos
+    // van ×1.5. Como el tiempo puede volver a subir, el jugador puede ELEGIR
+    // cabalgar el borde del abismo (riesgo-recompensa continuo).
+    sprintMult() {
+      const m = Config.MODES[State.mode];
+      return m && m.scoreAttack && State.timeLeft > 0 && State.timeLeft <= Config.SPRINT_WINDOW ? Config.SPRINT_MULT : 1;
+    },
+    // Warm-up de apertura (GM-26): factor del intervalo de spawn. ×0.55 los
+    // primeros 10s del nivel (o hasta la 3ª convergencia), con rampa de salida
+    // de 2s hacia el ritmo normal. No aplica a Zen/tutorial (calma).
+    warmupFactor(now) {
+      if (State.warmupDone) return 1;
+      const W = Config.WARMUP;
+      if (now < State.warmupUntil && State.warmupConvs < W.convs) return W.factor;
+      if (!State.warmupEndAt) State.warmupEndAt = now;
+      const k = (now - State.warmupEndAt) / W.rampMs;
+      if (k >= 1) { State.warmupDone = true; return 1; }
+      return W.factor + (1 - W.factor) * k;
+    },
 
     activate(i) {
       if (State.status !== 'playing') return;
@@ -3555,7 +3610,15 @@
         } else {
           if (ti.type === 'frozen') Sound.iceCrack(ti.taps); else Sound.tap();
         }
-        Render.setTile(i); Render.syncCell(i); Haptics.ice(); return;
+        Render.setTile(i); Render.syncCell(i); Haptics.ice();
+        // B6: en Supervivencia, el esfuerzo de romper hielo/bloqueos alimenta la
+        // carga (+2 por toque) — el "busywork" pasa a contribuir al build.
+        if (State.mode === 'supervivencia') {
+          Survival.charge += 2;
+          if (Survival.charge >= 100) { Survival.charge -= 100; Survival.grantRandom(); }
+          Survival.render();
+        }
+        return;
       }
       if (State.board[i] !== null) { Sound.tap(); return; }     // ocupada: nada
       const conv = Engine.converging(i);
@@ -3591,8 +3654,9 @@
       State.lastActionCell = i;
       const d = Config.DIFFICULTY[State.diff], m = Config.MODES[State.mode];
       const base = removed * 10 * State.level;
-      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * this.feverBoost() * (State.tempMult || 1));
+      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * this.feverBoost() * (State.tempMult || 1) * this.sprintMult());
       State.score += points;
+      State.warmupConvs++; // el warm-up (GM-26) termina antes si el jugador ya fluye
       // Jugada pico de la partida (GM-28): se muestra en el resumen de fin (regla pico-final).
       if (!State.bestPlay || points > State.bestPlay.points) {
         State.bestPlay = { points, combo: State.combo, removed, wave: State.mode === 'supervivencia' ? Survival.wave : 0, level: State.level };
@@ -3631,9 +3695,9 @@
       Render.clearAnim(conv, i);
       conv.forEach(idx => { Render.setTile(idx); Render.cells[idx].setAttribute('aria-label', Render.cellLabel(idx)); });
 
-      // Popup con el multiplicador TOTAL (combo × fiebre × temporal), no solo el de
-      // combo: lo que ves es lo que multiplicó de verdad (GM-16, legibilidad).
-      const totMult = State.comboMult * this.feverBoost() * (State.tempMult || 1);
+      // Popup con el multiplicador TOTAL (combo × fiebre × temporal × sprint), no
+      // solo el de combo: lo que ves es lo que multiplicó de verdad (GM-16).
+      const totMult = State.comboMult * this.feverBoost() * (State.tempMult || 1) * this.sprintMult();
       Render.popup(i, totMult > 1.001 ? `+${points} ×${totMult % 1 === 0 ? totMult : totMult.toFixed(1)}` : `+${points}`, color);
       Render.bump($('#hud-score'));
       Render.combo();
@@ -3684,6 +3748,18 @@
       const m = Config.MODES[State.mode];
       if (!m.penalties) return;
       Render.boardShake();
+      // GM-11: en score-attack (Contrarreloj/Reto) el error cuesta TIEMPO, la moneda
+      // real del modo. Añadir iconos ahí era un castigo-regalo: los iconos son la
+      // materia prima de puntuar. Sin iconos extra y sin acelerar el spawn.
+      if (m.scoreAttack) {
+        State.timeLeft = Math.max(0, State.timeLeft - Config.TIMED_MISTAKE_S);
+        Render.bump($('#hud-time'));
+        Toasts.show(I18n.t('mistake_time').replace('{n}', Config.TIMED_MISTAKE_S), 'bad', 1500);
+        Render.hud();
+        if (State.timeLeft <= 0) { this.gameOver(I18n.t('reason_time')); return; }
+        this.evaluate();
+        return;
+      }
       if (State.mode === 'supervivencia') Render.boardEvent('surv-penalty', 520);
       // Añadir iconos de penalización (escala con dificultad y nivel)
       const d = Config.DIFFICULTY[State.diff];
@@ -3902,7 +3978,7 @@
       const wave = State.mode === 'supervivencia' ? Survival.wave : 1;
       const combo = Math.min(State.combo || 1, 12);
       const raw = Config.EMPTY_BOARD_BONUS + chain * 90 + combo * 28 + (State.mode === 'supervivencia' ? wave * 45 : 0);
-      const points = Math.max(250, Math.round(raw * d.scoreMult * m.mult * this.feverBoost() * (State.tempMult || 1)));
+      const points = Math.max(250, Math.round(raw * d.scoreMult * m.mult * this.feverBoost() * (State.tempMult || 1) * this.sprintMult()));
       const coins = clamp(Math.round(points / 220), 3, 16);
       const extra = [];
       const center = State.lastActionCell != null
