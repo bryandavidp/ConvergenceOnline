@@ -345,7 +345,7 @@
         daily_medal_result: 'Medalla diaria: {m}', daily_next_medal: 'Siguiente medalla: supera {n}',
         daily_info_same: 'El mismo tablero para todos · cambia a medianoche', daily_info_mut: 'Mutador de hoy', daily_info_medals: 'Medallas', daily_info_best: 'Mejor de hoy', daily_info_no_best: 'Sin intentos todavía', daily_info_ghost: 'Tu fantasma: tu mejor intento de hoy', daily_info_streak: 'Racha con congelación ética', daily_info_first: '+5 💎 primer intento del día', daily_note_next: '🎯 Siguiente: {m} {n}', daily_medal_up: '¡Medalla de {m}! Siguiente: {n}', daily_medal_max: '¡Oro asegurado!',
         mode_note_clasico: 'Maestría: termina sin errores para 3★', mode_note_clasico_streak: 'Racha perfecta: ×{n}',
-        mode_note_aventura: 'Descubre: {m}', mode_note_contrarreloj: 'Cada convergencia compra segundos', mode_note_daily: 'Reto diario: bronce, plata u oro', mode_note_zen: 'Respira: sin castigo',
+        mode_note_aventura: 'Descubre: {m}', mode_note_contrarreloj: 'Cada convergencia compra segundos', mode_note_daily: 'Reto diario: bronce, plata u oro', mode_note_zen: 'Sin castigo',
         mode_brief_clasico: 'Clásico · busca 3 estrellas', mode_brief_aventura: 'Aventura · lee el bioma y adapta la ruta',
         mode_brief_contrarreloj: 'Contrarreloj · prioriza combos para comprar tiempo', mode_brief_supervivencia: 'Supervivencia · carga boosters antes de la oleada', mode_brief_zen: 'Zen · calma, limpieza y colección',
         result_focus_clasico: 'Repite niveles sin errores para encadenar perfectos.', result_focus_aventura: 'El siguiente bioma cambia el objetivo: mira el banner antes de actuar.',
@@ -799,9 +799,7 @@
 
     spawnRateForLevel(level) {
       const d = Config.DIFFICULTY[State.diff];
-      const m = Config.MODES[State.mode];
       let base = d.spawnStart * Math.pow(0.95, level - 1);
-      if (m.relaxed) base *= 1.25;    // zen: más lento
       return Math.round(clamp(base, d.spawnMin, 6000));
     },
 
@@ -1131,6 +1129,22 @@
       $('#hud-score').textContent = State.displayScore;
       $('#hud-level').textContent = State.level;
       $('#hud-best').textContent = Storage.best;
+      
+      const isZen = State.mode === 'zen';
+      const bestWrap = $('#hud-best-wrap');
+      const zenWrap = $('#hud-zen-wrap');
+      if (bestWrap) bestWrap.hidden = isZen;
+      if (zenWrap) {
+        zenWrap.hidden = !isZen;
+        if (isZen) {
+          const fl = Meta.zenFlowers();
+          let text = fl;
+          if (fl < 10) text = `${fl}/10 🎁`;
+          else if (fl < 50) text = `${fl}/50 🖼️`;
+          $('#hud-zen-flowers').textContent = text;
+        }
+      }
+
       $('#hud-speed').textContent = (State.spawnRate / 1000).toFixed(1) + 's';
       const timeEl = $('#hud-time');
       const timed = Config.MODES[State.mode].timed;
@@ -4890,12 +4904,14 @@
         extra.push('🌸 ' + fl);
         if (fl === 10) { Meta.addChest(1); Toasts.show(I18n.t('garden_10'), 'good', 2800, 'chest'); Econ.refresh(); }
         if (fl === 50 && Meta.grantBoard('jardin')) { Toasts.show(I18n.t('garden_50'), 'good', 3400, '🌸'); Sound.record(); FX.confetti(90); }
+        Render._hudDirty = true;
       }
 
       const msg = `Tablero limpio · +${points} · +${coins} ${I18n.t('coins')}${extra.length ? ' · ' + extra.join(' · ') : ''}`;
       Toasts.show(msg, 'good', 2400, 'v2:four-pointed-star');
       Render.popup(center, `+${points} BONUS`, '#ffd84d');
       Render.bump($('#hud-score'));
+      if (State.mode === 'zen') Render.bump($('#hud-zen-wrap'));
       Render.flash();
       Sound.boardClear(); Haptics.level();
       if (!State.recordHit && Storage.best > 0 && State.score > Storage.best) {
