@@ -2,7 +2,7 @@
 
 > Plan de trabajo derivado del análisis exhaustivo del código (`v1.7.1`). Cubre: bugs detectados, deuda pendiente de los alcances iniciales, mejoras de arquitectura/funcionales/diseño/usabilidad/seguridad, y el diseño de la arquitectura de nube necesaria para las funciones online. Cada ítem lleva **dificultad**, **beneficio** y **prioridad** para poder ejecutarlo paso a paso.
 >
-> Documentos de referencia: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (dónde está cada cosa) · [`MIGRATION_SPEC.md`](./MIGRATION_SPEC.md) (fórmulas/datos exactos) · [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (visual) · [`REQUIREMENTS.md`](./REQUIREMENTS.md) (qué debe cumplirse).
+> Documentos de referencia: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (dónde está cada cosa) · [`MIGRATION_SPEC.md`](./MIGRATION_SPEC.md) (fórmulas/datos exactos) · [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (visual) · [`REQUIREMENTS.md`](./REQUIREMENTS.md) (qué debe cumplirse) · [`GAME_MODES_MASTER_PLAN.md`](./GAME_MODES_MASTER_PLAN.md) (auditoría y plan de mejora de los modos de juego, tareas GM-*).
 
 ## Cómo leer este roadmap
 

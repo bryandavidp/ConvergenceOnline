@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.0.3';
+  const VERSION = '2.1.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -330,7 +330,7 @@
         update_ready: '✨ Nueva versión disponible', update_btn: 'Actualizar',
         sr_combo: 'Combo de {n}', sr_converge: '{n} iconos convergen', sr_wave: 'Oleada {n}', sr_life: 'Vida perdida, quedan {n}',
         sr_over: 'Fin de la partida, {n} puntos', sr_level: 'Nivel completado, {n} puntos', sr_stars: 'Nivel completado, {s} de 3 estrellas, {n} puntos',
-        surv_sys_title: 'Cómo funciona', surv_sys_charge: 'Encadena convergencias para llenar la barra y ganar un potenciador gratis.', surv_sys_frenzy: 'Llena el medidor de frenesí para multiplicar tus puntos un rato.', surv_sys_lives: 'Pierdes una vida si el tablero se desborda; revive por 120 monedas.',
+        surv_sys_title: 'Cómo funciona', surv_sys_charge: 'Encadena convergencias para llenar el anillo interior y ganar un potenciador gratis.', surv_sys_frenzy: 'Llena el anillo de frenesí para multiplicar tus puntos un rato.', surv_sys_lives: 'Pierdes una vida si el tablero se desborda; revive por 120 monedas.',
         pause_no_save: 'Este modo no guarda la partida al salir.',
         ci_tap: 'Toca para empezar', ci_no_mods: 'Sin modificadores especiales',
         daily_first_reward: '+5 💎 · primer intento del día', daily_new_best: '¡Nueva marca del día! {n}',
@@ -343,6 +343,8 @@
         surv_new_icons: '¡Nuevos iconos! Sube la dificultad',
         aim_hint: 'Toca dónde aplicarlo', pu_freeze: 'Spawns congelados', pu_x2: '¡Puntos x2!', pu_bomb: '¡Boom!', pu_ray: '¡Rayo!', pu_icons: 'iconos', chain_boom: 'Cadena ×{n}',
         surv_meteor: '¡Lluvia de iconos!', surv_quake: '¡Terremoto!', surv_frost: 'Frente helado', surv_life_lost: 'Vida liberada · -1',
+        surv_boss_soon: '⚠ Jefe', surv_boss_meteor_warn: '¡Lluvia de iconos inminente!', surv_boss_quake_warn: '¡Terremoto inminente!', surv_boss_frost_warn: '¡Frente helado inminente!',
+        near_miss: '¡Te quedaste a {n} figuras de lograrlo!', peak_moment: 'Tu mejor momento: +{p} con combo ×{c}',
         pu_row: '¡Fila despejada!', pu_col: '¡Columna despejada!', pu_no_target: 'Sin objetivo', pu_wild_emergency: 'Comodín · despeje de emergencia', pu_wild_icons: 'Comodín · {n} iconos',
         surv_diff_title: 'Supervivencia', surv_diff_sub: 'Elige el ritmo de la partida', surv_start: 'Empezar supervivencia',
         surv_frenzy: 'Frenesí', surv_frenzy_ready: '¡Frenesí activado!', surv_wave_reward: 'Oleada {w} · +{c} monedas',
@@ -435,7 +437,7 @@
         update_ready: '✨ New version available', update_btn: 'Update',
         sr_combo: 'Combo of {n}', sr_converge: '{n} icons converge', sr_wave: 'Wave {n}', sr_life: 'Life lost, {n} remaining',
         sr_over: 'Game over, {n} points', sr_level: 'Level complete, {n} points', sr_stars: 'Level complete, {s} of 3 stars, {n} points',
-        surv_sys_title: 'How it works', surv_sys_charge: 'Chain convergences to fill the bar and earn a free power-up.', surv_sys_frenzy: 'Fill the frenzy meter to multiply your points for a while.', surv_sys_lives: 'You lose a life if the board overflows; revive for 120 coins.',
+        surv_sys_title: 'How it works', surv_sys_charge: 'Chain convergences to fill the inner ring and earn a free power-up.', surv_sys_frenzy: 'Fill the frenzy ring to multiply your points for a while.', surv_sys_lives: 'You lose a life if the board overflows; revive for 120 coins.',
         pause_no_save: 'This mode does not save your game when you leave.',
         ci_tap: 'Tap to start', ci_no_mods: 'No special modifiers',
         daily_first_reward: '+5 💎 · first try of the day', daily_new_best: 'New daily best! {n}',
@@ -448,6 +450,8 @@
         surv_new_icons: 'New icons! Difficulty up',
         aim_hint: 'Tap where to use it', pu_freeze: 'Spawns frozen', pu_x2: 'Double points!', pu_bomb: 'Boom!', pu_ray: 'Ray!', pu_icons: 'icons', chain_boom: 'Chain ×{n}',
         surv_meteor: 'Icon rain!', surv_quake: 'Quake!', surv_frost: 'Frozen front', surv_life_lost: 'Life blast · -1',
+        surv_boss_soon: '⚠ Boss', surv_boss_meteor_warn: 'Icon rain incoming!', surv_boss_quake_warn: 'Quake incoming!', surv_boss_frost_warn: 'Frozen front incoming!',
+        near_miss: 'You were just {n} icons away!', peak_moment: 'Your best moment: +{p} with a ×{c} combo',
         pu_row: 'Row cleared!', pu_col: 'Column cleared!', pu_no_target: 'No target', pu_wild_emergency: 'Wildcard · emergency clear', pu_wild_icons: 'Wildcard · {n} icons',
         surv_diff_title: 'Survival', surv_diff_sub: 'Choose the run pace', surv_start: 'Start survival',
         surv_frenzy: 'Frenzy', surv_frenzy_ready: 'Frenzy active!', surv_wave_reward: 'Wave {w} · +{c} coins',
@@ -630,6 +634,9 @@
     displayScore: 0,        // marcador animado (count-up)
     fever: false, feverEver: false, perfectEver: false,
     recordHit: false,       // récord superado en vivo (una vez por partida)
+    minIcons: 99,           // mínimo de iconos alcanzado en el nivel (near-miss, GM-01)
+    bestPlay: null,         // jugada pico de la partida {points, combo, removed, wave, level} (GM-28)
+    spawnHoldUntil: 0,      // pausa breve de spawns (entrada en Fiebre, GM-27)
     emptyBonusClaimed: false, emptyBoards: 0, lastActionCell: null,
     lastDangerAt: 0,        // throttle del aviso de peligro
     timePressure: 0,        // 0 normal, 1 presion, 2 critico (Contrarreloj)
@@ -1027,6 +1034,26 @@
       // Pistas
       $('#hint-badge').textContent = State.hintsLeft;
       $('#btn-hint').disabled = State.hintsLeft <= 0 || performance.now() < State.hintReadyAt;
+      this.multChip();
+    },
+    // Chip del multiplicador TOTAL (combo × fiebre × temporal): un único número
+    // legible junto al score que responde "¿por cuánto vale ahora cada jugada?" (GM-16).
+    _lastMult: 1,
+    multChip() {
+      const el = $('#hud-mult'); if (!el) return;
+      const v = State.comboMult * Game.feverBoost() * (State.tempMult || 1);
+      const txt = '×' + (v % 1 === 0 ? v : +v.toFixed(1));
+      const on = v > 1.001 && State.status === 'playing';
+      if (el.textContent !== txt) {
+        el.textContent = txt;
+        if (on && v > this._lastMult && !Settings.reducedFx) {
+          el.getAnimations().forEach(a => a.cancel());
+          el.animate([{}, { transform: 'scale(1.24)', offset: .5 }, {}], { duration: 260, easing: 'ease' });
+        }
+      }
+      el.classList.toggle('on', on);
+      el.classList.toggle('hot', on && v >= 6);
+      this._lastMult = v;
     },
     // Coalescer: marca el HUD como "sucio"; el bucle lo refresca UNA vez por frame.
     // Evita rehacer occupation()+~10 escrituras del DOM en cada tap durante combos
@@ -1049,6 +1076,7 @@
     },
 
     combo() {
+      this.multChip();
       const el = $('#combo');
       if (State.combo < 3) { el.hidden = true; el.setAttribute('aria-hidden', 'true'); el.classList.remove('urgent'); return; }
       el.hidden = false;
@@ -1079,6 +1107,22 @@
       const f = $('#fever'); if (f) f.classList.toggle('on', on);
       // Clase en el propio tablero (no en <body>): evita invalidar el árbol entero.
       const w = document.querySelector('.board-wrap'); if (w) w.classList.toggle('fever-on', on);
+      // El aro de combo "arde" mientras dura la Fiebre (GM-27).
+      const c = $('#combo'); if (c && c.classList) c.classList.toggle('fever', on);
+    },
+    // Entrada en Fiebre (GM-27): zoom + barrido de acento del tablero, una sola vez.
+    feverBurst() {
+      if (Settings.reducedFx) return;
+      const w = document.querySelector('.board-wrap'); if (!w) return;
+      w.classList.remove('fever-burst'); void w.offsetWidth; w.classList.add('fever-burst');
+      setTimeout(() => w.classList.remove('fever-burst'), 640);
+    },
+    // Salida de Fiebre (GM-27): "exhalación" breve (desaturación de vuelta a la calma).
+    feverOut() {
+      if (Settings.reducedFx) return;
+      const w = document.querySelector('.board-wrap'); if (!w) return;
+      w.classList.remove('fever-out'); void w.offsetWidth; w.classList.add('fever-out');
+      setTimeout(() => w.classList.remove('fever-out'), 360);
     },
     // Destello breve de pantalla (récord / perfecto)
     flash() {
@@ -2207,8 +2251,9 @@
       const tn = this.tune();
       this.WAVE_MS = tn.waveMs; this.MAX_LIVES = tn.lives;
       this.lives = this.MAX_LIVES; this.wave = 1; this.waveAcc = 0; this.survSec = 0; this.charge = 0; this.frenzy = 0;
-      this.freezeUntil = 0; this.x2Until = 0; this.frenzyUntil = 0; this.lockUntil = 0; this.runCoins = 0; this.runGems = 0; this.runChests = 0; this.newWaveRecord = false; State.tempMult = 1; this._r = { waveWarned: false };
+      this.freezeUntil = 0; this.x2Until = 0; this.frenzyUntil = 0; this.lockUntil = 0; this.runCoins = 0; this.runGems = 0; this.runChests = 0; this.newWaveRecord = false; State.tempMult = 1; this._r = { waveWarned: false, bossWarned: false };
       this.armed = null; this._preview = null; document.body.classList.remove('aiming');
+      this._planBoss();
       this._setFrenzyClass();
       // Progresión de iconos desde la oleada 1: la puntuación base usa State.level (= dlevel).
       State.level = this.dlevel();
@@ -2223,10 +2268,18 @@
       State.tempMult = 1;
       document.body.classList.remove('aiming', 'surv-frenzy-active', 'surv-frenzy-1', 'surv-frenzy-2', 'surv-frenzy-3');
     },
+    // Telegrafiado del jefe (GM-18): si la PRÓXIMA oleada trae evento jefe, se decide
+    // ya el tipo (pre-roll) para poder avisar de forma específica antes de que llegue.
+    // La anticipación es la mitad del valor emocional del jefe; sin aviso solo hay susto.
+    bossNext: false, _nextBoss: null,
+    _planBoss() {
+      this.bossNext = (this.wave + 1) % this.tune().bossEvery === 0;
+      this._nextBoss = this.bossNext ? rand(3) : null;
+    },
     frenzyTier() { return clamp(Math.floor((this.wave - 1) / 4) + 1, 1, 3); },
     frenzyActive() { return performance.now() < this.frenzyUntil; },
     frenzyMult() { return this.frenzyActive() ? 1.55 + this.frenzyTier() * 0.1 : 1; },
-    _syncMult() { State.tempMult = (this.x2Active() ? 2 : 1) * this.frenzyMult(); },
+    _syncMult() { State.tempMult = (this.x2Active() ? 2 : 1) * this.frenzyMult(); Render.multChip(); },
     _syncIntensity() {
       if (!Settings.music) return;
       const base = 0.12 + Math.min(0.55, (this.wave - 1) * 0.045);
@@ -2346,6 +2399,20 @@
         Render.boardEvent('surv-wave-soon', 560);
         Sound.danger();
       }
+      // Aviso ESPECÍFICO del jefe entrante ~3s antes (GM-18): da tiempo a reaccionar
+      // (guardar un freeze, despejar zona) y convierte el susto en tensión anticipada.
+      if (this.bossNext && !this._r.bossWarned && this.WAVE_MS - this.waveAcc <= 3000) {
+        this._r.bossWarned = true;
+        const warn = [
+          ['surv_boss_meteor_warn', 'v2:meteor'],
+          ['surv_boss_quake_warn', 'teleporter'],
+          ['surv_boss_frost_warn', 'v2:snowflake'],
+        ][this._nextBoss != null ? this._nextBoss : 0];
+        Toasts.show(I18n.t(warn[0]), 'bad', 2400, warn[1]);
+        announce(I18n.t(warn[0]));
+        Render.boardEvent('surv-wave-soon', 700);
+        Sound.danger(); Haptics.fire(14);
+      }
       const isFrenzy = this.frenzyActive();
       if (wasFrenzy !== isFrenzy || this._r.intWave !== this.wave) {
         this._r.frenzyActive = isFrenzy; this._r.intWave = this.wave;
@@ -2358,6 +2425,7 @@
       this._waveReward(clearedWave);
       this.wave++;
       this._r.waveWarned = false;
+      this._r.bossWarned = false;
       const tn = this.tune();
       State.spawnRate = Math.max(tn.spawnFloor, Math.round(State.spawnRate * tn.spawnDecay));
       // Progresión de iconos: al subir el nivel efectivo, avanza la ventana del catálogo
@@ -2376,13 +2444,16 @@
       this._placeBombs(1 + Math.floor(this.wave / 6));
       if (this.wave >= 2 && RNG.random() < 0.25) this._placeSlowdown();
       if (this.wave % tn.bossEvery === 0) this.bossEvent();
+      this._planBoss(); // decide ya si la PRÓXIMA oleada trae jefe (telegrafiado GM-18)
       this._checkWaveRecord();
       this._setFrenzyClass(); this._syncIntensity();
       Render.boardEvent('surv-wave-up', 900);
       this.render();
     },
     bossEvent() {
-      const event = rand(3);
+      // Usa el evento pre-decidido por _planBoss (para que el aviso previo coincida).
+      const event = this._nextBoss != null ? this._nextBoss : rand(3);
+      this._nextBoss = null;
       if (event === 0) this.meteorRain();
       else if (event === 1) this.quake();
       else this.frostSurge();
@@ -2706,18 +2777,33 @@
         const wf = $('#surv-waveprog-fill'); if (wf) wf.style.width = wp + '%';
         const sb = $('#surv-bar'); if (sb) sb.classList.toggle('soon', wp >= 78);
       }
-      const ch = Math.round(this.charge); if (r.charge !== ch) { r.charge = ch; const cf = $('#charge-fill'); if (cf) cf.style.width = ch + '%'; }
+      // Bandera de jefe entrante (GM-18): visible durante TODA la oleada previa.
+      if (r.bossNext !== this.bossNext) {
+        r.bossNext = this.bossNext;
+        const sb = $('#surv-bar'); if (sb) sb.classList.toggle('boss-soon', this.bossNext);
+        const bf = $('#surv-boss-flag'); if (bf) { bf.hidden = !this.bossNext; bf.textContent = I18n.t('surv_boss_soon'); }
+      }
       const bestWave = Meta.survBestWave();
       const bestTxt = bestWave > 0 ? I18n.t('surv_best_wave') + ' ' + bestWave : '';
       if (r.bestWave !== bestTxt) { r.bestWave = bestTxt; const bw = $('#surv-best-wave'); if (bw) { bw.textContent = bestTxt; bw.hidden = !bestTxt; } }
+      // Anillos concéntricos (GM-21): interior = carga (→ potenciador), exterior =
+      // frenesí (→ furia). Un solo widget en vez de dos barras que subían a la par.
+      const C_CHARGE = 106.8, C_FRENZY = 150.8; // 2π·r (r=17 / r=24 del SVG)
+      const ch = Math.round(this.charge);
+      if (r.charge !== ch) { r.charge = ch; const c = $('#pr-charge'); if (c) c.style.strokeDashoffset = (C_CHARGE * (1 - Math.min(ch, 100) / 100)).toFixed(1); }
       const fActive = this.frenzyActive();
       const fVal = fActive ? 100 : Math.round(this.frenzy);
       if (r.frenzyVal !== fVal || r.frenzyOn !== fActive) {
         r.frenzyVal = fVal; r.frenzyOn = fActive;
-        const ff = $('#frenzy-fill'); if (ff) ff.style.width = fVal + '%';
-        const fm = $('#frenzy-meter'); if (fm) fm.classList.toggle('on', fActive);
+        const f = $('#pr-frenzy'); if (f) f.style.strokeDashoffset = (C_FRENZY * (1 - Math.min(fVal, 100) / 100)).toFixed(1);
+        const pr = $('#power-rings'); if (pr) pr.classList.toggle('on', fActive);
       }
-      const ready = this.charge >= 100; if (r.ready !== ready) { r.ready = ready; const bb = $('#booster-bar'); if (bb) bb.classList.toggle('ready', ready); }
+      const ready = this.charge >= 100;
+      if (r.ready !== ready) {
+        r.ready = ready;
+        const bb = $('#booster-bar'); if (bb) bb.classList.toggle('ready', ready);
+        const pr = $('#power-rings'); if (pr) pr.classList.toggle('ready', ready);
+      }
     },
   };
 
@@ -3320,6 +3406,7 @@
       State.iconCount = 0;
       State.combo = 0; State.comboMult = 1;
       Engine.placeInitial(Config.DIFFICULTY[State.diff].initialIcons);
+      State.minIcons = State.iconCount; // referencia near-miss del nivel (GM-01)
       // Hook de modo: permite a Aventura/Supervivencia sembrar tiles/objetivos.
       Rules.call('onSetupLevel', { level: State.level, mode: m });
       Render.syncAll();
@@ -3349,8 +3436,9 @@
       State.emptyBonusClaimed = false; State.emptyBoards = 0; State.lastActionCell = null;
       State.fever = false; State.feverEver = false; State.perfectEver = false; State.recordHit = false;
       State.timePressure = 0;
+      State.minIcons = 99; State.bestPlay = null; State.spawnHoldUntil = 0;
       State.isDaily = false; // startDaily() lo activa tras llamar aquí
-      State.status = 'playing'; this.ended = false; this.dailyRunResult = null; this.classicMastery = null;
+      State.status = 'playing'; this.ended = false; this.dailyRunResult = null; this.classicMastery = null; this._nearMiss = null;
       ModeSignals.apply(mode);
       // Aventura: reanuda en el nivel más lejano alcanzado; el resto empieza en 1.
       if (mode === 'aventura') State.level = Meta.advMax();
@@ -3487,9 +3575,12 @@
       // para tintar la animación de estrellas y se reutiliza en popup/rango.
       const color = State.comboMult >= 8 ? '#ffd84d' : State.comboMult >= 5 ? '#ff5cf0' : State.comboMult >= 3 ? '#b46cff' : State.comboMult >= 2 ? '#00d0ff' : State.comboMult >= 1.5 ? '#34e29b' : '#fff';
 
-      // FEVER: entrar al encadenar combo alto
+      // FEVER: entrar al encadenar combo alto. La entrada es un ESPECTÁCULO (GM-27):
+      // micro-pausa de spawns (aspiración) + zoom/barrido del tablero + aro en llamas.
       if (!State.fever && State.combo >= this.feverNeed()) {
-        State.fever = true; State.feverEver = true; Render.fever(true); Sound.fever(); Haptics.fever();
+        State.fever = true; State.feverEver = true;
+        State.spawnHoldUntil = performance.now() + 500;
+        Render.fever(true); Render.feverBurst(); Sound.fever(); Haptics.fever();
         if (Settings.music) Music.setIntensity(1);
         Toasts.show('¡FEVER!', 'warn', 1400, 'fire');
       }
@@ -3502,6 +3593,10 @@
       const base = removed * 10 * State.level;
       const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * this.feverBoost() * (State.tempMult || 1));
       State.score += points;
+      // Jugada pico de la partida (GM-28): se muestra en el resumen de fin (regla pico-final).
+      if (!State.bestPlay || points > State.bestPlay.points) {
+        State.bestPlay = { points, combo: State.combo, removed, wave: State.mode === 'supervivencia' ? Survival.wave : 0, level: State.level };
+      }
       if (Config.MILESTONES[State.combo]) { State.score += Config.MILESTONES[State.combo]; Toasts.show(`¡Combo ×${State.combo}! +${Config.MILESTONES[State.combo]}`, 'good'); Sound.milestone(); Haptics.milestone(); }
 
       // Contrarreloj: bonus de tiempo por convergencia (los combos suman más)
@@ -3536,7 +3631,10 @@
       Render.clearAnim(conv, i);
       conv.forEach(idx => { Render.setTile(idx); Render.cells[idx].setAttribute('aria-label', Render.cellLabel(idx)); });
 
-      Render.popup(i, State.comboMult > 1 ? `+${points} ×${State.comboMult}` : `+${points}`, color);
+      // Popup con el multiplicador TOTAL (combo × fiebre × temporal), no solo el de
+      // combo: lo que ves es lo que multiplicó de verdad (GM-16, legibilidad).
+      const totMult = State.comboMult * this.feverBoost() * (State.tempMult || 1);
+      Render.popup(i, totMult > 1.001 ? `+${points} ×${totMult % 1 === 0 ? totMult : totMult.toFixed(1)}` : `+${points}`, color);
       Render.bump($('#hud-score'));
       Render.combo();
 
@@ -3690,6 +3788,8 @@
     },
 
     doSpawn() {
+      // Micro-pausa de la entrada en Fiebre (GM-27): 500ms de "aspiración" sin spawns.
+      if (State.spawnHoldUntil && performance.now() < State.spawnHoldUntil) return;
       if (Rules.call('blockSpawn')) return;   // potenciador de congelación (Supervivencia)
       const m = Config.MODES[State.mode];
       const idx = Engine.spawnOne();
@@ -3697,6 +3797,9 @@
         if (m.endless) { Rules.call('onOverflow'); return; }     // surv/zen lo gestionan
         if (m.scoreAttack) return;                                // contrarreloj: el reloj decide
         // Clásico/Aventura: tablero lleno = atasco real (sin huecos no hay jugada).
+        // Near-miss (GM-01): si el jugador llegó a estar a ≤10 figuras de vaciar y la
+        // partida no fue trivial, el fin de partida se lo dice (motiva el reintento).
+        if (State.minIcons <= 10 && State.elapsed > 45) this._nearMiss = State.minIcons;
         this.gameOver(I18n.t('reason_full')); return;
       }
       Render.syncCell(idx); Render.spawnAnim(idx);
@@ -3763,6 +3866,8 @@
     /* Win/Lose: se evalúa tras cada cambio del tablero */
     evaluate() {
       if (State.status !== 'playing' || Coach.active) return;
+      // Mínimo de iconos del nivel: mide "lo cerca que estuviste" para el near-miss (GM-01).
+      if (State.iconCount < State.minIcons) State.minIcons = State.iconCount;
       // Hooks de modo: pueden forzar victoria/derrota propias (objetivos, oleadas…).
       // Devuelven 'win' | 'lose' | un texto de derrota, o nada para usar la regla base.
       const wc = Rules.call('winCheck', State);
@@ -3845,6 +3950,7 @@
       State.combo = 0; State.comboMult = 1;
       if (State.fever) {
         State.fever = false;
+        Render.feverOut(); // "exhalación" breve al salir de Fiebre (GM-27)
         if (State.mode === 'supervivencia') { Survival._setFrenzyClass(); Survival._syncIntensity(); }
         else { Render.fever(false); if (Settings.music) Music.setIntensity(0.15); }
       }
@@ -3971,6 +4077,7 @@
         // dependen solo de los errores de ESE nivel, no de los acumulados del mundo).
         State.score = 0; State.displayScore = 0; State.mistakes = 0;
         State.combo = 0; State.comboMult = 1; State.comboAt = 0; State.maxCombo = 0; State.removedTotal = 0;
+        State.bestPlay = null; // el pico se puntúa por nivel, igual que el score (GM-28)
         State.fever = false; Render.fever(false);
         State.status = 'playing'; Modal.close();
         this.setupLevel(); this.showGoalBanner(); Loop.start();
@@ -4059,6 +4166,25 @@
         else if (this._survNew) rec.innerHTML = iconInline('shield') + ' ' + I18n.t('surv_time_record');
         else if (this.newRecord) rec.innerHTML = iconInline('trophy') + ' ¡Nuevo récord!';
       }
+      // Near-miss (GM-01): "te quedaste a {n} figuras" — solo cuando aplica (derrota por
+      // tablero lleno en Clásico/Aventura habiendo estado realmente cerca de vaciar).
+      { const nm = $('#over-near'); if (nm) {
+        nm.hidden = this._nearMiss == null;
+        if (this._nearMiss != null) nm.textContent = I18n.t('near_miss').replace('{n}', this._nearMiss);
+        this._nearMiss = null;
+      } }
+      // Momento destacado (GM-28): la mejor jugada de la partida (regla pico-final).
+      { const pk = $('#over-peak'); if (pk) {
+        const bp = State.bestPlay;
+        const show = !!bp && bp.points >= 50;
+        pk.hidden = !show;
+        if (show) {
+          const where = State.mode === 'supervivencia'
+            ? ` · ${I18n.t('st_wave')} ${bp.wave}`
+            : (State.mode === 'clasico' || State.mode === 'aventura' ? ` · ${I18n.t('lvl')} ${bp.level}` : '');
+          pk.innerHTML = iconInline('star') + ' ' + esc(I18n.t('peak_moment').replace('{p}', bp.points).replace('{c}', bp.combo) + where);
+        }
+      } }
       const m = Config.MODES[State.mode];
       // Resumen coherente por modo
       let summary;
