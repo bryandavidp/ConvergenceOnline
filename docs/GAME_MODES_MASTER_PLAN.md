@@ -341,13 +341,14 @@ Sin telemetría (bloqueada por decisión del propietario) y sin equipo de QA, la
 Orden pensado para: valor visible temprano, dependencias respetadas, y cero cambios de balance antes de tener la simulación como red. Esfuerzo: 🟢 horas · 🟡 días · 🟡🟡 semana.
 
 ### Fase GM-α — Legibilidad y picos (sin tocar balance) — *la que más energía transmite por euro*
-1. **GM-16** Multiplicador total legible (🟢) — desbloquea la percepción de todo lo demás.
-2. **GM-28** Momento destacado en el resultado (🟢).
-3. **GM-18** Telegrafiar jefe en la barra de oleada (🟢).
-4. **GM-27** Fiebre-espectáculo (🟡).
-5. **GM-01** Near-miss en derrota (🟢).
-6. **GM-21** Fusión visual carga+frenesí (🟡).
-7. **GM-31** Checklist de playtest (🟢).
+> ✅ **Fase completada el 2026-07-06 (v2.1.0).** Detalle de lo implementado en el registro al final de este documento.
+1. **GM-16** Multiplicador total legible (🟢) — ✅ v2.1.0: chip `#hud-mult` junto al score (combo × fiebre × temp) + popups con el multiplicador total.
+2. **GM-28** Momento destacado en el resultado (🟢) — ✅ v2.1.0: `State.bestPlay` + tarjeta en `modal-over` con contexto (oleada/nivel).
+3. **GM-18** Telegrafiar jefe en la barra de oleada (🟢) — ✅ v2.1.0: bandera «⚠ Jefe» toda la oleada previa, pre-roll del tipo de evento y aviso específico ~3s antes.
+4. **GM-27** Fiebre-espectáculo (🟡) — ✅ v2.1.0: entrada con pausa de spawns 500ms + zoom/saturación one-shot, popups 1.3×, aro en llamas, exhalación al salir; anulado bajo `reduced-fx`.
+5. **GM-01** Near-miss en derrota (🟢) — ✅ v2.1.0: `State.minIcons`; «Te quedaste a {n} figuras» si mínimo ≤10 y >45s de nivel.
+6. **GM-21** Fusión visual carga+frenesí (🟡) — ✅ v2.1.0: widget `#power-rings` de 2 anillos concéntricos sustituye a las 2 barras; textos de ayuda actualizados.
+7. **GM-31** Checklist de playtest (🟢) — ✅ v2.1.0: `docs/PLAYTEST_CHECKLIST.md`.
 
 ### Fase GM-β — Red de seguridad + primeros cambios de balance
 8. **GM-30** Simulador de balance + baseline (🟡🟡) — **gate: nada de la lista B sin esto**.
@@ -388,3 +389,19 @@ Orden pensado para: valor visible temprano, dependencias respetadas, y cero camb
 | **Regresión de rendimiento** (GM-27, GM-08 añaden FX) | Todo efecto nuevo pasa por `FX.cap`/gobernador y tiene variante `reduced-fx`; prohibidas animaciones persistentes de box-shadow (regla del design system) |
 | **i18n incompleta** | Toda string nueva en ES+EN desde el primer commit (regla CLAUDE.md); las tablas de mutadores/bendiciones/reliquias definen sus claves i18n en el mismo PR que la lógica |
 | **El documento se pudre** (como pasó con MIGRATION_SPEC en v1.8–1.9) | Cada tarea GM-* cierra actualizando su línea en §11 con fecha y versión, igual que hace el registro del plan de engagement |
+
+---
+
+# Registro de implementación
+
+### 2026-07-06 — Fase GM-α implementada (v2.1.0)
+
+- **GM-16**: nuevo `Render.multChip()` alimenta `#hud-mult` (chip junto al score) con el producto vivo `comboMult × feverBoost × tempMult`; se enciende con `--mode-accent`, pasa a oro con ×6+, gris a ×1. Los popups de puntos muestran ese mismo multiplicador total (antes solo el de combo). Se refresca desde `Render.hud()`, `Render.combo()` y `Survival._syncMult()`.
+- **GM-28**: `State.bestPlay` registra la jugada de más puntos (puntos, combo, oleada/nivel); `fillStats()` la pinta en `#over-peak`. En Clásico se reinicia por nivel (igual que el score).
+- **GM-18**: `Survival._planBoss()` decide al empezar cada oleada si la siguiente trae jefe y pre-rolla el tipo; `render()` muestra `#surv-boss-flag` («⚠ Jefe») y tinta la barra toda la oleada previa; `onTick` avisa del tipo concreto ~3s antes; `bossEvent()` consume el pre-roll (el aviso siempre coincide con el evento).
+- **GM-27**: entrada en Fiebre = `State.spawnHoldUntil` (500ms sin spawns, comprobado en `doSpawn`), `Render.feverBurst()` (zoom 1.022 + saturación, one-shot, transform/filter), popups a 1.3× vía `.board-wrap.fever-on .popup`, aro de combo en llamas (`.combo.fever`, el estado urgente mantiene prioridad); salida con `Render.feverOut()` (exhalación 340ms). Todo anulado bajo `reduced-fx`.
+- **GM-01**: `State.minIcons` (mínimo de iconos del nivel, actualizado en `evaluate()`); en la derrota por tablero lleno de Clásico/Aventura, si `minIcons ≤ 10` y `elapsed > 45s`, `#over-near` muestra «Te quedaste a {n} figuras de lograrlo». Sin coste, sin pago: puro encuadre near-miss.
+- **GM-21**: `#power-rings` (SVG, 2 anillos concéntricos: interior carga → potenciador, exterior frenesí → furia, llama central que se enciende en frenesí) sustituye a `.charge` + `.frenzy-meter`; `Survival.render()` escribe `stroke-dashoffset`. Textos `surv_sys_*` actualizados a «anillo» en ES/EN. Sin cambio de reglas.
+- **GM-31**: `docs/PLAYTEST_CHECKLIST.md` con guion de ~10 min por modo e ítems bloqueantes ⭐.
+- **Balance intacto**: sin cambios en puntos, fórmulas, spawn (salvo la micro-pausa de 500ms al entrar en Fiebre, que es la mecánica diseñada de GM-27), economía ni probabilidades. El pre-roll del jefe consume `rand()` en otro orden (sin efecto de juego: Supervivencia no es seedeada-compartida).
+- i18n nuevas (ES+EN): `near_miss`, `peak_moment`, `surv_boss_soon`, `surv_boss_meteor_warn`, `surv_boss_quake_warn`, `surv_boss_frost_warn`; `surv_sys_charge`/`surv_sys_frenzy` reescritas.
