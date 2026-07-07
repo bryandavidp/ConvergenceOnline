@@ -1139,6 +1139,13 @@ body.time-critical .board-wrap { box-shadow: 0 0 0 1px rgba(255,93,115,.38), 0 0
 .cell.tile-bomb::after { content: ''; position: absolute; inset: 0; background: center / 62% no-repeat url(img/ui/bomb.png); filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
 .cell.tile-slowdown { color: #00e5cc; background: radial-gradient(circle, rgba(0,229,204,.22), rgba(0,180,160,.08)); box-shadow: 0 0 0 2px rgba(0,229,204,.65) inset; animation: special-pulse 1.6s ease-in-out infinite; }
 .cell.tile-slowdown::after { content: '⏳'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.4em; filter: drop-shadow(0 1px 4px rgba(0,229,204,.7)); animation: slowdown-bob 2.2s ease-in-out infinite; }
+/* Cápsula de tiempo (GM-13, Contrarreloj): +5s al detonarla por adyacencia */
+.cell.tile-timecap { color: var(--time, #7ad7ff); background: radial-gradient(circle, rgba(122,215,255,.24), rgba(122,215,255,.08)); box-shadow: 0 0 0 2px rgba(122,215,255,.65) inset; animation: special-pulse 1.6s ease-in-out infinite; }
+.cell.tile-timecap::after { content: '⏰'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.35em; filter: drop-shadow(0 1px 4px rgba(122,215,255,.7)); animation: slowdown-bob 2.2s ease-in-out infinite; }
+/* Marea (GM-20): aviso en las filas exteriores antes de llenarse */
+.cell.tide-warn { box-shadow: 0 0 0 2px rgba(122,215,255,.8) inset; animation: tide-warn-pulse .3s ease-in-out 4 alternate; }
+@keyframes tide-warn-pulse { from { background: rgba(122,215,255,.06); } to { background: rgba(122,215,255,.26); } }
+body.reduced-fx .cell.tide-warn { animation: none; background: rgba(122,215,255,.18); }
 @keyframes slowdown-bob { 0%,100% { transform: scale(1) rotate(-4deg); } 50% { transform: scale(1.12) rotate(4deg); } }
 
 /* Icono SVG dentro de la celda */
@@ -1540,6 +1547,21 @@ body.mode-zen .mult-chip { visibility: hidden; }
 body.mode-zen .gscore .hud-value { opacity: .55; text-shadow: none; }
 /* Clásico (GM-03): la barra de potenciadores sin los anillos de Supervivencia */
 body.mode-clasico #power-rings { display: none; }
+/* Ghost personal (GM-12): delta contra tu mejor intento */
+.ghost-chip { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--bad); }
+.ghost-chip.up { color: var(--good); }
+/* Calendario de medallas del reto (GM-14) */
+.daily-cal { display: inline-flex; align-items: center; gap: 3px; margin-top: 3px; }
+.cal-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.14); flex: none; }
+.cal-dot.m-bronze { background: #cd7f32; }
+.cal-dot.m-silver { background: #c8d3e8; }
+.cal-dot.m-gold { background: var(--gold); box-shadow: 0 0 5px rgba(255,216,77,.6); }
+.daily-streak-n { margin-left: 5px; font-size: .72rem; color: var(--warn); }
+/* Registro de expedición (GM-09) en el resumen de Aventura */
+.over-exped { margin: 6px 0 2px; padding: 8px 12px; border-radius: 12px; font-size: .78rem;
+  background: rgba(122,92,255,.08); border: 1px solid rgba(122,92,255,.25); text-align: left; }
+.over-exped b { display: block; margin-bottom: 3px; color: #b46cff; font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; }
+.over-exped span { color: var(--muted); line-height: 1.5; overflow-wrap: anywhere; }
 
 /* Near-miss (GM-01): cuánto te faltó para vaciar — motiva el reintento sin monetizar. */
 .over-near { color: var(--gold); font-weight: 800; margin: 0 0 6px; }
@@ -1857,6 +1879,16 @@ body.reduced-fx .board-card:hover .board-thumb, body.reduced-fx .board-card:focu
   --clear-animation: glyph-out .30s linear forwards;
   --clear-burst: radial-gradient(circle, rgba(130,225,255,.42), transparent 64%);
   --clear-burst-animation: clear-ring .32s ease-out forwards;
+}
+/* Jardín Zen (GM-23): exclusivo, se gana con 50 flores en modo Zen */
+.board-wrap[data-board="jardin"], .board-thumb[data-board="jardin"] {
+  --board-frame: linear-gradient(145deg, #10240f, #2c5a2b 45%, #77b25a);
+  --board-pattern: radial-gradient(circle at 20% 30%, rgba(255,183,213,.14) 0 8%, transparent 9%), radial-gradient(circle at 75% 65%, rgba(155,225,93,.12) 0 10%, transparent 11%), radial-gradient(circle at 55% 15%, rgba(255,183,213,.10) 0 6%, transparent 7%);
+  --board-pattern-size: 160% 160%, 180% 180%, 150% 150%;
+  --board-bg-animation: board-wood 30s linear infinite;
+  --board-border: rgba(155,225,93,.55);
+  --board-trim: rgba(255,183,213,.30);
+  --board-glow: rgba(120,190,90,.26);
 }
 .board-wrap[data-board="madera"], .board-thumb[data-board="madera"] {
   --board-frame: linear-gradient(145deg, #2a170c, #5b3519 42%, #a46835);
