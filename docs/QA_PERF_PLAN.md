@@ -13,7 +13,7 @@ Orden recomendado: **QP-1 (bugs P0/P1) → QP-2 (rendimiento móvil) → resto**
 | # | Tarea | Qué es | Esf. | Criterio de cierre |
 |---|---|---|---|---|
 | QP-1 | ✅ **Corrección de bugs confirmados** (§2.1) — hecho v2.4.1 | Los 6 hallazgos [CONFIRMADO] de la auditoría | 🟡 | ✅ 6 tests de regresión (`tests/qp1-regression.test.js`); suite 42/42 verde |
-| QP-2 | **Rendimiento móvil Fase 1** (§3.4, P0+P1) | backdrop-filter fuera, ambientales a compositor u opt-in, poda de pulsos infinitos, gobernador con histéresis | 🟡 | `perf-probe` ≥55 FPS con CPU ×6 en la escena de estrés; validación en iPhone real |
+| QP-2 | ✅ **Rendimiento móvil Fase 1** (§3.4, P0+P1) — hecho v2.5.0 | backdrop-filter fuera, ambientales a compositor, poda de pulsos infinitos, gobernador v2 con histéresis, auto-sugerencia | 🟡 | ✅ 8 tests (`tests/qp2-perf.test.js`); `perf-probe --assert 55` como guardarraíl. 🟡 Pendiente: `perf-probe`/iPhone real (P2-i) |
 | QP-3 | **GM-04 · Niveles estrella** (diferido de GM-δ) | 3 nodos laterales por mundo, puzles FINITOS sin spawns, puertas de 25/60/100★ | 🟡🟡 | Ver diseño abajo |
 | QP-4 | **Fase 4 de audio** (plan de engagement) | Motivos por modo, capas por intensidad, efectos diferenciados; enganches ya definidos (fiebre-espectáculo, sprint, jefes) | 🟡🟡 | Cada firma sonora de la matriz §5 del plan de modos suena; sin archivos (WebAudio) |
 | QP-5 | **Sincronización documental** | ARCHITECTURE/REQUIREMENTS/DESIGN_SYSTEM siguen anclados a v1.7–1.9; documentar Picker/PreLevel/DailyMut/anillos/mutadores | 🟡 | Ningún doc afirma algo falsificable contra v2.4+ |
@@ -40,7 +40,7 @@ Orden recomendado: **QP-1 (bugs P0/P1) → QP-2 (rendimiento móvil) → resto**
 | B-05 | **P2 ✅ CORREGIDO (v2.4.1)** | **El selector de ritmo Zen no se puede cancelar** | `launchZen()` abre un Picker sin `cancelLabel`: si el jugador tocó Zen por error, no hay atrás (debe elegir un ritmo y luego salir de la partida). **Corrección:** `cancelLabel: t('back')` con `onCancel` no-op. |
 | B-06 | **P2 ✅ CORREGIDO (v2.4.1)** | **Endurecer Picker/PreLevel ante fin de partida externo** | Hoy ninguna ruta legítima cierra la partida con un Picker pendiente (la pausa suave bloquea spawns/reloj), pero es frágil por diseño: cualquier feature futura que llame `gameOver()`/`quit()` con un Picker abierto dejaría el overlay pegado sobre el menú. **Corrección:** `Picker.dismiss()` idempotente invocado desde `Game.endGame()` y `Game.quit()`; ídem ocultar `#prelevel`. |
 | B-07 | P2 [SOSPECHA] | **Racha del reto "activa" con 2 días sin jugar** | `dailyStreak()` desplaza a ayer si hoy no hay medalla y además puede consumir congelación en ese mismo paso → una racha puede mostrarse viva tras 2 días de ausencia. Verificar con tabla de casos (test unitario con historial sintético) y ajustar si el resultado sorprende. |
-| B-08 | P2 [SOSPECHA] | **Gobernador de FX poco agresivo** | En la medición ×6 el juego sostuvo 43 FPS con `FX.cap = 52` (fuera incluso del máximo documentado de 50): el umbral EMA>22ms roza justo los ~23ms medidos y no llegó a recortar. Verificar la histéresis y el tope (§3.4-P1c). |
+| B-08 | **P2 ✅ CORREGIDO (v2.5.0)** | **Gobernador de FX poco agresivo** | El `+3` podía dejar `FX.cap` en 52 (>50). El gobernador v2 (módulo `Perf`) clampa el tope al techo del nivel cada frame (invariante dura) y actúa POR NIVELES con histéresis, no solo tocando `cap`. Test: `tests/qp2-perf.test.js` (`el tope nunca supera el techo del nivel`). |
 | B-09 | P3 [CONFIRMADO, aceptar] | Bomba/rayo/escoba destruyen la cápsula ⏰ sin efecto | `_powerClear` limpia tiles trigger sin detonarlos. Coherente con el resto de triggers; documentado como regla ("los potenciadores arrasan, no detonan"). No corregir salvo feedback de jugadores. |
 
 ## 2.2 Matriz de casuísticas a probar (la caza amplia)
@@ -123,6 +123,15 @@ Lecturas: (1) el síntoma se reproduce sin iPhone — es coste de CPU/paint, no 
 Parte de la diferencia es **diseño correcto**: el gobernador reduce partículas en gama baja a propósito. El objetivo NO es igualar visualmente a PC, sino que (a) los 60 FPS se sostengan en el gameplay base, y (b) la degradación sea **elegante y por capas** (perder motas antes que perder el vuelo de convergencia; perder ambientales antes que el feedback de jugada). Hoy la degradación es abrupta: se pierden frames (todo tartamudea) en vez de perder adornos.
 
 ## 3.4 Plan de corrección (tareas QP-2, por prioridad)
+
+> **Estado (v2.5.0):** P0 (a·b·c) y P1 (d·e·f·g) ✅ implementados y verificados en Chromium real
+> (gobernador 0→1→2 con clases `perf-1`/`perf-2`, cortes de animación por capa, clamp del tope,
+> integridad visual, cero errores de consola). **Corrección al alcance:** el plan listaba 6 ambientales
+> pero **`board-drift`** (skin *classic*, el DEFECTO más visto) también animaba `background-position`;
+> se corrigió también → **7 keyframes** pasados a transform/opacity. `board-scan` (futurista) NO se dejó
+> solo-desktop: se convirtió en scroll compositado de un periodo exacto (34px) con el pseudo
+> sobredimensionado (`inset:-34px`), así conserva el efecto en móvil a coste ~0. **Pendiente:** P2-h/P2-i
+> (correr `perf-probe --assert 55` y validar en iPhone real) — la sonda ya es multiplataforma y con guardarraíl.
 
 **P0 — sin pérdida visual apreciable (horas):**
 - (a) **Quitar `backdrop-filter`** de `.pick-overlay` → velo sólido `rgba(5,9,26,.88)` (B-04).

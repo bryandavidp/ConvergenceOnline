@@ -1127,8 +1127,19 @@ body.time-critical .board-wrap { box-shadow: 0 0 0 1px rgba(255,93,115,.38), 0 0
 }
 
 /* --- Objetos especiales del mockup (tap = efecto) --- */
-.cell.tile-bonus, .cell.tile-portal, .cell.tile-magicbox, .cell.tile-bomb { animation: special-pulse 1.6s ease-in-out infinite; }
-@keyframes special-pulse { 50% { box-shadow: 0 0 0 2px currentColor inset, 0 0 12px color-mix(in srgb, currentColor 60%, transparent); } }
+/* Pulso de tiles-trigger (QP-2 P0-c): el glow vive en un ::before PRE-PINTADO y solo se
+   anima su OPACITY (compositor), en vez de animar `box-shadow` cada frame (repaint). El
+   anillo estático de cada tile lo sigue pintando la propia celda; el ::before añade el
+   latido por encima. currentColor toma el color de cada tile. */
+.cell.tile-bonus, .cell.tile-portal, .cell.tile-magicbox, .cell.tile-bomb,
+.cell.tile-slowdown, .cell.tile-timecap { position: relative; }
+.cell.tile-bonus::before, .cell.tile-portal::before, .cell.tile-magicbox::before,
+.cell.tile-bomb::before, .cell.tile-slowdown::before, .cell.tile-timecap::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 0 2px currentColor inset, 0 0 12px color-mix(in srgb, currentColor 60%, transparent);
+  opacity: 0; animation: special-pulse 1.6s ease-in-out infinite;
+}
+@keyframes special-pulse { 50% { opacity: 1; } }
 .cell.tile-bonus { color: var(--good); background: radial-gradient(circle, rgba(52,226,155,.28), rgba(52,226,155,.08)); box-shadow: 0 0 0 2px rgba(52,226,155,.6) inset; }
 .cell.tile-bonus::after { content: '+30'; position: absolute; inset: 0; display: grid; place-items: center; font-weight: 900; font-size: .82em; color: var(--good); text-shadow: 0 1px 3px rgba(0,0,0,.6); }
 .cell.tile-portal { color: var(--accent-2); box-shadow: 0 0 0 2px rgba(0,208,255,.6) inset; }
@@ -1137,10 +1148,10 @@ body.time-critical .board-wrap { box-shadow: 0 0 0 1px rgba(255,93,115,.38), 0 0
 .cell.tile-magicbox::after { content: ''; position: absolute; inset: 0; background: center / 62% no-repeat url(img/ui/luckyblock.png); filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
 .cell.tile-bomb { color: var(--bad); box-shadow: 0 0 0 2px rgba(255,93,115,.6) inset; }
 .cell.tile-bomb::after { content: ''; position: absolute; inset: 0; background: center / 62% no-repeat url(img/ui/bomb.png); filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
-.cell.tile-slowdown { color: #00e5cc; background: radial-gradient(circle, rgba(0,229,204,.22), rgba(0,180,160,.08)); box-shadow: 0 0 0 2px rgba(0,229,204,.65) inset; animation: special-pulse 1.6s ease-in-out infinite; }
+.cell.tile-slowdown { color: #00e5cc; background: radial-gradient(circle, rgba(0,229,204,.22), rgba(0,180,160,.08)); box-shadow: 0 0 0 2px rgba(0,229,204,.65) inset; }
 .cell.tile-slowdown::after { content: '⏳'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.4em; filter: drop-shadow(0 1px 4px rgba(0,229,204,.7)); animation: slowdown-bob 2.2s ease-in-out infinite; }
 /* Cápsula de tiempo (GM-13, Contrarreloj): +5s al detonarla por adyacencia */
-.cell.tile-timecap { color: var(--time, #7ad7ff); background: radial-gradient(circle, rgba(122,215,255,.24), rgba(122,215,255,.08)); box-shadow: 0 0 0 2px rgba(122,215,255,.65) inset; animation: special-pulse 1.6s ease-in-out infinite; }
+.cell.tile-timecap { color: var(--time, #7ad7ff); background: radial-gradient(circle, rgba(122,215,255,.24), rgba(122,215,255,.08)); box-shadow: 0 0 0 2px rgba(122,215,255,.65) inset; }
 .cell.tile-timecap::after { content: '⏰'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.35em; filter: drop-shadow(0 1px 4px rgba(122,215,255,.7)); animation: slowdown-bob 2.2s ease-in-out infinite; }
 /* Marea (GM-20): aviso en las filas exteriores antes de llenarse */
 .cell.tide-warn { box-shadow: 0 0 0 2px rgba(122,215,255,.8) inset; animation: tide-warn-pulse .3s ease-in-out 4 alternate; }
@@ -1216,16 +1227,27 @@ body.reduced-fx .cell.tide-warn { animation: none; background: rgba(122,215,255,
   0% { opacity: .5; transform: scale(.55); }
   100% { opacity: 0; transform: scale(1.65); }
 }
-@keyframes board-drift { 0%,100% { transform: translate3d(-1%, -1%, 0) scale(1.04); background-position: 0% 0%; } 50% { transform: translate3d(1%, 1%, 0) scale(1.08); background-position: 100% 80%; } }
-@keyframes board-wood { 0% { transform: translate3d(-1%, 0, 0) scale(1.05); background-position: 0 0, 0 0; } 100% { transform: translate3d(1%, 0, 0) scale(1.05); background-position: 80px 0, 32px 0; } }
+/* Ambientales del tablero — SOLO transform/opacity (compositor), sin `background-position`
+   (QP-2 P0-b): animar la posición del fondo re-rasteriza el pseudo-elemento del tamaño
+   del tablero cada frame; era ~7 FPS en móvil (docs/QA_PERF_PLAN.md §3.2). Los bucles son
+   ping-pong (0/50/100 simétricos) o rotaciones/scroll de periodo entero: cierran sin salto. */
+@keyframes board-drift { 0%,100% { transform: translate3d(-1%, -1%, 0) scale(1.04); } 50% { transform: translate3d(1%, 1%, 0) scale(1.08); } }
+@keyframes board-wood { 0%,100% { transform: translate3d(-1%, 0, 0) scale(1.045); } 50% { transform: translate3d(1%, 0, 0) scale(1.06); } }
 @keyframes board-ice { 0%,100% { transform: scale(1.04) rotate(0deg); opacity: .48; } 50% { transform: scale(1.08) rotate(.7deg); opacity: .76; } }
-@keyframes board-lava { 0%,100% { transform: scale(1.04); background-position: 0% 0%, 0 0, 50% 50%; opacity: .52; } 50% { transform: scale(1.08); background-position: 12% 18%, 34px 18px, 58% 42%; opacity: .78; } }
+@keyframes board-lava { 0%,100% { transform: scale(1.04); opacity: .52; } 50% { transform: scale(1.08); opacity: .78; } }
 @keyframes board-prism { 0%,100% { transform: translate3d(-1%, 1%, 0) scale(1.05) rotate(0deg); opacity: .50; } 50% { transform: translate3d(1%, -1%, 0) scale(1.08) rotate(.8deg); opacity: .78; } }
-@keyframes board-runes { 0% { transform: scale(1.04) rotate(0deg); background-position: 0 0, 50% 50%; } 100% { transform: scale(1.04) rotate(1turn); background-position: 32px 26px, 50% 50%; } }
-@keyframes board-scan { 0% { background-position: 0 0, 0 0; opacity: .42; } 50% { opacity: .72; } 100% { background-position: 0 42px, 42px 0; opacity: .42; } }
+@keyframes board-runes { 0% { transform: scale(1.04) rotate(0deg); } 100% { transform: scale(1.04) rotate(1turn); } }
+/* Scan futurista: scroll diagonal de UN periodo exacto de la rejilla (34px) vía transform;
+   el pseudo se sobredimensiona (inset:-34px, ver más abajo) para que el desplazamiento no
+   descubra bordes. Igual de "escáner" que antes, coste de composición ~0. */
+@keyframes board-scan { 0% { transform: translate3d(0, 0, 0); opacity: .42; } 50% { opacity: .72; } 100% { transform: translate3d(34px, 34px, 0); opacity: .42; } }
 @keyframes board-gold { 0%,100% { transform: translate3d(-1%, -1%, 0) scale(1.04); opacity: .50; } 45% { transform: translate3d(1%, 1%, 0) scale(1.08); opacity: .76; } }
-@keyframes board-leaf { 0% { transform: translate3d(-1%, 1%, 0) scale(1.05); background-position: 0% 30%, 70% 70%; } 100% { transform: translate3d(1%, -1%, 0) scale(1.05); background-position: 12% 24%, 62% 78%; } }
-@keyframes board-stars { 0% { transform: translate3d(0, 0, 0) scale(1.04); background-position: 0 0; opacity: .48; } 100% { transform: translate3d(1%, -1%, 0) scale(1.08); background-position: 38px 54px; opacity: .68; } }
+@keyframes board-leaf { 0%,100% { transform: translate3d(-1%, 1%, 0) scale(1.05); } 50% { transform: translate3d(1%, -1%, 0) scale(1.07); } }
+@keyframes board-stars { 0%,100% { transform: translate3d(0, 0, 0) scale(1.04); opacity: .48; } 50% { transform: translate3d(1%, -1%, 0) scale(1.08); opacity: .68; } }
+/* Sobredimensionado del pseudo del skin futurista: 34px de sobrescán por lado para que el
+   scroll de `board-scan` (translate de 34px = un periodo de la rejilla) nunca deje ver el
+   borde del marco. La rejilla tiene background-size 34px, así que el bucle es perfecto. */
+.board-wrap[data-board="futurista"]::before, .board-thumb[data-board="futurista"]::before { inset: -34px; }
 @keyframes clear-wood { 0% { transform: scale(1) rotate(0); opacity: 1; } 40% { transform: scale(.88) rotate(3deg); opacity: .95; } 100% { transform: translateY(4px) scale(var(--clear-snap, .3)) rotate(12deg); opacity: 0; } }
 @keyframes clear-ice { 0% { transform: scale(1); opacity: 1; } 45% { transform: scale(.9) rotate(-4deg); opacity: .95; } 100% { transform: scale(var(--clear-snap, .22)) rotate(-22deg); opacity: 0; } }
 @keyframes clear-lava { 0% { transform: scale(1); opacity: 1; filter: brightness(1); } 48% { transform: scale(.84); opacity: .95; filter: brightness(1.25); } 100% { transform: translateY(-4px) scale(var(--clear-snap, .24)); opacity: 0; filter: brightness(1.55); } }
@@ -2579,6 +2601,37 @@ body.reduced-fx.time-critical .time-chip {
   animation: none !important;
 }
 body.reduced-fx.surv-frenzy-active .board-wrap { animation: none !important; }
+/* Pulsos de tiles-trigger bajo reduced-fx (QP-2 P0-c): antes NO estaban cubiertos y
+   quedaban ~83 animaciones vivas en modo reducido. Se apaga el latido (::before) y el
+   bamboleo del emoji (::after de ⏳/⏰); el anillo estático del tile permanece. */
+body.reduced-fx .cell.tile-bonus::before, body.reduced-fx .cell.tile-portal::before,
+body.reduced-fx .cell.tile-magicbox::before, body.reduced-fx .cell.tile-bomb::before,
+body.reduced-fx .cell.tile-slowdown::before, body.reduced-fx .cell.tile-timecap::before {
+  animation: none !important; opacity: 0;
+}
+body.reduced-fx .cell.tile-slowdown::after, body.reduced-fx .cell.tile-timecap::after { animation: none !important; }
+
+/* ---------- Gobernador de FX v2 (QP-2 P1-d) ----------
+   Degradación POR CAPAS, aplicada por el JS (módulo Perf) con una clase en <body> según
+   el EMA del tiempo de frame. Es CSS puro -> auditable y sin coste. `perf-1`: fuera las
+   ambientales del tablero (lo más caro medido). `perf-2`: además fuera los pulsos de tiles
+   y las escalas de popup (que fuerzan re-composición). La histéresis vive en el JS. */
+body.perf-1 .board-wrap::before, body.perf-1 .board-thumb::before { animation: none !important; }
+body.perf-2 .cell.tile-bonus::before, body.perf-2 .cell.tile-portal::before,
+body.perf-2 .cell.tile-magicbox::before, body.perf-2 .cell.tile-bomb::before,
+body.perf-2 .cell.tile-slowdown::before, body.perf-2 .cell.tile-timecap::before {
+  animation: none !important; opacity: 0;
+}
+body.perf-2 .cell.tile-slowdown::after, body.perf-2 .cell.tile-timecap::after { animation: none !important; }
+body.perf-2 .popup.show { animation-name: popup-float-flat !important; }
+@keyframes popup-float-flat {
+  0% { opacity: 0; transform: translate(-50%, -50%); }
+  18% { opacity: 1; transform: translate(-50%, -90%); }
+  100% { opacity: 0; transform: translate(-50%, -180%); }
+}
+/* El toast de auto-sugerencia (P1-e) es accionable: un toque activa el modo ligero. */
+.toast.actionable { pointer-events: auto; cursor: pointer; }
+.toast.actionable .toast-tx { text-decoration: underline; text-underline-offset: 2px; }
 
 /* ---------- Accesibilidad: movimiento reducido ---------- */
 @media (prefers-reduced-motion: reduce) {

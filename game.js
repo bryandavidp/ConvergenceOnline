@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.4.1';
+  const VERSION = '2.5.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -362,6 +362,7 @@
         challenge_start: 'Reto compartido: ¡mismo tablero!',
         diff_facil: 'Fácil', diff_normal: 'Normal', diff_dificil: 'Difícil',
         set_sfx: 'Efectos de sonido', set_music: 'Música', set_haptics: 'Vibración', set_reduced: 'Reducir efectos', set_large: 'Texto grande', set_lang: 'Idioma',
+        perf_suggest: 'Toca aquí para activar el modo ligero y ganar fluidez', perf_light_on: 'Modo ligero activado',
         st_points: 'Puntos', st_level: 'Nivel', st_combo: 'Combo máx.', st_removed: 'Eliminados', st_time: 'Tiempo', st_record: 'Récord', st_wave: 'Oleada', st_surv: 'Sobreviviste', st_best: 'Mejor',
         st_games: 'Partidas', st_bestcombo: 'Mejor combo', st_totaltime: 'Tiempo total',
         surv_new_icons: '¡Nuevos iconos! Sube la dificultad',
@@ -505,6 +506,7 @@
         challenge_start: 'Shared challenge: same board!',
         diff_facil: 'Easy', diff_normal: 'Normal', diff_dificil: 'Hard',
         set_sfx: 'Sound effects', set_music: 'Music', set_haptics: 'Vibration', set_reduced: 'Reduce effects', set_large: 'Large text', set_lang: 'Language',
+        perf_suggest: 'Tap here to turn on light mode for smoother play', perf_light_on: 'Light mode on',
         st_points: 'Score', st_level: 'Level', st_combo: 'Max combo', st_removed: 'Cleared', st_time: 'Time', st_record: 'Best', st_wave: 'Wave', st_surv: 'Survived', st_best: 'Best',
         st_games: 'Games', st_bestcombo: 'Best combo', st_totaltime: 'Total time',
         surv_new_icons: 'New icons! Difficulty up',
@@ -1272,7 +1274,7 @@
   const announceGame = (msg, ms = 1400) => { const t = Date.now(); if (t - _srLast < ms) return; _srLast = t; announce(msg); };
   const Toasts = {
     ICON: { info: 'info', good: 'check', warn: 'warning', bad: 'close' },
-    show(msg, kind = 'info', ms = 2800, iconArg) {
+    show(msg, kind = 'info', ms = 2800, iconArg, onClick) {
       const el = $('#toasts'); if (!el) return;
       // Si el mensaje empieza por un emoji (y no se pasó icono), úsalo como icono del toast.
       if (iconArg == null) {
@@ -1300,6 +1302,11 @@
         t.appendChild(s);
       }
       const tx = document.createElement('span'); tx.className = 'toast-tx'; tx.textContent = msg; t.appendChild(tx);
+      // Toast accionable: un toque ejecuta la acción y lo cierra (auto-sugerencia de FX).
+      if (typeof onClick === 'function') {
+        t.classList.add('actionable');
+        t.addEventListener('click', () => { clearTimeout(t._t); this._out(t); onClick(); });
+      }
       el.appendChild(t);
       t._t = setTimeout(() => this._out(t), ms);
       while (el.children.length > 3) el.firstChild.remove();
@@ -3888,6 +3895,68 @@
     },
   };
 
+  /* ===================== Gobernador de rendimiento (Perf, QP-2 P1) =====================
+   * Degradación POR CAPAS con histéresis, en vez de perder frames a lo bruto. Loop.tick le
+   * pasa cada frame el EMA del tiempo de frame (ms) y el dt; Perf decide un "nivel":
+   *   0 = todo · 1 = sin ambientales de tablero (tope 28) · 2 = sin pulsos de tiles y popups
+   *   sin escala (tope 18). El nivel se aplica con una clase en <body> (perf-1 / perf-2) ->
+   *   el corte de animaciones es CSS puro (styles.css). Subir de nivel (peor) exige el umbral
+   *   SOSTENIDO 2s; bajar (mejor) exige 10s buenos: nunca oscila. En móvil de alta densidad
+   *   arranca en nivel 1 hasta acumular EMA bueno (evita el primer minuto tartamudo). */
+  const Perf = {
+    level: 0,
+    CAP: [50, 28, 18],            // techo de partículas (FX.cap) por nivel
+    UP: [20, 26],                 // EMA(ms) para subir a nivel 1 / a nivel 2
+    GOOD: 16,                     // EMA(ms) considerado "bueno" (para bajar de nivel)
+    UP_MS: 2000, DOWN_MS: 10000,  // ms sostenidos requeridos para subir / bajar
+    FLOOR: 12,                    // tope mínimo de partículas
+    _badMs: 0, _goodMs: 0, _l2Ms: 0, _bootGuard: false, suggested: false,
+    init() {
+      try { this.suggested = localStorage.getItem('cv_perf_suggested') === '1'; } catch (_) {}
+      const hiDpiTouch = (navigator.maxTouchPoints || 0) > 0 && (window.devicePixelRatio || 1) >= 3;
+      this._bootGuard = hiDpiTouch;   // el primer descenso desde el arranque móvil pide solo 5s
+      this.level = -1;                // fuerza a apply() a escribir la clase aunque el nivel sea 0
+      this.apply(hiDpiTouch ? 1 : 0);
+    },
+    apply(lvl) {
+      lvl = lvl < 0 ? 0 : lvl > 2 ? 2 : lvl;
+      if (lvl !== this.level) {
+        this.level = lvl;
+        const b = document.body && document.body.classList;
+        if (b) { b.toggle('perf-1', lvl >= 1); b.toggle('perf-2', lvl >= 2); }
+      }
+      if (FX.cap > this.CAP[lvl]) FX.cap = this.CAP[lvl]; // baja YA; el EMA lo re-sube dentro del nivel
+      this._badMs = 0; this._goodMs = 0;
+    },
+    // Un paso por frame: EMA (ms) y dt (ms) del frame.
+    step(ema, dt) {
+      const ceil = this.CAP[this.level];
+      // Tope de partículas DENTRO del nivel (clamp correcto: nunca supera el techo — B-08).
+      if (ema > 22) { if (FX.cap > this.FLOOR) FX.cap = Math.max(this.FLOOR, FX.cap - 6); }
+      else if (ema < 17 && FX.cap < ceil) FX.cap = Math.min(ceil, FX.cap + 3);
+      if (FX.cap > ceil) FX.cap = ceil; // invariante dura: el tope jamás rebasa el techo del nivel
+      // Acumuladores de histéresis para el cambio de nivel.
+      if (this.level < 2 && ema > this.UP[this.level]) { this._badMs += dt; this._goodMs = 0; }
+      else if (ema < this.GOOD) { this._goodMs += dt; this._badMs = 0; }
+      else { this._badMs = 0; this._goodMs = 0; }
+      if (this.level < 2 && this._badMs >= this.UP_MS) this.apply(this.level + 1);
+      else if (this.level > 0 && this._goodMs >= (this._bootGuard ? 5000 : this.DOWN_MS)) { this._bootGuard = false; this.apply(this.level - 1); }
+      // Auto-sugerencia de modo ligero (P1-e): nivel 2 sostenido >30s, una sola vez por dispositivo.
+      if (this.level >= 2) { this._l2Ms += dt; if (this._l2Ms > 30000) this.suggestLight(); }
+      else this._l2Ms = 0;
+    },
+    suggestLight() {
+      if (this.suggested) return;
+      this.suggested = true;                                   // "toast único": no volver a preguntar
+      try { localStorage.setItem('cv_perf_suggested', '1'); } catch (_) {}
+      if (Settings.reducedFx) return;
+      Toasts.show(I18n.t('perf_suggest'), 'info', 7000, 'aura', () => {
+        Settings.reducedFx = true; applyReducedFx(); buildSettings();
+        Toasts.show(I18n.t('perf_light_on'), 'good', 2200, 'check');
+      });
+    },
+  };
+
   /* ===================== Loop (un único requestAnimationFrame) ===================== */
   const Loop = {
     raf: 0, last: 0, spawnAcc: 0, clockAcc: 0, ema: 16,
@@ -3899,10 +3968,9 @@
       const L = Loop;
       const dt = Math.min(100, now - L.last); L.last = now;
 
-      // Gobernador de rendimiento: EMA del tiempo de frame -> ajusta el tope de partículas
+      // Gobernador de rendimiento: EMA del tiempo de frame -> nivel de FX + tope de partículas.
       L.ema += (dt - L.ema) * 0.1;
-      if (L.ema > 22 && FX.cap > 18) FX.cap -= 6;
-      else if (L.ema < 17 && FX.cap < 50) FX.cap += 3;
+      Perf.step(L.ema, dt);
 
       if (State.status === 'playing') {
         L.clockAcc += dt;
@@ -5568,6 +5636,7 @@
     Render.buildBoard();
     FX.init();
     applyReducedFx();
+    Perf.init();
     applyLargeText();
     mountTopBars();
     fillArt();
@@ -5743,5 +5812,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Share, I18n, Toasts, RNG, RunSave, Picker, PreLevel, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Share, I18n, Toasts, RNG, RunSave, Picker, PreLevel, Perf, refreshStart, applyLanguage };
 })();
