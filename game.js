@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.2.0';
+  const VERSION = '2.3.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -111,6 +111,15 @@
     // primeros 10s del nivel (o hasta la 3ª convergencia) y sale con rampa de 2s.
     // Material temprano => primer combo antes (ataca el "arranque frío", D2 del plan).
     WARMUP: { ms: 10000, convs: 3, factor: 0.55, rampMs: 2000 },
+    // GM-02: continuar con gemas al llenarse el tablero (Clásico/Aventura) — 1 oferta
+    // por nivel, despeja el 40%. Primer sumidero de gemas de gameplay.
+    CONTINUE_GEMS: 15,
+    CONTINUE_CLEAR: 0.40,
+    // GM-03: potenciadores pre-nivel de Clásico (coste en monedas, máx. 2 por nivel,
+    // desde el 2º mundo). Recupera los costes históricos de Boosters.DEFS.
+    PRELEVEL_BOOSTERS: { bomb: 80, freeze: 60, clearLine: 90 },
+    PRELEVEL_MAX: 2,
+    PRELEVEL_FROM_WORLD: 1,   // índice de mundo (0 = Bosque juega sin fricción)
     HINTS_PER_LEVEL: 3,
     HINT_COOLDOWN: 10000,     // ms
     HINT_DURATION: 2000,      // ms
@@ -122,7 +131,9 @@
     MODES: {
       tutorial:      { name: 'Tutorial',     emoji: '🎓', timed: false, penalties: false, mult: 0.5, single: true, fixedDiff: 'facil', accent: '#ffd23f', goal: 'Junta dos iguales', desc: 'Aprende la mecánica sin prisa ni penalizaciones.' },
       clasico:       { name: 'Clásico',      emoji: '🗺️', timed: false, penalties: true,  mult: 1.0, accent: '#2f6bff', goal: 'Vacía el tablero', desc: 'Supera niveles con diferentes mapas y desafíos únicos.',
-        onSetupLevel(ctx) { Classic.setup(ctx.level); } },
+        onSetupLevel(ctx) { Classic.setup(ctx.level); },
+        // GM-03: los potenciadores pre-nivel (congelar) también pausan el spawn aquí.
+        blockSpawn() { return Survival.frozen() || Survival.locked(); } },
       aventura:      { name: 'Aventura',     emoji: '🚀', timed: false, penalties: true,  mult: 1.1, accent: '#7a5cff', desc: 'Viaje infinito por biomas con reglas propias, objetivos y mini-jefes. ¿Hasta dónde llegarás?',
         onSetupLevel(ctx) { Adventure.setup(ctx.level); },
         winCheck() { Adventure.refreshGoal(State.level); return Adventure.winCheck(); },
@@ -135,8 +146,9 @@
         onTick(dt) { Survival.onTick(dt); },
         onConverge(ctx) { Survival.onConverge(ctx); },
         onOverflow() { Survival.onOverflow(); },
-        blockSpawn() { return Survival.blockSpawn(); } },
-      zen:           { name: 'Zen',          emoji: '☯️', timed: false, penalties: false, mult: 0.8, relaxed: true, endless: true, accent: '#9be15d', goal: 'Sin fallos ni prisa',
+        blockSpawn() { return Survival.blockSpawn(); },
+        spawnFactor() { return Survival.spawnFactor(); } },
+      zen:           { name: 'Zen',          emoji: '☯️', timed: false, penalties: false, mult: 0.8, relaxed: true, endless: true, noFever: true, accent: '#9be15d', goal: 'Sin fallos ni prisa',
         onOverflow() { Game.softClear(0.45); }, desc: 'Ritmo relajado, sin penalizaciones ni fin de partida. Juega y respira.' },
     },
     MODE_ORDER: ['tutorial', 'clasico', 'aventura', 'contrarreloj', 'supervivencia', 'zen'],
@@ -231,6 +243,10 @@
     set lastVersion(v) { localStorage.setItem('cv_ver', v); },
     get survDiff() { return localStorage.getItem('cv_surv_diff') || 'normal'; },
     set survDiff(v) { localStorage.setItem('cv_surv_diff', v || 'normal'); },
+    get zenDiff() { return localStorage.getItem('cv_zen_diff') || 'normal'; },
+    set zenDiff(v) { localStorage.setItem('cv_zen_diff', v || 'normal'); },
+    get preboostSeen() { return localStorage.getItem('cv_preboost') === '1'; },
+    set preboostSeen(v) { localStorage.setItem('cv_preboost', v ? '1' : '0'); },
     get lastMode() { return localStorage.getItem('cv_last_mode') || ''; },
     set lastMode(v) { v ? localStorage.setItem('cv_last_mode', v) : localStorage.removeItem('cv_last_mode'); },
   };
@@ -353,6 +369,29 @@
         surv_boss_soon: '⚠ Jefe', surv_boss_meteor_warn: '¡Lluvia de iconos inminente!', surv_boss_quake_warn: '¡Terremoto inminente!', surv_boss_frost_warn: '¡Frente helado inminente!',
         near_miss: '¡Te quedaste a {n} figuras de lograrlo!', peak_moment: 'Tu mejor momento: +{p} con combo ×{c}',
         sprint_on: '¡Sprint final! Puntos ×1.5', mistake_time: 'Error · −{n}s',
+        boon_title: '¡Bendición!', boon_sub: 'Superaste al jefe: elige una mejora',
+        boon_life: 'Vida extra', boon_life_d: '+1 corazón (puede superar el máximo)',
+        boon_charge: 'Sobrecarga', boon_charge_d: '+50 de carga de potenciador',
+        boon_pack: 'Arsenal', boon_pack_d: '+1 bomba y +1 rayo',
+        boon_slow: 'Calma', boon_slow_d: 'Figuras más lentas durante 2 oleadas',
+        boon_frenzy: 'Furia', boon_frenzy_d: '¡Frenesí activado al instante!',
+        route_title: 'Elige tu ruta', route_dense: 'Ruta exigente', route_dense_d: 'Más obstáculos · puntos ×1.25 este capítulo',
+        route_calm: 'Ruta serena', route_calm_d: 'Figuras más lentas · sin bonus',
+        relic_title: 'Reliquia de jefe', relic_sub: 'Pasiva para el resto de la expedición (máx. 3)',
+        relic_combo: 'Reloj de arena', relic_combo_d: 'Ventana de combo +0.4s',
+        relic_crystal: 'Prisma', relic_crystal_d: 'Los cristales valen +30 extra',
+        relic_hint: 'Brújula', relic_hint_d: '+1 pista en cada nivel',
+        relic_shield: 'Escudo', relic_shield_d: 'La 1ª derrota del capítulo despeja el 30% en vez de terminar',
+        relic_shield_fired: '¡El escudo te salvó! Tablero despejado',
+        continue_title: 'Tablero lleno…', continue_sub: '¿Continuar por {n} gemas? Despeja el 40% del tablero (1 vez por nivel)',
+        continue_yes: 'Continuar ({n}💎)', continue_yes_d: 'Despeja el 40% y sigue jugando',
+        continue_no: 'Terminar partida', continue_done: '¡Continúas! Tablero despejado',
+        classic_win_streak: 'Racha de victorias ×{n} · +{p}% monedas',
+        zen_pace_title: 'Ritmo zen', zen_pace_slow: 'Sereno', zen_pace_slow_d: 'Figuras muy lentas, para respirar',
+        zen_pace_normal: 'Fluido', zen_pace_normal_d: 'Ritmo tranquilo estándar',
+        pl_sub: 'Lleva hasta 2 potenciadores (opcional)', pl_play: 'Jugar', pl_play_cost: 'Jugar · {c} monedas',
+        pl_skip: 'Sin potenciadores', pl_first: 'Nuevo: puedes llevar potenciadores a los niveles. Se usan tocando su botón en partida.',
+        pl_max: 'Máximo {n} potenciadores', pl_no_coins: 'Monedas insuficientes',
         pu_row: '¡Fila despejada!', pu_col: '¡Columna despejada!', pu_no_target: 'Sin objetivo', pu_wild_emergency: 'Comodín · despeje de emergencia', pu_wild_icons: 'Comodín · {n} iconos',
         surv_diff_title: 'Supervivencia', surv_diff_sub: 'Elige el ritmo de la partida', surv_start: 'Empezar supervivencia',
         surv_frenzy: 'Frenesí', surv_frenzy_ready: '¡Frenesí activado!', surv_wave_reward: 'Oleada {w} · +{c} monedas',
@@ -461,6 +500,29 @@
         surv_boss_soon: '⚠ Boss', surv_boss_meteor_warn: 'Icon rain incoming!', surv_boss_quake_warn: 'Quake incoming!', surv_boss_frost_warn: 'Frozen front incoming!',
         near_miss: 'You were just {n} icons away!', peak_moment: 'Your best moment: +{p} with a ×{c} combo',
         sprint_on: 'Final sprint! Points ×1.5', mistake_time: 'Miss · −{n}s',
+        boon_title: 'Blessing!', boon_sub: 'You beat the boss: pick an upgrade',
+        boon_life: 'Extra life', boon_life_d: '+1 heart (can exceed the max)',
+        boon_charge: 'Overcharge', boon_charge_d: '+50 power-up charge',
+        boon_pack: 'Arsenal', boon_pack_d: '+1 bomb and +1 ray',
+        boon_slow: 'Calm', boon_slow_d: 'Slower icons for 2 waves',
+        boon_frenzy: 'Fury', boon_frenzy_d: 'Frenzy activated instantly!',
+        route_title: 'Choose your route', route_dense: 'Demanding route', route_dense_d: 'More obstacles · points ×1.25 this chapter',
+        route_calm: 'Serene route', route_calm_d: 'Slower icons · no bonus',
+        relic_title: 'Boss relic', relic_sub: 'Passive for the rest of the expedition (max 3)',
+        relic_combo: 'Hourglass', relic_combo_d: 'Combo window +0.4s',
+        relic_crystal: 'Prism', relic_crystal_d: 'Crystals are worth +30 extra',
+        relic_hint: 'Compass', relic_hint_d: '+1 hint every level',
+        relic_shield: 'Shield', relic_shield_d: 'First defeat of the chapter clears 30% instead of ending',
+        relic_shield_fired: 'The shield saved you! Board cleared',
+        continue_title: 'Board full…', continue_sub: 'Continue for {n} gems? Clears 40% of the board (once per level)',
+        continue_yes: 'Continue ({n}💎)', continue_yes_d: 'Clear 40% and keep playing',
+        continue_no: 'End game', continue_done: 'You continue! Board cleared',
+        classic_win_streak: 'Win streak ×{n} · +{p}% coins',
+        zen_pace_title: 'Zen pace', zen_pace_slow: 'Serene', zen_pace_slow_d: 'Very slow icons, room to breathe',
+        zen_pace_normal: 'Flowing', zen_pace_normal_d: 'Standard calm pace',
+        pl_sub: 'Bring up to 2 power-ups (optional)', pl_play: 'Play', pl_play_cost: 'Play · {c} coins',
+        pl_skip: 'No power-ups', pl_first: 'New: you can bring power-ups into levels. Tap their button in-game to use them.',
+        pl_max: 'Max {n} power-ups', pl_no_coins: 'Not enough coins',
         pu_row: 'Row cleared!', pu_col: 'Column cleared!', pu_no_target: 'No target', pu_wild_emergency: 'Wildcard · emergency clear', pu_wild_icons: 'Wildcard · {n} icons',
         surv_diff_title: 'Survival', surv_diff_sub: 'Choose the run pace', surv_start: 'Start survival',
         surv_frenzy: 'Frenzy', surv_frenzy_ready: 'Frenzy active!', surv_wave_reward: 'Wave {w} · +{c} coins',
@@ -1710,6 +1772,16 @@
       stats: () => ({ games: m.games || 0, totalRemoved: m.totalRemoved || 0, totalScore: m.stats.totalScore || 0, bestCombo: m.stats.bestCombo || 0, totalTime: m.stats.totalTime || 0 }),
       modeBest: (mode) => (m.modes[mode] && m.modes[mode].best) || 0,
       modePlays: (mode) => (m.modes[mode] && m.modes[mode].plays) || 0,
+      // Racha de VICTORIAS de Clásico (GM-05): niveles seguidos completados; solo la
+      // derrota la reinicia (salir/pausar no castiga). Bonus de monedas +10%/nivel
+      // de racha desde la 2ª victoria seguida, tope +50%.
+      classicWinStreak: () => m.mastery.winStreak || 0,
+      recordClassicWin(won) {
+        if (!m.mastery) m.mastery = {};
+        m.mastery.winStreak = won ? (m.mastery.winStreak || 0) + 1 : 0;
+        save();
+        return m.mastery.winStreak;
+      },
       classicPerfectStreak: () => m.mastery.classicPerfect || 0,
       classicBestPerfectStreak: () => m.mastery.bestClassicPerfect || 0,
       recordClassicPerfect(perfect) {
@@ -2160,9 +2232,81 @@
     isBoss(level) { return this.licOf(level) === this.perChapter - 1; },
     resumeLevel() { return Meta.advMax(); },
 
+    /* ---- Rutas de capítulo (GM-06) y reliquias de jefe (GM-07) ----
+     * La identidad "expedición": el jugador COMPONE su run. Ruta = trade-off del
+     * capítulo (más obstáculos por más puntos, o calma sin bonus). Reliquia =
+     * pasiva de run ganada al superar un jefe (máx. 3, FIFO). Estado de run
+     * volátil: no persiste en RunSave/Meta (una expedición interrumpida retoma
+     * el nivel, no las elecciones). */
+    ROUTES: [
+      { id: 'dense', icon: '🪨' },   // +obstáculos → puntos ×1.25 (visible en el chip)
+      { id: 'calm', icon: '🌿' },    // spawn ×1.15 más lento, sin bonus
+    ],
+    RELICS: [
+      { id: 'combo', icon: '⏱️' },   // ventana de combo +400ms
+      { id: 'crystal', icon: '💎' }, // cristales valen +30 extra
+      { id: 'hint', icon: '🔍' },    // +1 pista por nivel
+      { id: 'shield', icon: '🛡️' },  // 1ª derrota del capítulo: despeje 30% en vez de fin
+    ],
+    route: null, relics: [], shieldUsed: false, _routeChapter: -1,
+    resetRun() { this.route = null; this.relics = []; this.shieldUsed = false; this._routeChapter = -1; },
+    hasRelic(id) { return this.relics.indexOf(id) !== -1; },
+    _applyRoute() {
+      if (this.route === 'calm') State.spawnRate = Math.round(State.spawnRate * 1.15);
+      else if (this.route === 'dense') {
+        State.tempMult = 1.25; // bonus legible en el chip de multiplicador (GM-16)
+        const biome = this.biomeOf(State.level);
+        if (biome.mods.includes('rocks')) this._placeOnEmpty('rock', 0.05);
+        else if (biome.mods.includes('ice')) this._placeFrozen(0.05);
+        else if (biome.mods.includes('crystals')) this._placeCrystals(2);
+        else this._placeOnEmpty('rock', 0.04);
+        Render.syncAll();
+      }
+    },
+    maybeOfferRoute(level) {
+      if (this.licOf(level) !== 0) return;
+      const ch = this.chapterOf(level);
+      if (this._routeChapter === ch) return;
+      this._routeChapter = ch;
+      const biome = this.biomeOf(level);
+      Picker.open({
+        title: I18n.t('route_title'), sub: I18n.t('chapter') + ' ' + (ch + 1) + ' · ' + this.biomeName(biome), accent: biome.accent,
+        options: this.ROUTES.map((r) => ({ id: r.id, icon: r.icon, name: I18n.t('route_' + r.id), desc: I18n.t('route_' + r.id + '_d') })),
+        onPick: (id) => {
+          this.route = id;
+          this._applyRoute();
+          Toasts.show(I18n.t('route_' + id), 'good', 1600, '🧭');
+          this.banner(level);
+        },
+      });
+    },
+    offerRelic(then) {
+      const have = new Set(this.relics);
+      const pool = this.RELICS.filter((r) => !have.has(r.id));
+      if (!pool.length) { if (then) then(); return; }
+      const opts = []; const bag = pool.slice();
+      while (opts.length < 3 && bag.length) opts.push(bag.splice(rand(bag.length), 1)[0]);
+      Sound.milestone();
+      Picker.open({
+        title: I18n.t('relic_title'), sub: I18n.t('relic_sub'), accent: '#b46cff',
+        options: opts.map((r) => ({ id: r.id, icon: r.icon, name: I18n.t('relic_' + r.id), desc: I18n.t('relic_' + r.id + '_d') })),
+        onPick: (id) => {
+          if (this.relics.length >= 3) this.relics.shift(); // se sustituye la más antigua
+          this.relics.push(id);
+          if (id === 'combo') State.comboWindow += 400; // efecto inmediato; setup lo re-deriva por nivel
+          Toasts.show(I18n.t('relic_' + id), 'good', 1900, '🏺');
+          Sound.record(); Haptics.milestone();
+          if (then) then();
+        },
+      });
+    },
+
     setup(level) {
       const biome = this.biomeOf(level), lic = this.licOf(level), chapter = this.chapterOf(level), boss = this.isBoss(level);
       this.levelScore0 = State.score; this.levelStart = State.elapsed;
+      // Frontera de capítulo: la ruta anterior caduca (se vuelve a elegir) y el
+      // escudo de reliquia se recarga (es "1ª derrota DEL CAPÍTULO", GM-06/07).
+      if (lic === 0 && chapter !== this._routeChapter) { this.route = null; State.tempMult = 1; this.shieldUsed = false; }
       // Escalada infinita: más presión de spawn por capítulo.
       State.spawnRate = Math.max(360, Math.round(State.spawnRate / (1 + chapter * 0.12)));
       // Objetivo del nivel
@@ -2177,6 +2321,10 @@
       if (this.objective === 'score') this.target = 250 + chapter * 120 + lic * 40;
       if (this.objective === 'survive') this.target = 18 + chapter * 4;
       if (this.objective === 'boss') this._placeCrystals(2 + Math.min(chapter, 4));
+      // Efectos de run elegidos por el jugador (GM-06/07), tras los del bioma.
+      if (this.route) this._applyRoute();
+      if (this.hasRelic('combo')) State.comboWindow += 400;
+      if (this.hasRelic('hint')) State.hintsLeft = Math.min(9, State.hintsLeft + 1);
       this.banner(level);
     },
 
@@ -2214,17 +2362,20 @@
       const el = $('#obj-banner'); if (!el) return;
       const biome = this.biomeOf(level);
       el.hidden = false; el.style.borderColor = '';
-      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>${ModeSignals.noteHtml('aventura')}`;
+      const relicsHtml = this.relics.length
+        ? `<span class="obj-relics" aria-label="${esc(I18n.t('relic_title'))}">${this.relics.map((id) => ((this.RELICS.find((r) => r.id === id) || {}).icon || '')).join('')}</span>`
+        : '';
+      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>${relicsHtml}${ModeSignals.noteHtml('aventura')}`;
     },
     refreshGoal() { const g = $('#obj-goal'); if (g) g.textContent = this.objectiveText(); },
     // Intro de capítulo: una tarjeta de bioma (nombre, modificadores, objetivo) mostrada
     // una sola vez la primera vez que se entra en un capítulo. Congela el juego hasta
     // descartarla (tap). Se salta si ya se vio o si no es el primer nivel del capítulo.
-    maybeChapterIntro(level) {
-      const ov = $('#chapter-intro'); if (!ov) return;
-      if (this.licOf(level) !== 0) return;
+    maybeChapterIntro(level, then) {
+      const ov = $('#chapter-intro'); if (!ov) return false;
+      if (this.licOf(level) !== 0) return false;
       const chapter = this.chapterOf(level);
-      if (Meta.advChapterSeen(chapter)) return;
+      if (Meta.advChapterSeen(chapter)) return false;
       Meta.markAdvChapterSeen(chapter);
       const biome = this.biomeOf(level);
       ov.style.setProperty('--mode-accent', biome.accent);
@@ -2240,8 +2391,11 @@
         ov.hidden = true;
         ov.removeEventListener('click', close);
         if (State.status === 'paused') State.status = 'playing';
+        // Tras la intro, la cadena de elecciones del capítulo (reliquia/ruta, GM-06/07).
+        if (then) then(); else this.maybeOfferRoute(level);
       };
       ov.addEventListener('click', close);
+      return true;
     },
   };
 
@@ -2273,6 +2427,7 @@
       this.lives = this.MAX_LIVES; this.wave = 1; this.waveAcc = 0; this.survSec = 0; this.charge = 0; this.frenzy = 0;
       this.freezeUntil = 0; this.x2Until = 0; this.frenzyUntil = 0; this.lockUntil = 0; this.runCoins = 0; this.runGems = 0; this.runChests = 0; this.newWaveRecord = false; this.revives = 0; State.tempMult = 1; this._r = { waveWarned: false, bossWarned: false };
       this.armed = null; this._preview = null; document.body.classList.remove('aiming');
+      this.slowWaves = 0; this._boonAt = 0;
       this._planBoss();
       this._setFrenzyClass();
       // Progresión de iconos desde la oleada 1: la puntuación base usa State.level (= dlevel).
@@ -2295,6 +2450,40 @@
     _planBoss() {
       this.bossNext = (this.wave + 1) % this.tune().bossEvery === 0;
       this._nextBoss = this.bossNext ? rand(3) : null;
+    },
+    // Bendiciones post-jefe (GM-17): sobrevivir a un evento jefe abre una elección
+    // de 1 entre 3 mejoras. El jefe pasa de molestia aleatoria a ciclo miedo→codicia,
+    // y la run gana dirección de build (la decisión estratégica que faltaba al modo).
+    BOONS: [
+      { id: 'life', icon: '❤️' },     // +1 vida (tope MAX+1)
+      { id: 'charge', icon: '⚡' },   // +50 de carga
+      { id: 'pack', icon: '💣' },     // +1 bomba y +1 rayo
+      { id: 'slow', icon: '🐌' },     // spawn ×1.15 más lento 2 oleadas
+      { id: 'frenzy', icon: '🔥' },   // frenesí instantáneo
+    ],
+    slowWaves: 0, _boonAt: 0,
+    spawnFactor() { return this.slowWaves > 0 ? 1.15 : 1; },
+    offerBoons() {
+      const pool = this.BOONS.filter((b) => b.id !== 'life' || this.lives < this.MAX_LIVES + 1);
+      const opts = []; const bag = pool.slice();
+      while (opts.length < 3 && bag.length) opts.push(bag.splice(rand(bag.length), 1)[0]);
+      if (!opts.length) return;
+      Sound.milestone(); Haptics.milestone();
+      Picker.open({
+        title: I18n.t('boon_title'), sub: I18n.t('boon_sub'), accent: '#ffd24d',
+        options: opts.map((b) => ({ id: b.id, icon: b.icon, name: I18n.t('boon_' + b.id), desc: I18n.t('boon_' + b.id + '_d') })),
+        onPick: (id) => this.applyBoon(id),
+      });
+    },
+    applyBoon(id) {
+      if (id === 'life') this.lives = Math.min(this.MAX_LIVES + 1, this.lives + 1);
+      else if (id === 'charge') { this.charge += 50; if (this.charge >= 100) { this.charge -= 100; this.grantRandom(); } }
+      else if (id === 'pack') { this.inv.bomb = (this.inv.bomb || 0) + 1; this.inv.clearLine = (this.inv.clearLine || 0) + 1; this.buildBar(); }
+      else if (id === 'slow') this.slowWaves = 2;
+      else if (id === 'frenzy') this.activateFrenzy();
+      Toasts.show(I18n.t('boon_' + id), 'good', 1800, '✨');
+      Sound.record(); Haptics.milestone();
+      this.render();
     },
     frenzyTier() { return clamp(Math.floor((this.wave - 1) / 4) + 1, 1, 3); },
     frenzyActive() { return performance.now() < this.frenzyUntil; },
@@ -2433,6 +2622,8 @@
         Render.boardEvent('surv-wave-soon', 700);
         Sound.danger(); Haptics.fire(14);
       }
+      // Bendición post-jefe pendiente (GM-17): se ofrece cuando el evento se asentó.
+      if (this._boonAt && performance.now() >= this._boonAt) { this._boonAt = 0; this.offerBoons(); }
       const isFrenzy = this.frenzyActive();
       if (wasFrenzy !== isFrenzy || this._r.intWave !== this.wave) {
         this._r.frenzyActive = isFrenzy; this._r.intWave = this.wave;
@@ -2446,6 +2637,7 @@
       this.wave++;
       this._r.waveWarned = false;
       this._r.bossWarned = false;
+      if (this.slowWaves > 0) this.slowWaves--; // bendición de ralentización (GM-17)
       const tn = this.tune();
       State.spawnRate = Math.max(tn.spawnFloor, Math.round(State.spawnRate * tn.spawnDecay));
       // Progresión de iconos: al subir el nivel efectivo, avanza la ventana del catálogo
@@ -2478,6 +2670,8 @@
       else if (event === 1) this.quake();
       else this.frostSurge();
       Haptics.milestone();
+      // Sobrevivir al jefe premia con una elección (GM-17), tras asentarse el evento.
+      this._boonAt = performance.now() + 1700;
     },
     meteorRain() {
       this._lock(900, 'surv-rain');
@@ -2787,7 +2981,12 @@
     },
     buildBar() {
       const el = $('#boosters'); if (!el) return;
-      el.innerHTML = this.BOOSTERS.map((id) => {
+      // Clásico (GM-03): solo los consumibles comprados pre-nivel; sin stock => barra fuera.
+      const list = State.mode === 'clasico'
+        ? Object.keys(Config.PRELEVEL_BOOSTERS).filter((id) => (this.inv[id] || 0) > 0)
+        : this.BOOSTERS;
+      if (State.mode === 'clasico') { const bb = $('#booster-bar'); if (bb) bb.hidden = list.length === 0; }
+      el.innerHTML = list.map((id) => {
         const d = Boosters.DEFS[id], n = this.inv[id] || 0;
         const arming = this.armed === id ? ' arming' : '';
         return `<button class="booster${n <= 0 ? ' empty' : ''}${arming}" data-b="${id}" aria-label="${d.name}: ${n}" ${n <= 0 ? 'aria-disabled="true"' : ''}><span class="b-ic">${BOOSTER_IMG[id] ? iconAnyInline(BOOSTER_IMG[id]) : d.glyph}</span><span class="b-count" data-bc="${id}">${n}</span></button>`;
@@ -2927,7 +3126,7 @@
           if (node) {
             const n = +node.dataset.lvl;
             if (!this.levelUnlocked(this.sel, n)) { Sound.tap(); Toasts.show(I18n.t('locked_level'), 'warn', 1300); return; }
-            Sound.ui(); Game.startClassic(this.sel, n);
+            Sound.ui(); PreLevel.open(this.sel, n);
           } else if (rew) { this.claimReward(); }
         });
       }
@@ -3135,6 +3334,135 @@
       const r = this.recommendation(ctx);
       const card = `<div class="next-card"><span class="next-card-ic">${iconAnyInline(r.icon)}</span><span class="next-card-copy"><b>${esc(I18n.t('next_title'))}: ${esc(r.title)}</b><small>${esc(r.sub)}</small></span><button class="btn btn-primary btn-sm" data-act="${r.act}">${esc(r.title)}</button></div>`;
       return card + this.progressHtml();
+    },
+  };
+
+  /* ===================== Picker (elección en partida) =====================
+   * Overlay único de "elige 1 de N" reutilizado por las bendiciones post-jefe
+   * (Supervivencia), las rutas de capítulo y reliquias (Aventura), el continuar
+   * con gemas (Clásico/Aventura) y el ritmo de Zen. Pausa suave mientras se
+   * decide y restaura el estado al elegir/cancelar. La elección es el latido
+   * de agencia de la Fase GM-γ: una decisión significativa por sesión y modo.
+   */
+  const Picker = {
+    pending: null, _wasPlaying: false,
+    open({ title, sub, accent, options, cancelLabel, onPick, onCancel }) {
+      const ov = $('#pick-overlay');
+      if (!ov) { if (options && options[0] && onPick) onPick(options[0].id); return; }
+      this.pending = { options, onPick, onCancel };
+      this._wasPlaying = State.status === 'playing';
+      if (this._wasPlaying) State.status = 'paused';
+      ov.style.setProperty('--pick-accent', accent || 'var(--accent-2)');
+      { const t = $('#pick-title'); if (t) t.textContent = title || ''; }
+      { const s = $('#pick-sub'); if (s) { s.hidden = !sub; s.textContent = sub || ''; } }
+      { const box = $('#pick-options'); if (box) box.innerHTML = (options || []).map((o) => `
+        <button class="pick-opt" data-pick="${esc(o.id)}" type="button">
+          <span class="po-ic" aria-hidden="true">${o.icon || ''}</span>
+          <span class="po-tx"><b>${esc(o.name)}</b><small>${esc(o.desc || '')}</small></span>
+        </button>`).join(''); }
+      { const cb = $('#pick-cancel'); if (cb) { cb.hidden = !cancelLabel; cb.textContent = cancelLabel || ''; } }
+      this._wire(ov);
+      ov.hidden = false;
+      announce(title || '');
+    },
+    _wire(ov) {
+      if (ov._wired) return; ov._wired = true;
+      ov.addEventListener('click', (e) => {
+        const opt = e.target.closest && e.target.closest('[data-pick]');
+        if (opt) { Sound.ui(); this.pick(opt.dataset.pick); return; }
+        if (e.target.closest && e.target.closest('#pick-cancel')) { Sound.ui(); this.cancel(); }
+      });
+    },
+    pick(id) {
+      const p = this.pending; if (!p) return;
+      this._close();
+      if (p.onPick) p.onPick(id);
+    },
+    cancel() {
+      const p = this.pending; if (!p) return;
+      this._close();
+      if (p.onCancel) p.onCancel();
+    },
+    _close() {
+      const ov = $('#pick-overlay'); if (ov) ov.hidden = true;
+      this.pending = null;
+      if (this._wasPlaying && State.status === 'paused') { State.status = 'playing'; Loop.kick(); }
+      this._wasPlaying = false;
+    },
+  };
+
+  /* ===================== PreLevel (lanzador de nivel de Clásico, GM-03) =====================
+   * Desde el 2º mundo, tocar un nivel abre una hoja con hasta 2 potenciadores
+   * comprables con monedas (bomba 80 / congelar 60 / rayo 90 — los costes
+   * históricos de Boosters.DEFS). Decisión estratégica pre-nivel + sumidero de
+   * monedas permanente. Son consumibles POR INTENTO: reintentar no los devuelve
+   * (estándar del género). El mundo 1 arranca directo (cero fricción al aprender).
+   */
+  const PreLevel = {
+    world: null, n: 1, sel: {},
+    open(worldId, n) {
+      const ov = $('#prelevel');
+      if (!ov || Worlds.idx(worldId) < Config.PRELEVEL_FROM_WORLD) { Game.startClassic(worldId, n); return; }
+      this.world = worldId; this.n = n; this.sel = {};
+      { const t = $('#pl-title'); if (t) t.textContent = `${I18n.t('lvl')} ${n} · ${Worlds.get(worldId).name}`; }
+      this._render();
+      this._wire(ov);
+      ov.style.setProperty('--pick-accent', Worlds.get(worldId).accent);
+      ov.hidden = false;
+      if (!Storage.preboostSeen) { Storage.preboostSeen = '1'; Toasts.show(I18n.t('pl_first'), 'info', 3400, '💡'); }
+    },
+    _selIds() { return Object.keys(this.sel).filter((id) => this.sel[id]); },
+    _selCost() { return this._selIds().reduce((s, id) => s + Config.PRELEVEL_BOOSTERS[id], 0); },
+    _render() {
+      const box = $('#pl-items'); if (!box) return;
+      box.innerHTML = Object.keys(Config.PRELEVEL_BOOSTERS).map((id) => {
+        const d = Boosters.DEFS[id], cost = Config.PRELEVEL_BOOSTERS[id], on = !!this.sel[id];
+        return `<button type="button" class="pl-chip${on ? ' on' : ''}" data-pl="${id}" aria-pressed="${on}">
+          <span class="po-ic" aria-hidden="true">${BOOSTER_IMG[id] ? iconAnyInline(BOOSTER_IMG[id]) : d.glyph}</span>
+          <span class="po-tx"><b>${esc(d.name)}</b><small>${iconInline('coin')} ${cost}</small></span>
+        </button>`;
+      }).join('');
+      const play = $('#pl-play');
+      if (play) {
+        const cost = this._selCost();
+        play.textContent = cost > 0 ? I18n.t('pl_play_cost').replace('{c}', cost) : I18n.t('pl_play');
+        play.disabled = cost > Meta.coins();
+      }
+    },
+    toggle(id) {
+      if (this.sel[id]) this.sel[id] = false;
+      else {
+        if (this._selIds().length >= Config.PRELEVEL_MAX) { Toasts.show(I18n.t('pl_max').replace('{n}', Config.PRELEVEL_MAX), 'warn', 1300); return; }
+        this.sel[id] = true;
+      }
+      Sound.ui();
+      this._render();
+    },
+    _wire(ov) {
+      if (ov._wired) return; ov._wired = true;
+      ov.addEventListener('click', (e) => {
+        const chip = e.target.closest && e.target.closest('[data-pl]');
+        if (chip) { this.toggle(chip.dataset.pl); return; }
+        if (e.target.closest && e.target.closest('#pl-play')) this._start(true);
+        else if (e.target.closest && e.target.closest('#pl-skip')) this._start(false);
+      });
+    },
+    _start(withBoosters) {
+      const ov = $('#prelevel');
+      const picked = withBoosters ? this._selIds() : [];
+      const cost = withBoosters ? this._selCost() : 0;
+      if (cost > 0 && !Meta.spend(cost)) { Toasts.show(I18n.t('pl_no_coins'), 'warn', 1500); return; }
+      if (cost > 0) Econ.refresh();
+      if (ov) ov.hidden = true;
+      Sound.ui();
+      Game.startClassic(this.world, this.n);
+      // El inventario se fija DESPUÉS de start() (que lo limpia para no-Supervivencia).
+      if (picked.length) {
+        Survival.inv = {};
+        picked.forEach((id) => { Survival.inv[id] = 1; });
+        Survival.buildBar();
+        const bb = $('#booster-bar'); if (bb) bb.hidden = false;
+      }
     },
   };
 
@@ -3349,8 +3677,9 @@
           Render.hud();
         }
         L.spawnAcc += dt;
-        // Intervalo efectivo = spawnRate × warm-up (GM-26: apertura más generosa).
-        const sr = Math.max(120, Math.round(State.spawnRate * Game.warmupFactor(now)));
+        // Intervalo efectivo = spawnRate × warm-up (GM-26) × factor del modo
+        // (GM-17: la bendición de ralentización de Supervivencia dura 2 oleadas).
+        const sr = Math.max(120, Math.round(State.spawnRate * Game.warmupFactor(now) * (Rules.call('spawnFactor') || 1)));
         if (L.spawnAcc >= sr) { L.spawnAcc -= sr; Game.doSpawn(); }
         if (State.combo > 0) {
           const left = State.comboWindow - (now - State.comboAt);
@@ -3443,6 +3772,7 @@
       State.warmupUntil = performance.now() + Config.WARMUP.ms;
       State.warmupConvs = 0; State.warmupEndAt = 0;
       State.warmupDone = !!(m.relaxed || m.single);
+      State.continueUsed = false; // oferta de continuar (GM-02): 1 por nivel
       // Hook de modo: permite a Aventura/Supervivencia sembrar tiles/objetivos.
       Rules.call('onSetupLevel', { level: State.level, mode: m });
       Render.syncAll();
@@ -3488,6 +3818,11 @@
       document.body.classList.toggle('mode-timed', !!Config.MODES[mode].timed);
       { const sb = $('#surv-bar'); if (sb) sb.hidden = !isSurv; const bb = $('#booster-bar'); if (bb) bb.hidden = !isSurv; }
       if (isSurv) Survival.start();
+      // No-Supervivencia: limpiar residuos de potenciadores (GM-03 los reintroduce
+      // en Clásico tras el lanzador; reiniciar = consumibles del intento perdidos).
+      else { Survival.disarm(); Survival.freezeUntil = 0; Survival.lockUntil = 0; Survival.inv = {}; }
+      // Aventura: limpiar elecciones de run ANTES de montar el nivel (setup las lee).
+      if (mode === 'aventura') Adventure.resetRun();
       Render.fever(false); Render.danger(0);
       this.clearHintHighlight();
       this.setupLevel();
@@ -3501,8 +3836,12 @@
       announce(`Partida iniciada. Modo ${Config.MODES[mode].name}.`);
       Toasts.show(I18n.t('lets_play'), 'good', 1400);
       ModeSignals.brief(mode);
-      // Aventura: intro de bioma una vez por capítulo (congela hasta descartar).
-      if (mode === 'aventura') Adventure.maybeChapterIntro(State.level);
+      // Aventura: intro de bioma una vez por capítulo (congela hasta descartar) y,
+      // al entrar en capítulo, elección de ruta (GM-06; encadenada tras la intro).
+      if (mode === 'aventura') {
+        const introShown = Adventure.maybeChapterIntro(State.level);
+        if (!introShown) Adventure.maybeOfferRoute(State.level);
+      }
     },
 
     // Reto del día: tablero de Contrarreloj idéntico para todos (semilla = fecha).
@@ -3565,6 +3904,8 @@
 
     /* Activación de una casilla (clic/tecla) */
     feverNeed() {
+      // Zen (GM-24): sin Fiebre — el modo santuario no evalúa ni acelera.
+      if (Config.MODES[State.mode].noFever) return Infinity;
       if (State.mode !== 'supervivencia') return Config.FEVER_COMBO;
       return Math.max(6, Config.FEVER_COMBO - Survival.frenzyTier());
     },
@@ -3594,7 +3935,7 @@
 
     activate(i) {
       if (State.status !== 'playing') return;
-      if (State.mode === 'supervivencia' && Survival.locked()) return;
+      if ((State.mode === 'supervivencia' || State.mode === 'clasico') && Survival.locked()) return;
       this.clearHintHighlight();
       const ti = State.tiles[i];
       // Objeto especial con efecto al tocar (bonus/portal/caja mágica/bomba oculta).
@@ -3689,7 +4030,8 @@
       // Aplicar al tablero (limpia también la casilla especial; cristal = bonus)
       conv.forEach(idx => {
         const t = State.tiles[idx];
-        if (t) { if (t.type === 'crystal') State.score += 50; State.tiles[idx] = null; }
+        // Cristal: +50 base; la reliquia de Aventura (GM-07) añade +30.
+        if (t) { if (t.type === 'crystal') State.score += 50 + (State.mode === 'aventura' && Adventure.hasRelic('crystal') ? 30 : 0); State.tiles[idx] = null; }
         State.board[idx] = null; State.iconCount--;
       });
       Render.clearAnim(conv, i);
@@ -3873,10 +4215,38 @@
         if (m.endless) { Rules.call('onOverflow'); return; }     // surv/zen lo gestionan
         if (m.scoreAttack) return;                                // contrarreloj: el reloj decide
         // Clásico/Aventura: tablero lleno = atasco real (sin huecos no hay jugada).
-        // Near-miss (GM-01): si el jugador llegó a estar a ≤10 figuras de vaciar y la
-        // partida no fue trivial, el fin de partida se lo dice (motiva el reintento).
-        if (State.minIcons <= 10 && State.elapsed > 45) this._nearMiss = State.minIcons;
-        this.gameOver(I18n.t('reason_full')); return;
+        // 1) Reliquia escudo de Aventura (GM-07): la 1ª derrota del capítulo se
+        //    convierte en un despeje del 30% — gratis, la reliquia hace su trabajo.
+        if (State.mode === 'aventura' && Adventure.hasRelic('shield') && !Adventure.shieldUsed) {
+          Adventure.shieldUsed = true;
+          this.softClear(0.30);
+          Toasts.show(I18n.t('relic_shield_fired'), 'good', 2200, '🛡️');
+          Render.hudSoon();
+          return;
+        }
+        // 2) Continuar con gemas (GM-02): 1 oferta por nivel, precio visible, rechazar
+        //    igual de fácil que aceptar, sin cuenta atrás. Ética antes que ingresos.
+        if (!State.continueUsed && Meta.gems() >= Config.CONTINUE_GEMS) {
+          State.continueUsed = true; // se consume la OFERTA, no solo la compra
+          Sound.danger();
+          Picker.open({
+            title: I18n.t('continue_title'),
+            sub: I18n.t('continue_sub').replace('{n}', Config.CONTINUE_GEMS),
+            accent: '#b46cff',
+            options: [{ id: 'yes', icon: '💎', name: I18n.t('continue_yes').replace('{n}', Config.CONTINUE_GEMS), desc: I18n.t('continue_yes_d') }],
+            cancelLabel: I18n.t('continue_no'),
+            onPick: () => {
+              if (!Meta.spendGems(Config.CONTINUE_GEMS)) { this._overflowLose(); return; }
+              Econ.refresh();
+              this.softClear(Config.CONTINUE_CLEAR);
+              Toasts.show(I18n.t('continue_done'), 'good', 1800, '💎');
+              Render.hudSoon();
+            },
+            onCancel: () => this._overflowLose(),
+          });
+          return;
+        }
+        this._overflowLose(); return;
       }
       Render.syncCell(idx); Render.spawnAnim(idx);
       if (m.scoreAttack) {
@@ -3900,6 +4270,14 @@
           announce(I18n.t('no_moves_wait'));
         }
       }
+    },
+
+    // Derrota real por tablero lleno (Clásico/Aventura), con el encuadre near-miss
+    // de GM-01. Separada de doSpawn porque el escudo (GM-07) y el continuar (GM-02)
+    // pueden interceptar el desbordamiento antes de llegar aquí.
+    _overflowLose() {
+      if (State.minIcons <= 10 && State.elapsed > 45) this._nearMiss = State.minIcons;
+      this.gameOver(I18n.t('reason_full'));
     },
 
     // Limpieza suave de una fracción de iconos (Zen: respiro sin fin de partida).
@@ -4079,7 +4457,11 @@
       const mastery = Meta.recordClassicPerfect(stars >= 3);
       this.classicMastery = mastery;
       const gained = Meta.setLevelStars(State.world, n, stars);
-      const coins = 20 + stars * 10 + Math.round(State.score / 60);
+      // Racha de victorias (GM-05): +10% de monedas por nivel de racha desde la 2ª
+      // victoria seguida, tope +50% — recompensa el "una más" sin castigar el fallo.
+      const winStreak = Meta.recordClassicWin(true);
+      const streakPct = Math.min(5, Math.max(0, winStreak - 1)) * 10;
+      const coins = Math.round((20 + stars * 10 + Math.round(State.score / 60)) * (1 + streakPct / 100));
       Meta.addCoins(coins);
       const modal = $('#modal-level'); if (modal) modal.style.setProperty('--modal-accent', w.accent);
       const emb = $('#level-emblem'); if (emb) emb.innerHTML = stars >= 3 ? icon('star') : (WORLD_IMG[w.id] ? iconAny(WORLD_IMG[w.id]) : w.glyph);
@@ -4103,7 +4485,10 @@
       const masteryHtml = mastery.streak > 0
         ? `<div class="classic-mastery">${iconInline('star')} ${esc(I18n.t('classic_streak').replace('{n}', mastery.streak))}<small>${esc(I18n.t('classic_best_streak').replace('{n}', mastery.best))}</small></div>`
         : `<div class="classic-mastery reset">${esc(I18n.t('classic_streak_lost'))}<small>${esc(I18n.t('classic_best_streak').replace('{n}', mastery.best))}</small></div>`;
-      $('#level-next').innerHTML = `<div class="m-card-h">${iconInline('coin')} +${coins}${gained > 0 ? ' · ' + iconInline('star') + ' +' + gained : ''}</div>${masteryHtml}`;
+      const streakHtml = streakPct > 0
+        ? `<div class="win-streak-line">${esc(I18n.t('classic_win_streak').replace('{n}', winStreak).replace('{p}', streakPct))}</div>`
+        : '';
+      $('#level-next').innerHTML = `<div class="m-card-h">${iconInline('coin')} +${coins}${gained > 0 ? ' · ' + iconInline('star') + ' +' + gained : ''}</div>${streakHtml}${masteryHtml}`;
       if (mastery.streak >= 2) Toasts.show(I18n.t('classic_streak').replace('{n}', mastery.streak), 'good', 1700, 'star');
       const last = n >= Worlds.PER_WORLD;
       { const nb = $('#btn-next-level'); if (nb) { nb.hidden = last; nb.textContent = I18n.t('classic_next'); } }
@@ -4172,6 +4557,12 @@
         const ch = Adventure.chapterOf(State.level);
         if (ch !== prevChapter) { const bi = Adventure.biomeOf(State.level); Toasts.show(`${I18n.t('chapter')} ${ch + 1}: ${Adventure.biomeName(bi)}`, 'good', 2200, BIOME_IMG[bi.id] || bi.glyph); }
         else Toasts.show(`${I18n.t('lvl')} ${State.level}`, 'info', 1200);
+        // Entrada de capítulo: reliquia por el jefe superado (GM-07) y luego la
+        // ruta del capítulo nuevo (GM-06) — recompensa primero, plan después.
+        if (Adventure.licOf(State.level) === 0) {
+          const chain = () => Adventure.offerRelic(() => Adventure.maybeOfferRoute(State.level));
+          if (!Adventure.maybeChapterIntro(State.level, chain)) chain();
+        }
       } else {
         Toasts.show(`${I18n.t('lvl')} ${State.level}`, 'info', 1400);
       }
@@ -4209,7 +4600,7 @@
         else if (r.newBest) Toasts.show(I18n.t('daily_new_best').replace('{n}', r.best), 'good', 2200, '🎯');
         if (r.medal !== 'none') Toasts.show(I18n.t('daily_medal_result').replace('{m}', ModeSignals.dailyMedalLabel(r.medal)), 'good', 2200, 'medal');
       }
-      if (State.mode === 'clasico') this.classicMastery = Meta.recordClassicPerfect(false);
+      if (State.mode === 'clasico') { this.classicMastery = Meta.recordClassicPerfect(false); Meta.recordClassicWin(false); }
       this.endGame();
       Sound.over(); Haptics.error(); Render.boardShake();
       const m = Config.MODES[State.mode];
@@ -4341,7 +4732,8 @@
   const Input = {
     init() {
       const board = $('#board');
-      const armed = () => State.mode === 'supervivencia' && Survival.armed;
+      // Los potenciadores apuntables funcionan en Supervivencia y en Clásico (GM-03).
+      const armed = () => (State.mode === 'supervivencia' || State.mode === 'clasico') && Survival.armed;
       // Activación rápida por pointerdown (sin retardo)
       board.addEventListener('pointerdown', (e) => {
         const cell = e.target.closest('.cell');
@@ -4377,8 +4769,22 @@
   };
 
   /* ===================== Construcción de menús ===================== */
-  // Dificultad por defecto al lanzar desde las tarjetas (los modos escalan solos).
-  let selDiff = 'normal';
+  // Lanzador de Zen (GM-24): elegir ritmo (sereno = tabla fácil, más lento; normal).
+  // Es el único punto del juego donde elegir ritmo encaja sin romper comparabilidad.
+  function launchZen() {
+    Modal.close();
+    const last = Storage.zenDiff;
+    const opts = [
+      { id: 'facil', icon: '🍃', name: I18n.t('zen_pace_slow'), desc: I18n.t('zen_pace_slow_d') },
+      { id: 'normal', icon: '☯️', name: I18n.t('zen_pace_normal'), desc: I18n.t('zen_pace_normal_d') },
+    ];
+    if (last === 'normal') opts.reverse(); // el último ritmo elegido, primero
+    Picker.open({
+      title: I18n.t('zen_pace_title'), accent: '#9be15d',
+      options: opts,
+      onPick: (d) => { Storage.zenDiff = d; Game.start('zen', d); },
+    });
+  }
   // Catálogo completo de la pantalla "Elige tu modo": los 5 modos jugables agrupados
   // (Progresión / Puntuación / Relax). El Tutorial NO es una tarjeta aquí — vive en el
   // modal "¿Cómo se juega?". Multijugador queda fuera de V1 (volverá con la capa online).
@@ -4398,7 +4804,7 @@
       action: () => { Modal.close(); Game.start('contrarreloj', 'normal'); } },
     { group: 'group_relax', key: 'zen', accent: '#9be15d', mode: 'zen',
       badge: 'card_zen_badge', feats: [],
-      action: () => { Modal.close(); Game.start('zen', selDiff); } },
+      action: () => launchZen() },
   ];
   const MODE_GROUPS = ['group_prog', 'group_score', 'group_relax'];
   function buildModeMenu() {
@@ -4921,7 +5327,7 @@
     // Modos
     $('#modes-back').addEventListener('click', () => Screens.show('start'));
     { const ms = $('#modes-settings'); if (ms) ms.addEventListener('click', () => { Sound.ui(); openSettings(); }); }
-    { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { Modal.close(); Game.start('aventura', selDiff); }); }
+    { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { Modal.close(); Game.start('aventura', 'normal'); }); }
     document.querySelectorAll('[data-surv-diff]').forEach((b) => b.addEventListener('click', () => {
       survDiff = b.dataset.survDiff || 'normal';
       Storage.survDiff = survDiff;
@@ -5005,5 +5411,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Share, I18n, Toasts, RNG, RunSave, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Share, I18n, Toasts, RNG, RunSave, Picker, PreLevel, refreshStart, applyLanguage };
 })();
