@@ -112,12 +112,16 @@ Campos comunes por modo: `name`, `emoji`, `timed`, `penalties`, `mult` (multipli
 Cada paso resalta la celda objetivo hasta que el jugador la completa; al terminar marca `tutorialDone = true` y vuelve al inicio. El tutorial **bypasea** el flujo normal de `Game.start`.
 
 ### 2.2 Clásico (`clasico`)
-`timed:false, penalties:true, mult:1.0`, objetivo "vaciar el tablero". Organizado en **mundos** (ver §5.4). Al completar nivel se calculan **estrellas 0-3** según errores: `STAR_ERR = [0, 2]` → 0 errores = 3★, ≤2 errores = 2★, más = 1★. Recompensa: `coins = 20 + stars*10 + round(score/60)`.
+`timed:false, penalties:true, mult:1.0`, objetivo "vaciar el tablero". Organizado en **mundos** (ver §5.4). Al completar nivel se calculan **estrellas 0-3** según errores: `STAR_ERR = [0, 2]` → 0 errores = 3★, ≤2 errores = 2★, más = 1★. Recompensa: `coins = 20 + stars*10 + round(score/60)`, multiplicada por la **racha de victorias** (v2.3.0, GM-05): `×(1 + min(5, racha−1)·0.10)` — +10% por nivel de racha desde la 2ª victoria seguida, tope +50%; solo la derrota reinicia la racha (`Meta.mastery.winStreak`).
+
+**Potenciadores pre-nivel (v2.3.0, GM-03):** desde el 2º mundo (`PRELEVEL_FROM_WORLD = 1`), tocar un nivel del mapa abre un lanzador con hasta `PRELEVEL_MAX (2)` consumibles comprables con monedas (`PRELEVEL_BOOSTERS`: bomb 80 / freeze 60 / clearLine 90). Son por intento (reiniciar no los devuelve). Reutilizan el inventario/apuntado de Supervivencia; `blockSpawn` del modo cubre la congelación. **Continuar con gemas (v2.3.0, GM-02):** al llenarse el tablero (Clásico/Aventura), 1 oferta por nivel de continuar por `CONTINUE_GEMS (15)` 💎 despejando `CONTINUE_CLEAR (40%)`; rechazar lleva a la derrota normal (con near-miss).
 
 Densidad de obstáculos por nivel: `dens = min(0.13, 0.015 + n*0.0021 + worldIndex*0.008)` (`n` = nivel dentro del mundo). El modificador `rush` del mundo multiplica `spawnRate` ×0.85. Desde el nivel 2, 60% de probabilidad de colocar un tile `bonus` (+30 puntos al tocarlo).
 
 ### 2.3 Aventura (`aventura`)
 `timed:false, penalties:true, mult:1.1`. Progresión infinita por capítulos — ver §5.5.
+
+**Rutas de capítulo (v2.3.0, GM-06):** al entrar en un capítulo se elige 1 de 2 rutas (estado volátil de run, no persiste en RunSave): `dense` («exigente»: refuerza el obstáculo del bioma y fija `State.tempMult = 1.25` durante el capítulo — visible en el chip de multiplicador) o `calm` («serena»: `spawnRate ×1.15`, sin bonus). La ruta caduca en la frontera de capítulo. **Reliquias de jefe (v2.3.0, GM-07):** al superar un nivel jefe se elige 1 de 3 pasivas de run (máx. 3 activas, FIFO): `combo` (ventana +400ms), `crystal` (cristales +30 extra), `hint` (+1 pista/nivel), `shield` (la 1ª derrota por tablero lleno de cada capítulo despeja el 30% en vez de terminar). Se muestran en el banner de objetivo.
 
 ### 2.4 Contrarreloj (`contrarreloj`)
 `timed:true, scoreAttack:true, penalties:true, mult:1.2`, objetivo "sumar puntos a contrarreloj". `TIMED_START = 60`s, `TIMED_CAP = 90`s (tope duro del reloj). Cada convergencia repone tiempo con rendimientos decrecientes (fórmula en §6.4). El spawn se acelera exponencialmente con el tiempo transcurrido (ver §1.4). Termina cuando `timeLeft <= 0`.
@@ -142,6 +146,8 @@ Constantes clave: `WAVE_MS` base 22000, `MAX_LIVES` base 3, `CHARGE_PER = 9` (ca
 - `quake()` — baraja el tablero (Fisher-Yates de valores, no de posiciones-tile) tras 620ms + bloqueo de 1150ms.
 - `frostSurge()` — congela `3 + floor(wave/4)` celdas ocupadas + bloqueo de 760ms.
 
+**Bendiciones post-jefe (v2.3.0, GM-17):** ~1.7s después de cada evento jefe, pausa suave y elección de 1 entre 3 (pool de 5, `life` solo si `lives < MAX+1`): `life` (+1 vida, tope MAX+1), `charge` (+50 de carga), `pack` (+1 bomba y +1 rayo), `slow` (intervalo de spawn ×1.15 durante 2 oleadas, vía factor en el bucle), `frenzy` (frenesí instantáneo).
+
 **Vidas:** 3 corazones por defecto; se pierden vía `onOverflow()` cuando el tablero no puede aceptar un spawn; al llegar a 0 → `lastChance()` (modal de revivir, restaura 1 vida); `giveUp()` termina la partida. **Precio de revivir (v2.2.0, GM-19):** `min(480, 120 × 2^usos)` por run — 120 → 240 → 480, máximo **3 revividas por run** (a la 4ª muerte no hay oferta). Antes: 120 plano ilimitado.
 
 **Medidor de frenesí (0-100):** `addFrenzy(n)` se incrementa por convergencia (`4 + min(22, removed*2 + min(combo,10))`), por inicio de oleada (`8 + tier*3`), por uso de booster, y por bono de tablero vacío. Al llegar a 100 → `activateFrenzy()`: duración `7200 + frenzyTier()*900` ms, spawnea `2+frenzyTier()` iconos extra, multiplica score por `frenzyMult() = 1.55 + tier*0.1`. `frenzyTier() = clamp(floor((wave-1)/4)+1, 1, 3)`.
@@ -151,7 +157,9 @@ Constantes clave: `WAVE_MS` base 22000, `MAX_LIVES` base 3, `CHARGE_PER = 9` (ca
 **Rocas rompibles:** `_crackRock` reduce `hits` en 1 por cada convergencia adyacente (vecinos ortogonales de la celda tocada + cada celda eliminada); se destruyen al llegar a 0 hits.
 
 ### 2.6 Zen (`zen`)
-`timed:false, penalties:false, mult:0.8, relaxed:true, endless:true`, objetivo "sin fallos ni prisa". `onOverflow()` → `softClear(0.45)` (elimina el 45% de las celdas ocupadas al azar **en vez de terminar la partida** — literalmente sin game over). El spawn es 1.25× más lento (`relaxed`). El bono de tablero vacío otorga +1 pista (tope 9).
+`timed:false, penalties:false, mult:0.8, relaxed:true, endless:true, noFever:true`, objetivo "sin fallos ni prisa". `onOverflow()` → `softClear(0.45)` (elimina el 45% de las celdas ocupadas al azar **en vez de terminar la partida** — literalmente sin game over). El spawn es 1.25× más lento (`relaxed`). El bono de tablero vacío otorga +1 pista (tope 9).
+
+**Desde v2.3.0 (GM-24):** la Fiebre no se activa (`noFever` → umbral infinito), el indicador de combo y el chip de multiplicador se ocultan y el score se atenúa (santuario sin evaluación). El lanzador ofrece elegir **ritmo**: «Sereno» (tabla `facil`) o «Fluido» (`normal`), persistido en `cv_zen_diff` — único punto del juego con ritmo elegible.
 
 ### 2.7 Tabla de dificultades (`Config.DIFFICULTY`)
 
@@ -237,7 +245,7 @@ Al cargar, cualquier campo faltante se rellena con su valor por defecto (migraci
 Tres monedas + cofres, todo dentro de `Meta`.
 
 - **Monedas (coins):** se ganan al final de cada partida (`recordGame()`, fórmula en §6.5), al completar niveles de Clásico, en recompensas de oleada de Supervivencia, en bonos de tablero vacío de Zen, en la recompensa diaria, y al abrir cofres. Se gastan en: skins de tablero (0-3000), temas de color (0-300), revivir en Supervivencia (120 fijo).
-- **Gemas (gems):** se ganan en hitos de oleada de Supervivencia (`2 + floor(wave/5)` cada 5 oleadas), en recompensa de mundo completado (+20), y en cofres (3-10). **Sin sumidero de gasto implementado** en el código analizado (el botón correspondiente muestra "disponible pronto").
+- **Gemas (gems):** se ganan en hitos de oleada de Supervivencia (`2 + floor(wave/5)` cada 5 oleadas), en recompensa de mundo completado (+20), en cofres (3-10) y en el primer intento diario del Reto (+5). Sumideros: cofre premium (25💎, v1.8) y **continuar partida** en Clásico/Aventura (15💎, v2.3.0, GM-02).
 - **Tickets:** se ganan raramente en cofres (1, con 8% de probabilidad). Sin sumidero de gasto implementado (reservado para una futura función, según comentario del código).
 - **Cofres:** se acumulan (no se abren automáticamente). Al abrir un cofre (`openChest()`), tabla de probabilidad:
   - `roll < 0.62` → monedas: `60 + floor(random()*140)` (60-199)
@@ -582,6 +590,11 @@ TIMED_MISTAKE_S: 3                    // v2.2.0 (GM-11)
 SPRINT_WINDOW: 10                     // v2.2.0 (GM-10)
 SPRINT_MULT: 1.5                      // v2.2.0 (GM-10)
 WARMUP: { ms: 10000, convs: 3, factor: 0.55, rampMs: 2000 }   // v2.2.0 (GM-26)
+CONTINUE_GEMS: 15                     // v2.3.0 (GM-02)
+CONTINUE_CLEAR: 0.40                  // v2.3.0 (GM-02)
+PRELEVEL_BOOSTERS: { bomb: 80, freeze: 60, clearLine: 90 }    // v2.3.0 (GM-03)
+PRELEVEL_MAX: 2                       // v2.3.0 (GM-03)
+PRELEVEL_FROM_WORLD: 1                // v2.3.0 (GM-03)
 HINTS_PER_LEVEL: 3
 HINT_COOLDOWN: 10000
 HINT_DURATION: 2000

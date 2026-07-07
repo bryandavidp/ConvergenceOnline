@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=v148" />
+  <link rel="stylesheet" href="styles.css?v=v149" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -245,6 +245,29 @@
           <div class="fever" id="fever" aria-hidden="true"></div>
           <!-- Flash de rango de combo -->
           <div class="rank" id="rank" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <!-- Selector de elección en partida (bendiciones/rutas/reliquias/continuar) -->
+      <div class="pick-overlay" id="pick-overlay" hidden>
+        <div class="pick-card" role="dialog" aria-modal="true" aria-labelledby="pick-title">
+          <h2 class="pick-title" id="pick-title"></h2>
+          <p class="pick-sub" id="pick-sub" hidden></p>
+          <div class="pick-options" id="pick-options"></div>
+          <button class="btn btn-ghost pick-cancel" id="pick-cancel" hidden></button>
+        </div>
+      </div>
+
+      <!-- Lanzador de nivel de Clásico (GM-03): potenciadores opcionales pre-nivel -->
+      <div class="pick-overlay" id="prelevel" hidden>
+        <div class="pick-card" role="dialog" aria-modal="true" aria-labelledby="pl-title">
+          <h2 class="pick-title" id="pl-title"></h2>
+          <p class="pick-sub" data-i18n="pl_sub">Lleva hasta 2 potenciadores (opcional)</p>
+          <div class="pl-items" id="pl-items"></div>
+          <div class="pl-actions">
+            <button class="btn btn-primary" id="pl-play" data-i18n="pl_play">Jugar</button>
+            <button class="btn btn-ghost" id="pl-skip" data-i18n="pl_skip">Sin potenciadores</button>
+          </div>
         </div>
       </div>
 
@@ -490,6 +513,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=v140" defer></script>
+  <script src="game.js?v=v141" defer></script>
 </body>
 </html>
