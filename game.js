@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.5.0';
+  const VERSION = '2.6.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -141,7 +141,15 @@
         // El objetivo MANDA: solo en niveles 'clear' se gana vaciando el tablero;
         // en score/survive/boss vaciar NO completa el nivel antes de tiempo.
         boardClearWins() { return Adventure.objective === 'clear'; } },
-      contrarreloj:  { name: 'Contrarreloj', emoji: '⏱️', timed: true,  scoreAttack: true, penalties: true,  mult: 1.2, accent: '#ff6cb0', goal: 'Suma puntos a contrarreloj', desc: 'Un solo tablero: cada convergencia suma algo de tiempo (con tope), pero la presión crece. ¡Puntúa todo lo posible antes de que el reloj llegue a cero!' },
+      contrarreloj:  { name: 'Contrarreloj', emoji: '⏱️', timed: true,  scoreAttack: true, penalties: true,  mult: 1.2, initialIcons: 22, accent: '#ff6cb0', goal: 'Suma puntos a contrarreloj', desc: 'Un solo tablero: cada convergencia suma algo de tiempo (con tope), pero la presión crece. ¡Puntúa todo lo posible antes de que el reloj llegue a cero!',
+        spawnFactor() {
+          if (State.elapsed * 1000 < Config.WARMUP.ms) return 1;
+          const n = State.iconCount;
+          if (n <= 10) return 0.65;
+          if (n <= 16) return 0.85;
+          if (n >= 30) return 1.1;
+          return 1;
+        } },
       supervivencia: { name: 'Supervivencia',emoji: '❤️', timed: false, penalties: true,  mult: 1.5, fast: true, endless: true, accent: '#ff5b6e', desc: 'Aguanta oleadas crecientes con vidas, trampas, jefes y potenciadores. ¿Cuánto sobrevivirás?',
         onSetupLevel(ctx) { Survival.setup(ctx.level); },
         onTick(dt) { Survival.onTick(dt); },
@@ -257,13 +265,18 @@
     const reduced = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
     const lang0 = (typeof navigator !== 'undefined' && /^en/i.test(navigator.language || '')) ? 'en' : 'es';
     const def = { sfx: true, music: false, haptics: true, reducedFx: reduced, lang: lang0, largeText: false };
-    let s; try { s = Object.assign({}, def, JSON.parse(localStorage.getItem('cv_settings') || '{}')); } catch (_) { s = { ...def }; }
+    let raw = {};
+    try { raw = JSON.parse(localStorage.getItem('cv_settings') || '{}') || {}; } catch (_) { raw = {}; }
+    let reducedFxExplicit = Object.prototype.hasOwnProperty.call(raw, 'reducedFx');
+    let s = Object.assign({}, def, raw);
     const save = () => { try { localStorage.setItem('cv_settings', JSON.stringify(s)); } catch (_) {} };
     return {
       get sfx() { return s.sfx; }, set sfx(v) { s.sfx = v; save(); },
       get music() { return s.music; }, set music(v) { s.music = v; save(); },
       get haptics() { return s.haptics; }, set haptics(v) { s.haptics = v; save(); },
-      get reducedFx() { return s.reducedFx; }, set reducedFx(v) { s.reducedFx = v; save(); },
+      get reducedFx() { return s.reducedFx; }, set reducedFx(v) { s.reducedFx = v; reducedFxExplicit = true; save(); },
+      get reducedFxExplicit() { return reducedFxExplicit; },
+      get systemReducedMotion() { return reduced; },
       get lang() { return s.lang; }, set lang(v) { s.lang = v; save(); },
       get largeText() { return s.largeText; }, set largeText(v) { s.largeText = v; save(); },
     };
@@ -300,7 +313,9 @@
         powerup_empty: 'No te quedan de este power-up',
         equipped: 'Equipado', equip: 'Equipar', free: 'Gratis', no_coins: 'Monedas insuficientes',
         shop_boards: 'Tableros visuales', shop_themes: 'Temas de color', shop_hint2: 'Los tableros son solo cambios visuales: no dan ventajas ni desventajas. Equipa tu estilo favorito para jugar.', board_unlocked: '¡Tablero desbloqueado!',
-        chests_title: '🎁 Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre contiene monedas, gemas o tickets.', chests_none: 'No tienes cofres', chest_reward: '¡Recompensa! {r}', open_chest: '🎁 Abrir cofre',
+        chests_title: '🎁 Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre contiene monedas, gemas, tickets o un cosmético raro.', chests_none: 'No tienes cofres · gana uno en Supervivencia, mundos, rachas o el Jardín Zen', chest_reward: '¡Recompensa! {r}', open_chest: '🎁 Abrir cofre',
+        chest_reveal_title: 'Contenido del cofre', chest_cosmetic_title: '¡COSMÉTICO!', chest_rarity_common: 'Recompensa', chest_rarity_jackpot: 'Jackpot', chest_rarity_cosmetic: 'Especial', chest_continue: 'Seguir', chest_equip: 'Equipar',
+        chest_reward_coins: '+{n} monedas', chest_reward_gems: '+{n} gemas', chest_reward_ticket: '+{n} ticket(s)', chest_reward_board: 'Tablero: {n}', chest_reward_theme: 'Tema: {n}',
         soon_badge: 'Próximamente', notify_me: 'Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
         edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
         home_classic: 'Partida clásica', home_classic_sub: 'Supera niveles y gana estrellas', home_surv_sub: 'Sobrevive a oleadas infinitas',
@@ -322,12 +337,13 @@
         coach_done: '¡Listo! Ya sabes jugar 🎉', coach_play1: 'Jugar nivel 1', coach_menu: 'Ir al menú',
         quit_confirm: '¿Salir? Toca de nuevo para confirmar', confirm_buy: '¿Confirmar?',
         resume_run: 'Continuar partida', run_resumed: 'Partida recuperada',
-        premium_chest: 'Cofre premium', no_gems: '¡No tienes gemas suficientes!',
+        premium_chest: 'Cofre premium', no_gems: 'Gemas insuficientes · gana gemas en Supervivencia, mundos y reto diario',
         reroll_mission: 'Cambiar misión (1)', mission_rerolled: '¡Misión nueva!',
         daily_challenge: 'Reto del día', daily_play: 'Jugar', daily_best: 'Mejor de hoy: {n}',
-        daily_pending: 'Tablero de hoy · ¡juégalo!', daily_done_state: '✅ Hecho · Mejor: {n}',
+        daily_pending: 'Tablero de hoy · ¡juégalo!', daily_home_pending: 'Hoy: ¡juégalo!', daily_home_done: '✅ {m} · {n}', daily_done_state: '✅ Hecho · Mejor: {n}',
         daily_done_medal: '{m} · Mejor: {n}', daily_medal_none: 'Sin medalla', daily_medal_bronze: 'Bronce', daily_medal_silver: 'Plata', daily_medal_gold: 'Oro',
         daily_medal_result: 'Medalla diaria: {m}', daily_next_medal: 'Siguiente medalla: supera {n}',
+        daily_info_same: 'El mismo tablero para todos · cambia a medianoche', daily_info_mut: 'Mutador de hoy', daily_info_medals: 'Medallas', daily_info_best: 'Mejor de hoy', daily_info_no_best: 'Sin intentos todavía', daily_info_ghost: 'Tu fantasma: tu mejor intento de hoy', daily_info_streak: 'Racha con congelación ética', daily_info_first: '+5 💎 primer intento del día', daily_note_next: '🎯 Siguiente: {m} {n}', daily_medal_up: '¡Medalla de {m}! Siguiente: {n}', daily_medal_max: '¡Oro asegurado!',
         mode_note_clasico: 'Maestría: termina sin errores para 3★', mode_note_clasico_streak: 'Racha perfecta: ×{n}',
         mode_note_aventura: 'Descubre: {m}', mode_note_contrarreloj: 'Cada convergencia compra segundos', mode_note_daily: 'Reto diario: bronce, plata u oro', mode_note_zen: 'Respira: sin castigo',
         mode_brief_clasico: 'Clásico · busca 3 estrellas', mode_brief_aventura: 'Aventura · lee el bioma y adapta la ruta',
@@ -362,7 +378,7 @@
         challenge_start: 'Reto compartido: ¡mismo tablero!',
         diff_facil: 'Fácil', diff_normal: 'Normal', diff_dificil: 'Difícil',
         set_sfx: 'Efectos de sonido', set_music: 'Música', set_haptics: 'Vibración', set_reduced: 'Reducir efectos', set_large: 'Texto grande', set_lang: 'Idioma',
-        perf_suggest: 'Toca aquí para activar el modo ligero y ganar fluidez', perf_light_on: 'Modo ligero activado',
+        perf_suggest: 'Toca aquí para activar el modo ligero y ganar fluidez', perf_light_on: 'Modo ligero activado · puedes revertirlo en Ajustes', rfx_system_notice: 'Efectos reducidos por el ajuste del sistema · cámbialo en Ajustes',
         st_points: 'Puntos', st_level: 'Nivel', st_combo: 'Combo máx.', st_removed: 'Eliminados', st_time: 'Tiempo', st_record: 'Récord', st_wave: 'Oleada', st_surv: 'Sobreviviste', st_best: 'Mejor',
         st_games: 'Partidas', st_bestcombo: 'Mejor combo', st_totaltime: 'Tiempo total',
         surv_new_icons: '¡Nuevos iconos! Sube la dificultad',
@@ -396,8 +412,8 @@
         pl_max: 'Máximo {n} potenciadores', pl_no_coins: 'Monedas insuficientes',
         surv_tide: '¡Marea de figuras!', surv_boss_tide_warn: '¡Marea inminente: despeja los bordes!',
         survmut_ice: 'Semana del hielo: trampas heladas · monedas ×1.15', survmut_chaos: 'Semana del caos: el terremoto ha vuelto', survmut_frenzy: 'Semana de la furia: frenesí +30%',
-        dmut_ice: 'Reto de hoy: tablero helado', dmut_window: 'Reto de hoy: combos más exigentes', dmut_variety: 'Reto de hoy: más variedad de figuras', dmut_rocks: 'Reto de hoy: campo de rocas', dmut_fast: 'Reto de hoy: ritmo veloz', dmut_crystal: 'Reto de hoy: cristales dobles', dmut_nohints: 'Reto de hoy: sin pistas',
-        dmut_ice_n: 'Hielo', dmut_window_n: 'Combos exigentes', dmut_variety_n: 'Variedad', dmut_rocks_n: 'Rocas', dmut_fast_n: 'Veloz', dmut_crystal_n: 'Cristales', dmut_nohints_n: 'Sin pistas',
+        dmut_pure: 'Reto de hoy: tablero puro', dmut_ice: 'Reto de hoy: tablero helado', dmut_window: 'Reto de hoy: combos más exigentes', dmut_variety: 'Reto de hoy: más variedad de figuras', dmut_rocks: 'Reto de hoy: campo de rocas', dmut_fast: 'Reto de hoy: ritmo veloz', dmut_crystal: 'Reto de hoy: cristales dobles', dmut_nohints: 'Reto de hoy: sin pistas',
+        dmut_pure_n: 'Puro', dmut_ice_n: 'Hielo', dmut_window_n: 'Combos exigentes', dmut_variety_n: 'Variedad', dmut_rocks_n: 'Rocas', dmut_fast_n: 'Veloz', dmut_crystal_n: 'Cristales', dmut_nohints_n: 'Sin pistas',
         daily_streak_chest: '¡{n} días de medalla seguidos! +1 cofre', daily_cal_al: 'Calendario de medallas de los últimos 14 días',
         timecap_hint: 'Cápsula de tiempo: detónala por adyacencia (+5s)',
         advboss_warn: 'El jefe carga su ataque…',
@@ -413,10 +429,10 @@
         surv_rewards: 'Recompensas', surv_reward_line: '+{c} monedas · +{g} gemas · +{ch} cofres', surv_time_record: '¡Récord de supervivencia!',
         coins: 'monedas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
         next: 'Próximo', new_icons: 'Nuevos iconos', chapter: 'Capítulo', next_to: 'Ir al nivel {n} →', lets_play: '¡A jugar!',
-        obj_clear: 'Vacía el tablero', obj_score: 'Consigue {n} pts', obj_survive: 'Sobrevive {n}s', obj_boss: 'JEFE · rompe los 💎', obj_boss_live: 'JEFE · rompe los 💎 ({n})',
+        obj_clear: 'Vacía el tablero', obj_score: 'Consigue {n} pts', obj_score_live: 'Puntos: {p}/{n}', obj_survive: 'Sobrevive {n}s', obj_boss: 'JEFE · rompe los 💎', obj_boss_live: 'JEFE · rompe los 💎 ({n})',
         biomemod_nebula: '', biomemod_asteroid: '🪨 Aparecen rocas que estorban', biomemod_ice: '🧊 Casillas heladas: tócalas para romperlas', biomemod_core: '🔥 Los iconos aparecen más rápido', biomemod_void: '🕳️ Menos pistas disponibles', biomemod_crystal: '💎 Cristales con puntos extra',
         sum_level: 'Nivel alcanzado {n}', sum_time: 'Tiempo {t}', sum_wave: 'Oleada {w} · {s}s sobrevividos', sum_chapter: 'Capítulo {c} · Nivel {n}',
-        level_done: '¡Nivel completado!', perfect_done: '¡Tablero perfecto!', level_sub: 'Nivel {n} superado', perfect_sub: 'Tablero limpio · bonus +{b}', boss_next: '¡Jefe a la vista!',
+        level_done: '¡Nivel completado!', perfect_done: '¡Tablero perfecto!', level_sub: 'Nivel {n} superado', perfect_sub: 'Tablero limpio · bonus +{b}', level_reason_score: 'Objetivo cumplido: {n} pts', level_reason_clear: 'Tablero vaciado', level_reason_boss: 'Cristales del jefe destruidos', level_reason_survive: 'Has resistido {n}s', boss_next: '¡Jefe a la vista!',
         over_victory: '🏆 ¡Victoria!', over_surv: '🛡️ Fin de la supervivencia', over_fail: '¡Misión fallida!',
         reason_time: '¡Se acabó el tiempo!', reason_nomoves: 'Sin movimientos posibles · {n}% del tablero ocupado.', reason_full: 'El tablero se ha llenado.', reason_end: 'Fin de la partida.', reason_surv: 'Sobreviviste {s}s', ach_unlocked: '🏅 Logro: {n}',
       },
@@ -444,7 +460,9 @@
         powerup_empty: 'No more of this power-up',
         equipped: 'Equipped', equip: 'Equip', free: 'Free', no_coins: 'Not enough coins',
         shop_boards: 'Visual boards', shop_themes: 'Color themes', shop_hint2: 'Boards are visual-only cosmetics: no advantages or disadvantages. Equip your favorite style before playing.', board_unlocked: 'Board unlocked!',
-        chests_title: '🎁 Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest contains coins, gems or tickets.', chests_none: 'You have no chests', chest_reward: 'Reward! {r}', open_chest: '🎁 Open chest',
+        chests_title: '🎁 Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest contains coins, gems, tickets or a rare cosmetic.', chests_none: 'No chests · earn them in Survival, worlds, streaks or the Zen Garden', chest_reward: 'Reward! {r}', open_chest: '🎁 Open chest',
+        chest_reveal_title: 'Chest contents', chest_cosmetic_title: 'COSMETIC!', chest_rarity_common: 'Reward', chest_rarity_jackpot: 'Jackpot', chest_rarity_cosmetic: 'Special', chest_continue: 'Continue', chest_equip: 'Equip',
+        chest_reward_coins: '+{n} coins', chest_reward_gems: '+{n} gems', chest_reward_ticket: '+{n} ticket(s)', chest_reward_board: 'Board: {n}', chest_reward_theme: 'Theme: {n}',
         soon_badge: 'Coming soon', notify_me: 'Notify me', notify_ok: "We'll let you know when it's ready!",
         edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
         home_classic: 'Classic game', home_classic_sub: 'Beat levels and earn stars', home_surv_sub: 'Survive endless waves',
@@ -466,12 +484,13 @@
         coach_done: 'Done! You know how to play 🎉', coach_play1: 'Play level 1', coach_menu: 'Go to menu',
         quit_confirm: 'Leave the game? Tap again to confirm', confirm_buy: 'Confirm?',
         resume_run: 'Resume game', run_resumed: 'Game restored',
-        premium_chest: 'Premium chest', no_gems: 'Not enough gems!',
+        premium_chest: 'Premium chest', no_gems: 'Not enough gems · earn gems in Survival, worlds and the daily run',
         reroll_mission: 'Swap mission (1)', mission_rerolled: 'New mission!',
         daily_challenge: 'Daily challenge', daily_play: 'Play', daily_best: "Today's best: {n}",
-        daily_pending: "Today's board · play it!", daily_done_state: '✅ Done · Best: {n}',
+        daily_pending: "Today's board · play it!", daily_home_pending: 'Today: play it!', daily_home_done: '✅ {m} · {n}', daily_done_state: '✅ Done · Best: {n}',
         daily_done_medal: '{m} · Best: {n}', daily_medal_none: 'No medal', daily_medal_bronze: 'Bronze', daily_medal_silver: 'Silver', daily_medal_gold: 'Gold',
         daily_medal_result: 'Daily medal: {m}', daily_next_medal: 'Next medal: beat {n}',
+        daily_info_same: 'Same board for everyone · changes at midnight', daily_info_mut: "Today's twist", daily_info_medals: 'Medals', daily_info_best: "Today's best", daily_info_no_best: 'No attempts yet', daily_info_ghost: 'Your ghost: your best try today', daily_info_streak: 'Ethical freeze streak', daily_info_first: '+5 💎 first try of the day', daily_note_next: '🎯 Next: {m} {n}', daily_medal_up: '{m} medal! Next: {n}', daily_medal_max: 'Gold secured!',
         mode_note_clasico: 'Mastery: finish with no mistakes for 3★', mode_note_clasico_streak: 'Perfect streak: ×{n}',
         mode_note_aventura: 'Discover: {m}', mode_note_contrarreloj: 'Every convergence buys seconds', mode_note_daily: 'Daily run: bronze, silver or gold', mode_note_zen: 'Breathe: no punishment',
         mode_brief_clasico: 'Classic · chase 3 stars', mode_brief_aventura: 'Adventure · read the biome and adapt',
@@ -506,7 +525,7 @@
         challenge_start: 'Shared challenge: same board!',
         diff_facil: 'Easy', diff_normal: 'Normal', diff_dificil: 'Hard',
         set_sfx: 'Sound effects', set_music: 'Music', set_haptics: 'Vibration', set_reduced: 'Reduce effects', set_large: 'Large text', set_lang: 'Language',
-        perf_suggest: 'Tap here to turn on light mode for smoother play', perf_light_on: 'Light mode on',
+        perf_suggest: 'Tap here to turn on light mode for smoother play', perf_light_on: 'Light mode on · you can revert it in Settings', rfx_system_notice: 'Effects reduced by your system setting · change it in Settings',
         st_points: 'Score', st_level: 'Level', st_combo: 'Max combo', st_removed: 'Cleared', st_time: 'Time', st_record: 'Best', st_wave: 'Wave', st_surv: 'Survived', st_best: 'Best',
         st_games: 'Games', st_bestcombo: 'Best combo', st_totaltime: 'Total time',
         surv_new_icons: 'New icons! Difficulty up',
@@ -540,8 +559,8 @@
         pl_max: 'Max {n} power-ups', pl_no_coins: 'Not enough coins',
         surv_tide: 'Icon tide!', surv_boss_tide_warn: 'Tide incoming: clear the edges!',
         survmut_ice: 'Ice week: frozen traps · coins ×1.15', survmut_chaos: 'Chaos week: the quake is back', survmut_frenzy: 'Fury week: frenzy +30%',
-        dmut_ice: "Today's twist: frozen board", dmut_window: "Today's twist: tighter combos", dmut_variety: "Today's twist: more icon variety", dmut_rocks: "Today's twist: rock field", dmut_fast: "Today's twist: fast pace", dmut_crystal: "Today's twist: double crystals", dmut_nohints: "Today's twist: no hints",
-        dmut_ice_n: 'Ice', dmut_window_n: 'Tight combos', dmut_variety_n: 'Variety', dmut_rocks_n: 'Rocks', dmut_fast_n: 'Fast', dmut_crystal_n: 'Crystals', dmut_nohints_n: 'No hints',
+        dmut_pure: "Today's twist: pure board", dmut_ice: "Today's twist: frozen board", dmut_window: "Today's twist: tighter combos", dmut_variety: "Today's twist: more icon variety", dmut_rocks: "Today's twist: rock field", dmut_fast: "Today's twist: fast pace", dmut_crystal: "Today's twist: double crystals", dmut_nohints: "Today's twist: no hints",
+        dmut_pure_n: 'Pure', dmut_ice_n: 'Ice', dmut_window_n: 'Tight combos', dmut_variety_n: 'Variety', dmut_rocks_n: 'Rocks', dmut_fast_n: 'Fast', dmut_crystal_n: 'Crystals', dmut_nohints_n: 'No hints',
         daily_streak_chest: '{n} medal days in a row! +1 chest', daily_cal_al: 'Medal calendar for the last 14 days',
         timecap_hint: 'Time capsule: detonate it by adjacency (+5s)',
         advboss_warn: 'The boss is charging its attack…',
@@ -557,11 +576,11 @@
         surv_rewards: 'Rewards', surv_reward_line: '+{c} coins · +{g} gems · +{ch} chests', surv_time_record: 'Survival record!',
         coins: 'coins', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
         next: 'Next', new_icons: 'New icons', chapter: 'Chapter', next_to: 'Go to level {n} →', lets_play: "Let's play!",
-        obj_clear: 'Clear the board', obj_score: 'Reach {n} pts', obj_survive: 'Survive {n}s', obj_boss: 'BOSS · break the 💎', obj_boss_live: 'BOSS · break the 💎 ({n})',
+        obj_clear: 'Clear the board', obj_score: 'Reach {n} pts', obj_score_live: 'Points: {p}/{n}', obj_survive: 'Survive {n}s', obj_boss: 'BOSS · break the 💎', obj_boss_live: 'BOSS · break the 💎 ({n})',
         biome_nebula: 'Nebula', biome_asteroid: 'Asteroid Belt', biome_ice: 'Ice Field', biome_core: 'Burning Core', biome_void: 'The Void', biome_crystal: 'Crystalia',
         biomemod_nebula: '', biomemod_asteroid: '🪨 Rocks block the board', biomemod_ice: '🧊 Frozen cells: tap to break', biomemod_core: '🔥 Icons spawn faster', biomemod_void: '🕳️ Fewer hints available', biomemod_crystal: '💎 Crystals worth extra points',
         sum_level: 'Reached level {n}', sum_time: 'Time {t}', sum_wave: 'Wave {w} · {s}s survived', sum_chapter: 'Chapter {c} · Level {n}',
-        level_done: 'Level complete!', perfect_done: 'Perfect board!', level_sub: 'Level {n} cleared', perfect_sub: 'Clean board · bonus +{b}', boss_next: 'Boss ahead!',
+        level_done: 'Level complete!', perfect_done: 'Perfect board!', level_sub: 'Level {n} cleared', perfect_sub: 'Clean board · bonus +{b}', level_reason_score: 'Goal reached: {n} pts', level_reason_clear: 'Board cleared', level_reason_boss: 'Boss crystals destroyed', level_reason_survive: 'You survived {n}s', boss_next: 'Boss ahead!',
         over_victory: '🏆 Victory!', over_surv: '🛡️ Survival over', over_fail: 'Mission failed!',
         reason_time: "Time's up!", reason_nomoves: 'No moves left · {n}% of the board filled.', reason_full: 'The board filled up.', reason_end: 'Game over.', reason_surv: 'Survived {s}s', ach_unlocked: '🏅 Achievement: {n}',
         m_tutorial_n: 'Tutorial', m_tutorial_d: 'Learn the mechanic, no rush or penalties.', m_tutorial_g: 'Match two equal',
@@ -1031,11 +1050,12 @@
         s.style.top = ((r + 0.5) / size * 100) + '%';
         const dx = (tc - c) * cellPx, dy = (tr - r) * cellPx;
         s.getAnimations().forEach((a) => a.cancel());
-        s.animate([
+        const anim = s.animate([
           { opacity: .95, transform: 'translate(-50%,-50%) scale(.92)' },
           { opacity: .8, transform: `translate(calc(-50% + ${dx * 0.85}px), calc(-50% + ${dy * 0.85}px)) scale(.5)`, offset: .8 },
           { opacity: 0, transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.2)` },
         ], { duration: 230, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'forwards' });
+        if (anim && anim.finished) anim.finished.then(() => { s.style.opacity = '0'; anim.cancel(); }).catch(() => {});
       });
     },
 
@@ -1097,11 +1117,12 @@
       // fuerza un reflujo sincrónico del documento en CADA eliminación (acumulado
       // en combos rápidos, saturaba el hilo principal de iOS -> congelación).
       p.getAnimations().forEach(a => a.cancel());
-      p.animate([
+      const anim = p.animate([
         { opacity: 0, transform: 'translate(-50%,-50%) scale(.6)' },
         { opacity: 1, transform: 'translate(-50%,-90%) scale(1.05)', offset: .18 },
         { opacity: 0, transform: 'translate(-50%,-180%) scale(.95)' },
       ], { duration: 1000, easing: 'ease-out', fill: 'forwards' });
+      if (anim && anim.finished) anim.finished.then(() => { p.style.opacity = '0'; anim.cancel(); }).catch(() => {});
     },
 
     bump(el) { el.getAnimations().forEach(a => a.cancel()); el.animate([{}, { transform: 'scale(1.18)', color: '#ffd84d', offset: .5 }, {}], { duration: 300, easing: 'ease' }); },
@@ -1349,8 +1370,10 @@
       $('#overlay').hidden = false;
       document.querySelectorAll('.modal').forEach(m => m.hidden = m.id !== id);
       const m = $('#' + id);
-      const focusable = m.querySelector('button:not([disabled]), [href], input');
-      if (focusable) focusable.focus();
+      const body = m.querySelector('.modal-body');
+      if (body) body.scrollTop = 0;
+      const focusable = m.querySelector('.modal-actions button:not([disabled])') || m.querySelector('button:not([disabled]), [href], input');
+      if (focusable) focusable.focus({ preventScroll: true });
     },
     close() {
       document.body.classList.remove('modal-open');
@@ -1371,7 +1394,8 @@
    */
   const FX = {
     layer: null, pool: [], idx: 0, active: 0, cap: 40, w: 0, h: 0, boardRect: null, supported: true, wave: null,
-    POOL: 56,                 // capas DOM máximas (acotado para no saturar el compositor)
+    POOL: 140,                // backstop absoluto para bursts de convergencia (FB-1)
+    ABS_MAX: 140,
     // Estrella REDONDEADA (5 puntas con esquinas suaves) como máscara SVG: escala
     // a cualquier tamaño (mask-size 100%) y el fondo/gradiente se ve a través.
     STAR_MASK: "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20fill='%23fff'%20d='M12%202.5c.5%200%20.9.3%201.1.7l2.4%205%205.4.8c1%20.1%201.4%201.3.7%202l-3.9%203.8.9%205.4c.2%201-.9%201.8-1.8%201.3L12%2018.9l-4.8%202.5c-.9.5-2-.3-1.8-1.3l.9-5.4L3.4%2011c-.7-.7-.3-1.9.7-2l5.4-.8%202.4-5c.2-.4.6-.7%201.1-.7z'/%3E%3C/svg%3E\")",
@@ -1425,8 +1449,8 @@
     // Lanza una partícula con velocidad (vx,vy) px/s y gravedad g px/s^2 durante life s.
     // Si se alcanza el tope de concurrencia, se DESCARTA (nunca se cancela una activa),
     // así el nº de capas del compositor queda acotado y no hay parpadeo blanco.
-    _emit(x, y, vx, vy, g, life, size, color, shape, spin, delay) {
-      if (!this.supported || this.active >= this.cap) return;
+    _emit(x, y, vx, vy, g, life, size, color, shape, spin, delay, force) {
+      if (!this.supported || this.active >= (force ? this.ABS_MAX : this.cap)) return;
       const p = this._slot(); if (!p) return;
       const el = p.el;
       el.style.width = size + 'px';
@@ -1449,7 +1473,12 @@
       try { anim = el.animate(frames, { duration: life * 1000, delay: delay || 0, easing: 'linear', fill: delay ? 'both' : 'forwards' }); }
       catch (_) { p.busy = false; this.active--; return; }
       p.anim = anim;
-      const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
+      const done = () => {
+        if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); }
+        el.style.opacity = '0';
+        if (p.anim === anim) p.anim = null;
+        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) {}
+      };
       anim.onfinish = done; anim.oncancel = done;
     },
     // Estallido en la celda eliminada (sale del centro hacia fuera).
@@ -1519,8 +1548,8 @@
     // Estrellita de "camino": pop en (x,y) tras `delay` ms; se mantiene y se
     // desvanece junto con TODO el efecto al terminar DUR_CLEAR (mismo final).
     // Reutiliza el pool y el gobernador. Sin glow (son muchas).
-    _spark(x, y, size, color, delay) {
-      if (!this.supported || this.active >= this.cap) return;
+    _spark(x, y, size, color, delay, force) {
+      if (!this.supported || this.active >= (force ? this.ABS_MAX : this.cap)) return;
       const p = this._slot(); if (!p) return;
       const el = p.el;
       el.style.width = size + 'px'; el.style.height = size + 'px';
@@ -1543,13 +1572,18 @@
       try { anim = el.animate(frames, { duration: dur, delay: delay || 0, fill: 'both' }); }
       catch (_) { p.busy = false; this.active--; return; }
       p.anim = anim;
-      const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
+      const done = () => {
+        if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); }
+        el.style.opacity = '0';
+        if (p.anim === anim) p.anim = null;
+        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) {}
+      };
       anim.onfinish = done; anim.oncancel = done;
     },
     // Mini-estrella que sale volando de (x0,y0) hacia (x1,y1): pop + viaje hacia
     // afuera con desaceleración elegante y desvanecido. Reutiliza el pool.
-    _flyStar(x0, y0, x1, y1, size, color, delay, dur) {
-      if (!this.supported || this.active >= this.cap) return;
+    _flyStar(x0, y0, x1, y1, size, color, delay, dur, force) {
+      if (!this.supported || this.active >= (force ? this.ABS_MAX : this.cap)) return;
       const p = this._slot(); if (!p) return;
       const el = p.el;
       el.style.width = size + 'px'; el.style.height = size + 'px';
@@ -1567,13 +1601,18 @@
       try { anim = el.animate(frames, { duration: dur, delay: delay || 0, fill: 'both' }); }
       catch (_) { p.busy = false; this.active--; return; }
       p.anim = anim;
-      const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
+      const done = () => {
+        if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); }
+        el.style.opacity = '0';
+        if (p.anim === anim) p.anim = null;
+        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) {}
+      };
       anim.onfinish = done; anim.oncancel = done;
     },
     // Estallido sutil de mini-estrellitas en todas direcciones desde (cx,cy),
     // sincronizado con la explosión de la estrella central → toque de "celebración".
-    _miniBurst(cx, cy, color, cellPx) {
-      const n = 6 + ((State.combo || 0) >= 6 ? 2 : 0);   // sutil (no exagerado)
+    _miniBurst(cx, cy, color, cellPx, force) {
+      const n = 3 + ((State.combo || 0) >= 6 ? 1 : 0);   // sutil (no exagerado)
       const size = Math.max(4, cellPx * 0.16);
       const dist = cellPx * 0.78;
       const delay = this.DUR_CLEAR * 0.5;                // estalla con la explosión central
@@ -1582,11 +1621,11 @@
       for (let k = 0; k < n; k++) {
         const a = base + k / n * 6.283 + (Math.random() - 0.5) * 0.35;
         const d = dist * (0.8 + Math.random() * 0.4);
-        this._flyStar(cx, cy, cx + Math.cos(a) * d, cy + Math.sin(a) * d, size, color, delay, dur);
+        this._flyStar(cx, cy, cx + Math.cos(a) * d, cy + Math.sin(a) * d, size, color, delay, dur, force);
       }
     },
-    _beam(x0, y0, x1, y1, color, delay, dur) {
-      if (!this.supported || this.active >= this.cap) return;
+    _beam(x0, y0, x1, y1, color, delay, dur, force) {
+      if (!this.supported || this.active >= (force ? this.ABS_MAX : this.cap)) return;
       const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy);
       if (len < 8) return;
       const p = this._slot(); if (!p) return;
@@ -1611,20 +1650,25 @@
         ], { duration: dur || this.DUR_CLEAR, delay: delay || 0, fill: 'both' });
       } catch (_) { p.busy = false; this.active--; return; }
       p.anim = anim;
-      const done = () => { if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } el.style.opacity = '0'; };
+      const done = () => {
+        if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); }
+        el.style.opacity = '0';
+        if (p.anim === anim) p.anim = null;
+        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) {}
+      };
       anim.onfinish = done; anim.oncancel = done;
     },
     // Estallido del icono al "reventar": esquirlas que salen disparadas en todas
     // direcciones. La cantidad y la velocidad CRECEN con la racha de combo (suave
     // en combos bajos, violento al subir). delay = momento del chasquido del icono.
-    _iconBurst(x, y, color) {
+    _iconBurst(x, y, color, force) {
       const t = clamp(((State.combo || 1) - 1) / 19, 0, 1);   // 0..1 sobre combo 1..20
-      const n = Math.round(7 + t * 13);                       // 7 → 20 esquirlas (bien visibles)
+      const n = Math.round(3 + t * 4);                         // 3 -> 7 esquirlas (plan comun FB-1)
       const spMax = 150 + t * 320;                            // velocidad crece con el combo
       const life = 0.26 + t * 0.08;
       for (let k = 0; k < n; k++) {
         const a = Math.random() * 6.283, sp = spMax * (0.4 + Math.random() * 0.6);
-        this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp, 280, life, 4 + Math.random() * 4, color, 0, 0);
+        this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp, 280, life, 4 + Math.random() * 4, color, 0, 0, 0, force);
       }
     },
     scoreToHud(centerIdx, color, tier) {
@@ -1636,7 +1680,7 @@
       if (!hr.width) return;
       const from = this.cellXY(centerIdx);
       const tx = hr.left + hr.width / 2, ty = hr.top + hr.height / 2;
-      const n = Math.min(6, 2 + Math.max(0, tier || 0));
+      const n = Math.min(4, 2 + Math.max(0, tier || 0));
       for (let k = 0; k < n; k++) {
         this._flyStar(
           from.x + (Math.random() - 0.5) * 10,
@@ -1646,7 +1690,8 @@
           5 + Math.random() * 4,
           color || '#ffd84d',
           80 + k * 36,
-          460 + Math.random() * 120
+          460 + Math.random() * 120,
+          true
         );
       }
     },
@@ -1661,6 +1706,7 @@
       const r = this.boardRect, sz = State.size;
       if (!r || !r.width) return;
       const cellPx = r.width / sz;
+      const force = true;
       const rcXY = (row, col) => ({ x: r.left + (col + 0.5) / sz * r.width, y: r.top + (row + 0.5) / sz * r.height });
       const cr = (centerIdx / sz) | 0, cc = centerIdx % sz;
       const C = rcXY(cr, cc);
@@ -1690,18 +1736,18 @@
       for (const idx of cells) {
         const ir = (idx / sz) | 0, ic = idx % sz;
         const ip = rcXY(ir, ic);
-        this._beam(C.x, C.y, ip.x, ip.y, color, 0, this.DUR_CLEAR * 0.78);
-        this._iconBurst(ip.x, ip.y, color);
+        this._beam(C.x, C.y, ip.x, ip.y, color, 0, this.DUR_CLEAR * 0.78, force);
+        this._iconBurst(ip.x, ip.y, color, force);
         const dr = Math.sign(ir - cr), dc = Math.sign(ic - cc);
         const N = Math.max(Math.abs(ir - cr), Math.abs(ic - cc));  // distancia en celdas
-        for (let d = 0.6; d <= N - 0.4 + 1e-6; d += 0.5) {
+        for (let d = 0.7; d <= N - 0.4 + 1e-6; d += 0.9) {
           const pos = rcXY(cr + dr * d, cc + dc * d);
-          this._spark(pos.x, pos.y, tiny, color, (d / N) * SWEEP);
+          this._spark(pos.x, pos.y, tiny, color, (d / N) * SWEEP, force);
         }
       }
 
       // 3) Toque de "celebración": mini-estrellitas desde el centro (secundario).
-      this._miniBurst(C.x, C.y, color, cellPx);
+      this._miniBurst(C.x, C.y, color, cellPx, force);
     },
     // Conservado por compatibilidad con el bucle; las partículas son autónomas (WAAPI).
     step() { return false; },
@@ -1860,15 +1906,14 @@
       openChest() {
         if ((m.chests || 0) <= 0) return null;
         m.chests--;
-        // Recompensa ponderada: la mayoría monedas, a veces gemas, raro un ticket.
         const roll = Math.random();
         let reward;
-        if (roll < 0.62) reward = { kind: 'coins', amount: 60 + Math.floor(Math.random() * 140) };
-        else if (roll < 0.92) reward = { kind: 'gems', amount: 3 + Math.floor(Math.random() * 8) };
-        else reward = { kind: 'ticket', amount: 1 };
-        if (reward.kind === 'coins') m.coins = (m.coins || 0) + reward.amount;
-        else if (reward.kind === 'gems') m.gems = (m.gems || 0) + reward.amount;
-        else m.tickets = (m.tickets || 0) + reward.amount;
+        if (roll < 0.60) reward = { kind: 'coins', amount: 60 + Math.floor(Math.random() * 140), rarity: 'common' };
+        else if (roll < 0.90) reward = { kind: 'gems', amount: 3 + Math.floor(Math.random() * 8), rarity: 'common' };
+        else if (roll < 0.98) reward = { kind: 'ticket', amount: 1, rarity: 'common' };
+        else reward = this._rollCosmetic();
+        if (!reward) reward = { kind: 'gems', amount: 8 + Math.floor(Math.random() * 8), rarity: 'common', fallback: 'cosmetic' };
+        this._applyChestReward(reward);
         save();
         return reward;
       },
@@ -1878,19 +1923,26 @@
         if (!this.spendGems(this.PREMIUM_CHEST_GEMS)) return null;
         const roll = Math.random();
         let reward;
-        if (roll < 0.55) reward = { kind: 'coins', amount: 200 + Math.floor(Math.random() * 300) };
-        else if (roll < 0.85) reward = { kind: 'ticket', amount: 2 };
-        else reward = { kind: 'coins', amount: 600 + Math.floor(Math.random() * 400) }; // jackpot
-        if (reward.kind === 'coins') m.coins = (m.coins || 0) + reward.amount;
-        else m.tickets = (m.tickets || 0) + reward.amount;
+        if (roll < 0.52) reward = { kind: 'coins', amount: 200 + Math.floor(Math.random() * 300), rarity: 'common' };
+        else if (roll < 0.82) reward = { kind: 'ticket', amount: 2, rarity: 'common' };
+        else if (roll < 0.92) reward = { kind: 'coins', amount: 600 + Math.floor(Math.random() * 400), rarity: 'jackpot' };
+        else reward = this._rollCosmetic();
+        if (!reward) reward = { kind: 'coins', amount: 600 + Math.floor(Math.random() * 400), rarity: 'jackpot', fallback: 'cosmetic' };
+        this._applyChestReward(reward);
         save();
         return reward;
       },
       // ---- Reto diario: mismo tablero para todos (semilla = fecha). ----
       DAILY_FIRST_GEMS: 5,
+      DAILY_MEDALS: [750, 1500, 2500],
       dailyMedal(score) {
         score = Math.max(0, score | 0);
-        return score >= 2500 ? 'gold' : score >= 1500 ? 'silver' : score >= 750 ? 'bronze' : 'none';
+        const m = this.DAILY_MEDALS;
+        return score >= m[2] ? 'gold' : score >= m[1] ? 'silver' : score >= m[0] ? 'bronze' : 'none';
+      },
+      dailyNextMedal(score) {
+        score = Math.max(0, score | 0);
+        return this.DAILY_MEDALS.find((n) => score < n) || null;
       },
       dailyRunInfo() {
         const d = today();
@@ -1966,6 +2018,36 @@
       zenFlowers: () => (m.zen && m.zen.flowers) || 0,
       addZenFlower() { if (!m.zen) m.zen = { flowers: 0 }; m.zen.flowers++; save(); return m.zen.flowers; },
       grantBoard(id) { if (!m.boards.owned[id]) { m.boards.owned[id] = 1; save(); return true; } return false; },
+      grantTheme(id) { if (this.owns(id)) return false; m.cosmetics.owned[id] = today(); save(); return true; },
+      chestCosmeticPool() {
+        const pool = [];
+        Boards.order.forEach((id) => {
+          const b = Boards.DEFS[id];
+          if (b && id !== 'classic' && !b.exclusive && !this.ownsBoard(id)) pool.push({ cosmeticKind: 'board', id, name: b.name });
+        });
+        Themes.order.forEach((id) => {
+          const t = Themes.DEFS[id];
+          if (t && id !== 'default' && !this.owns(id)) pool.push({ cosmeticKind: 'theme', id, name: t.name });
+        });
+        return pool;
+      },
+      _rollCosmetic() {
+        const pool = this.chestCosmeticPool();
+        if (!pool.length) return null;
+        const item = pool[Math.floor(Math.random() * pool.length)];
+        return Object.assign({ kind: 'cosmetic', rarity: 'cosmetic' }, item);
+      },
+      _applyChestReward(reward) {
+        if (!reward) return null;
+        if (reward.kind === 'coins') m.coins = (m.coins || 0) + reward.amount;
+        else if (reward.kind === 'gems') m.gems = (m.gems || 0) + reward.amount;
+        else if (reward.kind === 'ticket') m.tickets = (m.tickets || 0) + reward.amount;
+        else if (reward.kind === 'cosmetic') {
+          if (reward.cosmeticKind === 'board') this.grantBoard(reward.id);
+          else if (reward.cosmeticKind === 'theme') this.grantTheme(reward.id);
+        }
+        return reward;
+      },
       // ---- Reroll de la misión diaria: sumidero de tickets (1 por cambio). ----
       rerollDaily() {
         const cur = dailyMission(); // asegura que exista la misión de hoy
@@ -2473,7 +2555,7 @@
       if (biome.mods.includes('rush')) State.spawnRate = Math.max(340, Math.round(State.spawnRate * 0.8));
       if (biome.mods.includes('scarce')) State.hintsLeft = 1;
       if (biome.mods.includes('crystals') && !boss) this._placeCrystals(2 + Math.min(chapter, 3));
-      if (this.objective === 'score') this.target = 250 + chapter * 120 + lic * 40;
+      if (this.objective === 'score') this.target = this.scoreTarget(level);
       if (this.objective === 'survive') this.target = 18 + chapter * 4;
       if (this.objective === 'boss') this._placeCrystals(2 + Math.min(chapter, 4));
       // Efectos de run elegidos por el jugador (GM-06/07), tras los del bioma.
@@ -2489,6 +2571,10 @@
     _placeFrozen(density) { const f = this._filledIdx(), n = Math.floor(State.board.length * density); for (let k = 0; k < n && f.length; k++) State.tiles[f.splice(rand(f.length), 1)[0]] = Tiles.make('frozen'); },
     _placeCrystals(k) { const f = this._filledIdx(); for (let x = 0; x < k && f.length; x++) State.tiles[f.splice(rand(f.length), 1)[0]] = Tiles.make('crystal'); },
     crystalsLeft() { let n = 0; for (let i = 0; i < State.tiles.length; i++) if (State.tiles[i] && State.tiles[i].type === 'crystal') n++; return n; },
+    scoreTarget(level) {
+      const chapter = this.chapterOf(level);
+      return Math.round(level * (300 + 50 * chapter));
+    },
 
     winCheck() {
       if (this.objective === 'score') return (State.score - this.levelScore0) >= this.target ? 'win' : undefined;
@@ -2498,16 +2584,25 @@
     },
     objectiveText() {
       if (this.objective === 'boss') return I18n.t('obj_boss_live').replace('{n}', this.crystalsLeft());
-      if (this.objective === 'score') return I18n.t('obj_score').replace('{n}', this.target);
+      if (this.objective === 'score') {
+        const p = Math.max(0, State.score - this.levelScore0);
+        return I18n.t('obj_score_live').replace('{p}', Math.min(p, this.target)).replace('{n}', this.target);
+      }
       if (this.objective === 'survive') return I18n.t('obj_survive').replace('{n}', this.target);
       return I18n.t('obj_clear');
+    },
+    completionReason() {
+      if (this.objective === 'score') return I18n.t('level_reason_score').replace('{n}', this.target);
+      if (this.objective === 'survive') return I18n.t('level_reason_survive').replace('{n}', this.target);
+      if (this.objective === 'boss') return I18n.t('level_reason_boss');
+      return I18n.t('level_reason_clear');
     },
     // Objetivo del nivel `level` SIN mutar estado (para previsualizar el siguiente).
     previewObjective(level) {
       const lic = this.licOf(level), chapter = this.chapterOf(level), boss = this.isBoss(level);
       const obj = boss ? 'boss' : (lic === 2 ? 'score' : (lic === 3 && chapter > 0 ? 'survive' : 'clear'));
       if (obj === 'boss') return I18n.t('obj_boss');
-      if (obj === 'score') return I18n.t('obj_score').replace('{n}', 250 + chapter * 120 + lic * 40);
+      if (obj === 'score') return I18n.t('obj_score').replace('{n}', this.scoreTarget(level));
       if (obj === 'survive') return I18n.t('obj_survive').replace('{n}', 18 + chapter * 4);
       return I18n.t('obj_clear');
     },
@@ -3438,7 +3533,22 @@
       const key = MODE_IMG[mode];
       return key ? iconAnyInline(key) : esc((Config.MODES[mode] && Config.MODES[mode].emoji) || '');
     },
+    dailyMedalIcon(medal) {
+      return medal === 'gold' ? '🥇' : medal === 'silver' ? '🥈' : medal === 'bronze' ? '🥉' : '🎯';
+    },
     dailyMedalLabel(medal) { return I18n.t('daily_medal_' + (medal || 'none')); },
+    dailyNextMedalInfo(score = State.score) {
+      const next = Meta.dailyNextMedal(score);
+      if (!next) return null;
+      const idx = Meta.DAILY_MEDALS.indexOf(next);
+      const medal = ['bronze', 'silver', 'gold'][idx] || 'gold';
+      return { threshold: next, medal, icon: this.dailyMedalIcon(medal), label: this.dailyMedalLabel(medal) };
+    },
+    dailyNoteText(score = State.score) {
+      const next = this.dailyNextMedalInfo(score);
+      if (!next) return I18n.t('daily_medal_max');
+      return I18n.t('daily_note_next').replace('{m}', next.icon).replace('{n}', next.threshold);
+    },
     noteText(mode) {
       if (mode === 'clasico') {
         const streak = Meta.classicPerfectStreak();
@@ -3449,7 +3559,7 @@
         const mod = Adventure.biomeModText(bi) || Adventure.previewObjective(State.level);
         return I18n.t('mode_note_aventura').replace('{m}', mod);
       }
-      if (mode === 'contrarreloj') return State.isDaily ? I18n.t('mode_note_daily') : I18n.t('mode_note_contrarreloj');
+      if (mode === 'contrarreloj') return State.isDaily ? this.dailyNoteText() : I18n.t('mode_note_contrarreloj');
       if (mode === 'zen') {
         const fl = Meta.zenFlowers();
         return I18n.t('mode_note_zen') + (fl > 0 ? ' · 🌸 ' + fl : '');
@@ -3458,7 +3568,8 @@
     },
     noteHtml(mode) {
       const text = this.noteText(mode || State.mode);
-      return text ? `<span class="obj-mode-note">${esc(text)}</span>` : '';
+      const daily = (mode || State.mode) === 'contrarreloj' && State.isDaily;
+      return text ? `<span class="obj-mode-note"${daily ? ' id="daily-note"' : ''}>${esc(text)}</span>` : '';
     },
     brief(mode) {
       if (mode === 'tutorial') return;
@@ -3475,7 +3586,7 @@
     dailyResultHtml(result) {
       if (!State.isDaily || !result) return '';
       const medal = result.medal || 'none';
-      const next = State.score < 750 ? 750 : State.score < 1500 ? 1500 : State.score < 2500 ? 2500 : 0;
+      const next = Meta.dailyNextMedal(State.score);
       const medalLine = I18n.t('daily_medal_result').replace('{m}', this.dailyMedalLabel(medal));
       const nextLine = next ? `<small>${esc(I18n.t('daily_next_medal').replace('{n}', next))}</small>` : '';
       return `<div class="daily-medal-result medal-${medal}"><strong>${esc(medalLine)}</strong>${nextLine}</div>`;
@@ -4092,7 +4203,7 @@
       State.tiles = new Array(State.size * State.size).fill(null);
       State.iconCount = 0;
       State.combo = 0; State.comboMult = 1;
-      Engine.placeInitial(Config.DIFFICULTY[State.diff].initialIcons);
+      Engine.placeInitial(m.initialIcons != null ? m.initialIcons : Config.DIFFICULTY[State.diff].initialIcons);
       State.minIcons = State.iconCount; // referencia near-miss del nivel (GM-01)
       // Warm-up de apertura (GM-26): por nivel, se desactiva solo en modos de calma.
       State.warmupUntil = performance.now() + Config.WARMUP.ms;
@@ -4113,6 +4224,8 @@
     },
 
     start(mode, diff, startLevel, seed) {
+      Picker.dismiss();
+      { const pl = $('#prelevel'); if (pl) pl.hidden = true; }
       State.mode = mode;
       if (mode !== 'tutorial') Storage.lastMode = mode; // para marcar el modo actual en el catálogo
       State.diff = Config.MODES[mode].fixedDiff || diff;
@@ -4131,7 +4244,7 @@
       State.minIcons = 99; State.bestPlay = null; State.spawnHoldUntil = 0;
       State.mutFast = false; State.ghostSamples = []; // mutador diario (GM-15) · ghost (GM-12)
       State.isDaily = false; // startDaily() lo activa tras llamar aquí
-      State.status = 'playing'; this.ended = false; this.dailyRunResult = null; this.classicMastery = null; this._nearMiss = null;
+      State.status = 'playing'; this.ended = false; this.dailyRunResult = null; this._dailyMedalSeen = Object.create(null); this.classicMastery = null; this._nearMiss = null;
       ModeSignals.apply(mode);
       // Aventura: reanuda en el nivel más lejano alcanzado; el resto empieza en 1.
       if (mode === 'aventura') State.level = Meta.advMax();
@@ -4338,6 +4451,7 @@
       }
 
       // Puntos (icono×10×nivel × combo × dificultad × modo × fever)
+      const scoreBefore = State.score;
       const removed = conv.length;
       State.removedTotal += removed;
       State.lastActionCell = i;
@@ -4391,6 +4505,7 @@
       Render.popup(i, totMult > 1.001 ? `+${points} ×${totMult % 1 === 0 ? totMult : totMult.toFixed(1)}` : `+${points}`, color);
       Render.bump($('#hud-score'));
       Render.combo();
+      this.updateDailyObjective(scoreBefore);
 
       // Subida de rango → flash + sonido
       if (State.comboMult > prevMult && State.combo >= 3) {
@@ -4670,6 +4785,7 @@
         ? `<span class="obj-stars" id="obj-stars" title="${I18n.t('stars_help')}" aria-label="${I18n.t('stars_label')}"></span>` : '';
       el.innerHTML = `<span class="obj-biome" style="color:${m.accent || 'var(--accent-2)'}">${MODE_IMG[State.mode] ? iconAnyInline(MODE_IMG[State.mode]) : m.emoji} ${I18n.modeT(State.mode, 'name')}</span><span class="obj-goal">${I18n.modeT(State.mode, 'goal')}</span>${stars}${ModeSignals.noteHtml(State.mode)}`;
       this.updateLiveStars();
+      this.updateDailyObjective(undefined, { toast: false });
     },
 
     // Estrellas según errores cometidos (criterio único y transparente).
@@ -4684,6 +4800,23 @@
       const s = this.starsForMistakes(State.mistakes);
       el.innerHTML = [1, 2, 3].map((k) => `<span class="ols${k <= s ? ' on' : ''}">★</span>`).join('');
       el.dataset.stars = s;
+    },
+    updateDailyObjective(previousScore, opts = {}) {
+      if (!State.isDaily) return;
+      const note = $('#daily-note');
+      if (note) note.textContent = ModeSignals.dailyNoteText(State.score);
+      if (opts.toast === false || typeof previousScore !== 'number' || State.score <= previousScore) return;
+      if (!this._dailyMedalSeen) this._dailyMedalSeen = Object.create(null);
+      Meta.DAILY_MEDALS.forEach((threshold, idx) => {
+        const medal = ['bronze', 'silver', 'gold'][idx];
+        if (previousScore >= threshold || State.score < threshold || this._dailyMedalSeen[medal]) return;
+        this._dailyMedalSeen[medal] = true;
+        const next = Meta.dailyNextMedal(threshold);
+        const msg = next
+          ? I18n.t('daily_medal_up').replace('{m}', ModeSignals.dailyMedalLabel(medal)).replace('{n}', next)
+          : I18n.t('daily_medal_max');
+        Toasts.show(msg, 'good', 2200, ModeSignals.dailyMedalIcon(medal));
+      });
     },
 
     /* Win/Lose: se evalúa tras cada cambio del tablero */
@@ -4803,9 +4936,11 @@
       const emb = $('#level-emblem'); if (emb) emb.innerHTML = perfect ? icon('star') : (State.mode === 'aventura' ? (BIOME_IMG[Adventure.biomeOf(State.level).id] ? iconAny(BIOME_IMG[Adventure.biomeOf(State.level).id]) : Adventure.biomeOf(State.level).glyph) : (MODE_IMG[State.mode] ? iconAny(MODE_IMG[State.mode]) : (m.emoji || '⭐')));
 
       $('#level-title').textContent = perfect ? I18n.t('perfect_done') : I18n.t('level_done');
-      $('#level-sub').textContent = perfect
+      let levelSub = perfect
         ? I18n.t('perfect_sub').replace('{b}', Config.EMPTY_BOARD_BONUS)
         : I18n.t('level_sub').replace('{n}', State.level);
+      if (State.mode === 'aventura') levelSub += ' · ' + Adventure.completionReason();
+      $('#level-sub').textContent = levelSub;
 
       // Resumen de la partida hasta ahora (chips premium)
       $('#level-stats').innerHTML = statRow([
@@ -5277,6 +5412,49 @@
     Modal.close();
     Game.start('supervivencia', survDiff);
   }
+  function buildDailyInfo() {
+    const box = $('#daily-info'); if (!box) return;
+    const d = new Date().toISOString().slice(0, 10);
+    const mut = DailyMut.pick(d);
+    const dr = Meta.dailyRunInfo();
+    const medal = Meta.dailyMedal(dr.best || 0);
+    const medals = [
+      ['bronze', '🥉', Meta.DAILY_MEDALS[0]],
+      ['silver', '🥈', Meta.DAILY_MEDALS[1]],
+      ['gold', '🥇', Meta.DAILY_MEDALS[2]],
+    ].map(([, icon, n]) => `<span class="di-medal ${(dr.best || 0) >= n ? 'on' : ''}">${icon} ${n}</span>`).join('');
+    const best = dr.best > 0
+      ? `${ModeSignals.dailyMedalLabel(medal)} · ${dr.best}`
+      : I18n.t('daily_info_no_best');
+    const streak = Meta.dailyStreak();
+    box.innerHTML = `
+      <div class="di-hero">
+        <b>${esc(d)}</b>
+        <span>${esc(I18n.t('daily_info_same'))}</span>
+      </div>
+      <div class="di-row">
+        <span class="di-k">🎲 ${esc(I18n.t('daily_info_mut'))}</span>
+        <span class="di-v"><b>${esc(I18n.t('dmut_' + mut + '_n'))}</b><small>${esc(I18n.t('dmut_' + mut))}</small></span>
+      </div>
+      <div class="di-row">
+        <span class="di-k">${esc(I18n.t('daily_info_medals'))}</span>
+        <span class="di-medals">${medals}</span>
+      </div>
+      <div class="di-row">
+        <span class="di-k">${esc(I18n.t('daily_info_best'))}</span>
+        <span class="di-v"><b>${esc(best)}</b><small>${esc(I18n.t('daily_info_ghost'))}</small></span>
+      </div>
+      <div class="di-row">
+        <span class="di-k">🔥 ${streak}</span>
+        <span class="di-v">${esc(I18n.t('daily_info_streak'))}</span>
+      </div>
+      ${dr.plays > 0 ? '' : `<div class="di-bonus">${esc(I18n.t('daily_info_first'))}</div>`}
+    `;
+  }
+  function openDailyInfo() {
+    buildDailyInfo();
+    Modal.open('modal-daily');
+  }
 
   /* ===================== Top bar reutilizable (sistema base) ===================== */
   const TOPBAR_HTML = `
@@ -5345,13 +5523,16 @@
         const streak = Meta.dailyStreak();
         const streakTxt = streak > 0 ? ' · 🔥' + streak : '';
         const mut = DailyMut.pick(new Date().toISOString().slice(0, 10));
-        const mutTxt = mut !== 'pure' ? ' · 🎲 ' + I18n.t('dmut_' + mut + '_n') : '';
+        const mutTxt = '🎲 ' + I18n.t('dmut_' + mut + '_n');
         if (played) {
-          const key = medal !== 'none' ? 'daily_done_medal' : 'daily_done_state';
-          st.textContent = I18n.t(key).replace('{n}', dr.best).replace('{m}', ModeSignals.dailyMedalLabel(medal)) + streakTxt;
+          const line1 = I18n.t('daily_home_done').replace('{n}', dr.best).replace('{m}', ModeSignals.dailyMedalLabel(medal));
+          st.innerHTML = `<span>${esc(line1)}</span><span>${esc(mutTxt + streakTxt)}</span>`;
           st.removeAttribute('data-i18n');
         }
-        else { st.textContent = I18n.t('daily_pending') + mutTxt + streakTxt; st.removeAttribute('data-i18n'); }
+        else {
+          st.innerHTML = `<span>${esc(I18n.t('daily_home_pending'))}</span><span>${esc(mutTxt + streakTxt)}</span>`;
+          st.removeAttribute('data-i18n');
+        }
       } }
     // Cabecera compacta: perfil (izq) + economía (der), sin tarjeta.
     const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
@@ -5386,7 +5567,7 @@
         ? `<button class="btn btn-ghost btn-sm mission-reroll" data-reroll>🎟️ ${esc(I18n.t('reroll_mission'))}</button>` : '';
       mi.innerHTML = daily + row('', '🎯', dm, I18n.t('daily_done')) + reroll + row('weekly', '🗓️', Meta.weeklyChallenge(), I18n.t('weekly_done'));
       const db = mi.querySelector('[data-daily-run]');
-      if (db) db.addEventListener('click', () => { Sound.ensure(); Modal.close(); Game.startDaily(); });
+      if (db) db.addEventListener('click', () => { Sound.ensure(); Modal.close(); openDailyInfo(); });
       const rb = mi.querySelector('[data-reroll]');
       if (rb) rb.addEventListener('click', () => {
         const next = Meta.rerollDaily();
@@ -5406,6 +5587,14 @@
 
   function applyReducedFx() {
     document.body.classList.toggle('reduced-fx', Settings.reducedFx);
+  }
+  function maybeNoticeSystemReducedFx() {
+    if (!Settings.reducedFx || Settings.reducedFxExplicit || !Settings.systemReducedMotion) return;
+    try {
+      if (localStorage.getItem('cv_rfx_notice') === '1') return;
+      localStorage.setItem('cv_rfx_notice', '1');
+    } catch (_) {}
+    setTimeout(() => Toasts.show(I18n.t('rfx_system_notice'), 'info', 4200, 'aura'), 700);
   }
   function applyLargeText() {
     document.documentElement.style.fontSize = Settings.largeText ? '18.5px' : '';
@@ -5562,6 +5751,79 @@
   function openShop() { buildShop(); Modal.open('modal-shop'); }
 
   // --- Cofres: abrir y entregar recompensa aleatoria ---
+  function setChestButtonsBusy(on) {
+    ['#btn-open-chest', '#btn-open-premium'].forEach((sel) => {
+      const b = $(sel);
+      if (!b) return;
+      b.disabled = !!on;
+      b.classList.toggle('is-busy', !!on);
+    });
+  }
+  function syncChestButtons() {
+    const n = Meta.chests();
+    const ob = $('#btn-open-chest');
+    if (ob) {
+      ob.disabled = false;
+      ob.classList.toggle('is-poor', n <= 0);
+      ob.removeAttribute('aria-disabled');
+    }
+    const pb = $('#btn-open-premium');
+    if (pb) {
+      pb.innerHTML = `💎 ${esc(I18n.t('premium_chest'))} (${Meta.PREMIUM_CHEST_GEMS})`;
+      const poor = Meta.gems() < Meta.PREMIUM_CHEST_GEMS;
+      pb.disabled = false;
+      pb.classList.toggle('is-poor', poor);
+      pb.removeAttribute('aria-disabled');
+    }
+  }
+  function chestRewardInfo(r) {
+    if (!r) return null;
+    if (r.kind === 'coins') return { icon: '🪙', rarity: r.rarity || 'common', label: I18n.t('chest_reward_coins').replace('{n}', r.amount) };
+    if (r.kind === 'gems') return { icon: '💎', rarity: 'common', label: I18n.t('chest_reward_gems').replace('{n}', r.amount) };
+    if (r.kind === 'ticket') return { icon: '🎟️', rarity: 'common', label: I18n.t('chest_reward_ticket').replace('{n}', r.amount) };
+    const key = r.cosmeticKind === 'theme' ? 'chest_reward_theme' : 'chest_reward_board';
+    return { icon: '✨', rarity: 'cosmetic', label: I18n.t(key).replace('{n}', r.name || r.id) };
+  }
+  function showChestReward(r) {
+    const el = $('#chests-body'); if (!el) return;
+    const info = chestRewardInfo(r);
+    const cosmetic = r.kind === 'cosmetic';
+    const title = cosmetic ? I18n.t('chest_cosmetic_title') : I18n.t('chest_reveal_title');
+    const rarity = I18n.t('chest_rarity_' + info.rarity);
+    const equip = cosmetic ? `<button class="btn btn-primary btn-sm" data-chest-equip>${esc(I18n.t('chest_equip'))}</button>` : '';
+    el.innerHTML = `<div class="chest-reveal rarity-${info.rarity}">
+      <span class="cr-rarity">${esc(rarity)}</span>
+      <span class="cr-icon">${info.icon}</span>
+      <b>${esc(title)}</b>
+      <strong>${esc(info.label)}</strong>
+      <div class="cr-actions">${equip}<button class="btn btn-ghost btn-sm" data-chest-next>${esc(I18n.t('chest_continue'))}</button></div>
+    </div>`;
+    const next = el.querySelector('[data-chest-next]');
+    if (next) next.addEventListener('click', () => { Sound.ui(); buildChests(); });
+    const eq = el.querySelector('[data-chest-equip]');
+    if (eq) eq.addEventListener('click', () => {
+      if (r.cosmeticKind === 'board') { Meta.equipBoard(r.id); Boards.apply(); }
+      else { Meta.equip('theme', r.id); Cosmetics.apply(); }
+      Sound.success(); Econ.refresh(); refreshStart(); buildShop(); buildChests();
+      Toasts.show(I18n.t('equipped'), 'good', 1500, info.icon);
+    });
+  }
+  function revealChestReward(r, premium) {
+    const el = $('#chests-body');
+    const big = el && el.querySelector('.chest-big');
+    const info = chestRewardInfo(r);
+    setChestButtonsBusy(true);
+    if (big && !Settings.reducedFx) { big.classList.remove('ready'); big.classList.add('opening'); }
+    const finish = () => {
+      if (!Settings.reducedFx) FX.confetti(info.rarity === 'cosmetic' ? 160 : (premium ? 120 : 80));
+      showChestReward(r);
+      Toasts.show(I18n.t('chest_reward').replace('{r}', info.label), 'good', info.rarity === 'common' ? 2200 : 2800, info.icon);
+      Econ.refresh();
+      syncChestButtons();
+      setChestButtonsBusy(false);
+    };
+    setTimeout(finish, Settings.reducedFx ? 0 : 520);
+  }
   function buildChests() {
     const el = $('#chests-body'); if (!el) return;
     Econ.refresh();
@@ -5572,29 +5834,22 @@
       : `<p class="chest-hint">${I18n.t('chests_hint')}</p>`;
     el.innerHTML = `<div class="chest-big${n > 0 ? ' ready' : ''}">${iconInline('chest')}</div>
       <p class="chest-count">${I18n.t('chests_have').replace('{n}', n)}</p>${guide}`;
-    const ob = $('#btn-open-chest'); if (ob) ob.disabled = n <= 0;
-    const pb = $('#btn-open-premium');
-    if (pb) {
-      pb.innerHTML = `💎 ${esc(I18n.t('premium_chest'))} (${Meta.PREMIUM_CHEST_GEMS})`;
-      pb.disabled = Meta.gems() < Meta.PREMIUM_CHEST_GEMS;
-    }
+    syncChestButtons();
   }
   function doOpenPremiumChest() {
     const r = Meta.openPremiumChest();
-    if (!r) { Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 1600); return; }
-    Sound.success(); FX.confetti(140);
-    const txt = r.kind === 'coins' ? `🪙 +${r.amount}` : `🎟️ +${r.amount}`;
-    Toasts.show(I18n.t('chest_reward').replace('{r}', txt), 'good', 2400, '💎');
-    Econ.refresh(); buildChests();
+    if (!r) { Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 2800, 'gem'); buildChests(); return; }
+    Sound.success();
+    if (r.rarity === 'jackpot' || r.rarity === 'cosmetic') setTimeout(() => Sound.record(), 120);
+    revealChestReward(r, true);
   }
   function openChests() { buildChests(); Modal.open('modal-chests'); }
   function doOpenChest() {
     const r = Meta.openChest();
-    if (!r) { Sound.miss(); Toasts.show(I18n.t('chests_none'), 'warn', 1400); return; }
-    Sound.success(); FX.confetti(90);
-    const txt = r.kind === 'coins' ? `🪙 +${r.amount}` : r.kind === 'gems' ? `💎 +${r.amount}` : `🎟️ +${r.amount}`;
-    Toasts.show(I18n.t('chest_reward').replace('{r}', txt), 'good', 2200, '🎁');
-    Econ.refresh(); buildChests();
+    if (!r) { Sound.miss(); Toasts.show(I18n.t('chests_none'), 'warn', 2800, 'chest'); buildChests(); return; }
+    Sound.success();
+    if (r.rarity === 'cosmetic') setTimeout(() => Sound.record(), 120);
+    revealChestReward(r, false);
   }
 
   // Mapa de capítulos de Aventura (nodos hasta el capítulo alcanzado + el siguiente)
@@ -5646,6 +5901,7 @@
     Input.init();
     buildModeMenu();
     PWA.init();
+    maybeNoticeSystemReducedFx();
     const vEl = $('#app-version'); if (vEl) vEl.textContent = VERSION;
 
     // Audio iOS: red de seguridad. Desbloquea/reanuda el contexto con el primer
@@ -5702,10 +5958,10 @@
       else if (a === 'play') { Sound.ensure(); Screens.show('modes'); }
       else if (a === 'home-classic') { Sound.ui(); Worlds.open(); }
       else if (a === 'home-surv') { Sound.ensure(); openSurvivalDiff(); }
-      else if (a === 'home-daily') { Sound.ensure(); Game.startDaily(); }
+      else if (a === 'home-daily') { Sound.ensure(); openDailyInfo(); }
       else if (a === 'go-surv') { Sound.ensure(); Modal.close(); openSurvivalDiff(); }
       else if (a === 'go-play') { Sound.ensure(); Modal.close(); Screens.show('modes'); }
-      else if (a === 'go-daily') { Sound.ensure(); Modal.close(); Game.startDaily(); }
+      else if (a === 'go-daily') { Sound.ensure(); Modal.close(); openDailyInfo(); }
       else if (a === 'go-classic') { Sound.ensure(); Modal.close(); Worlds.open(); }
       else if (a === 'go-adventure') { Sound.ensure(); Modal.close(); openAdventure(); }
       else if (a === 'open-chests') { Sound.ensure(); Modal.close(); openChests(); }
@@ -5775,6 +6031,7 @@
     $('#btn-over-quit').addEventListener('click', () => Game.quit());
     { const rv = $('#btn-revive'); if (rv) rv.addEventListener('click', () => Survival.revive()); }
     { const gu = $('#btn-giveup'); if (gu) gu.addEventListener('click', () => Survival.giveUp()); }
+    { const ds = $('#btn-daily-start'); if (ds) ds.addEventListener('click', () => { Sound.ensure(); Modal.close(); Game.startDaily(); }); }
     document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => Modal.close()));
 
     // Teclas globales
@@ -5812,5 +6069,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Share, I18n, Toasts, RNG, RunSave, Picker, PreLevel, Perf, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Share, I18n, Toasts, RNG, RunSave, Picker, PreLevel, Modal, Perf, ModeSignals, refreshStart, applyLanguage };
 })();

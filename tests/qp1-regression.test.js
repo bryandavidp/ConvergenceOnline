@@ -53,7 +53,7 @@ test('B-02: reanudar Aventura no regala los niveles de objetivo score', () => {
   if (Picker.pending) Picker.cancel();
   assert.equal(Adventure.objective, 'score');
   assert.equal(Adventure.levelScore0, 4800);
-  assert.notEqual(Adventure.winCheck(), 'win', '200/330 de progreso: jamás victoria instantánea');
+  assert.notEqual(Adventure.winCheck(), 'win', '200/900 de progreso: jamás victoria instantánea');
   // Guardado ANTIGUO (sin campos): fallback conservador = el score actual es el inicio.
   localStorage.setItem(RunSave.KEY, JSON.stringify(mkSave({})));
   assert.ok(Game.resumeSaved());

@@ -22,6 +22,7 @@ const sim = require('../tools/balance-sim.js');
 
 test('medallas del reto diario: umbrales verbatim (750/1500/2500)', () => {
   const M = sim.cv.Meta;
+  assert.deepEqual(M.DAILY_MEDALS, [750, 1500, 2500]);
   assert.equal(M.dailyMedal(0), 'none');
   assert.equal(M.dailyMedal(749), 'none');
   assert.equal(M.dailyMedal(750), 'bronze');

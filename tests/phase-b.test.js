@@ -131,6 +131,10 @@ test('openPremiumChest: sin gemas suficientes → null y sin cambios', () => {
 });
 
 test('openPremiumChest: cobra las gemas y entrega monedas o tickets', () => {
+  const prevRandom = Math.random;
+  let randIdx = 0;
+  const seq = [0.10, 0];
+  Math.random = () => seq[Math.min(randIdx++, seq.length - 1)];
   Meta.addGems(Meta.PREMIUM_CHEST_GEMS);
   const gems0 = Meta.gems(), coins0 = Meta.coins(), tickets0 = Meta.tickets();
   const r = Meta.openPremiumChest();
@@ -144,6 +148,7 @@ test('openPremiumChest: cobra las gemas y entrega monedas o tickets', () => {
     assert.equal(r.amount, 2);
     assert.equal(Meta.tickets(), tickets0 + 2);
   }
+  Math.random = prevRandom;
 });
 
 test('rerollDaily: cambia la misión, gasta 1 ticket y resetea el progreso', () => {
