@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.4.0';
+  const VERSION = '2.4.1';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -404,6 +404,7 @@
         exped_title: 'Tu expedición',
         garden_10: '¡10 flores en tu jardín! +1 cofre', garden_50: '¡50 flores! Skin «Jardín Zen» desbloqueado',
         board_excl: 'Exclusivo',
+        pick_back: 'Volver',
         pu_row: '¡Fila despejada!', pu_col: '¡Columna despejada!', pu_no_target: 'Sin objetivo', pu_wild_emergency: 'Comodín · despeje de emergencia', pu_wild_icons: 'Comodín · {n} iconos',
         surv_diff_title: 'Supervivencia', surv_diff_sub: 'Elige el ritmo de la partida', surv_start: 'Empezar supervivencia',
         surv_frenzy: 'Frenesí', surv_frenzy_ready: '¡Frenesí activado!', surv_wave_reward: 'Oleada {w} · +{c} monedas',
@@ -546,6 +547,7 @@
         exped_title: 'Your expedition',
         garden_10: '10 flowers in your garden! +1 chest', garden_50: '50 flowers! "Zen Garden" skin unlocked',
         board_excl: 'Exclusive',
+        pick_back: 'Back',
         pu_row: 'Row cleared!', pu_col: 'Column cleared!', pu_no_target: 'No target', pu_wild_emergency: 'Wildcard · emergency clear', pu_wild_icons: 'Wildcard · {n} icons',
         surv_diff_title: 'Survival', surv_diff_sub: 'Choose the run pace', surv_start: 'Start survival',
         surv_frenzy: 'Frenzy', surv_frenzy_ready: 'Frenzy active!', surv_wave_reward: 'Wave {w} · +{c} coins',
@@ -3584,6 +3586,14 @@
       this._close();
       if (p.onCancel) p.onCancel();
     },
+    // B-06: cierre DEFENSIVO sin callbacks ni cambios de status — para fin de
+    // partida/salida externa con una elección abierta (hoy ninguna ruta legítima
+    // lo provoca, pero cualquier feature futura que llame gameOver()/quit() con
+    // un Picker pendiente dejaría el overlay pegado sobre el menú).
+    dismiss() {
+      this.pending = null; this._wasPlaying = false;
+      const ov = $('#pick-overlay'); if (ov) ov.hidden = true;
+    },
     _close() {
       const ov = $('#pick-overlay'); if (ov) ov.hidden = true;
       this.pending = null;
@@ -3953,7 +3963,11 @@
    * la semilla original (los spawns futuros divergen — no se exige replay exacto). */
   const RunSave = {
     KEY: 'cv_run',
-    EXCLUDED: { supervivencia: 1, tutorial: 1 },
+    // B-01: Contrarreloj (y el Reto del día, que es Contrarreloj seedeado) NO se
+    // guarda: son runs de 2-4 min y reanudar rompía la integridad del reto
+    // (isDaily/mutador/cápsula no viven en el snapshot). load() rechaza además
+    // cualquier guardado antiguo de un modo hoy excluido.
+    EXCLUDED: { supervivencia: 1, tutorial: 1, contrarreloj: 1 },
     save() {
       try {
         const playing = State.status === 'playing' || State.status === 'paused';
@@ -3969,6 +3983,11 @@
           maxCombo: State.maxCombo, removedTotal: State.removedTotal,
           emptyBoards: State.emptyBoards, coinsRun: State.coinsRun,
         };
+        // B-02: progreso del objetivo de nivel de Aventura (sin esto, un nivel de
+        // score reanudado se ganaba al instante: levelScore0 se re-derivaba a 0).
+        if (State.mode === 'aventura') { s.advScore0 = Adventure.levelScore0; s.advStart = Adventure.levelStart; }
+        // B-03: consumibles pre-nivel de Clásico (reanudar ES el mismo intento).
+        if (State.mode === 'clasico') s.inv = Survival.inv;
         localStorage.setItem(this.KEY, JSON.stringify(s));
       } catch (e) { /* cuota llena o similar: nunca romper el juego por guardar */ }
     },
@@ -4116,6 +4135,19 @@
       State.hintsLeft = s.hintsLeft; State.mistakes = s.mistakes;
       State.maxCombo = s.maxCombo; State.removedTotal = s.removedTotal;
       State.emptyBoards = s.emptyBoards; State.coinsRun = s.coinsRun;
+      // B-02: restaurar el progreso del objetivo de Aventura. Fallback para guardados
+      // antiguos sin estos campos: tratar el estado actual como inicio del nivel
+      // (conservador — jamás regala la victoria instantánea).
+      if (s.mode === 'aventura') {
+        Adventure.levelScore0 = typeof s.advScore0 === 'number' ? s.advScore0 : State.score;
+        Adventure.levelStart = typeof s.advStart === 'number' ? s.advStart : State.elapsed;
+        Adventure.refreshGoal(State.level);
+      }
+      // B-03: restaurar los consumibles pre-nivel de Clásico y su barra.
+      if (s.mode === 'clasico' && s.inv && typeof s.inv === 'object') {
+        Survival.inv = s.inv;
+        Survival.buildBar();
+      }
       Render.syncAll(); Render.hud(); this.showGoalBanner();
       Toasts.show(I18n.t('run_resumed'), 'good', 1600);
       return true;
@@ -4124,6 +4156,8 @@
     restart() { if (Coach.active) return Coach.skip(); Modal.close(); if (State.isDaily) return this.startDaily(); this.start(State.mode, State.diff); },
     quit() {
       if (Coach.active) return Coach.skip();
+      Picker.dismiss(); // B-06: ídem al salir al menú
+      { const pl = $('#prelevel'); if (pl) pl.hidden = true; }
       Loop.stop(); Music.stop(); State.status = 'idle'; Modal.close();
       ModeSignals.clear(); this.clearHintHighlight();
       if (typeof Survival !== 'undefined') Survival.cleanup();
@@ -4137,7 +4171,9 @@
       if (State.status !== 'playing') return;
       // Aviso: Supervivencia no se guarda al salir (RunSave excluye este modo). Se muestra
       // solo aquí para que el jugador sepa que salir pierde la oleada en curso.
-      { const pn = $('#pause-note'); if (pn) pn.hidden = State.mode !== 'supervivencia'; }
+      // B-01: el aviso "no se guarda" aplica a TODO modo excluido de RunSave
+      // (Supervivencia y Contrarreloj/Reto), no solo a Supervivencia.
+      { const pn = $('#pause-note'); if (pn) pn.hidden = !RunSave.EXCLUDED[State.mode]; }
       State.status = 'paused'; Music.stop(true); Modal.open('modal-pause'); announce('Juego en pausa.');
     },
     resume() {
@@ -4889,6 +4925,8 @@
     },
 
     endGame() {
+      Picker.dismiss(); // B-06: ninguna elección puede sobrevivir al fin de partida
+      { const pl = $('#prelevel'); if (pl) pl.hidden = true; }
       Loop.stop(); Music.stop(); State.status = 'over'; this.ended = true; this.clearHintHighlight();
       Render.fever(false); State.fever = false; Render.danger(0);
       if (State.mode === 'supervivencia') { Survival.cleanup(); document.body.classList.remove('mode-surv'); }
@@ -5064,6 +5102,7 @@
     Picker.open({
       title: I18n.t('zen_pace_title'), accent: '#9be15d',
       options: opts,
+      cancelLabel: I18n.t('pick_back'), // B-05: tocar Zen por error no debe atrapar
       onPick: (d) => { Storage.zenDiff = d; Game.start('zen', d); },
     });
   }
