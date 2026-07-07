@@ -128,6 +128,10 @@ Densidad de obstáculos por nivel: `dens = min(0.13, 0.015 + n*0.0021 + worldInd
 
 **Sprint final (v2.2.0, GM-10):** mientras `0 < timeLeft <= SPRINT_WINDOW (10s)`, todos los puntos (convergencias y bonus de tablero vacío) van `× SPRINT_MULT (1.5)`. Como el tiempo puede volver a subir, el jugador puede elegir "cabalgar el borde" (riesgo-recompensa continuo). El error en este modo resta `TIMED_MISTAKE_S (3)` segundos (ver §1.5).
 
+**Cápsula de tiempo (v2.4.0, GM-13):** 1 por partida en modos `scoreAttack`; en un segundo seedeado (`40 + rand(40)`) aparece un tile trigger `timecap` (⏰) que al detonarse por adyacencia da +5s (con el tope de reloj). **Ghost personal (v2.4.0, GM-12):** el score se muestrea cada 10s (`State.ghostSamples`); el mejor intento se guarda (`modes[mode].ghost`, o `dailyRun.ghost` para el reto) y en partida un chip muestra `▲/▼ delta` contra la muestra correspondiente al tiempo transcurrido.
+
+**Reto del día — mutador (v2.4.0, GM-15):** `hash32('mut:' + fecha) % 8` elige entre `pure/ice(4 heladas)/window(combo −500ms, mín 1500)/variety(pool de 6)/rocks(3)/fast(curva de spawn ×0.9)/crystal(2 cristales)/nohints`. Se aplica tras montar el nivel consumiendo RNG seedeado (idéntico para todos). **Calendario y racha (v2.4.0, GM-14):** `dailyRun.history` guarda la medalla de cada día (tope 60, FIFO); la racha cuenta días consecutivos con medalla ≥ bronce con **1 congelación de regalo +1 por cada 7 días** (un día perdido pausa, no borra); cada 7 días de racha → +1 cofre (una vez por hito, `streakRewarded`).
+
 ### 2.5 Supervivencia (`supervivencia`)
 `timed:false, penalties:true, mult:1.5, fast:true, endless:true`. Ver detalle completo en §2.5.1 más abajo y potenciadores en §7.
 
@@ -143,8 +147,11 @@ Constantes clave: `WAVE_MS` base 22000, `MAX_LIVES` base 3, `CHARGE_PER = 9` (ca
 
 **Oleadas:** `newWave()` se dispara cuando `waveAcc >= WAVE_MS`. En cada oleada: recompensa de oleada (monedas; gemas cada 5 oleadas: `2 + floor(wave/5)`; cofre cada 10 oleadas), `spawnRate = max(spawnFloor, round(spawnRate*spawnDecay))`, se recalcula `dlevel() = 1 + floor((wave-1)/tune.varEvery)` (nivel efectivo de dificultad de iconos) refrescando el pool, se añaden trampas y pickups de bomba, ocasionalmente un pickup de ralentización, y cada `bossEvery` oleadas se dispara un `bossEvent()` — uno de 3 eventos aleatorios. Desde v2.1.0 (GM-18) el tipo de evento se **pre-decide al empezar la oleada anterior** (`_planBoss()`): la oleada previa muestra una bandera «⚠ Jefe» y ~3s antes del evento llega un aviso específico del tipo; `bossEvent()` consume ese pre-roll. Los 3 eventos:
 - `meteorRain()` — 8 spawns forzados + bloqueo de 900ms.
-- `quake()` — baraja el tablero (Fisher-Yates de valores, no de posiciones-tile) tras 620ms + bloqueo de 1150ms.
+- `tideSurge()` — **Marea (v2.4.0, GM-20, sustituye al terremoto en el pool base):** marca las 2 filas exteriores 1.2s y las llena de iconos; amenaza legible con counterplay.
 - `frostSurge()` — congela `3 + floor(wave/4)` celdas ocupadas + bloqueo de 760ms.
+- `quake()` — baraja el tablero (Fisher-Yates de valores) tras 620ms + bloqueo de 1150ms. Desde v2.4.0 solo entra al pool en la "semana del caos" (mutador semanal).
+
+**Mutador semanal (v2.4.0, GM-22):** `hash32('survmut:' + lunesISO) % 4` elige el tema de la semana: `none` / `ice` (todas las trampas heladas, monedas de oleada ×1.15) / `chaos` (quake vuelve al pool de jefes) / `frenzy` (duración de frenesí ×1.3). Determinista sin servidor; el simulador lo fija a `none` para reproducibilidad.
 
 **Bendiciones post-jefe (v2.3.0, GM-17):** ~1.7s después de cada evento jefe, pausa suave y elección de 1 entre 3 (pool de 5, `life` solo si `lives < MAX+1`): `life` (+1 vida, tope MAX+1), `charge` (+50 de carga), `pack` (+1 bomba y +1 rayo), `slow` (intervalo de spawn ×1.15 durante 2 oleadas, vía factor en el bucle), `frenzy` (frenesí instantáneo).
 
@@ -160,6 +167,8 @@ Constantes clave: `WAVE_MS` base 22000, `MAX_LIVES` base 3, `CHARGE_PER = 9` (ca
 `timed:false, penalties:false, mult:0.8, relaxed:true, endless:true, noFever:true`, objetivo "sin fallos ni prisa". `onOverflow()` → `softClear(0.45)` (elimina el 45% de las celdas ocupadas al azar **en vez de terminar la partida** — literalmente sin game over). El spawn es 1.25× más lento (`relaxed`). El bono de tablero vacío otorga +1 pista (tope 9).
 
 **Desde v2.3.0 (GM-24):** la Fiebre no se activa (`noFever` → umbral infinito), el indicador de combo y el chip de multiplicador se ocultan y el score se atenúa (santuario sin evaluación). El lanzador ofrece elegir **ritmo**: «Sereno» (tabla `facil`) o «Fluido» (`normal`), persistido en `cv_zen_diff` — único punto del juego con ritmo elegible.
+
+**Jardín zen (v2.4.0, GM-23):** cada tablero limpio en Zen suma 1 flor permanente (`Meta.zen.flowers`, visible en el banner). Hitos: 10 flores → +1 cofre; 50 flores → skin de tablero exclusivo «Jardín Zen» (`Boards.DEFS.jardin`, `exclusive: true`, no comprable en tienda). Colección sin fallo posible: nada resta flores jamás.
 
 ### 2.7 Tabla de dificultades (`Config.DIFFICULTY`)
 
@@ -335,7 +344,7 @@ crystal  Cristalia              💎 mods:['crystals']accent #19f0d0
 - `chapterOf(level) = floor((level-1)/5)`; `licOf(level)` = índice del nivel dentro del capítulo (0-4); `isBoss(level)` = `licOf===4` (el último nivel de cada capítulo siempre es jefe).
 - Objetivo por nivel: jefe → `'boss'`; `lic===2` → `'score'`; `lic===3 && chapter>0` → `'survive'`; resto → `'clear'` (default vaciar tablero).
 - Objetivo de puntuación: `250 + chapter*120 + lic*40`. Objetivo de supervivencia: `18 + chapter*4` segundos.
-- Niveles jefe colocan `2 + min(chapter,4)` tiles de cristal que deben limpiarse todos para ganar.
+- Niveles jefe colocan `2 + min(chapter,4)` tiles de cristal que deben limpiarse todos para ganar. **Desde v2.4.0 (GM-08) el jefe ACTÚA:** cada 20s (aviso 3s antes) ejecuta el ataque de su bioma — nebulosa: 3 spawns forzados · asteroides: +2 rocas · hielo: congela 2 · núcleo: spawn ×0.9 · vacío: −1 pista · cristal: +1 cristal (se "regenera", tope 6 en tablero). **Registro de expedición (v2.4.0, GM-09):** las elecciones de la run (capítulo+ruta, reliquias) se registran y se muestran como cadena en el resumen de fin de partida.
 - El spawn se acelera por capítulo: `spawnRate = max(360, round(spawnRate/(1+chapter*0.12)))`.
 - Densidades/modificadores por bioma escalan con el capítulo (rocks `min(0.16, 0.06+chapter*0.012)`, ice `min(0.14,0.05+chapter*0.012)`, rush ×0.8 spawnRate, scarce fija `hintsLeft=1`).
 - El progreso solo avanza (`advReach(level)`, nunca retrocede); Aventura **siempre retoma** en el nivel máximo alcanzado, nunca reinicia desde el nivel 1.

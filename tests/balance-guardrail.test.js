@@ -37,8 +37,8 @@ test('deriva de fórmula: bot estándar en Contrarreloj dentro de banda ±40%', 
     { mode: 'contrarreloj', diff: 'normal', profile: 'average', maxMinutes: 3, seedBase: 20260707 },
     9,
   );
-  // Calibrado en v2.2.0 (tras GM-10 sprint, GM-11 error=tiempo, GM-26 warm-up).
-  const BASELINE_P50 = 60649;
+  // Calibrado en v2.4.0 (tras GM-13 cápsula de tiempo; antes 60649 en v2.2.0).
+  const BASELINE_P50 = 52964;
   assert.ok(
     r.score.p50 >= BASELINE_P50 * 0.6 && r.score.p50 <= BASELINE_P50 * 1.4,
     `score p50 del bot (${r.score.p50}) fuera de la banda [${Math.round(BASELINE_P50 * 0.6)}, ${Math.round(BASELINE_P50 * 1.4)}] — ` +

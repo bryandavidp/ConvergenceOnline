@@ -70,6 +70,28 @@ zen            normal    casual     13964    20412    240s     x6       nvl 1   
 
 **Lectura (γ):** Clásico, Contrarreloj y Zen **idénticos bit a bit** a v2.2.0 — los sistemas nuevos no se filtran fuera de su modo (los bots del sim no compran potenciadores pre-nivel ni continúan con gemas). Aventura baja ~34% (skilled/average) porque los bots eligen SIEMPRE la primera opción = ruta exigente en todos los capítulos: la ruta dura no domina a la serena — el trade-off es real, que es la condición de una elección significativa. Supervivencia ±1% (las bendiciones compensan levemente la variación de RNG).
 
+## Batería v2.4.0 (Fase GM-δ: marea, mutadores, calendario, ghost, cápsulas, jefes activos, jardín) — 40 runs/config
+
+```
+modo           diff      perfil    sc p50   sc p90   dur50  combo    progreso  deadAir    err  coins    cap
+clasico        normal    skilled    53910    77475    352s     x7      13 nvl      67%    0.3      0   100%
+aventura       normal    skilled    64987   169467    353s    x13      nvl 15      70%    5.3      0   100%
+contrarreloj   normal    skilled   246131   309650    240s    x22       nvl 1      77%    2.2    730   100%
+supervivencia  normal    skilled   138099   200600    480s     x9   oleada 18      85%    2.6    680   100%
+clasico        normal    average    35235    47340    354s     x8      10 nvl      43%    1.7      0    98%
+aventura       normal    average    26971    79481    355s    x10       nvl 7      52%   11.4      0   100%
+contrarreloj   normal    average   129463   173844    240s    x13       nvl 1      57%    6.8    469   100%
+supervivencia  normal    average    84051   110990    480s     x8   oleada 18      69%    9.9    559   100%
+clasico        normal    casual     14130    17115    357s     x7       5 nvl      17%    4.6      0   100%
+aventura       normal    casual     19224    26626    356s    x11       nvl 6      17%   21.3      0   100%
+contrarreloj   normal    casual     20440    37752    240s     x9       nvl 1      26%   12.4     85   100%
+supervivencia  normal    casual     24707    37059    480s     x9   oleada 18      35%   21.3    342   100%
+supervivencia  dificil   skilled   194566   287880    480s    x11   oleada 22      79%    4.3    954   100%
+zen            normal    casual     13964    20412    240s     x6       nvl 1      70%    5.8     64   100%
+```
+
+**Lectura (δ):** Clásico y Zen idénticos bit a bit (control ✅). Contrarreloj +2–11% por la cápsula de tiempo (+5s y desplazamiento del stream RNG) — esperado y aceptado; el guardarraíl se recalibró de 60649 a 52964 (la banda ±40% absorbió el cambio sin fallar). Supervivencia normal idéntica (el mutador semanal se fija a `none` en el sim). Limitación conocida: los efectos diferidos por `setTimeout` de los eventos jefe (relleno de la marea, barajado del quake) no se ejecutan dentro del bucle síncrono del simulador — se validan con el smoke de navegador.
+
 ## Evaluación de los criterios de aceptación (GM-β)
 
 | Criterio | Resultado | Veredicto |
