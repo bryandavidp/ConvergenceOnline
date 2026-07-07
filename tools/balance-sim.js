@@ -41,6 +41,9 @@ for (const k of Object.keys(cv.FX)) if (typeof cv.FX[k] === 'function') cv.FX[k]
 for (const k of Object.keys(cv.Sound)) if (typeof cv.Sound[k] === 'function') cv.Sound[k] = () => {};
 /* Aventura: las intros de capítulo pausan esperando un tap que en Node no llega. */
 for (let c = 0; c < 120; c++) cv.Meta.markAdvChapterSeen(c);
+/* Mutador semanal de Supervivencia (GM-22): fijar 'none' para que la batería sea
+ * reproducible en cualquier semana del calendario. */
+cv.Survival._mutOverride = 'none';
 
 /* ---------- PRNG propio del bot (independiente del RNG del juego) ---------- */
 function mulberry32(seed) {
