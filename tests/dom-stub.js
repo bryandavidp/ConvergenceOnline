@@ -69,6 +69,7 @@ function makeEl(tag = 'div') {
     querySelectorAll: () => [],
     getBoundingClientRect: () => ({ x: 0, y: 0, top: 0, left: 0, right: 100, bottom: 100, width: 100, height: 100 }),
     animate: () => ({ cancel() {}, finished: Promise.resolve(), onfinish: null, addEventListener() {} }),
+    getAnimations: () => [],
     getContext: () => null,
     firstChild: null, lastChild: null, firstElementChild: null, lastElementChild: null, nextSibling: null,
   };
