@@ -75,7 +75,8 @@ Algoritmo `converging(i)`:
 
 ### 1.5 Manejo de fallo (`mistake`)
 - Animación/sonido/háptico de "miss"; `mistakes++`; en Clásico actualiza en vivo el indicador de estrellas.
-- Si el modo tiene `penalties: true`:
+- **Modos `scoreAttack` (Contrarreloj/Reto del día), desde v2.2.0 (GM-11):** el error resta `TIMED_MISTAKE_S = 3` segundos del reloj (con toast "Error · −3s") y NO añade iconos ni acelera el spawn — el castigo cobra en la moneda del modo. Si el reloj llega a 0 por el error, fin de partida inmediato.
+- Resto de modos con `penalties: true`:
   - Sacude el tablero.
   - `n = clamp(penaltyBase + floor((level-1)/3), 1, 5)` (penaltyBase por dificultad: fácil 1, normal 2, difícil 3).
   - Coloca `n` iconos nuevos vía `addPenalty(n)`.
@@ -121,6 +122,8 @@ Densidad de obstáculos por nivel: `dens = min(0.13, 0.015 + n*0.0021 + worldInd
 ### 2.4 Contrarreloj (`contrarreloj`)
 `timed:true, scoreAttack:true, penalties:true, mult:1.2`, objetivo "sumar puntos a contrarreloj". `TIMED_START = 60`s, `TIMED_CAP = 90`s (tope duro del reloj). Cada convergencia repone tiempo con rendimientos decrecientes (fórmula en §6.4). El spawn se acelera exponencialmente con el tiempo transcurrido (ver §1.4). Termina cuando `timeLeft <= 0`.
 
+**Sprint final (v2.2.0, GM-10):** mientras `0 < timeLeft <= SPRINT_WINDOW (10s)`, todos los puntos (convergencias y bonus de tablero vacío) van `× SPRINT_MULT (1.5)`. Como el tiempo puede volver a subir, el jugador puede elegir "cabalgar el borde" (riesgo-recompensa continuo). El error en este modo resta `TIMED_MISTAKE_S (3)` segundos (ver §1.5).
+
 ### 2.5 Supervivencia (`supervivencia`)
 `timed:false, penalties:true, mult:1.5, fast:true, endless:true`. Ver detalle completo en §2.5.1 más abajo y potenciadores en §7.
 
@@ -139,7 +142,7 @@ Constantes clave: `WAVE_MS` base 22000, `MAX_LIVES` base 3, `CHARGE_PER = 9` (ca
 - `quake()` — baraja el tablero (Fisher-Yates de valores, no de posiciones-tile) tras 620ms + bloqueo de 1150ms.
 - `frostSurge()` — congela `3 + floor(wave/4)` celdas ocupadas + bloqueo de 760ms.
 
-**Vidas:** 3 corazones por defecto; se pierden vía `onOverflow()` cuando el tablero no puede aceptar un spawn; al llegar a 0 → `lastChance()` (modal de revivir, coste fijo **120 monedas**, restaura 1 vida); `giveUp()` termina la partida.
+**Vidas:** 3 corazones por defecto; se pierden vía `onOverflow()` cuando el tablero no puede aceptar un spawn; al llegar a 0 → `lastChance()` (modal de revivir, restaura 1 vida); `giveUp()` termina la partida. **Precio de revivir (v2.2.0, GM-19):** `min(480, 120 × 2^usos)` por run — 120 → 240 → 480, máximo **3 revividas por run** (a la 4ª muerte no hay oferta). Antes: 120 plano ilimitado.
 
 **Medidor de frenesí (0-100):** `addFrenzy(n)` se incrementa por convergencia (`4 + min(22, removed*2 + min(combo,10))`), por inicio de oleada (`8 + tier*3`), por uso de booster, y por bono de tablero vacío. Al llegar a 100 → `activateFrenzy()`: duración `7200 + frenzyTier()*900` ms, spawnea `2+frenzyTier()` iconos extra, multiplica score por `frenzyMult() = 1.55 + tier*0.1`. `frenzyTier() = clamp(floor((wave-1)/4)+1, 1, 3)`.
 
@@ -258,7 +261,7 @@ default 0 (Cosmos) · neon 150 · sunset 200 · forest 200 · aurora 300 · mono
 ```
 Cada tema sobreescribe variables CSS: `--bg-0`, `--bg-1`, `--bg-2`, `--panel`, `--panel-2`, `--accent`, `--accent-2`, `--level`, `--score`.
 
-**Coste de revivir (Supervivencia):** flat **120 monedas**, no escala con oleada/progreso.
+**Coste de revivir (Supervivencia):** `min(480, 120 × 2^usosEnLaRun)`, máximo 3 revividas por run (v2.2.0, GM-19; antes: 120 plano ilimitado).
 
 ---
 
@@ -424,7 +427,7 @@ Catálogo (`Boosters.DEFS`, orden `['bomb','freeze','x2','clearLine','wild']`):
 - `freeze` (global): `freezeUntil = ahora + 7000ms` — mientras dure, `blockSpawn()` devuelve `true`.
 - `x2` (global): `x2Until = ahora + 11000ms` — duplica `tempMult`.
 
-**Barra de carga:** se llena `CHARGE_PER(9) + min(combo,6)` por convergencia (+4 si ya en frenesí); al llegar a 100 otorga +1 booster aleatorio (uniforme entre los 5 tipos) y resetea con remanente.
+**Barra de carga:** se llena `CHARGE_PER(9) + min(combo,6)` por convergencia (+4 si ya en frenesí); al llegar a 100 otorga +1 booster aleatorio (uniforme entre los 5 tipos) y resetea con remanente. **Desde v2.2.0 (B6):** cada toque a una casilla rompible (hielo) en Supervivencia suma además **+2 de carga** — el esfuerzo de liberar bloqueos alimenta el build.
 
 **Otros pickups de tablero (tiles con `trigger`, no son "boosters" del jugador sino elementos del tablero):**
 | tile | efecto |
@@ -544,6 +547,7 @@ base = diff.spawnStart * 0.95^(level-1)     // decae 5% por nivel
 if modo.relaxed: base *= 1.25                 // Zen es más lento
 spawnRate = round(clamp(base, diff.spawnMin, 6000))
 ```
+**Warm-up de apertura (v2.2.0, GM-26):** el intervalo EFECTIVO de spawn se multiplica ×`WARMUP.factor (0.55)` durante los primeros `WARMUP.ms (10000)` del nivel o hasta la `WARMUP.convs (3)`ª convergencia (lo que llegue antes), con rampa lineal de salida de `WARMUP.rampMs (2000)` hacia el ritmo normal. No aplica a modos `relaxed` (Zen) ni `single` (tutorial). No muta `State.spawnRate`: se aplica como factor en el bucle.
 Se combina con: aceleración dentro del nivel (`spawnRate -= 3` por spawn, piso `spawnMin`), aceleración por fallo (`×0.95` por error), y el escalado específico por capítulo/oleada de Aventura/Supervivencia (§2.5, §5.6).
 
 ### 13.4 Medidor de ocupación / peligro
@@ -574,6 +578,10 @@ FEVER_COMBO: 10
 FEVER_BOOST: 1.25
 TIMED_START: 60
 TIMED_CAP: 90
+TIMED_MISTAKE_S: 3                    // v2.2.0 (GM-11)
+SPRINT_WINDOW: 10                     // v2.2.0 (GM-10)
+SPRINT_MULT: 1.5                      // v2.2.0 (GM-10)
+WARMUP: { ms: 10000, convs: 3, factor: 0.55, rampMs: 2000 }   // v2.2.0 (GM-26)
 HINTS_PER_LEVEL: 3
 HINT_COOLDOWN: 10000
 HINT_DURATION: 2000

@@ -351,12 +351,13 @@ Orden pensado para: valor visible temprano, dependencias respetadas, y cero camb
 7. **GM-31** Checklist de playtest (🟢) — ✅ v2.1.0: `docs/PLAYTEST_CHECKLIST.md`.
 
 ### Fase GM-β — Red de seguridad + primeros cambios de balance
-8. **GM-30** Simulador de balance + baseline (🟡🟡) — **gate: nada de la lista B sin esto**.
-9. **GM-26** Warm-up universal (B3, 🟢).
-10. **GM-10** Sprint final de Contrarreloj (B4, 🟢).
-11. **GM-11** Error = tiempo en scoreAttack (B2, 🟢).
-12. **GM-19** Revivir con precio creciente (B1, 🟢).
-13. B6 hielo→carga (🟢) · test guardarraíl de medallas (§7.3).
+> ✅ **Fase completada el 2026-07-07 (v2.2.0).** Baseline y comparación en [`BALANCE_BASELINE.md`](./BALANCE_BASELINE.md); detalle en el registro al final.
+8. **GM-30** Simulador de balance + baseline (🟡🟡) — ✅ v2.2.0: `tools/balance-sim.js` (reloj virtual + bots deterministas, 3 perfiles); baseline v2.1.0 y comparación en `BALANCE_BASELINE.md`.
+9. **GM-26** Warm-up universal (B3, 🟢) — ✅ v2.2.0: intervalo ×0.55 primeros 10s o 3 convergencias, rampa 2s; excluye Zen/tutorial. Criterio validado (sin inflación sistemática).
+10. **GM-10** Sprint final de Contrarreloj (B4, 🟢) — ✅ v2.2.0: ×1.5 con ≤10s, integrado en chip/popup; récords +1.8% (✅ ≤20%); actúa de comeback mechanic para perfiles débiles (+40% casual).
+11. **GM-11** Error = tiempo en scoreAttack (B2, 🟢) — ✅ v2.2.0: −3s sin iconos ni aceleración; duración de runs sin cambio (✅).
+12. **GM-19** Revivir con precio creciente (B1, 🟢) — ✅ v2.2.0: `min(480, 120×2^usos)`, máx 3/run.
+13. B6 hielo→carga (🟢) — ✅ v2.2.0: +2 de carga por toque de rompible en Supervivencia · guardarraíl de medallas (§7.3) — ✅ `tests/balance-guardrail.test.js` en CI.
 
 ### Fase GM-γ — Identidad y decisiones (la fragmentación real)
 14. **GM-17** Bendiciones post-jefe en Supervivencia (🟡🟡).
@@ -405,3 +406,15 @@ Orden pensado para: valor visible temprano, dependencias respetadas, y cero camb
 - **GM-31**: `docs/PLAYTEST_CHECKLIST.md` con guion de ~10 min por modo e ítems bloqueantes ⭐.
 - **Balance intacto**: sin cambios en puntos, fórmulas, spawn (salvo la micro-pausa de 500ms al entrar en Fiebre, que es la mecánica diseñada de GM-27), economía ni probabilidades. El pre-roll del jefe consume `rand()` en otro orden (sin efecto de juego: Supervivencia no es seedeada-compartida).
 - i18n nuevas (ES+EN): `near_miss`, `peak_moment`, `surv_boss_soon`, `surv_boss_meteor_warn`, `surv_boss_quake_warn`, `surv_boss_frost_warn`; `surv_sys_charge`/`surv_sys_frenzy` reescritas.
+
+### 2026-07-07 — Fase GM-β implementada (v2.2.0)
+
+- **GM-30**: `tools/balance-sim.js` — carga `game.js` real sobre el dom-stub de tests con `performance.now` parcheado (reloj virtual) y conduce `Loop.tick` con bots deterministas (perfiles skilled/average/casual: reacción, política greedy/aleatoria, tasa de error y lapsos de atención). Mismo seed ⇒ misma partida, verificado. Baseline v2.1.0 + batería v2.2.0 + evaluación de criterios en [`BALANCE_BASELINE.md`](./BALANCE_BASELINE.md). Hallazgos estructurales: la dificultad de Contrarreloj/Supervivencia es cognitiva (ningún bot muere: la presión útil ataca la atención, no la velocidad); el dead-air de jugadores rápidos es 66–85% (confirma D2 con datos).
+- **GM-26 (B3)**: warm-up de apertura — `Config.WARMUP {ms:10000, convs:3, factor:0.55, rampMs:2000}`, aplicado como factor en el bucle (no muta `spawnRate`); excluye `relaxed`/`single`. Zen idéntico bit a bit en el sim (control ✅); desviaciones de score contradictorias entre perfiles ⇒ ruido de re-muestreo, no inflación (✅ criterio).
+- **GM-10 (B4)**: sprint final — `Config.SPRINT_WINDOW 10 / SPRINT_MULT 1.5` vía `Game.sprintMult()`, aplicado en convergencias y bonus de tablero vacío, visible en el chip GM-16 y el popup; toast con throttle de 6s al entrar en zona crítica. Récords (skilled) +1.8% (✅ ≤20%); descubrimiento: rubber-banding a favor de perfiles débiles (+40% casual p50), deseable.
+- **GM-11 (B2)**: en `scoreAttack` el error resta `TIMED_MISTAKE_S = 3`s (toast «Error · −3s»), sin iconos ni aceleración; muerte inmediata si el reloj llega a 0. Duración de runs sin cambio en el sim (✅ ≤15%).
+- **GM-19 (B1)**: revivir `min(480, 120×2^usos)`, máx 3 por run (a la 4ª muerte, fin directo); el modal muestra el precio vivo. Texto de ayuda actualizado ES/EN.
+- **B6**: +2 de carga por toque a rompible en Supervivencia (mirror de la lógica de grant de `onConverge`).
+- **Guardarraíl (§7.3)**: `tests/balance-guardrail.test.js` — umbrales de medalla verbatim + bot estándar (average, 3 min, seeds fijos) con mediana calibrada 60649 y banda ±40%. Corre en CI con la suite normal.
+- i18n nuevas (ES+EN): `sprint_on`, `mistake_time`; `surv_sys_lives` reescrita (precio creciente).
+- Infra de tests: `firstChild`/`lastChild` del dom-stub ahora son getters reales (lo exigía `Toasts.show` al correr el juego entero en Node).
