@@ -39,6 +39,7 @@ Estos documentos existen precisamente para que **no tengas que releer el código
 - **`docs/DESIGN_SYSTEM.md`** — tokens de color/tipografía, inventario de componentes CSS, las ~50 animaciones (`@keyframes`) con su trigger, sistema de iconografía, accesibilidad.
 - **`docs/ROADMAP.md`** — plan de trabajo priorizado (bugs conocidos, deuda pendiente, mejoras por dificultad/beneficio, arquitectura de nube). Consultarlo antes de proponer trabajo nuevo: probablemente ya esté priorizado ahí.
 - **`docs/GAME_MODES_MASTER_PLAN.md`** — auditoría profunda de los 7 modos de juego (fortalezas/debilidades verificadas contra el código, psicología aplicada, referentes del género) + plan de mejora por fases (tareas GM-*): identidad por modo, pacing/frenesí, balance, potenciadores/penalizadores y validación por simulación. Consultarlo antes de tocar reglas, dificultad o sistemas de cualquier modo.
+- **`docs/QA_PERF_PLAN.md`** — cierre post-fases GM: pendientes (QP-*, incluido el generador de puzles de GM-04), plan de caza de bugs del flujo nuevo (con hallazgos B-* ya confirmados) y análisis medido del rendimiento de animaciones en móvil con su plan de corrección (`tools/perf-probe.js`). Consultarlo antes de arreglar bugs de los flujos GM o tocar animaciones.
 
 ## Cómo trabajar eficientemente en este repo
 
