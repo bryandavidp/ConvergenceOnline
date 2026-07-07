@@ -1501,7 +1501,9 @@ body.reduced-fx .ic-chip { animation: none; }
 /* ---------- Picker / PreLevel (elecciones en partida, GM-γ) ---------- */
 .pick-overlay {
   position: fixed; inset: 0; z-index: 74; display: grid; place-items: center;
-  background: rgba(5, 9, 26, .78); backdrop-filter: blur(3px); padding: 18px;
+  /* B-04: velo sólido, SIN backdrop-filter (regla del design system: el blur de
+     composición es de lo más caro que existe en iOS). */
+  background: rgba(5, 9, 26, .88); padding: 18px;
 }
 .pick-card {
   width: min(92vw, 420px); border-radius: 20px; padding: 18px 16px 16px;
