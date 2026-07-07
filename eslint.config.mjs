@@ -57,7 +57,7 @@ export default [
         console: 'readonly', setTimeout: 'readonly', process: 'readonly',
         __dirname: 'readonly', Promise: 'readonly', localStorage: 'readonly',
         // El dom-stub (tests/dom-stub.js) define estos globales del navegador.
-        document: 'readonly', window: 'readonly',
+        document: 'readonly', window: 'readonly', navigator: 'readonly',
       },
     },
     rules: {

@@ -1,13 +1,29 @@
 /* Sonda de rendimiento (QP-2, ver docs/QA_PERF_PLAN.md §3).
- * Uso: servir la app (python3 -m http.server 8080) y `node tools/perf-probe.js`.
+ * Uso: servir la app (python3 -m http.server 8080) y `node tools/perf-probe.js [--assert 55]`.
  * Requiere `playwright` disponible para Node (tooling de desarrollo; el repo
  * sigue sin package.json a propósito).
  *
  * Medición de rendimiento con CPU emulada de móvil (throttling ×6 vía CDP).
  * Mide FPS reales del rAF durante juego activo de Supervivencia (con fiebre y
  * confeti forzados) en 3 configuraciones: normal, reduced-fx, y normal sin
- * animaciones ambientales del tablero. También cuenta animaciones CSS/WAAPI vivas. */
+ * animaciones ambientales del tablero. También cuenta animaciones CSS/WAAPI vivas.
+ *
+ * --assert N : guardarraíl (QP-2 P2-h). Sale con código 1 si la escena de estrés
+ *   ('normal (CPU ×6)') baja de N FPS. Pensado para el checklist de release / CI opcional. */
+const fs = require('fs');
 const { chromium } = require('playwright');
+
+// Chromium multiplataforma: usa PW_CHROMIUM o la ruta de Linux del CI si existen,
+// si no deja que Playwright use su binario incluido (Windows/macOS/local).
+function chromiumPath() {
+  for (const p of [process.env.PW_CHROMIUM, '/opt/pw-browsers/chromium']) {
+    try { if (p && fs.existsSync(p)) return p; } catch (_) {}
+  }
+  return undefined;
+}
+// --assert N (umbral de FPS de la escena de estrés)
+const assertIdx = process.argv.indexOf('--assert');
+const ASSERT_FPS = assertIdx !== -1 ? +process.argv[assertIdx + 1] : null;
 
 async function measure(page, label, secs = 6) {
   return await page.evaluate(async ({ label, secs }) => {
@@ -42,7 +58,7 @@ async function measure(page, label, secs = 6) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', headless: true });
+  const browser = await chromium.launch({ executablePath: chromiumPath(), headless: true });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 6 }); // gama media iOS aprox.
@@ -66,7 +82,8 @@ async function measure(page, label, secs = 6) {
     document.body.classList.remove('reduced-fx'); window.__cv.Settings.reducedFx = false;
     const st = document.createElement('style');
     st.textContent = '.board-wrap::before,.board-thumb::before{animation:none!important}' +
-      '.cell.tile-bonus,.cell.tile-portal,.cell.tile-magicbox,.cell.tile-bomb,.cell.tile-slowdown,.cell.tile-timecap{animation:none!important}' +
+      // Los pulsos de tiles viven ahora en ::before (QP-2 P0-c); el bamboleo del emoji en ::after.
+      '.cell.tile-bonus::before,.cell.tile-portal::before,.cell.tile-magicbox::before,.cell.tile-bomb::before,.cell.tile-slowdown::before,.cell.tile-timecap::before{animation:none!important}' +
       '.cell.tile-slowdown::after,.cell.tile-timecap::after{animation:none!important}';
     document.head.appendChild(st);
   });
@@ -82,4 +99,15 @@ async function measure(page, label, secs = 6) {
 
   console.log(JSON.stringify(results, null, 2));
   await browser.close();
+
+  // Guardarraíl (--assert N): la escena de estrés no debe bajar de N FPS con CPU ×6.
+  if (ASSERT_FPS != null) {
+    const stress = results.find((r) => r.label === 'normal (CPU ×6)');
+    if (!stress) { console.error('PERF ASSERT: no se encontró la escena de estrés'); process.exit(2); }
+    if (stress.fps < ASSERT_FPS) {
+      console.error(`PERF ASSERT FALLÓ: ${stress.fps} FPS < ${ASSERT_FPS} FPS (escena de estrés, CPU ×6)`);
+      process.exit(1);
+    }
+    console.log(`PERF ASSERT OK: ${stress.fps} FPS ≥ ${ASSERT_FPS} FPS`);
+  }
 })().catch((e) => { console.error('PERF FAILED:', e); process.exit(2); });
