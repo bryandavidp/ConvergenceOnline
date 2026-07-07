@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=v146" />
+  <link rel="stylesheet" href="styles.css?v=v147" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -193,7 +193,7 @@
             <span class="g-chip time-chip"><b id="hud-time">0:00</b></span>
             <span class="g-chip rec-chip"><img class="ic ic-inline" src="img/ui/trophy.png" alt=""> <b id="hud-best">0</b></span>
           </div>
-          <div class="gscore"><span class="hud-value" id="hud-score">0</span></div>
+          <div class="gscore"><span class="hud-value" id="hud-score">0</span><span class="mult-chip" id="hud-mult" aria-hidden="true">×1</span></div>
           <div class="controls">
             <button class="icon-btn" id="btn-pause" aria-label="Pausa"><span class="icv2" style="--icv2-url:url('img/icons-v2/9-media/pause.svg')" aria-hidden="true"></span></button>
             <button class="icon-btn" id="btn-restart" aria-label="Reiniciar"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/refresh.svg')" aria-hidden="true"></span></button>
@@ -209,7 +209,7 @@
           <div class="surv-bar" id="surv-bar" hidden>
             <span class="surv-lives" id="surv-lives">❤️❤️❤️</span>
             <div class="surv-wave-wrap">
-              <span class="surv-wave-row"><span class="surv-wave" id="surv-wave">Oleada 1</span><span class="surv-tier" id="surv-tier" aria-label="Tier de dificultad">N1</span></span>
+              <span class="surv-wave-row"><span class="surv-wave" id="surv-wave">Oleada 1</span><span class="surv-tier" id="surv-tier" aria-label="Tier de dificultad">N1</span><span class="surv-boss-flag" id="surv-boss-flag" data-i18n="surv_boss_soon" hidden>⚠ Jefe</span></span>
               <span class="surv-waveprog" aria-hidden="true"><span class="surv-waveprog-fill" id="surv-waveprog-fill"></span></span>
               <span class="surv-best-wave" id="surv-best-wave"></span>
             </div>
@@ -260,10 +260,18 @@
         </div>
       </div>
 
-      <!-- Barra de potenciadores (Supervivencia): zona inferior, al alcance del pulgar -->
+      <!-- Barra de potenciadores (Supervivencia): zona inferior, al alcance del pulgar.
+           Anillos concéntricos (GM-21): interior = carga → potenciador · exterior = frenesí → furia -->
       <div class="booster-bar" id="booster-bar" hidden>
-        <div class="charge"><div class="charge-fill" id="charge-fill"></div></div>
-        <div class="frenzy-meter" id="frenzy-meter" aria-hidden="true"><span class="frenzy-label" data-i18n="surv_frenzy">Frenesí</span><span class="frenzy-fill" id="frenzy-fill"></span></div>
+        <div class="power-rings" id="power-rings" aria-hidden="true">
+          <svg viewBox="0 0 56 56">
+            <circle class="pr-bg" cx="28" cy="28" r="24"/>
+            <circle class="pr-fill pr-frenzy" id="pr-frenzy" cx="28" cy="28" r="24"/>
+            <circle class="pr-bg" cx="28" cy="28" r="17"/>
+            <circle class="pr-fill pr-charge" id="pr-charge" cx="28" cy="28" r="17"/>
+          </svg>
+          <span class="pr-flame">🔥</span>
+        </div>
         <div class="boosters" id="boosters"></div>
       </div>
 
@@ -334,8 +342,10 @@
       <div class="modal-body">
         <p class="record-badge" id="over-record" hidden><span class="icv2 icv2-inline" style="--icv2-url:url('img/icons-v2/12-misc/four-pointed-star.svg')" aria-hidden="true"></span> ¡Nuevo récord!</p>
         <p class="modal-sub" id="over-reason"></p>
+        <p class="over-near" id="over-near" hidden></p>
         <p class="modal-meta" id="over-meta"></p>
         <div class="stats" id="over-stats"></div>
+        <div class="over-peak" id="over-peak" hidden></div>
         <div class="over-xp" id="over-xp"></div>
         <div class="over-ach" id="over-ach"></div>
         <div class="over-next" id="over-next"></div>
@@ -382,8 +392,8 @@
         </div>
         <h3 class="group-title surv-sys-title" data-i18n="surv_sys_title">Cómo funciona</h3>
         <ul class="surv-systems">
-          <li><span class="ss-ic" aria-hidden="true">⚡</span><span data-i18n="surv_sys_charge">Encadena convergencias para llenar la barra y ganar un potenciador gratis.</span></li>
-          <li><span class="ss-ic" aria-hidden="true">🔥</span><span data-i18n="surv_sys_frenzy">Llena el medidor de frenesí para multiplicar tus puntos un rato.</span></li>
+          <li><span class="ss-ic" aria-hidden="true">⚡</span><span data-i18n="surv_sys_charge">Encadena convergencias para llenar el anillo interior y ganar un potenciador gratis.</span></li>
+          <li><span class="ss-ic" aria-hidden="true">🔥</span><span data-i18n="surv_sys_frenzy">Llena el anillo de frenesí para multiplicar tus puntos un rato.</span></li>
           <li><span class="ss-ic" aria-hidden="true">❤️</span><span data-i18n="surv_sys_lives">Pierdes una vida si el tablero se desborda; revive por 120 monedas.</span></li>
         </ul>
       </div>
@@ -480,6 +490,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=v138" defer></script>
+  <script src="game.js?v=v139" defer></script>
 </body>
 </html>

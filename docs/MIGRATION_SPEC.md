@@ -134,7 +134,7 @@ Antes de empezar, el jugador elige dificultad (fácil/normal/difícil), persisti
 
 Constantes clave: `WAVE_MS` base 22000, `MAX_LIVES` base 3, `CHARGE_PER = 9` (carga de booster por convergencia), `BOOSTERS = ['bomb','freeze','clearLine','wild','x2']`, `ROCK_CAP=10`, `ROCK_HITS=2`, `BOMB_CAP=6`, `SLOWDOWN_CAP=1`.
 
-**Oleadas:** `newWave()` se dispara cuando `waveAcc >= WAVE_MS`. En cada oleada: recompensa de oleada (monedas; gemas cada 5 oleadas: `2 + floor(wave/5)`; cofre cada 10 oleadas), `spawnRate = max(spawnFloor, round(spawnRate*spawnDecay))`, se recalcula `dlevel() = 1 + floor((wave-1)/tune.varEvery)` (nivel efectivo de dificultad de iconos) refrescando el pool, se añaden trampas y pickups de bomba, ocasionalmente un pickup de ralentización, y cada `bossEvery` oleadas se dispara un `bossEvent()` — uno de 3 eventos aleatorios:
+**Oleadas:** `newWave()` se dispara cuando `waveAcc >= WAVE_MS`. En cada oleada: recompensa de oleada (monedas; gemas cada 5 oleadas: `2 + floor(wave/5)`; cofre cada 10 oleadas), `spawnRate = max(spawnFloor, round(spawnRate*spawnDecay))`, se recalcula `dlevel() = 1 + floor((wave-1)/tune.varEvery)` (nivel efectivo de dificultad de iconos) refrescando el pool, se añaden trampas y pickups de bomba, ocasionalmente un pickup de ralentización, y cada `bossEvery` oleadas se dispara un `bossEvent()` — uno de 3 eventos aleatorios. Desde v2.1.0 (GM-18) el tipo de evento se **pre-decide al empezar la oleada anterior** (`_planBoss()`): la oleada previa muestra una bandera «⚠ Jefe» y ~3s antes del evento llega un aviso específico del tipo; `bossEvent()` consume ese pre-roll. Los 3 eventos:
 - `meteorRain()` — 8 spawns forzados + bloqueo de 900ms.
 - `quake()` — baraja el tablero (Fisher-Yates de valores, no de posiciones-tile) tras 620ms + bloqueo de 1150ms.
 - `frostSurge()` — congela `3 + floor(wave/4)` celdas ocupadas + bloqueo de 760ms.
@@ -360,6 +360,7 @@ Puntos flat añadidos exactamente cuando `combo` es igual a 10, 20 o 30.
 ### 6.5 Modo Fiebre (Fever)
 - Umbral para entrar: `Config.FEVER_COMBO = 10` normalmente; en Supervivencia `max(6, 10 - frenzyTier())` (el tier de frenesí baja el umbral).
 - Efecto: `feverBoost() = FEVER_BOOST(1.25) + (frenzyTier()*0.06 si Supervivencia)` — multiplica la puntuación mientras está activo.
+- Al ENTRAR en Fiebre los spawns se pausan **500ms** (`State.spawnHoldUntil`, "aspiración" del espectáculo de entrada — v2.1.0, GM-27).
 - Sale de Fiebre cuando el combo se resetea a 0.
 - `tempMult` (multiplicador temporal) se combina con Fiebre en Supervivencia: `tempMult = (x2Activo?2:1) * frenzyMult()`.
 
