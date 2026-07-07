@@ -125,7 +125,11 @@ function runOne(cfg) {
   if (cfg.mode === 'clasico') { State.world = cfg.world || 'bosque'; State.worldLevel = cfg.level || 1; }
   Game.start(cfg.mode, cfg.diff || 'normal', cfg.mode === 'clasico' ? (cfg.level || 1) : undefined, cfg.seed);
   if (cfg.mode === 'aventura') { // aislar runs: advMax crece entre runs del mismo proceso
-    State.status = 'playing'; State.level = cfg.level || 1; Game.setupLevel();
+    if (cv.Picker.pending) cv.Picker.cancel(); // ruta ofrecida para el nivel de reanudación: descartar
+    State.status = 'playing'; State.level = cfg.level || 1;
+    cv.Adventure.resetRun();
+    Game.setupLevel();
+    cv.Adventure.maybeOfferRoute(State.level); // el bot elegirá en el bucle
   }
 
   const stats = { polls: 0, noMove: 0 };
@@ -143,7 +147,17 @@ function runOne(cfg) {
       Game.nextLevel();
       continue;
     }
-    if (State.status === 'paused') { // Supervivencia: modal de revivir → el bot no paga
+    if (State.status === 'paused') {
+      // Elecciones en partida (GM-γ): el bot rechaza gastos (continuar con gemas,
+      // ofertas con cancelar) y toma la PRIMERA opción en bendiciones/rutas/reliquias.
+      const pk = cv.Picker && cv.Picker.pending;
+      if (pk) {
+        if (pk.onCancel) cv.Picker.cancel();
+        else if (pk.options && pk.options.length) cv.Picker.pick(pk.options[0].id);
+        else cv.Picker.cancel();
+        continue;
+      }
+      // Supervivencia: modal de revivir → el bot no paga
       if (cfg.mode === 'supervivencia') { Survival.giveUp(); }
       else break;
     }
