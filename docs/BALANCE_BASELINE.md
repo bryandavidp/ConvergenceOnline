@@ -48,6 +48,28 @@ supervivencia  dificil   skilled   177852   266674    480s    x11   oleada 22   
 zen            normal    casual     13964    20412    240s     x6       nvl 1      70%    5.8     64   100%
 ```
 
+## Batería v2.3.0 (Fase GM-γ: bendiciones, rutas, reliquias, continuar, racha, zen) — 40 runs/config
+
+```
+modo           diff      perfil    sc p50   sc p90   dur50  combo    progreso  deadAir    err  coins    cap
+clasico        normal    skilled    53910    77475    352s     x7      13 nvl      67%    0.3      0   100%
+aventura       normal    skilled    67010   161277    353s    x13      nvl 15      69%    5.5      0   100%
+contrarreloj   normal    skilled   237261   296408    240s    x22       nvl 1      77%    2.4    721   100%
+supervivencia  normal    skilled   138099   200600    480s     x9   oleada 18      85%    2.6    686   100%
+clasico        normal    average    35235    47340    354s     x8      10 nvl      43%    1.7      0    98%
+aventura       normal    average    27656    74152    355s    x10       nvl 9      51%   11.6      0   100%
+contrarreloj   normal    average   116169   172641    240s    x13       nvl 1      57%    6.6    440   100%
+supervivencia  normal    average    87689   111182    480s     x8   oleada 18      69%    9.9    561   100%
+clasico        normal    casual     14130    17115    357s     x7       5 nvl      17%    4.6      0   100%
+aventura       normal    casual     19357    26626    356s    x11       nvl 6      18%   21.1      0   100%
+contrarreloj   normal    casual     20336    38288    240s     x9       nvl 1      27%   12.6     93   100%
+supervivencia  normal    casual     24707    37059    480s     x9   oleada 18      35%   21.2    343   100%
+supervivencia  dificil   skilled   186730   259432    480s    x11   oleada 22      79%    4.6    946   100%
+zen            normal    casual     13964    20412    240s     x6       nvl 1      70%    5.8     64   100%
+```
+
+**Lectura (γ):** Clásico, Contrarreloj y Zen **idénticos bit a bit** a v2.2.0 — los sistemas nuevos no se filtran fuera de su modo (los bots del sim no compran potenciadores pre-nivel ni continúan con gemas). Aventura baja ~34% (skilled/average) porque los bots eligen SIEMPRE la primera opción = ruta exigente en todos los capítulos: la ruta dura no domina a la serena — el trade-off es real, que es la condición de una elección significativa. Supervivencia ±1% (las bendiciones compensan levemente la variación de RNG).
+
 ## Evaluación de los criterios de aceptación (GM-β)
 
 | Criterio | Resultado | Veredicto |

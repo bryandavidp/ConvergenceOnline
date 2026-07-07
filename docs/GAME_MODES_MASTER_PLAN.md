@@ -360,12 +360,13 @@ Orden pensado para: valor visible temprano, dependencias respetadas, y cero camb
 13. B6 hielo→carga (🟢) — ✅ v2.2.0: +2 de carga por toque de rompible en Supervivencia · guardarraíl de medallas (§7.3) — ✅ `tests/balance-guardrail.test.js` en CI.
 
 ### Fase GM-γ — Identidad y decisiones (la fragmentación real)
-14. **GM-17** Bendiciones post-jefe en Supervivencia (🟡🟡).
-15. **GM-06** Rutas de capítulo en Aventura (🟡🟡).
-16. **GM-07** Reliquias de jefe (🟡, tras GM-06).
-17. **GM-03** Boosters pre-nivel en Clásico (🟡) + coach-mark.
-18. **GM-02** Continuar con gemas (🟡) · **GM-05** racha de victorias (🟢).
-19. **GM-24** HUD zen + ritmo (🟢) · retirar `selDiff` muerto.
+> ✅ **Fase completada el 2026-07-07 (v2.3.0).** Todas las elecciones comparten el componente `Picker`; detalle en el registro al final.
+14. **GM-17** Bendiciones post-jefe en Supervivencia (🟡🟡) — ✅ v2.3.0: elección 1 de 3 (pool de 5) ~1.7s tras cada evento jefe.
+15. **GM-06** Rutas de capítulo en Aventura (🟡🟡) — ✅ v2.3.0: exigente (+obstáculos, ×1.25) vs serena (spawn ×1.15, sin bonus), por capítulo.
+16. **GM-07** Reliquias de jefe (🟡) — ✅ v2.3.0: 4 pasivas de run (combo/crystal/hint/shield), máx. 3 FIFO, visibles en el banner.
+17. **GM-03** Boosters pre-nivel en Clásico (🟡) — ✅ v2.3.0: lanzador desde el 2º mundo, hasta 2 consumibles (80/60/90 monedas), aviso la primera vez.
+18. **GM-02** Continuar con gemas (🟡) — ✅ v2.3.0: 15💎, 1/nivel, despeja 40%, rechazo simétrico · **GM-05** racha de victorias (🟢) — ✅ +10%/nivel de racha en monedas, tope +50%.
+19. **GM-24** HUD zen + ritmo (🟢) — ✅ v2.3.0: sin Fiebre/combo/multiplicador, score atenuado, ritmo Sereno/Fluido · `selDiff` muerto retirado — ✅.
 
 ### Fase GM-δ — Ritual y variedad a largo plazo
 20. **GM-14** Calendario y racha del reto (🟡).
@@ -418,3 +419,16 @@ Orden pensado para: valor visible temprano, dependencias respetadas, y cero camb
 - **Guardarraíl (§7.3)**: `tests/balance-guardrail.test.js` — umbrales de medalla verbatim + bot estándar (average, 3 min, seeds fijos) con mediana calibrada 60649 y banda ±40%. Corre en CI con la suite normal.
 - i18n nuevas (ES+EN): `sprint_on`, `mistake_time`; `surv_sys_lives` reescrita (precio creciente).
 - Infra de tests: `firstChild`/`lastChild` del dom-stub ahora son getters reales (lo exigía `Toasts.show` al correr el juego entero en Node).
+
+### 2026-07-07 — Fase GM-γ implementada (v2.3.0)
+
+- **`Picker`** (componente nuevo): overlay único de "elige 1 de N" con pausa suave y restauración de estado; lo comparten bendiciones, rutas, reliquias, continuar y el ritmo zen. Una sola superficie de UI para toda la agencia de la fase (regla §5: cada sistema pertenece a un modo, pero el patrón de elección es común).
+- **GM-17**: `Survival.offerBoons()` ~1.7s tras cada `bossEvent()` — 1 de 3 sobre pool de 5 (`life` +1 vida tope MAX+1 · `charge` +50 · `pack` +1💣+1⚡ · `slow` spawn ×1.15 dos oleadas vía hook `spawnFactor` en el bucle · `frenzy` instantáneo). El jefe pasa de molestia a ciclo miedo→codicia.
+- **GM-06**: `Adventure.maybeOfferRoute()` al entrar en capítulo (encadenada tras la intro): `dense` refuerza el obstáculo del bioma y fija `tempMult 1.25` (legible en el chip GM-16) · `calm` spawn ×1.15 sin bonus. La ruta caduca en la frontera de capítulo; estado volátil de run (no persiste en RunSave — documentado).
+- **GM-07**: `Adventure.offerRelic()` al superar cada jefe (cadena intro→reliquia→ruta en `nextLevel`): combo +400ms · cristales +30 · +1 pista/nivel · escudo (1ª derrota del capítulo = despeje 30%). Máx. 3, FIFO; iconos en el banner de objetivo.
+- **GM-03**: `PreLevel` — lanzador de nivel de Clásico desde el 2º mundo con hasta 2 consumibles (bomb 80 / freeze 60 / clearLine 90, los costes históricos de `Boosters.DEFS`); consumibles POR INTENTO; reutiliza el inventario/apuntado de Supervivencia (`Input` acepta armado en Clásico, `blockSpawn` del modo cubre freeze, anillos ocultos vía CSS). Coach-mark de primera vez (`cv_preboost`).
+- **GM-02**: al llenarse el tablero en Clásico/Aventura, cadena escudo→continuar→derrota (`Game._overflowLose`): oferta única por nivel de continuar por 15💎 (despeja 40%), rechazo simétrico, sin cuenta atrás. Primer sumidero de gemas de gameplay.
+- **GM-05**: `Meta.recordClassicWin()` — racha de victorias con bonus de monedas `+min(5, racha−1)·10%` en `_classicComplete`, línea propia en el modal de nivel; solo la derrota la reinicia.
+- **GM-24**: Zen con `noFever` (umbral infinito), combo/chip ocultos y score atenuado por CSS; lanzador con ritmo Sereno (`facil`)/Fluido (`normal`) persistido en `cv_zen_diff`. El `selDiff` global muerto queda eliminado (la Aventura usa `normal` explícito).
+- **Simulador**: los bots resuelven `Picker` (primera opción en elecciones, rechazo en ofertas con gasto). Batería v2.3.0: **Clásico, Contrarreloj y Zen idénticos bit a bit** (control ✅ — los cambios no se filtraron fuera de su modo); Aventura baja ~34% en bots skilled/average porque SIEMPRE eligen la ruta exigente — señal de que el trade-off es real (la ruta dura no domina); Supervivencia ±1%.
+- i18n nuevas (ES+EN): 12 claves de bendiciones, 5 de rutas, 11 de reliquias, 6 de continuar, `classic_win_streak`, 5 de ritmo zen, 8 de PreLevel.
