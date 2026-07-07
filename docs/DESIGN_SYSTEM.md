@@ -135,7 +135,7 @@ Uso extensivo de `color-mix(in srgb, ...)` como mecanismo de "tinte en runtime" 
 - **`.level-chip`/`.record-chip`** — pill de nivel/mejor puntuación, variante "record" con brillo radial dorado.
 - **`.world-map`** (grid de nodos `.lvl-node`, estilo pill 3D, estado `.locked`/`.current` con pulso) / **`.world-rail`** (lista vertical de mundos).
 - **`.shop-list`/`.shop-item`** — fila con swatch de previsualización, nombre, botón comprar/equipar; `.board-grid`/`.board-card` variante enriquecida con preview real del skin (reutiliza las custom properties del tablero).
-- **`.chests-body`** — icono grande de cofre con animación de "wobble" cuando hay cofres listos.
+- **`.chests-body`** — icono grande de cofre con `chestWobble` cuando hay cofres listos, `chestOpen` one-shot al abrir y tarjeta persistente `.chest-reveal` para mostrar la recompensa. `.chest-reveal.rarity-common|jackpot|cosmetic` cambia tinte/borde; cosméticos muestran acción `Equipar`. Con `body.reduced-fx`, se quitan wobble/open/pop, pero la tarjeta queda igual porque es información.
 - **`.mode-hero`/`.mode-card`** — tarjetas de selección de modo, glow radial por `--mode-accent`, check en `[aria-checked="true"]`, estado `.mode-disabled`.
 - Otros: `.switch` (toggle accesible), `.field input`, `.avatar-pick`/`.avatar-dot`, `.lang-pick`/`.lang-btn`, `.medal`, `.lb-row` (leaderboard), `.multi-vs`, `.adv-node`, `.stat`/`.stats`.
 
@@ -144,16 +144,20 @@ Uso extensivo de `color-mix(in srgb, ...)` como mecanismo de "tinte en runtime" 
 El archivo define **~50 animaciones**. Las agrupamos por propósito (nombres exactos entre paréntesis para buscarlas en el CSS original):
 
 - **Transiciones de pantalla/UI genérica:** entrada de pantalla (`screen-in`), pulso de CTA home (`ctaPulse`), pulso de recompensa (`rewardPulse`), aparición de modal (`modal-in`), entrada/salida/pop de toast (`toast-in`, `toast-out`, `toast-pop`), aparición de chip de icono (`chipPop`), "bump" de valor numérico (`bump`), spin decorativo del logo (`heroSpin`).
-- **Progresión/mapas:** pulso de nodo de nivel actual (`nodepulse`), estrellas apareciendo (`starpop`), estrella perdida (`starShake`), wobble de cofre listo (`chestWobble`).
+- **Progresión/mapas:** pulso de nodo de nivel actual (`nodepulse`), estrellas apareciendo (`starpop`), estrella perdida (`starShake`), wobble de cofre listo (`chestWobble`), apertura one-shot de cofre (`chestOpen`) y pop de tarjeta de recompensa (`rewardPop`).
 - **Ciclo de vida de icono en tablero:** aparición (`glyph-in`), eliminación genérica (`glyph-out` + burst `clear-ring`) y **9 variantes temáticas por skin de tablero** (`clear-wood`, `clear-ice`, `clear-lava`, `clear-crystal`, `clear-magic`, `clear-future`, `clear-gold`, `clear-leaf`, `clear-cosmic`, cada una con su burst a juego: `clear-dust`, `clear-shards`, `clear-magma`, `clear-prism`, `clear-rune`, `clear-scan`, `clear-gold-spark`, `clear-leaf-burst`, `clear-star-burst`).
 - **Feedback de error/refuerzo en celda:** shake de fallo (`miss`), pop de penalización (`penalty-pop`), shake de tablero (`board-shake`), impacto/rotura de hielo (`ice-hit`, `ice-shatter`).
 - **Ambiente de fondo del tablero por skin** (drift continuo detrás del grid): `board-drift`, `board-wood`, `board-ice`, `board-lava`, `board-prism`, `board-runes`, `board-scan`, `board-gold`, `board-leaf`, `board-stars` (una por cada uno de los 9 skins + genérico).
 - **Eventos de Supervivencia** (glow/shake en `.board-wrap`): terremoto (`surv-quake` + `surv-quake-settle`), lluvia de meteoros (`surv-rain`), penalización por vida perdida (`surv-penalty`), nueva oleada (`surv-wave-up`), congelación (`frost-field`), vida extra (`life-blast`), tablero limpiado bonus (`board-clear-bonus`), pulso de frenesí activo (`surv-frenzy-pulse`), caída de meteorito en celda (`surv-meteor`).
 - **Boosters (Supervivencia):** activación de cada booster (`bomb-board`, `line-board`, `x2-board`, `wild-board`), botón de booster disparado (`booster-fired`), booster "armado" esperando objetivo (`armPulse`), burst de limpieza especial por tipo (`special-clear`), pulso de atención en tiles especiales (`special-pulse`), bob del icono de ralentización (`slowdown-bob`).
-- **Combo/puntuación:** popup flotante de puntos (`popup-float`), pulso de combo (`combo-pulse`), callout de "rank" (`rankPop`, ej. "¡GENIAL!"/"¡ÉPICO!"), flash de pantalla completa por récord/tablero perfecto (`flashAnim`), borde de peligro por ocupación alta (`dangerBorder`), pulso de aura Fever (`feverPulse`).
+- **Combo/puntuación:** popup flotante de puntos por WAAPI (`Render.popup`, sin `@keyframes` CSS), pulso de combo (`combo-pulse`), callout de "rank" (`rankPop`, ej. "¡GENIAL!"/"¡ÉPICO!"), flash de pantalla completa por récord/tablero perfecto (`flashAnim`), borde de peligro por ocupación alta (`dangerBorder`), pulso de aura Fever (`feverPulse`).
 - **Tutorial:** aparición del texto de coach-mark (`coach-in`).
 
 Todas las animaciones "ambientales"/decorativas (drift de fondo, pulsos idle, spin del logo) se desactivan cuando el usuario activa el ajuste propio `reduced-fx` (ver §10) — es un mecanismo más granular que el `prefers-reduced-motion` del SO.
+
+El feedback de convergencia es un contrato visual de juego: con `reduced-fx` desactivado, `FX.converge` y `FX.scoreToHud` no se degradan por el gobernador de rendimiento ni por el `FX.cap` móvil; usan un backstop absoluto común (`FX.ABS_MAX`) para mantener paridad móvil/PC. `reduced-fx` sí puede ocultar partículas/vuelos por ser una elección explícita de accesibilidad o heredada del sistema, en cuyo caso la app muestra un aviso una sola vez.
+
+Las partículas, vuelos de glyph y popups creados con WAAPI se cancelan al terminar después de fijar `opacity:0`; no deben quedar animaciones con `fill:forwards/both` retenidas en `document.getAnimations()`, porque mantienen capas de compositor vivas sin aportar feedback visual.
 
 ## 7. Tablero: enfoque de renderizado
 
@@ -190,7 +194,7 @@ Tres tecnologías de icono en paralelo:
 - `.sr-only` — patrón estándar visualmente-oculto-pero-accesible, usado en `#sr-status` (`role="status" aria-live="polite"`).
 - `:focus-visible` en inputs, celdas del tablero (`outline: 3px solid var(--accent-2)`), y tarjetas de modo.
 - `prefers-reduced-motion: reduce` — override global: fuerza `animation-duration/transition-duration: .01ms !important`, oculta `.stars`.
-- **`body.reduced-fx`** — ajuste propio de la app (independiente del anterior, controlado desde Ajustes), más quirúrgico: desactiva animaciones caras específicas (partículas, fever, flash, pulso de peligro, eventos de tablero de Supervivencia, spin decorativo, drift de fondo del tablero, pulso de CTA/recompensa, entrada de toast/coach) manteniendo el feedback esencial — un punto medio entre movimiento completo y el "apagado total" del ajuste del SO.
+- **`body.reduced-fx`** — ajuste propio de la app (controlado desde Ajustes y heredado por defecto de `prefers-reduced-motion` si el usuario no guardó valor): desactiva animaciones caras específicas (partículas, vuelos de convergencia, fever, flash, pulso de peligro, eventos de tablero de Supervivencia, spin decorativo, drift de fondo del tablero, pulso de CTA/recompensa, entrada de toast/coach). Si queda activo solo por el ajuste del sistema, se informa una vez y puede revertirse desde Ajustes.
 - Tokens de tamaño de toque `--tap`/`--tap-lg` aplicados a botones/inputs; `touch-action: manipulation` amplio para suprimir zoom por doble-tap.
 - Estilos dirigidos por atributos ARIA: `[aria-checked="true"]` (toggles, tarjetas de modo, chips de dificultad), `[aria-current="page"]` (tabs activos).
 - No hay manejo explícito de `prefers-contrast`.

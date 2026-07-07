@@ -105,6 +105,8 @@ Formato: **Fortalezas → Debilidades → Psicología en juego → Referente del
 
 **Fortalezas.** Objetivos variables (score/survive/boss) — única fuente de variedad de objetivo del juego; biomas con acento visual y mods propios; intro de capítulo (V1-15) ya resuelve la legibilidad; retomar siempre en el máximo alcanzado (respeta el tiempo del jugador); escalado infinito honesto (`spawnRate / (1+ch·0.12)`).
 
+**Nota FB-6 (2026-07-07):** los niveles `score` de Aventura ya no usan el objetivo plano `250 + chapter*120 + lic*40`; ahora escalan con el nivel (`level * (300 + 50*chapter)`) y el banner muestra progreso `p/n`. El modal de nivel completado explicita la razón de victoria, cerrando el "nivel 3 se completa de golpe" sin tocar el modelo de reanudación.
+
 **Debilidades.**
 1. **El 40–60% de sus niveles sigue siendo "vaciar tablero"** → solape frontal con Clásico (D6). La identidad "expedición" está en el copy, no en las reglas.
 2. **Cero decisiones**: el jugador no elige nada en toda la expedición; los biomas se suceden en orden fijo cíclico. Un modo infinito sin agencia se vuelve rutina exactamente en el momento en que el jugador lo domina.
@@ -140,6 +142,7 @@ Formato: **Fortalezas → Debilidades → Psicología en juego → Referente del
 - **GM-11 · Error = tiempo** (🟢, cambio de balance documentado): en modos `scoreAttack`, el error resta **−3s** (con animación del reloj sangrando) y NO añade iconos. *Justificación: hace legible el coste del error en la moneda del modo; elimina el "castigo-regalo" actual. Riesgo: duplicar castigo si se mantuviera el icono — por eso se sustituye, no se suma. Validar con la simulación de §10 que no acorta las runs medias >15%.*
 - **GM-12 · Ghost personal** (🟡): guardar la línea de tiempo del mejor score (score cada 10s, array de ~24 enteros en `Meta.modes.contrarreloj.ghost`); en partida, un marcador fino bajo el score: «▲ +230 vs tu récord» / «▼ −120». Aplica también al Reto del día (ghost del mejor intento de HOY). *Justificación: la comparación contra uno mismo es el motivador de maestría más limpio que existe; ya estaba identificado como deuda de Fase 2.*
 - **GM-13 · Cápsulas de tiempo** (🟢, azúcar): muy ocasionalmente (~1 por partida) spawna un tile pickup «+5s» que hay que detonar por adyacencia (reutiliza `trigger`). *Justificación: micro-objetivo espacial que rompe la monotonía del farmeo de convergencias; ya estaba esbozado en el plan de engagement.*
+- **FB-2 · Arranque frío cerrado** (✅ 2026-07-07, v2.6.0): Contrarreloj/Reto arrancan con `initialIcons:22` y usan `spawnFactor()` tras el warm-up para reducir espera post-limpieza (0.65 con ≤10 iconos, 0.85 con ≤16, 1.1 con ≥30). Sim 40 runs: average `deadAir` 57%→39%, score p50 129463→120929, duración 240s; guardarraíl de medallas verde sin recalibración.
 
 ## 3.4 Reto del día — el ritual (el modo con mejor ratio valor/coste del juego)
 
@@ -157,6 +160,7 @@ Formato: **Fortalezas → Debilidades → Psicología en juego → Referente del
 **Propuestas.**
 - **GM-14 · Calendario y racha del reto** (🟡): `Meta.dailyRun` pasa a guardar historial `{fecha → medalla}` (tope 60 días, FIFO); el modal de misiones/home muestra el mes en curso como fila de puntos de medalla + racha actual de días con medalla ≥ bronce (congelable 1 día/semana, explicitado). Recompensa de hito: 7 días seguidos → +1 cofre. *Justificación: convierte el reto en ritual con historia; la congelación semanal elimina la ansiedad de racha (diseño ético declarado).*
 - **GM-15 · Mutador del día** (🟡, tras GM-14): la semilla de fecha también elige 1 mutador de una tabla de ~8 (`hashStr(fecha) % 8`): «Hielo (4 celdas heladas)», «Ventana de combo −500ms», «Solo 6 iconos», «Rocas ×3», «Spawn +10% rápido», «Cristales dobles», «Sin pistas», «Clásico puro (sin mutador)». Se muestra en la tarjeta del home y en la intro. *Justificación: cada día tiene tema → conversación y screenshot distinto; determinista sin servidor (mismo truco `hashStr` de misiones); reusa tiles/parámetros existentes al 100%.*
+- **FB-4 · Comunicación del ritual cerrada** (✅ 2026-07-07, v2.6.0): el home/misiones abren una ficha previa (`modal-daily`) con tablero compartido, mutador+efecto, medallas 750/1500/2500 (`Meta.DAILY_MEDALS`), mejor marca/ghost, racha y bonus de primer intento; en partida el banner muestra la siguiente medalla con número y avisa cada umbral cruzado.
 
 ## 3.5 Supervivencia — el buque insignia (profundo pero ilegible y sin decisiones)
 
@@ -443,6 +447,8 @@ Orden pensado para: valor visible temprano, dependencias respetadas, y cero camb
 - **GM-15**: `DailyMut` — `hash32(fecha) % 8` elige el tema del reto (puro/hielo/combos exigentes/variedad/rocas/veloz/cristales/sin pistas); se aplica tras montar el nivel con RNG seedeado (idéntico para todos); nombre en la tarjeta del home y toast al empezar.
 - **GM-14**: `dailyRun.history` (60 días FIFO) + `Meta.dailyStreak()` con congelación ética (1 de regalo +1 por cada 7 días — perder un día pausa, no borra) + cofre cada 7 días de racha (una vez por hito, con re-armado si la racha se reinicia). Calendario de 14 puntos en el panel de misiones y racha `🔥n` en la tarjeta del home y el resultado.
 - **GM-12**: muestreo de score cada 10s en scoreAttack; el mejor intento guarda su línea de tiempo (`modes[].ghost` / `dailyRun.ghost`); chip `#hud-ghost` ▲/▼ contra la muestra del mismo minuto de partida.
+- **FB-4**: ficha previa `modal-daily` para el reto con mutador+efecto, medallas, mejor marca/ghost, racha y bonus; `Meta.DAILY_MEDALS` centraliza 750/1500/2500; `#daily-note` muestra la siguiente medalla en partida y los textos de home/modos dejan de depender de elipsis o recorte móvil.
+- **FB-2**: `Config.MODES.contrarreloj.initialIcons = 22` y `spawnFactor()` de hambre de tablero (warm-up excluido; 0.65/0.85/1.1 por iconCount) reducen el dead-air del perfil average 57%→39% sin inflar score ni duración; el primer tuning más agresivo se descartó por fallar el guardarraíl de medallas.
 - **GM-13**: tile `timecap` (⏰, +5s al detonar por adyacencia, tope de reloj de siempre), 1 por partida en un segundo seedeado (40–80s).
 - **GM-08**: `Adventure.onTick` — en niveles jefe, ataque de bioma cada 20s con aviso a 3s (nebulosa andanada / rocas / hielo / aceleración / roba-pista / regeneración de cristal con tope 6). El jefe por fin HACE cosas.
 - **GM-09**: `Adventure.log` + `expeditionHtml()` — la cadena capítulo·ruta → reliquias de la run, renderizada en `#over-exped` del resumen (narrativiza la derrota).

@@ -72,6 +72,7 @@ Algoritmo `converging(i)`:
 - **Auto-aceleración del spawn:**
   - Modos normales: `spawnRate = max(spawnMin, spawnRate - 3)` en cada spawn (aceleración lenta dentro del nivel).
   - Contrarreloj (`scoreAttack`): se recalcula en cada spawn a partir del tiempo transcurrido: `clamp(round(spawnStart * 0.92^(elapsed/10)), 300, spawnStart)` — decaimiento exponencial independiente del reloj de puntuación.
+- **Intervalo efectivo:** el bucle usa `spawnRate * Game.warmupFactor(now) * Rules.call('spawnFactor')`. Desde FB-2, Contrarreloj/Reto añade DDA de hambre de tablero sin tocar la curva base: durante el warm-up devuelve `1`; después, con `State.iconCount <= 10` devuelve `0.65`, con `<= 16` devuelve `0.85`, con `>= 30` devuelve `1.1`, y en el resto `1`.
 
 ### 1.5 Manejo de fallo (`mistake`)
 - Animación/sonido/háptico de "miss"; `mistakes++`; en Clásico actualiza en vivo el indicador de estrellas.
@@ -102,7 +103,7 @@ Escanea todas las celdas vacías buscando alguna con `converging(i).length >= 2`
 
 Registro central `Config.MODES` con orden `MODE_ORDER = ['tutorial','clasico','aventura','contrarreloj','supervivencia','zen']` y dificultades `DIFF_ORDER = ['facil','normal','dificil']`.
 
-Campos comunes por modo: `name`, `emoji`, `timed`, `penalties`, `mult` (multiplicador de score), `single`, `fixedDiff`, `accent` (color hex), `goal`/`desc`, `scoreAttack`, `fast`/`endless`/`relaxed`, y hooks opcionales: `onSetupLevel(ctx)`, `onTick(dt)`, `onConverge(ctx)`, `onOverflow()`, `blockSpawn()`, `winCheck()`, `boardClearWins()`. El dispatcher genérico es `Rules.call(name, ctx)`.
+Campos comunes por modo: `name`, `emoji`, `timed`, `penalties`, `mult` (multiplicador de score), `single`, `fixedDiff`, `initialIcons`, `accent` (color hex), `goal`/`desc`, `scoreAttack`, `fast`/`endless`/`relaxed`, y hooks opcionales: `onSetupLevel(ctx)`, `onTick(dt)`, `onConverge(ctx)`, `onOverflow()`, `blockSpawn()`, `spawnFactor()`, `winCheck()`, `boardClearWins()`. El dispatcher genérico es `Rules.call(name, ctx)`.
 
 ### 2.1 Tutorial (`tutorial`)
 `timed:false, penalties:false, mult:0.5, single:true, fixedDiff:'facil'`. En la práctica el tutorial real es un módulo separado (`Coach`), una secuencia guiada de 2 pasos con tableros deterministas:
@@ -124,13 +125,15 @@ Densidad de obstáculos por nivel: `dens = min(0.13, 0.015 + n*0.0021 + worldInd
 **Rutas de capítulo (v2.3.0, GM-06):** al entrar en un capítulo se elige 1 de 2 rutas (estado volátil de run, no persiste en RunSave): `dense` («exigente»: refuerza el obstáculo del bioma y fija `State.tempMult = 1.25` durante el capítulo — visible en el chip de multiplicador) o `calm` («serena»: `spawnRate ×1.15`, sin bonus). La ruta caduca en la frontera de capítulo. **Reliquias de jefe (v2.3.0, GM-07):** al superar un nivel jefe se elige 1 de 3 pasivas de run (máx. 3 activas, FIFO): `combo` (ventana +400ms), `crystal` (cristales +30 extra), `hint` (+1 pista/nivel), `shield` (la 1ª derrota por tablero lleno de cada capítulo despeja el 30% en vez de terminar). Se muestran en el banner de objetivo.
 
 ### 2.4 Contrarreloj (`contrarreloj`)
-`timed:true, scoreAttack:true, penalties:true, mult:1.2`, objetivo "sumar puntos a contrarreloj". `TIMED_START = 60`s, `TIMED_CAP = 90`s (tope duro del reloj). Cada convergencia repone tiempo con rendimientos decrecientes (fórmula en §6.4). El spawn se acelera exponencialmente con el tiempo transcurrido (ver §1.4). Termina cuando `timeLeft <= 0`.
+`timed:true, scoreAttack:true, penalties:true, mult:1.2, initialIcons:22`, objetivo "sumar puntos a contrarreloj". `TIMED_START = 60`s, `TIMED_CAP = 90`s (tope duro del reloj). Cada convergencia repone tiempo con rendimientos decrecientes (fórmula en §6.4). El spawn se acelera exponencialmente con el tiempo transcurrido (ver §1.4) y aplica DDA de hambre de tablero tras el warm-up (`spawnFactor`: 0.65 con ≤10 iconos, 0.85 con ≤16, 1.1 con ≥30). Termina cuando `timeLeft <= 0`. El Reto del día hereda estos valores porque es Contrarreloj seedeado.
 
 **Sprint final (v2.2.0, GM-10):** mientras `0 < timeLeft <= SPRINT_WINDOW (10s)`, todos los puntos (convergencias y bonus de tablero vacío) van `× SPRINT_MULT (1.5)`. Como el tiempo puede volver a subir, el jugador puede elegir "cabalgar el borde" (riesgo-recompensa continuo). El error en este modo resta `TIMED_MISTAKE_S (3)` segundos (ver §1.5).
 
 **Cápsula de tiempo (v2.4.0, GM-13):** 1 por partida en modos `scoreAttack`; en un segundo seedeado (`40 + rand(40)`) aparece un tile trigger `timecap` (⏰) que al detonarse por adyacencia da +5s (con el tope de reloj). **Ghost personal (v2.4.0, GM-12):** el score se muestrea cada 10s (`State.ghostSamples`); el mejor intento se guarda (`modes[mode].ghost`, o `dailyRun.ghost` para el reto) y en partida un chip muestra `▲/▼ delta` contra la muestra correspondiente al tiempo transcurrido.
 
 **Reto del día — mutador (v2.4.0, GM-15):** `hash32('mut:' + fecha) % 8` elige entre `pure/ice(4 heladas)/window(combo −500ms, mín 1500)/variety(pool de 6)/rocks(3)/fast(curva de spawn ×0.9)/crystal(2 cristales)/nohints`. Se aplica tras montar el nivel consumiendo RNG seedeado (idéntico para todos). **Calendario y racha (v2.4.0, GM-14):** `dailyRun.history` guarda la medalla de cada día (tope 60, FIFO); la racha cuenta días consecutivos con medalla ≥ bronce con **1 congelación de regalo +1 por cada 7 días** (un día perdido pausa, no borra); cada 7 días de racha → +1 cofre (una vez por hito, `streakRewarded`).
+
+**Ficha y objetivo vivo del reto (v2.6.0, FB-4):** los umbrales viven en `Meta.DAILY_MEDALS = [750,1500,2500]` y `Meta.dailyNextMedal(score)` devuelve el siguiente corte o `null`. El home y el panel de misiones abren `modal-daily` antes de jugar: muestra fecha, tablero compartido, mutador con efecto, medallas, mejor marca/ghost, racha y bonus de primer intento. En partida diaria, `#daily-note` muestra la siguiente medalla con número y se actualiza al cruzar 750/1500/2500 con toast una vez por umbral.
 
 ### 2.5 Supervivencia (`supervivencia`)
 `timed:false, penalties:true, mult:1.5, fast:true, endless:true`. Ver detalle completo en §2.5.1 más abajo y potenciadores en §7.
@@ -255,11 +258,19 @@ Tres monedas + cofres, todo dentro de `Meta`.
 
 - **Monedas (coins):** se ganan al final de cada partida (`recordGame()`, fórmula en §6.5), al completar niveles de Clásico, en recompensas de oleada de Supervivencia, en bonos de tablero vacío de Zen, en la recompensa diaria, y al abrir cofres. Se gastan en: skins de tablero (0-3000), temas de color (0-300), revivir en Supervivencia (120 fijo).
 - **Gemas (gems):** se ganan en hitos de oleada de Supervivencia (`2 + floor(wave/5)` cada 5 oleadas), en recompensa de mundo completado (+20), en cofres (3-10) y en el primer intento diario del Reto (+5). Sumideros: cofre premium (25💎, v1.8) y **continuar partida** en Clásico/Aventura (15💎, v2.3.0, GM-02).
-- **Tickets:** se ganan raramente en cofres (1, con 8% de probabilidad). Sin sumidero de gasto implementado (reservado para una futura función, según comentario del código).
-- **Cofres:** se acumulan (no se abren automáticamente). Al abrir un cofre (`openChest()`), tabla de probabilidad:
-  - `roll < 0.62` → monedas: `60 + floor(random()*140)` (60-199)
-  - `0.62 ≤ roll < 0.92` → gemas: `3 + floor(random()*8)` (3-10)
-  - `roll ≥ 0.92` → 1 ticket
+- **Tickets:** se ganan raramente en cofres (1 normal, 2 premium). Se gastan en rerollear la misión diaria (1 ticket).
+- **Cofres:** se acumulan (no se abren automáticamente). Al abrir un cofre (`openChest()`), tabla de probabilidad (v2.6.0, FB-7):
+  - `roll < 0.60` → monedas: `60 + floor(random()*140)` (60-199)
+  - `0.60 ≤ roll < 0.90` → gemas: `3 + floor(random()*8)` (3-10)
+  - `0.90 ≤ roll < 0.98` → 1 ticket
+  - `roll ≥ 0.98` → cosmético raro (tablero no poseído no exclusivo o tema no poseído); si el pool está vacío, fallback a gemas `8 + floor(random()*8)` (8-15).
+- **Cofre premium:** cuesta `Meta.PREMIUM_CHEST_GEMS = 25` gemas y no devuelve gemas (evita circularidad):
+  - `roll < 0.52` → monedas: `200 + floor(random()*300)` (200-499)
+  - `0.52 ≤ roll < 0.82` → 2 tickets
+  - `0.82 ≤ roll < 0.92` → jackpot monedas: `600 + floor(random()*400)` (600-999)
+  - `roll ≥ 0.92` → cosmético raro; si el pool está vacío, fallback al jackpot.
+
+Los drops cosméticos usan `Math.random` de la economía meta, no el PRNG seedeado del tablero. Tableros se conceden con `Meta.grantBoard(id)` (`boards.owned[id] = 1`) y temas con `Meta.grantTheme(id)` (`cosmetics.owned[id] = fecha ISO`); ambos son idempotentes. No hay pity timer en esta iteración.
 
 **Recompensa diaria de inicio de sesión:** disponible si `reward.date !== today()`. Al reclamar: si el último reclamo fue exactamente ayer, `day++` (la racha continúa); si no, `day = 1`. `amount = 20 + 10*min(day, 7)` monedas (día 1 = 30 … día 7+ = 90, tope 90).
 
@@ -343,7 +354,7 @@ crystal  Cristalia              💎 mods:['crystals']accent #19f0d0
 ```
 - `chapterOf(level) = floor((level-1)/5)`; `licOf(level)` = índice del nivel dentro del capítulo (0-4); `isBoss(level)` = `licOf===4` (el último nivel de cada capítulo siempre es jefe).
 - Objetivo por nivel: jefe → `'boss'`; `lic===2` → `'score'`; `lic===3 && chapter>0` → `'survive'`; resto → `'clear'` (default vaciar tablero).
-- Objetivo de puntuación: `250 + chapter*120 + lic*40`. Objetivo de supervivencia: `18 + chapter*4` segundos.
+- Objetivo de puntuación (FB-6): `level * (300 + 50*chapter)`; el banner muestra progreso vivo `score - levelScore0` sobre el objetivo. Objetivo de supervivencia: `18 + chapter*4` segundos.
 - Niveles jefe colocan `2 + min(chapter,4)` tiles de cristal que deben limpiarse todos para ganar. **Desde v2.4.0 (GM-08) el jefe ACTÚA:** cada 20s (aviso 3s antes) ejecuta el ataque de su bioma — nebulosa: 3 spawns forzados · asteroides: +2 rocas · hielo: congela 2 · núcleo: spawn ×0.9 · vacío: −1 pista · cristal: +1 cristal (se "regenera", tope 6 en tablero). **Registro de expedición (v2.4.0, GM-09):** las elecciones de la run (capítulo+ruta, reliquias) se registran y se muestran como cadena en el resumen de fin de partida.
 - El spawn se acelera por capítulo: `spawnRate = max(360, round(spawnRate/(1+chapter*0.12)))`.
 - Densidades/modificadores por bioma escalan con el capítulo (rocks `min(0.16, 0.06+chapter*0.012)`, ice `min(0.14,0.05+chapter*0.012)`, rush ×0.8 spawnRate, scarce fija `hintsLeft=1`).
@@ -538,6 +549,7 @@ Ver también [`ARCHITECTURE.md` §7](./ARCHITECTURE.md#7-máquina-de-estados-pan
 | `modal-settings` | Toggles de ajustes + selector de idioma |
 | `modal-revive` | "Última oportunidad" de Supervivencia — revivir pagando monedas |
 | `modal-surv-diff` | Selección de dificultad de Supervivencia + botón empezar |
+| `modal-daily` | Ficha previa del reto diario: mutador, medallas, mejor marca, ghost, racha y primer intento |
 | `modal-adventure` | Overview del mapa de capítulos de Aventura |
 | `modal-shop` | Tienda (skins de tablero + temas) |
 | `modal-chests` | Inventario de cofres + botón abrir |
@@ -546,7 +558,7 @@ Ver también [`ARCHITECTURE.md` §7](./ARCHITECTURE.md#7-máquina-de-estados-pan
 
 `Game.pause()`/`resume()` alternan `State.status` entre `'playing'`/`'paused'` junto con abrir/cerrar `modal-pause`. Valores de `State.status`: `'idle'`, `'playing'`, `'paused'`, `'over'`, `'levelComplete'`.
 
-No existe un router genérico más allá de `Screens`/`Modal`: las transiciones son llamadas imperativas repartidas entre `Game`, `Worlds` y los constructores de menú, cableadas en `init()` más un único listener delegado por atributo `data-act` (para acciones reutilizables del top-bar/home: `settings`, `profile`, `edit-name`, `buy-coins`, `buy-gems`, `play`, `home-classic`, `home-surv`, `home-multi`, `claim-daily`, `nav-medals`, `nav-shop`, `nav-missions`, `nav-home`).
+No existe un router genérico más allá de `Screens`/`Modal`: las transiciones son llamadas imperativas repartidas entre `Game`, `Worlds` y los constructores de menú, cableadas en `init()` más un único listener delegado por atributo `data-act` (para acciones reutilizables del top-bar/home: `settings`, `profile`, `edit-name`, `buy-coins`, `buy-gems`, `play`, `home-classic`, `home-surv`, `home-daily`, `go-daily`, `home-multi`, `claim-daily`, `nav-medals`, `nav-shop`, `nav-missions`, `nav-home`).
 
 ---
 

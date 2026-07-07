@@ -92,6 +92,50 @@ zen            normal    casual     13964    20412    240s     x6       nvl 1   
 
 **Lectura (δ):** Clásico y Zen idénticos bit a bit (control ✅). Contrarreloj +2–11% por la cápsula de tiempo (+5s y desplazamiento del stream RNG) — esperado y aceptado; el guardarraíl se recalibró de 60649 a 52964 (la banda ±40% absorbió el cambio sin fallar). Supervivencia normal idéntica (el mutador semanal se fija a `none` en el sim). Limitación conocida: los efectos diferidos por `setTimeout` de los eventos jefe (relleno de la marea, barajado del quake) no se ejecutan dentro del bucle síncrono del simulador — se validan con el smoke de navegador.
 
+## Batería FB-6 (Aventura score target vivo, post-v2.5.0) — 40 runs/config
+
+Antes de FB-6 (misma sesión, referencia v2.5.0):
+
+```
+modo           diff      perfil    sc p50   sc p90   dur50  combo    progreso  deadAir    err  coins    cap
+aventura       normal    skilled    64987   169467    353s    x13      nvl 15      70%    5.3      0   100%
+aventura       normal    average    26971    79481    355s    x10       nvl 7      52%   11.4      0   100%
+aventura       normal    casual     19224    26626    356s    x11       nvl 6      17%   21.3      0   100%
+```
+
+Después de FB-6 (`target score = level * (300 + 50*chapter)`):
+
+```
+modo           diff      perfil    sc p50   sc p90   dur50  combo    progreso  deadAir    err  coins    cap
+aventura       normal    skilled    42068    96379    354s    x11      nvl 12      73%    5.3      0    98%
+aventura       normal    average    30402    67521    355s    x10       nvl 9      52%   10.7      0   100%
+aventura       normal    casual     17841    21799    357s    x11       nvl 6      18%   20.9      0   100%
+```
+
+Lectura: el nivel 3 deja de cerrarse en 2-3 convergencias y los objetivos `score` escalan con la potencia real del nivel. La progresión skilled cae 15→12 niveles (-20%, dentro del guardarraíl de FB-6 de no caer >25%); average sube 7→9; casual queda estable. Duración mediana estable.
+
+## Batería FB-2 (Contrarreloj DDA de hambre, post-v2.5.0) — 40 runs/config
+
+Antes de FB-2 (misma sesión, referencia v2.5.0):
+
+```
+modo           diff      perfil    sc p50   sc p90   dur50  combo    progreso  deadAir    err  coins    cap
+contrarreloj   normal    skilled   246131   309650    240s    x22       nvl 1      77%    2.2    730   100%
+contrarreloj   normal    average   129463   173844    240s    x13       nvl 1      57%    6.8    469   100%
+contrarreloj   normal    casual     20440    37752    240s     x9       nvl 1      26%   12.4     85   100%
+```
+
+Después de FB-2 (`initialIcons:22`; `spawnFactor`: 1 durante warm-up, luego 0.65 con ≤10 iconos, 0.85 con ≤16, 1.1 con ≥30):
+
+```
+modo           diff      perfil    sc p50   sc p90   dur50  combo    progreso  deadAir    err  coins    cap
+contrarreloj   normal    skilled   464250   587016    240s    x43       nvl 1      66%    3.5   1068   100%
+contrarreloj   normal    average   120929   247968    240s    x22       nvl 1      39%    8.9    460   100%
+contrarreloj   normal    casual     13085    29921    240s    x12       nvl 1      11%   15.0    114    98%
+```
+
+Lectura: el objetivo principal se cumple en el perfil average (`deadAir` 57%→39%, -18 puntos) sin inflar su score p50 (129463→120929, -6.6%) y con duración estable. Se descartó un primer tuning más agresivo (`initialIcons:24`, factores 0.55/0.75) porque el guardarraíl de medallas subía el bot estándar a 84984 (>74150); el tuning final mantiene `tests/balance-guardrail.test.js` verde sin recalibrar la mediana 52964.
+
 ## Evaluación de los criterios de aceptación (GM-β)
 
 | Criterio | Resultado | Veredicto |
@@ -105,6 +149,6 @@ zen            normal    casual     13964    20412    240s     x6       nvl 1   
 ## Hallazgos estructurales del baseline (para fases futuras)
 
 1. **La dificultad de Contrarreloj y Supervivencia es cognitiva, no mecánica.** Ningún bot (ni el casual, con 1.4s de reacción, 15% de error y lapsos) muere dentro del tope del sim: en Contrarreloj la reposición con suelo 0.4 supera al drenaje si conviertes cada ~1.4s, y en Supervivencia el alivio por vida perdida + clear-assist sostienen indefinidamente. Los humanos mueren por colapso de atención. Implicación: subir "dificultad numérica" castigaría poco al hábil y mucho al débil; la presión útil es la que ataca la atención (más variedad simultánea, eventos, decisiones), no la velocidad bruta.
-2. **El dead-air es real y enorme para jugadores rápidos** (66–85% de los turnos del bot skilled sin jugada disponible; 40–54% para el medio): confirma D2 del plan con datos. El warm-up lo mitiga solo al inicio; el cuello es la espera post-limpieza (el tablero se vacía más rápido de lo que spawnea). Candidato futuro: escalar el ritmo de spawn con la velocidad de consumo del jugador (DDA suave), a diseñar en GM-γ/δ con criterio propio.
+2. **El dead-air es real y enorme para jugadores rápidos** (66–85% de los turnos del bot skilled sin jugada disponible; 40–54% para el medio): confirma D2 del plan con datos. El warm-up lo mitiga solo al inicio; el cuello es la espera post-limpieza (el tablero se vacía más rápido de lo que spawnea). FB-2 implementa el DDA suave solo en Contrarreloj/Reto; el perfil average baja a 39% sin inflar score ni duración.
 3. **La oleada de Supervivencia es puramente temporal para bots** (oleada 18 a los 8 min en los 3 perfiles): el número de oleada mide tiempo jugado, no habilidad. El récord de oleada humano diferencia por atención sostenida — coherente con el hallazgo 1.
 4. **Guardarraíl de medallas** activo en CI (`tests/balance-guardrail.test.js`): bot estándar (average, 3 min, seeds fijos) con mediana calibrada 60649 en v2.2.0 y banda ±40%. Recalibrar solo en cambios de balance deliberados.

@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=v152" />
+  <link rel="stylesheet" href="styles.css?v=2.6.0" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -249,29 +249,6 @@
         </div>
       </div>
 
-      <!-- Selector de elección en partida (bendiciones/rutas/reliquias/continuar) -->
-      <div class="pick-overlay" id="pick-overlay" hidden>
-        <div class="pick-card" role="dialog" aria-modal="true" aria-labelledby="pick-title">
-          <h2 class="pick-title" id="pick-title"></h2>
-          <p class="pick-sub" id="pick-sub" hidden></p>
-          <div class="pick-options" id="pick-options"></div>
-          <button class="btn btn-ghost pick-cancel" id="pick-cancel" hidden></button>
-        </div>
-      </div>
-
-      <!-- Lanzador de nivel de Clásico (GM-03): potenciadores opcionales pre-nivel -->
-      <div class="pick-overlay" id="prelevel" hidden>
-        <div class="pick-card" role="dialog" aria-modal="true" aria-labelledby="pl-title">
-          <h2 class="pick-title" id="pl-title"></h2>
-          <p class="pick-sub" data-i18n="pl_sub">Lleva hasta 2 potenciadores (opcional)</p>
-          <div class="pl-items" id="pl-items"></div>
-          <div class="pl-actions">
-            <button class="btn btn-primary" id="pl-play" data-i18n="pl_play">Jugar</button>
-            <button class="btn btn-ghost" id="pl-skip" data-i18n="pl_skip">Sin potenciadores</button>
-          </div>
-        </div>
-      </div>
-
       <!-- Intro de capítulo (Aventura): tarjeta de bioma mostrada una vez por capítulo -->
       <div class="chapter-intro" id="chapter-intro" hidden>
         <div class="ci-card" role="dialog" aria-label="Nuevo capítulo">
@@ -302,6 +279,29 @@
       <!-- Pista: FAB en la zona natural del pulgar (acción usada en juego) -->
       <button class="icon-btn hint-btn hint-fab" id="btn-hint" aria-label="Pista"><img class="ic ic-inline" src="img/ui/search.png" alt=""><span class="badge" id="hint-badge">3</span></button>
     </section>
+
+    <!-- Selector global de eleccion (bendiciones/rutas/reliquias/continuar/Zen) -->
+    <div class="pick-overlay" id="pick-overlay" hidden>
+      <div class="pick-card" role="dialog" aria-modal="true" aria-labelledby="pick-title">
+        <h2 class="pick-title" id="pick-title"></h2>
+        <p class="pick-sub" id="pick-sub" hidden></p>
+        <div class="pick-options" id="pick-options"></div>
+        <button class="btn btn-ghost pick-cancel" id="pick-cancel" hidden></button>
+      </div>
+    </div>
+
+    <!-- Lanzador global de nivel de Clasico (GM-03): potenciadores opcionales pre-nivel -->
+    <div class="pick-overlay" id="prelevel" hidden>
+      <div class="pick-card" role="dialog" aria-modal="true" aria-labelledby="pl-title">
+        <h2 class="pick-title" id="pl-title"></h2>
+        <p class="pick-sub" data-i18n="pl_sub">Lleva hasta 2 potenciadores (opcional)</p>
+        <div class="pl-items" id="pl-items"></div>
+        <div class="pl-actions">
+          <button class="btn btn-primary" id="pl-play" data-i18n="pl_play">Jugar</button>
+          <button class="btn btn-ghost" id="pl-skip" data-i18n="pl_skip">Sin potenciadores</button>
+        </div>
+      </div>
+    </div>
 
   </main>
 
@@ -428,6 +428,18 @@
       </div>
     </div>
 
+    <!-- Reto del día -->
+    <div class="modal modal-daily" id="modal-daily" role="dialog" aria-modal="true" aria-labelledby="daily-info-title" hidden>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/target.png" alt=""></span><h2 id="daily-info-title" data-i18n="daily_challenge">Reto del día</h2></div>
+      <div class="modal-body">
+        <div class="daily-info" id="daily-info"></div>
+      </div>
+      <div class="modal-actions modal-buttons">
+        <button class="btn btn-primary btn-icon" id="btn-daily-start"><span class="btn-ic"><img class="ic" src="img/ui/target.png" alt=""></span><span data-i18n="daily_play">Jugar</span></button>
+        <button class="btn btn-ghost" data-close data-i18n="back">Volver</button>
+      </div>
+    </div>
+
     <!-- Mapa de Aventura -->
     <div class="modal modal-adventure" id="modal-adventure" role="dialog" aria-modal="true" aria-labelledby="adventure-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/rocket.png" alt=""></span><h2 id="adventure-title" data-i18n="adventure_title">Aventura</h2></div>
@@ -515,6 +527,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=v144" defer></script>
+  <script src="game.js?v=2.6.0" defer></script>
 </body>
 </html>

@@ -12,7 +12,7 @@ Contexto de proyecto para Claude Code. **Léelo antes de explorar el repo** — 
 - **Tests:** `node --test 'tests/*.test.js'` (núcleo puro vía stub de DOM en `tests/dom-stub.js` + hook `?dev`). **Lint:** `npx --yes eslint@9 .` (config en `eslint.config.mjs`, sin package.json a propósito). Ambos corren en CI (`.github/workflows/ci.yml`) en cada push.
 - **Simulación de balance:** `node tools/balance-sim.js` — juega partidas reales headless con bots deterministas (reloj virtual + RNG seedeado). **Obligatorio antes/después de cualquier cambio de balance** (comparar contra `docs/BALANCE_BASELINE.md`); el guardarraíl de medallas (`tests/balance-guardrail.test.js`) corre en CI.
 - Debug en consola del navegador: abrir con `?dev` en la URL → expone todos los módulos internos en `window.__cv`.
-- **Release / cache-busting:** al cambiar `styles.css` o `game.js`, ejecutar `tools/bump-version.sh X.Y.Z` — sube a la vez `VERSION` (game.js), `CACHE` (sw.js) y los `?v=` de `index.html`. No hacerlo a mano: olvidar uno de los tres deja a los usuarios con la versión vieja. Commit habitual: "Bump version to X.Y.Z; update cache version and asset links".
+- **Release / cache-busting:** al cambiar `styles.css` o `game.js`, ejecutar `tools/bump-version.sh X.Y.Z` — sube a la vez `VERSION` (game.js), `CACHE` (sw.js) y los `?v=` de `index.html`. ⚠️ **En Windows/Git Bash el script falla** (`grep -oP` no soportado): hacer el triple bump a mano en los 3 sitios y verificar con grep que quedaron iguales. Olvidar uno de los tres deja a los usuarios con la versión vieja. Commit habitual: "Bump version to X.Y.Z; update cache version and asset links".
 
 ## Mapa de archivos
 
@@ -40,6 +40,7 @@ Estos documentos existen precisamente para que **no tengas que releer el código
 - **`docs/ROADMAP.md`** — plan de trabajo priorizado (bugs conocidos, deuda pendiente, mejoras por dificultad/beneficio, arquitectura de nube). Consultarlo antes de proponer trabajo nuevo: probablemente ya esté priorizado ahí.
 - **`docs/GAME_MODES_MASTER_PLAN.md`** — auditoría profunda de los 7 modos de juego (fortalezas/debilidades verificadas contra el código, psicología aplicada, referentes del género) + plan de mejora por fases (tareas GM-*): identidad por modo, pacing/frenesí, balance, potenciadores/penalizadores y validación por simulación. Consultarlo antes de tocar reglas, dificultad o sistemas de cualquier modo.
 - **`docs/QA_PERF_PLAN.md`** — cierre post-fases GM: pendientes (QP-*, incluido el generador de puzles de GM-04), plan de caza de bugs del flujo nuevo (con hallazgos B-* ya confirmados) y análisis medido del rendimiento de animaciones en móvil con su plan de corrección (`tools/perf-probe.js`). Consultarlo antes de arreglar bugs de los flujos GM o tocar animaciones.
+- **`docs/PLAYER_FEEDBACK_PLAN.md`** — ✅ **COMPLETADO en v2.6.0**: plan de mejora intensivo derivado del feedback del propietario (FB-1…FB-7: paridad de convergencia móvil/PC, ritmo de apertura del Contrarreloj, modal de fin de partida scrolleado, UX del Reto del día, selector de Zen, objetivo score de Aventura, cofres). Mantenerlo como registro histórico de causas raíz, criterios, pruebas y decisiones tomadas.
 
 ## Cómo trabajar eficientemente en este repo
 

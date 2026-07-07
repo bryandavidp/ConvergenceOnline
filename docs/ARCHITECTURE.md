@@ -134,6 +134,8 @@ Pantallas (`<section class="screen" id="screen-X">` en `index.html`):
 
 `Modal.open(id)`/`close()` gestiona un overlay con **un solo modal activo a la vez**, captura y restaura foco (accesibilidad). Hay 13 modales definidos en `index.html` (misiones, cómo jugar, pausa, nivel completado, fin de partida, ajustes, revivir, dificultad de supervivencia, mapa de aventura, tienda, cofres, multijugador, perfil). Detalle completo de cada uno en [`MIGRATION_SPEC.md` §12](./MIGRATION_SPEC.md#12-pantallas--máquina-de-estados).
 
+Picker (`#pick-overlay`) y PreLevel (`#prelevel`) son capas globales dentro de `<main>`, no hijas de una pantalla concreta. Esto permite abrir el selector de ritmo de Zen sobre la pantalla de modos y el lanzador pre-nivel sobre el mapa de mundos aunque `#screen-game` esté oculto; `Game.start()` limpia ambas capas de forma defensiva antes de montar una partida nueva.
+
 ## 8. PWA / Service Worker
 
 - `sw.js` define `CACHE = 'cv-cache-v1.7.1'` — **debe subirse manualmente en cada release** (no hay automatización de versión).
