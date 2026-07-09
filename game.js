@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.0';
+  const VERSION = '2.6.1';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -95,6 +95,10 @@
     // Ayuda de vaciado: con el tablero casi vacío (<= threshold iconos), sesga el icono
     // que aparece hacia los que ya están (prioriza solitarios) para no alargar el vaciado.
     CLEAR_ASSIST: { threshold: 6, pMax: 0.9, decay: 0.1, pMin: 0.25 },
+    // Refill tras limpiar modos que no terminan (Contrarreloj/Supervivencia/Zen).
+    // La cantidad sube con la dificultad y con la cadena de tableros vaciados, pero
+    // se siembra con pares jugables para evitar tableros imposibles tras el premio.
+    EMPTY_BOARD_REFILL: { min: 10, baseFactor: 0.55, maxFactor: 1.1, hardCap: 26, maxPairs: 6, perClear: { facil: 2, normal: 3, dificil: 4 } },
     // Estrellas del nivel (Clásico): máximo de ERRORES permitidos para 3★ y 2★.
     // 0 errores -> 3★ · hasta 2 errores -> 2★ · más -> 1★.
     STAR_ERR: [0, 2],
@@ -900,6 +904,111 @@
         const j = rand(empties.length);
         const idx = empties.splice(j, 1)[0];
         State.board[idx] = State.pool[rand(State.pool.length)];
+        State.iconCount++;
+        placed.push(idx);
+      }
+      return placed;
+    },
+
+    _shuffle(list) {
+      for (let i = list.length - 1; i > 0; i--) {
+        const j = rand(i + 1);
+        const t = list[i]; list[i] = list[j]; list[j] = t;
+      }
+      return list;
+    },
+
+    _balancedIconBag(n) {
+      const pool = State.pool && State.pool.length ? State.pool : this.poolForLevel(State.level || 1);
+      const bag = [];
+      while (bag.length < n) {
+        const cycle = this._shuffle(pool.slice());
+        for (const id of cycle) {
+          bag.push(id);
+          if (bag.length >= n) break;
+        }
+      }
+      return bag;
+    },
+
+    emptyRefillTarget(chain = 1) {
+      const cfg = Config.EMPTY_BOARD_REFILL;
+      const d = Config.DIFFICULTY[State.diff] || Config.DIFFICULTY.normal;
+      const m = Config.MODES[State.mode] || {};
+      const room = this.emptyCells().length;
+      if (room <= 0) return 0;
+      const source = Math.max(d.initialIcons || 0, m.initialIcons || 0, cfg.min);
+      const base = Math.max(cfg.min, Math.round(source * cfg.baseFactor));
+      const step = (cfg.perClear && cfg.perClear[State.diff]) || cfg.perClear.normal;
+      const cap = Math.min(cfg.hardCap, Math.max(base, Math.round(source * cfg.maxFactor)));
+      const target = base + Math.max(0, (chain || 1) - 1) * step;
+      const low = Math.min(cfg.min, room);
+      const high = Math.min(cap, room);
+      return Math.min(room, clamp(target, low, high));
+    },
+
+    _rayRefillSlot(center, dr, dc, reservedCenters, reservedIcons) {
+      let r = (center / State.size | 0) + dr;
+      let c = center % State.size + dc;
+      while (this.inside(r, c)) {
+        const j = this.idx(r, c);
+        const t = State.tiles[j];
+        if (t && t.solid) return -1;
+        if (State.board[j] !== null || reservedIcons.has(j)) return -1;
+        if (!t && !reservedCenters.has(j)) return j;
+        r += dr; c += dc;
+      }
+      return -1;
+    },
+
+    _findRefillPattern(reservedCenters, reservedIcons, maxArms) {
+      const centers = this._shuffle(this.emptyCells().filter((i) => !reservedCenters.has(i)));
+      for (const center of centers) {
+        const dirs = this._shuffle([
+          [0, -1],
+          [-1, 0],
+          [0, 1],
+          [1, 0],
+        ]);
+        const cells = [];
+        for (const [dr, dc] of dirs) {
+          const idx = this._rayRefillSlot(center, dr, dc, reservedCenters, reservedIcons);
+          if (idx >= 0) cells.push(idx);
+        }
+        if (cells.length >= 2) return { center, cells: cells.slice(0, Math.min(maxArms, cells.length)) };
+      }
+      return null;
+    },
+
+    refillAfterEmpty(chain = 1) {
+      const target = this.emptyRefillTarget(chain);
+      const placed = [];
+      if (target <= 0) return placed;
+
+      const reservedCenters = new Set();
+      const reservedIcons = new Set();
+      const patternCount = Math.min(Config.EMPTY_BOARD_REFILL.maxPairs, Math.max(2, Math.floor(target / 4)));
+      const patternIds = this._balancedIconBag(patternCount);
+      for (let p = 0; p < patternCount && placed.length + 2 <= target; p++) {
+        const room = target - placed.length;
+        const arms = Math.min(room, State.diff === 'facil' && chain <= 1 ? 2 : (chain >= 3 || State.diff === 'dificil' ? 4 : 3));
+        const pattern = this._findRefillPattern(reservedCenters, reservedIcons, arms);
+        if (!pattern) break;
+        const id = patternIds[p];
+        reservedCenters.add(pattern.center);
+        pattern.cells.forEach((idx) => {
+          reservedIcons.add(idx);
+          State.board[idx] = id;
+          State.iconCount++;
+          placed.push(idx);
+        });
+      }
+
+      const fillable = this._shuffle(this.emptyCells().filter((i) => !reservedCenters.has(i)));
+      const bag = this._balancedIconBag(Math.min(target - placed.length, fillable.length));
+      for (let k = 0; k < bag.length; k++) {
+        const idx = fillable[k];
+        State.board[idx] = bag[k];
         State.iconCount++;
         placed.push(idx);
       }
@@ -4905,6 +5014,14 @@
         if (fl === 10) { Meta.addChest(1); Toasts.show(I18n.t('garden_10'), 'good', 2800, 'chest'); Econ.refresh(); }
         if (fl === 50 && Meta.grantBoard('jardin')) { Toasts.show(I18n.t('garden_50'), 'good', 3400, '🌸'); Sound.record(); FX.confetti(90); }
         Render._hudDirty = true;
+      }
+
+      const refilled = Engine.refillAfterEmpty(chain);
+      if (refilled.length) {
+        Render.syncAll();
+        refilled.forEach((idx) => Render.spawnAnim(idx));
+        State.emptyBonusClaimed = false;
+        State.minIcons = Math.min(State.minIcons, State.iconCount);
       }
 
       const msg = `Tablero limpio · +${points} · +${coins} ${I18n.t('coins')}${extra.length ? ' · ' + extra.join(' · ') : ''}`;

@@ -11,7 +11,7 @@ require('./dom-stub.js');
 require('../game.js');
 
 const cv = globalThis.window.__cv;
-const { State, Engine, Config, Game, Meta, I18n } = cv;
+const { State, Engine, Config, Game, Meta, I18n, RNG } = cv;
 
 /* ---------- utilidades ---------- */
 const SIZE = Config.SIZE; // 8
@@ -144,6 +144,64 @@ test('_pickSpawnId: por encima del umbral el spawn es aleatorio del pool', () =>
   const seen = new Set();
   for (let i = 0; i < 200; i++) seen.add(Engine._pickSpawnId());
   assert.ok(seen.size >= 3, 'debería muestrear varios iconos distintos del pool');
+});
+
+/* =================================================================
+ * Refill tras tablero limpio en modos sin fin por vaciado
+ * ================================================================= */
+
+test('emptyRefillTarget: escala por dificultad y cadena de tableros limpios', () => {
+  freshBoard();
+  State.mode = 'zen';
+  State.diff = 'facil';
+  assert.equal(Engine.emptyRefillTarget(1), 10);
+
+  State.diff = 'dificil';
+  assert.equal(Engine.emptyRefillTarget(1), 13);
+
+  State.mode = 'contrarreloj';
+  State.diff = 'normal';
+  assert.equal(Engine.emptyRefillTarget(1), 12);
+  assert.equal(Engine.emptyRefillTarget(3), 18);
+  assert.equal(Engine.emptyRefillTarget(99), 24);
+});
+
+test('refillAfterEmpty: repuebla equilibrado y deja al menos una jugada', () => {
+  freshBoard();
+  RNG.seed('empty-refill-balanced');
+  State.mode = 'contrarreloj';
+  State.diff = 'normal';
+  State.level = 1;
+  State.pool = Engine.poolForLevel(1);
+
+  const target = Engine.emptyRefillTarget(1);
+  const placed = Engine.refillAfterEmpty(1);
+  assert.equal(placed.length, target);
+  assert.equal(State.iconCount, target);
+  assert.equal(Engine.hasMoves(), true, 'el refill debe sembrar una convergencia posible');
+
+  const counts = State.board.filter(Boolean).reduce((acc, id) => {
+    acc[id] = (acc[id] || 0) + 1;
+    return acc;
+  }, {});
+  const values = Object.values(counts);
+  assert.ok(values.length >= 3, 'debe usar varios iconos del pool');
+  assert.ok(Math.max(...values) <= Math.ceil(target / values.length) + 2, 'la distribucion no debe concentrarse en un solo icono');
+});
+
+test('refillAfterEmpty: respeta tiles y sigue jugable con obstaculos', () => {
+  freshBoard();
+  RNG.seed('empty-refill-obstacles');
+  State.mode = 'supervivencia';
+  State.diff = 'dificil';
+  State.level = 8;
+  State.pool = Engine.poolForLevel(State.level);
+  for (let r = 0; r < SIZE; r++) State.tiles[at(r, 3)] = { type: 'rock', solid: true };
+
+  const placed = Engine.refillAfterEmpty(2);
+  assert.ok(placed.length > 0, 'debe colocar iconos aunque haya obstaculos');
+  assert.ok(placed.every((idx) => !State.tiles[idx]), 'no debe colocar iconos sobre tiles');
+  assert.equal(Engine.hasMoves(), true, 'el tablero repoblado debe ser continuable');
 });
 
 /* =================================================================
