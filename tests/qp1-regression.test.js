@@ -39,6 +39,32 @@ test('B-01: RunSave excluye Contrarreloj/Reto (guardar y cargar)', () => {
   RunSave.clear();
 });
 
+test('QP: Contrarreloj termina al llenarse el tablero aunque quede tiempo', () => {
+  Game.start('contrarreloj', 'normal', undefined, 321);
+  State.board = new Array(64).fill(State.pool[0]);
+  State.tiles = new Array(64).fill(null);
+  State.iconCount = 64;
+  State.timeLeft = 45;
+  State.status = 'playing';
+  Game.doSpawn();
+  assert.equal(State.status, 'over');
+  assert.equal($q('#over-reason').textContent, cv.I18n.t('reason_full'));
+});
+
+test('QP: Contrarreloj termina cuando el spawn ocupa la ultima celda libre', () => {
+  Game.start('contrarreloj', 'normal', undefined, 322);
+  State.board = new Array(64).fill(State.pool[0]);
+  State.tiles = new Array(64).fill(null);
+  State.board[12] = null;
+  State.iconCount = 63;
+  State.timeLeft = 45;
+  State.status = 'playing';
+  Game.doSpawn();
+  assert.equal(State.iconCount, 64);
+  assert.equal(State.status, 'over');
+  assert.equal($q('#over-reason').textContent, cv.I18n.t('reason_full'));
+});
+
 test('B-02: reanudar Aventura no regala los niveles de objetivo score', () => {
   Meta.advReach(3); // el nivel guardado es el máximo alcanzado (caso real)
   const mkSave = (extra) => Object.assign({
