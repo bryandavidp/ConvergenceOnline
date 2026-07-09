@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.1';
+  const VERSION = '2.6.2';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -109,6 +109,7 @@
     TIMED_START: 60,          // s reloj inicial
     TIMED_CAP: 90,            // s máximo en el reloj (tope duro)
     TIMED_MISTAKE_S: 3,       // GM-11: el error en score-attack cuesta segundos, no iconos
+    TIMED_GAIN: { base: 0.9, perIcon: 0.6, combo: 0.32, comboCap: 4, decaySec: 125, minDecay: 0.08 },
     SPRINT_WINDOW: 10,        // GM-10: sprint final — con <=10s en el reloj...
     SPRINT_MULT: 1.5,         // ...todos los puntos ×1.5 (riesgo-recompensa: cabalgar el borde)
     // GM-26: warm-up de apertura — el intervalo de spawn se multiplica ×0.55 los
@@ -4594,8 +4595,9 @@
         // Tiempo ganado MODESTO, con TOPE de reloj y RENDIMIENTO DECRECIENTE: los
         // combos ya recompensan con puntos; el tiempo no se acumula sin límite ni
         // hace la partida infinita. (Antes: hasta +20s por convergencia, sin tope.)
-        const decay = clamp(1 - State.elapsed / 150, 0.4, 1);      // 100% -> 40% hacia el min ~150s
-        const raw = (2 + Math.min(removed, 4) + Math.min(State.combo, 4)) * decay;  // ~2..10s, decreciente
+        const tg = Config.TIMED_GAIN;
+        const decay = clamp(1 - State.elapsed / tg.decaySec, tg.minDecay, 1);
+        const raw = (tg.base + Math.min(removed, 4) * tg.perIcon + Math.min(State.combo, tg.comboCap) * tg.combo) * decay;
         const before = State.timeLeft;
         State.timeLeft = Math.min(Config.TIMED_CAP, State.timeLeft + raw);
         const got = Math.round(State.timeLeft - before);
@@ -4806,7 +4808,7 @@
       const idx = Engine.spawnOne();
       if (idx < 0) { // no queda casilla vacía colocable: el tablero está lleno
         if (m.endless) { Rules.call('onOverflow'); return; }     // surv/zen lo gestionan
-        if (m.scoreAttack) return;                                // contrarreloj: el reloj decide
+        if (m.scoreAttack) { this.gameOver(I18n.t('reason_full')); return; }
         // Clásico/Aventura: tablero lleno = atasco real (sin huecos no hay jugada).
         // 1) Reliquia escudo de Aventura (GM-07): la 1ª derrota del capítulo se
         //    convierte en un despeje del 30% — gratis, la reliquia hace su trabajo.
@@ -4842,6 +4844,7 @@
         this._overflowLose(); return;
       }
       Render.syncCell(idx); Render.spawnAnim(idx);
+      if (m.scoreAttack && !Engine.emptyCells().length) { this.gameOver(I18n.t('reason_full')); return; }
       if (m.scoreAttack) {
         // Contrarreloj: presión CRECIENTE con el tiempo => la partida es finita
         // aunque ganes tiempo (los spawns acaban superando al jugador).
@@ -5000,10 +5003,6 @@
         extra.push('+25% carga', '+24% ' + I18n.t('surv_frenzy'));
       } else {
         Render.boardEvent('board-clear-bonus', 950);
-      }
-      if (m.scoreAttack) {
-        const add = Math.min(8, Math.max(0, Math.round(Config.TIMED_CAP - State.timeLeft)));
-        if (add > 0) { State.timeLeft += add; extra.push('+' + add + 's'); }
       }
       if (State.mode === 'zen') {
         State.hintsLeft = Math.min(9, State.hintsLeft + 1);

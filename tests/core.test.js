@@ -221,6 +221,7 @@ test('MILESTONES y constantes de balance intactas', () => {
   assert.equal(Config.FEVER_BOOST, 1.25);
   assert.equal(Config.TIMED_START, 60);
   assert.equal(Config.TIMED_CAP, 90);
+  assert.deepEqual(Config.TIMED_GAIN, { base: 0.9, perIcon: 0.6, combo: 0.32, comboCap: 4, decaySec: 125, minDecay: 0.08 });
 });
 
 test('DIFFICULTY: los tres tiers con sus 6 parámetros', () => {

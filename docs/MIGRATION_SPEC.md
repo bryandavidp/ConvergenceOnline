@@ -66,8 +66,7 @@ Algoritmo `converging(i)`:
 - `emptyCells()` = celdas con `board[i]===null` y sin tile (los tiles sólidos nunca son destino de spawn).
 - Si no hay celda vacía:
   - Modos `endless` → hook `onOverflow()` (Supervivencia pierde una vida; Zen hace un despeje parcial).
-  - Modos `scoreAttack` (Contrarreloj) → simplemente se omite el spawn (el reloj decide el fin).
-  - Resto (Clásico/Aventura) → **derrota dura** por tablero lleno (`gameOver('reason_full')`).
+  - Resto, incluido `scoreAttack` (Contrarreloj/Reto) → **derrota dura** por tablero lleno (`gameOver('reason_full')`).
 - Si hay celda vacía: se elige una al azar y un id de icono vía `_pickSpawnId()` (ver §13, sesgo anti-frustración).
 - **Auto-aceleración del spawn:**
   - Modos normales: `spawnRate = max(spawnMin, spawnRate - 3)` en cada spawn (aceleración lenta dentro del nivel).
@@ -95,7 +94,7 @@ Escanea todas las celdas vacías buscando alguna con `converging(i).length >= 2`
 - Modos `endless`/`scoreAttack`: sin "nivel completado"; en su lugar se dispara `emptyBoardBonus()` una vez por cada vez que el tablero queda vacío.
 - Resto (Clásico/Aventura/Tutorial): victoria por defecto = tablero completamente vacío (`iconCount === 0`), condicionado por el hook `boardClearWins()` (en Aventura solo aplica si el objetivo del nivel es `'clear'`). La derrota por tablero lleno se maneja en el spawn, no aquí.
 
-**Razones de fin de partida:** `reason_full` (tablero lleno sin espacio para spawnear, modos no-endless/no-scoreAttack), `reason_time` (reloj de Contrarreloj llega a 0), razones específicas de Aventura/Supervivencia (ej. `reason_surv`).
+**Razones de fin de partida:** `reason_full` (tablero lleno sin espacio para spawnear, excepto modos endless que lo interceptan), `reason_time` (reloj de Contrarreloj llega a 0), razones específicas de Aventura/Supervivencia (ej. `reason_surv`).
 
 ---
 
@@ -125,7 +124,7 @@ Densidad de obstáculos por nivel: `dens = min(0.13, 0.015 + n*0.0021 + worldInd
 **Rutas de capítulo (v2.3.0, GM-06):** al entrar en un capítulo se elige 1 de 2 rutas (estado volátil de run, no persiste en RunSave): `dense` («exigente»: refuerza el obstáculo del bioma y fija `State.tempMult = 1.25` durante el capítulo — visible en el chip de multiplicador) o `calm` («serena»: `spawnRate ×1.15`, sin bonus). La ruta caduca en la frontera de capítulo. **Reliquias de jefe (v2.3.0, GM-07):** al superar un nivel jefe se elige 1 de 3 pasivas de run (máx. 3 activas, FIFO): `combo` (ventana +400ms), `crystal` (cristales +30 extra), `hint` (+1 pista/nivel), `shield` (la 1ª derrota por tablero lleno de cada capítulo despeja el 30% en vez de terminar). Se muestran en el banner de objetivo.
 
 ### 2.4 Contrarreloj (`contrarreloj`)
-`timed:true, scoreAttack:true, penalties:true, mult:1.2, initialIcons:22`, objetivo "sumar puntos a contrarreloj". `TIMED_START = 60`s, `TIMED_CAP = 90`s (tope duro del reloj). Cada convergencia repone tiempo con rendimientos decrecientes (fórmula en §6.4). El spawn se acelera exponencialmente con el tiempo transcurrido (ver §1.4) y aplica DDA de hambre de tablero tras el warm-up (`spawnFactor`: 0.65 con ≤10 iconos, 0.85 con ≤16, 1.1 con ≥30). Termina cuando `timeLeft <= 0`. El Reto del día hereda estos valores porque es Contrarreloj seedeado.
+`timed:true, scoreAttack:true, penalties:true, mult:1.2, initialIcons:22`, objetivo "sumar puntos a contrarreloj". `TIMED_START = 60`s, `TIMED_CAP = 90`s (tope duro del reloj). Cada convergencia repone tiempo con rendimientos decrecientes (fórmula en §6.6). El spawn se acelera exponencialmente con el tiempo transcurrido (ver §1.4) y aplica DDA de hambre de tablero tras el warm-up (`spawnFactor`: 0.65 con ≤10 iconos, 0.85 con ≤16, 1.1 con ≥30). Termina cuando `timeLeft <= 0` o cuando el tablero llega al 100% y no queda celda colocable. El Reto del día hereda estos valores porque es Contrarreloj seedeado.
 
 **Sprint final (v2.2.0, GM-10):** mientras `0 < timeLeft <= SPRINT_WINDOW (10s)`, todos los puntos (convergencias y bonus de tablero vacío) van `× SPRINT_MULT (1.5)`. Como el tiempo puede volver a subir, el jugador puede elegir "cabalgar el borde" (riesgo-recompensa continuo). El error en este modo resta `TIMED_MISTAKE_S (3)` segundos (ver §1.5).
 
@@ -397,11 +396,12 @@ Puntos flat añadidos exactamente cuando `combo` es igual a 10, 20 o 30.
 
 ### 6.6 Bono de tiempo en Contrarreloj
 ```
-decay = clamp(1 - elapsed/150, 0.4, 1)                            // 100%→40% hacia los ~150s
-raw   = (2 + min(removed,4) + min(combo,4)) * decay                // ~2..10s por convergencia, decayendo
+tg = TIMED_GAIN { base:0.9, perIcon:0.6, combo:0.32, comboCap:4, decaySec:125, minDecay:0.08 }
+decay = clamp(1 - elapsed/tg.decaySec, tg.minDecay, 1)             // 100%→8% hacia los ~125s
+raw   = (tg.base + min(removed,4)*tg.perIcon + min(combo,4)*tg.combo) * decay
 timeLeft = min(TIMED_CAP(90), timeLeft + raw)                       // tope duro
 ```
-Diseño deliberado para impedir alargar la partida indefinidamente encadenando combos.
+Diseño deliberado para que una buena racha compre segundos, pero el reloj pueda agotarse. El bono de tablero limpio no repone tiempo; la cápsula de tiempo sigue siendo el pickup puntual de +5s.
 
 ### 6.7 Callouts de "rank" al subir de tier de combo
 Se muestran cuando el multiplicador sube de tier (y `combo >= 3`):
@@ -419,7 +419,7 @@ raw    = EMPTY_BOARD_BONUS(500) + chain*90 + combo*28 + (Supervivencia ? wave*45
 points = max(250, round(raw * diff.scoreMult * mode.mult * feverBoost() * tempMult))
 coins  = clamp(round(points/220), 3, 16)
 ```
-Además: en Supervivencia +25% de carga de booster y +24 de frenesí; en Contrarreloj hasta +8s de tiempo; en Zen +1 pista (tope 9). En modos no-endless, el bono de "tablero perfecto" es más simple: flat `EMPTY_BOARD_BONUS = 500`.
+Además: en Supervivencia +25% de carga de booster y +24 de frenesí; en Contrarreloj solo puntúa/monedas y repuebla el tablero; en Zen +1 pista (tope 9). En modos no-endless, el bono de "tablero perfecto" es más simple: flat `EMPTY_BOARD_BONUS = 500`.
 
 ### 6.9 XP y monedas ganadas por partida (`recordGame`)
 ```
@@ -608,6 +608,7 @@ FEVER_BOOST: 1.25
 TIMED_START: 60
 TIMED_CAP: 90
 TIMED_MISTAKE_S: 3                    // v2.2.0 (GM-11)
+TIMED_GAIN: { base:0.9, perIcon:0.6, combo:0.32, comboCap:4, decaySec:125, minDecay:0.08 }
 SPRINT_WINDOW: 10                     // v2.2.0 (GM-10)
 SPRINT_MULT: 1.5                      // v2.2.0 (GM-10)
 WARMUP: { ms: 10000, convs: 3, factor: 0.55, rampMs: 2000 }   // v2.2.0 (GM-26)
