@@ -1060,6 +1060,8 @@ body.time-critical .board-wrap { box-shadow: 0 0 0 1px rgba(255,93,115,.38), 0 0
 .cell.tile-crystal::after { content: ''; position: absolute; top: 2px; right: 2px; width: 40%; height: 40%; background: center / contain no-repeat url(img/ui/crystal.png); filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
 .cell.tile-locked { background: #2a2f3c; }
 .cell.tile-locked::after { content: ''; position: absolute; inset: 0; background: center / 54% no-repeat url(img/ui/lock.png); filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.55)); }
+.cell.tile-locked.lock-cracked { opacity: .62; }
+.cell.tile-locked.lock-cracked::after { opacity: .54; transform: scale(.86) rotate(-7deg); }
 .cell.tile-infected { box-shadow: 0 0 0 2px rgba(120, 230, 120, .6) inset; }
 .cell.tile-infected::after {
   content: '';

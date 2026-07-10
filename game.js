@@ -1076,9 +1076,15 @@
       const el = this.cells[i];
       const cls = def ? def.cls : '';
       Tiles.CLASSES.forEach((c) => el.classList.toggle(c, c === cls));
-      el.classList.remove('ice-1', 'ice-2', 'ice-3');
+      el.classList.remove('ice-1', 'ice-2', 'ice-3', 'lock-1', 'lock-2', 'lock-cracked');
       if (type === 'frozen') el.classList.add('ice-' + clamp(t.taps || 1, 1, 3));
-      if (type !== 'rock') el.classList.remove('rock-cracked');
+      if (type === 'locked') {
+        const hits = clamp(t.hits || 1, 1, 2);
+        el.classList.add('lock-' + hits);
+        el.classList.toggle('lock-cracked', hits <= 1);
+      }
+      if (type === 'rock') el.classList.toggle('rock-cracked', t.hits != null && (t.hits || 1) <= 1);
+      else el.classList.remove('rock-cracked');
       // Glifo de objetos especiales/obstáculos con etiqueta propia (p. ej. "+30").
       el.dataset.tileGlyph = (def && def.trigger) ? def.glyph : '';
     },
@@ -2776,7 +2782,9 @@
   /* ===================== Survival (Supervivencia 2.0: oleadas, vidas, boosters, trampas) ===================== */
   const Survival = {
     WAVE_MS: 22000, MAX_LIVES: 3, CHARGE_PER: 9, BOOSTERS: ['bomb', 'freeze', 'clearLine', 'wild', 'x2'],
-    ROCK_CAP: 10, ROCK_HITS: 2,   // las rocas NO son permanentes: tope de cobertura + se rompen por convergencia adyacente
+    SPECIAL_CAP: { facil: 6, normal: 7, dificil: 8 },
+    BLOCK_CAP: { facil: 4, normal: 5, dificil: 6 },
+    BOMB_CAP: { facil: 2, normal: 2, dificil: 3 },
     // Tabla de escalado por dificultad (curva "perfecta", iterable desde un solo sitio).
     // waveMs: duración de oleada · lives: vidas · spawnDecay/Floor: aceleración de spawns ·
     // trapBase/Cap: densidad de trampas (·oleada) · varEvery: cada cuántas oleadas suben los iconos ·
@@ -2961,13 +2969,22 @@
     x2Active() { return performance.now() < this.x2Until; },
     _emptyIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) a.push(i); return a; },
     _filledIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) a.push(i); return a; },
-    _rockIdx() { const a = []; for (let i = 0; i < State.board.length; i++) { const t = State.tiles[i]; if (t && t.type === 'rock') a.push(i); } return a; },
-    BOMB_CAP: 6,
+    _specialCap() { return this.SPECIAL_CAP[State.diff] || this.SPECIAL_CAP.normal; },
+    _blockCap() { return this.BLOCK_CAP[State.diff] || this.BLOCK_CAP.normal; },
+    _bombCap() { return this.BOMB_CAP[State.diff] || this.BOMB_CAP.normal; },
+    _blockHits() {
+      const start = State.diff === 'dificil' ? 5 : State.diff === 'normal' ? 7 : 9;
+      return this.wave >= start ? 2 : 1;
+    },
+    _specialIdx() { const a = []; for (let i = 0; i < State.tiles.length; i++) if (State.tiles[i] && State.tiles[i].type !== 'crystal') a.push(i); return a; },
+    _specialRoom(reserve = 0) { return Math.max(0, this._specialCap() - this._specialIdx().length - Math.max(0, reserve || 0)); },
+    _isBlockTile(t) { return !!(t && (t.type === 'rock' || t.type === 'locked') && t.hits != null); },
+    _blockIdx() { const a = []; for (let i = 0; i < State.tiles.length; i++) if (this._isBlockTile(State.tiles[i])) a.push(i); return a; },
     _bombIdx() { const a = []; for (let i = 0; i < State.tiles.length; i++) { const t = State.tiles[i]; if (t && t.trigger === 'bomb') a.push(i); } return a; },
     // Coloca pickups-bomba en casillas vacías (tope para no saturar). Detonan al
     // eliminar un icono adyacente (encadenan) o al tocarlas.
     _placeBombs(n) {
-      const room = this.BOMB_CAP - this._bombIdx().length; if (room <= 0) return;
+      const room = Math.min(this._bombCap() - this._bombIdx().length, this._specialRoom()); if (room <= 0) return;
       const e = this._emptyIdx(), k = Math.min(n, room, e.length); const placed = [];
       for (let x = 0; x < k; x++) { const idx = e.splice(rand(e.length), 1)[0]; State.tiles[idx] = Tiles.make('bomb'); placed.push(idx); }
       if (placed.length) { Render.syncAll(); placed.forEach((i) => Render.cellPulse(i, 'bomb-cleared', 600)); }
@@ -2976,21 +2993,24 @@
     _slowdownIdx() { return State.tiles.map((t, i) => (t && t.type === 'slowdown' ? i : -1)).filter((i) => i >= 0); },
     _placeSlowdown() {
       if (this._slowdownIdx().length >= this.SLOWDOWN_CAP) return;
+      if (this._specialRoom() <= 0) return;
       const e = this._emptyIdx(); if (!e.length) return;
       const idx = e[rand(e.length)];
       State.tiles[idx] = Tiles.make('slowdown');
       Render.syncAll(); Render.cellPulse(idx, 'slowdown-placed', 700);
     },
     _traps(density) {
-      const e = this._emptyIdx(); let n = Math.floor(e.length * density);
-      let rocks = this._rockIdx().length;   // tope de cobertura: el tablero nunca se "brickea"
+      const e = this._emptyIdx();
+      const bombReserve = this._bombIdx().length < this._bombCap() ? 1 : 0;
+      let n = Math.min(e.length, this._specialRoom(bombReserve), Math.max(this.wave >= 3 ? 1 : 0, Math.floor(e.length * density)));
+      let blocks = this._blockIdx().length;   // tope de cobertura: el tablero nunca se "brickea"
       for (let k = 0; k < n && e.length; k++) {
         const idx = e.splice(rand(e.length), 1)[0];
-        // Las rocas (ahora ROMPIBLES, con hits) bajan de proporción a ~45% y respetan el tope.
+        // Los candados son bloqueos rompibles y respetan el tope de cobertura.
         // Semana del hielo (GM-22): todas las trampas son heladas.
-        if (this.mut.id !== 'ice' && rocks < this.ROCK_CAP && RNG.random() < 0.45) {
-          const t = Tiles.make('rock'); t.hits = this.ROCK_HITS; State.tiles[idx] = t; rocks++;
-        } else { State.tiles[idx] = Tiles.make('frozen'); State.board[idx] = State.pool[rand(State.pool.length)]; State.iconCount++; }
+        if (this.mut.id !== 'ice' && blocks < this._blockCap() && RNG.random() < 0.55) {
+          const t = Tiles.make('locked'); t.hits = this._blockHits(); State.tiles[idx] = t; blocks++;
+        } else { State.tiles[idx] = Tiles.make('frozen'); }
       }
       Render.syncAll();
     },
@@ -3120,7 +3140,7 @@
     frostSurge() {
       this._lock(760, 'surv-frost');
       const f = this._filledIdx(), placed = [];
-      const n = Math.min(3 + Math.floor(this.wave / 4), f.length);
+      const n = Math.min(3 + Math.floor(this.wave / 4), f.length, this._specialRoom());
       for (let k = 0; k < n && f.length; k++) {
         const idx = f.splice(rand(f.length), 1)[0];
         if (!State.tiles[idx]) { State.tiles[idx] = Tiles.make('frozen'); placed.push(idx); }
@@ -3142,7 +3162,7 @@
       const removed = ctx ? (ctx.removed || 0) : 0;
       this.addFrenzy(4 + Math.min(22, removed * 2 + Math.min(combo || 0, 10)));
       if (this.frenzyActive()) this.charge = Math.min(100, this.charge + 4);
-      // Romper rocas (con hits) ortogonalmente adyacentes a la acción: la casilla
+      // Romper bloqueos ortogonalmente adyacentes a la acción: la casilla
       // central tocada + cada icono eliminado. Da agencia y evita el bloqueo permanente.
       if (ctx) {
         const seen = new Set();
@@ -3152,22 +3172,22 @@
           for (const [rr, cc] of nb) {
             if (rr < 0 || cc < 0 || rr > 7 || cc > 7) continue;
             const j = rr * 8 + cc, t = State.tiles[j];
-            if (t && t.type === 'rock' && t.hits != null && !seen.has(j)) seen.add(j);
+            if (this._isBlockTile(t) && !seen.has(j)) seen.add(j);
           }
         };
         if (ctx.center != null) mark(ctx.center);
         if (ctx.cells) ctx.cells.forEach(mark);
-        seen.forEach((j) => this._crackRock(j));
+        seen.forEach((j) => this._crackBlock(j));
       }
       this.render();
     },
-    _crackRock(j) {
-      const t = State.tiles[j]; if (!t || t.type !== 'rock') return;
+    _crackBlock(j) {
+      const t = State.tiles[j]; if (!this._isBlockTile(t)) return;
       t.hits = (t.hits || 1) - 1;
-      if (t.hits > 0) { Render.cells[j].classList.add('rock-cracked'); Sound.tap(); return; }
+      if (t.hits > 0) { Render.setTile(j); Sound.tap(); return; }
       // Rota: desaparece (libera la casilla) con estallido.
       FX.burst(j, '#c2cbe0', 5);
-      Render.cells[j].classList.remove('rock-cracked');
+      Render.cells[j].classList.remove('rock-cracked', 'lock-cracked');
       State.tiles[j] = null; Render.syncCell(j);
       Sound.eliminate(1); Haptics.tap();
     },
@@ -3189,10 +3209,10 @@
         const idx = f.splice(rand(f.length), 1)[0];
         this._powerClear(idx, cleared, 4);
       }
-      // El alivio también ROMPE bloqueos: quita ~la mitad de las rocas para dar respiro real.
-      const rocks = this._rockIdx(); let rn = Math.ceil(rocks.length * 0.5);
-      for (let k = 0; k < rn && rocks.length; k++) {
-        const idx = rocks.splice(rand(rocks.length), 1)[0];
+      // El alivio también ROMPE bloqueos: quita ~la mitad para dar respiro real.
+      const blocks = this._blockIdx(); let rn = Math.ceil(blocks.length * 0.5);
+      for (let k = 0; k < rn && blocks.length; k++) {
+        const idx = blocks.splice(rand(blocks.length), 1)[0];
         this._powerClear(idx, cleared, 4);
       }
       Render.syncAll();
@@ -3311,11 +3331,12 @@
         State.board[j] = null;
         State.iconCount = Math.max(0, State.iconCount - 1);
       } else {
-        FX.burst(j, t && t.type === 'rock' ? '#c2cbe0' : '#dffbff', Math.max(3, fxN - 1));
+        FX.burst(j, t && (t.type === 'rock' || t.type === 'locked') ? '#c2cbe0' : '#dffbff', Math.max(3, fxN - 1));
       }
       if (t) {
         if (t.type === 'frozen') Render.iceBreak(j);
         if (t.type === 'rock') Render.cells[j].classList.remove('rock-cracked');
+        if (t.type === 'locked') Render.cells[j].classList.remove('lock-cracked');
         State.tiles[j] = null;
       }
       cleared.push(j);
@@ -3329,7 +3350,7 @@
     _lineScore(cells) {
       return cells.reduce((sum, j) => {
         const t = State.tiles[j];
-        return sum + (State.board[j] !== null ? 2 : 0) + (t ? (t.type === 'rock' ? 1.35 : 1) : 0);
+        return sum + (State.board[j] !== null ? 2 : 0) + (t ? (t.type === 'rock' || t.type === 'locked' ? 1.35 : 1) : 0);
       }, 0);
     },
     _bomb() {

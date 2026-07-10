@@ -11,7 +11,7 @@ require('./dom-stub.js');
 require('../game.js');
 
 const cv = globalThis.window.__cv;
-const { State, Engine, Config, Game, Meta, I18n, RNG } = cv;
+const { State, Engine, Config, Game, Meta, I18n, RNG, Survival, Render } = cv;
 
 /* ---------- utilidades ---------- */
 const SIZE = Config.SIZE; // 8
@@ -22,6 +22,17 @@ function freshBoard() {
   State.iconCount = 0;
 }
 const at = (r, c) => r * SIZE + c;
+function withSurvivalRenderStub(fn) {
+  const prevSyncAll = Render.syncAll;
+  const prevCellPulse = Render.cellPulse;
+  Render.syncAll = () => {};
+  Render.cellPulse = () => {};
+  try { return fn(); }
+  finally {
+    Render.syncAll = prevSyncAll;
+    Render.cellPulse = prevCellPulse;
+  }
+}
 
 /* =================================================================
  * Engine.converging — la mecánica core del juego
@@ -202,6 +213,53 @@ test('refillAfterEmpty: respeta tiles y sigue jugable con obstaculos', () => {
   assert.ok(placed.length > 0, 'debe colocar iconos aunque haya obstaculos');
   assert.ok(placed.every((idx) => !State.tiles[idx]), 'no debe colocar iconos sobre tiles');
   assert.equal(Engine.hasMoves(), true, 'el tablero repoblado debe ser continuable');
+});
+
+test('supervivencia: bombas limitadas a dos o tres en pantalla', () => {
+  freshBoard();
+  State.mode = 'supervivencia';
+  State.level = 1;
+  State.pool = Engine.poolForLevel(1);
+  Survival.wave = 12;
+
+  State.diff = 'normal';
+  RNG.seed('surv-bomb-cap-normal');
+  withSurvivalRenderStub(() => Survival._placeBombs(10));
+  assert.equal(Survival._bombIdx().length, 2);
+
+  freshBoard();
+  State.mode = 'supervivencia';
+  State.diff = 'dificil';
+  State.pool = Engine.poolForLevel(1);
+  RNG.seed('surv-bomb-cap-hard');
+  withSurvivalRenderStub(() => Survival._placeBombs(10));
+  assert.equal(Survival._bombIdx().length, 3);
+});
+
+test('supervivencia: especiales de oleada no cuentan como iconos de relleno', () => {
+  freshBoard();
+  State.mode = 'supervivencia';
+  State.diff = 'facil';
+  State.level = 1;
+  State.pool = Engine.poolForLevel(1);
+  Survival.wave = 9;
+  Survival.mut = { id: 'none' };
+  RNG.seed('surv-trap-budget');
+
+  withSurvivalRenderStub(() => Survival._traps(1));
+
+  assert.equal(State.iconCount, 0, 'los especiales nuevos no deben sumar iconos ocultos');
+  assert.ok(Survival._specialIdx().length > 0, 'debe colocar alguna trampa de oleada');
+  assert.ok(Survival._specialIdx().length <= Survival._specialCap(), 'debe respetar el presupuesto total de especiales');
+});
+
+test('supervivencia: bloqueos escalan de uno a dos toques por dificultad', () => {
+  State.diff = 'facil'; Survival.wave = 8; assert.equal(Survival._blockHits(), 1);
+  State.diff = 'facil'; Survival.wave = 9; assert.equal(Survival._blockHits(), 2);
+  State.diff = 'normal'; Survival.wave = 6; assert.equal(Survival._blockHits(), 1);
+  State.diff = 'normal'; Survival.wave = 7; assert.equal(Survival._blockHits(), 2);
+  State.diff = 'dificil'; Survival.wave = 4; assert.equal(Survival._blockHits(), 1);
+  State.diff = 'dificil'; Survival.wave = 5; assert.equal(Survival._blockHits(), 2);
 });
 
 /* =================================================================
