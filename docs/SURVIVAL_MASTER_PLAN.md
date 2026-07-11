@@ -274,6 +274,7 @@ Esfuerzo: 🟢 horas · 🟡 días · 🟡🟡 semana. Cada fase cierra con: tes
 | SV-14 | Polish de revivir: «te faltan {n}», qué recibes, contador /3, fade de música | 🟢 | Claridad sin presión (ética intacta) | — | Prohibido añadir cuenta atrás (§12) |
 
 ### Fase SV-γ — Pico y final (🟡) — cierra R-18 y EGF-08/09/10
+> ✅ **Fase completada el 2026-07-11 (v2.6.6).** Detalle en el registro al final. Batería de control del sim idéntica bit a bit a v2.6.5 (los FX/feedback no tocan RNG). perf-probe no ejecutable localmente (sin Playwright, documentado en QA_PERF_PLAN §3); cumplimiento del presupuesto verificado por revisión de la regla del design system (infinite = transform/opacity + reduced-fx; one-shot box-shadow <700ms).
 
 | ID | Tarea | Esf. | Justificación | Dep. | Guardarraíl |
 |---|---|---|---|---|---|
@@ -338,6 +339,14 @@ GM-04 pertenece a Clásico (§5) y su bloqueante es el generador de puzles solve
 ---
 
 # Registro de implementación
+
+### 2026-07-11 — Fase SV-γ implementada (v2.6.6)
+
+- **SV-20 · Pico del jefe**: `bossEvent()` ya no lanza confeti/haptics al CAER el jefe (celebraba la amenaza, N6). Nueva secuencia A-P-E: anticipación (bandera + aviso, ya existía) → peligro (evento) → **beat «¡JEFE SUPERADO!»** (`_bossSurvived()`, +1.2s vía `_bossSurvivedAt` en `onTick`, solo si sigues vivo — el jefe pudo desbordar y matarte) → codicia (bendición, +1.7s). El confeti + `rankFlash` + `Sound.record` viven ahora en el beat de superación. Gancho de audio para QP-4 documentado en el método. Eliminado el `Haptics.milestone()` duplicado.
+- **SV-21 · Celebraciones de hito**: (a) **récord de oleada vivo** — al batirlo, `#surv-best-wave` pasa a estado dorado «Récord: oleada N ¡y subiendo!» el resto de la run (`_liveRecord` + `.record-live`); (b) **furia máxima** — primer frenesí tier 3 de la run dispara callout `rankFlash` «¡FURIA MÁXIMA!» una sola vez (`_frenzyT3Seen`); (c) **última vida** — `#surv-lives.last-life` con pulso lento (única animación `infinite` del modo: elemento diminuto, transform/opacity, en `reduced-fx`); (d) **reveal épico** — `.pick-opt.rarity-epic` con glow one-shot (.6s box-shadow, <700ms) + barrido dorado compositado (transform), anulados en `reduced-fx`. Además la hazaña "sin potenciadores": `_noBoosterSinceBoss` se rompe en `_applyGlobal`/`applyBoosterAt` y el beat muestra «sin potenciadores ✦» si se mantuvo.
+- **SV-22 · Modal de fin reordenado** (cierra R-18): héroe `#over-hero` con la **OLEADA** como protagonista (no el score) + contexto de récord — «¡Nuevo récord de oleada!» (dorado), «A {k} de tu récord (oleada {best})» (near-miss, solo si k≤3) o «Tu récord: oleada {best}». Fila `#over-run` con la **hoja de la run**: iconos de las bendiciones elegidas en orden (`_boonLog`) + «{n} jefes superados» (`_bossesSurvived`). El badge `#over-record` deja de mostrar el récord de oleada (el héroe lo posee, sin duplicar el trofeo). El CTA «Reintentar» ya relanzaba directo con la misma dificultad (`restart()` → `start('supervivencia', diff)`), cumpliendo la regla pico-final sin cambios. Sin ofertas en la derrota (ética intacta).
+- Verificación: `node --check` ✅ · suite 78/78 ✅ (+3 tests nuevos en `survival-phase.test.js`: beat programado, conteo de jefes con guarda de game-over, `_boonLog`, claves i18n) · eslint ✅ · batería sim supervivencia idéntica a v2.6.5 (control ✅) · smoke navegador vía inspección JS: reveal épico con `epicGlow`/`epicSweep`, héroe «Oleada 27 · A 2 de tu récord (oleada 29)» clase `near`, fila de run «👑🐌🧲 · 2 jefes superados». (Captura de pantalla no disponible: el capturador del pane hace timeout con las animaciones ambientales del tablero; verificación por texto/clases computadas en su lugar.)
+- i18n nuevas (ES+EN): `surv_boss_cleared`, `surv_boss_cleared_clean`, `surv_frenzy_max`, `surv_wave_record_live`, `surv_over_wave_new`, `surv_over_wave_near`, `surv_over_record`, `surv_run_bosses`.
 
 ### 2026-07-11 — Fase SV-β implementada (v2.6.5)
 

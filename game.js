@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.5';
+  const VERSION = '2.6.6';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -452,6 +452,10 @@
         surv_week_label: 'Esta semana', survmut_none: 'Semana clásica · sin modificador',
         surv_diff_facil_d: '4 vidas · ritmo suave · monedas ×0.85', surv_diff_normal_d: '3 vidas · estándar · monedas ×1', surv_diff_dificil_d: '3 vidas · ritmo alto · monedas ×1.3',
         surv_launch_record: 'Récord: oleada {w}', surv_launch_norecord: 'Aún sin récord',
+        surv_boss_cleared: '¡JEFE SUPERADO!', surv_boss_cleared_clean: '¡Jefe superado sin potenciadores! ✦',
+        surv_frenzy_max: '¡FURIA MÁXIMA!', surv_wave_record_live: 'Récord: oleada {w} ¡y subiendo!',
+        surv_over_wave_new: '🏆 ¡Nuevo récord de oleada!', surv_over_wave_near: 'A {k} de tu récord (oleada {best})', surv_over_record: 'Tu récord: oleada {best}',
+        surv_run_bosses: '{n} jefes superados',
         surv_frenzy: 'Frenesí', surv_frenzy_ready: '¡Frenesí activado!', surv_wave_reward: 'Oleada {w} · +{c} monedas',
         surv_milestone: 'Hito de oleada {w}', surv_wave_record: '¡Récord! Oleada {w}', surv_best_wave: 'Mejor oleada',
         surv_rewards: 'Recompensas', surv_reward_line: '+{c} monedas · +{g} gemas · +{ch} cofres', surv_time_record: '¡Récord de supervivencia!',
@@ -607,6 +611,10 @@
         surv_week_label: 'This week', survmut_none: 'Classic week · no modifier',
         surv_diff_facil_d: '4 lives · gentle pace · coins ×0.85', surv_diff_normal_d: '3 lives · standard · coins ×1', surv_diff_dificil_d: '3 lives · fast pace · coins ×1.3',
         surv_launch_record: 'Record: wave {w}', surv_launch_norecord: 'No record yet',
+        surv_boss_cleared: 'BOSS CLEARED!', surv_boss_cleared_clean: 'Boss cleared with no power-ups! ✦',
+        surv_frenzy_max: 'MAX FURY!', surv_wave_record_live: 'Record: wave {w} and climbing!',
+        surv_over_wave_new: '🏆 New wave record!', surv_over_wave_near: '{k} short of your record (wave {best})', surv_over_record: 'Your record: wave {best}',
+        surv_run_bosses: '{n} bosses cleared',
         surv_frenzy: 'Frenzy', surv_frenzy_ready: 'Frenzy active!', surv_wave_reward: 'Wave {w} · +{c} coins',
         surv_milestone: 'Wave {w} milestone', surv_wave_record: 'Record! Wave {w}', surv_best_wave: 'Best wave',
         surv_rewards: 'Rewards', surv_reward_line: '+{c} coins · +{g} gems · +{ch} chests', surv_time_record: 'Survival record!',
@@ -2855,6 +2863,8 @@
       this.freezeUntil = 0; this.x2Until = 0; this.frenzyUntil = 0; this.lockUntil = 0; this.runCoins = 0; this.runGems = 0; this.runChests = 0; this.newWaveRecord = false; this.revives = 0; State.tempMult = 1; this._r = { waveWarned: false, bossWarned: false };
       this.armed = null; this._preview = null; document.body.classList.remove('aiming');
       this.slowWaves = 0; this._boonAt = 0;
+      this._bossSurvivedAt = 0; this._noBoosterSinceBoss = true; this._frenzyT3Seen = false; this._liveRecord = false; // hitos SV-20/21
+      this._boonLog = []; this._bossesSurvived = 0; // resumen de la run (SV-22)
       this.scoreBoost = 0; this.magnetMoves = 0; this.goldenWaveWaves = 0;
       this.mut = this.weeklyMut(); // mutador semanal (GM-22)
       if (this.mut.id !== 'none') Toasts.show(I18n.t('survmut_' + this.mut.id), 'info', 2400, '📅');
@@ -2968,6 +2978,10 @@
       else if (id === 'magnet') this.magnetMoves = 5;
       else if (id === 'score_boost') this.scoreBoost = Math.min(this.SCORE_BOOST_CAP, (this.scoreBoost || 0) + 0.25);
       else if (id === 'golden_wave') this.goldenWaveWaves = 2;
+      // Registro de la run (SV-22): la cadena de bendiciones elegidas se muestra en
+      // el resumen como "hoja de la run" del Superviviente.
+      const bd = this.BOONS.find((b) => b.id === id);
+      (this._boonLog || (this._boonLog = [])).push({ id, icon: bd ? bd.icon : '✨' });
       Toasts.show(I18n.t('boon_' + id), 'good', 1800, '✨');
       Sound.record(); Haptics.milestone();
       Render.multChip(); // impulso/oleada dorada entran en el multiplicador visible
@@ -3004,7 +3018,14 @@
       this._syncMult(); this._setFrenzyClass(); this._syncIntensity();
       for (let k = 0; k < 2 + this.frenzyTier(); k++) Engine.spawnOne();
       Render.syncAll(); Render.fever(true); Render.flash(); FX.confetti(36);
-      Toasts.show(I18n.t('surv_frenzy_ready'), 'warn', 1800, 'fire');
+      // Primera FURIA MÁXIMA (tier 3) de la run: callout propio, una sola vez (SV-21).
+      if (this.frenzyTier() === 3 && !this._frenzyT3Seen) {
+        this._frenzyT3Seen = true;
+        Toasts.show(I18n.t('surv_frenzy_max'), 'warn', 2000, 'fire');
+        Render.rankFlash(I18n.t('surv_frenzy_max'), '#ff5cf0');
+      } else {
+        Toasts.show(I18n.t('surv_frenzy_ready'), 'warn', 1800, 'fire');
+      }
       Sound.fever(); Haptics.fever(); this.render();
     },
     _waveReward(clearedWave) {
@@ -3032,6 +3053,7 @@
       if (this.wave <= 1) return;
       if (Meta.survWaveRecord(this.wave)) {
         this.newWaveRecord = true;
+        this._liveRecord = true; // el récord batido se saborea el resto de la run (SV-21)
         Toasts.show(I18n.t('surv_wave_record').replace('{w}', this.wave), 'good', 2200, 'trophy');
         Render.flash(); FX.confetti(80); Sound.record(); Haptics.record();
       }
@@ -3138,6 +3160,8 @@
         Render.boardEvent('surv-wave-soon', 700);
         Sound.danger(); Haptics.fire(14);
       }
+      // Beat «¡SUPERADO!» (SV-20): entre el peligro y la bendición.
+      if (this._bossSurvivedAt && performance.now() >= this._bossSurvivedAt) { this._bossSurvivedAt = 0; this._bossSurvived(); }
       // Bendición post-jefe pendiente (GM-17): se ofrece cuando el evento se asentó.
       if (this._boonAt && performance.now() >= this._boonAt) { this._boonAt = 0; this.offerBoons(); }
       const isFrenzy = this.frenzyActive();
@@ -3195,10 +3219,25 @@
       else if (ev === 'quake') this.quake();
       else this.frostSurge();
       Haptics.milestone();
-      // Sobrevivir al jefe premia con una elección (GM-17), tras asentarse el evento.
+      // Pico del jefe (SV-20): la secuencia es anticipación → PELIGRO (aquí) →
+      // «¡SUPERADO!» (beat propio, +1.2s) → codicia (bendición, +1.7s). El confeti
+      // NO va aquí (celebraba la amenaza, N6): se mueve al beat de superación.
+      this._bossSurvivedAt = performance.now() + 1200;
+      this._noBoosterSinceBoss = true; // se anula si el jugador gasta un booster
       this._boonAt = performance.now() + 1700;
-      Haptics.milestone();
-      FX.confetti(40);
+    },
+    // Beat «¡SUPERADO!» (SV-20): el clímax "he sobrevivido al jefe" — el mejor
+    // momento del modo por fin tiene su propia fanfarria. Solo si sigues vivo (el
+    // jefe pudo desbordar el tablero y matarte). Gancho de audio para QP-4: aquí va
+    // la fanfarria corta de victoria de jefe.
+    _bossSurvived() {
+      if (State.status !== 'playing' || this.lives <= 0) return;
+      this._bossesSurvived = (this._bossesSurvived || 0) + 1;
+      const clean = !!this._noBoosterSinceBoss;
+      Toasts.show(I18n.t(clean ? 'surv_boss_cleared_clean' : 'surv_boss_cleared'), 'good', 1800, 'trophy');
+      Render.rankFlash(I18n.t('surv_boss_cleared'), '#ffd24d'); // no-op bajo reduced-fx
+      Render.flash(); FX.confetti(clean ? 54 : 40);
+      Sound.record(); Haptics.record();
     },
     // Marea (GM-20): marca las 2 filas exteriores y 1.2s después las llena de
     // iconos. Amenaza legible con counterplay: despeja esas zonas antes.
@@ -3378,6 +3417,7 @@
     },
     _applyGlobal(id) {
       this.inv[id]--;
+      this._noBoosterSinceBoss = false; // rompe la hazaña "sin potenciadores" (SV-20/21)
       Render.boosterPulse(id);
       if (id === 'freeze') { this.freezeUntil = performance.now() + 7000; Toasts.show(I18n.t('pu_freeze'), 'info', 1500, BOOSTER_IMG.freeze); Render.boardEvent('boost-freeze', 1200); }
       else if (id === 'x2') { this.x2Until = performance.now() + 11000; this._syncMult(); Toasts.show(I18n.t('pu_x2'), 'good', 1500, BOOSTER_IMG.x2); Render.boardEvent('boost-x2', 1200); }
@@ -3412,6 +3452,7 @@
     // Aplica el power-up espacial armado en la casilla elegida por el jugador.
     applyBoosterAt(id, i) {
       if ((this.inv[id] || 0) <= 0) { this.disarm(); return; }
+      this._noBoosterSinceBoss = false; // rompe la hazaña "sin potenciadores" (SV-20/21)
       // Escoba sobre casilla vacía: barrido automático del grupo más repetido.
       if (id === 'wild' && State.board[i] == null) {
         this.inv[id]--; Render.boosterPulse(id); this._lock(420, 'boost-wild'); this._wild();
@@ -3553,7 +3594,10 @@
     },
     render() {
       const r = this._r;
-      if (r.lives !== this.lives) { r.lives = this.lives; const lv = $('#surv-lives'); if (lv) lv.innerHTML = this.lives > 0 ? iconInline('heart').repeat(this.lives) : iconInline('skull'); }
+      if (r.lives !== this.lives) {
+        r.lives = this.lives; const lv = $('#surv-lives');
+        if (lv) { lv.innerHTML = this.lives > 0 ? iconInline('heart').repeat(this.lives) : iconInline('skull'); lv.classList.toggle('last-life', this.lives === 1); }
+      }
       if (r.wave !== this.wave) { r.wave = this.wave; const w = $('#surv-wave'); if (w) w.textContent = I18n.t('st_wave') + ' ' + this.wave; }
       const tier = this.dlevel(); if (r.tier !== tier) { r.tier = tier; const tEl = $('#surv-tier'); if (tEl) tEl.textContent = 'N' + tier; }
       const sec = Math.floor(this.survSec); if (r.sec !== sec) { r.sec = sec; const t = $('#surv-time'); if (t) t.textContent = sec + 's'; }
@@ -3570,9 +3614,17 @@
         const sb = $('#surv-bar'); if (sb) sb.classList.toggle('boss-soon', this.bossNext);
         const bf = $('#surv-boss-flag'); if (bf) { bf.hidden = !this.bossNext; bf.textContent = I18n.t('surv_boss_soon'); }
       }
+      // Récord de oleada: tras batirlo en vivo (SV-21), la etiqueta pasa a estado
+      // dorado "¡y subiendo!" el resto de la run — el récord se saborea cada segundo.
       const bestWave = Meta.survBestWave();
-      const bestTxt = bestWave > 0 ? I18n.t('surv_best_wave') + ' ' + bestWave : '';
-      if (r.bestWave !== bestTxt) { r.bestWave = bestTxt; const bw = $('#surv-best-wave'); if (bw) { bw.textContent = bestTxt; bw.hidden = !bestTxt; } }
+      const bestTxt = this._liveRecord
+        ? I18n.t('surv_wave_record_live').replace('{w}', bestWave)
+        : (bestWave > 0 ? I18n.t('surv_best_wave') + ' ' + bestWave : '');
+      if (r.bestWave !== bestTxt) {
+        r.bestWave = bestTxt;
+        const bw = $('#surv-best-wave');
+        if (bw) { bw.textContent = bestTxt; bw.hidden = !bestTxt; bw.classList.toggle('record-live', !!this._liveRecord); }
+      }
       // Anillos concéntricos (GM-21): interior = carga (→ potenciador), exterior =
       // frenesí (→ furia). Un solo widget en vez de dos barras que subían a la par.
       const C_CHARGE = 106.8, C_FRENZY = 150.8; // 2π·r (r=17 / r=24 del SVG)
@@ -5472,10 +5524,43 @@
     fillStats() {
       const rec = $('#over-record');
       if (rec) {
-        rec.hidden = !this.newRecord && !this._survNew && !this._survWaveNew;
-        if (this._survWaveNew) rec.innerHTML = iconInline('trophy') + ' ' + I18n.t('surv_wave_record').replace('{w}', Survival.wave);
-        else if (this._survNew) rec.innerHTML = iconInline('shield') + ' ' + I18n.t('surv_time_record');
+        // En Supervivencia el récord de OLEADA lo muestra el héroe (SV-22): aquí solo
+        // el récord de tiempo/score, para no duplicar el trofeo.
+        rec.hidden = !this.newRecord && !this._survNew;
+        if (this._survNew) rec.innerHTML = iconInline('shield') + ' ' + I18n.t('surv_time_record');
         else if (this.newRecord) rec.innerHTML = iconInline('trophy') + ' ' + I18n.t('new_record');
+      }
+      // Héroe de Supervivencia (SV-22): la OLEADA como protagonista + contexto de
+      // récord. El near-miss de récord es el motor del reintento inmediato ("a 2 de
+      // tu marca" convierte la derrota en asunto pendiente).
+      {
+        const hero = $('#over-hero'), run = $('#over-run');
+        const isSurv = State.mode === 'supervivencia';
+        if (hero) {
+          hero.hidden = !isSurv;
+          if (isSurv) {
+            const wave = Survival.wave, best = Meta.survBestWave();
+            let ctx, ctxCls;
+            if (this._survWaveNew) { ctx = I18n.t('surv_over_wave_new'); ctxCls = 'gold'; }
+            else if (best > 0 && best - wave > 0 && best - wave <= 3) { ctx = I18n.t('surv_over_wave_near').replace('{k}', best - wave).replace('{best}', best); ctxCls = 'near'; }
+            else if (best > 0) { ctx = I18n.t('surv_over_record').replace('{best}', best); ctxCls = ''; }
+            else { ctx = ''; ctxCls = ''; }
+            hero.innerHTML = `<div class="oh-wave"><span class="oh-label">${esc(I18n.t('st_wave'))}</span><span class="oh-num">${wave}</span></div>`
+              + (ctx ? `<div class="oh-ctx ${ctxCls}">${esc(ctx)}</div>` : '');
+          }
+        }
+        // Hoja de la run: cadena de bendiciones + jefes superados.
+        if (run) {
+          const log = isSurv ? (Survival._boonLog || []) : [];
+          const bosses = isSurv ? (Survival._bossesSurvived || 0) : 0;
+          const show = isSurv && (log.length || bosses);
+          run.hidden = !show;
+          if (show) {
+            const chips = log.map((b) => `<span class="or-boon">${b.icon}</span>`).join('');
+            const bossTxt = bosses ? `<span class="or-bosses">${iconInline('shield')} ${I18n.t('surv_run_bosses').replace('{n}', bosses)}</span>` : '';
+            run.innerHTML = (chips ? `<div class="or-boons">${chips}</div>` : '') + bossTxt;
+          }
+        }
       }
       // Near-miss (GM-01): "te quedaste a {n} figuras" — solo cuando aplica (derrota por
       // tablero lleno en Clásico/Aventura habiendo estado realmente cerca de vaciar).
