@@ -263,6 +263,7 @@ Esfuerzo: 🟢 horas · 🟡 días · 🟡🟡 semana. Cada fase cierra con: tes
 | SV-05 | Sincronizar SURVIVAL_INVENTORY/MIGRATION_SPEC con v2.6.x (N11) | 🟢 | Ninguna sesión futura debe partir de datos falsos | SV-01 | — |
 
 ### Fase SV-β — Legibilidad del build y del ritual (🟢–🟡)
+> ✅ **Fase completada el 2026-07-11 (v2.6.5).** Detalle en el registro al final. Batería de control del sim idéntica bit a bit a v2.6.4 (los cambios son UI/feedback puros, no tocan RNG ni lógica).
 
 | ID | Tarea | Esf. | Justificación | Dep. | Guardarraíl |
 |---|---|---|---|---|---|
@@ -337,6 +338,16 @@ GM-04 pertenece a Clásico (§5) y su bloqueante es el generador de puzles solve
 ---
 
 # Registro de implementación
+
+### 2026-07-11 — Fase SV-β implementada (v2.6.5)
+
+- **SV-10/11**: nueva fila `#surv-build` bajo la `surv-bar` — chips de SOLO LECTURA con las bendiciones que tienen estado (`🐌×n` oleadas, `🧲×n` usos, `👑×n` oleadas, `📈+n%`) y el mutador semanal (`📅❄️`/`📅🌀`/`📅🔥`). Lo instantáneo (vida/carga/pack) no genera chip: ya se ve en vidas/anillo/inventario. Render con diffing por firma (`_r.build`) en `Survival.render()`; se oculta al no haber build y en `cleanup()`; tocar el chip 📅 repite el toast del mutador (N9 cerrado). CSS: `.sb-chip` con `chipPop` (en `reduced-fx` sin animación), acentos por rareza `.sb-rare`/`.sb-epic`. El build deja de ser invisible (N2).
+- **SV-12**: `modal-surv-diff` enriquecido — tarjeta del mutador semanal arriba (icono + «Esta semana» + efecto, `survmut_none` nuevo para la semana clásica), récord por dificultad bajo cada chip (`Meta.survBestWaveFor(diff)` + `m.survBestWaves` retrocompatible, actualizado en `survWaveRecord`), y descriptor concreto por dificultad (`surv_diff_{diff}_d`: vidas·ritmo·monedas). La primera decisión de la sesión pasa de ciega a informada (N8). Verificado en navegador: tarjeta «Semana del hielo», récords oleada 12/19/—, descriptor «3 vidas · estándar · monedas ×1».
+- **SV-13**: coreografía de toasts en `newWave`/`_waveReward` — la recompensa de monedas se FUSIONA con el toast de hito (5/10) en uno solo (antes dos pisándose); el toast «Oleada N» se SUPRIME en frontera de jefe (la bandera ⚠ y el aviso específico ya lo anuncian; se mantienen sonido y `announce`); «nuevos iconos» se retrasa 1.2s con guarda de estado/oleada. Cero consumo de RNG nuevo → batería de control idéntica (N7 cerrado).
+- **SV-14**: `modal-revive` — línea «Recibes 1 vida y despeja el 60% del tablero», «Te faltan {n} monedas» (rojo) cuando el saldo no llega y el botón está deshabilitado, contador «Revivir n/3» (hace visible el tope, evita el "me estafaron" al 4º), y fade de música (`Music.stop()` en vez de `stop(true)` — el corte seco se leía como fallo técnico). Sin cuenta atrás (ética intacta). Verificado: coste 240, faltan 140, «REVIVIR 2/3», botón deshabilitado.
+- Verificación: `node --check` ✅ · suite 70/70 ✅ · eslint ✅ · batería sim supervivencia idéntica a v2.6.4 (control ✅) · smoke navegador de las 4 tareas sin errores de consola.
+- i18n nuevas (ES+EN): `surv_week_label`, `survmut_none`, `surv_diff_facil_d`/`normal_d`/`dificil_d`, `surv_launch_record`, `surv_launch_norecord`, `revive_gets`, `revive_count`, `revive_short`.
+- Deuda i18n conocida (transversal, a QP-5): toast de tablero limpio y callouts de rango siguen hardcodeados (fuera del alcance de Supervivencia).
 
 ### 2026-07-11 — Fase SV-α implementada (v2.6.4)
 

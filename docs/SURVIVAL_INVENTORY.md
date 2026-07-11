@@ -1,7 +1,7 @@
 # 🎮 Inventario del Modo Supervivencia — Convergence
 
 > **Última actualización**: 11 julio 2026  
-> **Versión del juego**: v2.6.4  
+> **Versión del juego**: v2.6.5  
 > **Código fuente**: [game.js](file:///c:/Users/bryandavidp/Desktop/ConvergenceOnline/game.js) módulo `Survival`  
 > **Estado general**: Funcional con todas las tareas GM completadas. Rebalance de bendiciones **validado por simulación** en SV-01 (fase α del [`SURVIVAL_MASTER_PLAN.md`](./SURVIVAL_MASTER_PLAN.md)); batería y bisección en [`BALANCE_BASELINE.md`](./BALANCE_BASELINE.md).
 
@@ -348,6 +348,10 @@ Se anuncia con toast al inicio de la run. Override para simulador: `Survival._mu
 | SV-02 | Barrido i18n (imán, monedas, récord, FEVER, botón revivir) + copy de `golden_wave` | ✅ v2.6.4 |
 | SV-03 | Imán: atrae la figura más cercana, sin consumo en vacío | ✅ v2.6.4 |
 | SV-04 | `Survival.scoreMult()` centralizado en puntos + chip GM-16 + popup | ✅ v2.6.4 |
+| SV-10/11 | Fila de build `#surv-build`: chips de bendiciones con estado + mutador semanal (re-consultable) | ✅ v2.6.5 |
+| SV-12 | Lanzador enriquecido: tarjeta de mutador + récord por dificultad (`survBestWaves`) + descriptores | ✅ v2.6.5 |
+| SV-13 | Coreografía de toasts en frontera de oleada (fusión recompensa+hito, supresión en jefe, retraso de iconos) | ✅ v2.6.5 |
+| SV-14 | Polish del modal de revivir: qué recibes, «te faltan {n}», contador n/3, fade de música | ✅ v2.6.5 |
 
 ---
 
@@ -385,7 +389,8 @@ Se anuncia con toast al inicio de la run. Override para simulador: `Survival._mu
 | Key | Tipo | Descripción |
 |---|---|---|
 | `cv_meta.survBest` | number | Mejor tiempo de supervivencia (segundos) |
-| `cv_meta.survBestWave` | number | Mayor oleada alcanzada |
+| `cv_meta.survBestWave` | number | Mayor oleada alcanzada (global, todas las dificultades) |
+| `cv_meta.survBestWaves` | `{facil,normal,dificil}` | Mayor oleada por dificultad (SV-12; retrocompatible, se auto-rellena a 0) |
 | `cv_meta.modes.supervivencia.best` | number | Mejor score |
 | `cv_meta.modes.supervivencia.plays` | number | Total de partidas |
 | `cv_surv_diff` | string | Última dificultad elegida |
