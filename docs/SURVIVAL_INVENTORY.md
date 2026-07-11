@@ -1,7 +1,7 @@
 # 🎮 Inventario del Modo Supervivencia — Convergence
 
 > **Última actualización**: 11 julio 2026  
-> **Versión del juego**: v2.6.6  
+> **Versión del juego**: v2.6.7  
 > **Código fuente**: [game.js](file:///c:/Users/bryandavidp/Desktop/ConvergenceOnline/game.js) módulo `Survival`  
 > **Estado general**: Funcional con todas las tareas GM completadas. Rebalance de bendiciones **validado por simulación** en SV-01 (fase α del [`SURVIVAL_MASTER_PLAN.md`](./SURVIVAL_MASTER_PLAN.md)); batería y bisección en [`BALANCE_BASELINE.md`](./BALANCE_BASELINE.md).
 
@@ -355,6 +355,9 @@ Se anuncia con toast al inicio de la run. Override para simulador: `Survival._mu
 | SV-20 | Pico del jefe: beat «¡SUPERADO!», confeti movido del instante del jefe, ganchos audio QP-4 | ✅ v2.6.6 |
 | SV-21 | Celebraciones de hito: récord vivo, furia máxima, última vida, reveal épico, hazaña sin-booster | ✅ v2.6.6 |
 | SV-22 | Modal de fin: héroe=oleada + near-miss de récord + hoja de la run (bendiciones + jefes) | ✅ v2.6.6 (cierra R-18) |
+| SV-30 | Hoja de Servicio (`m.surv`) + Rango del Superviviente (6 rangos por oleadas vitalicias) | ✅ v2.6.7 (cierra R-31) |
+| SV-31 | 8 hazañas vitalicias (impecable/purista/fenix/coleccionista/semana_completa/frenetico/al_limite/economo) | ✅ v2.6.7 |
+| SV-32 | Récord semanal ligado al mutador (reinicio por semana ISO, solo positivo) | ✅ v2.6.7 |
 
 ---
 
@@ -368,7 +371,7 @@ Se anuncia con toast al inicio de la run. Override para simulador: `Survival._mu
 | R-18 | Polish de pantalla Game Over → SV-22 | ✅ Hecho (v2.6.6) | — |
 | R-23 / GM-22* | Eventos mid-oleada → SV-41 (oleadas de élite, fase ε) | 🟡 MED | v2.8+ |
 | R-24 / GM-23 | Late-game hazard modifiers → SV-41/SV-43 (fase ε) | 🟡 MED | v2.8+ |
-| R-31 / GM-25 | Meta-progresión de Supervivencia → SV-30/31/32 (fase δ) | 🟢 LOW | long-term |
+| R-31 / GM-25 | Meta-progresión de Supervivencia (rango + hazañas + récord semanal) | ✅ Hecho (SV-30/31/32, v2.6.7) | — |
 | R-32 | Leaderboard (requiere backend) | 🟢 LOW | long-term |
 | EGF-08 | Efecto visual "última vida" | ✅ Hecho (SV-21, v2.6.6) | — |
 | EGF-09 | Celebración de oleada completada | 🟡 Parcial (coreografía SV-13); celebración grande en hitos 5/10 | — |
@@ -394,6 +397,7 @@ Se anuncia con toast al inicio de la run. Override para simulador: `Survival._mu
 | `cv_meta.survBest` | number | Mejor tiempo de supervivencia (segundos) |
 | `cv_meta.survBestWave` | number | Mayor oleada alcanzada (global, todas las dificultades) |
 | `cv_meta.survBestWaves` | `{facil,normal,dificil}` | Mayor oleada por dificultad (SV-12; retrocompatible, se auto-rellena a 0) |
+| `cv_meta.surv` | `{totalWaves,totalBosses,runs,feats,boonsSeen,mutsWon,weekBest}` | Hoja de Servicio vitalicia (SV-30/31/32): rango, hazañas, récord semanal. Relleno tolerante `_v`; nada decae |
 | `cv_meta.modes.supervivencia.best` | number | Mejor score |
 | `cv_meta.modes.supervivencia.plays` | number | Total de partidas |
 | `cv_surv_diff` | string | Última dificultad elegida |

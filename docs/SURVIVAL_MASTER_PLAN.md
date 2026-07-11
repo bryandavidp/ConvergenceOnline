@@ -283,6 +283,7 @@ Esfuerzo: 🟢 horas · 🟡 días · 🟡🟡 semana. Cada fase cierra con: tes
 | SV-22 | Modal de fin reordenado: héroe=oleada + near-miss de récord + fila de build + CTA Reintentar directo (N10) | 🟡 | Pico-final + near-miss = máximo predictor de "una más" | SV-10 | Sin monetizar la derrota (nada de ofertas aquí) |
 
 ### Fase SV-δ — La Hoja de Servicio (🟡🟡) — cierra R-31
+> ✅ **Fase completada el 2026-07-11 (v2.6.7).** Detalle en el registro al final. Batería de control del sim idéntica bit a bit a v2.6.6 (la acumulación vitalicia y las hazañas no tocan RNG ni la partida).
 
 | ID | Tarea | Esf. | Justificación | Dep. | Guardarraíl |
 |---|---|---|---|---|---|
@@ -339,6 +340,14 @@ GM-04 pertenece a Clásico (§5) y su bloqueante es el generador de puzles solve
 ---
 
 # Registro de implementación
+
+### 2026-07-11 — Fase SV-δ implementada (v2.6.7)
+
+- **SV-30 · Hoja de Servicio + Rango**: nuevo `m.surv` (relleno tolerante `_v`): `{ totalWaves, totalBosses, runs, feats:{}, boonsSeen:{}, mutsWon:{}, weekBest:{week,wave,mut} }` — acumulación **vitalicia, nada decae**. `Meta.SURV_RANKS` con 6 rangos por oleadas acumuladas (Recluta 0 / Explorador 50 / Curtido 150 / Veterano 400 / Élite 900 / Leyenda 2000 — calibrado con el sim: ~18 oleadas/run ⇒ Veterano ≈ 22 runs). `Meta.recordSurvivalRun()` al `gameOver` de Supervivencia devuelve `{rankUp, rank}`. Superficies: bloque `#surv-service` en el lanzador (rango + barra de progreso + récord semanal + medallero de hazañas) y línea `#over-service` en el resumen («+N oleadas de servicio → Rango: total/next», con ascenso destacado). Cero economía: el rango es señal de maestría pura.
+- **SV-31 · 8 hazañas** (`Survival.FEATS`, vitalicias, celebradas 1 vez con `_feat()` → `Meta.survUnlockFeat`): `impecable` (jefe sin perder vida esa oleada, en `_bossSurvived` con `_livesLostThisWave`), `purista` (oleada 10 sin potenciadores, `_anyBoosterUsed`), `fenix` (batir récord habiendo revivido, en `gameOver`), `coleccionista` (las 8 bendiciones vistas, `Meta.survSeeBoon`), `semana_completa`/Trotamundos (récord semanal en 3 mutadores distintos, `mutsWon`), `frenetico` (3 frenesíes tier 3, `_t3Count`), `al_limite` (2 oleadas seguidas con 1 vida, `_waves1Life`), `economo` (oleada 15 sin revivir). Metas ORTOGONALES a la velocidad — el hallazgo nº1 del sim (la dificultad es de atención) pide premiar estilo, no rapidez.
+- **SV-32 · Récord semanal ligado al mutador**: `Meta.survWeekRecord(week, wave, mut)` reinicia solo al cambiar de semana ISO (misma `_weekKey` que GM-22) y solo sube (nunca se muestra como pérdida); registra el mutador en `mutsWon` para alimentar `semana_completa`. Visible en el lanzador («Esta semana: oleada 14») y en la Hoja de Servicio.
+- Verificación: `node --check` ✅ · suite 83/83 ✅ (+5 tests: umbrales de rango, acumulación/ascenso, weekBest reinicio+distintos, unlock idempotente, detección de `impecable`) · eslint ✅ · batería sim supervivencia idéntica a v2.6.6 (control ✅ — la meta persiste en localStorage stub sin filtrarse a la partida) · smoke navegador: lanzador «Veterano · 640/900 → Élite · barra 48% · semana oleada 14 · 🏅 3/8», resumen «¡Ascenso de rango: Élite! · +10 oleada · Élite 905/2000», hazañas economo/purista otorgadas en las oleadas 15/10, cero errores de consola.
+- i18n nuevas (ES+EN): 6 rangos `srank_*`, `surv_rank_label`/`_progress`/`_max`/`_up`, `surv_week_best`/`_none`, `feat_unlocked`, `surv_feats_label`, y 8×2 claves de hazañas (`feat_*` + `_d`).
 
 ### 2026-07-11 — Fase SV-γ implementada (v2.6.6)
 
