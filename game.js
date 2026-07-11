@@ -436,6 +436,12 @@
         pl_skip: 'Sin potenciadores', pl_first: 'Nuevo: puedes llevar potenciadores a los niveles. Se usan tocando su botón en partida.',
         pl_max: 'Máximo {n} potenciadores', pl_no_coins: 'Monedas insuficientes',
         surv_tide: '¡Marea de figuras!', surv_boss_tide_warn: '¡Marea inminente: despeja los bordes!',
+        // Jefes nuevos y enfurecidos (SV-43)
+        surv_lockdown: '¡Cierre! Candados en el tablero', surv_boss_lockdown_warn: '¡Cierre inminente: prepárate para romper candados!',
+        surv_eco: '¡Ha vuelto: {b}!', surv_boss_eco_warn: '¡Un jefe vuelve a por ti!',
+        surv_boss_enraged_warn: '⚠ ¡Jefe ENFURECIDO inminente!',
+        surv_meteor_enraged: '¡Lluvia de iconos ENFURECIDA!', surv_tide_enraged: '¡Marea ENFURECIDA: marco completo!', surv_frost_enraged: 'Frente helado ENFURECIDO',
+        bossname_meteor: 'Lluvia de iconos', bossname_tide: 'Marea', bossname_frost: 'Frente helado', bossname_lockdown: 'Cierre', bossname_quake: 'Terremoto',
         survmut_ice: 'Semana del hielo: trampas heladas · monedas ×1.15', survmut_chaos: 'Semana del caos: el terremoto ha vuelto', survmut_frenzy: 'Semana de la furia: frenesí +30%',
         dmut_pure: 'Reto de hoy: tablero puro', dmut_ice: 'Reto de hoy: tablero helado', dmut_window: 'Reto de hoy: combos más exigentes', dmut_variety: 'Reto de hoy: más variedad de figuras', dmut_rocks: 'Reto de hoy: campo de rocas', dmut_fast: 'Reto de hoy: ritmo veloz', dmut_crystal: 'Reto de hoy: cristales dobles', dmut_nohints: 'Reto de hoy: sin pistas',
         dmut_pure_n: 'Puro', dmut_ice_n: 'Hielo', dmut_window_n: 'Combos exigentes', dmut_variety_n: 'Variedad', dmut_rocks_n: 'Rocas', dmut_fast_n: 'Veloz', dmut_crystal_n: 'Cristales', dmut_nohints_n: 'Sin pistas',
@@ -608,6 +614,12 @@
         pl_skip: 'No power-ups', pl_first: 'New: you can bring power-ups into levels. Tap their button in-game to use them.',
         pl_max: 'Max {n} power-ups', pl_no_coins: 'Not enough coins',
         surv_tide: 'Icon tide!', surv_boss_tide_warn: 'Tide incoming: clear the edges!',
+        // New and enraged bosses (SV-43)
+        surv_lockdown: 'Lockdown! Locks on the board', surv_boss_lockdown_warn: 'Lockdown incoming: get ready to break locks!',
+        surv_eco: "It's back: {b}!", surv_boss_eco_warn: 'A boss returns for you!',
+        surv_boss_enraged_warn: '⚠ ENRAGED boss incoming!',
+        surv_meteor_enraged: 'ENRAGED icon rain!', surv_tide_enraged: 'ENRAGED tide: full frame!', surv_frost_enraged: 'ENRAGED frozen front',
+        bossname_meteor: 'Icon rain', bossname_tide: 'Tide', bossname_frost: 'Frozen front', bossname_lockdown: 'Lockdown', bossname_quake: 'Quake',
         survmut_ice: 'Ice week: frozen traps · coins ×1.15', survmut_chaos: 'Chaos week: the quake is back', survmut_frenzy: 'Fury week: frenzy +30%',
         dmut_pure: "Today's twist: pure board", dmut_ice: "Today's twist: frozen board", dmut_window: "Today's twist: tighter combos", dmut_variety: "Today's twist: more icon variety", dmut_rocks: "Today's twist: rock field", dmut_fast: "Today's twist: fast pace", dmut_crystal: "Today's twist: double crystals", dmut_nohints: "Today's twist: no hints",
         dmut_pure_n: 'Pure', dmut_ice_n: 'Ice', dmut_window_n: 'Tight combos', dmut_variety_n: 'Variety', dmut_rocks_n: 'Rocks', dmut_fast_n: 'Fast', dmut_crystal_n: 'Crystals', dmut_nohints_n: 'No hints',
@@ -2977,6 +2989,7 @@
       this._bossSurvivedAt = 0; this._noBoosterSinceBoss = true; this._frenzyT3Seen = false; this._liveRecord = false; // hitos SV-20/21
       this._boonLog = []; this._bossesSurvived = 0; // resumen de la run (SV-22)
       this._anyBoosterUsed = false; this._t3Count = 0; this._livesLostThisWave = 0; this._waves1Life = 0; // hazañas (SV-31)
+      this._lastBossType = null; // eco/jefes SV-40/43 (el override de sim/tests NO se toca aquí)
       this.scoreBoost = 0; this.magnetMoves = 0; this.goldenWaveWaves = 0;
       this.mut = this.weeklyMut(); // mutador semanal (GM-22)
       if (this.mut.id !== 'none') Toasts.show(I18n.t('survmut_' + this.mut.id), 'info', 2400, '📅');
@@ -3008,19 +3021,35 @@
     // Telegrafiado del jefe (GM-18): si la PRÓXIMA oleada trae evento jefe, se decide
     // ya el tipo (pre-roll) para poder avisar de forma específica antes de que llegue.
     // La anticipación es la mitad del valor emocional del jefe; sin aviso solo hay susto.
-    bossNext: false, _nextBoss: null,
-    // Pool de eventos jefe (GM-20): la Marea sustituye al terremoto — amenaza
-    // legible con counterplay (despejar las filas marcadas) en vez de azar
-    // bidireccional. El quake solo vuelve en la "semana del caos" (GM-22).
+    bossNext: false, _nextBoss: null, _lastBossType: null, _bossOverride: null,
+    ENRAGE_WAVE: 24, // desde aquí los jefes salen "enfurecidos" (+1 intensidad, SV-43)
+    // Registro declarativo de jefes (SV-40): metadata (aviso/icono/disponibilidad) +
+    // el método que ejecuta el evento. Añadir un jefe nuevo = 1 entrada aquí + su
+    // método + 2 claves i18n. `base` entra siempre; `chaosOnly` solo en semana del
+    // caos; `echo` solo si ya hubo un jefe previo que repetir.
+    BOSS_DEFS: {
+      meteor: { warn: 'surv_boss_meteor_warn', icon: 'v2:meteor', base: true, fn: 'meteorRain' },
+      tide: { warn: 'surv_boss_tide_warn', icon: '🌊', base: true, fn: 'tideSurge' },
+      frost: { warn: 'surv_boss_frost_warn', icon: 'v2:snowflake', base: true, fn: 'frostSurge' },
+      lockdown: { warn: 'surv_boss_lockdown_warn', icon: '🔒', base: true, fn: 'lockdown' },
+      eco: { warn: 'surv_boss_eco_warn', icon: '🔁', echo: true, fn: 'echoBoss' },
+      quake: { warn: 'surv_boss_quake_warn', icon: 'teleporter', chaosOnly: true, fn: 'quake' },
+    },
     _bossPool() {
-      const pool = ['meteor', 'tide', 'frost'];
-      if (this.weeklyMut().id === 'chaos') pool.push('quake');
-      return pool;
+      const chaos = this.weeklyMut().id === 'chaos' || this.mut.id === 'chaos';
+      return Object.keys(this.BOSS_DEFS).filter((id) => {
+        const d = this.BOSS_DEFS[id];
+        if (d.chaosOnly) return chaos;
+        if (d.echo) return this._lastBossType != null; // eco necesita un jefe que repetir
+        return d.base;
+      });
     },
     _planBoss() {
       this.bossNext = (this.wave + 1) % this.tune().bossEvery === 0;
+      if (!this.bossNext) { this._nextBoss = null; return; }
       const pool = this._bossPool();
-      this._nextBoss = this.bossNext ? pool[rand(pool.length)] : null;
+      // Override para sim/tests (espejo de _mutOverride): fuerza el tipo de jefe.
+      this._nextBoss = (this._bossOverride && this.BOSS_DEFS[this._bossOverride]) ? this._bossOverride : pool[rand(pool.length)];
     },
     // Mutador semanal (GM-22): hashStr(semana ISO) elige un tema determinista sin
     // servidor — cada semana el modo tiene una razón nueva de visita.
@@ -3264,15 +3293,12 @@
       // (guardar un freeze, despejar zona) y convierte el susto en tensión anticipada.
       if (this.bossNext && !this._r.bossWarned && this.WAVE_MS - this.waveAcc <= 3000) {
         this._r.bossWarned = true;
-        const WARNS = {
-          meteor: ['surv_boss_meteor_warn', 'v2:meteor'],
-          tide: ['surv_boss_tide_warn', '🌊'],
-          quake: ['surv_boss_quake_warn', 'teleporter'],
-          frost: ['surv_boss_frost_warn', 'v2:snowflake'],
-        };
-        const warn = WARNS[this._nextBoss] || WARNS.meteor;
-        Toasts.show(I18n.t(warn[0]), 'bad', 2400, warn[1]);
-        announce(I18n.t(warn[0]));
+        const def = this.BOSS_DEFS[this._nextBoss] || this.BOSS_DEFS.meteor;
+        // Aviso enfurecido si la próxima oleada cae en zona de enfurecimiento (SV-43).
+        const willEnrage = (this.wave + 1) >= this.ENRAGE_WAVE;
+        const warnKey = willEnrage ? 'surv_boss_enraged_warn' : def.warn;
+        Toasts.show(I18n.t(warnKey), 'bad', 2400, def.icon);
+        announce(I18n.t(warnKey));
         Render.boardEvent('surv-wave-soon', 700);
         Sound.danger(); Haptics.fire(14);
       }
@@ -3335,12 +3361,10 @@
     bossEvent() {
       // Usa el evento pre-decidido por _planBoss (para que el aviso previo coincida).
       const pool = this._bossPool();
-      const ev = this._nextBoss != null ? this._nextBoss : pool[rand(pool.length)];
+      const ev = this._nextBoss != null ? this._nextBoss : (this._bossOverride || pool[rand(pool.length)] || 'meteor');
       this._nextBoss = null;
-      if (ev === 'meteor') this.meteorRain();
-      else if (ev === 'tide') this.tideSurge();
-      else if (ev === 'quake') this.quake();
-      else this.frostSurge();
+      const enraged = this.wave >= this.ENRAGE_WAVE; // jefe enfurecido (SV-43)
+      this._runBoss(ev, enraged);
       Haptics.milestone();
       // Pico del jefe (SV-20): la secuencia es anticipación → PELIGRO (aquí) →
       // «¡SUPERADO!» (beat propio, +1.2s) → codicia (bendición, +1.7s). El confeti
@@ -3364,14 +3388,25 @@
       Render.flash(); FX.confetti(clean ? 54 : 40);
       Sound.record(); Haptics.record();
     },
+    // Dispatcher declarativo (SV-40): ejecuta el jefe `id` con su intensidad. El eco
+    // repite el último jefe real; los demás quedan registrados como "último".
+    _runBoss(id, enraged) {
+      const def = this.BOSS_DEFS[id] || this.BOSS_DEFS.meteor;
+      if (id === 'eco') { this.echoBoss(enraged); return; }
+      this._lastBossType = id;
+      this[def.fn](enraged);
+    },
     // Marea (GM-20): marca las 2 filas exteriores y 1.2s después las llena de
-    // iconos. Amenaza legible con counterplay: despeja esas zonas antes.
-    tideSurge() {
+    // iconos. Amenaza legible con counterplay: despeja esas zonas antes. Enfurecida
+    // (SV-43): además las 2 columnas exteriores → marco completo.
+    tideSurge(enraged) {
       this._lock(900, 'surv-rain');
-      const size = State.size, cells = [];
-      [0, size - 1].forEach((r) => { for (let c = 0; c < size; c++) cells.push(r * size + c); });
+      const size = State.size, set = new Set();
+      [0, size - 1].forEach((r) => { for (let c = 0; c < size; c++) set.add(r * size + c); });
+      if (enraged) [0, size - 1].forEach((c) => { for (let r = 0; r < size; r++) set.add(r * size + c); });
+      const cells = [...set];
       cells.forEach((j) => Render.cellPulse(j, 'tide-warn', 1200));
-      Toasts.show(I18n.t('surv_tide'), 'bad', 1800, '🌊');
+      Toasts.show(I18n.t(enraged ? 'surv_tide_enraged' : 'surv_tide'), 'bad', 1800, '🌊');
       Sound.rain();
       setTimeout(() => {
         if (State.status !== 'playing') return;
@@ -3386,12 +3421,12 @@
         if (filled) { Render.hudSoon(); if (State.status === 'playing') Game.evaluate(); }
       }, 1200);
     },
-    meteorRain() {
+    meteorRain(enraged) {
       this._lock(900, 'surv-rain');
-      const placed = [];
-      for (let k = 0; k < 8; k++) { const idx = Engine.spawnOne(); if (idx >= 0) placed.push(idx); }
+      const placed = [], n = enraged ? 10 : 8;
+      for (let k = 0; k < n; k++) { const idx = Engine.spawnOne(); if (idx >= 0) placed.push(idx); }
       Render.syncAll(); Render.meteor(placed);
-      Toasts.show(I18n.t('surv_meteor'), 'bad', 1800, 'v2:meteor');
+      Toasts.show(I18n.t(enraged ? 'surv_meteor_enraged' : 'surv_meteor'), 'bad', 1800, 'v2:meteor');
       Sound.rain();
     },
     quake() {
@@ -3404,17 +3439,41 @@
         Render.boardEvent('surv-quake-settle', 420);
       }, 620);
     },
-    frostSurge() {
+    frostSurge(enraged) {
       this._lock(760, 'surv-frost');
       const f = this._filledIdx(), placed = [];
-      const n = Math.min(3 + Math.floor(this.wave / 4), f.length, this._specialRoom());
+      const n = Math.min(3 + Math.floor(this.wave / 4) + (enraged ? 2 : 0), f.length, this._specialRoom());
       for (let k = 0; k < n && f.length; k++) {
         const idx = f.splice(rand(f.length), 1)[0];
         if (!State.tiles[idx]) { State.tiles[idx] = Tiles.make('frozen'); placed.push(idx); }
       }
       Render.syncAll(); placed.forEach(i => Render.iceHit(i));
-      Toasts.show(I18n.t('surv_frost'), 'warn', 1600, 'v2:snowflake');
+      Toasts.show(I18n.t(enraged ? 'surv_frost_enraged' : 'surv_frost'), 'warn', 1600, 'v2:snowflake');
       Sound.booster('freeze'); Haptics.ice();
+    },
+    // Cierre (SV-43): siembra candados de 1 golpe sobre huecos — amenaza de bloqueo
+    // con counterplay barato (rompen con UNA convergencia adyacente). Respeta el tope
+    // de bloqueos para no brickear el tablero.
+    lockdown(enraged) {
+      this._lock(760, 'surv-frost');
+      const e = this._emptyIdx();
+      const room = Math.min(this._specialRoom(), Math.max(0, this._blockCap() - this._blockIdx().length));
+      const n = Math.min(enraged ? 4 : 3, e.length, room);
+      const placed = [];
+      for (let k = 0; k < n && e.length; k++) {
+        const idx = e.splice(rand(e.length), 1)[0];
+        const t = Tiles.make('locked'); t.hits = 1; State.tiles[idx] = t; placed.push(idx);
+      }
+      Render.syncAll(); placed.forEach(i => Render.cellPulse(i, 'ice-hit', 520));
+      Toasts.show(I18n.t('surv_lockdown'), 'bad', 1800, '🔒');
+      Sound.booster('freeze'); Haptics.ice();
+    },
+    // Eco (SV-43): "ha vuelto a por ti" — repite el último jefe real con intensidad +1
+    // (enfurecido forzado). Si no hay jefe previo, cae en meteoro.
+    echoBoss() {
+      const prev = (this._lastBossType && this.BOSS_DEFS[this._lastBossType] && !this.BOSS_DEFS[this._lastBossType].echo) ? this._lastBossType : 'meteor';
+      Toasts.show(I18n.t('surv_eco').replace('{b}', I18n.t('bossname_' + prev)), 'bad', 1600, '🔁');
+      this._runBoss(prev, true);
     },
     _shuffle() {
       const idx = [], vals = [];

@@ -167,7 +167,44 @@ test('SV-31: impecable se otorga al superar jefe sin perder vida; no si perdió'
   s.feats = {};
 });
 
-test('SV-02/20/21/22/30/31/32: claves i18n nuevas en ES y EN', () => {
+test('SV-40: BOSS_DEFS declarativo — pool por disponibilidad y override', () => {
+  Survival.start();
+  Survival._mutOverride = 'none'; Survival._lastBossType = null;
+  let pool = Survival._bossPool();
+  assert.ok(pool.includes('meteor') && pool.includes('tide') && pool.includes('frost') && pool.includes('lockdown'), 'base siempre');
+  assert.ok(!pool.includes('quake'), 'quake fuera sin caos');
+  assert.ok(!pool.includes('eco'), 'eco fuera sin jefe previo');
+  Survival._lastBossType = 'meteor';
+  assert.ok(Survival._bossPool().includes('eco'), 'eco disponible con jefe previo');
+  Survival._mutOverride = 'chaos';
+  assert.ok(Survival._bossPool().includes('quake'), 'quake en semana del caos');
+  Survival._mutOverride = 'none';
+});
+
+test('SV-40/43: cada jefe × mutador se ejecuta sin excepción y respeta invariantes', () => {
+  const bosses = Object.keys(Survival.BOSS_DEFS);
+  const muts = ['none', 'ice', 'chaos', 'frenzy'];
+  for (const mut of muts) {
+    for (const boss of bosses) {
+      Survival._mutOverride = mut;
+      Survival.start();
+      Survival._lastBossType = 'tide'; // que 'eco' tenga algo que repetir
+      // Poblar el tablero parcialmente para que frost/tide/lockdown tengan sustrato.
+      for (let i = 0; i < 20; i++) { State.board[i] = State.pool[i % State.pool.length]; State.iconCount = (State.iconCount || 0) + 1; }
+      Survival.wave = 26; // zona enfurecida (SV-43) para ejercitar esa rama
+      Survival._bossOverride = boss;
+      assert.doesNotThrow(() => Survival.bossEvent(), `${boss} × ${mut} no debe lanzar`);
+      // Invariantes duros (parte síncrona; los setTimeout de marea/quake no cuentan aquí).
+      const filled = State.board.filter((v) => v !== null).length;
+      assert.ok(filled >= 0 && filled <= 64, `${boss}×${mut}: iconos en [0,64], fue ${filled}`);
+      const specials = State.tiles.filter((t) => t && t.type !== 'crystal').length;
+      assert.ok(specials <= Survival._specialCap() + 2, `${boss}×${mut}: especiales acotados (${specials})`);
+    }
+  }
+  Survival._bossOverride = null; Survival._mutOverride = 'none';
+});
+
+test('SV-02/20/21/22/30/31/32/40/43: claves i18n nuevas en ES y EN', () => {
   const keys = ['magnet_done', 'new_record', 'revive_btn', 'revive_gets', 'revive_count', 'revive_short',
     'survmut_none', 'surv_week_label', 'surv_diff_normal_d', 'surv_launch_record',
     'boon_golden_wave_d', 'boon_score_boost_d',
