@@ -1,4 +1,4 @@
-/* Regresión de las fases SV-α/SV-β de Supervivencia (docs/SURVIVAL_MASTER_PLAN.md).
+/* Regresión de las fases SV-α…δ de Supervivencia (docs/SURVIVAL_MASTER_PLAN.md).
  * Fija la lógica pura de los rebalances y correcciones; si alguien la rompe,
  * este archivo lo grita con el identificador de la tarea SV-*. */
 'use strict';
@@ -98,12 +98,85 @@ test('SV-22: applyBoon registra la hoja de la run (_boonLog)', () => {
   assert.ok(Survival._boonLog[0].icon, 'cada entrada tiene icono');
 });
 
-test('SV-02/20/21/22: claves i18n nuevas en ES y EN', () => {
+test('SV-30: survRank respeta los umbrales de oleadas vitalicias', () => {
+  const s = Meta.survData();
+  const cases = [[0, 'recluta'], [49, 'recluta'], [50, 'explorador'], [149, 'explorador'],
+    [150, 'curtido'], [400, 'veterano'], [899, 'veterano'], [900, 'elite'], [1999, 'elite'], [2000, 'leyenda'], [9999, 'leyenda']];
+  for (const [tot, id] of cases) { s.totalWaves = tot; assert.equal(Meta.survRank().id, id, `${tot} → ${id}`); }
+  // En rango no-máximo hay siguiente; en máximo no.
+  s.totalWaves = 100; assert.equal(Meta.survRank().next, 'curtido');
+  s.totalWaves = 2000; assert.equal(Meta.survRank().next, null);
+  s.totalWaves = 0;
+});
+
+test('SV-30: recordSurvivalRun acumula y detecta ascenso de rango', () => {
+  const s = Meta.survData();
+  s.totalWaves = 45; s.totalBosses = 0; s.runs = 0;
+  State.diff = 'normal';
+  const res = Meta.recordSurvivalRun({ wave: 10, bosses: 2 }); // 45+10=55 → cruza 50
+  assert.equal(s.totalWaves, 55);
+  assert.equal(s.totalBosses, 2);
+  assert.equal(s.runs, 1);
+  assert.equal(res.rankUp, true, 'cruzar 50 asciende a Explorador');
+  assert.equal(res.rank.id, 'explorador');
+  const res2 = Meta.recordSurvivalRun({ wave: 5, bosses: 0 }); // 60, sigue Explorador
+  assert.equal(res2.rankUp, false);
+  s.totalWaves = 0; s.totalBosses = 0; s.runs = 0;
+});
+
+test('SV-32: survWeekRecord reinicia por semana y solo sube; cuenta mutadores distintos', () => {
+  const s = Meta.survData();
+  s.weekBest = { week: '', wave: 0, mut: 'none' }; s.mutsWon = {};
+  let r = Meta.survWeekRecord('2026-W28', 12, 'ice');
+  assert.equal(r.isRecord, true); assert.equal(s.weekBest.wave, 12); assert.equal(r.distinctMuts, 1);
+  r = Meta.survWeekRecord('2026-W28', 8, 'ice');   // menor: no récord
+  assert.equal(r.isRecord, false); assert.equal(s.weekBest.wave, 12);
+  r = Meta.survWeekRecord('2026-W29', 5, 'frenzy'); // semana nueva: reinicia a 5
+  assert.equal(r.isRecord, true); assert.equal(s.weekBest.wave, 5); assert.equal(r.distinctMuts, 2);
+  Meta.survWeekRecord('2026-W30', 3, 'chaos');
+  assert.equal(Object.keys(s.mutsWon).length, 3, '3 mutadores distintos con récord');
+  // 'none' no cuenta como mutador para la hazaña
+  Meta.survWeekRecord('2026-W31', 20, 'none');
+  assert.equal(Object.keys(s.mutsWon).length, 3);
+  s.weekBest = { week: '', wave: 0, mut: 'none' }; s.mutsWon = {};
+});
+
+test('SV-31: hazañas — unlock idempotente y detecciones puras', () => {
+  const s = Meta.survData();
+  s.feats = {}; s.boonsSeen = {};
+  assert.equal(Meta.survUnlockFeat('impecable'), true, 'primera vez desbloquea');
+  assert.equal(Meta.survUnlockFeat('impecable'), false, 'segunda vez no');
+  assert.equal(Meta.survFeatDone('impecable'), true);
+  assert.equal(Meta.survFeatCount(), 1);
+  // coleccionista: ver las 8 bendiciones
+  Survival.BOONS.forEach((b) => Meta.survSeeBoon(b.id));
+  assert.equal(Meta.survBoonsSeenCount(), Survival.BOONS.length);
+  s.feats = {}; s.boonsSeen = {};
+});
+
+test('SV-31: impecable se otorga al superar jefe sin perder vida; no si perdió', () => {
+  const s = Meta.survData(); s.feats = {};
+  State.mode = 'supervivencia'; State.status = 'playing';
+  Survival.lives = 2; Survival._livesLostThisWave = 0; Survival._bossesSurvived = 0;
+  Survival._bossSurvived();
+  assert.equal(Meta.survFeatDone('impecable'), true);
+  // Otra run: perdió vida esa oleada → no re-otorga (ya está) pero comprobamos la guarda
+  s.feats = {}; Survival._livesLostThisWave = 1;
+  Survival._bossSurvived();
+  assert.equal(Meta.survFeatDone('impecable'), false, 'no se otorga si perdió vida');
+  s.feats = {};
+});
+
+test('SV-02/20/21/22/30/31/32: claves i18n nuevas en ES y EN', () => {
   const keys = ['magnet_done', 'new_record', 'revive_btn', 'revive_gets', 'revive_count', 'revive_short',
     'survmut_none', 'surv_week_label', 'surv_diff_normal_d', 'surv_launch_record',
     'boon_golden_wave_d', 'boon_score_boost_d',
     'surv_boss_cleared', 'surv_boss_cleared_clean', 'surv_frenzy_max', 'surv_wave_record_live',
-    'surv_over_wave_new', 'surv_over_wave_near', 'surv_over_record', 'surv_run_bosses'];
+    'surv_over_wave_new', 'surv_over_wave_near', 'surv_over_record', 'surv_run_bosses',
+    'srank_recluta', 'srank_leyenda', 'surv_rank_label', 'surv_rank_progress', 'surv_rank_max',
+    'surv_rank_up', 'surv_week_best', 'surv_week_best_none', 'feat_unlocked', 'surv_feats_label',
+    'feat_impecable', 'feat_impecable_d', 'feat_purista', 'feat_fenix', 'feat_coleccionista',
+    'feat_semana_completa', 'feat_frenetico', 'feat_al_limite', 'feat_economo'];
   for (const lang of ['es', 'en']) {
     for (const k of keys) {
       assert.ok(cv.I18n.DICT[lang][k], `falta ${k} en ${lang}`);

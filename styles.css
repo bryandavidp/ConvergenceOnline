@@ -2529,6 +2529,15 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
   .di-medals { justify-content: flex-start; }
 }
 
+/* Hoja de Servicio en el lanzador (SV-30/31/32): rango + progreso + semana + hazañas. */
+.surv-service { margin: 2px 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: rgba(0,0,0,.24); }
+.surv-service .ss-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.surv-service .ss-rank { font-size: 1.05rem; font-weight: 900; color: var(--gold); text-shadow: 0 0 10px rgba(255,216,77,.3); }
+.surv-service .ss-feats { font-size: .8rem; font-weight: 800; color: var(--muted); }
+.surv-service .ss-bar { display: block; height: 5px; border-radius: 999px; background: rgba(255,255,255,.12); overflow: hidden; margin: 6px 0 5px; }
+.surv-service .ss-bar-fill { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--gold), var(--warn)); }
+.surv-service .ss-sub { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: .72rem; color: var(--muted); font-weight: 600; }
+
 /* Tarjeta del mutador semanal en el lanzador (SV-12) */
 .surv-week { display: flex; align-items: center; gap: 10px; margin: 4px 0 12px; padding: 10px 12px;
   border: 1px solid var(--line); border-radius: 12px;
@@ -2575,6 +2584,11 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
 .over-run .or-boons { display: inline-flex; flex-wrap: wrap; gap: 4px; }
 .over-run .or-boon { font-size: 1.05rem; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
 .over-run .or-bosses { font-size: .8rem; font-weight: 700; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+/* Progreso de rango en el resumen (SV-30). */
+.over-service { margin: 0 0 10px; text-align: center; font-size: .82rem; color: var(--muted); }
+.over-service .os-line b { color: var(--gold); }
+.over-service .os-up { font-weight: 900; color: var(--gold); font-size: .95rem; margin-bottom: 2px; text-shadow: 0 0 10px rgba(255,216,77,.4); }
+.over-service.rankup { color: var(--text); }
 .modal-meta {
   margin: -2px 0 8px;
   line-height: 1.35;

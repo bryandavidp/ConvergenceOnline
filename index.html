@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.6" />
+  <link rel="stylesheet" href="styles.css?v=2.6.7" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -376,6 +376,8 @@
         <div class="over-hero" id="over-hero" hidden></div>
         <!-- Hoja de la run (SV-22): la cadena de bendiciones elegidas + jefes superados. -->
         <div class="over-run" id="over-run" hidden></div>
+        <!-- Progreso de rango del Superviviente (SV-30): +N oleadas de servicio → rango. -->
+        <div class="over-service" id="over-service" hidden></div>
         <p class="over-near" id="over-near" hidden></p>
         <p class="modal-meta" id="over-meta"></p>
         <div class="stats" id="over-stats"></div>
@@ -422,6 +424,12 @@
     <div class="modal modal-surv-diff" id="modal-surv-diff" role="dialog" aria-modal="true" aria-labelledby="surv-diff-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/heart.png" alt=""></span><h2 id="surv-diff-title" data-i18n="surv_diff_title">Supervivencia</h2></div>
       <div class="modal-body">
+        <!-- Hoja de Servicio (SV-30/31/32): rango vitalicio + récord semanal + hazañas -->
+        <div class="surv-service" id="surv-service" hidden>
+          <div class="ss-top"><span class="ss-rank" id="surv-rank-name">Recluta</span><span class="ss-feats" id="surv-feats-line"></span></div>
+          <div class="ss-bar" aria-hidden="true"><span class="ss-bar-fill" id="surv-rank-fill"></span></div>
+          <div class="ss-sub"><span id="surv-rank-prog"></span><span id="surv-week-line"></span></div>
+        </div>
         <!-- Tarjeta del mutador semanal (SV-12): la razón de revisita, visible antes de jugar -->
         <div class="surv-week" id="surv-week" hidden>
           <span class="sw-ic" id="surv-week-ic" aria-hidden="true">📅</span>
@@ -546,6 +554,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=2.6.6" defer></script>
+  <script src="game.js?v=2.6.7" defer></script>
 </body>
 </html>

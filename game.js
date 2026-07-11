@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.6';
+  const VERSION = '2.6.7';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -456,6 +456,19 @@
         surv_frenzy_max: '¡FURIA MÁXIMA!', surv_wave_record_live: 'Récord: oleada {w} ¡y subiendo!',
         surv_over_wave_new: '🏆 ¡Nuevo récord de oleada!', surv_over_wave_near: 'A {k} de tu récord (oleada {best})', surv_over_record: 'Tu récord: oleada {best}',
         surv_run_bosses: '{n} jefes superados',
+        // Hoja de Servicio (SV-30/31/32)
+        srank_recluta: 'Recluta', srank_explorador: 'Explorador', srank_curtido: 'Curtido', srank_veterano: 'Veterano', srank_elite: 'Élite', srank_leyenda: 'Leyenda',
+        surv_rank_label: 'Rango', surv_rank_progress: '{c}/{n} oleadas → {next}', surv_rank_max: '¡Rango máximo!', surv_rank_up: '¡Ascenso de rango: {r}!',
+        surv_week_best: 'Esta semana: oleada {w}', surv_week_best_none: 'Esta semana: aún sin marca',
+        feat_unlocked: '¡Hazaña!', surv_feats_label: 'Hazañas',
+        feat_impecable: 'Impecable', feat_impecable_d: 'Supera un jefe sin perder ninguna vida',
+        feat_purista: 'Purista', feat_purista_d: 'Llega a la oleada 10 sin usar potenciadores',
+        feat_fenix: 'Fénix', feat_fenix_d: 'Bate tu récord en una run donde reviviste',
+        feat_coleccionista: 'Coleccionista', feat_coleccionista_d: 'Elige las 8 bendiciones distintas',
+        feat_semana_completa: 'Trotamundos', feat_semana_completa_d: 'Marca récord semanal en 3 mutadores distintos',
+        feat_frenetico: 'Frenético', feat_frenetico_d: 'Activa 3 frenesíes máximos en una run',
+        feat_al_limite: 'Al límite', feat_al_limite_d: 'Supera 2 oleadas seguidas con 1 sola vida',
+        feat_economo: 'Económico', feat_economo_d: 'Llega a la oleada 15 sin revivir',
         surv_frenzy: 'Frenesí', surv_frenzy_ready: '¡Frenesí activado!', surv_wave_reward: 'Oleada {w} · +{c} monedas',
         surv_milestone: 'Hito de oleada {w}', surv_wave_record: '¡Récord! Oleada {w}', surv_best_wave: 'Mejor oleada',
         surv_rewards: 'Recompensas', surv_reward_line: '+{c} monedas · +{g} gemas · +{ch} cofres', surv_time_record: '¡Récord de supervivencia!',
@@ -615,6 +628,19 @@
         surv_frenzy_max: 'MAX FURY!', surv_wave_record_live: 'Record: wave {w} and climbing!',
         surv_over_wave_new: '🏆 New wave record!', surv_over_wave_near: '{k} short of your record (wave {best})', surv_over_record: 'Your record: wave {best}',
         surv_run_bosses: '{n} bosses cleared',
+        // Service Record (SV-30/31/32)
+        srank_recluta: 'Recruit', srank_explorador: 'Explorer', srank_curtido: 'Hardened', srank_veterano: 'Veteran', srank_elite: 'Elite', srank_leyenda: 'Legend',
+        surv_rank_label: 'Rank', surv_rank_progress: '{c}/{n} waves → {next}', surv_rank_max: 'Max rank!', surv_rank_up: 'Rank up: {r}!',
+        surv_week_best: 'This week: wave {w}', surv_week_best_none: 'This week: no mark yet',
+        feat_unlocked: 'Feat!', surv_feats_label: 'Feats',
+        feat_impecable: 'Flawless', feat_impecable_d: 'Beat a boss without losing a life',
+        feat_purista: 'Purist', feat_purista_d: 'Reach wave 10 without using power-ups',
+        feat_fenix: 'Phoenix', feat_fenix_d: 'Beat your record in a run where you revived',
+        feat_coleccionista: 'Collector', feat_coleccionista_d: 'Pick all 8 distinct blessings',
+        feat_semana_completa: 'Globetrotter', feat_semana_completa_d: 'Set a weekly record in 3 distinct mutators',
+        feat_frenetico: 'Frantic', feat_frenetico_d: 'Trigger 3 max frenzies in one run',
+        feat_al_limite: 'On the edge', feat_al_limite_d: 'Clear 2 waves in a row with a single life',
+        feat_economo: 'Thrifty', feat_economo_d: 'Reach wave 15 without reviving',
         surv_frenzy: 'Frenzy', surv_frenzy_ready: 'Frenzy active!', surv_wave_reward: 'Wave {w} · +{c} coins',
         surv_milestone: 'Wave {w} milestone', surv_wave_record: 'Record! Wave {w}', surv_best_wave: 'Best wave',
         surv_rewards: 'Rewards', surv_reward_line: '+{c} coins · +{g} gems · +{ch} chests', surv_time_record: 'Survival record!',
@@ -1983,6 +2009,17 @@
     if (typeof m.coins !== 'number') m.coins = 0;
     if (typeof m.survBestWave !== 'number') m.survBestWave = 0;
     if (!m.survBestWaves || typeof m.survBestWaves !== 'object') m.survBestWaves = { facil: 0, normal: 0, dificil: 0 };
+    // Hoja de Servicio del Superviviente (SV-30): acumulación VITALICIA — nada caduca
+    // ni decae. `feats`/`boonsSeen`/`mutsWon` son mapas {id:1}; `weekBest` es la marca
+    // de la semana ISO en curso (se reinicia sola al cambiar de semana, solo hacia arriba).
+    if (!m.surv || typeof m.surv !== 'object') m.surv = {};
+    if (typeof m.surv.totalWaves !== 'number') m.surv.totalWaves = 0;
+    if (typeof m.surv.totalBosses !== 'number') m.surv.totalBosses = 0;
+    if (typeof m.surv.runs !== 'number') m.surv.runs = 0;
+    if (!m.surv.feats || typeof m.surv.feats !== 'object') m.surv.feats = {};
+    if (!m.surv.boonsSeen || typeof m.surv.boonsSeen !== 'object') m.surv.boonsSeen = {};
+    if (!m.surv.mutsWon || typeof m.surv.mutsWon !== 'object') m.surv.mutsWon = {};
+    if (!m.surv.weekBest || typeof m.surv.weekBest !== 'object') m.surv.weekBest = { week: '', wave: 0, mut: 'none' };
     // Esquema 3: economía ampliada (gemas/tickets/cofres), tableros de tienda y mundos del modo Clásico.
     if (typeof m.gems !== 'number') m.gems = 0;
     if (typeof m.tickets !== 'number') m.tickets = 0;
@@ -2280,6 +2317,61 @@
         if (m.survBestWaves && wave > (m.survBestWaves[State.diff] || 0)) { m.survBestWaves[State.diff] = wave; save(); }
         if (wave > (m.survBestWave || 0)) { m.survBestWave = wave; save(); return true; }
         return false;
+      },
+      // ---- Hoja de Servicio del Superviviente (SV-30/31/32) ----
+      // Rango vitalicio por oleadas acumuladas — señal de maestría pura, sin economía.
+      // Umbrales validados con el sim (oleada ~18/run ⇒ Veterano ≈ 22 runs).
+      SURV_RANKS: [
+        { id: 'recluta', at: 0 }, { id: 'explorador', at: 50 }, { id: 'curtido', at: 150 },
+        { id: 'veterano', at: 400 }, { id: 'elite', at: 900 }, { id: 'leyenda', at: 2000 },
+      ],
+      survData: () => m.surv,
+      survRank() {
+        const tot = m.surv.totalWaves || 0;
+        const R = this.SURV_RANKS; let i = 0;
+        for (let k = 0; k < R.length; k++) if (tot >= R[k].at) i = k;
+        const next = R[i + 1] || null;
+        return { id: R[i].id, index: i, total: tot, at: R[i].at, next: next ? next.id : null, nextAt: next ? next.at : null };
+      },
+      survWeekBest: () => m.surv.weekBest,
+      survFeatDone: (id) => !!(m.surv.feats && m.surv.feats[id]),
+      survFeatCount: () => Object.keys(m.surv.feats || {}).length,
+      // Desbloquea una hazaña (idempotente). Devuelve true solo la primera vez.
+      survUnlockFeat(id) {
+        if (!m.surv.feats) m.surv.feats = {};
+        if (m.surv.feats[id]) return false;
+        m.surv.feats[id] = today(); save();
+        return true;
+      },
+      // Marca una bendición como vista alguna vez (para la hazaña 'coleccionista').
+      survSeeBoon(id) {
+        if (!m.surv.boonsSeen) m.surv.boonsSeen = {};
+        if (!m.surv.boonsSeen[id]) { m.surv.boonsSeen[id] = 1; save(); }
+        return Object.keys(m.surv.boonsSeen).length;
+      },
+      survBoonsSeenCount: () => Object.keys(m.surv.boonsSeen || {}).length,
+      // Récord semanal ligado al mutador (SV-32): se reinicia solo al cambiar de semana
+      // ISO (nunca se muestra como pérdida). Devuelve {isRecord, distinctMuts}.
+      survWeekRecord(week, wave, mut) {
+        const wb = m.surv.weekBest || (m.surv.weekBest = { week: '', wave: 0, mut: 'none' });
+        if (wb.week !== week) { wb.week = week; wb.wave = 0; wb.mut = mut; }
+        let isRecord = false;
+        if (wave > wb.wave) {
+          wb.wave = wave; wb.mut = mut; isRecord = true;
+          if (mut && mut !== 'none') { if (!m.surv.mutsWon) m.surv.mutsWon = {}; m.surv.mutsWon[mut] = 1; }
+          save();
+        }
+        return { isRecord, distinctMuts: Object.keys(m.surv.mutsWon || {}).length };
+      },
+      // Registro de fin de run (SV-30): acumula lo vitalicio. Devuelve el rango antes/después.
+      recordSurvivalRun(ctx) {
+        const before = this.survRank().id;
+        m.surv.runs = (m.surv.runs || 0) + 1;
+        m.surv.totalWaves = (m.surv.totalWaves || 0) + Math.max(0, ctx.wave | 0);
+        m.surv.totalBosses = (m.surv.totalBosses || 0) + Math.max(0, ctx.bosses | 0);
+        save();
+        const after = this.survRank();
+        return { rankUp: before !== after.id, rank: after };
       },
       claimReward() {
         if (m.reward.date === today()) return 0;
@@ -2852,6 +2944,25 @@
     // iconos (Engine.poolForLevel/varietyFor) → entran iconos más difíciles y se dejan
     // atrás los fáciles; además escala la puntuación base.
     dlevel() { return 1 + Math.floor((this.wave - 1) / this.tune().varEvery); },
+    // Hazañas del Superviviente (SV-31): metas ORTOGONALES a la velocidad — el sim
+    // demostró que la dificultad del modo es de atención, no mecánica; estas premian
+    // estilo, no rapidez. Vitalicias, se celebran una vez. Icono para el medallero.
+    FEATS: [
+      { id: 'impecable', icon: '🛡️' },   // superar un jefe sin perder vida esa oleada
+      { id: 'purista', icon: '✋' },       // llegar a oleada 10 sin usar potenciadores
+      { id: 'fenix', icon: '🔥' },         // batir tu récord en una run donde reviviste
+      { id: 'coleccionista', icon: '📖' }, // haber elegido las 8 bendiciones (vitalicio)
+      { id: 'semana_completa', icon: '📅' },// récord semanal en 3 mutadores distintos
+      { id: 'frenetico', icon: '⚡' },     // 3 frenesíes tier 3 en una run
+      { id: 'al_limite', icon: '💔' },     // 2 oleadas completas con 1 vida
+      { id: 'economo', icon: '💰' },       // oleada 15 sin revivir
+    ],
+    _feat(id) {
+      if (Meta.survUnlockFeat(id)) {
+        Toasts.show(I18n.t('feat_' + id) + ' · ' + I18n.t('feat_unlocked'), 'good', 2600, 'medal');
+        Sound.record(); Haptics.record();
+      }
+    },
     lives: 3, wave: 1, waveAcc: 0, survSec: 0, charge: 0, frenzy: 0, frenzyUntil: 0, freezeUntil: 0, x2Until: 0, lockUntil: 0,
     runCoins: 0, runGems: 0, runChests: 0, newWaveRecord: false,
     inv: {},
@@ -2865,6 +2976,7 @@
       this.slowWaves = 0; this._boonAt = 0;
       this._bossSurvivedAt = 0; this._noBoosterSinceBoss = true; this._frenzyT3Seen = false; this._liveRecord = false; // hitos SV-20/21
       this._boonLog = []; this._bossesSurvived = 0; // resumen de la run (SV-22)
+      this._anyBoosterUsed = false; this._t3Count = 0; this._livesLostThisWave = 0; this._waves1Life = 0; // hazañas (SV-31)
       this.scoreBoost = 0; this.magnetMoves = 0; this.goldenWaveWaves = 0;
       this.mut = this.weeklyMut(); // mutador semanal (GM-22)
       if (this.mut.id !== 'none') Toasts.show(I18n.t('survmut_' + this.mut.id), 'info', 2400, '📅');
@@ -2982,6 +3094,8 @@
       // el resumen como "hoja de la run" del Superviviente.
       const bd = this.BOONS.find((b) => b.id === id);
       (this._boonLog || (this._boonLog = [])).push({ id, icon: bd ? bd.icon : '✨' });
+      // Hazaña 'coleccionista' (SV-31): haber elegido las 8 bendiciones alguna vez.
+      if (Meta.survSeeBoon(id) >= this.BOONS.length) this._feat('coleccionista');
       Toasts.show(I18n.t('boon_' + id), 'good', 1800, '✨');
       Sound.record(); Haptics.milestone();
       Render.multChip(); // impulso/oleada dorada entran en el multiplicador visible
@@ -3026,6 +3140,8 @@
       } else {
         Toasts.show(I18n.t('surv_frenzy_ready'), 'warn', 1800, 'fire');
       }
+      // Hazaña 'frenetico' (SV-31): 3 frenesíes tier 3 en una run.
+      if (this.frenzyTier() === 3) { this._t3Count = (this._t3Count || 0) + 1; if (this._t3Count === 3) this._feat('frenetico'); }
       Sound.fever(); Haptics.fever(); this.render();
     },
     _waveReward(clearedWave) {
@@ -3173,10 +3289,17 @@
     },
     newWave() {
       const clearedWave = this.wave;
+      // Hazaña 'al_limite' (SV-31): completar oleadas con 1 sola vida. La oleada que
+      // se acaba de superar contaba con las vidas actuales.
+      if (this.lives === 1) { this._waves1Life = (this._waves1Life || 0) + 1; if (this._waves1Life === 2) this._feat('al_limite'); }
       this._waveReward(clearedWave);
       this.wave++;
+      this._livesLostThisWave = 0; // reinicia el contador para 'impecable' de la nueva oleada
       this._r.waveWarned = false;
       this._r.bossWarned = false;
+      // Hazañas de progreso (SV-31): llegar a la 10 sin potenciadores / a la 15 sin revivir.
+      if (this.wave === 10 && !this._anyBoosterUsed) this._feat('purista');
+      if (this.wave === 15 && this.revives === 0) this._feat('economo');
       if (this.slowWaves > 0) this.slowWaves--; // bendición de ralentización (GM-17)
       const tn = this.tune();
       State.spawnRate = Math.max(tn.spawnFloor, Math.round(State.spawnRate * tn.spawnDecay));
@@ -3233,6 +3356,8 @@
     _bossSurvived() {
       if (State.status !== 'playing' || this.lives <= 0) return;
       this._bossesSurvived = (this._bossesSurvived || 0) + 1;
+      // Hazaña 'impecable' (SV-31): superar el jefe sin perder vida en esa oleada.
+      if (!this._livesLostThisWave) this._feat('impecable');
       const clean = !!this._noBoosterSinceBoss;
       Toasts.show(I18n.t(clean ? 'surv_boss_cleared_clean' : 'surv_boss_cleared'), 'good', 1800, 'trophy');
       Render.rankFlash(I18n.t('surv_boss_cleared'), '#ffd24d'); // no-op bajo reduced-fx
@@ -3335,6 +3460,7 @@
     },
     onOverflow() {
       this.lives--;
+      this._livesLostThisWave = (this._livesLostThisWave || 0) + 1; // hazaña 'impecable' (SV-31)
       if (this.lives <= 0) { this.lastChance(); return; }
       Toasts.show(I18n.t('surv_life_lost'), 'bad', 1700, 'heart');
       announce(I18n.t('sr_life').replace('{n}', this.lives));
@@ -3417,7 +3543,7 @@
     },
     _applyGlobal(id) {
       this.inv[id]--;
-      this._noBoosterSinceBoss = false; // rompe la hazaña "sin potenciadores" (SV-20/21)
+      this._noBoosterSinceBoss = false; this._anyBoosterUsed = true; // hazañas (SV-20/21/31)
       Render.boosterPulse(id);
       if (id === 'freeze') { this.freezeUntil = performance.now() + 7000; Toasts.show(I18n.t('pu_freeze'), 'info', 1500, BOOSTER_IMG.freeze); Render.boardEvent('boost-freeze', 1200); }
       else if (id === 'x2') { this.x2Until = performance.now() + 11000; this._syncMult(); Toasts.show(I18n.t('pu_x2'), 'good', 1500, BOOSTER_IMG.x2); Render.boardEvent('boost-x2', 1200); }
@@ -3452,7 +3578,7 @@
     // Aplica el power-up espacial armado en la casilla elegida por el jugador.
     applyBoosterAt(id, i) {
       if ((this.inv[id] || 0) <= 0) { this.disarm(); return; }
-      this._noBoosterSinceBoss = false; // rompe la hazaña "sin potenciadores" (SV-20/21)
+      this._noBoosterSinceBoss = false; this._anyBoosterUsed = true; // hazañas (SV-20/21/31)
       // Escoba sobre casilla vacía: barrido automático del grupo más repetido.
       if (id === 'wild' && State.board[i] == null) {
         this.inv[id]--; Render.boosterPulse(id); this._lock(420, 'boost-wild'); this._wild();
@@ -5474,10 +5600,17 @@
     gameOver(reason) {
       if (this.ended) return;
       // Supervivencia: registra el récord de tiempo sobrevivido.
-      this._survNew = false; this._survWaveNew = false;
+      this._survNew = false; this._survWaveNew = false; this._survRunResult = null;
       if (State.mode === 'supervivencia') {
         this._survNew = Meta.survRecord(Survival.survSec);
         this._survWaveNew = Survival.newWaveRecord || Meta.survWaveRecord(Survival.wave);
+        // Hoja de Servicio (SV-30/32): acumula lo vitalicio + récord semanal ligado
+        // al mutador. Y la hazaña 'fenix' (batir récord habiendo revivido).
+        const rankRes = Meta.recordSurvivalRun({ wave: Survival.wave, bosses: Survival._bossesSurvived || 0 });
+        const weekRes = Meta.survWeekRecord(Survival._weekKey(), Survival.wave, Survival.mut.id);
+        if (weekRes.distinctMuts >= 3) Survival._feat('semana_completa');
+        if (this._survWaveNew && Survival.revives > 0) Survival._feat('fenix');
+        this._survRunResult = { rankUp: rankRes.rankUp, rank: rankRes.rank, weekBest: Meta.survWeekBest() };
       }
       // Reto diario: registra la marca y premia el primer intento del día.
       if (State.isDaily) {
@@ -5559,6 +5692,19 @@
             const chips = log.map((b) => `<span class="or-boon">${b.icon}</span>`).join('');
             const bossTxt = bosses ? `<span class="or-bosses">${iconInline('shield')} ${I18n.t('surv_run_bosses').replace('{n}', bosses)}</span>` : '';
             run.innerHTML = (chips ? `<div class="or-boons">${chips}</div>` : '') + bossTxt;
+          }
+        }
+        // Progreso de rango (SV-30): "+N oleadas de servicio → Rango: total/next".
+        const svc = $('#over-service');
+        if (svc) {
+          const res = this._survRunResult;
+          svc.hidden = !(isSurv && res);
+          if (isSurv && res) {
+            const rk = res.rank;
+            const prog = rk.nextAt ? `${rk.total}/${rk.nextAt}` : '★';
+            const line = `+${Survival.wave} ${I18n.t('st_wave').toLowerCase()} · ${I18n.t('surv_rank_label')} <b>${esc(I18n.t('srank_' + rk.id))}</b> ${prog}`;
+            svc.innerHTML = (res.rankUp ? `<div class="os-up">${iconInline('upgrade')} ${esc(I18n.t('surv_rank_up').replace('{r}', I18n.t('srank_' + rk.id)))}</div>` : '') + `<div class="os-line">${line}</div>`;
+            svc.classList.toggle('rankup', !!res.rankUp);
           }
         }
       }
@@ -5837,8 +5983,32 @@
     const start = $('#btn-surv-start');
     if (start) start.dataset.diff = survDiff;
   }
+  function fillSurvivalService() {
+    const box = $('#surv-service'); if (!box) return;
+    box.hidden = false;
+    const rank = Meta.survRank();
+    $('#surv-rank-name').textContent = I18n.t('srank_' + rank.id);
+    // Progreso al siguiente rango (barra + texto). En rango máximo, barra llena.
+    const fill = $('#surv-rank-fill'), prog = $('#surv-rank-prog');
+    if (rank.nextAt) {
+      const span = rank.nextAt - rank.at, done = rank.total - rank.at;
+      if (fill) fill.style.width = Math.max(4, Math.min(100, done / span * 100)).toFixed(0) + '%';
+      if (prog) prog.textContent = I18n.t('surv_rank_progress').replace('{c}', rank.total).replace('{n}', rank.nextAt).replace('{next}', I18n.t('srank_' + rank.next));
+    } else {
+      if (fill) fill.style.width = '100%';
+      if (prog) prog.textContent = I18n.t('surv_rank_max');
+    }
+    // Récord semanal ligado al mutador (SV-32): solo si es de la semana en curso.
+    const wb = Meta.survWeekBest(), wk = Survival._weekKey();
+    const wl = $('#surv-week-line');
+    if (wl) wl.textContent = (wb && wb.week === wk && wb.wave > 0) ? I18n.t('surv_week_best').replace('{w}', wb.wave) : I18n.t('surv_week_best_none');
+    // Medallero de hazañas (SV-31): desbloqueadas / total.
+    const fl = $('#surv-feats-line');
+    if (fl) fl.textContent = '🏅 ' + Meta.survFeatCount() + '/' + Survival.FEATS.length;
+  }
   function openSurvivalDiff() {
     survDiff = Config.DIFF_ORDER.indexOf(Storage.survDiff) >= 0 ? Storage.survDiff : 'normal';
+    fillSurvivalService();
     // Tarjeta del mutador semanal (SV-12): mismo tema determinista que la partida.
     const mut = Survival.weeklyMut();
     const wk = $('#surv-week');
