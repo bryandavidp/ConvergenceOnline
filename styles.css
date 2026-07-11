@@ -1541,14 +1541,46 @@ body.reduced-fx .pick-card { animation: none; }
   display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
   padding: 11px 12px; border-radius: 14px; min-height: 56px;
   background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.28));
-  border: 1px solid var(--line-strong); color: inherit; font: inherit;
-  transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease;
-  touch-action: manipulation;
+  border: 1px solid var(--opt-border, var(--line-strong)); color: inherit; font: inherit;
+  transition: transform .08s ease, border-color .15s ease, box-shadow .15s ease, filter .15s ease;
+  touch-action: manipulation; position: relative; overflow: hidden;
+  animation: cascade-in .4s cubic-bezier(.2,.9,.3,1.1) backwards;
 }
+@keyframes cascade-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.pick-opt:nth-child(1) { animation-delay: 0s; }
+.pick-opt:nth-child(2) { animation-delay: 0.1s; }
+.pick-opt:nth-child(3) { animation-delay: 0.2s; }
+.pick-opt:nth-child(4) { animation-delay: 0.3s; }
+
+/* Safe delay protection (500ms delay on opening) */
+.pick-overlay.safe-delay-active .pick-opt {
+  pointer-events: none;
+  filter: grayscale(0.5) brightness(0.7);
+}
+.pick-overlay.safe-delay-active .pick-opt::after {
+  content: ''; position: absolute; bottom: 0; left: 0; height: 3px;
+  background: var(--opt-accent, var(--accent-2));
+  animation: safe-delay-fill 0.5s linear forwards;
+}
+@keyframes safe-delay-fill {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+/* Rarity Tiers */
+.pick-opt.rarity-common { --opt-border: rgba(255,255,255,0.15); --opt-accent: #ffffff; }
+.pick-opt.rarity-uncommon { --opt-border: rgba(0,208,255,0.4); --opt-accent: #00d0ff; }
+.pick-opt.rarity-rare { --opt-border: rgba(180,108,255,0.5); --opt-accent: #b46cff; }
+.pick-opt.rarity-epic { --opt-border: rgba(255,216,77,0.6); --opt-accent: #ffd84d; }
+
 .pick-opt:active, .pl-chip:active { transform: scale(.97); }
 .pick-opt:hover, .pick-opt:focus-visible {
-  border-color: var(--pick-accent, var(--accent-2));
-  box-shadow: 0 0 12px color-mix(in srgb, var(--pick-accent, var(--accent-2)) 30%, transparent);
+  border-color: var(--opt-accent, var(--pick-accent, var(--accent-2)));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--opt-accent, var(--pick-accent, var(--accent-2))) 30%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--opt-accent, rgba(255,255,255,1)) 10%, rgba(255,255,255,.05)), rgba(0,0,0,.28));
 }
 .po-ic { flex: none; font-size: 1.5rem; width: 36px; text-align: center; }
 .po-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }

@@ -29,7 +29,7 @@
         a.push({ t: Date.now(), v: VERSION, kind, msg: String(msg).slice(0, 300), extra });
         while (a.length > this.MAX) a.shift();
         localStorage.setItem(this.KEY, JSON.stringify(a));
-      } catch (_) {}
+      } catch (_) { }
     },
   };
   window.addEventListener('error', (e) => { ErrLog.push('error', e.message, { src: e.filename, line: e.lineno }); showFatalError(); });
@@ -78,7 +78,7 @@
     btn.className = 'btn btn-primary btn-sm';
     btn.textContent = I18n.t('update_btn');
     btn.addEventListener('click', () => {
-      try { if (reg && reg.waiting) reg.waiting.postMessage('skipWaiting'); } catch (_) {}
+      try { if (reg && reg.waiting) reg.waiting.postMessage('skipWaiting'); } catch (_) { }
       location.reload();
     });
     box.appendChild(msg); box.appendChild(btn);
@@ -89,7 +89,7 @@
   const Config = {
     SIZE: 8,
     // Los iconos ya no son emojis: se generan por SVG (ver el módulo Icons).
-    COMBO_MULTIPLIERS: [[30,10],[20,8],[15,5],[10,3],[6,2],[3,1.5]], // [umbral, multiplicador], desc
+    COMBO_MULTIPLIERS: [[30, 10], [20, 8], [15, 5], [10, 3], [6, 2], [3, 1.5]], // [umbral, multiplicador], desc
     MILESTONES: { 10: 500, 20: 1000, 30: 2000 },
     EMPTY_BOARD_BONUS: 500,   // bonus por dejar el tablero vacío
     // Ayuda de vaciado: con el tablero casi vacío (<= threshold iconos), sesga el icono
@@ -129,24 +129,29 @@
     HINT_COOLDOWN: 10000,     // ms
     HINT_DURATION: 2000,      // ms
     DIFFICULTY: {
-      facil:   { label: 'Fácil',   initialIcons: 12, comboWindow: 5000, spawnStart: 6000, spawnMin: 2000, scoreMult: 0.8, penaltyBase: 1 },
-      normal:  { label: 'Normal',  initialIcons: 18, comboWindow: 3500, spawnStart: 5000, spawnMin: 1400, scoreMult: 1.0, penaltyBase: 2 },
-      dificil: { label: 'Difícil', initialIcons: 24, comboWindow: 2500, spawnStart: 3800, spawnMin: 900,  scoreMult: 1.3, penaltyBase: 3 },
+      facil: { label: 'Fácil', initialIcons: 12, comboWindow: 5000, spawnStart: 6000, spawnMin: 2000, scoreMult: 0.8, penaltyBase: 1 },
+      normal: { label: 'Normal', initialIcons: 18, comboWindow: 3500, spawnStart: 5000, spawnMin: 1400, scoreMult: 1.0, penaltyBase: 2 },
+      dificil: { label: 'Difícil', initialIcons: 24, comboWindow: 2500, spawnStart: 3800, spawnMin: 900, scoreMult: 1.3, penaltyBase: 3 },
     },
     MODES: {
-      tutorial:      { name: 'Tutorial',     emoji: '🎓', timed: false, penalties: false, mult: 0.5, single: true, fixedDiff: 'facil', accent: '#ffd23f', goal: 'Junta dos iguales', desc: 'Aprende la mecánica sin prisa ni penalizaciones.' },
-      clasico:       { name: 'Clásico',      emoji: '🗺️', timed: false, penalties: true,  mult: 1.0, accent: '#2f6bff', goal: 'Vacía el tablero', desc: 'Supera niveles con diferentes mapas y desafíos únicos.',
+      tutorial: { name: 'Tutorial', emoji: '🎓', timed: false, penalties: false, mult: 0.5, single: true, fixedDiff: 'facil', accent: '#ffd23f', goal: 'Junta dos iguales', desc: 'Aprende la mecánica sin prisa ni penalizaciones.' },
+      clasico: {
+        name: 'Clásico', emoji: '🗺️', timed: false, penalties: true, mult: 1.0, accent: '#2f6bff', goal: 'Vacía el tablero', desc: 'Supera niveles con diferentes mapas y desafíos únicos.',
         onSetupLevel(ctx) { Classic.setup(ctx.level); },
         // GM-03: los potenciadores pre-nivel (congelar) también pausan el spawn aquí.
-        blockSpawn() { return Survival.frozen() || Survival.locked(); } },
-      aventura:      { name: 'Aventura',     emoji: '🚀', timed: false, penalties: true,  mult: 1.1, accent: '#7a5cff', desc: 'Viaje infinito por biomas con reglas propias, objetivos y mini-jefes. ¿Hasta dónde llegarás?',
+        blockSpawn() { return Survival.frozen() || Survival.locked(); }
+      },
+      aventura: {
+        name: 'Aventura', emoji: '🚀', timed: false, penalties: true, mult: 1.1, accent: '#7a5cff', desc: 'Viaje infinito por biomas con reglas propias, objetivos y mini-jefes. ¿Hasta dónde llegarás?',
         onSetupLevel(ctx) { Adventure.setup(ctx.level); },
         onTick(dt) { Adventure.onTick(dt); },
         winCheck() { Adventure.refreshGoal(State.level); return Adventure.winCheck(); },
         // El objetivo MANDA: solo en niveles 'clear' se gana vaciando el tablero;
         // en score/survive/boss vaciar NO completa el nivel antes de tiempo.
-        boardClearWins() { return Adventure.objective === 'clear'; } },
-      contrarreloj:  { name: 'Contrarreloj', emoji: '⏱️', timed: true,  scoreAttack: true, penalties: true,  mult: 1.2, initialIcons: 22, accent: '#ff6cb0', goal: 'Suma puntos a contrarreloj', desc: 'Un solo tablero: cada convergencia suma algo de tiempo (con tope), pero la presión crece. ¡Puntúa todo lo posible antes de que el reloj llegue a cero!',
+        boardClearWins() { return Adventure.objective === 'clear'; }
+      },
+      contrarreloj: {
+        name: 'Contrarreloj', emoji: '⏱️', timed: true, scoreAttack: true, penalties: true, mult: 1.2, initialIcons: 22, accent: '#ff6cb0', goal: 'Suma puntos a contrarreloj', desc: 'Un solo tablero: cada convergencia suma algo de tiempo (con tope), pero la presión crece. ¡Puntúa todo lo posible antes de que el reloj llegue a cero!',
         spawnFactor() {
           if (State.elapsed * 1000 < Config.WARMUP.ms) return 1;
           const n = State.iconCount;
@@ -154,16 +159,21 @@
           if (n <= 16) return 0.85;
           if (n >= 30) return 1.1;
           return 1;
-        } },
-      supervivencia: { name: 'Supervivencia',emoji: '❤️', timed: false, penalties: true,  mult: 1.5, fast: true, endless: true, accent: '#ff5b6e', desc: 'Aguanta oleadas crecientes con vidas, trampas, jefes y potenciadores. ¿Cuánto sobrevivirás?',
+        }
+      },
+      supervivencia: {
+        name: 'Supervivencia', emoji: '❤️', timed: false, penalties: true, mult: 1.5, fast: true, endless: true, accent: '#ff5b6e', desc: 'Aguanta oleadas crecientes con vidas, trampas, jefes y potenciadores. ¿Cuánto sobrevivirás?',
         onSetupLevel(ctx) { Survival.setup(ctx.level); },
         onTick(dt) { Survival.onTick(dt); },
         onConverge(ctx) { Survival.onConverge(ctx); },
         onOverflow() { Survival.onOverflow(); },
         blockSpawn() { return Survival.blockSpawn(); },
-        spawnFactor() { return Survival.spawnFactor(); } },
-      zen:           { name: 'Zen',          emoji: '☯️', timed: false, penalties: false, mult: 0.8, relaxed: true, endless: true, noFever: true, accent: '#9be15d', goal: 'Sin fallos ni prisa',
-        onOverflow() { Game.softClear(0.45); }, desc: 'Ritmo relajado, sin penalizaciones ni fin de partida. Juega y respira.' },
+        spawnFactor() { return Survival.spawnFactor(); }
+      },
+      zen: {
+        name: 'Zen', emoji: '☯️', timed: false, penalties: false, mult: 0.8, relaxed: true, endless: true, noFever: true, accent: '#9be15d', goal: 'Sin fallos ni prisa',
+        onOverflow() { Game.softClear(0.45); }, desc: 'Ritmo relajado, sin penalizaciones ni fin de partida. Juega y respira.'
+      },
     },
     MODE_ORDER: ['tutorial', 'clasico', 'aventura', 'contrarreloj', 'supervivencia', 'zen'],
     DIFF_ORDER: ['facil', 'normal', 'dificil'],
@@ -176,35 +186,39 @@
    */
   const Icons = (() => {
     const COLORS = {
-      red:'#ff5b6e', blue:'#4b8bff', green:'#3ad07f', yellow:'#ffd23f', purple:'#a06bff',
-      cyan:'#2bd4e6', orange:'#ff9838', pink:'#ff79c6', lime:'#b6e64a', white:'#e8eefc',
-      teal:'#27b6a0', indigo:'#6c7bff',
+      red: '#ff5b6e', blue: '#4b8bff', green: '#3ad07f', yellow: '#ffd23f', purple: '#a06bff',
+      cyan: '#2bd4e6', orange: '#ff9838', pink: '#ff79c6', lime: '#b6e64a', white: '#e8eefc',
+      teal: '#27b6a0', indigo: '#6c7bff',
     };
-    const CNAME = { red:'rojo', blue:'azul', green:'verde', yellow:'amarillo', purple:'morado',
-      cyan:'cian', orange:'naranja', pink:'rosa', lime:'lima', white:'blanco', teal:'turquesa', indigo:'índigo' };
+    const CNAME = {
+      red: 'rojo', blue: 'azul', green: 'verde', yellow: 'amarillo', purple: 'morado',
+      cyan: 'cian', orange: 'naranja', pink: 'rosa', lime: 'lima', white: 'blanco', teal: 'turquesa', indigo: 'índigo'
+    };
     const ST = 'stroke="rgba(0,0,0,.30)" stroke-width="3" stroke-linejoin="round"';
     const SHAPES = {
-      circle:   c => `<circle cx="50" cy="50" r="33" fill="${c}" ${ST}/>`,
-      square:   c => `<rect x="18" y="18" width="64" height="64" rx="12" fill="${c}" ${ST}/>`,
+      circle: c => `<circle cx="50" cy="50" r="33" fill="${c}" ${ST}/>`,
+      square: c => `<rect x="18" y="18" width="64" height="64" rx="12" fill="${c}" ${ST}/>`,
       triangle: c => `<path d="M50 16 L85 80 L15 80 Z" fill="${c}" ${ST}/>`,
-      diamond:  c => `<path d="M50 13 L87 50 L50 87 L13 50 Z" fill="${c}" ${ST}/>`,
-      star:     c => `<path d="M50 13 L61 39 L88 41 L67 59 L74 86 L50 71 L26 86 L33 59 L12 41 L39 39 Z" fill="${c}" ${ST}/>`,
-      heart:    c => `<path d="M50 84 C12 58 20 26 44 26 C50 26 50 33 50 36 C50 33 50 26 56 26 C80 26 88 58 50 84 Z" fill="${c}" ${ST}/>`,
-      hexagon:  c => `<path d="M50 14 L84 32 L84 68 L50 86 L16 68 L16 32 Z" fill="${c}" ${ST}/>`,
-      plus:     c => `<path d="M40 15 H60 V40 H85 V60 H60 V85 H40 V60 H15 V40 H40 Z" fill="${c}" ${ST}/>`,
-      droplet:  c => `<path d="M50 13 C50 13 77 49 77 65 A27 27 0 1 1 23 65 C23 49 50 13 50 13 Z" fill="${c}" ${ST}/>`,
-      ring:     c => `<circle cx="50" cy="50" r="30" fill="none" stroke="${c}" stroke-width="15"/>`,
+      diamond: c => `<path d="M50 13 L87 50 L50 87 L13 50 Z" fill="${c}" ${ST}/>`,
+      star: c => `<path d="M50 13 L61 39 L88 41 L67 59 L74 86 L50 71 L26 86 L33 59 L12 41 L39 39 Z" fill="${c}" ${ST}/>`,
+      heart: c => `<path d="M50 84 C12 58 20 26 44 26 C50 26 50 33 50 36 C50 33 50 26 56 26 C80 26 88 58 50 84 Z" fill="${c}" ${ST}/>`,
+      hexagon: c => `<path d="M50 14 L84 32 L84 68 L50 86 L16 68 L16 32 Z" fill="${c}" ${ST}/>`,
+      plus: c => `<path d="M40 15 H60 V40 H85 V60 H60 V85 H40 V60 H15 V40 H40 Z" fill="${c}" ${ST}/>`,
+      droplet: c => `<path d="M50 13 C50 13 77 49 77 65 A27 27 0 1 1 23 65 C23 49 50 13 50 13 Z" fill="${c}" ${ST}/>`,
+      ring: c => `<circle cx="50" cy="50" r="30" fill="none" stroke="${c}" stroke-width="15"/>`,
       // Figuras desbloqueables (mockup): siluetas limpias, mismo estilo plano + contorno.
       pentagon: c => `<path d="M50 14 L84 39 L71 81 L29 81 L16 39 Z" fill="${c}" ${ST}/>`,
-      moon:     c => `<path d="M64 16 A36 36 0 1 0 64 84 A28 28 0 1 1 64 16 Z" fill="${c}" ${ST}/>`,
-      sun:      c => `<path d="M50 8 L58 28 L80 20 L72 42 L92 50 L72 58 L80 80 L58 72 L50 92 L42 72 L20 80 L28 58 L8 50 L28 42 L20 20 L42 28 Z" fill="${c}" ${ST}/>`,
-      flower:   c => `<g fill="${c}" ${ST}><circle cx="50" cy="28" r="15"/><circle cx="72" cy="44" r="15"/><circle cx="64" cy="70" r="15"/><circle cx="36" cy="70" r="15"/><circle cx="28" cy="44" r="15"/></g><circle cx="50" cy="52" r="12" fill="#ffe9a8" ${ST}/>`,
-      clover:   c => `<g fill="${c}" ${ST}><circle cx="50" cy="32" r="16"/><circle cx="34" cy="50" r="16"/><circle cx="66" cy="50" r="16"/></g><path d="M48 58 L52 58 L54 86 L46 86 Z" fill="${c}" ${ST}/>`,
-      spiral:   c => `<path d="M50 50 C50 43 59 43 59 50 C59 62 41 62 41 50 C41 34 67 34 67 50 C67 72 33 72 33 50 C33 25 75 25 75 50" fill="none" stroke="${c}" stroke-width="9" stroke-linecap="round"/>`,
+      moon: c => `<path d="M64 16 A36 36 0 1 0 64 84 A28 28 0 1 1 64 16 Z" fill="${c}" ${ST}/>`,
+      sun: c => `<path d="M50 8 L58 28 L80 20 L72 42 L92 50 L72 58 L80 80 L58 72 L50 92 L42 72 L20 80 L28 58 L8 50 L28 42 L20 20 L42 28 Z" fill="${c}" ${ST}/>`,
+      flower: c => `<g fill="${c}" ${ST}><circle cx="50" cy="28" r="15"/><circle cx="72" cy="44" r="15"/><circle cx="64" cy="70" r="15"/><circle cx="36" cy="70" r="15"/><circle cx="28" cy="44" r="15"/></g><circle cx="50" cy="52" r="12" fill="#ffe9a8" ${ST}/>`,
+      clover: c => `<g fill="${c}" ${ST}><circle cx="50" cy="32" r="16"/><circle cx="34" cy="50" r="16"/><circle cx="66" cy="50" r="16"/></g><path d="M48 58 L52 58 L54 86 L46 86 Z" fill="${c}" ${ST}/>`,
+      spiral: c => `<path d="M50 50 C50 43 59 43 59 50 C59 62 41 62 41 50 C41 34 67 34 67 50 C67 72 33 72 33 50 C33 25 75 25 75 50" fill="none" stroke="${c}" stroke-width="9" stroke-linecap="round"/>`,
     };
-    const SNAME = { circle:'círculo', square:'cuadrado', triangle:'triángulo', diamond:'rombo',
-      star:'estrella', heart:'corazón', hexagon:'hexágono', plus:'cruz', droplet:'gota', ring:'anillo',
-      pentagon:'pentágono', moon:'luna', sun:'sol', flower:'flor', clover:'trébol', spiral:'espiral' };
+    const SNAME = {
+      circle: 'círculo', square: 'cuadrado', triangle: 'triángulo', diamond: 'rombo',
+      star: 'estrella', heart: 'corazón', hexagon: 'hexágono', plus: 'cruz', droplet: 'gota', ring: 'anillo',
+      pentagon: 'pentágono', moon: 'luna', sun: 'sol', flower: 'flor', clover: 'trébol', spiral: 'espiral'
+    };
 
     // Pares [forma, color]. ORDENADOS EN CICLOS de las 10 formas EN EL MISMO
     // ORDEN (3 ciclos = 30 iconos, múltiplo de 10). Cada forma aparece 3 veces
@@ -250,7 +264,7 @@
     get user() { return localStorage.getItem('cv_user'); },
     set user(v) { v ? localStorage.setItem('cv_user', v) : localStorage.removeItem('cv_user'); },
     get profile() { try { return JSON.parse(localStorage.getItem('cv_profile') || 'null'); } catch (_) { return null; } },
-    set profile(v) { try { localStorage.setItem('cv_profile', JSON.stringify(v)); } catch (_) {} },
+    set profile(v) { try { localStorage.setItem('cv_profile', JSON.stringify(v)); } catch (_) { } },
     get tutorialDone() { return localStorage.getItem('cv_tut') === '1'; },
     set tutorialDone(v) { localStorage.setItem('cv_tut', v ? '1' : '0'); },
     get lastVersion() { return localStorage.getItem('cv_ver') || ''; },
@@ -274,7 +288,7 @@
     try { raw = JSON.parse(localStorage.getItem('cv_settings') || '{}') || {}; } catch (_) { raw = {}; }
     let reducedFxExplicit = Object.prototype.hasOwnProperty.call(raw, 'reducedFx');
     let s = Object.assign({}, def, raw);
-    const save = () => { try { localStorage.setItem('cv_settings', JSON.stringify(s)); } catch (_) {} };
+    const save = () => { try { localStorage.setItem('cv_settings', JSON.stringify(s)); } catch (_) { } };
     return {
       get sfx() { return s.sfx; }, set sfx(v) { s.sfx = v; save(); },
       get music() { return s.music; }, set music(v) { s.music = v; save(); },
@@ -396,8 +410,11 @@
         boon_life: 'Vida extra', boon_life_d: '+1 corazón (puede superar el máximo)',
         boon_charge: 'Sobrecarga', boon_charge_d: '+50 de carga de potenciador',
         boon_pack: 'Arsenal', boon_pack_d: '+1 bomba y +1 rayo',
-        boon_slow: 'Calma', boon_slow_d: 'Figuras más lentas durante 2 oleadas',
+        boon_slow: 'Calma', boon_slow_d: 'Figuras un 25% más lentas durante 3 oleadas',
         boon_frenzy: 'Furia', boon_frenzy_d: '¡Frenesí activado al instante!',
+        boon_magnet: 'Imán', boon_magnet_d: 'Las próximas 5 uniones atraen +1 figura',
+        boon_score_boost: 'Impulso de Puntos', boon_score_boost_d: '+0.25x permanente a la puntuación',
+        boon_golden_wave: 'Oleada Dorada', boon_golden_wave_d: '¡Puntuación x3 en la próxima oleada!',
         route_title: 'Elige tu ruta', route_dense: 'Ruta exigente', route_dense_d: 'Más obstáculos · puntos ×1.25 este capítulo',
         route_calm: 'Ruta serena', route_calm_d: 'Figuras más lentas · sin bonus',
         relic_title: 'Reliquia de jefe', relic_sub: 'Pasiva para el resto de la expedición (máx. 3)',
@@ -543,8 +560,11 @@
         boon_life: 'Extra life', boon_life_d: '+1 heart (can exceed the max)',
         boon_charge: 'Overcharge', boon_charge_d: '+50 power-up charge',
         boon_pack: 'Arsenal', boon_pack_d: '+1 bomb and +1 ray',
-        boon_slow: 'Calm', boon_slow_d: 'Slower icons for 2 waves',
+        boon_slow: 'Calm', boon_slow_d: 'Icons are 25% slower for 3 waves',
         boon_frenzy: 'Fury', boon_frenzy_d: 'Frenzy activated instantly!',
+        boon_magnet: 'Magnet', boon_magnet_d: 'Next 5 matches attract +1 icon',
+        boon_score_boost: 'Score Boost', boon_score_boost_d: 'Permanent +0.25x score multiplier',
+        boon_golden_wave: 'Golden Wave', boon_golden_wave_d: '3x score in the next wave!',
         route_title: 'Choose your route', route_dense: 'Demanding route', route_dense_d: 'More obstacles · points ×1.25 this chapter',
         route_calm: 'Serene route', route_calm_d: 'Slower icons · no bonus',
         relic_title: 'Boss relic', relic_sub: 'Passive for the rest of the expedition (max 3)',
@@ -622,7 +642,7 @@
   /* ===================== Haptics (vibración móvil) ===================== */
   const Haptics = {
     ok: typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function',
-    fire(p) { if (this.ok && Settings.haptics) { try { navigator.vibrate(p); } catch (_) {} } },
+    fire(p) { if (this.ok && Settings.haptics) { try { navigator.vibrate(p); } catch (_) { } } },
     tap() { this.fire(8); },
     combo() { this.fire(14); },
     milestone() { this.fire([12, 30, 14]); },
@@ -646,20 +666,20 @@
           // iOS 16.4+: enrutar al canal "playback" para que el audio suene aunque
           // el interruptor físico de silencio esté activado (la causa más común de
           // "no hay sonido en iPhone" mientras sí funciona en Android).
-          try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (_) {}
+          try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (_) { }
           this.ctx = new (window.AudioContext || window.webkitAudioContext)();
           this.sfxGain = this.ctx.createGain(); this.sfxGain.gain.value = 0.9; this.sfxGain.connect(this.ctx.destination);
           this.musicGain = this.ctx.createGain(); this.musicGain.gain.value = 0.0; this.musicGain.connect(this.ctx.destination);
-        } catch (_) {}
+        } catch (_) { }
       }
       // iOS usa también el estado 'interrupted' (tras Siri/llamada), no solo 'suspended'.
-      if (this.ctx && this.ctx.state !== 'running') { const r = this.ctx.resume(); if (r && r.catch) r.catch(() => {}); }
+      if (this.ctx && this.ctx.state !== 'running') { const r = this.ctx.resume(); if (r && r.catch) r.catch(() => { }); }
       // Desbloqueo iOS: reproducir un búfer silencioso una vez dentro del gesto.
       if (this.ctx && !this._unlocked) {
         try {
           const buf = this.ctx.createBuffer(1, 1, 22050), src = this.ctx.createBufferSource();
           src.buffer = buf; src.connect(this.ctx.destination); src.start(0); this._unlocked = true;
-        } catch (_) {}
+        } catch (_) { }
       }
     },
     tone(freq, dur, type = 'sine', vol = 0.2, when = 0) {
@@ -691,7 +711,7 @@
     fever() { this.chord([330, 415, 554, 659], 0.3, 'sawtooth', 0.06, 0.04); },
     milestone() { this.chord([659, 988, 1319], 0.25, 'square', 0.07, 0.06); },
     record() { this.chord([784, 988, 1175, 1568], 0.3, 'sine', 0.12, 0.07); },
-    boardClear() { this.tone(196, 0.12, 'triangle', 0.08); [523, 784, 1047, 1568, 2093].forEach((f, i) => this.tone(f, 0.18, 'sine', 0.105, i * 0.045)); },
+    boardClear() { this.tone(196, 0.12, 'triangle', 0.08);[523, 784, 1047, 1568, 2093].forEach((f, i) => this.tone(f, 0.18, 'sine', 0.105, i * 0.045)); },
     miss() { this.tone(160, 0.12, 'sawtooth', 0.09); },
     danger() { this.tone(120, 0.09, 'sine', 0.08); },
     level() { [523, 659, 784, 1047, 1319].forEach((f, i) => this.tone(f, 0.16, 'sine', 0.13, i * 0.08)); },
@@ -1169,7 +1189,7 @@
           { opacity: .8, transform: `translate(calc(-50% + ${dx * 0.85}px), calc(-50% + ${dy * 0.85}px)) scale(.5)`, offset: .8 },
           { opacity: 0, transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.2)` },
         ], { duration: 230, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'forwards' });
-        if (anim && anim.finished) anim.finished.then(() => { s.style.opacity = '0'; anim.cancel(); }).catch(() => {});
+        if (anim && anim.finished) anim.finished.then(() => { s.style.opacity = '0'; anim.cancel(); }).catch(() => { });
       });
     },
 
@@ -1236,7 +1256,7 @@
         { opacity: 1, transform: 'translate(-50%,-90%) scale(1.05)', offset: .18 },
         { opacity: 0, transform: 'translate(-50%,-180%) scale(.95)' },
       ], { duration: 1000, easing: 'ease-out', fill: 'forwards' });
-      if (anim && anim.finished) anim.finished.then(() => { p.style.opacity = '0'; anim.cancel(); }).catch(() => {});
+      if (anim && anim.finished) anim.finished.then(() => { p.style.opacity = '0'; anim.cancel(); }).catch(() => { });
     },
 
     bump(el) { el.getAnimations().forEach(a => a.cancel()); el.animate([{}, { transform: 'scale(1.18)', color: '#ffd84d', offset: .5 }, {}], { duration: 300, easing: 'ease' }); },
@@ -1245,7 +1265,7 @@
       $('#hud-score').textContent = State.displayScore;
       $('#hud-level').textContent = State.level;
       $('#hud-best').textContent = Storage.best;
-      
+
       const isZen = State.mode === 'zen';
       const bestWrap = $('#hud-best-wrap');
       const zenWrap = $('#hud-zen-wrap');
@@ -1283,7 +1303,8 @@
       }
       if (timeEl.parentElement) timeEl.parentElement.classList.toggle('urgent', pressure === 2);
       // Ghost personal (GM-12): ¿vas por delante o por detrás de tu mejor intento?
-      { const gEl = $('#hud-ghost');
+      {
+        const gEl = $('#hud-ghost');
         if (gEl) {
           let show = false;
           if (Config.MODES[State.mode].scoreAttack && State.status === 'playing' && State.elapsed >= 10) {
@@ -1297,7 +1318,8 @@
             }
           }
           gEl.hidden = !show;
-        } }
+        }
+      }
       // Barra de ocupación = medidor de peligro (cuanto más llena, peor)
       const occ = Engine.occupation();
       const fill = $('#hud-progress-fill');
@@ -1509,7 +1531,7 @@
       document.body.classList.remove('modal-open');
       $('#overlay').hidden = true; document.querySelectorAll('.modal').forEach(m => m.hidden = true);
       // Accesibilidad: devolver el foco al elemento que abrió el modal.
-      if (this._last && this._last.focus) { try { this._last.focus(); } catch (_) {} }
+      if (this._last && this._last.focus) { try { this._last.focus(); } catch (_) { } }
       this._last = null;
     },
   };
@@ -1607,7 +1629,7 @@
         if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); }
         el.style.opacity = '0';
         if (p.anim === anim) p.anim = null;
-        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) {}
+        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) { }
       };
       anim.onfinish = done; anim.oncancel = done;
     },
@@ -1661,7 +1683,7 @@
             { transform: wt(0.34), opacity: 0.9, offset: 0.18, easing: 'cubic-bezier(.15,.6,.3,1)' },
             { transform: wt(1.18), opacity: 0, offset: 1 },
           ], { duration: 760, fill: 'forwards' });
-        } catch (_) {}
+        } catch (_) { }
       }
       const n = Math.min(34, this.cap);
       for (let k = 0; k < n; k++) {
@@ -1706,7 +1728,7 @@
         if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); }
         el.style.opacity = '0';
         if (p.anim === anim) p.anim = null;
-        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) {}
+        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) { }
       };
       anim.onfinish = done; anim.oncancel = done;
     },
@@ -1735,7 +1757,7 @@
         if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); }
         el.style.opacity = '0';
         if (p.anim === anim) p.anim = null;
-        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) {}
+        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) { }
       };
       anim.onfinish = done; anim.oncancel = done;
     },
@@ -1784,7 +1806,7 @@
         if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); }
         el.style.opacity = '0';
         if (p.anim === anim) p.anim = null;
-        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) {}
+        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) { }
       };
       anim.onfinish = done; anim.oncancel = done;
     },
@@ -1857,7 +1879,7 @@
             { transform: wt(0.42), opacity: 0.95, offset: 0.16, easing: 'cubic-bezier(.15,.6,.3,1)' },
             { transform: wt(1.0), opacity: 0, offset: 1 },
           ], { duration: this.DUR_CLEAR, fill: 'forwards' });
-        } catch (_) {}
+        } catch (_) { }
       }
 
       // 2) Estallido de esquirlas en cada icono eliminado (la "explosión"; tiene
@@ -1948,7 +1970,7 @@
     m.boards.owned.classic = 1; // el tablero Clásico es siempre propiedad (gratis)
     if (!m.boards.equipped || !m.boards.owned[m.boards.equipped]) m.boards.equipped = 'classic';
     m._v = SCHEMA;
-    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch (_) {} };
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch (_) { } };
     const today = () => new Date().toISOString().slice(0, 10);
     const hashStr = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
     const xpForLevel = (lvl) => 300 + (lvl - 1) * 250;
@@ -2372,12 +2394,12 @@
   const iconAny = (name, cls) => isV2Icon(name) ? iconV2(name.slice(3), cls) : icon(name, cls);
   const iconAnyInline = (name) => isV2Icon(name) ? iconV2Inline(name.slice(3)) : iconInline(name);
   // Estructuras que guardan un glyph emoji: si la id tiene equivalente PNG se usa; si no, se mantiene el emoji.
-  const MODE_IMG    = { tutorial: 'book', clasico: 'pin', aventura: 'rocket', contrarreloj: 'clock', supervivencia: 'heart', zen: 'v2:rest' };
-  const BIOME_IMG   = { nebula: 'planet', asteroid: 'v2:meteor', ice: 'v2:snowflake', core: 'planet-hell', void: 'v2:circle-ring', crystal: 'crystal' };
-  const WORLD_IMG   = { bosque: 'leaf', desierto: 'v2:cactus', montana: 'v2:mountain', cueva: 'potion', neon: 'v2:town' };
+  const MODE_IMG = { tutorial: 'book', clasico: 'pin', aventura: 'rocket', contrarreloj: 'clock', supervivencia: 'heart', zen: 'v2:rest' };
+  const BIOME_IMG = { nebula: 'planet', asteroid: 'v2:meteor', ice: 'v2:snowflake', core: 'planet-hell', void: 'v2:circle-ring', crystal: 'crystal' };
+  const WORLD_IMG = { bosque: 'leaf', desierto: 'v2:cactus', montana: 'v2:mountain', cueva: 'potion', neon: 'v2:town' };
   const BOOSTER_IMG = { bomb: 'bomb', freeze: 'v2:snowflake', clearLine: 'bolt', wild: 'v2:brush', x2: 'v2:double' };
   // Emojis sueltos (novedades de mundo, toasts, resúmenes) con icono equivalente en el pack.
-  const EMOJI_IMG   = { '🎯': 'target', '💎': 'crystal', '🌀': 'teleporter', '💣': 'bomb', '🎁': 'gift', '⚡': 'bolt', '➕': 'plus', '🔒': 'lock', '🏆': 'trophy', '🪙': 'coin', '🏅': 'medal', '⬆️': 'upgrade', '🗓️': 'calendar', '✅': 'check', '🔥': 'fire', '⭐': 'star', '🌟': 'star', '👑': 'crown', '🧊': 'v2:snowflake', '❄️': 'v2:snowflake', '☣️': 'v2:radiation', '⛓️': 'v2:link', '🕸️': 'v2:connection', '🚧': 'v2:prohibited', '🟫': 'v2:drought', '🏜️': 'v2:cactus', '🏔️': 'v2:mountain', '🏙️': 'v2:town', '🪨': 'v2:meteor', '🕳️': 'v2:circle-ring', '🧹': 'v2:brush', '🃏': 'v2:double', '📳': 'v2:mobile-phone', '🔠': 'v2:font', '📲': 'v2:download', '📤': 'v2:share', '🔔': 'v2:notification', '📶': 'v2:wi-fi', '🎉': 'v2:four-pointed-star', '✨': 'v2:four-pointed-star', '🏁': 'v2:flag' };
+  const EMOJI_IMG = { '🎯': 'target', '💎': 'crystal', '🌀': 'teleporter', '💣': 'bomb', '🎁': 'gift', '⚡': 'bolt', '➕': 'plus', '🔒': 'lock', '🏆': 'trophy', '🪙': 'coin', '🏅': 'medal', '⬆️': 'upgrade', '🗓️': 'calendar', '✅': 'check', '🔥': 'fire', '⭐': 'star', '🌟': 'star', '👑': 'crown', '🧊': 'v2:snowflake', '❄️': 'v2:snowflake', '☣️': 'v2:radiation', '⛓️': 'v2:link', '🕸️': 'v2:connection', '🚧': 'v2:prohibited', '🟫': 'v2:drought', '🏜️': 'v2:cactus', '🏔️': 'v2:mountain', '🏙️': 'v2:town', '🪨': 'v2:meteor', '🕳️': 'v2:circle-ring', '🧹': 'v2:brush', '🃏': 'v2:double', '📳': 'v2:mobile-phone', '🔠': 'v2:font', '📲': 'v2:download', '📤': 'v2:share', '🔔': 'v2:notification', '📶': 'v2:wi-fi', '🎉': 'v2:four-pointed-star', '✨': 'v2:four-pointed-star', '🏁': 'v2:flag' };
   // <img> en línea si el emoji tiene equivalente; si no, el propio emoji (texto).
   const emojiIcon = (e) => EMOJI_IMG[e] ? iconAnyInline(EMOJI_IMG[e]) : e;
 
@@ -2423,23 +2445,23 @@
 
   const Tiles = {
     DEFS: {
-      rock:     { glyph: '🪨', solid: true,  cls: 'tile-rock',     desc: 'Roca: estorba y no converge' },
-      locked:   { glyph: '🔒', solid: true,  cls: 'tile-locked',   desc: 'Bloqueada' },
-      frozen:   { glyph: '🧊', solid: true,  cls: 'tile-frozen', taps: 2, breakable: true, desc: 'Helada: toca para descongelar' },
+      rock: { glyph: '🪨', solid: true, cls: 'tile-rock', desc: 'Roca: estorba y no converge' },
+      locked: { glyph: '🔒', solid: true, cls: 'tile-locked', desc: 'Bloqueada' },
+      frozen: { glyph: '🧊', solid: true, cls: 'tile-frozen', taps: 2, breakable: true, desc: 'Helada: toca para descongelar' },
       // `infected` retirado en V1 (nunca tuvo lógica de propagación). Reintroducir con ROADMAP 3.4.
-      crystal:  { glyph: '💎', solid: false, cls: 'tile-crystal', bonus: 3, desc: 'Vale puntos extra' },
+      crystal: { glyph: '💎', solid: false, cls: 'tile-crystal', bonus: 3, desc: 'Vale puntos extra' },
       // --- Obstáculos del mockup ---
-      chains:   { glyph: '⛓️', solid: true,  cls: 'tile-chains', taps: 2, breakable: true, desc: 'Cadenas: toca 2 veces para liberar' },
-      web:      { glyph: '🕸️', solid: true,  cls: 'tile-web',    taps: 2, breakable: true, desc: 'Telaraña: toca 2 veces para liberar' },
-      barrier:  { glyph: '🚧', solid: true,  cls: 'tile-barrier', desc: 'Barrera: sólo se quita con objetos especiales' },
-      mud:      { glyph: '🟫', solid: false, cls: 'tile-mud',    taps: 2, breakable: true, desc: 'Lodo: ralentiza y cuesta limpiar' },
+      chains: { glyph: '⛓️', solid: true, cls: 'tile-chains', taps: 2, breakable: true, desc: 'Cadenas: toca 2 veces para liberar' },
+      web: { glyph: '🕸️', solid: true, cls: 'tile-web', taps: 2, breakable: true, desc: 'Telaraña: toca 2 veces para liberar' },
+      barrier: { glyph: '🚧', solid: true, cls: 'tile-barrier', desc: 'Barrera: sólo se quita con objetos especiales' },
+      mud: { glyph: '🟫', solid: false, cls: 'tile-mud', taps: 2, breakable: true, desc: 'Lodo: ralentiza y cuesta limpiar' },
       // --- Objetos especiales del mockup (tap = efecto) ---
-      bonus:    { glyph: '+30', trigger: 'bonus',    cls: 'tile-bonus',    desc: 'Bonus: +30 puntos al instante' },
-      portal:   { glyph: '🌀',  trigger: 'portal',   cls: 'tile-portal',   desc: 'Portal: teletransporta una figura' },
-      magicbox: { glyph: '🎁',  trigger: 'magicbox', cls: 'tile-magicbox', desc: 'Caja mágica: libera figuras cercanas' },
-      bomb:      { glyph: '💣',  trigger: 'bomb',      cls: 'tile-bomb',      desc: 'Bomba oculta: detona figuras cercanas' },
-      slowdown:  { glyph: '⏳',  trigger: 'slowdown',  cls: 'tile-slowdown',  desc: 'Ralentizador: reduce la velocidad de aparición' },
-      timecap:   { glyph: '⏰',  trigger: 'timecap',   cls: 'tile-timecap',   desc: 'Cápsula: +5s al detonarla por adyacencia' },
+      bonus: { glyph: '+30', trigger: 'bonus', cls: 'tile-bonus', desc: 'Bonus: +30 puntos al instante' },
+      portal: { glyph: '🌀', trigger: 'portal', cls: 'tile-portal', desc: 'Portal: teletransporta una figura' },
+      magicbox: { glyph: '🎁', trigger: 'magicbox', cls: 'tile-magicbox', desc: 'Caja mágica: libera figuras cercanas' },
+      bomb: { glyph: '💣', trigger: 'bomb', cls: 'tile-bomb', desc: 'Bomba oculta: detona figuras cercanas' },
+      slowdown: { glyph: '⏳', trigger: 'slowdown', cls: 'tile-slowdown', desc: 'Ralentizador: reduce la velocidad de aparición' },
+      timecap: { glyph: '⏰', trigger: 'timecap', cls: 'tile-timecap', desc: 'Cápsula: +5s al detonarla por adyacencia' },
     },
     // Lista de clases CSS de casilla (para limpiar/aplicar en Render.setTile).
     CLASSES: ['tile-rock', 'tile-locked', 'tile-frozen', 'tile-crystal', 'tile-chains', 'tile-web', 'tile-barrier', 'tile-mud', 'tile-bonus', 'tile-portal', 'tile-magicbox', 'tile-bomb', 'tile-slowdown', 'tile-timecap'],
@@ -2451,11 +2473,11 @@
    */
   const Boosters = {
     DEFS: {
-      bomb:      { name: 'Bomba',       glyph: '💣', start: 2, desc: 'Elimina una zona 3×3' },
-      freeze:    { name: 'Congelación', glyph: '❄️', start: 2, desc: 'Pausa la aparición de figuras' },
-      clearLine: { name: 'Rayo',        glyph: '⚡', start: 3, desc: 'Elimina una fila o columna' },
-      wild:      { name: 'Escoba',       glyph: '🧹', start: 2, desc: 'Limpia el grupo más repetido' },
-      x2:        { name: 'Comodín',      glyph: '🃏', start: 1, desc: 'Duplica los puntos un tiempo' },
+      bomb: { name: 'Bomba', glyph: '💣', start: 2, desc: 'Elimina una zona 3×3' },
+      freeze: { name: 'Congelación', glyph: '❄️', start: 2, desc: 'Pausa la aparición de figuras' },
+      clearLine: { name: 'Rayo', glyph: '⚡', start: 3, desc: 'Elimina una fila o columna' },
+      wild: { name: 'Escoba', glyph: '🧹', start: 2, desc: 'Limpia el grupo más repetido' },
+      x2: { name: 'Comodín', glyph: '🃏', start: 1, desc: 'Duplica los puntos un tiempo' },
     },
     order: ['bomb', 'freeze', 'x2', 'clearLine', 'wild'],
   };
@@ -2465,11 +2487,11 @@
    */
   const Modifiers = {
     DEFS: {
-      rocks:  { name: 'Asteroides', tile: 'rock',   density: 0.06 },
-      ice:    { name: 'Hielo',      tile: 'frozen', density: 0.05 },
-      rush:   { name: 'Núcleo',     spawnMult: 0.8 },
-      scarce: { name: 'Vacío',      hints: 1 },
-      crystals:{ name: 'Cristales', tile: 'crystal', density: 0.04 },
+      rocks: { name: 'Asteroides', tile: 'rock', density: 0.06 },
+      ice: { name: 'Hielo', tile: 'frozen', density: 0.05 },
+      rush: { name: 'Núcleo', spawnMult: 0.8 },
+      scarce: { name: 'Vacío', hints: 1 },
+      crystals: { name: 'Cristales', tile: 'crystal', density: 0.04 },
     },
   };
 
@@ -2480,11 +2502,11 @@
   const Themes = {
     DEFS: {
       default: { name: 'Cosmos', cost: 0, vars: {} },
-      neon:    { name: 'Neón',    cost: 150, vars: { '--bg-0': '#0a0420', '--bg-1': '#12063a', '--bg-2': '#1e0a5c', '--panel': '#1a1052', '--panel-2': '#241466', '--accent': '#b14bff', '--accent-2': '#19f0d0', '--level': '#ff5cf0', '--score': '#19f0d0' } },
-      sunset:  { name: 'Ocaso',   cost: 200, vars: { '--bg-0': '#1a0a14', '--bg-1': '#2e0f1e', '--bg-2': '#4a1530', '--panel': '#34122a', '--panel-2': '#451a38', '--accent': '#ff7a59', '--accent-2': '#ffd23f', '--level': '#ff5b6e', '--score': '#ffb24d' } },
-      forest:  { name: 'Bosque',  cost: 200, vars: { '--bg-0': '#04140f', '--bg-1': '#08231a', '--bg-2': '#0e3a2b', '--panel': '#0c3024', '--panel-2': '#114433', '--accent': '#2fbf71', '--accent-2': '#9be15d', '--level': '#27b6a0', '--score': '#9be15d' } },
-      aurora:  { name: 'Aurora',  cost: 300, vars: { '--bg-0': '#04101c', '--bg-1': '#082236', '--bg-2': '#0c3a52', '--panel': '#0b2c45', '--panel-2': '#103a59', '--accent': '#19f0d0', '--accent-2': '#7a5cff', '--level': '#3ad07f', '--score': '#19f0d0' } },
-      mono:    { name: 'Eclipse', cost: 250, vars: { '--bg-0': '#0c0c10', '--bg-1': '#16161c', '--bg-2': '#24242e', '--panel': '#1c1c24', '--panel-2': '#26262f', '--accent': '#8a90a6', '--accent-2': '#cfd6ea', '--level': '#aeb6cc', '--score': '#cfd6ea' } },
+      neon: { name: 'Neón', cost: 150, vars: { '--bg-0': '#0a0420', '--bg-1': '#12063a', '--bg-2': '#1e0a5c', '--panel': '#1a1052', '--panel-2': '#241466', '--accent': '#b14bff', '--accent-2': '#19f0d0', '--level': '#ff5cf0', '--score': '#19f0d0' } },
+      sunset: { name: 'Ocaso', cost: 200, vars: { '--bg-0': '#1a0a14', '--bg-1': '#2e0f1e', '--bg-2': '#4a1530', '--panel': '#34122a', '--panel-2': '#451a38', '--accent': '#ff7a59', '--accent-2': '#ffd23f', '--level': '#ff5b6e', '--score': '#ffb24d' } },
+      forest: { name: 'Bosque', cost: 200, vars: { '--bg-0': '#04140f', '--bg-1': '#08231a', '--bg-2': '#0e3a2b', '--panel': '#0c3024', '--panel-2': '#114433', '--accent': '#2fbf71', '--accent-2': '#9be15d', '--level': '#27b6a0', '--score': '#9be15d' } },
+      aurora: { name: 'Aurora', cost: 300, vars: { '--bg-0': '#04101c', '--bg-1': '#082236', '--bg-2': '#0c3a52', '--panel': '#0b2c45', '--panel-2': '#103a59', '--accent': '#19f0d0', '--accent-2': '#7a5cff', '--level': '#3ad07f', '--score': '#19f0d0' } },
+      mono: { name: 'Eclipse', cost: 250, vars: { '--bg-0': '#0c0c10', '--bg-1': '#16161c', '--bg-2': '#24242e', '--panel': '#1c1c24', '--panel-2': '#26262f', '--accent': '#8a90a6', '--accent-2': '#cfd6ea', '--level': '#aeb6cc', '--score': '#cfd6ea' } },
     },
     order: ['default', 'neon', 'sunset', 'forest', 'aurora', 'mono'],
     allVars() { const s = {}; this.order.forEach((id) => Object.keys(this.DEFS[id].vars).forEach((k) => s[k] = 1)); return Object.keys(s); },
@@ -2509,18 +2531,18 @@
    */
   const Boards = {
     DEFS: {
-      classic:   { name: 'Tablero Clásico',    cost: 0,    sw: 'linear-gradient(135deg,#1b2a52,#2f6bff)', chars: ['Marco espacial azul', 'Casillas limpias y legibles'] },
+      classic: { name: 'Tablero Clásico', cost: 0, sw: 'linear-gradient(135deg,#1b2a52,#2f6bff)', chars: ['Marco espacial azul', 'Casillas limpias y legibles'] },
       // Exclusivo del Jardín Zen (GM-23): se gana con 50 flores, no se compra.
-      jardin:    { name: 'Jardín Zen',        cost: 0, exclusive: true, sw: 'linear-gradient(135deg,#1d3a24,#9be15d 60%,#ffb7d5)', chars: ['Se gana con 50 flores zen', 'Pétalos y musgo en calma'] },
-      madera:    { name: 'Tablero de Madera',  cost: 500,  sw: 'linear-gradient(135deg,#5a3a1e,#a86a36)', chars: ['Vetas cálidas de madera', 'Marco artesanal'] },
-      hielo:     { name: 'Tablero de Hielo',   cost: 800,  sw: 'linear-gradient(135deg,#2a6a9e,#9fe6ff)', chars: ['Cristal frío y brillo polar', 'Casillas translúcidas'] },
-      lava:      { name: 'Tablero de Lava',    cost: 1200, sw: 'linear-gradient(135deg,#7a1e10,#ff5b2e)', chars: ['Roca oscura y magma', 'Borde incandescente'] },
-      cristal:   { name: 'Tablero de Cristal', cost: 1500, sw: 'linear-gradient(135deg,#5a2a8e,#c08bff)', chars: ['Prismas violetas', 'Destellos de vidrio'] },
-      magico:    { name: 'Tablero Mágico',     cost: 2000, sw: 'linear-gradient(135deg,#3a1e6e,#8a5cff)', chars: ['Runas arcanas sutiles', 'Brillo encantado'] },
-      futurista: { name: 'Tablero Futurista',  cost: 2500, sw: 'linear-gradient(135deg,#0e3a4a,#19f0d0)', chars: ['Circuitos neón', 'Paneles tecnológicos'] },
-      dorado:    { name: 'Tablero Dorado',     cost: 3000, sw: 'linear-gradient(135deg,#7a5a10,#ffd84d)', chars: ['Oro pulido', 'Detalles premium'] },
-      bosque:    { name: 'Tablero del Bosque', cost: 1800, sw: 'linear-gradient(135deg,#1e4a2a,#6bd36b)', chars: ['Textura de hojas', 'Tonos naturales'] },
-      cosmico:   { name: 'Tablero Cósmico',    cost: 2200, sw: 'linear-gradient(135deg,#2a1a5e,#a06bff)', chars: ['Nebulosa profunda', 'Estrellas en el marco'] },
+      jardin: { name: 'Jardín Zen', cost: 0, exclusive: true, sw: 'linear-gradient(135deg,#1d3a24,#9be15d 60%,#ffb7d5)', chars: ['Se gana con 50 flores zen', 'Pétalos y musgo en calma'] },
+      madera: { name: 'Tablero de Madera', cost: 500, sw: 'linear-gradient(135deg,#5a3a1e,#a86a36)', chars: ['Vetas cálidas de madera', 'Marco artesanal'] },
+      hielo: { name: 'Tablero de Hielo', cost: 800, sw: 'linear-gradient(135deg,#2a6a9e,#9fe6ff)', chars: ['Cristal frío y brillo polar', 'Casillas translúcidas'] },
+      lava: { name: 'Tablero de Lava', cost: 1200, sw: 'linear-gradient(135deg,#7a1e10,#ff5b2e)', chars: ['Roca oscura y magma', 'Borde incandescente'] },
+      cristal: { name: 'Tablero de Cristal', cost: 1500, sw: 'linear-gradient(135deg,#5a2a8e,#c08bff)', chars: ['Prismas violetas', 'Destellos de vidrio'] },
+      magico: { name: 'Tablero Mágico', cost: 2000, sw: 'linear-gradient(135deg,#3a1e6e,#8a5cff)', chars: ['Runas arcanas sutiles', 'Brillo encantado'] },
+      futurista: { name: 'Tablero Futurista', cost: 2500, sw: 'linear-gradient(135deg,#0e3a4a,#19f0d0)', chars: ['Circuitos neón', 'Paneles tecnológicos'] },
+      dorado: { name: 'Tablero Dorado', cost: 3000, sw: 'linear-gradient(135deg,#7a5a10,#ffd84d)', chars: ['Oro pulido', 'Detalles premium'] },
+      bosque: { name: 'Tablero del Bosque', cost: 1800, sw: 'linear-gradient(135deg,#1e4a2a,#6bd36b)', chars: ['Textura de hojas', 'Tonos naturales'] },
+      cosmico: { name: 'Tablero Cósmico', cost: 2200, sw: 'linear-gradient(135deg,#2a1a5e,#a06bff)', chars: ['Nebulosa profunda', 'Estrellas en el marco'] },
     },
     order: ['classic', 'madera', 'hielo', 'lava', 'cristal', 'magico', 'futurista', 'dorado', 'bosque', 'cosmico', 'jardin'],
     apply(id) {
@@ -2540,12 +2562,12 @@
   const Adventure = {
     perChapter: 5,
     BIOMES: [
-      { id: 'nebula',   name: 'Nebulosa',               glyph: '🌌', mods: [],           accent: '#7a5cff' },
-      { id: 'asteroid', name: 'Cinturón de Asteroides', glyph: '🪨', mods: ['rocks'],    accent: '#ff9838' },
-      { id: 'ice',      name: 'Campo de Hielo',         glyph: '🧊', mods: ['ice'],      accent: '#2bd4e6' },
-      { id: 'core',     name: 'Núcleo Ardiente',        glyph: '🔥', mods: ['rush'],     accent: '#ff5b6e' },
-      { id: 'void',     name: 'El Vacío',               glyph: '🕳️', mods: ['scarce'],   accent: '#a06bff' },
-      { id: 'crystal',  name: 'Cristalia',              glyph: '💎', mods: ['crystals'], accent: '#19f0d0' },
+      { id: 'nebula', name: 'Nebulosa', glyph: '🌌', mods: [], accent: '#7a5cff' },
+      { id: 'asteroid', name: 'Cinturón de Asteroides', glyph: '🪨', mods: ['rocks'], accent: '#ff9838' },
+      { id: 'ice', name: 'Campo de Hielo', glyph: '🧊', mods: ['ice'], accent: '#2bd4e6' },
+      { id: 'core', name: 'Núcleo Ardiente', glyph: '🔥', mods: ['rush'], accent: '#ff5b6e' },
+      { id: 'void', name: 'El Vacío', glyph: '🕳️', mods: ['scarce'], accent: '#a06bff' },
+      { id: 'crystal', name: 'Cristalia', glyph: '💎', mods: ['crystals'], accent: '#19f0d0' },
     ],
     objective: 'clear', target: 0, levelScore0: 0, levelStart: 0,
     chapterOf(level) { return Math.floor((level - 1) / this.perChapter); },
@@ -2790,9 +2812,9 @@
     // trapBase/Cap: densidad de trampas (·oleada) · varEvery: cada cuántas oleadas suben los iconos ·
     // bossEvery: cadencia de jefe · coinMult: multiplicador de recompensa.
     TUNE: {
-      facil:   { waveMs: 32000, lives: 4, spawnDecay: 0.985, spawnFloor: 2000, trapBase: 0.008, trapCap: 0.05, varEvery: 8, bossEvery: 8, coinMult: 0.85 },
-      normal:  { waveMs: 28000, lives: 3, spawnDecay: 0.975, spawnFloor: 1400, trapBase: 0.010, trapCap: 0.07, varEvery: 6, bossEvery: 6, coinMult: 1.0 },
-      dificil: { waveMs: 22000, lives: 3, spawnDecay: 0.960, spawnFloor: 900,  trapBase: 0.016, trapCap: 0.10, varEvery: 5, bossEvery: 5, coinMult: 1.3 },
+      facil: { waveMs: 32000, lives: 4, spawnDecay: 0.985, spawnFloor: 2000, trapBase: 0.008, trapCap: 0.05, varEvery: 8, bossEvery: 8, coinMult: 0.85 },
+      normal: { waveMs: 28000, lives: 3, spawnDecay: 0.975, spawnFloor: 1400, trapBase: 0.010, trapCap: 0.07, varEvery: 6, bossEvery: 6, coinMult: 1.0 },
+      dificil: { waveMs: 22000, lives: 3, spawnDecay: 0.960, spawnFloor: 900, trapBase: 0.016, trapCap: 0.10, varEvery: 5, bossEvery: 5, coinMult: 1.3 },
     },
     tune() { return this.TUNE[State.diff] || this.TUNE.normal; },
     // Nivel efectivo de dificultad: sube con las oleadas y MANDA sobre el catálogo de
@@ -2810,6 +2832,7 @@
       this.freezeUntil = 0; this.x2Until = 0; this.frenzyUntil = 0; this.lockUntil = 0; this.runCoins = 0; this.runGems = 0; this.runChests = 0; this.newWaveRecord = false; this.revives = 0; State.tempMult = 1; this._r = { waveWarned: false, bossWarned: false };
       this.armed = null; this._preview = null; document.body.classList.remove('aiming');
       this.slowWaves = 0; this._boonAt = 0;
+      this.scoreBoost = 0; this.magnetMoves = 0; this.goldenWaveWaves = 0;
       this.mut = this.weeklyMut(); // mutador semanal (GM-22)
       if (this.mut.id !== 'none') Toasts.show(I18n.t('survmut_' + this.mut.id), 'info', 2400, '📅');
       this._planBoss();
@@ -2862,32 +2885,49 @@
     // de 1 entre 3 mejoras. El jefe pasa de molestia aleatoria a ciclo miedo→codicia,
     // y la run gana dirección de build (la decisión estratégica que faltaba al modo).
     BOONS: [
-      { id: 'life', icon: '❤️' },     // +1 vida (tope MAX+1)
-      { id: 'charge', icon: '⚡' },   // +50 de carga
-      { id: 'pack', icon: '💣' },     // +1 bomba y +1 rayo
-      { id: 'slow', icon: '🐌' },     // spawn ×1.15 más lento 2 oleadas
-      { id: 'frenzy', icon: '🔥' },   // frenesí instantáneo
+      { id: 'life', icon: '❤️', rarity: 'common', weight: 45 },
+      { id: 'charge', icon: '⚡', rarity: 'common', weight: 45 },
+      { id: 'slow', icon: '🐌', rarity: 'common', weight: 45 },
+      { id: 'pack', icon: '💣', rarity: 'uncommon', weight: 35 },
+      { id: 'frenzy', icon: '🔥', rarity: 'uncommon', weight: 35 },
+      { id: 'magnet', icon: '🧲', rarity: 'rare', weight: 15 },
+      { id: 'score_boost', icon: '📈', rarity: 'rare', weight: 15 },
+      { id: 'golden_wave', icon: '👑', rarity: 'epic', weight: 5 },
     ],
     slowWaves: 0, _boonAt: 0, mut: { id: 'none' },
-    spawnFactor() { return this.slowWaves > 0 ? 1.15 : 1; },
+    scoreBoost: 0, magnetMoves: 0, goldenWaveWaves: 0,
+    spawnFactor() { return this.slowWaves > 0 ? 1.25 : 1; },
     offerBoons() {
       const pool = this.BOONS.filter((b) => b.id !== 'life' || this.lives < this.MAX_LIVES + 1);
       const opts = []; const bag = pool.slice();
-      while (opts.length < 3 && bag.length) opts.push(bag.splice(rand(bag.length), 1)[0]);
+      while (opts.length < 3 && bag.length) {
+        let totalWeight = bag.reduce((sum, b) => sum + b.weight, 0);
+        let r = Math.random() * totalWeight;
+        let selectedIdx = 0;
+        for (let i = 0; i < bag.length; i++) {
+          r -= bag[i].weight;
+          if (r <= 0) { selectedIdx = i; break; }
+        }
+        opts.push(bag.splice(selectedIdx, 1)[0]);
+      }
       if (!opts.length) return;
       Sound.milestone(); Haptics.milestone();
       Picker.open({
         title: I18n.t('boon_title'), sub: I18n.t('boon_sub'), accent: '#ffd24d',
-        options: opts.map((b) => ({ id: b.id, icon: b.icon, name: I18n.t('boon_' + b.id), desc: I18n.t('boon_' + b.id + '_d') })),
+        options: opts.map((b) => ({ id: b.id, icon: b.icon, name: I18n.t('boon_' + b.id), desc: I18n.t('boon_' + b.id + '_d'), rarity: b.rarity })),
         onPick: (id) => this.applyBoon(id),
+        safeDelayMs: 500
       });
     },
     applyBoon(id) {
       if (id === 'life') this.lives = Math.min(this.MAX_LIVES + 1, this.lives + 1);
       else if (id === 'charge') { this.charge += 50; if (this.charge >= 100) { this.charge -= 100; this.grantRandom(); } }
       else if (id === 'pack') { this.inv.bomb = (this.inv.bomb || 0) + 1; this.inv.clearLine = (this.inv.clearLine || 0) + 1; this.buildBar(); }
-      else if (id === 'slow') this.slowWaves = 2;
+      else if (id === 'slow') this.slowWaves = 3;
       else if (id === 'frenzy') this.activateFrenzy();
+      else if (id === 'magnet') this.magnetMoves = 5;
+      else if (id === 'score_boost') this.scoreBoost = Math.min(1.0, (this.scoreBoost || 0) + 0.25);
+      else if (id === 'golden_wave') this.goldenWaveWaves = 2;
       Toasts.show(I18n.t('boon_' + id), 'good', 1800, '✨');
       Sound.record(); Haptics.milestone();
       this.render();
@@ -2924,7 +2964,10 @@
     },
     _waveReward(clearedWave) {
       if (clearedWave <= 0) return;
-      const coins = Math.max(3, Math.round((4 + clearedWave * 1.45) * this.tune().coinMult * (this.mut.coinMult || 1)));
+      if (this.goldenWaveWaves > 0) this.goldenWaveWaves--;
+      let coins = Math.round((4 + clearedWave * 1.45) * this.tune().coinMult * (this.mut.coinMult || 1));
+      if (clearedWave >= 15) coins += Math.round(Math.pow(clearedWave - 14, 1.5) * 2); // Kicker
+      coins = Math.max(3, coins);
       Meta.addCoins(coins); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
       Toasts.show(I18n.t('surv_wave_reward').replace('{w}', clearedWave).replace('{c}', coins), 'good', 1700, 'coin');
       if (clearedWave % 5 === 0) {
@@ -3096,6 +3139,8 @@
       Haptics.milestone();
       // Sobrevivir al jefe premia con una elección (GM-17), tras asentarse el evento.
       this._boonAt = performance.now() + 1700;
+      Haptics.milestone();
+      FX.confetti(40);
     },
     // Marea (GM-20): marca las 2 filas exteriores y 1.2s después las llena de
     // iconos. Amenaza legible con counterplay: despeja esas zonas antes.
@@ -3168,7 +3213,7 @@
         const seen = new Set();
         const mark = (idx) => {
           const r = idx / 8 | 0, c = idx % 8;
-          const nb = [[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
+          const nb = [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]];
           for (const [rr, cc] of nb) {
             if (rr < 0 || cc < 0 || rr > 7 || cc > 7) continue;
             const j = rr * 8 + cc, t = State.tiles[j];
@@ -3493,16 +3538,26 @@
     PER_WORLD: 50,
     REWARD_EVERY: 50,            // cofre de recompensa al completar el mundo
     LIST: [
-      { id: 'bosque',   name: 'Bosque Verde',     glyph: '🌲', accent: '#3ad07f', mods: ['chains'],
-        nov: [['⛓️', 'Cadenas', 'Toca la figura 2 veces para liberarla'], ['➕', 'Bonus +30', 'Tócalo para puntos extra'], ['🎯', 'Nuevos objetivos', 'Alcanza la meta en cada nivel']] },
-      { id: 'desierto', name: 'Desierto Dorado',  glyph: '🏜️', accent: '#ffb24d', mods: ['rocks'],
-        nov: [['🪨', 'Rocas', 'Estorban y no convergen'], ['☀️', 'Calor', 'El tablero se llena más rápido'], ['💰', 'Tesoros', 'Más monedas por combo']] },
-      { id: 'montana',  name: 'Montaña Helada',   glyph: '🏔️', accent: '#7ad7ff', mods: ['ice', 'web'],
-        nov: [['🧊', 'Hielo', 'Casillas heladas: tócalas para romperlas'], ['🕸️', 'Telaraña', 'Toca 2 veces para liberar'], ['🎯', 'Objetivos', 'Despeja el tablero helado']] },
-      { id: 'cueva',    name: 'Cueva Misteriosa', glyph: '🔮', accent: '#a06bff', mods: ['crystals', 'portal', 'barrier'],
-        nov: [['💎', 'Cristales', 'Valen puntos extra'], ['🌀', 'Portales', 'Teletransportan figuras'], ['🚧', 'Barreras', 'Sólo objetos especiales las quitan']] },
-      { id: 'neon',     name: 'Ciudad Neón',      glyph: '🏙️', accent: '#ff5cf0', mods: ['rush', 'bomb', 'magicbox'],
-        nov: [['⚡', 'Sobrecarga', 'Los iconos aparecen más rápido'], ['💣', 'Bomba oculta', 'Detona figuras cercanas'], ['🎁', 'Caja mágica', 'Libera figuras cercanas']] },
+      {
+        id: 'bosque', name: 'Bosque Verde', glyph: '🌲', accent: '#3ad07f', mods: ['chains'],
+        nov: [['⛓️', 'Cadenas', 'Toca la figura 2 veces para liberarla'], ['➕', 'Bonus +30', 'Tócalo para puntos extra'], ['🎯', 'Nuevos objetivos', 'Alcanza la meta en cada nivel']]
+      },
+      {
+        id: 'desierto', name: 'Desierto Dorado', glyph: '🏜️', accent: '#ffb24d', mods: ['rocks'],
+        nov: [['🪨', 'Rocas', 'Estorban y no convergen'], ['☀️', 'Calor', 'El tablero se llena más rápido'], ['💰', 'Tesoros', 'Más monedas por combo']]
+      },
+      {
+        id: 'montana', name: 'Montaña Helada', glyph: '🏔️', accent: '#7ad7ff', mods: ['ice', 'web'],
+        nov: [['🧊', 'Hielo', 'Casillas heladas: tócalas para romperlas'], ['🕸️', 'Telaraña', 'Toca 2 veces para liberar'], ['🎯', 'Objetivos', 'Despeja el tablero helado']]
+      },
+      {
+        id: 'cueva', name: 'Cueva Misteriosa', glyph: '🔮', accent: '#a06bff', mods: ['crystals', 'portal', 'barrier'],
+        nov: [['💎', 'Cristales', 'Valen puntos extra'], ['🌀', 'Portales', 'Teletransportan figuras'], ['🚧', 'Barreras', 'Sólo objetos especiales las quitan']]
+      },
+      {
+        id: 'neon', name: 'Ciudad Neón', glyph: '🏙️', accent: '#ff5cf0', mods: ['rush', 'bomb', 'magicbox'],
+        nov: [['⚡', 'Sobrecarga', 'Los iconos aparecen más rápido'], ['💣', 'Bomba oculta', 'Detona figuras cercanas'], ['🎁', 'Caja mágica', 'Libera figuras cercanas']]
+      },
     ],
     sel: 'bosque',
     idx(wid) { return this.LIST.findIndex(w => w.id === wid); },
@@ -3812,7 +3867,7 @@
    */
   const Picker = {
     pending: null, _wasPlaying: false,
-    open({ title, sub, accent, options, cancelLabel, onPick, onCancel }) {
+    open({ title, sub, accent, options, cancelLabel, onPick, onCancel, safeDelayMs }) {
       const ov = $('#pick-overlay');
       if (!ov) { if (options && options[0] && onPick) onPick(options[0].id); return; }
       this.pending = { options, onPick, onCancel };
@@ -3821,11 +3876,19 @@
       ov.style.setProperty('--pick-accent', accent || 'var(--accent-2)');
       { const t = $('#pick-title'); if (t) t.textContent = title || ''; }
       { const s = $('#pick-sub'); if (s) { s.hidden = !sub; s.textContent = sub || ''; } }
-      { const box = $('#pick-options'); if (box) box.innerHTML = (options || []).map((o) => `
-        <button class="pick-opt" data-pick="${esc(o.id)}" type="button">
+      {
+        const box = $('#pick-options'); if (box) box.innerHTML = (options || []).map((o) => `
+        <button class="pick-opt ${o.rarity ? 'rarity-' + o.rarity : ''}" data-pick="${esc(o.id)}" type="button">
           <span class="po-ic" aria-hidden="true">${o.icon || ''}</span>
           <span class="po-tx"><b>${esc(o.name)}</b><small>${esc(o.desc || '')}</small></span>
-        </button>`).join(''); }
+        </button>`).join('');
+      }
+      if (safeDelayMs) {
+        ov.classList.add('safe-delay-active');
+        setTimeout(() => { if (this.pending) ov.classList.remove('safe-delay-active'); }, safeDelayMs);
+      } else {
+        ov.classList.remove('safe-delay-active');
+      }
       { const cb = $('#pick-cancel'); if (cb) { cb.hidden = !cancelLabel; cb.textContent = cancelLabel || ''; } }
       this._wire(ov);
       ov.hidden = false;
@@ -3988,7 +4051,7 @@
           }).catch((e) => ErrLog.push('sw', e && e.message));
         });
       }
-      
+
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
       const btn = $('#btn-install');
       if (btn && !isStandalone) btn.hidden = false;
@@ -4005,9 +4068,9 @@
     promptInstall() {
       if (this.deferredPrompt) {
         this.deferredPrompt.prompt();
-        this.deferredPrompt.userChoice.finally(() => { 
-          this.deferredPrompt = null; 
-          const btn = $('#btn-install'); if (btn) btn.hidden = true; 
+        this.deferredPrompt.userChoice.finally(() => {
+          this.deferredPrompt = null;
+          const btn = $('#btn-install'); if (btn) btn.hidden = true;
         });
       } else {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -4066,14 +4129,20 @@
   const Coach = {
     active: false, step: 0, targets: [], tIdx: 0,
     STEPS: [
-      { textKey: 'coach1',
-        build() { State.board[26] = 'circle_red'; State.board[28] = 'circle_red'; State.iconCount = 2; return 27; } },
-      { textKey: 'coach2',
-        build() { State.board[19] = 'star_yellow'; State.board[35] = 'star_yellow'; State.board[26] = 'star_yellow'; State.board[28] = 'star_yellow'; State.iconCount = 4; return 27; } },
+      {
+        textKey: 'coach1',
+        build() { State.board[26] = 'circle_red'; State.board[28] = 'circle_red'; State.iconCount = 2; return 27; }
+      },
+      {
+        textKey: 'coach2',
+        build() { State.board[19] = 'star_yellow'; State.board[35] = 'star_yellow'; State.board[26] = 'star_yellow'; State.board[28] = 'star_yellow'; State.iconCount = 4; return 27; }
+      },
       // Paso 3: dos parejas independientes (fila 1 y fila 6, sin columnas compartidas para
       // que no se crucen las líneas de visión); encadenarlas rápido enseña la ventana de combo.
-      { textKey: 'coach3',
-        build() { State.board[10] = 'circle_red'; State.board[12] = 'circle_red'; State.board[53] = 'circle_red'; State.board[55] = 'circle_red'; State.iconCount = 4; return [11, 54]; } },
+      {
+        textKey: 'coach3',
+        build() { State.board[10] = 'circle_red'; State.board[12] = 'circle_red'; State.board[53] = 'circle_red'; State.board[55] = 'circle_red'; State.iconCount = 4; return [11, 54]; }
+      },
     ],
     start() {
       this.active = true; this.step = 0; this.targets = []; this.tIdx = 0;
@@ -4168,7 +4237,7 @@
     FLOOR: 12,                    // tope mínimo de partículas
     _badMs: 0, _goodMs: 0, _l2Ms: 0, _bootGuard: false, suggested: false,
     init() {
-      try { this.suggested = localStorage.getItem('cv_perf_suggested') === '1'; } catch (_) {}
+      try { this.suggested = localStorage.getItem('cv_perf_suggested') === '1'; } catch (_) { }
       const hiDpiTouch = (navigator.maxTouchPoints || 0) > 0 && (window.devicePixelRatio || 1) >= 3;
       this._bootGuard = hiDpiTouch;   // el primer descenso desde el arranque móvil pide solo 5s
       this.level = -1;                // fuerza a apply() a escribir la clase aunque el nivel sea 0
@@ -4204,7 +4273,7 @@
     suggestLight() {
       if (this.suggested) return;
       this.suggested = true;                                   // "toast único": no volver a preguntar
-      try { localStorage.setItem('cv_perf_suggested', '1'); } catch (_) {}
+      try { localStorage.setItem('cv_perf_suggested', '1'); } catch (_) { }
       if (Settings.reducedFx) return;
       Toasts.show(I18n.t('perf_suggest'), 'info', 7000, 'aura', () => {
         Settings.reducedFx = true; applyReducedFx(); buildSettings();
@@ -4597,12 +4666,28 @@
 
       // Puntos (icono×10×nivel × combo × dificultad × modo × fever)
       const scoreBefore = State.score;
-      const removed = conv.length;
+      if (State.mode === 'supervivencia' && Survival.magnetMoves > 0) {
+        let extra = -1;
+        for (let j = 0; j < State.board.length; j++) {
+          if (State.board[j] !== null && !conv.includes(j) && (!State.tiles[j] || !State.tiles[j].solid)) {
+            extra = j;
+            break;
+          }
+        }
+        if (extra !== -1) {
+          conv.push(extra);
+          FX.burst(extra, Icons.colorOf(State.board[extra]), 4);
+        }
+        Survival.magnetMoves--;
+        if (Survival.magnetMoves === 0) Toasts.show('Imán agotado', 'warn', 1500, '🧲');
+      }
+      let removed = conv.length;
       State.removedTotal += removed;
       State.lastActionCell = i;
       const d = Config.DIFFICULTY[State.diff], m = Config.MODES[State.mode];
       const base = removed * 10 * State.level;
-      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * this.feverBoost() * (State.tempMult || 1) * this.sprintMult());
+      const survMult = (State.mode === 'supervivencia') ? (1 + (Survival.scoreBoost || 0)) * (Survival.goldenWaveWaves > 0 ? 3 : 1) : 1;
+      const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * this.feverBoost() * (State.tempMult || 1) * this.sprintMult() * survMult);
       State.score += points;
       State.warmupConvs++; // el warm-up (GM-26) termina antes si el jugador ya fluye
       // Jugada pico de la partida (GM-28): se muestra en el resumen de fin (regla pico-final).
@@ -5306,23 +5391,27 @@
       }
       // Near-miss (GM-01): "te quedaste a {n} figuras" — solo cuando aplica (derrota por
       // tablero lleno en Clásico/Aventura habiendo estado realmente cerca de vaciar).
-      { const nm = $('#over-near'); if (nm) {
-        nm.hidden = this._nearMiss == null;
-        if (this._nearMiss != null) nm.textContent = I18n.t('near_miss').replace('{n}', this._nearMiss);
-        this._nearMiss = null;
-      } }
-      // Momento destacado (GM-28): la mejor jugada de la partida (regla pico-final).
-      { const pk = $('#over-peak'); if (pk) {
-        const bp = State.bestPlay;
-        const show = !!bp && bp.points >= 50;
-        pk.hidden = !show;
-        if (show) {
-          const where = State.mode === 'supervivencia'
-            ? ` · ${I18n.t('st_wave')} ${bp.wave}`
-            : (State.mode === 'clasico' || State.mode === 'aventura' ? ` · ${I18n.t('lvl')} ${bp.level}` : '');
-          pk.innerHTML = iconInline('star') + ' ' + esc(I18n.t('peak_moment').replace('{p}', bp.points).replace('{c}', bp.combo) + where);
+      {
+        const nm = $('#over-near'); if (nm) {
+          nm.hidden = this._nearMiss == null;
+          if (this._nearMiss != null) nm.textContent = I18n.t('near_miss').replace('{n}', this._nearMiss);
+          this._nearMiss = null;
         }
-      } }
+      }
+      // Momento destacado (GM-28): la mejor jugada de la partida (regla pico-final).
+      {
+        const pk = $('#over-peak'); if (pk) {
+          const bp = State.bestPlay;
+          const show = !!bp && bp.points >= 50;
+          pk.hidden = !show;
+          if (show) {
+            const where = State.mode === 'supervivencia'
+              ? ` · ${I18n.t('st_wave')} ${bp.wave}`
+              : (State.mode === 'clasico' || State.mode === 'aventura' ? ` · ${I18n.t('lvl')} ${bp.level}` : '');
+            pk.innerHTML = iconInline('star') + ' ' + esc(I18n.t('peak_moment').replace('{p}', bp.points).replace('{c}', bp.combo) + where);
+          }
+        }
+      }
       const m = Config.MODES[State.mode];
       // Resumen coherente por modo
       let summary;
@@ -5368,10 +5457,12 @@
       $('#over-ach').innerHTML = r.newAch.length
         ? '<div class="ach-new">' + iconInline('medal') + ' ' + r.newAch.map(a => a.name).join(' · ') + '</div>' : '';
       // Registro de expedición (GM-09): la run de Aventura como historia contable.
-      { const ex = $('#over-exped'); if (ex) {
-        const html = State.mode === 'aventura' ? Adventure.expeditionHtml() : '';
-        ex.hidden = !html; ex.innerHTML = html;
-      } }
+      {
+        const ex = $('#over-exped'); if (ex) {
+          const html = State.mode === 'aventura' ? Adventure.expeditionHtml() : '';
+          ex.hidden = !html; ex.innerHTML = html;
+        }
+      }
       { const nx = $('#over-next'); if (nx) nx.innerHTML = NextActions.html(r); }
       if (r.leveledUp) { setTimeout(() => { Sound.record(); FX.confetti(60); }, 350); }
       if (r.newAch.length) { setTimeout(() => { Sound.milestone(); Toasts.show(I18n.t('ach_unlocked').replace('{n}', r.newAch[0].name), 'good', 2400); }, 600); }
@@ -5466,22 +5557,32 @@
   // (Progresión / Puntuación / Relax). El Tutorial NO es una tarjeta aquí — vive en el
   // modal "¿Cómo se juega?". Multijugador queda fuera de V1 (volverá con la capa online).
   const MODE_CARDS = [
-    { group: 'group_prog', key: 'clasico', accent: '#2f6bff', svg: 'island', art: 'classic',
+    {
+      group: 'group_prog', key: 'clasico', accent: '#2f6bff', svg: 'island', art: 'classic',
       i18n: 'card_classic', badge: 'card_classic_badge', desc: 'card_classic_desc',
       feats: [['lock', 'card_feat_locks'], ['target', 'card_feat_objects'], ['bolt', 'card_feat_events'], ['v2:four-pointed-star', 'card_feat_more']],
-      action: () => openWorldsMap() },
-    { group: 'group_prog', key: 'aventura', accent: '#7a5cff', mode: 'aventura',
+      action: () => openWorldsMap()
+    },
+    {
+      group: 'group_prog', key: 'aventura', accent: '#7a5cff', mode: 'aventura',
       badge: 'card_adv_badge', feats: [],
-      action: () => openAdventure() },
-    { group: 'group_score', key: 'supervivencia', accent: '#ff5b6e', svg: 'heartFoes', art: 'surv',
+      action: () => openAdventure()
+    },
+    {
+      group: 'group_score', key: 'supervivencia', accent: '#ff5b6e', svg: 'heartFoes', art: 'surv',
       i18n: 'card_surv', badge: 'card_surv_badge', desc: 'card_surv_desc', feats: [],
-      action: () => openSurvivalDiff() },
-    { group: 'group_score', key: 'contrarreloj', accent: '#ff6cb0', mode: 'contrarreloj',
+      action: () => openSurvivalDiff()
+    },
+    {
+      group: 'group_score', key: 'contrarreloj', accent: '#ff6cb0', mode: 'contrarreloj',
       badge: 'card_contra_badge', feats: [['target', 'card_contra_daily']],
-      action: () => { Modal.close(); Game.start('contrarreloj', 'normal'); } },
-    { group: 'group_relax', key: 'zen', accent: '#9be15d', mode: 'zen',
+      action: () => { Modal.close(); Game.start('contrarreloj', 'normal'); }
+    },
+    {
+      group: 'group_relax', key: 'zen', accent: '#9be15d', mode: 'zen',
       badge: 'card_zen_badge', feats: [],
-      action: () => launchZen() },
+      action: () => launchZen()
+    },
   ];
   const MODE_GROUPS = ['group_prog', 'group_score', 'group_relax'];
   function buildModeMenu() {
@@ -5659,12 +5760,15 @@
     updateTopBars();
     { const sb = $('#start-best'); if (sb) sb.textContent = Storage.best; }
     // Banner de recompensa diaria: visible siempre; badge/botón activos si toca reclamar.
-    { const ready = Meta.rewardReady(); const bn = $('#btn-reward'); if (bn) bn.classList.toggle('claimed', !ready);
-      const bd = bn && bn.querySelector('.db-badge'); if (bd) bd.hidden = !ready; }
+    {
+      const ready = Meta.rewardReady(); const bn = $('#btn-reward'); if (bn) bn.classList.toggle('claimed', !ready);
+      const bd = bn && bn.querySelector('.db-badge'); if (bd) bd.hidden = !ready;
+    }
     // Botón "Continuar partida": solo si hay un snapshot reanudable.
     { const rr = $('#btn-resume-run'); if (rr) rr.hidden = !RunSave.load(); }
     // Tarjeta "Reto del día" del home: estado (sin jugar / hecho + mejor marca de hoy).
-    { const card = $('#home-daily-card'), st = $('#home-daily-state');
+    {
+      const card = $('#home-daily-card'), st = $('#home-daily-state');
       if (card && st) {
         const dr = Meta.dailyRunInfo();
         const played = (dr.plays || 0) > 0;
@@ -5686,7 +5790,8 @@
           st.innerHTML = `<span>${esc(I18n.t('daily_home_pending'))}</span><span>${esc(mutTxt + streakTxt)}</span>`;
           st.removeAttribute('data-i18n');
         }
-      } }
+      }
+    }
     // Cabecera compacta: perfil (izq) + economía (der), sin tarjeta.
     const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
     const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
@@ -5746,7 +5851,7 @@
     try {
       if (localStorage.getItem('cv_rfx_notice') === '1') return;
       localStorage.setItem('cv_rfx_notice', '1');
-    } catch (_) {}
+    } catch (_) { }
     setTimeout(() => Toasts.show(I18n.t('rfx_system_notice'), 'info', 4200, 'aura'), 700);
   }
   function applyLargeText() {
@@ -5845,9 +5950,9 @@
       // Skins exclusivos (GM-23): no comprables — se GANAN (p. ej. Jardín Zen, 50 flores).
       const btn = eq ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
         : owned ? `<button class="btn btn-primary btn-sm" data-beq="${id}">${esc(I18n.t('equip'))}</button>`
-        : b.exclusive ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('board_excl'))}</button>`
-        : (b.cost === 0 ? `<button class="btn btn-primary btn-sm" data-beq="${id}">${esc(I18n.t('free'))}</button>`
-          : `<button class="btn btn-primary btn-sm" data-bbuy="${id}">${iconInline('coin')} ${b.cost}</button>`);
+          : b.exclusive ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('board_excl'))}</button>`
+            : (b.cost === 0 ? `<button class="btn btn-primary btn-sm" data-beq="${id}">${esc(I18n.t('free'))}</button>`
+              : `<button class="btn btn-primary btn-sm" data-bbuy="${id}">${iconInline('coin')} ${b.cost}</button>`);
       return `<div class="board-card${eq ? ' on' : ''}" data-board="${id}">
         <span class="board-thumb" data-board="${id}" aria-hidden="true"></span>
         <span class="board-name">${esc(b.name)}</span>
@@ -5861,7 +5966,7 @@
       const t = Themes.DEFS[id], owned = Meta.owns(id), eq = curT === id;
       const btn = eq ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
         : owned ? `<button class="btn btn-primary btn-sm" data-equip="${id}">${esc(I18n.t('equip'))}</button>`
-        : `<button class="btn btn-primary btn-sm" data-buy="${id}">${iconInline('coin')} ${t.cost}</button>`;
+          : `<button class="btn btn-primary btn-sm" data-buy="${id}">${iconInline('coin')} ${t.cost}</button>`;
       return `<div class="shop-item${eq ? ' on' : ''}" data-theme="${id}" role="button" tabindex="0"><span class="shop-sw" style="background:${Themes.swatch(id)}"></span><span class="shop-name">${t.name}</span>${btn}</div>`;
     }).join('');
     list.innerHTML =
@@ -6062,7 +6167,7 @@
     const unlockAudio = () => { Sound.ensure(); };
     ['pointerdown', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, unlockAudio, { passive: true }));
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && Sound.ctx && Sound.ctx.state !== 'running') { const r = Sound.ctx.resume(); if (r && r.catch) r.catch(() => {}); }
+      if (!document.hidden && Sound.ctx && Sound.ctx.state !== 'running') { const r = Sound.ctx.resume(); if (r && r.catch) r.catch(() => { }); }
     });
 
     // Bienvenida sin fricción: nombre opcional + color de avatar + invitado.
