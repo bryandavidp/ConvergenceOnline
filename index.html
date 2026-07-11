@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.4" />
+  <link rel="stylesheet" href="styles.css?v=2.6.5" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -218,6 +218,10 @@
             <span class="surv-time" id="surv-time">0s</span>
           </div>
 
+          <!-- Fila de build (SV-10/11): chips de solo lectura con las bendiciones
+               con estado activo y el mutador semanal. Vacía => oculta. -->
+          <div class="surv-build" id="surv-build" aria-label="Bendiciones activas" hidden></div>
+
           <!-- Ocupación: franja fina pegada al tablero (estados warn/danger) -->
           <div class="occ" aria-hidden="true">
             <span class="sr-only" id="hud-progress-label" data-i18n="hud_occ">Ocupación</span>
@@ -399,6 +403,9 @@
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/heart.png" alt=""></span><h2 id="revive-title" data-i18n="revive_title">¡Última oportunidad!</h2></div>
       <div class="modal-body">
         <p class="modal-sub" data-i18n="revive_sub">Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?</p>
+        <p class="revive-gets" id="revive-gets" data-i18n="revive_gets">Recibes 1 vida y despeja el 60% del tablero</p>
+        <p class="revive-short" id="revive-short" hidden></p>
+        <p class="revive-count" id="revive-count"></p>
       </div>
       <div class="modal-actions modal-buttons">
         <button class="btn btn-primary" id="btn-revive"><img class="ic ic-inline" src="img/ui/coin.png" alt=""> <span data-i18n="revive_btn">Revivir</span> (<span id="revive-cost">120</span>)</button>
@@ -410,12 +417,18 @@
     <div class="modal modal-surv-diff" id="modal-surv-diff" role="dialog" aria-modal="true" aria-labelledby="surv-diff-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/heart.png" alt=""></span><h2 id="surv-diff-title" data-i18n="surv_diff_title">Supervivencia</h2></div>
       <div class="modal-body">
+        <!-- Tarjeta del mutador semanal (SV-12): la razón de revisita, visible antes de jugar -->
+        <div class="surv-week" id="surv-week" hidden>
+          <span class="sw-ic" id="surv-week-ic" aria-hidden="true">📅</span>
+          <div class="sw-tx"><small class="sw-label" data-i18n="surv_week_label">Esta semana</small><b class="sw-effect" id="surv-week-effect">—</b></div>
+        </div>
         <p class="modal-sub" data-i18n="surv_diff_sub">Elige el ritmo de la partida</p>
         <div class="surv-diff-pick" id="surv-diff-pick" role="radiogroup" aria-label="Dificultad de Supervivencia">
-          <button class="diff-chip" type="button" data-surv-diff="facil" role="radio"><span data-i18n="diff_facil">Fácil</span></button>
-          <button class="diff-chip" type="button" data-surv-diff="normal" role="radio"><span data-i18n="diff_normal">Normal</span></button>
-          <button class="diff-chip" type="button" data-surv-diff="dificil" role="radio"><span data-i18n="diff_dificil">Difícil</span></button>
+          <button class="diff-chip" type="button" data-surv-diff="facil" role="radio"><span class="dc-name" data-i18n="diff_facil">Fácil</span><span class="dc-rec" data-surv-rec="facil"></span></button>
+          <button class="diff-chip" type="button" data-surv-diff="normal" role="radio"><span class="dc-name" data-i18n="diff_normal">Normal</span><span class="dc-rec" data-surv-rec="normal"></span></button>
+          <button class="diff-chip" type="button" data-surv-diff="dificil" role="radio"><span class="dc-name" data-i18n="diff_dificil">Difícil</span><span class="dc-rec" data-surv-rec="dificil"></span></button>
         </div>
+        <p class="surv-diff-desc" id="surv-diff-desc" data-i18n="surv_diff_normal_d">3 vidas · estándar · monedas ×1</p>
         <h3 class="group-title surv-sys-title" data-i18n="surv_sys_title">Cómo funciona</h3>
         <ul class="surv-systems">
           <li><span class="ss-ic" aria-hidden="true">⚡</span><span data-i18n="surv_sys_charge">Encadena convergencias para llenar el anillo interior y ganar un potenciador gratis.</span></li>
@@ -528,6 +541,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=2.6.4" defer></script>
+  <script src="game.js?v=2.6.5" defer></script>
 </body>
 </html>

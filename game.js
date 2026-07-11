@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.4';
+  const VERSION = '2.6.5';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -148,7 +148,8 @@
         winCheck() { Adventure.refreshGoal(State.level); return Adventure.winCheck(); },
         // El objetivo MANDA: solo en niveles 'clear' se gana vaciando el tablero;
         // en score/survive/boss vaciar NO completa el nivel antes de tiempo.
-        boardClearWins() { return Adventure.objective === 'clear'; }
+        boardClearWins() { return Adventure.objective === 'clear'; },
+        blockSpawn() { return Survival.frozen() || Survival.locked(); }
       },
       contrarreloj: {
         name: 'Contrarreloj', emoji: '⏱️', timed: true, scoreAttack: true, penalties: true, mult: 1.2, initialIcons: 22, accent: '#ff6cb0', goal: 'Suma puntos a contrarreloj', desc: 'Un solo tablero: cada convergencia suma algo de tiempo (con tope), pero la presión crece. ¡Puntúa todo lo posible antes de que el reloj llegue a cero!',
@@ -349,6 +350,7 @@
         profile_title: '📊 Perfil', best_by_mode: 'Mejores marcas por modo', achievements: 'Logros',
         adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
         revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
+        revive_gets: 'Recibes 1 vida y despeja el 60% del tablero', revive_count: 'Revivir {n}/{max}', revive_short: 'Te faltan {n} monedas',
         coach_skip: 'Saltar tutorial',
         coach1: '👆 Toca la casilla VACÍA que brilla, entre dos iconos iguales, para juntarlos.',
         coach2: '✨ ¡Eso es! Si coinciden en varias direcciones, eliminas más de golpe.',
@@ -447,6 +449,9 @@
         pick_back: 'Volver',
         pu_row: '¡Fila despejada!', pu_col: '¡Columna despejada!', pu_no_target: 'Sin objetivo', pu_wild_emergency: 'Comodín · despeje de emergencia', pu_wild_icons: 'Comodín · {n} iconos',
         surv_diff_title: 'Supervivencia', surv_diff_sub: 'Elige el ritmo de la partida', surv_start: 'Empezar supervivencia',
+        surv_week_label: 'Esta semana', survmut_none: 'Semana clásica · sin modificador',
+        surv_diff_facil_d: '4 vidas · ritmo suave · monedas ×0.85', surv_diff_normal_d: '3 vidas · estándar · monedas ×1', surv_diff_dificil_d: '3 vidas · ritmo alto · monedas ×1.3',
+        surv_launch_record: 'Récord: oleada {w}', surv_launch_norecord: 'Aún sin récord',
         surv_frenzy: 'Frenesí', surv_frenzy_ready: '¡Frenesí activado!', surv_wave_reward: 'Oleada {w} · +{c} monedas',
         surv_milestone: 'Hito de oleada {w}', surv_wave_record: '¡Récord! Oleada {w}', surv_best_wave: 'Mejor oleada',
         surv_rewards: 'Recompensas', surv_reward_line: '+{c} monedas · +{g} gemas · +{ch} cofres', surv_time_record: '¡Récord de supervivencia!',
@@ -500,6 +505,7 @@
         profile_title: '📊 Profile', best_by_mode: 'Best by mode', achievements: 'Achievements',
         adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
         revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
+        revive_gets: 'Get 1 life and clear 60% of the board', revive_count: 'Revive {n}/{max}', revive_short: 'You need {n} more coins',
         coach_skip: 'Skip tutorial',
         coach1: '👆 Tap the glowing EMPTY cell between two matching icons to merge them.',
         coach2: "✨ That's it! If they match in several directions, you clear more at once.",
@@ -598,6 +604,9 @@
         pick_back: 'Back',
         pu_row: 'Row cleared!', pu_col: 'Column cleared!', pu_no_target: 'No target', pu_wild_emergency: 'Wildcard · emergency clear', pu_wild_icons: 'Wildcard · {n} icons',
         surv_diff_title: 'Survival', surv_diff_sub: 'Choose the run pace', surv_start: 'Start survival',
+        surv_week_label: 'This week', survmut_none: 'Classic week · no modifier',
+        surv_diff_facil_d: '4 lives · gentle pace · coins ×0.85', surv_diff_normal_d: '3 lives · standard · coins ×1', surv_diff_dificil_d: '3 lives · fast pace · coins ×1.3',
+        surv_launch_record: 'Record: wave {w}', surv_launch_norecord: 'No record yet',
         surv_frenzy: 'Frenzy', surv_frenzy_ready: 'Frenzy active!', surv_wave_reward: 'Wave {w} · +{c} coins',
         surv_milestone: 'Wave {w} milestone', surv_wave_record: 'Record! Wave {w}', surv_best_wave: 'Best wave',
         surv_rewards: 'Rewards', surv_reward_line: '+{c} coins · +{g} gems · +{ch} chests', surv_time_record: 'Survival record!',
@@ -1965,6 +1974,7 @@
     if (!m.dailyRun) m.dailyRun = { date: '', best: 0, plays: 0 }; // reto diario (tablero seedeado por fecha)
     if (typeof m.coins !== 'number') m.coins = 0;
     if (typeof m.survBestWave !== 'number') m.survBestWave = 0;
+    if (!m.survBestWaves || typeof m.survBestWaves !== 'object') m.survBestWaves = { facil: 0, normal: 0, dificil: 0 };
     // Esquema 3: economía ampliada (gemas/tickets/cofres), tableros de tienda y mundos del modo Clásico.
     if (typeof m.gems !== 'number') m.gems = 0;
     if (typeof m.tickets !== 'number') m.tickets = 0;
@@ -2254,7 +2264,15 @@
       survBest: () => m.survBest || 0,
       survRecord(sec) { sec = Math.floor(sec); if (sec > (m.survBest || 0)) { m.survBest = sec; save(); return true; } return false; },
       survBestWave: () => m.survBestWave || 0,
-      survWaveRecord(wave) { wave = Math.max(0, wave | 0); if (wave > (m.survBestWave || 0)) { m.survBestWave = wave; save(); return true; } return false; },
+      // Récord por dificultad (SV-12): el lanzador muestra "tu marca" en cada chip.
+      // Retrocompatible: el global survBestWave se conserva como antes.
+      survBestWaveFor: (diff) => (m.survBestWaves && m.survBestWaves[diff]) || 0,
+      survWaveRecord(wave) {
+        wave = Math.max(0, wave | 0);
+        if (m.survBestWaves && wave > (m.survBestWaves[State.diff] || 0)) { m.survBestWaves[State.diff] = wave; save(); }
+        if (wave > (m.survBestWave || 0)) { m.survBestWave = wave; save(); return true; }
+        return false;
+      },
       claimReward() {
         if (m.reward.date === today()) return 0;
         const y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
@@ -2840,6 +2858,15 @@
       this.scoreBoost = 0; this.magnetMoves = 0; this.goldenWaveWaves = 0;
       this.mut = this.weeklyMut(); // mutador semanal (GM-22)
       if (this.mut.id !== 'none') Toasts.show(I18n.t('survmut_' + this.mut.id), 'info', 2400, '📅');
+      // Chip del mutador re-consultable (SV-11): tocar 📅 repite el aviso — el tema
+      // de la semana deja de vivir solo en un toast de 2.4s al empezar.
+      const bd = $('#surv-build');
+      if (bd && !this._buildBound) {
+        this._buildBound = true;
+        bd.addEventListener('click', (e) => {
+          if (e.target.closest('.sb-mut') && this.mut.id !== 'none') Toasts.show(I18n.t('survmut_' + this.mut.id), 'info', 2400, '📅');
+        });
+      }
       this._planBoss();
       this._setFrenzyClass();
       // Progresión de iconos desde la oleada 1: la puntuación base usa State.level (= dlevel).
@@ -2854,6 +2881,7 @@
       this.frenzyUntil = 0; this.x2Until = 0; this.freezeUntil = 0; this.lockUntil = 0;
       State.tempMult = 1;
       document.body.classList.remove('aiming', 'surv-frenzy-active', 'surv-frenzy-1', 'surv-frenzy-2', 'surv-frenzy-3');
+      const bd = $('#surv-build'); if (bd) { bd.hidden = true; bd.innerHTML = ''; }
     },
     // Telegrafiado del jefe (GM-18): si la PRÓXIMA oleada trae evento jefe, se decide
     // ya el tipo (pre-roll) para poder avisar de forma específica antes de que llegue.
@@ -2986,12 +3014,18 @@
       if (clearedWave >= 15) coins += Math.round(Math.pow(clearedWave - 14, 1.5) * 2); // Kicker
       coins = Math.max(3, coins);
       Meta.addCoins(coins); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
-      Toasts.show(I18n.t('surv_wave_reward').replace('{w}', clearedWave).replace('{c}', coins), 'good', 1700, 'coin');
+      // Coreografía de toasts (SV-13): en oleadas de hito, la recompensa de monedas
+      // se FUSIONA con el toast del hito (antes eran dos toasts pisándose); en el
+      // resto, va sola. Protege el canal de feedback en el instante de más carga.
+      const coinTxt = I18n.t('surv_wave_reward').replace('{w}', clearedWave).replace('{c}', coins);
       if (clearedWave % 5 === 0) {
-        let txt;
-        if (clearedWave % 10 === 0) { Meta.addChest(1); this.runChests++; txt = '+1 ' + I18n.t('tab_chests'); Toasts.show(I18n.t('surv_milestone').replace('{w}', clearedWave) + ' · ' + txt, 'good', 2300, 'chest'); }
-        else { const gems = 2 + Math.floor(clearedWave / 5); Meta.addGems(gems); this.runGems += gems; txt = '+' + gems; Toasts.show(I18n.t('surv_milestone').replace('{w}', clearedWave) + ' · ' + txt, 'good', 2300, 'gem'); }
+        let txt, ic;
+        if (clearedWave % 10 === 0) { Meta.addChest(1); this.runChests++; txt = '+1 ' + I18n.t('tab_chests'); ic = 'chest'; }
+        else { const gems = 2 + Math.floor(clearedWave / 5); Meta.addGems(gems); this.runGems += gems; txt = '+' + gems + ' 💎'; ic = 'gem'; }
+        Toasts.show(I18n.t('surv_milestone').replace('{w}', clearedWave) + ' · +' + coins + ' ' + I18n.t('coins') + ' · ' + txt, 'good', 2600, ic);
         Render.flash(); FX.confetti(70); Sound.record(); Haptics.record(); Econ.refresh();
+      } else {
+        Toasts.show(coinTxt, 'good', 1700, 'coin');
       }
     },
     _checkWaveRecord() {
@@ -3125,13 +3159,20 @@
       // Progresión de iconos: al subir el nivel efectivo, avanza la ventana del catálogo
       // (entran iconos nuevos/más difíciles, se dejan atrás los iniciales) y crece la variedad.
       const lvl = this.dlevel();
+      const isBossWave = this.wave % tn.bossEvery === 0;
       if (lvl !== State.level) {
         State.level = lvl;
         State.pool = Engine.poolForLevel(lvl);
         this._reconcileOrphans();
-        Toasts.show(I18n.t('surv_new_icons'), 'info', 1500, 'v2:four-pointed-star');
+        // "Nuevos iconos" se retrasa 1.2s (SV-13) para no pisar el toast de oleada/jefe.
+        const atWave = this.wave;
+        setTimeout(() => { if (State.status === 'playing' && this.wave === atWave) Toasts.show(I18n.t('surv_new_icons'), 'info', 1500, 'v2:four-pointed-star'); }, 1200);
       }
-      Toasts.show(I18n.t('st_wave') + ' ' + this.wave, 'warn', 1400, 'fire'); Sound.danger();
+      // El toast "Oleada N" se SUPRIME en frontera de jefe (SV-13): la bandera ⚠ y el
+      // aviso específico ya lo anuncian; dos avisos a la vez saturan. El sonido/anuncio
+      // accesible se mantienen.
+      if (!isBossWave) Toasts.show(I18n.t('st_wave') + ' ' + this.wave, 'warn', 1400, 'fire');
+      Sound.danger();
       announce(I18n.t('sr_wave').replace('{n}', this.wave));
       this.addFrenzy(8 + this.frenzyTier() * 3);
       this._traps(Math.min(tn.trapCap, tn.trapBase * Math.max(0, this.wave - 2)));
@@ -3290,9 +3331,17 @@
     reviveCost() { return Math.min(this.REVIVE_CAP, this.REVIVE_BASE * Math.pow(2, this.revives)); },
     lastChance() {
       if (this.revives >= this.REVIVE_MAX) { this.giveUp(); return; }
-      State.status = 'paused'; Loop.stop(); Music.stop(true);
+      // Fade suave de música (SV-14): el corte seco (Music.stop(true)) se leía como
+      // fallo técnico; el desvanecido da dramatismo. Sin cuenta atrás (regla ética).
+      State.status = 'paused'; Loop.stop(); Music.stop();
       const cost = this.reviveCost(); const cc = $('#revive-cost'); if (cc) cc.textContent = cost;
-      const rb = $('#btn-revive'); if (rb) rb.disabled = Meta.coins() < cost;
+      const short = Math.max(0, cost - Meta.coins());
+      const rb = $('#btn-revive'); if (rb) rb.disabled = short > 0;
+      // "Te faltan {n} monedas": el botón deshabilitado por fin dice por qué.
+      const se = $('#revive-short');
+      if (se) { se.hidden = short <= 0; if (short > 0) se.textContent = I18n.t('revive_short').replace('{n}', short); }
+      // Contador de usos: hace visible el tope de 3 (evita el "me estafaron" al 4º).
+      const ce = $('#revive-count'); if (ce) ce.textContent = I18n.t('revive_count').replace('{n}', this.revives + 1).replace('{max}', this.REVIVE_MAX);
       Modal.open('modal-revive');
     },
     revive() {
@@ -3541,6 +3590,24 @@
         r.ready = ready;
         const bb = $('#booster-bar'); if (bb) bb.classList.toggle('ready', ready);
         const pr = $('#power-rings'); if (pr) pr.classList.toggle('ready', ready);
+      }
+      // Fila de build (SV-10/11): chips de SOLO LECTURA con las bendiciones que
+      // tienen estado (lo instantáneo ya se ve en vidas/anillo/inventario) y el
+      // mutador semanal. El build deja de ser invisible sin añadir medidores.
+      const chips = [];
+      if (this.mut.id !== 'none') {
+        const mi = { ice: '❄️', chaos: '🌀', frenzy: '🔥' }[this.mut.id] || '';
+        chips.push(`<button type="button" class="sb-chip sb-mut" aria-label="${esc(I18n.t('survmut_' + this.mut.id))}">📅${mi}</button>`);
+      }
+      if (this.goldenWaveWaves > 0) chips.push(`<span class="sb-chip sb-epic" aria-label="${esc(I18n.t('boon_golden_wave'))}">👑×${this.goldenWaveWaves}</span>`);
+      if ((this.scoreBoost || 0) > 0) chips.push(`<span class="sb-chip sb-rare" aria-label="${esc(I18n.t('boon_score_boost'))}">📈+${Math.round(this.scoreBoost * 100)}%</span>`);
+      if (this.magnetMoves > 0) chips.push(`<span class="sb-chip sb-rare" aria-label="${esc(I18n.t('boon_magnet'))}">🧲×${this.magnetMoves}</span>`);
+      if (this.slowWaves > 0) chips.push(`<span class="sb-chip" aria-label="${esc(I18n.t('boon_slow'))}">🐌×${this.slowWaves}</span>`);
+      const bsig = chips.join('');
+      if (r.build !== bsig) {
+        r.build = bsig;
+        const bd = $('#surv-build');
+        if (bd) { bd.innerHTML = bsig; bd.hidden = !bsig; }
       }
     },
   };
@@ -4627,7 +4694,7 @@
 
     activate(i) {
       if (State.status !== 'playing') return;
-      if ((State.mode === 'supervivencia' || State.mode === 'clasico') && Survival.locked()) return;
+      if (Survival.locked()) { Render.boardShake(); Sound.tap(); return; }
       this.clearHintHighlight();
       const ti = State.tiles[i];
       // Objeto especial con efecto al tocar (bonus/portal/caja mágica/bomba oculta).
@@ -4653,7 +4720,7 @@
         }
         return;
       }
-      if (State.board[i] !== null) { Sound.tap(); return; }     // ocupada: nada
+      if (State.board[i] !== null) { Render.miss(i); Sound.tap(); return; }     // ocupada: nada (ahora con feedback visual)
       const conv = Engine.converging(i);
       if (conv.length < 2) { this.mistake(i); return; }          // error → penalización
 
@@ -5674,11 +5741,28 @@
       btn.classList.toggle('on', on);
       btn.setAttribute('aria-checked', String(on));
     });
+    // Récord por dificultad bajo cada chip (SV-12): la marca a batir, visible al elegir.
+    document.querySelectorAll('[data-surv-rec]').forEach((el) => {
+      const w = Meta.survBestWaveFor(el.dataset.survRec);
+      el.textContent = w > 0 ? I18n.t('surv_launch_record').replace('{w}', w) : I18n.t('surv_launch_norecord');
+    });
+    // Descriptor concreto de la dificultad elegida (vidas · ritmo · monedas).
+    const desc = $('#surv-diff-desc');
+    if (desc) { const key = 'surv_diff_' + survDiff + '_d'; desc.textContent = I18n.t(key); desc.setAttribute('data-i18n', key); }
     const start = $('#btn-surv-start');
     if (start) start.dataset.diff = survDiff;
   }
   function openSurvivalDiff() {
     survDiff = Config.DIFF_ORDER.indexOf(Storage.survDiff) >= 0 ? Storage.survDiff : 'normal';
+    // Tarjeta del mutador semanal (SV-12): mismo tema determinista que la partida.
+    const mut = Survival.weeklyMut();
+    const wk = $('#surv-week');
+    if (wk) {
+      const ic = { none: '📅', ice: '❄️', chaos: '🌀', frenzy: '🔥' }[mut.id] || '📅';
+      $('#surv-week-ic').textContent = ic;
+      $('#surv-week-effect').textContent = I18n.t('survmut_' + mut.id);
+      wk.hidden = false;
+    }
     renderSurvivalDiff();
     Modal.open('modal-surv-diff');
   }

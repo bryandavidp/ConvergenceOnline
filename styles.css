@@ -1785,6 +1785,17 @@ body.mode-timed .lvl-chip { display: none; }
 body.reduced-fx .surv-boss-flag { animation: none; }
 .surv-bar.boss-soon .surv-waveprog-fill { background: linear-gradient(90deg, var(--bad), #ff2d55); }
 .surv-bar.soon { border-color: rgba(255,178,77,.58); box-shadow: 0 0 18px rgba(255,178,77,.18); }
+
+/* Fila de build (SV-10/11): chips de solo lectura del estado de la run (bendiciones
+   con duración + mutador semanal). El build deja de ser invisible sin nuevos medidores. */
+.surv-build { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0 auto 6px; width: min(96vw, 620px); max-width: 100%; }
+.sb-chip { font-size: .72rem; font-weight: 800; line-height: 1; color: var(--text);
+  background: rgba(0,0,0,.34); border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px;
+  display: inline-flex; align-items: center; gap: 2px; animation: chipPop .24s ease both; }
+body.reduced-fx .sb-chip { animation: none; }
+.sb-chip.sb-mut { cursor: pointer; }
+.sb-chip.sb-rare { border-color: rgba(180,108,255,.5); color: #d9c2ff; }
+.sb-chip.sb-epic { border-color: rgba(255,216,77,.6); color: var(--gold); background: rgba(255,216,77,.1); }
 .surv-bar.soon .surv-wave { color: var(--bad); }
 .surv-bar.soon .surv-waveprog-fill { background: linear-gradient(90deg, var(--bad), var(--gold)); }
 .surv-time { color: var(--accent-2); font-variant-numeric: tabular-nums; }
@@ -2501,17 +2512,34 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
   .di-medals { justify-content: flex-start; }
 }
 
+/* Tarjeta del mutador semanal en el lanzador (SV-12) */
+.surv-week { display: flex; align-items: center; gap: 10px; margin: 4px 0 12px; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: radial-gradient(90% 90% at 0% 0%, color-mix(in srgb, var(--modal-accent) 16%, transparent), transparent 60%), rgba(0,0,0,.24); }
+.surv-week .sw-ic { font-size: 1.4rem; line-height: 1; }
+.surv-week .sw-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.surv-week .sw-label { font-size: .62rem; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+.surv-week .sw-effect { font-size: .9rem; font-weight: 800; color: var(--text); }
+.surv-diff-desc { text-align: center; color: var(--muted); font-size: .82rem; font-weight: 600; margin: 8px 0 4px; min-height: 1.2em; }
+
 .surv-diff-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin: 12px 0 4px; }
 .modal-surv-diff .diff-chip {
   min-width: 0; min-height: 56px; border-radius: 14px; color: var(--text); font-weight: 900;
   background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(0,0,0,.24));
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 4px;
 }
+.modal-surv-diff .diff-chip .dc-rec { font-size: .56rem; font-weight: 800; color: rgba(255,216,77,.9); text-transform: uppercase; letter-spacing: .2px; line-height: 1; }
 .modal-surv-diff .diff-chip.on,
 .modal-surv-diff .diff-chip[aria-checked="true"] {
   border-color: var(--modal-accent);
   background: linear-gradient(180deg, color-mix(in srgb, var(--modal-accent) 28%, rgba(255,255,255,.06)), rgba(0,0,0,.22));
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--modal-accent) 70%, transparent) inset, 0 10px 24px color-mix(in srgb, var(--modal-accent) 22%, transparent);
 }
+
+/* Modal de revivir (SV-14): qué recibes · cuánto falta · uso N/3 */
+.revive-gets { text-align: center; color: var(--muted); font-size: .84rem; margin: 6px 0 2px; }
+.revive-short { text-align: center; color: var(--bad); font-weight: 800; font-size: .84rem; margin: 4px 0 2px; }
+.revive-count { text-align: center; color: var(--muted); font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin: 2px 0 0; }
 
 .modal-over .modal-sub,
 .modal-win .modal-sub {
