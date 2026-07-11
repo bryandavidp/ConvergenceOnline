@@ -1,7 +1,7 @@
 # 🎮 Inventario del Modo Supervivencia — Convergence
 
 > **Última actualización**: 11 julio 2026  
-> **Versión del juego**: v2.6.5  
+> **Versión del juego**: v2.6.6  
 > **Código fuente**: [game.js](file:///c:/Users/bryandavidp/Desktop/ConvergenceOnline/game.js) módulo `Survival`  
 > **Estado general**: Funcional con todas las tareas GM completadas. Rebalance de bendiciones **validado por simulación** en SV-01 (fase α del [`SURVIVAL_MASTER_PLAN.md`](./SURVIVAL_MASTER_PLAN.md)); batería y bisección en [`BALANCE_BASELINE.md`](./BALANCE_BASELINE.md).
 
@@ -352,6 +352,9 @@ Se anuncia con toast al inicio de la run. Override para simulador: `Survival._mu
 | SV-12 | Lanzador enriquecido: tarjeta de mutador + récord por dificultad (`survBestWaves`) + descriptores | ✅ v2.6.5 |
 | SV-13 | Coreografía de toasts en frontera de oleada (fusión recompensa+hito, supresión en jefe, retraso de iconos) | ✅ v2.6.5 |
 | SV-14 | Polish del modal de revivir: qué recibes, «te faltan {n}», contador n/3, fade de música | ✅ v2.6.5 |
+| SV-20 | Pico del jefe: beat «¡SUPERADO!», confeti movido del instante del jefe, ganchos audio QP-4 | ✅ v2.6.6 |
+| SV-21 | Celebraciones de hito: récord vivo, furia máxima, última vida, reveal épico, hazaña sin-booster | ✅ v2.6.6 |
+| SV-22 | Modal de fin: héroe=oleada + near-miss de récord + hoja de la run (bendiciones + jefes) | ✅ v2.6.6 (cierra R-18) |
 
 ---
 
@@ -362,14 +365,14 @@ Se anuncia con toast al inicio de la run. Override para simulador: `Survival._mu
 | ID | Tarea | Prioridad | Versión target |
 |---|---|---|---|
 | R-17 / GM-21* | **Rebalancear bendiciones** | ✅ Hecho (SV-01, v2.6.4) | — |
-| R-18 | Polish de pantalla Game Over → SV-22 | 🟡 MED | v2.7 |
-| R-23 / GM-22* | Eventos mid-oleada | 🟡 MED | v2.8+ |
-| R-24 / GM-23 | Late-game hazard modifiers | 🟡 MED | v2.8+ |
-| R-31 / GM-25 | Meta-progresión de Supervivencia | 🟢 LOW | long-term |
+| R-18 | Polish de pantalla Game Over → SV-22 | ✅ Hecho (v2.6.6) | — |
+| R-23 / GM-22* | Eventos mid-oleada → SV-41 (oleadas de élite, fase ε) | 🟡 MED | v2.8+ |
+| R-24 / GM-23 | Late-game hazard modifiers → SV-41/SV-43 (fase ε) | 🟡 MED | v2.8+ |
+| R-31 / GM-25 | Meta-progresión de Supervivencia → SV-30/31/32 (fase δ) | 🟢 LOW | long-term |
 | R-32 | Leaderboard (requiere backend) | 🟢 LOW | long-term |
-| EGF-08 | Efecto visual "última vida" | 🟡 MED | — |
-| EGF-09 | Celebración de oleada completada | 🟡 MED | — |
-| EGF-10 | Reveal dramático de bendición | 🟢 LOW | — |
+| EGF-08 | Efecto visual "última vida" | ✅ Hecho (SV-21, v2.6.6) | — |
+| EGF-09 | Celebración de oleada completada | 🟡 Parcial (coreografía SV-13); celebración grande en hitos 5/10 | — |
+| EGF-10 | Reveal dramático de bendición | ✅ Hecho (SV-21, v2.6.6) | — |
 
 *Nota: algunos IDs de GM se reutilizaron para tareas diferentes en el plan original vs roadmap.
 

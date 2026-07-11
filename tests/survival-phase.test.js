@@ -65,10 +65,45 @@ test('SV-12: survBestWaveFor por dificultad, retrocompatible con survBestWave', 
   State.diff = 'normal';
 });
 
-test('SV-02: claves i18n nuevas en ES y EN', () => {
+test('SV-20: bossEvent programa el beat de superación y NO celebra al llegar', () => {
+  Survival.start(); // resetea flags
+  State.mode = 'supervivencia'; State.status = 'playing';
+  Survival.wave = 6; Survival._nextBoss = 'meteor'; Survival.lives = 3;
+  Survival.bossEvent();
+  assert.ok(Survival._bossSurvivedAt > 0, 'programa el beat ¡SUPERADO!');
+  assert.ok(Survival._boonAt > 0, 'programa la bendición');
+  assert.equal(Survival._noBoosterSinceBoss, true, 'arranca la hazaña sin-potenciadores');
+});
+
+test('SV-20/21: _bossSurvived cuenta jefe y respeta game over; hazaña sin-booster', () => {
+  Survival.start();
+  State.mode = 'supervivencia'; State.status = 'playing'; Survival.lives = 2;
+  Survival._bossesSurvived = 0; Survival._noBoosterSinceBoss = true;
+  Survival._bossSurvived();
+  assert.equal(Survival._bossesSurvived, 1, 'suma jefe superado');
+  // Con game over no cuenta
+  State.status = 'over';
+  Survival._bossSurvived();
+  assert.equal(Survival._bossesSurvived, 1, 'no cuenta si no sigues vivo');
+  State.status = 'playing';
+});
+
+test('SV-22: applyBoon registra la hoja de la run (_boonLog)', () => {
+  Survival.start();
+  Survival._boonLog = [];
+  Survival.applyBoon('slow');
+  Survival.applyBoon('magnet');
+  assert.equal(Survival._boonLog.length, 2);
+  assert.deepEqual(Survival._boonLog.map((b) => b.id), ['slow', 'magnet']);
+  assert.ok(Survival._boonLog[0].icon, 'cada entrada tiene icono');
+});
+
+test('SV-02/20/21/22: claves i18n nuevas en ES y EN', () => {
   const keys = ['magnet_done', 'new_record', 'revive_btn', 'revive_gets', 'revive_count', 'revive_short',
     'survmut_none', 'surv_week_label', 'surv_diff_normal_d', 'surv_launch_record',
-    'boon_golden_wave_d', 'boon_score_boost_d'];
+    'boon_golden_wave_d', 'boon_score_boost_d',
+    'surv_boss_cleared', 'surv_boss_cleared_clean', 'surv_frenzy_max', 'surv_wave_record_live',
+    'surv_over_wave_new', 'surv_over_wave_near', 'surv_over_record', 'surv_run_bosses'];
   for (const lang of ['es', 'en']) {
     for (const k of keys) {
       assert.ok(cv.I18n.DICT[lang][k], `falta ${k} en ${lang}`);

@@ -1575,6 +1575,16 @@ body.reduced-fx .pick-card { animation: none; }
 .pick-opt.rarity-uncommon { --opt-border: rgba(0,208,255,0.4); --opt-accent: #00d0ff; }
 .pick-opt.rarity-rare { --opt-border: rgba(180,108,255,0.5); --opt-accent: #b46cff; }
 .pick-opt.rarity-epic { --opt-border: rgba(255,216,77,0.6); --opt-accent: #ffd84d; }
+/* Reveal épico (SV-21, EGF-10): el 5% de peso merece momento — glow one-shot + barrido
+   dorado compositado al abrir el Picker. Todo <900ms; anulado en reduced-fx. */
+.pick-opt.rarity-epic { position: relative; overflow: hidden; box-shadow: 0 0 12px rgba(255,216,77,.22); animation: epicGlow .6s ease-out; }
+@keyframes epicGlow { 0% { box-shadow: 0 0 0 rgba(255,216,77,0); } 45% { box-shadow: 0 0 22px rgba(255,216,77,.5); } 100% { box-shadow: 0 0 12px rgba(255,216,77,.22); } }
+.pick-opt.rarity-epic::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,240,180,.35) 50%, transparent 70%);
+  transform: translateX(-120%); animation: epicSweep .65s ease-out .05s; }
+@keyframes epicSweep { to { transform: translateX(120%); } }
+body.reduced-fx .pick-opt.rarity-epic { animation: none; }
+body.reduced-fx .pick-opt.rarity-epic::after { display: none; }
 
 .pick-opt:active, .pl-chip:active { transform: scale(.97); }
 .pick-opt:hover, .pick-opt:focus-visible {
@@ -1774,6 +1784,13 @@ body.mode-timed .lvl-chip { display: none; }
 .surv-wave { color: var(--warn); }
 .surv-tier { font-size: .64rem; font-weight: 800; color: #04122e; background: var(--warn); border-radius: 999px; padding: 1px 7px; }
 .surv-best-wave { font-size: .62rem; color: rgba(255,216,77,.88); font-weight: 800; text-transform: uppercase; letter-spacing: .25px; line-height: 1; }
+/* Récord de oleada batido en vivo (SV-21): estado dorado persistente el resto de la run. */
+.surv-best-wave.record-live { color: var(--gold); text-shadow: 0 0 8px rgba(255,216,77,.55); }
+/* Última vida (SV-21): pulso lento del chip de vidas — tensión, no pánico. Única
+   animación infinite del modo: elemento diminuto (transform/opacity) y en reduced-fx. */
+.surv-lives.last-life { animation: lastLife 1.15s ease-in-out infinite; transform-origin: left center; }
+@keyframes lastLife { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .55; transform: scale(1.08); } }
+body.reduced-fx .surv-lives.last-life { animation: none; }
 .surv-waveprog { width: min(180px, 42vw); height: 4px; border-radius: 999px; background: rgba(255,255,255,.12); overflow: hidden; }
 .surv-waveprog-fill { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--warn), var(--bad)); transition: width .25s linear; }
 /* Jefe entrante (GM-18): bandera pulsante + barra de oleada tintada durante toda la
@@ -2545,6 +2562,19 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
 .modal-win .modal-sub {
   margin-bottom: 10px;
 }
+/* Héroe de Supervivencia en el resumen (SV-22): la oleada como protagonista. */
+.over-hero { margin: 6px 0 10px; text-align: center; }
+.over-hero .oh-wave { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; }
+.over-hero .oh-label { font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
+.over-hero .oh-num { font-size: clamp(2.6rem, 13vw, 3.6rem); font-weight: 900; color: var(--level); text-shadow: 0 2px 14px rgba(143,123,255,.4); font-variant-numeric: tabular-nums; }
+.over-hero .oh-ctx { margin-top: 4px; font-size: .86rem; font-weight: 700; color: var(--muted); }
+.over-hero .oh-ctx.gold { color: var(--gold); text-shadow: 0 0 10px rgba(255,216,77,.4); }
+.over-hero .oh-ctx.near { color: var(--warn); }
+/* Hoja de la run (SV-22): bendiciones elegidas + jefes superados. */
+.over-run { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px; margin: 0 0 10px; }
+.over-run .or-boons { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.over-run .or-boon { font-size: 1.05rem; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
+.over-run .or-bosses { font-size: .8rem; font-weight: 700; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
 .modal-meta {
   margin: -2px 0 8px;
   line-height: 1.35;

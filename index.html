@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.5" />
+  <link rel="stylesheet" href="styles.css?v=2.6.6" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -371,6 +371,11 @@
       <div class="modal-body">
         <p class="record-badge" id="over-record" hidden><span class="icv2 icv2-inline" style="--icv2-url:url('img/icons-v2/12-misc/four-pointed-star.svg')" aria-hidden="true"></span> ¡Nuevo récord!</p>
         <p class="modal-sub" id="over-reason"></p>
+        <!-- Héroe de Supervivencia (SV-22): la OLEADA es el ancla del modo, no el score.
+             Grande + contexto de récord (near-miss o marca nueva). -->
+        <div class="over-hero" id="over-hero" hidden></div>
+        <!-- Hoja de la run (SV-22): la cadena de bendiciones elegidas + jefes superados. -->
+        <div class="over-run" id="over-run" hidden></div>
         <p class="over-near" id="over-near" hidden></p>
         <p class="modal-meta" id="over-meta"></p>
         <div class="stats" id="over-stats"></div>
@@ -541,6 +546,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=2.6.5" defer></script>
+  <script src="game.js?v=2.6.6" defer></script>
 </body>
 </html>
