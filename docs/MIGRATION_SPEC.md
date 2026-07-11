@@ -145,9 +145,9 @@ Antes de empezar, el jugador elige dificultad (fácil/normal/difícil), persisti
 | normal | 28000 | 3 | 0.975 | 1400 | 0.010 | 0.07 | 6 | 6 | 1.0 |
 | dificil | 22000 | 3 | 0.960 | 900 | 0.016 | 0.10 | 5 | 5 | 1.3 |
 
-Constantes clave: `WAVE_MS` base 22000, `MAX_LIVES` base 3, `CHARGE_PER = 9` (carga de booster por convergencia), `BOOSTERS = ['bomb','freeze','clearLine','wild','x2']`, `ROCK_CAP=10`, `ROCK_HITS=2`, `BOMB_CAP=6`, `SLOWDOWN_CAP=1`.
+Constantes clave: `WAVE_MS` base 22000, `MAX_LIVES` base 3, `CHARGE_PER = 9` (carga de booster por convergencia), `BOOSTERS = ['bomb','freeze','clearLine','wild','x2']`, `SLOWDOWN_CAP=1`. **Topes por dificultad (v2.6.2):** `SPECIAL_CAP` 6/7/8 (fácil/normal/difícil, especiales totales), `BLOCK_CAP` 4/5/6 (bloqueos rock/locked), `BOMB_CAP` 2/2/3 (pickups bomba). Los bloqueos (`rock`/`locked`, colocados como trampas con prob. 0.55 salvo semana del hielo) tienen 1 hit antes de la oleada 9/7/5 (fácil/normal/difícil) y 2 después.
 
-**Oleadas:** `newWave()` se dispara cuando `waveAcc >= WAVE_MS`. En cada oleada: recompensa de oleada (monedas; gemas cada 5 oleadas: `2 + floor(wave/5)`; cofre cada 10 oleadas), `spawnRate = max(spawnFloor, round(spawnRate*spawnDecay))`, se recalcula `dlevel() = 1 + floor((wave-1)/tune.varEvery)` (nivel efectivo de dificultad de iconos) refrescando el pool, se añaden trampas y pickups de bomba, ocasionalmente un pickup de ralentización, y cada `bossEvery` oleadas se dispara un `bossEvent()` — uno de 3 eventos aleatorios. Desde v2.1.0 (GM-18) el tipo de evento se **pre-decide al empezar la oleada anterior** (`_planBoss()`): la oleada previa muestra una bandera «⚠ Jefe» y ~3s antes del evento llega un aviso específico del tipo; `bossEvent()` consume ese pre-roll. Los 3 eventos:
+**Oleadas:** `newWave()` se dispara cuando `waveAcc >= WAVE_MS`. En cada oleada: recompensa de oleada (monedas: `max(3, round((4 + oleada×1.45) × coinMult × mutCoinMult))`, **más el kicker tardío v2.6.4: `+round((oleada−14)^1.5 × 2)` desde la oleada 15**; gemas cada 5 oleadas: `2 + floor(wave/5)`; cofre cada 10 oleadas), `spawnRate = max(spawnFloor, round(spawnRate*spawnDecay))`, se recalcula `dlevel() = 1 + floor((wave-1)/tune.varEvery)` (nivel efectivo de dificultad de iconos) refrescando el pool, se añaden trampas y pickups de bomba, ocasionalmente un pickup de ralentización, y cada `bossEvery` oleadas se dispara un `bossEvent()` — uno de 3 eventos aleatorios. Desde v2.1.0 (GM-18) el tipo de evento se **pre-decide al empezar la oleada anterior** (`_planBoss()`): la oleada previa muestra una bandera «⚠ Jefe» y ~3s antes del evento llega un aviso específico del tipo; `bossEvent()` consume ese pre-roll. Los 3 eventos:
 - `meteorRain()` — 8 spawns forzados + bloqueo de 900ms.
 - `tideSurge()` — **Marea (v2.4.0, GM-20, sustituye al terremoto en el pool base):** marca las 2 filas exteriores 1.2s y las llena de iconos; amenaza legible con counterplay.
 - `frostSurge()` — congela `3 + floor(wave/4)` celdas ocupadas + bloqueo de 760ms.
@@ -155,7 +155,20 @@ Constantes clave: `WAVE_MS` base 22000, `MAX_LIVES` base 3, `CHARGE_PER = 9` (ca
 
 **Mutador semanal (v2.4.0, GM-22):** `hash32('survmut:' + lunesISO) % 4` elige el tema de la semana: `none` / `ice` (todas las trampas heladas, monedas de oleada ×1.15) / `chaos` (quake vuelve al pool de jefes) / `frenzy` (duración de frenesí ×1.3). Determinista sin servidor; el simulador lo fija a `none` para reproducibilidad.
 
-**Bendiciones post-jefe (v2.3.0, GM-17):** ~1.7s después de cada evento jefe, pausa suave y elección de 1 entre 3 (pool de 5, `life` solo si `lives < MAX+1`): `life` (+1 vida, tope MAX+1), `charge` (+50 de carga), `pack` (+1 bomba y +1 rayo), `slow` (intervalo de spawn ×1.15 durante 2 oleadas, vía factor en el bucle), `frenzy` (frenesí instantáneo).
+**Bendiciones post-jefe (v2.3.0, GM-17 · rediseño v2.6.4, SV-01):** ~1.7s después de cada evento jefe, pausa suave y elección de 1 entre 3, muestreadas **por peso de rareza sin reemplazo** (RNG seedeado) sobre un pool de 8. Exclusiones: `life` si `lives ≥ MAX+1`, `score_boost` si ya está al tope.
+
+| id | rareza | peso | efecto |
+|---|---|---|---|
+| `life` | común | 45 | +1 vida (tope MAX+1) |
+| `charge` | común | 45 | +50 de carga (≥100 ⇒ otorga booster con remanente) |
+| `slow` | común | 45 | intervalo de spawn ×1.25 durante 3 oleadas (factor en el bucle) |
+| `pack` | infrecuente | 35 | +1 bomba y +1 rayo |
+| `frenzy` | infrecuente | 35 | frenesí instantáneo |
+| `magnet` | rara | 15 | las próximas 5 convergencias atraen +1 la figura MÁS CERCANA al toque (si no hay nada que atraer, no consume uso) |
+| `score_boost` | rara | 15 | +0.25× permanente a `Survival.scoreMult()`, tope `SCORE_BOOST_CAP = 0.5` |
+| `golden_wave` | épica | 4 | `Survival.scoreMult()` ×2 durante lo que queda de la oleada actual + toda la siguiente (`goldenWaveWaves = 2`, decrementa en `_waveReward`) |
+
+`Survival.scoreMult() = (1 + scoreBoost) × (goldenWave ? 2 : 1)` entra en la fórmula de puntuación (§6.1), en el chip GM-16 y en el popup — los tres DEBEN compartir el helper. *Historia: la implementación inicial v2.6.2 (sin validar) usaba golden ×3, tope de impulso 1.0, peso épico 5 y `Math.random()`; la validación SV-01 (bisección + batería, ver `BALANCE_BASELINE.md`) aplicó la tabla de nerf pre-acordada y restauró el RNG seedeado.*
 
 **Vidas:** 3 corazones por defecto; se pierden vía `onOverflow()` cuando el tablero no puede aceptar un spawn; al llegar a 0 → `lastChance()` (modal de revivir, restaura 1 vida); `giveUp()` termina la partida. **Precio de revivir (v2.2.0, GM-19):** `min(480, 120 × 2^usos)` por run — 120 → 240 → 480, máximo **3 revividas por run** (a la 4ª muerte no hay oferta). Antes: 120 plano ilimitado.
 
@@ -255,7 +268,7 @@ Al cargar, cualquier campo faltante se rellena con su valor por defecto (migraci
 
 Tres monedas + cofres, todo dentro de `Meta`.
 
-- **Monedas (coins):** se ganan al final de cada partida (`recordGame()`, fórmula en §6.5), al completar niveles de Clásico, en recompensas de oleada de Supervivencia, en bonos de tablero vacío de Zen, en la recompensa diaria, y al abrir cofres. Se gastan en: skins de tablero (0-3000), temas de color (0-300), revivir en Supervivencia (120 fijo).
+- **Monedas (coins):** se ganan al final de cada partida (`recordGame()`, fórmula en §6.5), al completar niveles de Clásico, en recompensas de oleada de Supervivencia, en bonos de tablero vacío de Zen, en la recompensa diaria, y al abrir cofres. Se gastan en: skins de tablero (0-3000), temas de color (0-300), revivir en Supervivencia (escalante 120→240→480, máx. 3/run), potenciadores pre-nivel de Clásico (60-90).
 - **Gemas (gems):** se ganan en hitos de oleada de Supervivencia (`2 + floor(wave/5)` cada 5 oleadas), en recompensa de mundo completado (+20), en cofres (3-10) y en el primer intento diario del Reto (+5). Sumideros: cofre premium (25💎, v1.8) y **continuar partida** en Clásico/Aventura (15💎, v2.3.0, GM-02).
 - **Tickets:** se ganan raramente en cofres (1 normal, 2 premium). Se gastan en rerollear la misión diaria (1 ticket).
 - **Cofres:** se acumulan (no se abren automáticamente). Al abrir un cofre (`openChest()`), tabla de probabilidad (v2.6.0, FB-7):
@@ -365,10 +378,12 @@ crystal  Cristalia              💎 mods:['crystals']accent #19f0d0
 
 ### 6.1 Fórmula de puntuación por convergencia
 ```
-removed = cantidad de iconos eliminados en este toque (2-4)
-base    = removed * 10 * level          // "level" = nivel de dificultad efectivo del modo
-points  = floor(base * comboMult * diff.scoreMult * mode.mult * feverBoost() * (tempMult||1))
+removed  = cantidad de iconos eliminados en este toque (2-4; +1 con imán activo)
+base     = removed * 10 * level         // "level" = nivel de dificultad efectivo del modo
+survMult = Supervivencia ? Survival.scoreMult() : 1   // bendiciones (v2.6.4): (1+scoreBoost) × (goldenWave?2:1)
+points   = floor(base * comboMult * diff.scoreMult * mode.mult * feverBoost() * (tempMult||1) * sprintMult() * survMult)
 ```
+El chip GM-16 (`Render.multChip`) y el popup de puntos muestran `comboMult × feverBoost × tempMult × sprintMult × survMult` — exactamente los factores variables de la fórmula (los constantes de la run, dificultad y modo, van implícitos).
 (`level` en modos sin niveles explícitos es un "nivel de dificultad sintético": en Supervivencia es `dlevel()`, en Aventura es el nivel real de aventura).
 
 ### 6.2 Tabla de multiplicador de combo (`Config.COMBO_MULTIPLIERS`)
@@ -416,10 +431,12 @@ chain = cantidad de veces que el tablero quedó vacío en esta partida
 wave  = oleada actual (Supervivencia) o 1
 combo = min(combo actual, 12)
 raw    = EMPTY_BOARD_BONUS(500) + chain*90 + combo*28 + (Supervivencia ? wave*45 : 0)
-points = max(250, round(raw * diff.scoreMult * mode.mult * feverBoost() * tempMult))
+points = max(250, round(raw * diff.scoreMult * mode.mult * feverBoost() * tempMult * sprintMult()))
 coins  = clamp(round(points/220), 3, 16)
 ```
-Además: en Supervivencia +25% de carga de booster y +24 de frenesí; en Contrarreloj solo puntúa/monedas y repuebla el tablero; en Zen +1 pista (tope 9). En modos no-endless, el bono de "tablero perfecto" es más simple: flat `EMPTY_BOARD_BONUS = 500`.
+Además: en Supervivencia +25% de carga de booster y +24 de frenesí; en Zen +1 pista (tope 9) y +1 flor del jardín. En modos no-endless, el bono de "tablero perfecto" es más simple: flat `EMPTY_BOARD_BONUS = 500`.
+
+**Refill de tablero vacío (v2.6.1, `Engine.refillAfterEmpty`):** tras cobrar el bono en los modos sin fin (Contrarreloj/Supervivencia/Zen), el tablero se repuebla al instante con `EMPTY_BOARD_REFILL = { min:10, baseFactor:0.55, maxFactor:1.1, hardCap:26, maxPairs:6, perClear: {facil:2, normal:3, dificil:4} }`: hasta `maxPairs` patrones de 2-4 figuras IGUALES colocadas como primer-icono-visible en direcciones libres desde un centro vacío (cada patrón garantiza una convergencia jugable). El objetivo crece con `chain` (vaciados consecutivos). Elimina el dead-air post-limpieza (D2) a costa de sostener el combo: **inflación medida de score en Supervivencia p50 +19% / p90 +35% (bisección SV-01, `BALANCE_BASELINE.md`)** — cambio de época documentado, la oleada alcanzada no varía.
 
 ### 6.9 XP y monedas ganadas por partida (`recordGame`)
 ```

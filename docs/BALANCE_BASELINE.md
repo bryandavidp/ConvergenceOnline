@@ -136,6 +136,47 @@ contrarreloj   normal    casual     13085    29921    240s    x12       nvl 1   
 
 Lectura: el objetivo principal se cumple en el perfil average (`deadAir` 57%→39%, -18 puntos) sin inflar su score p50 (129463→120929, -6.6%) y con duración estable. Se descartó un primer tuning más agresivo (`initialIcons:24`, factores 0.55/0.75) porque el guardarraíl de medallas subía el bot estándar a 84984 (>74150); el tuning final mantiene `tests/balance-guardrail.test.js` verde sin recalibrar la mediana 52964.
 
+## Batería v2.6.4 (SV-01: validación del rebalance de bendiciones + refill + candados) — 40 runs/config
+
+> Contexto: entre v2.4.0 y v2.6.2 entraron a `game.js` tres cambios de balance de Supervivencia **sin batería previa** (violación de la regla operativa, detectada y corregida en SV-01): el refill de tablero vacío (v2.6.1), los candados con hits + topes de bomba (v2.6.2) y el rediseño de bendiciones con rareza + kicker de monedas (v2.6.2, además con `Math.random()` — no determinista). SV-01 bisecó la inflación, aplicó la tabla de nerf pre-acordada del plan de Supervivencia (golden ×3→×2, tope de impulso 1.0→0.5, peso épico 5→4) y restauró el RNG seedeado en `offerBoons` (dos baterías consecutivas idénticas ⇒ determinismo verificado).
+
+**Bisección de la inflación (probe de 1 config: supervivencia · normal · skilled, 40 runs):**
+
+```
+commit    versión  qué entra                        p50      p90     combo  deadAir  coins
+1333bb6   v2.4.0   (baseline registrado)          138099   200600     x9      85%     680
+ad8bd1b…6f091d7    QP-1 · QP-2 · FB · zen-HUD     138099   200600     x9      85%     680   ← idéntico bit a bit
+7240b70   v2.6.1   refill de tablero vacío        164284   270186    x23      62%     569
+a574fab   v2.6.2   gameover scoreAttack           164284   270186    x23      62%     569   ← idéntico
+ce090bf   v2.6.2   candados con hits + BOMB_CAP   191572   272674    x28      62%     584
+3b8eb3e   v2.6.2   bendiciones+kicker (pre-nerf)  186003*  361545*   x24      61%     615   * no determinista (Math.random)
+```
+
+Atribución: el refill explica p50 +19% / p90 +35% (y el desplome del dead-air 85%→62%, su objetivo de diseño — D2); los candados p50 +17%; las bendiciones pre-nerf ≈0% en p50 y **+33% en p90** (cola de `golden_wave`/`score_boost` → falla el criterio ≤+15% a nivel de commit → tabla de nerf aplicada).
+
+**Batería final v2.6.4 (post-nerf + RNG seedeado + imán al más cercano):**
+
+```
+modo           diff      perfil    sc p50   sc p90   dur50  combo    progreso  deadAir    err  coins    cap
+supervivencia  normal    skilled   203577   336751    480s    x26   oleada 18      62%    8.3    610   100%
+supervivencia  normal    average   113796   160368    480s    x21   oleada 18      38%   19.6    494   100%
+supervivencia  normal    casual     29648    44246    480s    x14   oleada 18      13%   29.5    341   100%
+supervivencia  dificil   skilled   563237   887041    480s    x41   oleada 22      44%   11.8   1015   100%
+```
+
+**Evaluación de criterios (B-S1/B-S2 del plan de Supervivencia):**
+
+| Criterio | Resultado | Veredicto |
+|---|---|---|
+| Determinismo del sim restaurado | 2 baterías consecutivas idénticas | ✅ |
+| B-S1 bendiciones: p50 ≤ +15% sobre el estado pre-bendiciones (ce090bf) | +6.3% (191572→203577) | ✅ |
+| B-S1 bendiciones: p90 ≤ +15% sobre ce090bf | +23.5% (272674→336751); pre-nerf era +33%, y en difícil el p90 baja de 1.07M a 887k (−17%) | ⚠️ Aceptado con nota: la cola p90 es el diseño intencional de "momentos épicos" (BAL-2); la tabla de nerf pre-acordada está agotada — endurecer más exige decisión de propietario/playtest, no otro nerf en caliente |
+| B-S2 kicker: coins/run skilled ≤ +20% vs v2.4.0 | 610 vs 680 (−10%: el refill suprime el farmeo de bonus de tablero vacío y compensa de sobra el kicker) | ✅ |
+| Oleada alcanzada (ancla del modo) sin cambio | 18/18 normal · 22/22 difícil | ✅ |
+| Guardarraíl de medallas del reto (CI) | 70/70 tests verdes sin recalibrar | ✅ |
+
+**Época de score:** el baseline de Supervivencia pasa oficialmente de la fila v2.4.0 a esta batería. Los récords personales de score previos quedarán por debajo de lo alcanzable (~+47% p50 estructural por refill+candados); el récord de OLEADA — el ancla real del modo — no se mueve.
+
 ## Evaluación de los criterios de aceptación (GM-β)
 
 | Criterio | Resultado | Veredicto |

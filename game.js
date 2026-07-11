@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.2';
+  const VERSION = '2.6.4';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -413,8 +413,9 @@
         boon_slow: 'Calma', boon_slow_d: 'Figuras un 25% más lentas durante 3 oleadas',
         boon_frenzy: 'Furia', boon_frenzy_d: '¡Frenesí activado al instante!',
         boon_magnet: 'Imán', boon_magnet_d: 'Las próximas 5 uniones atraen +1 figura',
-        boon_score_boost: 'Impulso de Puntos', boon_score_boost_d: '+0.25x permanente a la puntuación',
-        boon_golden_wave: 'Oleada Dorada', boon_golden_wave_d: '¡Puntuación x3 en la próxima oleada!',
+        boon_score_boost: 'Impulso de Puntos', boon_score_boost_d: '+0.25× permanente a la puntuación (máx. +0.5×)',
+        boon_golden_wave: 'Oleada Dorada', boon_golden_wave_d: '¡Puntuación ×2 en esta oleada y la siguiente!',
+        magnet_done: 'Imán agotado', new_record: '¡Nuevo récord!', fever_on: '¡FEVER!', revive_btn: 'Revivir',
         route_title: 'Elige tu ruta', route_dense: 'Ruta exigente', route_dense_d: 'Más obstáculos · puntos ×1.25 este capítulo',
         route_calm: 'Ruta serena', route_calm_d: 'Figuras más lentas · sin bonus',
         relic_title: 'Reliquia de jefe', relic_sub: 'Pasiva para el resto de la expedición (máx. 3)',
@@ -563,8 +564,9 @@
         boon_slow: 'Calm', boon_slow_d: 'Icons are 25% slower for 3 waves',
         boon_frenzy: 'Fury', boon_frenzy_d: 'Frenzy activated instantly!',
         boon_magnet: 'Magnet', boon_magnet_d: 'Next 5 matches attract +1 icon',
-        boon_score_boost: 'Score Boost', boon_score_boost_d: 'Permanent +0.25x score multiplier',
-        boon_golden_wave: 'Golden Wave', boon_golden_wave_d: '3x score in the next wave!',
+        boon_score_boost: 'Score Boost', boon_score_boost_d: 'Permanent +0.25× score (max +0.5×)',
+        boon_golden_wave: 'Golden Wave', boon_golden_wave_d: '×2 score for this wave and the next!',
+        magnet_done: 'Magnet depleted', new_record: 'New record!', fever_on: 'FEVER!', revive_btn: 'Revive',
         route_title: 'Choose your route', route_dense: 'Demanding route', route_dense_d: 'More obstacles · points ×1.25 this chapter',
         route_calm: 'Serene route', route_calm_d: 'Slower icons · no bonus',
         relic_title: 'Boss relic', relic_sub: 'Passive for the rest of the expedition (max 3)',
@@ -1342,7 +1344,10 @@
     _lastMult: 1,
     multChip() {
       const el = $('#hud-mult'); if (!el) return;
-      const v = State.comboMult * Game.feverBoost() * (State.tempMult || 1) * Game.sprintMult();
+      // Incluye el multiplicador de bendiciones de Supervivencia (Survival.scoreMult):
+      // el chip debe mostrar EXACTAMENTE lo que multiplica cada jugada.
+      const v = State.comboMult * Game.feverBoost() * (State.tempMult || 1) * Game.sprintMult()
+        * (State.mode === 'supervivencia' ? Survival.scoreMult() : 1);
       const txt = '×' + (v % 1 === 0 ? v : +v.toFixed(1));
       const on = v > 1.001 && State.status === 'playing';
       if (el.textContent !== txt) {
@@ -2892,17 +2897,24 @@
       { id: 'frenzy', icon: '🔥', rarity: 'uncommon', weight: 35 },
       { id: 'magnet', icon: '🧲', rarity: 'rare', weight: 15 },
       { id: 'score_boost', icon: '📈', rarity: 'rare', weight: 15 },
-      { id: 'golden_wave', icon: '👑', rarity: 'epic', weight: 5 },
+      { id: 'golden_wave', icon: '👑', rarity: 'epic', weight: 4 },
     ],
+    SCORE_BOOST_CAP: 0.5,
     slowWaves: 0, _boonAt: 0, mut: { id: 'none' },
     scoreBoost: 0, magnetMoves: 0, goldenWaveWaves: 0,
     spawnFactor() { return this.slowWaves > 0 ? 1.25 : 1; },
     offerBoons() {
-      const pool = this.BOONS.filter((b) => b.id !== 'life' || this.lives < this.MAX_LIVES + 1);
+      // Se excluyen las bendiciones sin efecto posible (vida al tope, impulso al tope):
+      // ofrecer una elección muerta es peor que repetir el pool.
+      const pool = this.BOONS.filter((b) =>
+        (b.id !== 'life' || this.lives < this.MAX_LIVES + 1) &&
+        (b.id !== 'score_boost' || (this.scoreBoost || 0) < this.SCORE_BOOST_CAP));
       const opts = []; const bag = pool.slice();
       while (opts.length < 3 && bag.length) {
         let totalWeight = bag.reduce((sum, b) => sum + b.weight, 0);
-        let r = Math.random() * totalWeight;
+        // RNG seedeado, no Math.random: la premisa del simulador (mismo seed ⇒
+        // misma partida) cubre también qué bendiciones se ofrecen.
+        let r = RNG.random() * totalWeight;
         let selectedIdx = 0;
         for (let i = 0; i < bag.length; i++) {
           r -= bag[i].weight;
@@ -2926,12 +2938,17 @@
       else if (id === 'slow') this.slowWaves = 3;
       else if (id === 'frenzy') this.activateFrenzy();
       else if (id === 'magnet') this.magnetMoves = 5;
-      else if (id === 'score_boost') this.scoreBoost = Math.min(1.0, (this.scoreBoost || 0) + 0.25);
+      else if (id === 'score_boost') this.scoreBoost = Math.min(this.SCORE_BOOST_CAP, (this.scoreBoost || 0) + 0.25);
       else if (id === 'golden_wave') this.goldenWaveWaves = 2;
       Toasts.show(I18n.t('boon_' + id), 'good', 1800, '✨');
       Sound.record(); Haptics.milestone();
+      Render.multChip(); // impulso/oleada dorada entran en el multiplicador visible
       this.render();
     },
+    // Multiplicador propio del modo por bendiciones (impulso + oleada dorada).
+    // Centralizado: puntos, chip GM-16 y popup DEBEN compartirlo — si divergen,
+    // el multiplicador visible miente (regresión N1 del plan de Supervivencia).
+    scoreMult() { return (1 + (this.scoreBoost || 0)) * (this.goldenWaveWaves > 0 ? 2 : 1); },
     frenzyTier() { return clamp(Math.floor((this.wave - 1) / 4) + 1, 1, 3); },
     frenzyActive() { return performance.now() < this.frenzyUntil; },
     frenzyMult() { return this.frenzyActive() ? 1.55 + this.frenzyTier() * 0.1 : 1; },
@@ -2964,7 +2981,7 @@
     },
     _waveReward(clearedWave) {
       if (clearedWave <= 0) return;
-      if (this.goldenWaveWaves > 0) this.goldenWaveWaves--;
+      if (this.goldenWaveWaves > 0) { this.goldenWaveWaves--; if (!this.goldenWaveWaves) Render.multChip(); }
       let coins = Math.round((4 + clearedWave * 1.45) * this.tune().coinMult * (this.mut.coinMult || 1));
       if (clearedWave >= 15) coins += Math.round(Math.pow(clearedWave - 14, 1.5) * 2); // Kicker
       coins = Math.max(3, coins);
@@ -3280,7 +3297,7 @@
     },
     revive() {
       const cost = this.reviveCost();
-      if (!Meta.spend(cost)) { Toasts.show('Monedas insuficientes', 'warn', 1500); return; }
+      if (!Meta.spend(cost)) { Toasts.show(I18n.t('no_coins'), 'warn', 1500); return; }
       this.revives++;
       this.lives = 1; Sound.lifeBlast(); Haptics.life(); this._lock(900, 'life-blast'); this._relief(0.6);
       Modal.close(); State.status = 'playing'; Loop.start(); if (Settings.music) Music.start();
@@ -4661,32 +4678,36 @@
         State.spawnHoldUntil = performance.now() + 500;
         Render.fever(true); Render.feverBurst(); Sound.fever(); Haptics.fever();
         if (Settings.music) Music.setIntensity(1);
-        Toasts.show('¡FEVER!', 'warn', 1400, 'fire');
+        Toasts.show(I18n.t('fever_on'), 'warn', 1400, 'fire');
       }
 
       // Puntos (icono×10×nivel × combo × dificultad × modo × fever)
       const scoreBefore = State.score;
       if (State.mode === 'supervivencia' && Survival.magnetMoves > 0) {
-        let extra = -1;
+        // Imán (bendición): atrae la figura MÁS CERCANA al toque — legible y con
+        // rayo de conexión (entra en conv antes de FX.converge). Si no hay nada
+        // que atraer, el uso NO se consume.
+        let extra = -1, bestD = Infinity;
+        const r0 = i / 8 | 0, c0 = i % 8;
         for (let j = 0; j < State.board.length; j++) {
           if (State.board[j] !== null && !conv.includes(j) && (!State.tiles[j] || !State.tiles[j].solid)) {
-            extra = j;
-            break;
+            const dj = Math.abs((j / 8 | 0) - r0) + Math.abs(j % 8 - c0);
+            if (dj < bestD) { bestD = dj; extra = j; }
           }
         }
         if (extra !== -1) {
           conv.push(extra);
           FX.burst(extra, Icons.colorOf(State.board[extra]), 4);
+          Survival.magnetMoves--;
+          if (Survival.magnetMoves === 0) Toasts.show(I18n.t('magnet_done'), 'warn', 1500, '🧲');
         }
-        Survival.magnetMoves--;
-        if (Survival.magnetMoves === 0) Toasts.show('Imán agotado', 'warn', 1500, '🧲');
       }
       let removed = conv.length;
       State.removedTotal += removed;
       State.lastActionCell = i;
       const d = Config.DIFFICULTY[State.diff], m = Config.MODES[State.mode];
       const base = removed * 10 * State.level;
-      const survMult = (State.mode === 'supervivencia') ? (1 + (Survival.scoreBoost || 0)) * (Survival.goldenWaveWaves > 0 ? 3 : 1) : 1;
+      const survMult = (State.mode === 'supervivencia') ? Survival.scoreMult() : 1;
       const points = Math.floor(base * State.comboMult * d.scoreMult * m.mult * this.feverBoost() * (State.tempMult || 1) * this.sprintMult() * survMult);
       State.score += points;
       State.warmupConvs++; // el warm-up (GM-26) termina antes si el jugador ya fluye
@@ -4730,9 +4751,9 @@
       Render.clearAnim(conv, i);
       conv.forEach(idx => { Render.setTile(idx); Render.cells[idx].setAttribute('aria-label', Render.cellLabel(idx)); });
 
-      // Popup con el multiplicador TOTAL (combo × fiebre × temporal × sprint), no
-      // solo el de combo: lo que ves es lo que multiplicó de verdad (GM-16).
-      const totMult = State.comboMult * this.feverBoost() * (State.tempMult || 1) * this.sprintMult();
+      // Popup con el multiplicador TOTAL (combo × fiebre × temporal × sprint ×
+      // bendiciones), no solo el de combo: lo que ves es lo que multiplicó (GM-16).
+      const totMult = State.comboMult * this.feverBoost() * (State.tempMult || 1) * this.sprintMult() * survMult;
       Render.popup(i, totMult > 1.001 ? `+${points} ×${totMult % 1 === 0 ? totMult : totMult.toFixed(1)}` : `+${points}`, color);
       Render.bump($('#hud-score'));
       Render.combo();
@@ -4753,7 +4774,7 @@
       // eliminación, saliendo hacia fuera y cayendo al fondo de la pantalla.
       if (!State.recordHit && Storage.best > 0 && State.score > Storage.best) {
         State.recordHit = true; Render.flash(); Sound.record(); Haptics.record(); FX.celebrate(i);
-        Toasts.show('¡Nuevo récord!', 'good', 1600, 'trophy');
+        Toasts.show(I18n.t('new_record'), 'good', 1600, 'trophy');
       }
 
       Render.hudSoon();
@@ -5137,7 +5158,7 @@
       Render.flash();
       Sound.boardClear(); Haptics.level();
       if (!State.recordHit && Storage.best > 0 && State.score > Storage.best) {
-        State.recordHit = true; Sound.record(); Haptics.record(); Toasts.show('¡Nuevo récord!', 'good', 1600, 'trophy');
+        State.recordHit = true; Sound.record(); Haptics.record(); Toasts.show(I18n.t('new_record'), 'good', 1600, 'trophy');
       }
       this.saveBest();
       Render.hudSoon();
@@ -5387,7 +5408,7 @@
         rec.hidden = !this.newRecord && !this._survNew && !this._survWaveNew;
         if (this._survWaveNew) rec.innerHTML = iconInline('trophy') + ' ' + I18n.t('surv_wave_record').replace('{w}', Survival.wave);
         else if (this._survNew) rec.innerHTML = iconInline('shield') + ' ' + I18n.t('surv_time_record');
-        else if (this.newRecord) rec.innerHTML = iconInline('trophy') + ' ¡Nuevo récord!';
+        else if (this.newRecord) rec.innerHTML = iconInline('trophy') + ' ' + I18n.t('new_record');
       }
       // Near-miss (GM-01): "te quedaste a {n} figuras" — solo cuando aplica (derrota por
       // tablero lleno en Clásico/Aventura habiendo estado realmente cerca de vaciar).
