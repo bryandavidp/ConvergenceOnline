@@ -229,5 +229,24 @@ Commit: (ver historial "SV/FBK-0"). Verificado: 85 tests verdes, eslint limpio, 
 - Consolidar aún más los toasts de oleada (fundir monedas normales dentro del toast de "Oleada N") — diferido; hoy se serializan, que ya evita el solape.
 - Degradar monedas/récord del toast al HUD (count-up) — diferido a Fase 2/3.
 
-### ⏳ Fase 1 — Legibilidad de amenazas — EN CURSO
-(pendiente)
+### ✅ Fase 1 — Legibilidad de amenazas (v2.6.9) — COMPLETADA
+Verificado: 85 tests verdes, eslint limpio, prueba en navegador (`?dev`) sin errores de consola.
+
+**Entregado (FBK-04):**
+- **Terremoto (pieza estrella, arregla H1):** `Render.quakeSlide(srcOf)` — los iconos ahora **se DESLIZAN** de su casilla vieja a la nueva (FLIP, solo `transform` → compositor) en vez de teletransportarse. `Survival._shuffle(animate)` reescrito para mapear destino→origen y disparar el deslizamiento; `quake()` llama `_shuffle(true)`. Verificado en vivo: 57/58 iconos animando, keyframes con offsets reales (múltiplos del tamaño de celda ~73px, p. ej. `translate(293.9px,0)` = 4 celdas). En `reduced-fx` no anima (barajado instantáneo).
+- **Marcos diferenciados por evento:** antes marea/meteoro compartían `surv-rain` y el cierre compartía `surv-frost`. Ahora: marea → `surv-tide` (azul, vaivén de ola), meteoro → `surv-meteor-board` (rojo, flash desde arriba), cierre → `surv-lockdown` (acero, "clamp"). Verificado en vivo: cada handler aplica su clase propia.
+- **Movimiento de celda por evento:** marea rellena con `tide-fill` (los iconos "suben" desde abajo) en vez del pop genérico; cierre estampa candados con `lock-stamp` (impacto) en vez de `ice-hit`. Ambos con paridad `reduced-fx`.
+- Escarcha se mantiene (ya era 4.5/5, familia hielo `surv-frost` intacta).
+
+**Notas:**
+- El deslizamiento del terremoto son ≤64 animaciones WAAPI one-shot (solo transform); un `getBoundingClientRect` por celda (una pasada de layout). Coste acotado y raro (solo jefe terremoto). Respeta `reduced-fx`.
+- `Sound.rain()` sigue sin uso desde Fase 0 (conservado).
+
+**Pendiente de fases siguientes (heredado):**
+- **H5 (arranque):** tarjeta de objetivo + 3·2·1 + ventana de gracia + coach 1ª vez + leyenda HUD → **Fase 3**.
+- Verbos de tablero adicionales (meteoro "cae" con estela/cráter más marcado; eco fantasma; bossWarn en color del jefe) → refinamiento opcional.
+- Degradar monedas/récord del toast al HUD (count-up) → Fase 2.
+- Beat de "ventaja concedida" con vuelo al centro (hoy: marco dorado + campana + toast, suficiente para H4) → refinamiento Fase 2.
+
+### ⏳ Fase 2 — Legibilidad de recompensas — SIGUIENTE
+(pendiente: FBK-09 ventaja "vuela al centro", FBK-10 pérdida de vida como daño, FBK-11 coherencia cromática beneficio≠amenaza)

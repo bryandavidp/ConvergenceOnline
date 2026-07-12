@@ -1,6 +1,6 @@
 /* Convergencia — Service Worker (offline-first).
  * Sube CACHE al publicar una versión nueva para invalidar la caché anterior. */
-const CACHE = 'cv-cache-v2.6.8';
+const CACHE = 'cv-cache-v2.6.9';
 const ASSETS = [
   './', './index.html', './styles.css', './game.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',

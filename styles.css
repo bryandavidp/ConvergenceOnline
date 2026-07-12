@@ -1290,6 +1290,25 @@ body.reduced-fx .cell.tide-warn { animation: none; background: rgba(122,215,255,
 .board-wrap.surv-quake { animation: surv-quake 1.12s cubic-bezier(.18,.8,.22,1); border-color: rgba(255,178,77,.85); }
 .board-wrap.surv-quake-settle { animation: surv-settle .42s ease-out; }
 .board-wrap.surv-rain { animation: surv-rain .9s ease; border-color: rgba(255,93,115,.78); }
+/* Marcos DIFERENCIADOS por evento (FBK-04): antes marea y meteoro compartían
+   `surv-rain`, y el cierre compartía el marco de la escarcha. Ahora cada amenaza
+   tiñe el marco con su color de valencia y su propio gesto (H1). */
+.board-wrap.surv-tide { animation: surv-tide 1s ease; border-color: rgba(120,200,255,.85); }
+@keyframes surv-tide {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); box-shadow: 0 18px 44px rgba(0,0,0,.55), inset 0 0 0 2px rgba(120,200,255,.6), 0 0 30px rgba(90,170,255,.34); }
+  50% { transform: translateX(4px); }
+  80% { transform: translateX(-2px); }
+}
+.board-wrap.surv-meteor-board { animation: surv-meteor-board .9s ease-out; border-color: rgba(255,120,80,.85); }
+@keyframes surv-meteor-board { 22% { transform: translateY(2px) scale(1.006); box-shadow: 0 18px 44px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,120,80,.62), 0 0 30px rgba(255,90,60,.34); } }
+.board-wrap.surv-lockdown { animation: surv-lockdown .8s cubic-bezier(.2,.8,.2,1); border-color: rgba(190,200,215,.9); }
+@keyframes surv-lockdown { 30% { transform: scale(.988); box-shadow: 0 18px 44px rgba(0,0,0,.55), inset 0 0 0 2px rgba(190,200,215,.7), 0 0 26px rgba(150,165,190,.3); } 60% { transform: scale(1.004); } }
+/* Celdas: la marea "sube" al llenar; el candado se "estampa". */
+.cell.tide-fill .glyph { animation: tide-fill-rise .56s cubic-bezier(.2,.85,.3,1); }
+@keyframes tide-fill-rise { 0% { transform: translateY(16px) scale(.6); opacity: .2; } 60% { transform: translateY(-2px) scale(1.06); opacity: 1; } }
+.cell.lock-stamp { animation: lock-stamp .5s cubic-bezier(.2,.9,.25,1.3); }
+@keyframes lock-stamp { 0% { transform: scale(1.5); } 55% { transform: scale(.9); } 100% { transform: scale(1); } }
 .board-wrap.surv-wave-up { animation: surv-wave-up .9s ease-out; border-color: rgba(255,216,77,.82); }
 .board-wrap.surv-wave-soon { animation: surv-wave-soon .56s ease-out; border-color: rgba(255,178,77,.76); }
 @keyframes surv-wave-soon { 45% { transform: translateY(-1px) scale(1.008); filter: saturate(1.14); } }
@@ -2772,6 +2791,11 @@ body.reduced-fx .board-wrap.surv-penalty,
 body.reduced-fx .board-wrap.surv-quake,
 body.reduced-fx .board-wrap.surv-quake-settle,
 body.reduced-fx .board-wrap.surv-rain,
+body.reduced-fx .board-wrap.surv-tide,
+body.reduced-fx .board-wrap.surv-meteor-board,
+body.reduced-fx .board-wrap.surv-lockdown,
+body.reduced-fx .cell.tide-fill .glyph,
+body.reduced-fx .cell.lock-stamp,
 body.reduced-fx .board-wrap.surv-wave-up,
 body.reduced-fx .board-wrap.surv-frost,
 body.reduced-fx .board-wrap.life-blast,
