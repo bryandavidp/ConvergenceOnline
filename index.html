@@ -209,13 +209,13 @@
           <div class="obj-banner" id="obj-banner" hidden></div>
           <!-- Barra de Supervivencia: vidas + oleada + tiempo sobrevivido -->
           <div class="surv-bar" id="surv-bar" hidden>
-            <span class="surv-lives" id="surv-lives">❤️❤️❤️</span>
+            <span class="surv-lives" id="surv-lives" data-explain="hud_lives_explain">❤️❤️❤️</span>
             <div class="surv-wave-wrap">
-              <span class="surv-wave-row"><span class="surv-wave" id="surv-wave">Oleada 1</span><span class="surv-tier" id="surv-tier" aria-label="Tier de dificultad">N1</span><span class="surv-boss-flag" id="surv-boss-flag" data-i18n="surv_boss_soon" hidden>⚠ Jefe</span></span>
-              <span class="surv-waveprog" aria-hidden="true"><span class="surv-waveprog-fill" id="surv-waveprog-fill"></span></span>
+              <span class="surv-wave-row"><span class="surv-wave" id="surv-wave" data-explain="hud_wave_explain">Oleada 1</span><span class="surv-tier" id="surv-tier" aria-label="Tier de dificultad" data-explain="hud_tier_explain">N1</span><span class="surv-boss-flag" id="surv-boss-flag" data-i18n="surv_boss_soon" hidden>⚠ Jefe</span></span>
+              <span class="surv-waveprog" aria-hidden="true" data-explain="hud_waveprog_explain"><span class="surv-waveprog-fill" id="surv-waveprog-fill"></span></span>
               <span class="surv-best-wave" id="surv-best-wave"></span>
             </div>
-            <span class="surv-time" id="surv-time">0s</span>
+            <span class="surv-time" id="surv-time" data-explain="hud_time_explain">0s</span>
           </div>
 
           <!-- Fila de build (SV-10/11): chips de solo lectura con las bendiciones
@@ -223,9 +223,15 @@
           <div class="surv-build" id="surv-build" aria-label="Bendiciones activas" hidden></div>
 
           <!-- Ocupación: franja fina pegada al tablero (estados warn/danger) -->
-          <div class="occ" aria-hidden="true">
-            <span class="sr-only" id="hud-progress-label" data-i18n="hud_occ">Ocupación</span>
-            <div class="bar-fill" id="hud-progress-fill"></div>
+          <div class="occ" data-explain="hud_danger_explain">
+            <span class="occ-label" id="occ-label">
+              <span class="icv2" id="occ-icon" style="--icv2-url:url('img/icons-v2/8-ui/grid.svg')" aria-hidden="true"></span>
+              <span class="occ-text" id="occ-text" data-i18n="hud_board_fill">Tablero</span>
+            </span>
+            <div class="occ-bar-wrap" aria-hidden="true">
+              <span class="sr-only" id="hud-progress-label" data-i18n="hud_occ">Ocupación</span>
+              <div class="bar-fill" id="hud-progress-fill"></div>
+            </div>
           </div>
         </div>
         <!-- Velocidad: conservada para Render.hud pero oculta (HUD minimalista) -->

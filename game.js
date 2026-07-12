@@ -341,6 +341,13 @@
         home_classic: 'Partida clásica', home_classic_sub: 'Supera niveles y gana estrellas', home_surv_sub: 'Sobrevive a oleadas infinitas',
         q_missions: 'Misiones', q_daily: 'Diario', q_chests: 'Cofres', q_league: 'Liga', q_friends: 'Amigos', best_score: 'Mejor puntuación', play_word: 'Jugar',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
+        hud_danger: 'Peligro', hud_board_fill: 'Tablero',
+        hud_lives_explain: 'Tus vidas. Si llegas a 0, se acaba.',
+        hud_wave_explain: 'Ronda actual. Cada oleada es más dura.',
+        hud_tier_explain: 'Dificultad: sube cada varias oleadas',
+        hud_time_explain: 'Tiempo sobrevivido',
+        hud_waveprog_explain: 'Cuenta atrás para la siguiente oleada',
+        hud_danger_explain: 'Si esta barra se llena, pierdes una vida',
         how_title: '¿Cómo se juega?', how1: 'Toca una <strong>casilla vacía</strong>.', how2: 'Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).',
         how3: 'Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!', how4: 'Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.',
         how5: 'Los iconos aparecen solos: vacía el tablero antes de que se llene.',
@@ -523,6 +530,13 @@
         home_classic: 'Classic game', home_classic_sub: 'Beat levels and earn stars', home_surv_sub: 'Survive endless waves',
         q_missions: 'Missions', q_daily: 'Daily', q_chests: 'Chests', q_league: 'League', q_friends: 'Friends', best_score: 'Best score', play_word: 'Play',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
+        hud_danger: 'Danger', hud_board_fill: 'Board',
+        hud_lives_explain: 'Your lives. Reach 0 and it is game over.',
+        hud_wave_explain: 'Current round. Each wave gets harder.',
+        hud_tier_explain: 'Difficulty: goes up every few waves',
+        hud_time_explain: 'Time survived',
+        hud_waveprog_explain: 'Countdown to the next wave',
+        hud_danger_explain: 'If this bar fills up, you lose a life',
         how_title: 'How to play?', how1: 'Tap an <strong>empty cell</strong>.', how2: 'It looks at the nearest icon in each direction (up, down, left, right).',
         how3: 'If <strong>2 or more match</strong>, they converge and vanish!', how4: 'Chain quick clears to raise the <strong>combo</strong> and multiply points.',
         how5: 'Icons spawn on their own: clear the board before it fills up.',
@@ -1450,6 +1464,24 @@
       const dl = occ >= 85 ? 2 : occ >= 65 ? 1 : 0;
       fill.classList.toggle('warn', dl === 1);
       fill.classList.toggle('danger', dl === 2);
+      
+      const occLabel = $('#occ-label');
+      if (occLabel) {
+        occLabel.classList.toggle('warn', dl === 1);
+        occLabel.classList.toggle('danger', dl === 2);
+        const occText = $('#occ-text');
+        const occIcon = $('#occ-icon');
+        if (dl > 0) {
+          occText.textContent = I18n.t('hud_danger');
+          occText.setAttribute('data-i18n', 'hud_danger');
+          occIcon.style.setProperty('--icv2-url', "url('img/icons-v2/8-ui/warning.svg')");
+        } else {
+          occText.textContent = I18n.t('hud_board_fill');
+          occText.setAttribute('data-i18n', 'hud_board_fill');
+          occIcon.style.setProperty('--icv2-url', "url('img/icons-v2/8-ui/grid.svg')");
+        }
+      }
+
       this.danger(dl);
       if (dl === 2 && State.status === 'playing') {
         const t = performance.now();
@@ -3147,11 +3179,18 @@
       // sigue siendo re-consultable en el chip 📅.
       // Chip del mutador re-consultable (SV-11): tocar 📅 repite el aviso — el tema
       // de la semana deja de vivir solo en un toast de 2.4s al empezar.
-      const bd = $('#surv-build');
-      if (bd && !this._buildBound) {
+      const gtop = document.querySelector('.gtop-context');
+      if (gtop && !this._buildBound) {
         this._buildBound = true;
-        bd.addEventListener('click', (e) => {
-          if (e.target.closest('.sb-mut') && this.mut.id !== 'none') Toasts.show(I18n.t('survmut_' + this.mut.id), 'info', 2400, '📅');
+        gtop.addEventListener('click', (e) => {
+          if (e.target.closest('.sb-mut') && this.mut.id !== 'none') {
+            Toasts.show(I18n.t('survmut_' + this.mut.id), 'info', 2400, '📅');
+          }
+          const expEl = e.target.closest('[data-explain]');
+          if (expEl) {
+            const key = expEl.getAttribute('data-explain');
+            Toasts.show(I18n.t(key), 'info', 2400, '💡');
+          }
         });
       }
       this._planBoss();
