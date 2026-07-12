@@ -1,0 +1,233 @@
+# Plan de claridad de feedback — Convergence
+
+> Objetivo: que **cualquier persona en "modo sencillo"** entienda, sin leer, **qué acaba de pasar** en la partida (sobre todo en Supervivencia). Hoy el jugador mira el tablero y el feedback importante vive fuera de su foco (toasts fugaces encima, premios en la barra inferior) o es ambiguo (terremoto = "los iconos se movieron").
+>
+> Dirección aprobada por el propietario (2026-07-12): responsive **móvil-primero** (el móvil marca las restricciones), sistema **por capas** = **marco del tablero reactivo por evento** + **toasts rediseñados (secundarios)** + **sonido/vibración distintivos por evento**; **visual primero, texto mínimo**; arranque con **tarjeta de objetivo + cuenta 3·2·1**. **Sin banner central** (el "momento" se diseña dentro del propio tablero, que es donde están los ojos).
+>
+> Relación con otros planes: complementa `GAME_MODES_MASTER_PLAN.md` (identidad/pacing de modos) y `PLAYER_FEEDBACK_PLAN.md` (FB-*, ya cerrado). Prefijo de tareas nuevo: **FBK-**.
+
+---
+
+## 1. Metodología y hallazgos
+
+Análisis en dos frentes: (a) lectura del código de feedback (`Toasts`, `Render.boardEvent/cellPulse/impact`, `Survival.*`, `Sound`, `Haptics`, CSS de `.toast` y `.board-wrap`), y (b) **prueba en vivo con un agente Haiku jugando como usuario primerizo**, disparando cada evento vía `window.__cv.Survival.*` (`?dev`) y puntuando la claridad 1–5 sin leer texto.
+
+### Hallazgos confirmados (ordenados por impacto)
+
+| # | Hallazgo | Evidencia |
+|---|---|---|
+| H1 | **Terremoto, marea y meteoro son indistinguibles** ("los iconos se movieron / el tablero se llenó"). El terremoto **teletransporta** (no desliza) → se lee como barajado aleatorio. | Claridad 2 / 2.5 / 2 sobre 5. Los tres = "icon rearrangement, no distinctive animation". |
+| H2 | **Los toasts se pierden**: tan fugaces (1.6–1.8 s) y **encima del tablero** que un tester buscándolos reportó "sin toast" en 5 eventos que sí lo lanzan. | Columna "Toast readable? = No" en marea/meteoro/terremoto/escarcha/cierre. |
+| H3 | **Apilamiento de toasts en el cambio de oleada** (Oleada N + monedas + récord + iconos nuevos a la vez). | "Multiple toasts collide and become unreadable". |
+| H4 | **La ventaja concedida es casi invisible** (booster aleatorio): sucede en la barra inferior, no en el tablero. | Claridad 1/5. "Zero visual indication; only timer change". |
+| H5 | **Arranque sin objetivo**: no se comunica que se sobrevive, que se pierde por desbordamiento, ni el rol del temporizador. | Claridad de objetivo 2.5/5. |
+| H6 | **Sonidos colisionan**: marea≈meteoro (`rain`), escarcha≈cierre (`booster('freeze')`), aviso-oleada≈aviso-jefe≈subida-oleada (`danger`). | `Sound.rain` (game.js ~783), `Sound.booster` (~786), `Sound.danger` (~773). |
+| H7 | **Lo que SÍ funciona** (≥4.5/5): escarcha, cierre, pérdida de vida, modales de jefe/bendición. | Todos dejan **estado persistente y coloreado en el tablero** o abren un **modal ineludible**. |
+
+**Lección rectora (de H7):** el feedback que **vive en el tablero y persiste** se entiende; el **texto fugaz encima** no. Todo el plan mueve la carga comunicativa *al tablero* y deja el texto como confirmación secundaria.
+
+---
+
+## 2. Principios de diseño
+
+1. **El evento se cuenta con su "verbo de movimiento" en el propio tablero.** Terremoto = deslizar/tumbar; marea = subir agua; meteoro = caer desde arriba; escarcha = congelar extendiéndose; cierre = candados que se estampan. Donde están los ojos, ahí ocurre la explicación.
+2. **Código de valencia (semáforo).** Antes que "qué evento", el usuario debe captar **"¿bueno o malo?"** por color:
+   - 🔴/🟠 **AMENAZA** (rojo/ámbar) · 🔵 **AMENAZA FRÍA** (azul hielo) · 🟡🟢 **BENEFICIO** (oro/verde) · ⚪ **INFO** (neutro).
+   - El marco del tablero adopta esta valencia siempre. Un usuario que no lee sabe al instante si celebrar o reaccionar.
+3. **Nunca solo color.** Cada evento se distingue por **color + forma de movimiento + glifo + sonido + vibración** (redundancia → daltónicos, con sonido apagado, en movimiento). Ninguna señal viaja sola.
+4. **Un evento importante a la vez.** Cola/serializador: dos beats grandes no se pisan (mín. ~700–900 ms entre ellos); un solo toast de evento visible a la vez.
+5. **Texto = confirmación, no explicación.** 1–2 palabras + glifo grande. El chatter (monedas, récord) baja al HUD, no ocupa un toast.
+6. **Paridad `reduced-fx` / `prefers-reduced-motion`.** Toda animación tiene alternativa estática (tinte + glifo) que conserva la valencia y el color; nunca se pierde la información al desactivar efectos.
+7. **Bilingüe.** Todo string nuevo va a `I18n.DICT` ES/EN; nada hardcodeado.
+
+---
+
+## 3. Arquitectura de la solución (sistemas transversales)
+
+Refactor keystone: **un único despachador de feedback + un registro declarativo de firmas de evento.** Hoy cada evento llama a mano a `Toasts.show` + `Sound.*` + `Haptics.*` + `Render.boardEvent`, con colisiones y omisiones. Se centraliza para **garantizar** que cada evento es distinto en las 5 dimensiones.
+
+### A) Registro de firmas de evento (`FBK-01`)
+Tabla declarativa, fuente única de verdad:
+
+```js
+// Ejemplo de forma (no final)
+const EVENT_SIG = {
+  quake:    { valence:'threat', hue:'amber', frame:'shake',  motion:'slide',  glyph:'teleporter',   snd:'quake',    hap:'quake',   toast:'surv_quake' },
+  tide:     { valence:'threat', hue:'water', frame:'wobble', motion:'flood',  glyph:'🌊',          snd:'tide',     hap:'roll',    toast:'surv_tide' },
+  meteor:   { valence:'threat', hue:'ember', frame:'flashTop',motion:'drop',  glyph:'v2:meteor',   snd:'meteor',   hap:'impacts', toast:'surv_meteor' },
+  frost:    { valence:'cold',   hue:'ice',   frame:'frost',  motion:'creep',  glyph:'v2:snowflake',snd:'frost',    hap:'ice',     toast:'surv_frost' },
+  lockdown: { valence:'threat', hue:'steel', frame:'stamp',  motion:'slam',   glyph:'🔒',          snd:'lockdown', hap:'clank',   toast:'surv_lockdown' },
+  echo:     { valence:'threat', hue:'violet',frame:'echo',   motion:'ghost',  glyph:'🔁',          snd:'echo',     hap:'quake',   toast:'surv_eco' },
+  grant:    { valence:'boon',   hue:'gold',  frame:'sparkle',motion:'flyIn',  glyph:'✨',          snd:'grant',    hap:'reward',  toast:'surv_grant' },
+  lifeLost: { valence:'threat', hue:'red',   frame:'crack',  motion:'overfill',glyph:'heart',      snd:'lifeBlast',hap:'life',    toast:'surv_life_lost' },
+  waveUp:   { valence:'neutral',hue:'amberSoft',frame:'sweep',motion:null,    glyph:'fire',        snd:'waveUp',   hap:'combo',   toast:'st_wave' },
+};
+```
+
+Un único punto de entrada `Feedback.event(id, opts)` lee la firma y orquesta marco + movimiento + sonido + háptico + toast, respetando cola y `reduced-fx`. Los handlers de `Survival` dejan de cablear feedback a mano y solo llaman a su verbo de tablero + `Feedback.event('quake')`.
+
+### B) Código de valencia en el marco (`FBK-02`)
+`.board-wrap` gana un borde reactivo más grueso y visible en periferia, cuyo color = valencia de la firma. Tokens CSS nuevos: `--fbk-threat`, `--fbk-cold`, `--fbk-boon`, `--fbk-info`. El marco es el **canal periférico** que se capta con el rabillo del ojo aunque el foco esté en el centro.
+
+### C) Cola de toasts + rediseño (`FBK-03`)
+- **Cola serial**: nunca 2 toasts de evento a la vez; tiempo mínimo en pantalla garantizado (~2.2–2.6 s), y el más nuevo espera su turno en vez de apilarse/expulsar (`while children>3 remove` se sustituye por cola).
+- **Rediseño**: chip de icono más grande, **1 línea corta**, barra fina de tiempo restante (el usuario ve cuánto le queda para leer), acercado al borde del tablero.
+- **Degradar el chatter**: monedas y récord dejan de ser toasts; se animan en los **chips del HUD** (contador de monedas hace count-up, chip de oleada parpadea). Solo el **evento** ocupa toast.
+
+### D) Verbos de movimiento en tablero (`FBK-04` … el mayor arreglo)
+Cada amenaza anima su "verbo" (detalle en §4). Clave técnica del terremoto: **FLIP** (First-Last-Invert-Play) — capturar posición vieja de cada icono, aplicar el barajado, y animar `transform` de vieja→nueva para que **se deslicen** en lugar de teletransportarse. Es lo que convierte "barajado random" en "temblor que sacudió todo".
+
+### E) Audio + háptico únicos por evento (`FBK-05`)
+Se rompen las colisiones (H6). Cada familia recibe un motivo de 2–3 notas y un patrón de vibración propio:
+
+| Evento | Sonido nuevo (idea) | Vibración |
+|---|---|---|
+| Terremoto | rumor grave sostenido `sawtooth` desc. + subgrave | larga irregular (ya existe `quake`) |
+| Marea | "whoosh" ascendente + gorgoteo | rodante creciente |
+| Meteoro | silbido de caída + 2–3 impactos secos | staccato de impactos |
+| Escarcha | cristalino ascendente (mantener `freeze`) | `ice` |
+| Cierre | "clank" metálico + cerrojo | golpe seco doble |
+| Eco | shimmer invertido / con delay | eco de `quake` |
+| Ventaja | campana ascendente alegre | patrón de recompensa |
+
+### F) Serializador de beats / pacing (`FBK-06`)
+Formaliza lo que hoy se hace con `setTimeout` sueltos (p. ej. "iconos nuevos" +1.2 s, `_bossSurvivedAt` +1.2 s, `_boonAt` +1.7 s): un mini-scheduler que garantiza separación mínima entre beats grandes y un **micro-suspense antes del jefe** (breve oscurecido/latido del marco en el color del jefe → golpe).
+
+### G) Experiencia de arranque (`FBK-07`)
+Tarjeta de objetivo pre-partida + cuenta atrás + ventana de gracia (ver §5).
+
+### H) Accesibilidad (`FBK-08`)
+`reduced-fx` y `prefers-reduced-motion`: fallback estático por evento (tinte de marco + glifo persistente + toast), conservando valencia/color. Daltonismo: color siempre acompañado de glifo+movimiento distintos. Mantener/mejorar `announce()` para lector de pantalla con el nombre del evento.
+
+---
+
+## 4. Rediseño evento por evento
+
+Leyenda: **Verbo** = cómo se mueve el tablero · **Marco** = reacción del borde · **Persistencia** = qué queda visible tras el golpe.
+
+| Evento | Problema hoy | Verbo de movimiento (nuevo) | Marco / color | Persistencia | Sonido·Háptico |
+|---|---|---|---|---|---|
+| **Terremoto** (`quake` ~3432) | Teletransporta → "barajado random" (H1) | **Deslizar/tumbar** los iconos a su nueva celda con FLIP; onda de choque que barre filas; polvo + grietas parpadeando en la rejilla | Ámbar, sacudida lateral **más fuerte y larga** (ya existe `surv-quake`, intensificar) | Breve poso de polvo | rumor grave · vibración larga |
+| **Marea** (`tideSurge` ~3402) | Parece spawn normal (H1) | **Subir agua** desde el borde: línea de agua que asciende por el anillo exterior con ondulación; celdas se llenan con "chapoteo" de fuera hacia dentro | Cian-azul, wobble de ola | Anillo con tinte húmedo 1–2 s | whoosh ascendente · rodante |
+| **Meteoro** (`meteorRain` ~3424) | "Mala suerte", no evento (H1) | **Caer desde arriba**: los iconos entran desde encima del borde con estela y "cráter"/destello rojo al impactar | Rojo-naranja, flash desde arriba | Destello de impacto por celda | silbido+impactos · staccato |
+| **Escarcha** (`frostSurge` ~3442) | Ya 4.5/5 (H7) | **Congelar extendiéndose**: barrido de escarcha; refinar el `iceHit` existente | Azul hielo, escarcha en bordes | Celdas heladas (persistente ✔) | cristalino · `ice` |
+| **Cierre** (`lockdown` ~3457) | Ya 4.5/5 pero suena igual que escarcha (H6) | **Estampar candados**: los candados "caen y se sellan" con golpe | Acero/rojo, "stamp" | Candados (persistente ✔) | **clank metálico** (distinto de escarcha) · golpe seco |
+| **Eco** (`echoBoss` ~3473) | "Ha vuelto a por ti" poco legible | **Fantasma/rebobinado**: pre-destello fantasma del jefe anterior, luego repite su animación | Violeta, doble latido | — | shimmer invertido |
+| **Subida de oleada** (`newWave` ~3316) | Apilamiento de toasts (H3) | Sin verbo de tablero; **tick** del chip de oleada del HUD (pulsa e incrementa) + barrido de luz en el borde superior | Ámbar suave, "sweep" | Chip de oleada actualizado | motivo de progreso propio (no `danger`) · `combo` |
+| **Aviso de jefe** (`_r.bossWarned` ~3294) | Bueno (anticipación); suena como aviso de oleada (H6) | Micro-suspense: marco late en **el color del jefe** con su glifo telegrafiado en los bordes | Color del jefe entrante | — | tensión ascendente única por familia |
+| **Ventaja concedida** (`grantRandom`/`_grant` ~3200) | Invisible (H4) | **Vuela hacia dentro**: el icono del booster sale de la barra con estela hacia el centro + chispa dorada; el chip del booster hace "pop/glow" fuerte | **Oro**, destello sparkle | Chip con +1 resaltado | campana ascendente · recompensa |
+| **Bendición** (`offerBoons`/`applyBoon` ~3085) | Modal ya 5/5 (H7) | Mantener modal; al aplicar, animar el efecto sobre el tablero (imán, oleada dorada…) | Oro | Efecto visible en HUD/mult | `record` |
+| **Pérdida de vida** (`onOverflow` ~3520) | 4.5/5, pero poco claro el "por qué" | **Sobre-relleno**: destello rojo en la(s) celda(s) donde el tablero se llenó; el corazón perdido "vuela"; grieta en el marco | Rojo, "crack" | Corazón menos en HUD | `lifeBlast` · `life` |
+| **Furia/Frenesí** (`activateFrenzy` ~3158) | Debe leerse como **BUENO** | Ya tiene fever/confeti; asegurar color **oro/fuego** (beneficio), nunca rojo de amenaza | Oro/fuego | Clase `surv-frenzy-*` | ascendente positivo |
+
+> Nota de coherencia cromática: **amenazas** = rojo/ámbar/azul-hielo; **beneficios** = oro/verde. Frenesí y ventaja NO pueden compartir el rojo de las amenazas: es la señal más importante para el "modo sencillo".
+
+---
+
+## 5. Arranque de partida (`FBK-07`)
+
+Secuencia nueva al entrar a Supervivencia (reemplaza la avalancha actual — hoy `Survival.start` ~2982 lanza el toast del mutador semanal y el flujo suelta récord/oleada encima):
+
+1. **Tarjeta de objetivo** (breve, visual, ineludible pero rápida de cerrar), con 3 iconos y una frase por icono:
+   - 🎯 *Sobrevive el mayor número de oleadas.*
+   - 🔗 *Junta iconos iguales tocando la casilla vacía entre ellos.*
+   - ❤️ *Si el tablero se llena, pierdes una vida.*
+2. **Cuenta atrás 3·2·1** sobre el tablero ya visible (el jugador ubica vidas/oleada/temporizador antes de empezar).
+3. **Ventana de gracia** (~3–5 s): sin eventos/penalizaciones ni toasts de evento; solo jugar. El aviso del mutador semanal se integra en el chip 📅 (ya re-consultable, SV-11), no como toast de apertura.
+4. **Tutorial contextual solo la 1ª vez** (una vez, persistido): coach-marks señalando vidas, oleada, temporizador y el primer evento cuando ocurra. Reutiliza el sistema `Coach` existente.
+5. **Mini-leyenda persistente en HUD**: que "oleada", "vidas" y el temporizador sean auto-explicativos (etiqueta/icono), para que el objetivo no dependa de un toast que se desvanece.
+
+---
+
+## 6. Plan por fases
+
+> Cada fase es entregable y verificable de forma aislada. Ninguna toca balance (no requiere `balance-sim`), pero **sí** requiere bump de versión (`VERSION`/`CACHE`/`?v=`) al tocar `game.js`/`styles.css` (ver CLAUDE.md; en Windows el triple bump es manual).
+
+### Fase 0 — Fundación (refactor invisible)
+- **FBK-01** Registro `EVENT_SIG` + despachador `Feedback.event()`.
+- **FBK-02** Tokens de valencia + marco reactivo base en `.board-wrap`.
+- **FBK-03** Cola de toasts + rediseño del toast; degradar chatter al HUD.
+- **FBK-05** Separar sonidos/hápticos colisionados (romper `rain`/`freeze`/`danger` compartidos).
+- *Salida visible*: se acaban los toasts apilados (H3) y los sonidos duplicados (H6).
+
+### Fase 1 — Legibilidad de amenazas (arregla el H1, la queja principal)
+- **FBK-04a** Terremoto con FLIP (deslizar) + onda + polvo.
+- **FBK-04b** Marea "sube agua"; **FBK-04c** Meteoro "cae"; **FBK-04d** pulir escarcha/cierre y diferenciar cierre (clank + stamp).
+- **FBK-04e** Eco (fantasma) y aviso de jefe con color propio + micro-suspense (`FBK-06`).
+
+### Fase 2 — Legibilidad de recompensas
+- **FBK-09** Beat de "ventaja concedida" (vuela + oro + campana) — mata el H4.
+- **FBK-10** Pérdida de vida como "daño" claro (sobre-relleno + grieta).
+- **FBK-11** Coherencia cromática de frenesí/bendición (beneficio ≠ amenaza).
+
+### Fase 3 — Onboarding
+- **FBK-07** Tarjeta de objetivo + 3·2·1 + gracia + leyenda HUD + coach 1ª vez.
+
+### Fase 4 — Pulido y accesibilidad
+- **FBK-08** Paridad `reduced-fx`/`prefers-reduced-motion`, daltonismo, `announce()` con nombre de evento.
+- **FBK-12** QA final: re-correr el protocolo de prueba del usuario primerizo.
+
+---
+
+## 7. Criterios de aceptación
+
+Re-ejecutar el **protocolo de la prueba** (agente jugando de primerizo, disparando cada evento por `window.__cv.Survival.*`):
+
+1. **Distinción**: terremoto, marea y meteoro se identifican como **eventos distintos** solo por lo visual (hoy los tres = "icons moved").
+2. **Claridad ≥ 4/5** para todos los eventos de §4 (hoy terremoto/marea/meteoro = 2, ventaja = 1).
+3. **≤ 1 toast de evento** visible a la vez; ninguno se pierde por fugacidad (barra de tiempo visible).
+4. **Valencia** legible sin leer: en ≤0.5 s el usuario dice "bueno" vs "malo" por el color del marco.
+5. **Arranque**: un primerizo enuncia el objetivo (sobrevivir), la condición de derrota (desbordamiento) y el rol del temporizador tras la tarjeta.
+6. **Audio**: cada evento tiene sonido único (sin colisiones `rain`/`freeze`/`danger`).
+7. **`reduced-fx`**: cada evento sigue siendo identificable (tinte + glifo + toast) sin animación.
+8. **Móvil**: verificado en viewport estrecho (portrait), con el marco captable en periferia con el dedo sobre el tablero.
+
+---
+
+## 8. Notas de implementación
+
+**Anclas de código** (líneas aprox., archivo crecido a ~6750 líneas):
+- Toasts: `Toasts.show` ~1508; CSS `.toasts`/`.toast` ~1393–1432.
+- Render FX: `boardEvent`/`cellPulse`/`impact`/`meteor`/`iceHit` ~1255–1296; CSS `.board-wrap.*` y `@keyframes surv-*` ~1281–1353; fallbacks `reduced-fx` ~2748–2771.
+- Survival: `start` ~2982, `BOSS_DEFS` ~3030, `BOONS`/`offerBoons`/`applyBoon` ~3071–3132, `newWave` ~3316, `bossEvent` ~3361, `_runBoss` ~3393, `tideSurge`/`meteorRain`/`quake`/`frostSurge`/`lockdown`/`echoBoss`/`_shuffle` ~3402–3483, `onOverflow` ~3520, grant/booster ~3200–3211, avisos de oleada/jefe ~3286–3304.
+- Sound (colisiones a romper): `danger` ~773, `quake` ~782, `rain` ~783, `lifeBlast` ~784, `booster` ~785. Haptics ~700–712.
+- Dev hook `window.__cv` (para probar): ~6749.
+
+**Restricciones del repo** (CLAUDE.md):
+- 100% vanilla; animaciones vía WAAPI/CSS que corran en el compositor (transform/opacity) — el gobernador de `FX.cap` y el patrón "sin canvas" existen por un fallo de compositing de WebKit; no introducir canvas ni bucles de RAF nuevos.
+- Todo string nuevo → `I18n.DICT` ES/EN con clave; usar `data-i18n`/`I18n.t()`. Texto de evento: 1–2 palabras.
+- Persistencia retrocompatible (`cv_meta`): el flag "tutorial de Supervivencia ya visto" se rellena por defecto al cargar.
+- Al tocar `game.js`/`styles.css`: subir `VERSION`, `CACHE` (sw.js) y los `?v=` de `index.html` (triple bump manual en Windows).
+
+**Riesgos / mitigaciones:**
+- *Rendimiento en móvil* (FLIP del terremoto = 64 animaciones): reutilizar el pool WAAPI existente, solo transform/opacity, respetar `FX.cap`; en `reduced-fx` no animar (barajado instantáneo + tinte).
+- *Regresión de balance*: este plan no cambia reglas ni números; si algún ajuste rozara timings de spawn/oleada, pasar por `balance-sim` y comparar con `BALANCE_BASELINE.md`.
+
+---
+
+## 9. Bitácora de implementación
+
+> Registro vivo del estado para sobrevivir a pérdidas de contexto. Actualizar al cerrar cada fase.
+
+### ✅ Fase 0 — Fundación (v2.6.8) — COMPLETADA
+Commit: (ver historial "SV/FBK-0"). Verificado: 85 tests verdes, eslint limpio, prueba en navegador (`?dev`) sin errores de consola.
+
+**Entregado:**
+- **FBK-01** Módulo `Feedback` (game.js, tras `Toasts`, ~línea 1560) con registro `SIG` de 11 eventos (`quake, tide, meteor, frost, lockdown, echo, lifeLost, grant, waveUp, waveSoon, bossWarn`) y despachador `Feedback.event(id, opts)` que orquesta toast+sonido+háptico+marco. Expuesto en `window.__cv.Feedback`.
+- **FBK-03** `Toasts` con **cola serial de eventos** (`Toasts.event()` + `_evQ`/`_pumpEv`/`_trim`): nunca se solapan dos toasts de evento (verificado: al disparar 4 seguidos, 1 activo + 3 en cola). Toast de evento con **barra de tiempo restante** (`.toast-bar`, duración inline). `Toasts.show()` (chatter) intacto con fusión ×N.
+- **FBK-05** Sonidos ÚNICOS nuevos en `Sound`: `tide, meteor, frost, lockdown, waveUp, bossWarn, grant, echo` (rotas las colisiones `rain`/`booster('freeze')`/`danger`). Hápticos nuevos en `Haptics`: `roll, impacts, clank, reward`.
+- **FBK-02** (parcial) Tokens de valencia en `:root` (`--fbk-threat/cold/boon/warn/info`) + clase de marco `.board-wrap.fbk-boon` (destello dorado) usada por la ventaja concedida. Añadida a la lista `reduced-fx`.
+- **Migrados a `Feedback.event()`**: `tideSurge, meteorRain, quake, frostSurge, lockdown, echoBoss, onOverflow, grantRandom`, avisos `waveUp/waveSoon/bossWarn`; y los toasts de recompensa/récord/iconos-nuevos/bendición pasados a `Toasts.event()` (serial). Esto ataca H1 (parcial: audio+toast), H3 (apilamiento) y H4 (ventaja visible: +marco dorado, campana, vibración de recompensa).
+
+**Decisiones / notas:**
+- Valencia de toast por evento (color secundario; la distinción fuerte vendrá del movimiento en Fase 1): quake/tide/waveUp/waveSoon=`warn` (ámbar), meteor/lockdown/echo/lifeLost/bossWarn=`bad` (rojo), frost=`info` (azul), grant=`good`.
+- El pico de arranque (3 toasts de chatter: mutador semanal + "¡A jugar!" + "carga boosters") **sigue presente** → es H5, se aborda en Fase 3 (tarjeta de objetivo + 3·2·1 + gracia). No tocado en Fase 0.
+- `Sound.rain()` queda sin uso (lo reemplazan `tide`/`meteor`); se conserva por si se reutiliza.
+- El marco por evento de marea/meteoro aún comparte `surv-rain`; diferenciar el **movimiento de marco** es Fase 1 (FBK-04).
+
+**Pendiente heredado para fases siguientes:**
+- Consolidar aún más los toasts de oleada (fundir monedas normales dentro del toast de "Oleada N") — diferido; hoy se serializan, que ya evita el solape.
+- Degradar monedas/récord del toast al HUD (count-up) — diferido a Fase 2/3.
+
+### ⏳ Fase 1 — Legibilidad de amenazas — EN CURSO
+(pendiente)

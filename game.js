@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.7';
+  const VERSION = '2.6.8';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -710,6 +710,10 @@
     ice() { this.fire([6, 18, 8]); },
     quake() { this.fire([28, 28, 34, 28, 42]); },
     life() { this.fire([18, 36, 18, 22]); },
+    roll() { this.fire([10, 20, 14, 26, 20]); },   // marea (creciente)
+    impacts() { this.fire([30, 22, 30, 22, 40]); }, // meteoro (staccato)
+    clank() { this.fire([42, 26, 42]); },           // cierre (metálico)
+    reward() { this.fire([10, 24, 10, 30]); },      // ventaja concedida
   };
 
   /* ===================== Sound (WebAudio, sin archivos) ===================== */
@@ -790,6 +794,17 @@
       if (id === 'wild') { this.chord([523, 784, 1047, 1568], 0.18, 'sine', 0.08, 0.03); return; }
       this.rank();
     },
+    // Firmas de audio ÚNICAS por evento de Supervivencia (FBK-05): antes marea≈meteoro
+    // (rain) y escarcha≈cierre (booster freeze) sonaban igual. Ahora cada evento tiene
+    // su motivo para reconocerlo sin mirar el texto.
+    tide() { [392, 523, 659, 784, 988].forEach((f, i) => this.tone(f, 0.09, 'triangle', 0.06, i * 0.05)); this.tone(180, 0.22, 'sine', 0.05, 0.02); },       // whoosh que SUBE + gorgoteo grave
+    meteor() { this.tone(1250, 0.14, 'sine', 0.05); this.tone(720, 0.12, 'sine', 0.05, 0.07); this.tone(88, 0.16, 'sawtooth', 0.10, 0.18); this.tone(120, 0.10, 'square', 0.06, 0.28); }, // silbido que CAE + impactos
+    frost() { this.chord([880, 1175, 1568], 0.16, 'triangle', 0.07, 0.025); this.tone(2100, 0.05, 'sine', 0.04, 0.08); },   // cristalino (familia hielo)
+    lockdown() { this.tone(300, 0.05, 'square', 0.08); this.tone(170, 0.13, 'sawtooth', 0.08, 0.05); this.tone(120, 0.14, 'square', 0.06, 0.12); }, // clank metálico + cerrojo
+    waveUp() { this.tone(523, 0.10, 'triangle', 0.09); this.tone(784, 0.13, 'sine', 0.08, 0.06); },  // progreso (distinto de danger)
+    bossWarn() { [196, 220, 247, 277].forEach((f, i) => this.tone(f, 0.15, 'sawtooth', 0.06, i * 0.09)); }, // tensión que sube
+    grant() { this.chord([784, 1047, 1319, 1568], 0.16, 'sine', 0.08, 0.05); },  // campana alegre ascendente
+    echo() { [1319, 988, 784, 659, 523].forEach((f, i) => this.tone(f, 0.10, 'sine', 0.05, i * 0.05)); },  // shimmer descendente
   };
 
   /* ===================== Helpers ===================== */
@@ -1507,6 +1522,26 @@
   const announceGame = (msg, ms = 1400) => { const t = Date.now(); if (t - _srLast < ms) return; _srLast = t; announce(msg); };
   const Toasts = {
     ICON: { info: 'info', good: 'check', warn: 'warning', bad: 'close' },
+    _evQ: [], _evActive: null,
+    // Construye el nodo de un toast (sin lógica de cola/fusión). `isEvent` añade la
+    // barra de tiempo restante (FBK-03): el usuario ve cuánto le queda para leerlo.
+    _node(msg, kind, ic, isEvent, ms) {
+      const t = document.createElement('div');
+      t.className = 'toast ' + kind + (isEvent ? ' event' : ''); t.dataset.msg = msg; t.dataset.n = '1';
+      if (isEvent) t.dataset.event = '1';
+      if (ic) {
+        const s = document.createElement('span'); s.className = 'toast-ic';
+        const tok = EMOJI_IMG[ic] || (/^(v2:)?[a-z][a-z0-9-]*$/.test(ic) ? ic : null);
+        if (tok) s.innerHTML = iconAny(tok); else s.textContent = ic;
+        t.appendChild(s);
+      }
+      const tx = document.createElement('span'); tx.className = 'toast-tx'; tx.textContent = msg; t.appendChild(tx);
+      if (isEvent && !Settings.reducedFx) {
+        const bar = document.createElement('span'); bar.className = 'toast-bar'; bar.style.animationDuration = ms + 'ms'; t.appendChild(bar);
+      }
+      return t;
+    },
+    // Toasts de "chatter" (combos, power-ups, misc): inmediatos, fusionan repetidos.
     show(msg, kind = 'info', ms = 2800, iconArg, onClick) {
       const el = $('#toasts'); if (!el) return;
       // Si el mensaje empieza por un emoji (y no se pasó icono), úsalo como icono del toast.
@@ -1526,15 +1561,7 @@
         dup.classList.remove('pop'); void dup.offsetWidth; dup.classList.add('pop');
         return;
       }
-      const t = document.createElement('div');
-      t.className = 'toast ' + kind; t.dataset.msg = msg; t.dataset.n = '1';
-      if (ic) {
-        const s = document.createElement('span'); s.className = 'toast-ic';
-        const tok = EMOJI_IMG[ic] || (/^(v2:)?[a-z][a-z0-9-]*$/.test(ic) ? ic : null);
-        if (tok) s.innerHTML = iconAny(tok); else s.textContent = ic;
-        t.appendChild(s);
-      }
-      const tx = document.createElement('span'); tx.className = 'toast-tx'; tx.textContent = msg; t.appendChild(tx);
+      const t = this._node(msg, kind, ic, false, ms);
       // Toast accionable: un toque ejecuta la acción y lo cierra (auto-sugerencia de FX).
       if (typeof onClick === 'function') {
         t.classList.add('actionable');
@@ -1542,9 +1569,80 @@
       }
       el.appendChild(t);
       t._t = setTimeout(() => this._out(t), ms);
-      while (el.children.length > 3) el.firstChild.remove();
+      this._trim(el);
+    },
+    // Cola SERIAL de toasts de EVENTO (FBK-03): nunca se solapan dos avisos de evento.
+    // Antes, al cambiar de oleada, "Oleada N" + monedas + récord + iconos nuevos caían
+    // a la vez y se pisaban (hallazgo H3). Ahora se muestran de uno en uno.
+    event(msg, kind = 'info', ms = 2200, iconArg) {
+      if (iconArg == null && typeof msg === 'string') {
+        const m = msg.match(/^(\p{Extended_Pictographic}️?)\s+/u);
+        if (m) { iconArg = m[1]; msg = msg.slice(m[0].length); }
+      }
+      const ic = iconArg != null ? iconArg : (this.ICON[kind] || '');
+      this._evQ.push({ msg, kind, ms, ic });
+      if (this._evQ.length > 4) this._evQ.shift();   // backstop: no acumular cola infinita
+      this._pumpEv();
+    },
+    _pumpEv() {
+      const el = $('#toasts'); if (!el) return;
+      if (this._evActive && this._evActive.isConnected && !this._evActive.classList.contains('out')) return;
+      const it = this._evQ.shift(); this._evActive = null;
+      if (!it) return;
+      const t = this._node(it.msg, it.kind, it.ic, true, it.ms);
+      el.appendChild(t); this._evActive = t; this._trim(el);
+      t._t = setTimeout(() => { this._out(t); this._evActive = null; setTimeout(() => this._pumpEv(), 160); }, it.ms);
+    },
+    // Recorta el contenedor sin expulsar nunca el toast de evento activo.
+    _trim(el) {
+      while (el.children.length > 3) {
+        const victim = Array.prototype.find.call(el.children, c => c !== this._evActive && !c.classList.contains('out'));
+        if (!victim) break;
+        victim.remove();
+      }
     },
     _out(t) { if (!t) return; t.classList.add('out'); t.addEventListener('animationend', () => t.remove(), { once: true }); },
+  };
+
+  /* ===================== Feedback (despachador de eventos, FBK-01) =============
+   * Fuente ÚNICA de verdad de cómo se comunica cada evento de partida: color de
+   * valencia + icono + sonido + vibración + toast (en cola serial) + destello de
+   * marco opcional. Antes cada evento cableaba a mano Toasts.show + Sound + Haptics
+   * (con colisiones y omisiones); ahora todos pasan por Feedback.event(id, opts),
+   * lo que GARANTIZA que cada evento es distinto en varias dimensiones.
+   * Los "verbos de movimiento" del tablero (cómo se mueven los iconos) se añaden por
+   * evento en las fases siguientes; este módulo cubre el canal audio/toast/marco.
+   */
+  const Feedback = {
+    // valence: threat(rojo) · warn(ámbar) · cold(azul) · boon(oro/verde) — vía `kind`.
+    SIG: {
+      quake:    { kind: 'warn', ms: 2000, icon: 'teleporter',   snd: 'quake',    hap: 'quake',   toast: 'surv_quake' },
+      tide:     { kind: 'warn', ms: 2000, icon: '🌊',           snd: 'tide',     hap: 'roll',    toastEn: ['surv_tide', 'surv_tide_enraged'] },
+      meteor:   { kind: 'bad',  ms: 2000, icon: 'v2:meteor',    snd: 'meteor',   hap: 'impacts', toastEn: ['surv_meteor', 'surv_meteor_enraged'] },
+      frost:    { kind: 'info', ms: 1900, icon: 'v2:snowflake', snd: 'frost',    hap: 'ice',     toastEn: ['surv_frost', 'surv_frost_enraged'] },
+      lockdown: { kind: 'bad',  ms: 2000, icon: '🔒',           snd: 'lockdown', hap: 'clank',   toast: 'surv_lockdown' },
+      echo:     { kind: 'bad',  ms: 1900, icon: '🔁',           snd: 'echo',     hap: 'quake' },
+      lifeLost: { kind: 'bad',  ms: 1900, icon: 'heart',        snd: 'lifeBlast',hap: 'life',    toast: 'surv_life_lost' },
+      grant:    { kind: 'good', ms: 1700, icon: '✨',           snd: 'grant',    hap: 'reward',  frame: 'fbk-boon' },
+      waveUp:   { kind: 'warn', ms: 1600, icon: 'fire',         snd: 'waveUp',   hap: 'combo' },
+      waveSoon: { kind: 'warn', ms: 1500, icon: 'fire',         snd: 'danger',   hap: null,      toast: 'surv_wave_soon' },
+      bossWarn: { kind: 'bad',  ms: 2400, icon: null,           snd: 'bossWarn', hap: 'fire' },
+    },
+    event(id, opts) {
+      opts = opts || {};
+      const s = this.SIG[id]; if (!s) return;
+      let msg = opts.msg;
+      if (msg == null) {
+        const key = opts.toastKey || (s.toastEn ? s.toastEn[opts.enraged ? 1 : 0] : s.toast);
+        if (key) msg = I18n.t(key);
+      }
+      const icon = opts.icon != null ? opts.icon : s.icon;
+      if (msg != null) Toasts.event(msg, opts.kind || s.kind, opts.ms || s.ms, icon);
+      const frame = opts.frame || s.frame; if (frame) Render.boardEvent(frame, 800);
+      const snd = opts.snd || s.snd; if (snd && Sound[snd]) Sound[snd]();
+      const hap = opts.hap != null ? opts.hap : s.hap; if (hap && Haptics[hap]) Haptics[hap]();
+      if (opts.announce !== false && msg != null) announce(msg);
+    },
   };
 
   // Cuenta ascendente de un número en un elemento (recompensa visual barata).
@@ -3125,7 +3223,7 @@
       (this._boonLog || (this._boonLog = [])).push({ id, icon: bd ? bd.icon : '✨' });
       // Hazaña 'coleccionista' (SV-31): haber elegido las 8 bendiciones alguna vez.
       if (Meta.survSeeBoon(id) >= this.BOONS.length) this._feat('coleccionista');
-      Toasts.show(I18n.t('boon_' + id), 'good', 1800, '✨');
+      Toasts.event(I18n.t('boon_' + id), 'good', 1800, '✨');
       Sound.record(); Haptics.milestone();
       Render.multChip(); // impulso/oleada dorada entran en el multiplicador visible
       this.render();
@@ -3188,10 +3286,10 @@
         let txt, ic;
         if (clearedWave % 10 === 0) { Meta.addChest(1); this.runChests++; txt = '+1 ' + I18n.t('tab_chests'); ic = 'chest'; }
         else { const gems = 2 + Math.floor(clearedWave / 5); Meta.addGems(gems); this.runGems += gems; txt = '+' + gems + ' 💎'; ic = 'gem'; }
-        Toasts.show(I18n.t('surv_milestone').replace('{w}', clearedWave) + ' · +' + coins + ' ' + I18n.t('coins') + ' · ' + txt, 'good', 2600, ic);
+        Toasts.event(I18n.t('surv_milestone').replace('{w}', clearedWave) + ' · +' + coins + ' ' + I18n.t('coins') + ' · ' + txt, 'good', 2600, ic);
         Render.flash(); FX.confetti(70); Sound.record(); Haptics.record(); Econ.refresh();
       } else {
-        Toasts.show(coinTxt, 'good', 1700, 'coin');
+        Toasts.event(coinTxt, 'good', 1700, 'coin');
       }
     },
     _checkWaveRecord() {
@@ -3199,7 +3297,7 @@
       if (Meta.survWaveRecord(this.wave)) {
         this.newWaveRecord = true;
         this._liveRecord = true; // el récord batido se saborea el resto de la run (SV-21)
-        Toasts.show(I18n.t('surv_wave_record').replace('{w}', this.wave), 'good', 2200, 'trophy');
+        Toasts.event(I18n.t('surv_wave_record').replace('{w}', this.wave), 'good', 2200, 'trophy');
         Render.flash(); FX.confetti(80); Sound.record(); Haptics.record();
       }
     },
@@ -3207,8 +3305,10 @@
     grantRandom() {
       const id = this.BOOSTERS[rand(this.BOOSTERS.length)];
       this.inv[id] = (this.inv[id] || 0) + 1;
-      Toasts.show(`+1 ${Boosters.DEFS[id].name}`, 'good', 1500, BOOSTER_IMG[id] || Boosters.DEFS[id].glyph);
-      Sound.milestone(); this.buildBar(); Render.boosterReady(id);
+      // Ventaja concedida (H4): antes era casi invisible (barra inferior). Ahora suma
+      // destello dorado del marco + campana + vibración de recompensa + toast en cola.
+      Feedback.event('grant', { msg: `+1 ${Boosters.DEFS[id].name}`, icon: BOOSTER_IMG[id] || Boosters.DEFS[id].glyph });
+      this.buildBar(); Render.boosterReady(id);
     },
     // Convierte iconos huérfanos (del pool anterior) a iconos del pool actual para que
     // el tablero siempre sea 100% vaciable tras un cambio de tanda.
@@ -3285,9 +3385,8 @@
       if (this.waveAcc >= this.WAVE_MS) { this.waveAcc -= this.WAVE_MS; this.newWave(); }
       else if (!this._r.waveWarned && this.waveAcc / this.WAVE_MS >= 0.78) {
         this._r.waveWarned = true;
-        Toasts.show(I18n.t('surv_wave_soon'), 'warn', 1400, 'fire');
+        Feedback.event('waveSoon');
         Render.boardEvent('surv-wave-soon', 560);
-        Sound.danger();
       }
       // Aviso ESPECÍFICO del jefe entrante ~3s antes (GM-18): da tiempo a reaccionar
       // (guardar un freeze, despejar zona) y convierte el susto en tensión anticipada.
@@ -3297,10 +3396,8 @@
         // Aviso enfurecido si la próxima oleada cae en zona de enfurecimiento (SV-43).
         const willEnrage = (this.wave + 1) >= this.ENRAGE_WAVE;
         const warnKey = willEnrage ? 'surv_boss_enraged_warn' : def.warn;
-        Toasts.show(I18n.t(warnKey), 'bad', 2400, def.icon);
-        announce(I18n.t(warnKey));
+        Feedback.event('bossWarn', { msg: I18n.t(warnKey), icon: def.icon });
         Render.boardEvent('surv-wave-soon', 700);
-        Sound.danger(); Haptics.fire(14);
       }
       // Beat «¡SUPERADO!» (SV-20): entre el peligro y la bendición.
       if (this._bossSurvivedAt && performance.now() >= this._bossSurvivedAt) { this._bossSurvivedAt = 0; this._bossSurvived(); }
@@ -3339,13 +3436,15 @@
         this._reconcileOrphans();
         // "Nuevos iconos" se retrasa 1.2s (SV-13) para no pisar el toast de oleada/jefe.
         const atWave = this.wave;
-        setTimeout(() => { if (State.status === 'playing' && this.wave === atWave) Toasts.show(I18n.t('surv_new_icons'), 'info', 1500, 'v2:four-pointed-star'); }, 1200);
+        setTimeout(() => { if (State.status === 'playing' && this.wave === atWave) Toasts.event(I18n.t('surv_new_icons'), 'info', 1500, 'v2:four-pointed-star'); }, 1200);
       }
       // El toast "Oleada N" se SUPRIME en frontera de jefe (SV-13): la bandera ⚠ y el
       // aviso específico ya lo anuncian; dos avisos a la vez saturan. El sonido/anuncio
       // accesible se mantienen.
-      if (!isBossWave) Toasts.show(I18n.t('st_wave') + ' ' + this.wave, 'warn', 1400, 'fire');
-      Sound.danger();
+      // En frontera de jefe el toast de oleada se suprime (la bandera ⚠ y el aviso ya
+      // lo anuncian) y el propio evento del jefe aporta su sonido; fuera de jefe, un
+      // solo aviso de oleada con sonido propio (ya no comparte `danger` con los avisos).
+      if (!isBossWave) Feedback.event('waveUp', { msg: I18n.t('st_wave') + ' ' + this.wave, announce: false });
       announce(I18n.t('sr_wave').replace('{n}', this.wave));
       this.addFrenzy(8 + this.frenzyTier() * 3);
       this._traps(Math.min(tn.trapCap, tn.trapBase * Math.max(0, this.wave - 2)));
@@ -3406,8 +3505,7 @@
       if (enraged) [0, size - 1].forEach((c) => { for (let r = 0; r < size; r++) set.add(r * size + c); });
       const cells = [...set];
       cells.forEach((j) => Render.cellPulse(j, 'tide-warn', 1200));
-      Toasts.show(I18n.t(enraged ? 'surv_tide_enraged' : 'surv_tide'), 'bad', 1800, '🌊');
-      Sound.rain();
+      Feedback.event('tide', { enraged });
       setTimeout(() => {
         if (State.status !== 'playing') return;
         let filled = 0;
@@ -3426,13 +3524,11 @@
       const placed = [], n = enraged ? 10 : 8;
       for (let k = 0; k < n; k++) { const idx = Engine.spawnOne(); if (idx >= 0) placed.push(idx); }
       Render.syncAll(); Render.meteor(placed);
-      Toasts.show(I18n.t(enraged ? 'surv_meteor_enraged' : 'surv_meteor'), 'bad', 1800, 'v2:meteor');
-      Sound.rain();
+      Feedback.event('meteor', { enraged });
     },
     quake() {
       this._lock(1150, 'surv-quake');
-      Toasts.show(I18n.t('surv_quake'), 'bad', 1800, 'teleporter');
-      Sound.quake(); Haptics.quake();
+      Feedback.event('quake');
       setTimeout(() => {
         if (State.status !== 'playing') return;
         this._shuffle();
@@ -3448,8 +3544,7 @@
         if (!State.tiles[idx]) { State.tiles[idx] = Tiles.make('frozen'); placed.push(idx); }
       }
       Render.syncAll(); placed.forEach(i => Render.iceHit(i));
-      Toasts.show(I18n.t(enraged ? 'surv_frost_enraged' : 'surv_frost'), 'warn', 1600, 'v2:snowflake');
-      Sound.booster('freeze'); Haptics.ice();
+      Feedback.event('frost', { enraged });
     },
     // Cierre (SV-43): siembra candados de 1 golpe sobre huecos — amenaza de bloqueo
     // con counterplay barato (rompen con UNA convergencia adyacente). Respeta el tope
@@ -3465,14 +3560,13 @@
         const t = Tiles.make('locked'); t.hits = 1; State.tiles[idx] = t; placed.push(idx);
       }
       Render.syncAll(); placed.forEach(i => Render.cellPulse(i, 'ice-hit', 520));
-      Toasts.show(I18n.t('surv_lockdown'), 'bad', 1800, '🔒');
-      Sound.booster('freeze'); Haptics.ice();
+      Feedback.event('lockdown');
     },
     // Eco (SV-43): "ha vuelto a por ti" — repite el último jefe real con intensidad +1
     // (enfurecido forzado). Si no hay jefe previo, cae en meteoro.
     echoBoss() {
       const prev = (this._lastBossType && this.BOSS_DEFS[this._lastBossType] && !this.BOSS_DEFS[this._lastBossType].echo) ? this._lastBossType : 'meteor';
-      Toasts.show(I18n.t('surv_eco').replace('{b}', I18n.t('bossname_' + prev)), 'bad', 1600, '🔁');
+      Feedback.event('echo', { msg: I18n.t('surv_eco').replace('{b}', I18n.t('bossname_' + prev)) });
       this._runBoss(prev, true);
     },
     _shuffle() {
@@ -3521,9 +3615,9 @@
       this.lives--;
       this._livesLostThisWave = (this._livesLostThisWave || 0) + 1; // hazaña 'impecable' (SV-31)
       if (this.lives <= 0) { this.lastChance(); return; }
-      Toasts.show(I18n.t('surv_life_lost'), 'bad', 1700, 'heart');
+      Feedback.event('lifeLost', { announce: false });
       announce(I18n.t('sr_life').replace('{n}', this.lives));
-      Sound.lifeBlast(); Haptics.life(); this._lock(880, 'life-blast');
+      this._lock(880, 'life-blast');
       this._relief(0.4); this.render();
       if (State.status === 'playing') Game.evaluate();
     },
@@ -6746,5 +6840,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Share, I18n, Toasts, RNG, RunSave, Picker, PreLevel, Modal, Perf, ModeSignals, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, Modal, Perf, ModeSignals, refreshStart, applyLanguage };
 })();
