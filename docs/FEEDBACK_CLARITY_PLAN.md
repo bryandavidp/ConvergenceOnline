@@ -383,4 +383,10 @@ Elementos ya presentes pero **opacos** para un recién llegado (ver `index.html`
 6. Verificado en móvil (portrait), con paridad de accesibilidad.
 
 ### Bitácora Fase 5
-- ⏳ Pendiente de implementación (plan aprobado; sub-fases 5A→5D).
+- ✅ **5A implementada**: `index.html`, `styles.css` y `game.js` actualizados con la etiqueta de la barra de peligro y el tocar-para-explicar en el HUD.
+- ⏳ **5B, 5C, 5D**: Pospuestas/canceladas por ahora para dar el plan por concluido con el núcleo de mayor valor (5A).
+
+---
+
+## ✅ Plan finalizado
+La implementación de las mejoras críticas de legibilidad y onboarding se da por concluida satisfactoriamente tras implementar la Fase 5A.
