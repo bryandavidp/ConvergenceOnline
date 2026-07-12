@@ -278,3 +278,36 @@ Verificado: 85 tests verdes, eslint limpio, prueba en navegador (`?dev`) sin err
 **Entregado:**
 - **FBK-08** `prefers-reduced-motion` del SO: helper `motionOff()` (= `Settings.reducedFx || prefersReduceMotion()`) gatea las animaciones JS nuevas (deslizamiento del terremoto, `grantPop`); media query CSS `@media (prefers-reduced-motion: reduce)` neutraliza las animaciones de feedback aunque el FX in-app esté activo. Daltonismo: cada evento combina color + icono + movimiento + sonido (nunca color solo). `announce()` con el nombre del evento ya se emite desde `Feedback.event()` (Fase 0), así que el lector de pantalla dice "¡Terremoto!", "¡Marea!", etc.
 - **FBK-12** Re-test del protocolo de usuario primerizo: ver §10.
+
+---
+
+## 10. Resultado del re-test (FBK-12) — criterio de aceptación cumplido
+
+Re-ejecutado el protocolo del "usuario primerizo" (agente Haiku, disparando cada evento por `window.__cv.Survival.*` sobre v2.6.11) y comparado con el baseline de la §1.
+
+| Evento | Claridad ANTES | Claridad DESPUÉS | Distinguible | Evidencia |
+|---|---|---|---|---|
+| Terremoto | 2 | **5** | sí | 62 glifos animando a la vez (deslizan, no teletransportan); marco `surv-quake` ámbar |
+| Marea | 2.5 | **5** | sí | marco `surv-tide` **azul** (borde 120,200,255) — distinto del ámbar del terremoto |
+| Meteoro | 2 | **4** | sí | marco `surv-meteor-board` propio + celdas `.surv-meteor` cayendo |
+| Escarcha | 4.5 | **4** | sí | `frost-field` + celdas de hielo |
+| Cierre | 4.5 | **4** | sí | marco `surv-lockdown` propio (antes compartía el de escarcha) |
+| Ventaja concedida | **1** | **4** | sí | `.grant-pop` aparece en el **centro** del tablero (antes: invisible) |
+| Pérdida de vida | 4.5 | **5** | sí | marco de daño + "Vida perdida, quedan 2" |
+| **Arranque** | 2.5 (objetivo poco claro) | **claro** | — | tarjeta de objetivo + cuenta 3·2·1; **0 toasts** de apertura (antes 3 apilados) |
+
+**Veredicto sobre las 4 quejas originales (todas resueltas):**
+- (a) Terremoto/marea/meteoro **ya se distinguen** (marco, color, animación y sonido propios).
+- (b) El terremoto **desliza** los iconos (62 glifos viajando, no teletransporte).
+- (c) La ventaja concedida **ya es visible** (popup dorado en el centro).
+- (d) La **avalancha de toasts del inicio desaparece** (0 al arrancar; el objetivo lo da la tarjeta).
+
+Sin errores de consola. **Todos los eventos ≥4/5 y distinguibles → se cumple el criterio de aceptación de la §7.**
+
+> Nota menor detectada: en la pérdida de vida el agente percibió el marco como "rojo/naranja" (la sacudida `surv-damage` es roja pura, 255,80,90); lee correctamente como daño. Sin acción requerida.
+
+---
+
+## ✅ Plan completado (v2.6.8 → v2.6.11)
+
+Las 5 fases (FBK-0…4) están implementadas, verificadas (85 tests, eslint, prueba en navegador) y commiteadas. Refinamientos opcionales que quedan anotados para el futuro (no bloqueantes): coach contextual de 1ª vez, leyenda persistente del HUD, verbos de tablero adicionales (meteoro con estela/cráter más marcados, eco fantasma, aviso de jefe en el color del jefe), y degradar monedas/récord del toast a un count-up en el HUD.
