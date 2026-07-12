@@ -266,8 +266,15 @@ Verificado: 85 tests verdes (incluida paridad i18n ES/EN de las claves nuevas), 
 - Coach contextual de 1ª vez señalando vidas/oleada/temporizador → opcional, la tarjeta ya cubre el objetivo; se puede añadir luego reutilizando el módulo `Coach`.
 - Leyenda persistente del HUD (etiquetas en oleada/vidas/tiempo) → opcional.
 
-### ⏳ Fase 2 — Legibilidad de recompensas — PENDIENTE
-(FBK-09 ventaja "vuela al centro", FBK-10 pérdida de vida como daño claro, FBK-11 coherencia cromática beneficio≠amenaza)
+### ✅ Fase 2 — Legibilidad de recompensas (v2.6.11) — COMPLETADA
+Verificado: 85 tests verdes, eslint limpio, prueba en navegador (`?dev`) sin errores.
 
-### ⏳ Fase 4 — Pulido y accesibilidad — PENDIENTE
-(FBK-08 reduced-motion/daltonismo/announce con nombre de evento, FBK-12 re-test del protocolo de usuario primerizo)
+**Entregado:**
+- **FBK-09** `Render.grantPop(token)`: la ventaja concedida APARECE grande en el centro del tablero con chispa dorada y "cae" hacia la barra de boosters. Verificado en vivo: el `.grant-pop` se crea en `#popups` y anima. Complementa el marco dorado + campana + vibración de recompensa ya puestos en Fase 0 (H4 cerrado).
+- **FBK-10** Pérdida de vida como DAÑO: marco rojo `surv-damage` (sacudida) en vez del destello dorado, + `Render.livesHit()` (los corazones del HUD se sacuden/enrojecen). `_relief(frac, frame)` ahora acepta el marco; `onOverflow` pasa `null` (no dorado, ya está el rojo), `revive` mantiene el dorado. Verificado: overflow → `surv-damage` sí / `life-blast` no / corazones `hit`; revive → dorado sí.
+- **FBK-11** Coherencia cromática beneficio≠amenaza: el único caso incoherente (marco dorado en la pérdida de vida) queda resuelto por FBK-10. Ventaja/bendición/frenesí = oro/verde; amenazas = rojo/ámbar/azul.
+
+### ✅ Fase 4 — Pulido y accesibilidad (v2.6.11) — COMPLETADA (código); re-test abajo
+**Entregado:**
+- **FBK-08** `prefers-reduced-motion` del SO: helper `motionOff()` (= `Settings.reducedFx || prefersReduceMotion()`) gatea las animaciones JS nuevas (deslizamiento del terremoto, `grantPop`); media query CSS `@media (prefers-reduced-motion: reduce)` neutraliza las animaciones de feedback aunque el FX in-app esté activo. Daltonismo: cada evento combina color + icono + movimiento + sonido (nunca color solo). `announce()` con el nombre del evento ya se emite desde `Feedback.event()` (Fase 0), así que el lector de pantalla dice "¡Terremoto!", "¡Marea!", etc.
+- **FBK-12** Re-test del protocolo de usuario primerizo: ver §10.

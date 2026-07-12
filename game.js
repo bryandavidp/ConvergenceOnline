@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.10';
+  const VERSION = '2.6.11';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -818,6 +818,10 @@
   /* ===================== Helpers ===================== */
   const $ = (s) => document.querySelector(s);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  // Accesibilidad (FBK-08): respeta la preferencia del SO de "reducir movimiento",
+  // además del ajuste in-app `Settings.reducedFx`. Se combinan en las animaciones nuevas.
+  const prefersReduceMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const motionOff = () => Settings.reducedFx || prefersReduceMotion();
   /* PRNG seedeable (mulberry32). El GAMEPLAY (spawns, trampas, bonus) tira de
    * RNG.random() para que un mismo seed reproduzca el mismo tablero (reto diario,
    * replays, validación anti-trampas futura). Los efectos visuales (FX) y la
@@ -1310,13 +1314,37 @@
           { duration: 460, easing: 'cubic-bezier(.2,.7,.3,1)' });
       }
     },
+    // Ventaja concedida (FBK-09): el icono del booster APARECE en el centro del
+    // tablero (donde están los ojos) con chispa dorada y luego "cae" hacia la barra
+    // de boosters — deja claro qué has ganado y a dónde ha ido. Antes: invisible (H4).
+    grantPop(token) {
+      if (motionOff() || !this.popupsEl || !token) return;
+      const s = document.createElement('span');
+      s.className = 'grant-pop'; s.setAttribute('aria-hidden', 'true');
+      s.innerHTML = iconAny(token);
+      this.popupsEl.appendChild(s);
+      s.animate([
+        { transform: 'translate(-50%,-50%) scale(.4)', opacity: 0 },
+        { transform: 'translate(-50%,-50%) scale(1.3)', opacity: 1, offset: .3 },
+        { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: .62 },
+        { transform: 'translate(-50%,55%) scale(.6)', opacity: 0 },
+      ], { duration: 1150, easing: 'cubic-bezier(.2,.8,.3,1)' });
+      setTimeout(() => s.remove(), 1200);
+    },
+    // Pérdida de vida (FBK-10): los corazones del HUD reaccionan como DAÑO (sacudida
+    // + destello rojo), reforzando que ha sido malo (no lo celebra el marco dorado).
+    livesHit() {
+      const el = $('#surv-lives'); if (!el) return;
+      el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+      setTimeout(() => el.classList.remove('hit'), 640);
+    },
     impact(tier = 1) {
       if (Settings.reducedFx) return;
       const cls = tier >= 3 ? 'impact-heavy' : tier >= 2 ? 'impact-mid' : 'impact-soft';
       this.boardEvent(cls, tier >= 3 ? 360 : 260);
     },
-    lifeClear(indices) {
-      this.boardEvent('life-blast', 900);
+    lifeClear(indices, frame = 'life-blast') {
+      if (frame) this.boardEvent(frame, 900);   // frame=null → el llamador ya puso su marco (p. ej. daño rojo)
       indices.forEach(i => this.cellPulse(i, 'life-cleared', 820));
     },
     meteor(indices) { indices.forEach(i => this.cellPulse(i, 'surv-meteor', 820)); },
@@ -3376,7 +3404,9 @@
       this.inv[id] = (this.inv[id] || 0) + 1;
       // Ventaja concedida (H4): antes era casi invisible (barra inferior). Ahora suma
       // destello dorado del marco + campana + vibración de recompensa + toast en cola.
-      Feedback.event('grant', { msg: `+1 ${Boosters.DEFS[id].name}`, icon: BOOSTER_IMG[id] || Boosters.DEFS[id].glyph });
+      const gIcon = BOOSTER_IMG[id] || Boosters.DEFS[id].glyph;
+      Feedback.event('grant', { msg: `+1 ${Boosters.DEFS[id].name}`, icon: gIcon });
+      Render.grantPop(gIcon);
       this.buildBar(); Render.boosterReady(id);
     },
     // Convierte iconos huérfanos (del pool anterior) a iconos del pool actual para que
@@ -3651,7 +3681,7 @@
       const srcOf = {};   // celda-destino → celda-origen (para el deslizamiento FLIP)
       idx.forEach((dest, k) => { State.board[dest] = oldVals[perm[k]]; srcOf[dest] = idx[perm[k]]; });
       Render.syncAll();
-      if (animate && !Settings.reducedFx) Render.quakeSlide(srcOf);
+      if (animate && !motionOff()) Render.quakeSlide(srcOf);
     },
     onConverge(ctx) {
       const combo = ctx ? ctx.combo : 0;
@@ -3695,11 +3725,14 @@
       if (this.lives <= 0) { this.lastChance(); return; }
       Feedback.event('lifeLost', { announce: false });
       announce(I18n.t('sr_life').replace('{n}', this.lives));
-      this._lock(880, 'life-blast');
-      this._relief(0.4); this.render();
+      // Marco ROJO de daño (FBK-10), no el destello dorado de la revivida: perder una
+      // vida debe leerse como daño. El alivio (limpieza) sigue ocurriendo debajo.
+      this._lock(880, 'surv-damage');
+      Render.livesHit();
+      this._relief(0.4, null); this.render();   // sin marco dorado: el marco rojo de daño ya está puesto (FBK-10)
       if (State.status === 'playing') Game.evaluate();
     },
-    _relief(frac) {
+    _relief(frac, frame) {
       const f = [];
       for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null) f.push(i);
       let n = Math.floor(f.length * frac);
@@ -3715,7 +3748,7 @@
         this._powerClear(idx, cleared, 4);
       }
       Render.syncAll();
-      Render.lifeClear(cleared);
+      Render.lifeClear(cleared, frame === undefined ? 'life-blast' : frame);
       if (cleared.length) State.lastActionCell = cleared[0];
     },
     // GM-19: el precio de revivir CRECE con cada uso en la misma run (120→240→480,

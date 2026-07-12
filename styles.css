@@ -1309,6 +1309,26 @@ body.reduced-fx .cell.tide-warn { animation: none; background: rgba(122,215,255,
 @keyframes tide-fill-rise { 0% { transform: translateY(16px) scale(.6); opacity: .2; } 60% { transform: translateY(-2px) scale(1.06); opacity: 1; } }
 .cell.lock-stamp { animation: lock-stamp .5s cubic-bezier(.2,.9,.25,1.3); }
 @keyframes lock-stamp { 0% { transform: scale(1.5); } 55% { transform: scale(.9); } 100% { transform: scale(1); } }
+/* Pérdida de vida como DAÑO (FBK-10): marco rojo con sacudida, no el destello
+   dorado de la revivida. */
+.board-wrap.surv-damage { animation: surv-damage .82s ease-out; border-color: rgba(255,80,90,.92); }
+@keyframes surv-damage {
+  0%,100% { transform: translate(0,0); }
+  12% { transform: translate(-6px,0); }
+  24% { transform: translate(6px,0); box-shadow: 0 18px 44px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,70,80,.75), 0 0 40px rgba(255,60,70,.4); }
+  40% { transform: translate(-4px,0); }
+  62% { transform: translate(2px,0); }
+}
+/* Corazones del HUD reaccionan al daño. */
+.surv-lives.hit { animation: lives-hit .6s ease; }
+@keyframes lives-hit { 0%,100% { transform: translateX(0); filter: none; } 20% { transform: translateX(-3px); filter: drop-shadow(0 0 6px rgba(255,70,80,.9)); } 45% { transform: translateX(3px); } 70% { transform: translateX(-1px); } }
+/* Ventaja concedida que "vuela" en el centro del tablero (FBK-09). */
+.grant-pop {
+  position: absolute; left: 50%; top: 50%; width: 24%; aspect-ratio: 1;
+  pointer-events: none; display: grid; place-items: center;
+  filter: drop-shadow(0 0 12px rgba(255,210,77,.85)) drop-shadow(0 3px 8px rgba(0,0,0,.5));
+}
+.grant-pop > * { width: 100%; height: 100%; }
 .board-wrap.surv-wave-up { animation: surv-wave-up .9s ease-out; border-color: rgba(255,216,77,.82); }
 .board-wrap.surv-wave-soon { animation: surv-wave-soon .56s ease-out; border-color: rgba(255,178,77,.76); }
 @keyframes surv-wave-soon { 45% { transform: translateY(-1px) scale(1.008); filter: saturate(1.14); } }
@@ -2840,6 +2860,8 @@ body.reduced-fx .board-wrap.impact-heavy,
 body.reduced-fx .board-wrap.time-pressure,
 body.reduced-fx .board-wrap.surv-wave-soon,
 body.reduced-fx .board-wrap.fbk-boon,
+body.reduced-fx .board-wrap.surv-damage,
+body.reduced-fx .surv-lives.hit,
 body.reduced-fx .combo.urgent,
 body.reduced-fx .booster-bar.grant,
 body.reduced-fx .booster.just-granted,
@@ -2847,6 +2869,21 @@ body.reduced-fx.time-critical .time-chip {
   animation: none !important;
 }
 body.reduced-fx.surv-frenzy-active .board-wrap { animation: none !important; }
+/* prefers-reduced-motion del SO (FBK-08): neutraliza el movimiento del sistema de
+   feedback aunque el ajuste in-app de FX esté activo. El JS (deslizamiento del
+   terremoto, popup de ventaja) también lo consulta vía motionOff(). */
+@media (prefers-reduced-motion: reduce) {
+  .toast, .toast.pop, .toast .toast-bar,
+  .surv-intro, .si-count.pulse, .si-count.go,
+  .board-wrap.surv-quake, .board-wrap.surv-quake-settle, .board-wrap.surv-tide,
+  .board-wrap.surv-meteor-board, .board-wrap.surv-lockdown, .board-wrap.surv-rain,
+  .board-wrap.surv-frost, .board-wrap.surv-wave-up, .board-wrap.surv-wave-soon,
+  .board-wrap.surv-damage, .board-wrap.life-blast, .board-wrap.fbk-boon,
+  .cell.surv-meteor, .cell.tide-fill .glyph, .cell.lock-stamp,
+  .surv-lives.hit, .grant-pop {
+    animation: none !important;
+  }
+}
 /* Pulsos de tiles-trigger bajo reduced-fx (QP-2 P0-c): antes NO estaban cubiertos y
    quedaban ~83 animaciones vivas en modo reducido. Se apaga el latido (::before) y el
    bamboleo del emoji (::after de ⏳/⏰); el anillo estático del tile permanece. */
