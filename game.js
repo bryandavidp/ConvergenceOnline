@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.8';
+  const VERSION = '2.6.9';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -1286,6 +1286,21 @@
       const w = document.querySelector('.board-wrap'); if (!w) return;
       w.classList.remove(cls); void w.offsetWidth; w.classList.add(cls);
       setTimeout(() => w.classList.remove(cls), ms);
+    },
+    // Terremoto (FBK-04): en vez de teletransportar los iconos (que se leía como
+    // "barajado aleatorio"), cada icono SE DESLIZA desde su casilla vieja a la nueva
+    // (técnica FLIP, solo transform → compositor). Así se entiende que el temblor
+    // ha SACUDIDO el tablero. `srcOf` mapea celda-destino → celda-origen.
+    quakeSlide(srcOf) {
+      const rects = this.cells.map((c) => c.getBoundingClientRect());
+      for (const dest in srcOf) {
+        const d = +dest, s = srcOf[dest]; if (s === d) continue;
+        const g = this.glyphs[d]; if (!g || !this._cellId[d]) continue;
+        const dx = rects[s].left - rects[d].left, dy = rects[s].top - rects[d].top;
+        g.getAnimations().forEach((a) => a.cancel());
+        g.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }],
+          { duration: 460, easing: 'cubic-bezier(.2,.7,.3,1)' });
+      }
     },
     impact(tier = 1) {
       if (Settings.reducedFx) return;
@@ -3499,7 +3514,7 @@
     // iconos. Amenaza legible con counterplay: despeja esas zonas antes. Enfurecida
     // (SV-43): además las 2 columnas exteriores → marco completo.
     tideSurge(enraged) {
-      this._lock(900, 'surv-rain');
+      this._lock(900, 'surv-tide');
       const size = State.size, set = new Set();
       [0, size - 1].forEach((r) => { for (let c = 0; c < size; c++) set.add(r * size + c); });
       if (enraged) [0, size - 1].forEach((c) => { for (let r = 0; r < size; r++) set.add(r * size + c); });
@@ -3513,14 +3528,14 @@
           if (State.board[j] === null && !State.tiles[j]) {
             State.board[j] = State.pool[rand(State.pool.length)];
             State.iconCount++; filled++;
-            Render.syncCell(j); Render.spawnAnim(j);
+            Render.syncCell(j); Render.cellPulse(j, 'tide-fill', 600);
           }
         });
         if (filled) { Render.hudSoon(); if (State.status === 'playing') Game.evaluate(); }
       }, 1200);
     },
     meteorRain(enraged) {
-      this._lock(900, 'surv-rain');
+      this._lock(900, 'surv-meteor-board');
       const placed = [], n = enraged ? 10 : 8;
       for (let k = 0; k < n; k++) { const idx = Engine.spawnOne(); if (idx >= 0) placed.push(idx); }
       Render.syncAll(); Render.meteor(placed);
@@ -3531,7 +3546,7 @@
       Feedback.event('quake');
       setTimeout(() => {
         if (State.status !== 'playing') return;
-        this._shuffle();
+        this._shuffle(true);
         Render.boardEvent('surv-quake-settle', 420);
       }, 620);
     },
@@ -3550,7 +3565,7 @@
     // con counterplay barato (rompen con UNA convergencia adyacente). Respeta el tope
     // de bloqueos para no brickear el tablero.
     lockdown(enraged) {
-      this._lock(760, 'surv-frost');
+      this._lock(760, 'surv-lockdown');
       const e = this._emptyIdx();
       const room = Math.min(this._specialRoom(), Math.max(0, this._blockCap() - this._blockIdx().length));
       const n = Math.min(enraged ? 4 : 3, e.length, room);
@@ -3559,7 +3574,7 @@
         const idx = e.splice(rand(e.length), 1)[0];
         const t = Tiles.make('locked'); t.hits = 1; State.tiles[idx] = t; placed.push(idx);
       }
-      Render.syncAll(); placed.forEach(i => Render.cellPulse(i, 'ice-hit', 520));
+      Render.syncAll(); placed.forEach(i => Render.cellPulse(i, 'lock-stamp', 520));
       Feedback.event('lockdown');
     },
     // Eco (SV-43): "ha vuelto a por ti" — repite el último jefe real con intensidad +1
@@ -3569,11 +3584,17 @@
       Feedback.event('echo', { msg: I18n.t('surv_eco').replace('{b}', I18n.t('bossname_' + prev)) });
       this._runBoss(prev, true);
     },
-    _shuffle() {
-      const idx = [], vals = [];
-      for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) { idx.push(i); vals.push(State.board[i]); }
-      for (let i = vals.length - 1; i > 0; i--) { const j = rand(i + 1); const t = vals[i]; vals[i] = vals[j]; vals[j] = t; }
-      idx.forEach((p, k) => State.board[p] = vals[k]); Render.syncAll();
+    _shuffle(animate) {
+      const idx = [];
+      for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) idx.push(i);
+      const n = idx.length; if (!n) return;
+      const oldVals = idx.map((p) => State.board[p]);
+      const perm = idx.map((_, k) => k);
+      for (let i = n - 1; i > 0; i--) { const j = rand(i + 1); const t = perm[i]; perm[i] = perm[j]; perm[j] = t; }
+      const srcOf = {};   // celda-destino → celda-origen (para el deslizamiento FLIP)
+      idx.forEach((dest, k) => { State.board[dest] = oldVals[perm[k]]; srcOf[dest] = idx[perm[k]]; });
+      Render.syncAll();
+      if (animate && !Settings.reducedFx) Render.quakeSlide(srcOf);
     },
     onConverge(ctx) {
       const combo = ctx ? ctx.combo : 0;
