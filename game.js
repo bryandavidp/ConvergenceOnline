@@ -766,6 +766,9 @@
     get enabled() { return Settings.sfx; },
     // Debe llamarse DENTRO de un gesto de usuario (iOS lo exige).
     ensure() {
+      const ua = navigator.userActivation;
+      const activeGesture = !ua || ua.isActive;
+      if (!this.ctx && !activeGesture) return;
       if (!this.ctx) {
         try {
           // iOS 16.4+: enrutar al canal "playback" para que el audio suene aunque
@@ -778,7 +781,10 @@
         } catch (_) { }
       }
       // iOS usa también el estado 'interrupted' (tras Siri/llamada), no solo 'suspended'.
-      if (this.ctx && this.ctx.state !== 'running') { const r = this.ctx.resume(); if (r && r.catch) r.catch(() => { }); }
+      if (this.ctx && this.ctx.state !== 'running') {
+        if (!activeGesture) return;
+        const r = this.ctx.resume(); if (r && r.catch) r.catch(() => { });
+      }
       // Desbloqueo iOS: reproducir un búfer silencioso una vez dentro del gesto.
       if (this.ctx && !this._unlocked) {
         try {
@@ -1359,19 +1365,34 @@
     // Ventaja concedida (FBK-09): el icono del booster APARECE en el centro del
     // tablero (donde están los ojos) con chispa dorada y luego "cae" hacia la barra
     // de boosters — deja claro qué has ganado y a dónde ha ido. Antes: invisible (H4).
-    grantPop(token) {
-      if (motionOff() || !this.popupsEl || !token) return;
-      const s = document.createElement('span');
-      s.className = 'grant-pop'; s.setAttribute('aria-hidden', 'true');
-      s.innerHTML = iconAny(token);
-      this.popupsEl.appendChild(s);
-      s.animate([
-        { transform: 'translate(-50%,-50%) scale(.4)', opacity: 0 },
-        { transform: 'translate(-50%,-50%) scale(1.3)', opacity: 1, offset: .3 },
-        { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: .62 },
-        { transform: 'translate(-50%,55%) scale(.6)', opacity: 0 },
-      ], { duration: 1150, easing: 'cubic-bezier(.2,.8,.3,1)' });
-      setTimeout(() => s.remove(), 1200);
+    grantPop(token, targetId, label) {
+      if (motionOff() || !token || !targetId) return;
+      const target = document.querySelector(`.booster[data-b="${targetId}"]`);
+      const targetIcon = target && (target.querySelector('.b-ic') || target);
+      const source = document.querySelector('body.mode-surv .score-side .power-rings') || $('.board-wrap');
+      if (!targetIcon || !source) return;
+      const sr = source.getBoundingClientRect();
+      const tr = targetIcon.getBoundingClientRect();
+      if (!sr.width || !tr.width) return;
+      const sx = sr.left + sr.width / 2, sy = sr.top + sr.height / 2;
+      const tx = tr.left + tr.width / 2, ty = tr.top + tr.height / 2;
+      const flyer = document.createElement('span');
+      flyer.className = 'grant-flyer';
+      flyer.setAttribute('aria-hidden', 'true');
+      flyer.style.left = sx + 'px';
+      flyer.style.top = sy + 'px';
+      const iconMarkup = targetIcon.innerHTML || iconAnyInline(token);
+      flyer.innerHTML = `<span class="grant-flyer-card"><span class="grant-flyer-ic">${iconMarkup}</span><span class="grant-flyer-tx"><b>+1</b><small>${esc(label || 'Poder')}</small></span></span>`;
+      document.body.appendChild(flyer);
+      const dx = tx - sx, dy = ty - sy;
+      const anim = flyer.animate([
+        { transform: 'translate(-50%, -50%) scale(.62)', opacity: 0 },
+        { transform: 'translate(-50%, -50%) scale(1.06)', opacity: 1, offset: .14 },
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: .44 },
+        { transform: `translate(calc(-50% + ${dx * .66}px), calc(-50% + ${dy * .66}px)) scale(.9)`, opacity: 1, offset: .78 },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.42)`, opacity: 0 },
+      ], { duration: 1600, easing: 'cubic-bezier(.18,.82,.22,1)' });
+      anim.finished.catch(() => { }).then(() => flyer.remove());
     },
     // Pérdida de vida (FBK-10): los corazones del HUD reaccionan como DAÑO (sacudida
     // + destello rojo), reforzando que ha sido malo (no lo celebra el marco dorado).
@@ -1395,19 +1416,34 @@
       const b = document.querySelector(`.booster[data-b="${id}"]`);
       if (b) { b.classList.remove('fired'); void b.offsetWidth; b.classList.add('fired'); setTimeout(() => b.classList.remove('fired'), 520); }
     },
-    boosterReady(id) {
-      if (Settings.reducedFx) return;
-      const bar = $('#booster-bar');
-      if (bar) { bar.classList.remove('grant'); void bar.offsetWidth; bar.classList.add('grant'); setTimeout(() => bar.classList.remove('grant'), 720); }
+    boosterReady(id, token, label) {
       const b = document.querySelector(`.booster[data-b="${id}"]`);
       if (b) {
-        b.classList.remove('just-granted');
-        let tag = b.querySelector('.earned-tag');
-        if (!tag) { tag = document.createElement('span'); tag.className = 'earned-tag'; b.appendChild(tag); }
-        tag.textContent = '+1';
-        void b.offsetWidth;
-        b.classList.add('just-granted');
-        setTimeout(() => { b.classList.remove('just-granted'); if (tag && tag.parentNode === b) tag.remove(); }, 900);
+        b.classList.remove('just-granted', 'grant-incoming');
+        clearTimeout(b._grantTimer);
+        const oldTag = b.querySelector('.earned-tag');
+        if (oldTag) oldTag.remove();
+        const count = b.querySelector('.b-count');
+        if (count) count.classList.remove('count-pop');
+        if (!motionOff() && token) {
+          b.classList.add('grant-incoming');
+          this.grantPop(token, id, label);
+        }
+        const land = () => {
+          b.classList.remove('grant-incoming');
+          b.classList.add('just-granted');
+          let tag = b.querySelector('.earned-tag');
+          if (!tag) { tag = document.createElement('span'); tag.className = 'earned-tag'; b.appendChild(tag); }
+          tag.textContent = '+1';
+          if (count) { count.classList.remove('count-pop'); void count.offsetWidth; count.classList.add('count-pop'); }
+        };
+        if (motionOff()) land(); else setTimeout(land, 1400);
+        b._grantTimer = setTimeout(() => {
+          b.classList.remove('just-granted', 'grant-incoming');
+          if (count) count.classList.remove('count-pop');
+          const tag = b.querySelector('.earned-tag');
+          if (tag && tag.parentNode === b) tag.remove();
+        }, motionOff() ? 900 : 2300);
       }
     },
 
@@ -1516,7 +1552,7 @@
         if (dl > 0) {
           occText.textContent = I18n.t('hud_danger');
           occText.setAttribute('data-i18n', 'hud_danger');
-          occIcon.style.setProperty('--icv2-url', "url('img/icons-v2/8-ui/warning.svg')");
+          occIcon.style.setProperty('--icv2-url', "url('img/icons-v2/8-ui/exclamation.svg')");
         } else {
           occText.textContent = I18n.t('hud_board_fill');
           occText.setAttribute('data-i18n', 'hud_board_fill');
@@ -1765,7 +1801,8 @@
       }
       const icon = opts.icon != null ? opts.icon : s.icon;
       if (msg != null) Toasts.event(msg, opts.kind || s.kind, opts.ms || s.ms, icon);
-      const frame = opts.frame || s.frame; if (frame) Render.boardEvent(frame, 800);
+      const frame = Object.prototype.hasOwnProperty.call(opts, 'frame') ? opts.frame : s.frame;
+      if (frame) Render.boardEvent(frame, 800);
       const snd = opts.snd || s.snd; if (snd && Sound[snd]) Sound[snd]();
       const hap = opts.hap != null ? opts.hap : s.hap; if (hap && Haptics[hap]) Haptics[hap]();
       if (opts.announce !== false && msg != null) announce(msg);
@@ -2745,6 +2782,8 @@
     'wi-fi': '9-media/wi-fi',
     'four-pointed-star': '12-misc/four-pointed-star',
     flag: '6-buildings/flag',
+    hourglass: '9-media/time',
+    warning: '8-ui/exclamation',
     'arrow-left': '8-ui/arrow-left',
     play: '9-media/play',
     pause: '9-media/pause',
@@ -3489,12 +3528,12 @@
     grantRandom() {
       const id = this.BOOSTERS[rand(this.BOOSTERS.length)];
       this.inv[id] = (this.inv[id] || 0) + 1;
-      // Ventaja concedida (H4): antes era casi invisible (barra inferior). Ahora suma
-      // destello dorado del marco + campana + vibración de recompensa + toast en cola.
+      // Ventaja concedida (H4): toast + sonido + vuelo al slot exacto de la toolbelt.
       const gIcon = BOOSTER_IMG[id] || Boosters.DEFS[id].glyph;
-      Feedback.event('grant', { msg: `+1 ${Boosters.DEFS[id].name}`, icon: gIcon });
-      Render.grantPop(gIcon);
-      this.buildBar(); Render.boosterReady(id);
+      const gName = ({ freeze: 'Hielo', wild: 'Barrido', x2: 'Doble' }[id]) || Boosters.DEFS[id].name;
+      Feedback.event('grant', { msg: `+1 ${gName}`, icon: gIcon, frame: null });
+      this.buildBar();
+      Render.boosterReady(id, gIcon, gName);
     },
     // Convierte iconos huérfanos (del pool anterior) a iconos del pool actual para que
     // el tablero siempre sea 100% vaciable tras un cambio de tanda.
