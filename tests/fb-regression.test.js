@@ -9,7 +9,7 @@ const { makeEl, getMemoEl } = require('./dom-stub.js');
 require('../game.js');
 
 const cv = globalThis.window.__cv;
-const { FX, State, Config, I18n, Settings, Adventure, Meta, ModeSignals, Game, Toasts, Boards, Themes } = cv;
+const { FX, State, Config, I18n, Settings, Adventure, Meta, ModeSignals, Game, Toasts, Boards, Themes, Modal } = cv;
 const root = path.join(__dirname, '..');
 
 function withRandomSequence(seq, fn) {
@@ -265,6 +265,40 @@ test('FB-7: UI de cofres conserva feedback clicable y tarjeta persistente', () =
     }
   } finally {
     Settings.lang = prevLang;
+  }
+});
+
+test('FB-8: cerrar un modal secundario tras game over vuelve al inicio', () => {
+  const prev = {
+    status: State.status,
+    mode: State.mode,
+    screen: document.body.dataset.screen,
+    modalId: Modal._id,
+  };
+  try {
+    State.status = 'over';
+    State.mode = 'supervivencia';
+    document.body.dataset.screen = 'game';
+
+    Modal.open('modal-over');
+    Modal.close();
+    assert.equal(State.status, 'over', 'cerrar el resumen no debe saltar antes de abrir la opcion');
+    assert.equal(document.body.dataset.screen, 'game');
+
+    Modal.open('modal-chests');
+    Modal.close();
+
+    assert.equal(State.status, 'idle');
+    assert.equal(document.body.dataset.screen, 'start');
+    assert.equal(document.querySelector('#overlay').hidden, true);
+  } finally {
+    document.querySelector('#overlay').hidden = true;
+    document.body.classList.remove('modal-open');
+    Modal._last = null;
+    State.status = prev.status;
+    State.mode = prev.mode;
+    document.body.dataset.screen = prev.screen;
+    Modal._id = prev.modalId;
   }
 });
 
