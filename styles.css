@@ -1351,34 +1351,41 @@ body.reduced-fx .cell.tide-warn { animation: none; background: rgba(122,215,255,
   top: 0;
   pointer-events: none;
   will-change: transform, opacity;
-  filter: drop-shadow(0 0 14px rgba(255,216,77,.52)) drop-shadow(0 8px 18px rgba(0,0,0,.45));
+  filter: drop-shadow(0 0 14px rgba(255,216,77,.38)) drop-shadow(0 10px 22px rgba(0,0,0,.48));
 }
 .grant-flyer-card {
-  min-width: 78px;
-  height: 42px;
+  min-width: 92px;
+  height: 48px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 10px 7px 8px;
-  border: 1px solid rgba(255,216,77,.58);
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255,236,143,.96), rgba(255,188,63,.94));
-  color: #241600;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.46);
+  gap: 9px;
+  padding: 8px 12px 8px 9px;
+  border: 1px solid rgba(255,216,77,.42);
+  border-radius: 15px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 42%),
+    linear-gradient(180deg, rgba(28,39,82,.96), rgba(12,18,45,.98));
+  color: #f8fbff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 0 0 1px rgba(255,216,77,.12);
 }
 .grant-flyer-ic {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   display: grid;
   place-items: center;
-  border-radius: 9px;
-  background: rgba(39,24,0,.12);
+  border-radius: 10px;
+  background: rgba(255,216,77,.14);
+  box-shadow: inset 0 0 0 1px rgba(255,216,77,.16);
 }
 .grant-flyer-ic .ic,
-.grant-flyer-ic .icv2-inline { width: 20px; height: 20px; }
+.grant-flyer-ic .icv2-inline { width: 22px; height: 22px; }
 .grant-flyer-tx { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; line-height: 1; }
-.grant-flyer-tx b { font-size: .82rem; font-weight: 1000; }
-.grant-flyer-tx small { max-width: 46px; margin-top: 3px; font-size: .48rem; font-weight: 1000; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .72; }
+.grant-flyer-tx b { color: var(--gold); font-size: .9rem; font-weight: 1000; font-variant-numeric: tabular-nums; }
+.grant-flyer-tx small { max-width: 58px; margin-top: 4px; color: rgba(255,255,255,.72); font-size: .56rem; font-weight: 900; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 1; }
+.reward-flyer-coin .grant-flyer-card { border-color: rgba(255,216,77,.52); }
+.reward-flyer-coin .grant-flyer-ic { background: rgba(255,216,77,.18); }
+.reward-flyer-power .grant-flyer-card { border-color: rgba(122,215,255,.36); }
+.reward-flyer-power .grant-flyer-ic { background: rgba(122,215,255,.12); box-shadow: inset 0 0 0 1px rgba(122,215,255,.14); }
 .board-wrap.surv-wave-up { animation: surv-wave-up .9s ease-out; border-color: rgba(255,216,77,.82); }
 .board-wrap.surv-wave-soon { animation: surv-wave-soon .56s ease-out; border-color: rgba(255,178,77,.76); }
 @keyframes surv-wave-soon { 45% { transform: translateY(-1px) scale(1.008); filter: saturate(1.14); } }

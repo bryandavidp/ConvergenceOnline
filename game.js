@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.11';
+  const VERSION = '2.6.12';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -1365,34 +1365,63 @@
     // Ventaja concedida (FBK-09): el icono del booster APARECE en el centro del
     // tablero (donde están los ojos) con chispa dorada y luego "cae" hacia la barra
     // de boosters — deja claro qué has ganado y a dónde ha ido. Antes: invisible (H4).
-    grantPop(token, targetId, label) {
-      if (motionOff() || !token || !targetId) return;
-      const target = document.querySelector(`.booster[data-b="${targetId}"]`);
-      const targetIcon = target && (target.querySelector('.b-ic') || target);
-      const source = document.querySelector('body.mode-surv .score-side .power-rings') || $('.board-wrap');
-      if (!targetIcon || !source) return;
-      const sr = source.getBoundingClientRect();
-      const tr = targetIcon.getBoundingClientRect();
-      if (!sr.width || !tr.width) return;
-      const sx = sr.left + sr.width / 2, sy = sr.top + sr.height / 2;
+    _rewardSourcePoint() {
+      const anchor = $('.gscore') || $('.score-row') || $('#hud-score');
+      if (!anchor) return null;
+      const r = anchor.getBoundingClientRect();
+      if (!r.width && !r.height) return null;
+      const x = Math.min(window.innerWidth - 64, r.right + 36);
+      return { x, y: r.top + r.height / 2 };
+    },
+    rewardFlyout({ iconMarkup, targetEl, label, amount = '+1', tone = 'gold' }) {
+      if (motionOff() || !iconMarkup || !targetEl) return;
+      const src = this._rewardSourcePoint();
+      const tr = targetEl.getBoundingClientRect();
+      if (!src || !tr.width) return;
+      const sx = src.x, sy = src.y;
       const tx = tr.left + tr.width / 2, ty = tr.top + tr.height / 2;
       const flyer = document.createElement('span');
-      flyer.className = 'grant-flyer';
+      flyer.className = 'grant-flyer reward-flyer-' + tone;
       flyer.setAttribute('aria-hidden', 'true');
       flyer.style.left = sx + 'px';
       flyer.style.top = sy + 'px';
-      const iconMarkup = targetIcon.innerHTML || iconAnyInline(token);
-      flyer.innerHTML = `<span class="grant-flyer-card"><span class="grant-flyer-ic">${iconMarkup}</span><span class="grant-flyer-tx"><b>+1</b><small>${esc(label || 'Poder')}</small></span></span>`;
+      flyer.innerHTML = `<span class="grant-flyer-card"><span class="grant-flyer-ic">${iconMarkup}</span><span class="grant-flyer-tx"><b>${esc(amount)}</b><small>${esc(label || 'Recompensa')}</small></span></span>`;
       document.body.appendChild(flyer);
       const dx = tx - sx, dy = ty - sy;
       const anim = flyer.animate([
-        { transform: 'translate(-50%, -50%) scale(.62)', opacity: 0 },
-        { transform: 'translate(-50%, -50%) scale(1.06)', opacity: 1, offset: .14 },
-        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: .44 },
-        { transform: `translate(calc(-50% + ${dx * .66}px), calc(-50% + ${dy * .66}px)) scale(.9)`, opacity: 1, offset: .78 },
+        { transform: 'translate(-50%, -50%) scale(.62)', opacity: 0, easing: 'cubic-bezier(.2,.85,.25,1)' },
+        { transform: 'translate(-50%, -50%) scale(1.05)', opacity: 1, offset: .10 },
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: .62, easing: 'cubic-bezier(.18,.82,.22,1)' },
+        { transform: `translate(calc(-50% + ${dx * .62}px), calc(-50% + ${dy * .62}px)) scale(.88)`, opacity: 1, offset: .84 },
         { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.42)`, opacity: 0 },
-      ], { duration: 1600, easing: 'cubic-bezier(.18,.82,.22,1)' });
+      ], { duration: 3200, easing: 'linear' });
       anim.finished.catch(() => { }).then(() => flyer.remove());
+    },
+    grantPop(token, targetId, label) {
+      const target = document.querySelector(`.booster[data-b="${targetId}"]`);
+      const targetIcon = target && (target.querySelector('.b-ic') || target);
+      if (!targetIcon) return;
+      this.rewardFlyout({
+        iconMarkup: targetIcon.innerHTML || iconAnyInline(token),
+        targetEl: targetIcon,
+        label: label || 'Poder',
+        amount: '+1',
+        tone: 'power',
+      });
+    },
+    coinsReward(amount, label) {
+      amount = Math.max(0, amount | 0);
+      if (!amount) return;
+      const target = (State.mode === 'supervivencia' && $('#hud-run-coins-wrap')) || $('#hud-coins');
+      if (!target) return;
+      const icon = target.querySelector('.ic') || $('#hud-coins')?.parentElement?.querySelector('.ic');
+      this.rewardFlyout({
+        iconMarkup: icon ? icon.outerHTML : iconInline('coin'),
+        targetEl: target,
+        label: label || I18n.t('coins'),
+        amount: '+' + fmtNum(amount),
+        tone: 'coin',
+      });
     },
     // Pérdida de vida (FBK-10): los corazones del HUD reaccionan como DAÑO (sacudida
     // + destello rojo), reforzando que ha sido malo (no lo celebra el marco dorado).
@@ -1437,13 +1466,13 @@
           tag.textContent = '+1';
           if (count) { count.classList.remove('count-pop'); void count.offsetWidth; count.classList.add('count-pop'); }
         };
-        if (motionOff()) land(); else setTimeout(land, 1400);
+        if (motionOff()) land(); else setTimeout(land, 2920);
         b._grantTimer = setTimeout(() => {
           b.classList.remove('just-granted', 'grant-incoming');
           if (count) count.classList.remove('count-pop');
           const tag = b.querySelector('.earned-tag');
           if (tag && tag.parentNode === b) tag.remove();
-        }, motionOff() ? 900 : 2300);
+        }, motionOff() ? 900 : 4300);
       }
     },
 
@@ -1838,7 +1867,9 @@
   };
   const Modal = {
     _last: null,
+    _id: null,
     open(id) {
+      this._id = id;
       this._last = document.activeElement;
       document.body.classList.add('modal-open');
       $('#overlay').hidden = false;
@@ -1850,11 +1881,18 @@
       if (focusable) focusable.focus({ preventScroll: true });
     },
     close() {
+      const closedId = this._id;
+      this._id = null;
+      const exitEndedGame = closedId && closedId !== 'modal-over' &&
+        State.status === 'over' && document.body.dataset.screen === 'game';
       document.body.classList.remove('modal-open');
       $('#overlay').hidden = true; document.querySelectorAll('.modal').forEach(m => m.hidden = true);
       // Accesibilidad: devolver el foco al elemento que abrió el modal.
       if (this._last && this._last.focus) { try { this._last.focus(); } catch (_) { } }
       this._last = null;
+      // Si un modal secundario se cierra tras el resumen de game over, ya no
+      // hay un modal util al que volver: salimos igual que con "Menu".
+      if (exitEndedGame) Game.quit();
     },
   };
 
@@ -3501,6 +3539,7 @@
       if (clearedWave >= 15) coins += Math.round(Math.pow(clearedWave - 14, 1.5) * 2); // Kicker
       coins = Math.max(3, coins);
       Meta.addCoins(coins); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
+      Render.coinsReward(coins, I18n.t('coins'));
       // Coreografía de toasts (SV-13): en oleadas de hito, la recompensa de monedas
       // se FUSIONA con el toast del hito (antes eran dos toasts pisándose); en el
       // resto, va sola. Protege el canal de feedback en el instante de más carga.
@@ -5761,6 +5800,8 @@
       State.score += points;
       State.coinsRun += coins;
       Meta.addCoins(coins);
+      Econ.refresh();
+      Render.coinsReward(coins, I18n.t('coins'));
 
       if (State.mode === 'supervivencia') {
         Survival.charge = Math.min(100, Survival.charge + 25);
