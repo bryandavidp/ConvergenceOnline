@@ -62,10 +62,10 @@ function mulberry32(seed) {
  * bot consistente es inmortal en Contrarreloj/Supervivencia (hallazgo del
  * primer baseline: la dificultad de esos modos es cognitiva, no mecánica). */
 const PROFILES = {
-  //           reacción(ms)  política   errores        lapsos
-  skilled: { reaction: 550, policy: 'greedy', errorRate: 0.03, lapse: { p: 0.04, ms: 2200 } },
-  average: { reaction: 900, policy: 'greedy', errorRate: 0.08, lapse: { p: 0.10, ms: 2800 } },
-  casual:  { reaction: 1400, policy: 'random', errorRate: 0.15, lapse: { p: 0.18, ms: 3400 } },
+  //           reacción(ms)  política   errores        lapsos                      caza de anclas (JF-04, B-J2)
+  skilled: { reaction: 550, policy: 'greedy', errorRate: 0.03, lapse: { p: 0.04, ms: 2200 }, bossAware: 0.7 },
+  average: { reaction: 900, policy: 'greedy', errorRate: 0.08, lapse: { p: 0.10, ms: 2800 }, bossAware: 0.35 },
+  casual:  { reaction: 1400, policy: 'random', errorRate: 0.15, lapse: { p: 0.18, ms: 3400 }, bossAware: 0.1 },
 };
 
 /* ---------- Bot ---------- */
@@ -106,6 +106,18 @@ function botAct(profile, rng, stats) {
   if (rng() < profile.errorRate) {
     const bad = listBadTaps();
     if (bad.length) { cv.Game.activate(bad[(rng() * bad.length) | 0]); return; }
+  }
+  // Bot boss-aware (JF-04, B-J2): con un encuentro activo, prioriza con prob.
+  // `bossAware` las jugadas que golpean un ancla del jefe (converger un icono que
+  // vive sobre un tile `boss` expuesto). Sin esto el sim no ve el sistema de jefes.
+  if (cv.Bosses && cv.Bosses.enc && profile.bossAware && rng() < profile.bossAware) {
+    const { State } = cv;
+    let bestA = null;
+    for (const p of plays) {
+      const hits = cv.Engine.converging(p[0]).some((j) => { const t = State.tiles[j]; return t && t.type === 'boss'; });
+      if (hits && (!bestA || p[1] > bestA[1])) bestA = p;
+    }
+    if (bestA) { cv.Game.activate(bestA[0]); return; }
   }
   let pick;
   if (profile.policy === 'random') pick = plays[(rng() * plays.length) | 0][0];
