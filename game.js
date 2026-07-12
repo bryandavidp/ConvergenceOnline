@@ -881,6 +881,12 @@
   // elección determinista de mutadores diarios/semanales sin servidor (GM-15/22).
   const hash32 = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0; return Math.abs(h); };
   const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  const fmtNum = (n) => {
+    const v = Math.floor(+n || 0);
+    const sign = v < 0 ? '-' : '';
+    return sign + String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  };
+  const fmtSigned = (n) => (n > 0 ? '+' : '') + fmtNum(n);
   // Escapado HTML único para TODO texto interpolado en template strings que acaben en
   // innerHTML. Cualquier dato de usuario o texto variable debe pasar por aquí.
   const esc = (s) => String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
@@ -1394,7 +1400,15 @@
       const bar = $('#booster-bar');
       if (bar) { bar.classList.remove('grant'); void bar.offsetWidth; bar.classList.add('grant'); setTimeout(() => bar.classList.remove('grant'), 720); }
       const b = document.querySelector(`.booster[data-b="${id}"]`);
-      if (b) { b.classList.remove('just-granted'); void b.offsetWidth; b.classList.add('just-granted'); setTimeout(() => b.classList.remove('just-granted'), 760); }
+      if (b) {
+        b.classList.remove('just-granted');
+        let tag = b.querySelector('.earned-tag');
+        if (!tag) { tag = document.createElement('span'); tag.className = 'earned-tag'; b.appendChild(tag); }
+        tag.textContent = '+1';
+        void b.offsetWidth;
+        b.classList.add('just-granted');
+        setTimeout(() => { b.classList.remove('just-granted'); if (tag && tag.parentNode === b) tag.remove(); }, 900);
+      }
     },
 
     hint(indices, on) { indices.forEach(i => this.cells[i].classList.toggle('hint', on)); },
@@ -1421,9 +1435,13 @@
     bump(el) { el.getAnimations().forEach(a => a.cancel()); el.animate([{}, { transform: 'scale(1.18)', color: '#ffd84d', offset: .5 }, {}], { duration: 300, easing: 'ease' }); },
 
     hud() {
-      $('#hud-score').textContent = State.displayScore;
+      $('#hud-score').textContent = fmtNum(State.displayScore);
       $('#hud-level').textContent = State.level;
-      $('#hud-best').textContent = Storage.best;
+      $('#hud-best').textContent = fmtNum(Storage.best);
+      const runCoins = $('#hud-run-coins');
+      const runWrap = $('#hud-run-coins-wrap');
+      if (runCoins) runCoins.textContent = fmtSigned(State.coinsRun || (State.mode === 'supervivencia' ? Survival.runCoins : 0));
+      if (runWrap) runWrap.hidden = State.mode !== 'supervivencia' && !(State.coinsRun > 0);
 
       const isZen = State.mode === 'zen';
       const bestWrap = $('#hud-best-wrap');
@@ -1483,6 +1501,8 @@
       const occ = Engine.occupation();
       const fill = $('#hud-progress-fill');
       fill.style.width = occ.toFixed(1) + '%';
+      const occPct = $('#occ-percent');
+      if (occPct) occPct.textContent = Math.round(occ) + '%';
       const dl = occ >= 85 ? 2 : occ >= 65 ? 1 : 0;
       fill.classList.toggle('warn', dl === 1);
       fill.classList.toggle('danger', dl === 2);
@@ -1510,8 +1530,9 @@
         if (t - State.lastDangerAt > 900) { State.lastDangerAt = t; Sound.danger(); Haptics.fire(10); }
       }
       // Pistas
-      $('#hint-badge').textContent = State.hintsLeft;
-      $('#btn-hint').disabled = State.hintsLeft <= 0 || performance.now() < State.hintReadyAt;
+      ['hint-badge', 'hint-badge-tool'].forEach((id) => { const el = $('#' + id); if (el) el.textContent = fmtNum(State.hintsLeft); });
+      const hintDisabled = State.hintsLeft <= 0 || performance.now() < State.hintReadyAt;
+      ['btn-hint', 'btn-hint-tool'].forEach((id) => { const el = $('#' + id); if (el) el.disabled = hintDisabled; });
       this.multChip();
     },
     // Chip del multiplicador TOTAL (combo × fiebre × temporal): un único número
@@ -1700,7 +1721,8 @@
     },
     // Recorta el contenedor sin expulsar nunca el toast de evento activo.
     _trim(el) {
-      while (el.children.length > 3) {
+      const maxVisible = document.body.classList.contains('mode-surv') ? 2 : 3;
+      while (el.children.length > maxVisible) {
         const victim = Array.prototype.find.call(el.children, c => c !== this._evActive && !c.classList.contains('out'));
         if (!victim) break;
         victim.remove();
@@ -1753,11 +1775,11 @@
   // Cuenta ascendente de un número en un elemento (recompensa visual barata).
   function countUp(el, to, ms, prefix, suffix) {
     if (!el) return; to = +to || 0; prefix = prefix || ''; suffix = suffix || '';
-    if (Settings.reducedFx || to <= 0) { el.textContent = prefix + to + suffix; return; }
+    if (Settings.reducedFx || to <= 0) { el.textContent = prefix + fmtNum(to) + suffix; return; }
     const t0 = performance.now();
     const step = (now) => {
       const k = Math.min(1, (now - t0) / ms);
-      el.textContent = prefix + Math.round(to * (1 - Math.pow(1 - k, 3))) + suffix;
+      el.textContent = prefix + fmtNum(Math.round(to * (1 - Math.pow(1 - k, 3)))) + suffix;
       if (k < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -2663,10 +2685,14 @@
       const scope = root || document;
       scope.querySelectorAll('[data-econ]').forEach((el) => {
         const kind = el.dataset.econ;
-        el.innerHTML = (this.ICONS[kind] ? iconInline(this.ICONS[kind]) + ' ' : '') + this.valueOf(kind);
+        el.innerHTML = (this.ICONS[kind] ? iconInline(this.ICONS[kind]) + ' ' : '') + fmtNum(this.valueOf(kind));
       });
       // Pills del nuevo sistema base: solo el número (el icono es un SVG aparte).
-      scope.querySelectorAll('[data-econ-num]').forEach((el) => { el.textContent = this.valueOf(el.dataset.econNum); });
+      scope.querySelectorAll('[data-econ-num]').forEach((el) => { el.textContent = fmtNum(this.valueOf(el.dataset.econNum)); });
+      const runCoins = $('#hud-run-coins');
+      const runWrap = $('#hud-run-coins-wrap');
+      if (runCoins) runCoins.textContent = fmtSigned(State.coinsRun || 0);
+      if (runWrap) runWrap.hidden = State.mode !== 'supervivencia' && !(State.coinsRun > 0);
       updateSinkBadges();
     },
   };
@@ -4039,7 +4065,8 @@
       el.innerHTML = list.map((id) => {
         const d = Boosters.DEFS[id], n = this.inv[id] || 0;
         const arming = this.armed === id ? ' arming' : '';
-        return `<button class="booster${n <= 0 ? ' empty' : ''}${arming}" data-b="${id}" aria-label="${d.name}: ${n}" ${n <= 0 ? 'aria-disabled="true"' : ''}><span class="b-ic">${BOOSTER_IMG[id] ? iconAnyInline(BOOSTER_IMG[id]) : d.glyph}</span><span class="b-count" data-bc="${id}">${n}</span></button>`;
+        const label = ({ freeze: 'Hielo', wild: 'Barrido', x2: 'Doble' }[id]) || d.name;
+        return `<button class="booster${n <= 0 ? ' empty' : ''}${arming}" data-b="${id}" aria-label="${d.name}: ${n}" ${n <= 0 ? 'aria-disabled="true"' : ''}><span class="b-ic">${BOOSTER_IMG[id] ? iconAnyInline(BOOSTER_IMG[id]) : d.glyph}</span><span class="b-label">${esc(label)}</span><span class="b-count" data-bc="${id}">${fmtNum(n)}</span></button>`;
       }).join('');
       el.querySelectorAll('.booster').forEach((b) => b.addEventListener('click', () => this.armBooster(b.dataset.b)));
     },
@@ -4924,7 +4951,7 @@
         const diff = State.score - State.displayScore;
         const stepv = Math.max(1, Math.ceil(Math.abs(diff) * 0.18));
         State.displayScore += diff > 0 ? Math.min(stepv, diff) : Math.max(-stepv, diff);
-        $('#hud-score').textContent = State.displayScore;
+        $('#hud-score').textContent = fmtNum(State.displayScore);
       }
 
       // Las partículas se animan solas en el compositor (WAAPI); el bucle solo
@@ -5070,6 +5097,7 @@
       this.showGoalBanner();
       Render.combo();
       Boards.apply();
+      Econ.refresh();
       Screens.show('game');
       FX.resize();
       Loop.start();
@@ -5327,7 +5355,7 @@
       // Popup con el multiplicador TOTAL (combo × fiebre × temporal × sprint ×
       // bendiciones), no solo el de combo: lo que ves es lo que multiplicó (GM-16).
       const totMult = State.comboMult * this.feverBoost() * (State.tempMult || 1) * this.sprintMult() * survMult;
-      Render.popup(i, totMult > 1.001 ? `+${points} ×${totMult % 1 === 0 ? totMult : totMult.toFixed(1)}` : `+${points}`, color);
+      Render.popup(i, totMult > 1.001 ? `+${fmtNum(points)} ×${totMult % 1 === 0 ? totMult : totMult.toFixed(1)}` : `+${fmtNum(points)}`, color);
       Render.bump($('#hud-score'));
       Render.combo();
       this.updateDailyObjective(scoreBefore);
@@ -5725,7 +5753,7 @@
 
       const msg = `Tablero limpio · +${points} · +${coins} ${I18n.t('coins')}${extra.length ? ' · ' + extra.join(' · ') : ''}`;
       Toasts.show(msg, 'good', 2400, 'v2:four-pointed-star');
-      Render.popup(center, `+${points} BONUS`, '#ffd84d');
+      Render.popup(center, `+${fmtNum(points)} BONUS`, '#ffd84d');
       Render.bump($('#hud-score'));
       if (State.mode === 'zen') Render.bump($('#hud-zen-wrap'));
       Render.flash();
@@ -6918,7 +6946,7 @@
     if (Storage.user) Screens.show('start'); else Screens.show('login');
     refreshStart();
     { const ni = $('#player-name'), pr = Storage.profile; if (ni && pr && pr.name && pr.name !== 'Invitado') ni.value = pr.name; }
-    $('#login-form').addEventListener('submit', (e) => { e.preventDefault(); enterApp($('#player-name').value.trim()); });
+    { const lf = $('#login-form'); if (lf) lf.addEventListener('submit', (e) => { e.preventDefault(); const ni = $('#player-name'); enterApp(ni ? ni.value.trim() : ''); }); }
     { const g = $('#btn-guest'); if (g) g.addEventListener('click', () => enterApp('Invitado')); }
     { const bt = $('#btn-tutorial'); if (bt) bt.addEventListener('click', () => { Modal.close(); Coach.start(); }); }
     { const cs = $('#coach-skip'); if (cs) cs.addEventListener('click', () => Coach.skip()); }
@@ -6937,6 +6965,7 @@
       else if (a === 'profile') { Sound.ensure(); openMedals(); }
       else if (a === 'edit-name') { e.preventDefault(); e.stopPropagation(); Sound.ui(); renameProfile(); }
       else if (a === 'buy-coins') { Sound.ensure(); openShop(); }
+      else if (a === 'buy-gems') { Sound.ensure(); openShop(); }
       else if (a === 'bell') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
       else if (a === 'play') { Sound.ensure(); Screens.show('modes'); }
       else if (a === 'home-classic') { Sound.ui(); Worlds.open(); }
@@ -6958,6 +6987,7 @@
     });
 
     // Inicio (el grueso del cableado vive en el handler delegado data-act de arriba).
+    const on = (id, ev, fn, opts) => { const el = $('#' + id); if (el) el.addEventListener(ev, fn, opts); };
     { const bp = $('#btn-play'); if (bp) bp.addEventListener('click', () => { Sound.ensure(); Screens.show('modes'); }); }
     { const rr = $('#btn-resume-run'); if (rr) rr.addEventListener('click', () => { Sound.ensure(); if (!Game.resumeSaved()) { rr.hidden = true; Sound.miss(); } }); }
     { const bi = $('#btn-install'); if (bi) bi.addEventListener('click', () => PWA.promptInstall()); }
@@ -6965,7 +6995,7 @@
     { const sc = $('#shop-close'); if (sc) sc.addEventListener('click', () => Cosmetics.apply()); }
 
     // Modos
-    $('#modes-back').addEventListener('click', () => Screens.show('start'));
+    on('modes-back', 'click', () => Screens.show('start'));
     { const ms = $('#modes-settings'); if (ms) ms.addEventListener('click', () => { Sound.ui(); openSettings(); }); }
     { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { Modal.close(); Game.start('aventura', 'normal'); }); }
     document.querySelectorAll('[data-surv-diff]').forEach((b) => b.addEventListener('click', () => {
@@ -6991,12 +7021,14 @@
     { const mn = $('#btn-multi-notify'); if (mn) mn.addEventListener('click', () => { Sound.success(); Toasts.show(I18n.t('notify_ok'), 'good', 1800); Modal.close(); }); }
 
     // Juego
-    $('#btn-hint').addEventListener('click', () => Game.hint());
-    $('#btn-pause').addEventListener('click', () => Game.pause());
-    $('#btn-restart').addEventListener('click', () => Game.restart());
+    on('btn-hint', 'click', () => Game.hint());
+    on('btn-hint-tool', 'click', () => Game.hint());
+    on('btn-pause', 'click', () => Game.pause());
+    { const br = $('#btn-restart'); if (br) br.addEventListener('click', () => Game.restart()); }
     { // Salir en plena partida: doble toque para evitar abandonos accidentales.
       let quitArm = 0;
-      $('#btn-quit').addEventListener('click', () => {
+      const bq = $('#btn-quit');
+      if (bq) bq.addEventListener('click', () => {
         if (State.status !== 'playing' && State.status !== 'paused') return Game.quit();
         const now = performance.now();
         if (now - quitArm < 2500) { quitArm = 0; Game.quit(); }
@@ -7005,13 +7037,13 @@
     }
 
     // Modales
-    $('#btn-resume').addEventListener('click', () => Game.resume());
-    $('#btn-pause-restart').addEventListener('click', () => Game.restart());
-    $('#btn-pause-quit').addEventListener('click', () => Game.quit());
-    $('#btn-next-level').addEventListener('click', () => Game.nextLevel());
-    $('#btn-retry').addEventListener('click', () => Game.restart());
+    on('btn-resume', 'click', () => Game.resume());
+    on('btn-pause-restart', 'click', () => Game.restart());
+    on('btn-pause-quit', 'click', () => Game.quit());
+    on('btn-next-level', 'click', () => Game.nextLevel());
+    on('btn-retry', 'click', () => Game.restart());
     { const bsh = $('#btn-share'); if (bsh) bsh.addEventListener('click', () => Share.go()); }
-    $('#btn-over-quit').addEventListener('click', () => Game.quit());
+    on('btn-over-quit', 'click', () => Game.quit());
     { const rv = $('#btn-revive'); if (rv) rv.addEventListener('click', () => Survival.revive()); }
     { const gu = $('#btn-giveup'); if (gu) gu.addEventListener('click', () => Survival.giveUp()); }
     { const ds = $('#btn-daily-start'); if (ds) ds.addEventListener('click', () => { Sound.ensure(); Modal.close(); Game.startDaily(); }); }

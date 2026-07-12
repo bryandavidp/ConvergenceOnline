@@ -185,42 +185,73 @@
 
     <!-- ============ PANTALLA: JUEGO ============ -->
     <section class="screen screen-game" id="screen-game" aria-label="Partida" hidden>
-      <!-- Cabecera de estado (solo lectura): contexto + puntuación héroe + controles meta -->
+      <!-- Cabecera de recursos + pausa: el estado de partida vive cerca del tablero -->
       <header class="gtop">
         <div class="gtop-main">
-          <div class="gctx">
-            <span class="g-chip lvl-chip"><span class="g-k" data-i18n="hud_level">Nivel</span> <b id="hud-level">1</b></span>
-            <span class="g-chip time-chip"><b id="hud-time">0:00</b></span>
-            <span class="g-chip rec-chip" id="hud-best-wrap"><img class="ic ic-inline" src="img/ui/trophy.png" alt=""> <b id="hud-best">0</b></span>
-            <span class="g-chip zen-chip" id="hud-zen-wrap" hidden>🌸 <b id="hud-zen-flowers">0</b></span>
-            <span class="g-chip ghost-chip" id="hud-ghost" hidden>▲</span>
+          <div class="hud-wallet" aria-label="Recursos">
+            <button class="wallet-pill wallet-coins" type="button" data-act="buy-coins" aria-label="Comprar monedas">
+              <img class="ic ic-inline" src="img/ui/coin.png" alt="">
+              <b id="hud-coins" data-econ-num="coins">0</b>
+              <span class="wallet-plus" aria-hidden="true"></span>
+            </button>
+            <button class="wallet-pill wallet-gems" type="button" data-act="buy-gems" aria-label="Comprar gemas">
+              <img class="ic ic-inline" src="img/ui/gem.png" alt="">
+              <b id="hud-gems" data-econ-num="gems">0</b>
+              <span class="wallet-plus" aria-hidden="true"></span>
+            </button>
+            <span class="wallet-pill wallet-run" id="hud-run-coins-wrap" hidden><span>Run</span> <b id="hud-run-coins">+0</b></span>
           </div>
-          <div class="gscore"><span class="hud-value" id="hud-score">0</span><span class="mult-chip" id="hud-mult" aria-hidden="true">×1</span></div>
           <div class="controls">
             <button class="icon-btn" id="btn-pause" aria-label="Pausa"><span class="icv2" style="--icv2-url:url('img/icons-v2/9-media/pause.svg')" aria-hidden="true"></span></button>
-            <button class="icon-btn" id="btn-restart" aria-label="Reiniciar"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/refresh.svg')" aria-hidden="true"></span></button>
-            <button class="icon-btn" id="btn-quit" aria-label="Salir al menú"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/cross.svg')" aria-hidden="true"></span></button>
           </div>
         </div>
 
-        <!-- Contexto del modo + ocupación: se pega al borde superior del tablero -->
+        <div class="event-dock">
+          <div class="toasts" id="toasts" aria-live="polite"></div>
+        </div>
+
+        <!-- Contexto del modo + puntuación + ocupación: cerca del tablero -->
         <div class="gtop-context">
           <!-- Banner de objetivo (modo Aventura) -->
           <div class="obj-banner" id="obj-banner" hidden></div>
           <!-- Barra de Supervivencia: vidas + oleada + tiempo sobrevivido -->
           <div class="surv-bar" id="surv-bar" hidden>
-            <span class="surv-lives" id="surv-lives" data-explain="hud_lives_explain">❤️❤️❤️</span>
-            <div class="surv-wave-wrap">
-              <span class="surv-wave-row"><span class="surv-wave" id="surv-wave" data-explain="hud_wave_explain">Oleada 1</span><span class="surv-tier" id="surv-tier" aria-label="Tier de dificultad" data-explain="hud_tier_explain">N1</span><span class="surv-boss-flag" id="surv-boss-flag" data-i18n="surv_boss_soon" hidden>⚠ Jefe</span></span>
-              <span class="surv-waveprog" aria-hidden="true" data-explain="hud_waveprog_explain"><span class="surv-waveprog-fill" id="surv-waveprog-fill"></span></span>
-              <span class="surv-best-wave" id="surv-best-wave"></span>
+            <div class="surv-grid">
+              <span class="surv-metric surv-life-box"><span class="surv-k">Vidas</span><span class="surv-lives" id="surv-lives" data-explain="hud_lives_explain">❤️❤️❤️</span></span>
+              <div class="surv-wave-wrap">
+                <span class="surv-wave-row"><span class="surv-wave" id="surv-wave" data-explain="hud_wave_explain">Oleada 1</span><span class="surv-tier" id="surv-tier" aria-label="Tier de dificultad" data-explain="hud_tier_explain">N1</span><span class="surv-boss-flag" id="surv-boss-flag" data-i18n="surv_boss_soon" hidden>⚠ Jefe</span></span>
+                <span class="surv-waveprog" aria-hidden="true" data-explain="hud_waveprog_explain"><span class="surv-waveprog-fill" id="surv-waveprog-fill"></span></span>
+              </div>
+              <span class="surv-metric surv-time-box"><span class="surv-k" data-i18n="hud_time">Tiempo</span><span class="surv-time" id="surv-time" data-explain="hud_time_explain">0s</span></span>
             </div>
-            <span class="surv-time" id="surv-time" data-explain="hud_time_explain">0s</span>
+            <div class="surv-subrow"><span class="surv-best-wave" id="surv-best-wave"></span><span class="surv-next">Pool +1</span></div>
+            <div class="surv-build" id="surv-build" aria-label="Bendiciones activas" hidden></div>
           </div>
 
-          <!-- Fila de build (SV-10/11): chips de solo lectura con las bendiciones
-               con estado activo y el mutador semanal. Vacía => oculta. -->
-          <div class="surv-build" id="surv-build" aria-label="Bendiciones activas" hidden></div>
+          <div class="score-row" aria-label="Puntuación y frenesí">
+            <div class="score-side">
+              <div class="power-rings" id="power-rings" aria-hidden="true">
+                <svg viewBox="0 0 56 56">
+                  <circle class="pr-bg" cx="28" cy="28" r="24"/>
+                  <circle class="pr-fill pr-frenzy" id="pr-frenzy" cx="28" cy="28" r="24"/>
+                  <circle class="pr-bg" cx="28" cy="28" r="17"/>
+                  <circle class="pr-fill pr-charge" id="pr-charge" cx="28" cy="28" r="17"/>
+                </svg>
+                <span class="pr-flame">🔥</span>
+              </div>
+              <div class="gctx">
+                <span class="g-chip lvl-chip"><span class="g-k" data-i18n="hud_level">Nivel</span> <b id="hud-level">1</b></span>
+                <span class="g-chip time-chip"><b id="hud-time">0:00</b></span>
+                <span class="g-chip zen-chip" id="hud-zen-wrap" hidden>🌸 <b id="hud-zen-flowers">0</b></span>
+                <span class="g-chip ghost-chip" id="hud-ghost" hidden>▲</span>
+              </div>
+            </div>
+            <div class="gscore">
+              <span class="hud-value" id="hud-score">0</span>
+              <span class="score-meta"><span class="score-best" id="hud-best-wrap"><span data-i18n="best_score">Mejor puntuación</span> <b id="hud-best">0</b></span><span class="mult-chip" id="hud-mult" aria-hidden="true">×1</span></span>
+            </div>
+            <span class="score-spacer" aria-hidden="true"></span>
+          </div>
 
           <!-- Ocupación: franja fina pegada al tablero (estados warn/danger) -->
           <div class="occ" data-explain="hud_danger_explain">
@@ -232,6 +263,7 @@
               <span class="sr-only" id="hud-progress-label" data-i18n="hud_occ">Ocupación</span>
               <div class="bar-fill" id="hud-progress-fill"></div>
             </div>
+            <span class="occ-percent" id="occ-percent">0%</span>
           </div>
         </div>
         <!-- Velocidad: conservada para Render.hud pero oculta (HUD minimalista) -->
@@ -239,9 +271,6 @@
       </header>
 
       <div class="board-area">
-        <!-- Notificaciones: encima del tablero (suben, nunca dentro) -->
-        <div class="toasts" id="toasts" aria-live="polite"></div>
-
         <!-- Indicador de combo (multiplicador): encima del tablero, a la derecha -->
         <div class="combo" id="combo" hidden aria-hidden="true">
           <svg viewBox="0 0 44 44" class="combo-ring"><circle class="combo-ring-bg" cx="22" cy="22" r="19"/><circle class="combo-ring-fill" id="combo-ring-fill" cx="22" cy="22" r="19"/></svg>
@@ -272,19 +301,10 @@
         </div>
       </div>
 
-      <!-- Barra de potenciadores (Supervivencia): zona inferior, al alcance del pulgar.
-           Anillos concéntricos (GM-21): interior = carga → potenciador · exterior = frenesí → furia -->
+      <!-- Barra de potenciadores (Supervivencia): toolbelt de objetos + pista integrada -->
       <div class="booster-bar" id="booster-bar" hidden>
-        <div class="power-rings" id="power-rings" aria-hidden="true">
-          <svg viewBox="0 0 56 56">
-            <circle class="pr-bg" cx="28" cy="28" r="24"/>
-            <circle class="pr-fill pr-frenzy" id="pr-frenzy" cx="28" cy="28" r="24"/>
-            <circle class="pr-bg" cx="28" cy="28" r="17"/>
-            <circle class="pr-fill pr-charge" id="pr-charge" cx="28" cy="28" r="17"/>
-          </svg>
-          <span class="pr-flame">🔥</span>
-        </div>
         <div class="boosters" id="boosters"></div>
+        <button class="booster hint-tool" id="btn-hint-tool" aria-label="Pista"><span class="b-ic"><img class="ic ic-inline" src="img/ui/search.png" alt=""></span><span class="b-label">Pista</span><span class="b-count" id="hint-badge-tool">3</span></button>
       </div>
 
       <!-- Pista: FAB en la zona natural del pulgar (acción usada en juego) -->
