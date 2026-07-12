@@ -310,4 +310,77 @@ Sin errores de consola. **Todos los eventos ≥4/5 y distinguibles → se cumple
 
 ## ✅ Plan completado (v2.6.8 → v2.6.11)
 
-Las 5 fases (FBK-0…4) están implementadas, verificadas (85 tests, eslint, prueba en navegador) y commiteadas. Refinamientos opcionales que quedan anotados para el futuro (no bloqueantes): coach contextual de 1ª vez, leyenda persistente del HUD, verbos de tablero adicionales (meteoro con estela/cráter más marcados, eco fantasma, aviso de jefe en el color del jefe), y degradar monedas/récord del toast a un count-up en el HUD.
+Las 5 fases (FBK-0…4) están implementadas, verificadas (85 tests, eslint, prueba en navegador) y commiteadas. Refinamientos opcionales que quedan anotados para el futuro (no bloqueantes): verbos de tablero adicionales (meteoro con estela/cráter más marcados, eco fantasma, aviso de jefe en el color del jefe). La **Fase 5** (abajo) recoge la leyenda persistente del HUD, el coach de 1ª vez y el paso de monedas/récord al HUD.
+
+---
+
+## 11. Fase 5 — Leyenda persistente del HUD y mejoras adjuntas (PLANIFICADA)
+
+> Objetivo: que **durante la partida** (no solo en la tarjeta de arranque) cualquiera entienda qué significa cada elemento del HUD de Supervivencia — sobre todo la **barra de peligro**, que hoy es literalmente el medidor de "cuánto te falta para perder" y no tiene etiqueta visible. Dirección aprobada por el propietario (2026-07-12): **leyenda por capas** + las **4 mejoras adjuntas**. Prefijo de tareas: **HUD-**.
+
+### Diagnóstico del HUD actual (Supervivencia)
+Elementos ya presentes pero **opacos** para un recién llegado (ver `index.html` §screen-game y `Render.hud`):
+- `#surv-lives` (❤️❤️❤️) — vidas. *Relativamente claro.*
+- `#surv-wave` ("Oleada N") + `.surv-waveprog` (barra fina de **cuenta atrás a la siguiente oleada**, sin etiqueta) + `#surv-tier` ("N1", pill de dificultad **críptica**).
+- `#surv-time` ("0s") — tiempo sobrevivido, sin etiqueta.
+- **`.occ` / `#hud-progress-fill`** — barra de **ocupación del tablero** con estados `warn`(ámbar)/`danger`(rojo). **Es el medidor de la condición de derrota** (si el tablero se llena, pierdes vida) y su única etiqueta es `sr-only` "Ocupación" → invisible para quien ve. **Máxima prioridad.**
+- `#surv-build` — chips de bendiciones + mutador 📅 (ya re-consultable al tocar; es el patrón a generalizar).
+
+### Principio: leyenda POR CAPAS
+1. **Capa siempre visible (mínima):** solo lo crítico lleva etiqueta/icono fijo → la **barra de peligro**. El resto no se recarga.
+2. **Capa "?" (bajo demanda):** un botón de ayuda persistente abre una **leyenda completa** que explica cada elemento; también reabre el objetivo.
+3. **Capa "tocar para explicar":** tocar cualquier chip del HUD muestra una línea de ayuda (generaliza el patrón del chip 📅). Cero carga visual.
+
+### Tareas
+
+**HUD-01 · Barra de peligro legible** *(la meta de "no perder")* — **prioridad alta**
+- Añadir a `.occ` una **etiqueta/icono persistente** a la izquierda de la barra: en estado normal, discreta (p. ej. icono de tablero + texto muy pequeño "Tablero"); al entrar en `warn`/`danger`, cambia a **⚠ "Peligro"** y la barra se refuerza (leve pulso en `danger`, respetando `reduced-fx`).
+- Toggle de estado desde `Render.hud` (donde ya se aplican `.warn`/`.danger` a `#hud-progress-fill`, game.js ~1448): añadir la clase/el texto al nuevo elemento de etiqueta.
+- i18n: `hud_danger` ("Peligro"/"Danger"), `hud_board_fill` ("Tablero"/"Board"). Mantener `aria`/`sr-only` actualizado.
+- Aceptación: sin leer nada más, se entiende que esa barra creciendo = acercarse a perder.
+
+**HUD-02 · Botón "?" + leyenda desplegable** *(objetivo re-consultable)*
+- Añadir un botón "?" persistente y pequeño en el HUD de Supervivencia (candidato: fila `.controls`, junto a pausa/reiniciar/salir).
+- Al tocarlo → `Survival.legend()` abre un **modal/tarjeta de leyenda** que explica cada elemento con su icono + una línea: corazones = vidas; Oleada N = ronda (sube dificultad); barra fina superior = cuenta atrás a la siguiente oleada; N1/N2 = nivel de dificultad; **barra de peligro = cuánto se llena el tablero (si se llena, pierdes vida)**; tiempo = cuánto llevas vivo; + el objetivo (sobrevivir).
+- Reutilizar el estilo de la tarjeta de intro (`.si-card`) o un modal propio `#surv-legend`. La tarjeta de arranque (Fase 3) puede enlazar aquí ("¿qué es esto?").
+- Enlazable también desde el menú de pausa.
+
+**HUD-03 · Tocar para explicar + aclarar el tier** *(generaliza el patrón 📅)*
+- Delegación de eventos sobre `#surv-bar` y `.occ`: cada elemento con `data-explain="clave"` muestra su línea al tocarlo (vía un toast corto/tooltip). Elementos: vidas, oleada, **tier N{n}** ("Dificultad: sube cada varias oleadas"), tiempo, barra de peligro, barra de oleada.
+- Aprovecha que el chip 📅 ya hace esto; unificar en un solo manejador.
+- Descubribilidad: el botón "?" (HUD-02) es la vía principal; el toque es un extra. Opcional: micro-hint "toca para saber más" una sola vez.
+
+**HUD-05 · Monedas/récord al HUD** *(menos toasts)*
+- Sacar del flujo de toasts las recompensas rutinarias de oleada:
+  - Monedas: "+N" con count-up sobre el pill de monedas del HUD (reutilizar `countUp`) o un flotante breve, en vez del `Toasts.event` de `_waveReward` (caso no-hito).
+  - Récord: destello/etiqueta "¡Récord!" en `#surv-best-wave` (ya existe en la surv-bar) en vez del toast de `_checkWaveRecord`.
+- El **toast de hito** (oleada %5/%10 con cofre/gemas) se mantiene: es una celebración mayor. Conservar `announce()` para accesibilidad.
+- Efecto: el canal de toasts queda casi exclusivamente para **eventos** (amenazas/ventajas), reforzando la jerarquía de la Fase 0.
+
+**HUD-06 · Coach contextual de 1ª vez** *(onboarding)*
+- Solo la **primera** partida de Supervivencia (flag persistido en `cv_meta`, retrocompatible): tras la cuenta atrás de arranque, 2–3 coach-marks señalando **corazones (vidas) → barra de peligro → oleada**. Reutilizar el módulo `Coach` (coach-marks ya existen para el tutorial de Clásico) o una versión ligera.
+- Skippable y una sola vez.
+
+### Sub-fases (entregables incrementales)
+- **5A** — HUD-01 (barra de peligro) + HUD-03/tier: el núcleo de la leyenda, mayor valor.
+- **5B** — HUD-02 (botón "?" + leyenda desplegable).
+- **5C** — HUD-05 (monedas/récord al HUD).
+- **5D** — HUD-06 (coach de 1ª vez).
+
+### Transversal
+- i18n ES/EN para todo string nuevo; nada hardcodeado.
+- Paridad `reduced-fx` / `prefers-reduced-motion` en cualquier animación nueva (pulso de peligro, count-up, destello de récord, coach) — reutilizar `motionOff()`.
+- **Móvil (portrait) manda**: el botón "?" y la etiqueta de peligro deben caber sin romper la surv-bar; verificar en viewport estrecho.
+- Persistencia retrocompatible (`cv_meta`): el flag "coach de Supervivencia visto" se rellena por defecto al cargar.
+- Bump de versión (`VERSION`/`CACHE`/`?v=`) al tocar `game.js`/`styles.css`.
+
+### Criterios de aceptación
+1. Un recién llegado, **sin** la tarjeta de arranque, puede señalar cada elemento del HUD y decir qué significa (vía "?" o al tocarlo).
+2. El significado de la **barra de peligro** es obvio (etiqueta + estado); se entiende que llenarse = perder.
+3. El tier N1/N2 deja de ser críptico (explicado en leyenda y al tocar).
+4. Menos toasts rutinarios: monedas/récord ya no ocupan el canal de eventos.
+5. El coach de 1ª vez aparece una sola vez y es skippable.
+6. Verificado en móvil (portrait), con paridad de accesibilidad.
+
+### Bitácora Fase 5
+- ⏳ Pendiente de implementación (plan aprobado; sub-fases 5A→5D).
