@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.12';
+  const VERSION = '2.6.14';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -1380,6 +1380,16 @@
       if (!src || !tr.width) return;
       const sx = src.x, sy = src.y;
       const tx = tr.left + tr.width / 2, ty = tr.top + tr.height / 2;
+      const dx = tx - sx, dy = ty - sy;
+      const distance = Math.hypot(dx, dy);
+      const holdMs = 230;
+      const flightMs = Math.round(clamp(520 + distance * 0.30, 640, 860));
+      const duration = holdMs + flightMs;
+      const launchAt = holdMs / duration;
+      const flyAt = (p) => launchAt + (1 - launchAt) * p;
+      const lift = clamp(distance * 0.16, 36, 112);
+      const swerve = clamp(Math.abs(dx) * 0.07, 12, 34) * (dx < 0 ? -1 : 1);
+      const stageTransform = `translate(calc(-50% + ${swerve * -0.25}px), calc(-50% - 16px))`;
       const flyer = document.createElement('span');
       flyer.className = 'grant-flyer reward-flyer-' + tone;
       flyer.setAttribute('aria-hidden', 'true');
@@ -1387,21 +1397,30 @@
       flyer.style.top = sy + 'px';
       flyer.innerHTML = `<span class="grant-flyer-card"><span class="grant-flyer-ic">${iconMarkup}</span><span class="grant-flyer-tx"><b>${esc(amount)}</b><small>${esc(label || 'Recompensa')}</small></span></span>`;
       document.body.appendChild(flyer);
-      const dx = tx - sx, dy = ty - sy;
       const anim = flyer.animate([
-        { transform: 'translate(-50%, -50%) scale(.62)', opacity: 0, easing: 'cubic-bezier(.2,.85,.25,1)' },
-        { transform: 'translate(-50%, -50%) scale(1.05)', opacity: 1, offset: .10 },
-        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: .62, easing: 'cubic-bezier(.18,.82,.22,1)' },
-        { transform: `translate(calc(-50% + ${dx * .62}px), calc(-50% + ${dy * .62}px)) scale(.88)`, opacity: 1, offset: .84 },
-        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.42)`, opacity: 0 },
-      ], { duration: 3200, easing: 'linear' });
-      anim.finished.catch(() => { }).then(() => flyer.remove());
+        { transform: 'translate(-50%, -50%) scale(.48) rotate(-10deg)', opacity: 0 },
+        { transform: `${stageTransform} scale(1.2) rotate(${dx < 0 ? -8 : 8}deg)`, opacity: 1, offset: Math.min(.14, launchAt * .58) },
+        { transform: `${stageTransform} scale(1.08) rotate(${dx < 0 ? -4 : 4}deg)`, opacity: 1, offset: launchAt },
+        { transform: `translate(calc(-50% + ${dx * .22 + swerve}px), calc(-50% + ${dy * .12 - lift}px)) scale(1.04) rotate(${dx < 0 ? -12 : 12}deg)`, opacity: 1, offset: flyAt(.26) },
+        { transform: `translate(calc(-50% + ${dx * .76}px), calc(-50% + ${dy * .70 - lift * .28}px)) scale(.76) rotate(${dx < 0 ? -5 : 5}deg)`, opacity: 1, offset: flyAt(.76) },
+        { transform: `translate(calc(-50% + ${dx * .98}px), calc(-50% + ${dy * .98 - 3}px)) scale(.42) rotate(0deg)`, opacity: .95, offset: flyAt(.94) },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.24) rotate(0deg)`, opacity: 0 },
+      ], { duration, easing: 'cubic-bezier(.16,.86,.18,1)' });
+      const landTimer = setTimeout(() => {
+        if (!targetEl.isConnected) return;
+        targetEl.classList.remove('reward-land');
+        void targetEl.offsetWidth;
+        targetEl.classList.add('reward-land');
+        setTimeout(() => targetEl.classList.remove('reward-land'), 460);
+      }, Math.max(120, duration - 120));
+      anim.finished.catch(() => { }).then(() => { clearTimeout(landTimer); flyer.remove(); });
+      return duration;
     },
     grantPop(token, targetId, label) {
       const target = document.querySelector(`.booster[data-b="${targetId}"]`);
       const targetIcon = target && (target.querySelector('.b-ic') || target);
       if (!targetIcon) return;
-      this.rewardFlyout({
+      return this.rewardFlyout({
         iconMarkup: targetIcon.innerHTML || iconAnyInline(token),
         targetEl: targetIcon,
         label: label || 'Poder',
@@ -1412,10 +1431,11 @@
     coinsReward(amount, label) {
       amount = Math.max(0, amount | 0);
       if (!amount) return;
-      const target = (State.mode === 'supervivencia' && $('#hud-run-coins-wrap')) || $('#hud-coins');
+      const coinNum = $('#hud-coins');
+      const target = (State.mode === 'supervivencia' && $('#hud-run-coins-wrap')) || (coinNum && coinNum.parentElement) || coinNum;
       if (!target) return;
-      const icon = target.querySelector('.ic') || $('#hud-coins')?.parentElement?.querySelector('.ic');
-      this.rewardFlyout({
+      const icon = target.querySelector('.ic') || (coinNum && coinNum.parentElement && coinNum.parentElement.querySelector('.ic'));
+      return this.rewardFlyout({
         iconMarkup: icon ? icon.outerHTML : iconInline('coin'),
         targetEl: target,
         label: label || I18n.t('coins'),
@@ -1454,9 +1474,10 @@
         if (oldTag) oldTag.remove();
         const count = b.querySelector('.b-count');
         if (count) count.classList.remove('count-pop');
+        let flyMs = 0;
         if (!motionOff() && token) {
           b.classList.add('grant-incoming');
-          this.grantPop(token, id, label);
+          flyMs = this.grantPop(token, id, label) || 0;
         }
         const land = () => {
           b.classList.remove('grant-incoming');
@@ -1466,13 +1487,13 @@
           tag.textContent = '+1';
           if (count) { count.classList.remove('count-pop'); void count.offsetWidth; count.classList.add('count-pop'); }
         };
-        if (motionOff()) land(); else setTimeout(land, 2920);
+        if (motionOff()) land(); else setTimeout(land, Math.max(360, flyMs - 80));
         b._grantTimer = setTimeout(() => {
           b.classList.remove('just-granted', 'grant-incoming');
           if (count) count.classList.remove('count-pop');
           const tag = b.querySelector('.earned-tag');
           if (tag && tag.parentNode === b) tag.remove();
-        }, motionOff() ? 900 : 4300);
+        }, motionOff() ? 900 : Math.max(1250, flyMs + 760));
       }
     },
 
