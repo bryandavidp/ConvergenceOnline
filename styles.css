@@ -1296,6 +1296,12 @@ body.reduced-fx .cell.tide-warn { animation: none; background: rgba(122,215,255,
 .board-wrap.surv-frost,
 .board-wrap.boost-freeze { animation: frost-field 1.05s ease; border-color: rgba(140,235,255,.82); }
 .board-wrap.life-blast { animation: life-blast .88s ease-out; border-color: rgba(255,216,77,.88); }
+/* Código de valencia del feedback (FBK-02): tokens compartidos para que el usuario
+   capte "bueno vs malo" por color. `fbk-boon` da al marco un destello dorado en los
+   eventos de BENEFICIO que hoy no tenían marco propio (p. ej. la ventaja concedida). */
+:root { --fbk-threat: #ff5d73; --fbk-cold: #8cebff; --fbk-boon: #ffd24d; --fbk-warn: #ffb24d; --fbk-info: #7ad7ff; }
+.board-wrap.fbk-boon { animation: fbk-boon .8s ease-out; border-color: rgba(255,210,77,.9); }
+@keyframes fbk-boon { 30% { box-shadow: 0 18px 44px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,210,77,.72), 0 0 34px rgba(255,210,77,.42); } }
 .board-wrap.board-clear-bonus { animation: board-clear-bonus .95s cubic-bezier(.18,.8,.22,1); border-color: rgba(255,216,77,.96); }
 .board-wrap.boost-bomb { animation: bomb-board .58s ease-out; }
 .board-wrap.boost-clearLine { animation: line-board .58s ease-out; }
@@ -1401,6 +1407,7 @@ body.reduced-fx .cell.tide-warn { animation: none; background: rgba(122,215,255,
    legibles y multilínea. --tc = color del tipo (lo fijan .info/.good/...). */
 .toast {
   --tc: var(--accent-2);
+  position: relative; overflow: hidden;
   display: flex; align-items: center; gap: 10px;
   padding: 11px 14px; border-radius: 14px; font-weight: 800; font-size: .95rem; line-height: 1.25;
   text-align: left; color: #fff;
@@ -1429,7 +1436,17 @@ body.reduced-fx .cell.tide-warn { animation: none; background: rgba(122,215,255,
 @keyframes toast-in { from { opacity: 0; transform: translateY(12px) scale(.96); } }
 @keyframes toast-out { to { opacity: 0; transform: translateY(-8px); } }
 @keyframes toast-pop { 50% { transform: scale(1.06); } }
+/* Toast de EVENTO (FBK-03): un poco más alto y con barra de tiempo restante, para
+   que el usuario vea de un vistazo cuánto le queda para leerlo. */
+.toast.event { padding-bottom: 13px; }
+.toast .toast-bar {
+  position: absolute; left: 0; bottom: 0; height: 3px; width: 100%;
+  background: var(--tc); transform-origin: left center;
+  animation: toast-bar-shrink linear forwards;
+}
+@keyframes toast-bar-shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 body.reduced-fx .toast { animation: none; }
+body.reduced-fx .toast .toast-bar { display: none; }
 
 /* ---------- Overlay y modales ---------- */
 .overlay {
@@ -2769,6 +2786,7 @@ body.reduced-fx .board-wrap.impact-mid,
 body.reduced-fx .board-wrap.impact-heavy,
 body.reduced-fx .board-wrap.time-pressure,
 body.reduced-fx .board-wrap.surv-wave-soon,
+body.reduced-fx .board-wrap.fbk-boon,
 body.reduced-fx .combo.urgent,
 body.reduced-fx .booster-bar.grant,
 body.reduced-fx .booster.just-granted,
