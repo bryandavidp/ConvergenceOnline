@@ -248,5 +248,26 @@ Verificado: 85 tests verdes, eslint limpio, prueba en navegador (`?dev`) sin err
 - Degradar monedas/récord del toast al HUD (count-up) → Fase 2.
 - Beat de "ventaja concedida" con vuelo al centro (hoy: marco dorado + campana + toast, suficiente para H4) → refinamiento Fase 2.
 
-### ⏳ Fase 2 — Legibilidad de recompensas — SIGUIENTE
-(pendiente: FBK-09 ventaja "vuela al centro", FBK-10 pérdida de vida como daño, FBK-11 coherencia cromática beneficio≠amenaza)
+### ✅ Fase 3 — Onboarding / arranque (v2.6.10) — COMPLETADA
+> Adelantada sobre la Fase 2 por decisión del propietario: era su queja explícita (H5).
+Verificado: 85 tests verdes (incluida paridad i18n ES/EN de las claves nuevas), eslint limpio, prueba en navegador (`?dev`) sin errores.
+
+**Entregado (FBK-07):**
+- **Tarjeta de objetivo + cuenta 3·2·1**: `Survival.intro()` monta un overlay `#surv-intro` sobre el tablero (scrim ligero, tablero visible detrás) con 3 líneas — 🎯 sobrevivir, 🔗 juntar iconos, ❤️ perder vida por desbordamiento — y el mutador semanal integrado; luego cuenta 3·2·1 → "¡YA!" y se desvanece. i18n nuevas: `surv_intro_goal/merge/lose`, `surv_go` (ES+EN).
+- **Ventana de gracia**: `Survival._introActive()` gatea `blockSpawn()` y el `onTick()` (no avanza el reloj de oleada ni caen eventos hasta terminar la cuenta). Verificado: durante el intro `spawnsBlocked=true`; al terminar (~3.2s) `introActive=false`, spawns reanudan, overlay oculto.
+- **Fin de la avalancha de toasts del inicio (H5)**: en Supervivencia se suprimen `lets_play` ("¡A jugar!"), `ModeSignals.brief` (resumen de modo) y el toast de mutador; todo eso lo cubre la tarjeta. Verificado en vivo: 0 toasts de apertura del juego (solo apareció el aviso de "nueva versión" de la PWA, propio de mi limpieza de caché, no del flujo normal).
+- Paridad `reduced-fx`: sin animaciones, tarjeta breve (1.6s) y arranque.
+
+**Notas:**
+- El overlay es hijo de `.board-wrap` (position:relative, tamaño del tablero) → `inset:0` lo encaja exacto. Se crea una vez y se reutiliza; sobrevive a `Render.buildBoard()` (que solo vacía `#board`).
+- Durante el intro el overlay bloquea taps en el tablero (sin `pointer-events` propios que jueguen): grace real, sin toques accidentales.
+
+**Pendiente (heredado):**
+- Coach contextual de 1ª vez señalando vidas/oleada/temporizador → opcional, la tarjeta ya cubre el objetivo; se puede añadir luego reutilizando el módulo `Coach`.
+- Leyenda persistente del HUD (etiquetas en oleada/vidas/tiempo) → opcional.
+
+### ⏳ Fase 2 — Legibilidad de recompensas — PENDIENTE
+(FBK-09 ventaja "vuela al centro", FBK-10 pérdida de vida como daño claro, FBK-11 coherencia cromática beneficio≠amenaza)
+
+### ⏳ Fase 4 — Pulido y accesibilidad — PENDIENTE
+(FBK-08 reduced-motion/daltonismo/announce con nombre de evento, FBK-12 re-test del protocolo de usuario primerizo)

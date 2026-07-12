@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.9';
+  const VERSION = '2.6.10';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -403,6 +403,10 @@
         st_points: 'Puntos', st_level: 'Nivel', st_combo: 'Combo máx.', st_removed: 'Eliminados', st_time: 'Tiempo', st_record: 'Récord', st_wave: 'Oleada', st_surv: 'Sobreviviste', st_best: 'Mejor',
         st_games: 'Partidas', st_bestcombo: 'Mejor combo', st_totaltime: 'Tiempo total',
         surv_new_icons: '¡Nuevos iconos! Sube la dificultad',
+        surv_intro_goal: 'Sobrevive el mayor número de oleadas.',
+        surv_intro_merge: 'Junta iconos iguales tocando la casilla vacía entre ellos.',
+        surv_intro_lose: 'Si el tablero se llena, pierdes una vida.',
+        surv_go: '¡YA!',
         aim_hint: 'Toca dónde aplicarlo', pu_freeze: 'Spawns congelados', pu_x2: '¡Puntos x2!', pu_bomb: '¡Boom!', pu_ray: '¡Rayo!', pu_icons: 'iconos', chain_boom: 'Cadena ×{n}',
         surv_meteor: '¡Lluvia de iconos!', surv_quake: '¡Terremoto!', surv_frost: 'Frente helado', surv_life_lost: 'Vida liberada · -1',
         surv_boss_soon: '⚠ Jefe', surv_boss_meteor_warn: '¡Lluvia de iconos inminente!', surv_boss_quake_warn: '¡Terremoto inminente!', surv_boss_frost_warn: '¡Frente helado inminente!',
@@ -581,6 +585,10 @@
         st_points: 'Score', st_level: 'Level', st_combo: 'Max combo', st_removed: 'Cleared', st_time: 'Time', st_record: 'Best', st_wave: 'Wave', st_surv: 'Survived', st_best: 'Best',
         st_games: 'Games', st_bestcombo: 'Best combo', st_totaltime: 'Total time',
         surv_new_icons: 'New icons! Difficulty up',
+        surv_intro_goal: 'Survive as many waves as you can.',
+        surv_intro_merge: 'Merge matching icons by tapping the empty cell between them.',
+        surv_intro_lose: 'If the board fills up, you lose a life.',
+        surv_go: 'GO!',
         aim_hint: 'Tap where to use it', pu_freeze: 'Spawns frozen', pu_x2: 'Double points!', pu_bomb: 'Boom!', pu_ray: 'Ray!', pu_icons: 'icons', chain_boom: 'Chain ×{n}',
         surv_meteor: 'Icon rain!', surv_quake: 'Quake!', surv_frost: 'Frozen front', surv_life_lost: 'Life blast · -1',
         surv_boss_soon: '⚠ Boss', surv_boss_meteor_warn: 'Icon rain incoming!', surv_boss_quake_warn: 'Quake incoming!', surv_boss_frost_warn: 'Frozen front incoming!',
@@ -3104,8 +3112,11 @@
       this._anyBoosterUsed = false; this._t3Count = 0; this._livesLostThisWave = 0; this._waves1Life = 0; // hazañas (SV-31)
       this._lastBossType = null; // eco/jefes SV-40/43 (el override de sim/tests NO se toca aquí)
       this.scoreBoost = 0; this.magnetMoves = 0; this.goldenWaveWaves = 0;
+      this._introUntil = 0; // ventana de gracia del arranque (FBK-07)
       this.mut = this.weeklyMut(); // mutador semanal (GM-22)
-      if (this.mut.id !== 'none') Toasts.show(I18n.t('survmut_' + this.mut.id), 'info', 2400, '📅');
+      // El tema de la semana ya NO se anuncia por toast al arrancar (parte de la
+      // avalancha del inicio, H5): se muestra en la tarjeta de objetivo (intro) y
+      // sigue siendo re-consultable en el chip 📅.
       // Chip del mutador re-consultable (SV-11): tocar 📅 repite el aviso — el tema
       // de la semana deja de vivir solo en un toast de 2.4s al empezar.
       const bd = $('#surv-build');
@@ -3130,6 +3141,49 @@
       State.tempMult = 1;
       document.body.classList.remove('aiming', 'surv-frenzy-active', 'surv-frenzy-1', 'surv-frenzy-2', 'surv-frenzy-3');
       const bd = $('#surv-build'); if (bd) { bd.hidden = true; bd.innerHTML = ''; }
+    },
+    // ---- Arranque de partida (FBK-07): tarjeta de objetivo + cuenta 3·2·1 + gracia --
+    // Ataca H5 (demasiados toasts al inicio, objetivo poco claro). En vez de soltar
+    // 3 toasts pisándose, muestra qué es el modo, cómo se pierde y la meta; luego una
+    // cuenta atrás sobre el tablero YA visible (el jugador ubica vidas/oleada) y una
+    // ventana de gracia sin spawns ni eventos hasta que termina.
+    INTRO_MS: 3200,
+    _introUntil: 0,
+    _introActive() { return performance.now() < (this._introUntil || 0); },
+    intro() {
+      const parent = document.querySelector('.board-wrap'); if (!parent) return;
+      let ov = document.getElementById('surv-intro');
+      if (!ov) { ov = document.createElement('div'); ov.id = 'surv-intro'; ov.className = 'surv-intro'; parent.appendChild(ov); }
+      const mutLine = this.mut.id !== 'none' ? `<div class="si-mut">📅 ${esc(I18n.t('survmut_' + this.mut.id))}</div>` : '';
+      ov.innerHTML = `<div class="si-card">
+          <div class="si-goal"><span class="si-ic">🎯</span><span>${esc(I18n.t('surv_intro_goal'))}</span></div>
+          <div class="si-goal"><span class="si-ic">🔗</span><span>${esc(I18n.t('surv_intro_merge'))}</span></div>
+          <div class="si-goal"><span class="si-ic">❤️</span><span>${esc(I18n.t('surv_intro_lose'))}</span></div>
+          ${mutLine}
+        </div><div class="si-count" id="si-count" aria-hidden="true"></div>`;
+      ov.hidden = false; ov.classList.remove('out');
+      announce(I18n.t('surv_intro_goal'));
+      // Sin animaciones: tarjeta breve y arranque (respeta reduced-fx).
+      if (Settings.reducedFx) {
+        this._introUntil = performance.now() + 1600;
+        setTimeout(() => { if (ov) ov.hidden = true; }, 1600);
+        return;
+      }
+      this._introUntil = performance.now() + this.INTRO_MS;
+      const cEl = ov.querySelector('#si-count');
+      let n = 3;
+      const tick = () => {
+        if (State.status !== 'playing') { ov.hidden = true; return; }
+        if (n > 0) {
+          cEl.textContent = n; cEl.classList.remove('go', 'pulse'); void cEl.offsetWidth; cEl.classList.add('pulse');
+          Sound.tap(); Haptics.tap(); n--; setTimeout(tick, 640);
+        } else {
+          cEl.textContent = I18n.t('surv_go'); cEl.classList.remove('pulse'); void cEl.offsetWidth; cEl.classList.add('go');
+          Sound.waveUp(); Haptics.combo();
+          setTimeout(() => { ov.classList.add('out'); setTimeout(() => { ov.hidden = true; ov.classList.remove('out'); }, 320); }, 360);
+        }
+      };
+      setTimeout(tick, 900); // ~0.9s para leer los objetivos antes de la cuenta
     },
     // Telegrafiado del jefe (GM-18): si la PRÓXIMA oleada trae evento jefe, se decide
     // ya el tipo (pre-roll) para poder avisar de forma específica antes de que llegue.
@@ -3337,7 +3391,7 @@
     setup() { const tn = this.tune(); if (this.wave >= 3) this._traps(Math.min(tn.trapCap, tn.trapBase * (this.wave - 2))); this._placeBombs(1); },
     frozen() { return performance.now() < this.freezeUntil; },
     locked() { return performance.now() < this.lockUntil; },
-    blockSpawn() { return this.frozen() || this.locked(); },
+    blockSpawn() { return this.frozen() || this.locked() || this._introActive(); },
     _lock(ms, cls) {
       this.lockUntil = Math.max(this.lockUntil || 0, performance.now() + ms);
       if (cls) Render.boardEvent(cls, ms);
@@ -3392,6 +3446,9 @@
     },
     onTick(dt) {
       if (State.status !== 'playing') return;
+      // Ventana de gracia del arranque (FBK-07): el reloj de oleada no avanza ni caen
+      // eventos hasta que termina la cuenta atrás; el tablero se ve pero no amenaza.
+      if (this._introActive()) { this.render(); return; }
       this.survSec = State.elapsed;
       const wasFrenzy = this._r.frenzyActive;
       if (this.x2Until && !this.x2Active()) { this.x2Until = 0; this._syncMult(); }
@@ -4924,8 +4981,11 @@
       Loop.start();
       if (Settings.music) Music.start();
       announce(`Partida iniciada. Modo ${Config.MODES[mode].name}.`);
-      Toasts.show(I18n.t('lets_play'), 'good', 1400);
-      ModeSignals.brief(mode);
+      // Supervivencia (FBK-07): en vez de la avalancha de toasts del arranque
+      // (¡A jugar! + resumen de modo + mutador), una tarjeta de objetivo con cuenta
+      // atrás y ventana de gracia. El resto de modos conservan su aviso breve.
+      if (isSurv) { Survival.intro(); }
+      else { Toasts.show(I18n.t('lets_play'), 'good', 1400); ModeSignals.brief(mode); }
       // Aventura: intro de bioma una vez por capítulo (congela hasta descartar) y,
       // al entrar en capítulo, elección de ruta (GM-06; encadenada tras la intro).
       if (mode === 'aventura') {
