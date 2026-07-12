@@ -372,26 +372,44 @@
     </div>
 
     <!-- Fin de partida -->
-    <div class="modal modal-over" id="modal-over" role="dialog" aria-modal="true" aria-labelledby="over-title" hidden>
+    <div class="modal modal-over endgame-modal" id="modal-over" role="dialog" aria-modal="true" aria-labelledby="over-title" hidden>
       <div class="m-head"><span class="m-emblem" id="over-emblem" aria-hidden="true"><span class="icv2" style="--icv2-url:url('img/icons-v2/6-buildings/flag.svg')"></span></span><h2 id="over-title">¡Misión fallida!</h2></div>
-      <div class="modal-body">
-        <p class="record-badge" id="over-record" hidden><span class="icv2 icv2-inline" style="--icv2-url:url('img/icons-v2/12-misc/four-pointed-star.svg')" aria-hidden="true"></span> ¡Nuevo récord!</p>
-        <p class="modal-sub" id="over-reason"></p>
-        <!-- Héroe de Supervivencia (SV-22): la OLEADA es el ancla del modo, no el score.
-             Grande + contexto de récord (near-miss o marca nueva). -->
-        <div class="over-hero" id="over-hero" hidden></div>
-        <!-- Hoja de la run (SV-22): la cadena de bendiciones elegidas + jefes superados. -->
-        <div class="over-run" id="over-run" hidden></div>
-        <!-- Progreso de rango del Superviviente (SV-30): +N oleadas de servicio → rango. -->
-        <div class="over-service" id="over-service" hidden></div>
-        <p class="over-near" id="over-near" hidden></p>
-        <p class="modal-meta" id="over-meta"></p>
-        <div class="stats" id="over-stats"></div>
+      <div class="modal-body endgame-body">
+        <section class="endgame-section endgame-result" aria-label="Resultado principal">
+          <p class="record-badge" id="over-record" hidden><span class="icv2 icv2-inline" style="--icv2-url:url('img/icons-v2/12-misc/four-pointed-star.svg')" aria-hidden="true"></span> ¡Nuevo récord!</p>
+          <p class="modal-sub" id="over-reason"></p>
+          <!-- Héroe de Supervivencia (SV-22): la OLEADA es el ancla del modo, no el score. -->
+          <div class="over-hero" id="over-hero" hidden></div>
+          <div class="over-score" id="over-score"></div>
+          <p class="over-near" id="over-near" hidden></p>
+          <p class="modal-meta" id="over-meta"></p>
+        </section>
+
+        <section class="endgame-section endgame-ledger" id="over-ledger" aria-label="Hoja de supervivencia" hidden>
+          <div class="endgame-section-title"><span data-i18n="over_surv_sheet">Hoja de supervivencia</span><small data-i18n="over_surv_sheet_sub">bendiciones, jefes y rango</small></div>
+          <!-- Hoja de la run (SV-22): la cadena de bendiciones elegidas + jefes superados. -->
+          <div class="over-run" id="over-run" hidden></div>
+          <!-- Progreso de rango del Superviviente (SV-30): +N oleadas de servicio → rango. -->
+          <div class="over-service" id="over-service" hidden></div>
+        </section>
+
+        <section class="endgame-section endgame-performance" aria-label="Rendimiento">
+          <div class="endgame-section-title"><span data-i18n="over_performance">Rendimiento</span><small data-i18n="over_performance_sub">lo esencial de la run</small></div>
+          <div class="stats" id="over-stats"></div>
+        </section>
+
         <div class="over-peak" id="over-peak" hidden></div>
         <div class="over-exped" id="over-exped" hidden></div>
-        <div class="over-xp" id="over-xp"></div>
-        <div class="over-ach" id="over-ach"></div>
-        <div class="over-next" id="over-next"></div>
+
+        <section class="endgame-section endgame-rewards" aria-label="Recompensas">
+          <div class="endgame-section-title"><span data-i18n="surv_rewards">Recompensas</span><small data-i18n="over_profile_general">perfil general</small></div>
+          <div class="over-xp" id="over-xp"></div>
+          <div class="over-ach" id="over-ach"></div>
+        </section>
+
+        <section class="endgame-section endgame-next" aria-label="Siguiente paso">
+          <div class="over-next" id="over-next"></div>
+        </section>
       </div>
       <div class="modal-actions modal-buttons">
         <button class="btn btn-primary btn-icon" id="btn-retry"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/8-ui/refresh.svg')" aria-hidden="true"></span><span data-i18n="retry">Reintentar</span></button>

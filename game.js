@@ -391,6 +391,17 @@
         progress_title: 'Progreso cercano', progress_daily: 'Misión diaria', progress_weekly: 'Reto semanal',
         progress_variety: 'Variedad de modos', progress_chests: 'Cofres listos', progress_cosmetic: 'Cosmético cercano',
         progress_ready: 'Listo', progress_left: 'faltan {n}', progress_modes_left: '{n} por probar',
+        over_surv_sheet: 'Hoja de supervivencia', over_surv_sheet_sub: 'bendiciones, jefes y rango',
+        over_performance: 'Rendimiento', over_performance_sub: 'lo esencial de la run',
+        over_profile_general: 'perfil general', over_wave_reached: 'Oleada alcanzada',
+        over_boons: 'Bendiciones elegidas', over_no_boons: 'Sin bendiciones',
+        over_bosses: 'Jefes', over_bosses_cleared: 'Superados', over_service_rank: 'Rango de supervivencia',
+        over_rank_up_short: 'Ascenso', over_this_run_waves: 'Oleadas esta run', over_toward_rank: 'Hacia {r}',
+        over_wave_progress_unit: 'Oleada = progreso', over_rank_reason: 'Sube porque alcanzaste la oleada {w}: cada oleada completada suma servicio al rango de Supervivencia.',
+        over_rank_reason_max: 'Rango máximo: cada oleada sigue sumando servicio vitalicio de Supervivencia.',
+        over_peak_title: 'Mejor momento', over_peak_sub: 'Pico de la run', over_peak_points: 'Puntos', over_peak_combo: 'Combo',
+        over_peak_chain: 'Cadena perfecta', over_peak_note_surv: 'Combo ×{c} en la oleada {w}: el tramo donde más puntos generaste de una sola cadena.',
+        over_peak_note_level: 'Combo ×{c}: el tramo donde más puntos generaste de una sola cadena.',
         empty_chests_title: 'Aún no tienes cofres', empty_chests_sub: 'Gana un cofre cada 10 oleadas en Supervivencia', empty_cta_surv: 'Jugar Supervivencia',
         empty_medals_title: 'Tu primera medalla te espera', empty_medals_sub: 'Juega una partida para empezar a desbloquear logros',
         empty_lb_title: 'Sin marcas todavía', empty_lb_sub: 'Juega cualquier modo para registrar tu primera marca', empty_cta_play: 'Elegir modo',
@@ -580,6 +591,17 @@
         progress_title: 'Nearby progress', progress_daily: 'Daily mission', progress_weekly: 'Weekly challenge',
         progress_variety: 'Mode variety', progress_chests: 'Ready chests', progress_cosmetic: 'Nearby cosmetic',
         progress_ready: 'Ready', progress_left: '{n} left', progress_modes_left: '{n} to try',
+        over_surv_sheet: 'Survival sheet', over_surv_sheet_sub: 'boons, bosses and rank',
+        over_performance: 'Performance', over_performance_sub: 'the run essentials',
+        over_profile_general: 'profile progress', over_wave_reached: 'Wave reached',
+        over_boons: 'Chosen boons', over_no_boons: 'No boons',
+        over_bosses: 'Bosses', over_bosses_cleared: 'Cleared', over_service_rank: 'Survival rank',
+        over_rank_up_short: 'Rank up', over_this_run_waves: 'Waves this run', over_toward_rank: 'Toward {r}',
+        over_wave_progress_unit: 'Wave = progress', over_rank_reason: 'It rises because you reached wave {w}: every cleared wave adds service to your Survival rank.',
+        over_rank_reason_max: 'Max rank: every wave still adds lifetime Survival service.',
+        over_peak_title: 'Best moment', over_peak_sub: 'Run peak', over_peak_points: 'Points', over_peak_combo: 'Combo',
+        over_peak_chain: 'Perfect chain', over_peak_note_surv: '×{c} combo on wave {w}: the stretch where one chain generated your most points.',
+        over_peak_note_level: '×{c} combo: the stretch where one chain generated your most points.',
         empty_chests_title: 'No chests yet', empty_chests_sub: 'Earn a chest every 10 waves in Survival', empty_cta_surv: 'Play Survival',
         empty_medals_title: 'Your first medal awaits', empty_medals_sub: 'Play a game to start unlocking achievements',
         empty_lb_title: 'No scores yet', empty_lb_sub: 'Play any mode to set your first score', empty_cta_play: 'Choose a mode',
@@ -5961,6 +5983,10 @@
     },
 
     fillStats() {
+      const isSurv = State.mode === 'supervivencia';
+      const overModal = $('#modal-over');
+      if (overModal) overModal.classList.toggle('is-survival', isSurv);
+
       const rec = $('#over-record');
       if (rec) {
         // En Supervivencia el récord de OLEADA lo muestra el héroe (SV-22): aquí solo
@@ -5969,12 +5995,21 @@
         if (this._survNew) rec.innerHTML = iconInline('shield') + ' ' + I18n.t('surv_time_record');
         else if (this.newRecord) rec.innerHTML = iconInline('trophy') + ' ' + I18n.t('new_record');
       }
+
+      {
+        const score = $('#over-score');
+        if (score) {
+          score.innerHTML = `<span class="over-score-v">${State.score}</span><span class="over-score-k">${esc(I18n.t('st_points'))}</span>`;
+          countUp($('#over-score .over-score-v'), State.score, 700);
+        }
+      }
+
       // Héroe de Supervivencia (SV-22): la OLEADA como protagonista + contexto de
       // récord. El near-miss de récord es el motor del reintento inmediato ("a 2 de
       // tu marca" convierte la derrota en asunto pendiente).
       {
-        const hero = $('#over-hero'), run = $('#over-run');
-        const isSurv = State.mode === 'supervivencia';
+        const hero = $('#over-hero'), run = $('#over-run'), ledger = $('#over-ledger');
+        if (ledger) ledger.hidden = !isSurv;
         if (hero) {
           hero.hidden = !isSurv;
           if (isSurv) {
@@ -5984,7 +6019,7 @@
             else if (best > 0 && best - wave > 0 && best - wave <= 3) { ctx = I18n.t('surv_over_wave_near').replace('{k}', best - wave).replace('{best}', best); ctxCls = 'near'; }
             else if (best > 0) { ctx = I18n.t('surv_over_record').replace('{best}', best); ctxCls = ''; }
             else { ctx = ''; ctxCls = ''; }
-            hero.innerHTML = `<div class="oh-wave"><span class="oh-label">${esc(I18n.t('st_wave'))}</span><span class="oh-num">${wave}</span></div>`
+            hero.innerHTML = `<div class="oh-wave"><span class="oh-label">${esc(I18n.t('over_wave_reached'))}</span><span class="oh-num">${wave}</span></div>`
               + (ctx ? `<div class="oh-ctx ${ctxCls}">${esc(ctx)}</div>` : '');
           }
         }
@@ -5992,12 +6027,15 @@
         if (run) {
           const log = isSurv ? (Survival._boonLog || []) : [];
           const bosses = isSurv ? (Survival._bossesSurvived || 0) : 0;
-          const show = isSurv && (log.length || bosses);
-          run.hidden = !show;
-          if (show) {
-            const chips = log.map((b) => `<span class="or-boon">${b.icon}</span>`).join('');
-            const bossTxt = bosses ? `<span class="or-bosses">${iconInline('shield')} ${I18n.t('surv_run_bosses').replace('{n}', bosses)}</span>` : '';
-            run.innerHTML = (chips ? `<div class="or-boons">${chips}</div>` : '') + bossTxt;
+          run.hidden = !isSurv;
+          if (isSurv) {
+            const boonIcon = { life: 'heart', charge: 'bolt', slow: 'clock', pack: 'bomb', frenzy: 'fire', magnet: 'magnet', score_boost: 'stats', golden_wave: 'crown' };
+            const chips = log.length
+              ? log.map((b) => `<span class="or-boon" title="${esc(I18n.t('boon_' + b.id))}">${boonIcon[b.id] ? iconAnyInline(boonIcon[b.id]) : esc(b.icon || '✨')}</span>`).join('')
+              : `<span class="or-empty">${esc(I18n.t('over_no_boons'))}</span>`;
+            run.innerHTML =
+              `<div class="or-build"><div class="or-label">${esc(I18n.t('over_boons'))}</div><div class="or-boons">${chips}</div></div>` +
+              `<div class="or-boss-card"><span class="or-label">${esc(I18n.t('over_bosses'))}</span><b>${bosses}</b><small>${esc(I18n.t('over_bosses_cleared'))}</small></div>`;
           }
         }
         // Progreso de rango (SV-30): "+N oleadas de servicio → Rango: total/next".
@@ -6007,9 +6045,23 @@
           svc.hidden = !(isSurv && res);
           if (isSurv && res) {
             const rk = res.rank;
+            const rankName = I18n.t('srank_' + rk.id);
+            const nextName = rk.next ? I18n.t('srank_' + rk.next) : I18n.t('surv_rank_max');
             const prog = rk.nextAt ? `${rk.total}/${rk.nextAt}` : '★';
-            const line = `+${Survival.wave} ${I18n.t('st_wave').toLowerCase()} · ${I18n.t('surv_rank_label')} <b>${esc(I18n.t('srank_' + rk.id))}</b> ${prog}`;
-            svc.innerHTML = (res.rankUp ? `<div class="os-up">${iconInline('upgrade')} ${esc(I18n.t('surv_rank_up').replace('{r}', I18n.t('srank_' + rk.id)))}</div>` : '') + `<div class="os-line">${line}</div>`;
+            const span = rk.nextAt ? Math.max(1, rk.nextAt - rk.at) : 1;
+            const pct = rk.nextAt ? clamp((rk.total - rk.at) / span * 100, 0, 100) : 100;
+            const toward = rk.nextAt ? I18n.t('over_toward_rank').replace('{r}', nextName) : I18n.t('surv_rank_max');
+            const reason = I18n.t(rk.nextAt ? 'over_rank_reason' : 'over_rank_reason_max').replace('{w}', Survival.wave);
+            svc.innerHTML =
+              `<div class="os-top"><div><span class="os-label">${esc(I18n.t('over_service_rank'))}</span><b class="os-rank">${esc(rankName)}</b></div>` +
+              (res.rankUp ? `<span class="os-up">${iconInline('upgrade')} ${esc(I18n.t('over_rank_up_short'))}</span>` : '') + `</div>` +
+              `<div class="os-grid">` +
+              `<span><b>+${Survival.wave}</b><small>${esc(I18n.t('over_this_run_waves'))}</small></span>` +
+              `<span><b>${esc(prog)}</b><small>${esc(toward)}</small></span>` +
+              `<span><b>1:1</b><small>${esc(I18n.t('over_wave_progress_unit'))}</small></span>` +
+              `</div>` +
+              `<div class="os-bar"><span style="width:${pct.toFixed(0)}%"></span></div>` +
+              `<div class="os-reason">${esc(reason)}</div>`;
             svc.classList.toggle('rankup', !!res.rankUp);
           }
         }
@@ -6030,10 +6082,19 @@
           const show = !!bp && bp.points >= 50;
           pk.hidden = !show;
           if (show) {
-            const where = State.mode === 'supervivencia'
-              ? ` · ${I18n.t('st_wave')} ${bp.wave}`
-              : (State.mode === 'clasico' || State.mode === 'aventura' ? ` · ${I18n.t('lvl')} ${bp.level}` : '');
-            pk.innerHTML = iconInline('star') + ' ' + esc(I18n.t('peak_moment').replace('{p}', bp.points).replace('{c}', bp.combo) + where);
+            const wherePill = State.mode === 'supervivencia'
+              ? `<span class="op-pill">${iconAnyInline('fire')} ${esc(I18n.t('st_wave'))} ${bp.wave}</span>`
+              : ((State.mode === 'clasico' || State.mode === 'aventura') ? `<span class="op-pill">${iconAnyInline('pin')} ${esc(I18n.t('lvl'))} ${bp.level}</span>` : '');
+            const note = State.mode === 'supervivencia'
+              ? I18n.t('over_peak_note_surv').replace('{c}', bp.combo).replace('{w}', bp.wave)
+              : I18n.t('over_peak_note_level').replace('{c}', bp.combo);
+            pk.innerHTML =
+              `<section class="over-peak-card" aria-label="${esc(I18n.t('over_peak_title'))}">` +
+              `<div class="op-main"><div class="op-medal">${iconInline('star')}</div><div class="op-copy">` +
+              `<div class="op-kicker"><span>${esc(I18n.t('over_peak_title'))}</span><small>${esc(I18n.t('over_peak_sub'))}</small></div>` +
+              `<div class="op-score"><b>+${bp.points}</b><span>${esc(I18n.t('over_peak_points'))}</span></div>` +
+              `<div class="op-pills"><span class="op-pill strong">${iconAnyInline('bolt')} ${esc(I18n.t('over_peak_combo'))} ×${bp.combo}</span>${wherePill}<span class="op-pill">${iconAnyInline('star')} ${esc(I18n.t('over_peak_chain'))}</span></div>` +
+              `</div></div><div class="op-note">${esc(note)}</div></section>`;
           }
         }
       }
@@ -6046,7 +6107,6 @@
       else summary = I18n.t('sum_level').replace('{n}', State.level);
       $('#over-meta').textContent = `${I18n.modeT(State.mode, 'name')} · ${I18n.t('diff_' + State.diff)} · ${summary}`;
       const rows = State.mode === 'supervivencia' ? [
-        [State.score, I18n.t('st_points'), 'var(--score)'],
         [Survival.wave, I18n.t('st_wave'), 'var(--level)'],
         [Meta.survBestWave(), I18n.t('surv_best_wave'), 'var(--warn)'],
         ['×' + State.maxCombo, I18n.t('st_combo'), 'var(--gold)'],
@@ -6054,7 +6114,6 @@
         [Math.floor(Survival.survSec) + 's', I18n.t('st_surv'), 'var(--time)'],
         [Meta.survBest() + 's', I18n.t('st_best'), 'var(--gold)'],
       ] : [
-        [State.score, I18n.t('st_points'), 'var(--score)'],
         [State.level, I18n.t('st_level'), 'var(--level)'],
         ['×' + State.maxCombo, I18n.t('st_combo'), 'var(--gold)'],
         [State.removedTotal, I18n.t('st_removed'), 'var(--good)'],
