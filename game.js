@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.19';
+  const VERSION = '2.6.20';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -508,6 +508,13 @@
         surv_boss_crystalid_warn: '¡Cristálido inminente: remátalo antes de que rebrote!',
         surv_boss_void_warn: '¡El Vacío inminente: no dejes que crezca!',
         surv_boss_puppeteer_warn: '¡El Titiritero inminente: cuidado con los hilos!',
+        // Jefes de bioma de Aventura (JF-ζ): identidad; la mecánica GM-08 no cambia.
+        advdex_nebula: 'Corazón de Nebulosa', advdex_nebula_e: 'late entre el polvo',
+        advdex_asteroid: 'El Magnetar', advdex_asteroid_e: 'pastor de rocas',
+        advdex_ice: 'Aurora Hambrienta', advdex_ice_e: 'la luz que congela',
+        advdex_core: 'El Fundidor', advdex_core_e: 'corazón del núcleo',
+        advdex_void: 'La Nada', advdex_void_e: 'devora-pistas',
+        advdex_crystal: 'Matriarca Cristal', advdex_crystal_e: 'madre del enjambre',
         feat_cazador: 'Cazador', feat_cazador_d: 'Derrota a los 5 Señores (Nubarrón, Corriente, Boreal, Cerrajero y Tectónico)',
         feat_ronda_maestra: 'Ronda maestra', feat_ronda_maestra_d: 'Logra 3 Rondas maestras (derrotas sin daño ni potenciadores)',
         feat_domaecos: 'Domaecos', feat_domaecos_d: 'Derrota a un eco de nivel III o superior',
@@ -762,6 +769,13 @@
         surv_boss_crystalid_warn: 'Crystalid incoming: finish it before it regrows!',
         surv_boss_void_warn: 'The Void incoming: do not let it grow!',
         surv_boss_puppeteer_warn: 'The Puppeteer incoming: beware the threads!',
+        // Adventure biome bosses (JF-ζ): identity only; GM-08 mechanics unchanged.
+        advdex_nebula: 'Nebula Heart', advdex_nebula_e: 'beating in the dust',
+        advdex_asteroid: 'The Magnetar', advdex_asteroid_e: 'shepherd of rocks',
+        advdex_ice: 'Hungry Aurora', advdex_ice_e: 'the freezing light',
+        advdex_core: 'The Smelter', advdex_core_e: 'heart of the core',
+        advdex_void: 'The Nothing', advdex_void_e: 'hint-devourer',
+        advdex_crystal: 'Crystal Matriarch', advdex_crystal_e: 'mother of the swarm',
         feat_cazador: 'Hunter', feat_cazador_d: 'Defeat the 5 Lords (Stormfront, Current, Boreal, Locksmith and Tectonic)',
         feat_ronda_maestra: 'Master round', feat_ronda_maestra_d: 'Earn 3 Master rounds (defeats with no damage and no power-ups)',
         feat_domaecos: 'Echo tamer', feat_domaecos_d: 'Defeat an echo of level III or higher',
@@ -3208,7 +3222,7 @@
       { id: 'shield', icon: '🛡️' },  // 1ª derrota del capítulo: despeje 30% en vez de fin
     ],
     route: null, relics: [], shieldUsed: false, _routeChapter: -1, log: [],
-    resetRun() { this.route = null; this.relics = []; this.shieldUsed = false; this._routeChapter = -1; this.log = []; this.bossAcc = 0; this._bossWarned = false; },
+    resetRun() { this.route = null; this.relics = []; this.shieldUsed = false; this._routeChapter = -1; this.log = []; this.bossAcc = 0; this._bossWarned = false; this._rHp = -1; this._rNext = -1; document.documentElement.style.removeProperty('--boss-accent'); },
     hasRelic(id) { return this.relics.indexOf(id) !== -1; },
     _applyRoute() {
       if (this.route === 'calm') State.spawnRate = Math.round(State.spawnRate * 1.15);
@@ -3276,17 +3290,27 @@
     },
     // Jefe con comportamiento (GM-08): en niveles jefe, cada 20s el bioma ACTÚA
     // (telegrafiado 3s antes). El jefe deja de ser "más cristales": hace cosas.
-    BOSS_MS: 20000, bossAcc: 0, _bossWarned: false,
+    BOSS_MS: 20000, bossAcc: 0, _bossWarned: false, _rHp: -1, _rNext: -1,
+    // Fase 2 del jefe de bioma (JF-52, gated B-J6): con ≤2 cristales restantes el
+    // jefe acelera su reloj de ataque 20s→15s — el remate se disputa.
+    _bossMsFor() { return this.crystalsLeft() <= 2 ? 15000 : this.BOSS_MS; },
     onTick(dt) {
       if (this.objective !== 'boss' || State.status !== 'playing') return;
       this.bossAcc += dt;
-      if (!this._bossWarned && this.bossAcc >= this.BOSS_MS - 3000) {
+      const ms = this._bossMsFor();
+      if (!this._bossWarned && this.bossAcc >= ms - 3000) {
         this._bossWarned = true;
         Toasts.show(I18n.t('advboss_warn'), 'warn', 1900, '⚠️');
         Render.boardEvent('surv-wave-soon', 620);
         Sound.danger();
       }
-      if (this.bossAcc >= this.BOSS_MS) { this.bossAcc -= this.BOSS_MS; this._bossWarned = false; this.bossAction(); }
+      if (this.bossAcc >= ms) { this.bossAcc -= ms; this._bossWarned = false; this.bossAction(); }
+      // Cara del jefe (JF-ζ): pips de cristales + cuenta del próximo ataque, con
+      // diffing de 1s (mismo presupuesto que el banner de Supervivencia).
+      const hp = $('#adv-boss-hp');
+      if (hp) { const n = this.crystalsLeft(); if (this._rHp !== n) { this._rHp = n; hp.textContent = '◆'.repeat(Math.min(8, n)); } }
+      const nx = $('#adv-boss-next');
+      if (nx) { const s = Math.max(0, Math.ceil((ms - this.bossAcc) / 1000)); if (this._rNext !== s) { this._rNext = s; nx.textContent = '▲ ' + s + 's'; } }
     },
     _placeK(type, k) { const e = this._emptyIdx(); for (let x = 0; x < k && e.length; x++) State.tiles[e.splice(rand(e.length), 1)[0]] = Tiles.make(type); },
     _freezeK(k) { const f = this._filledIdx(); for (let x = 0; x < k && f.length; x++) State.tiles[f.splice(rand(f.length), 1)[0]] = Tiles.make('frozen'); },
@@ -3330,6 +3354,16 @@
       if (this.hasRelic('combo')) State.comboWindow += 400;
       if (this.hasRelic('hint')) State.hintsLeft = Math.min(9, State.hintsLeft + 1);
       this.banner(level);
+      // Cara del jefe de bioma (JF-ζ): card de presentación + acento; se limpia en
+      // niveles normales. Presentación pura — la mecánica (GM-08) no cambia.
+      this._rHp = -1; this._rNext = -1;
+      if (boss) {
+        document.documentElement.style.setProperty('--boss-accent', biome.accent);
+        Render.bossCard(I18n.t('advdex_' + biome.id), I18n.t('advdex_' + biome.id + '_e'));
+        announce(I18n.t('surv_boss_enter_sr').replace('{b}', I18n.t('advdex_' + biome.id)).replace('{n}', this.chapterOf(level) + 1).replace('{k}', this.crystalsLeft()));
+      } else if (State.mode === 'aventura') {
+        document.documentElement.style.removeProperty('--boss-accent');
+      }
     },
 
     _emptyIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) a.push(i); return a; },
@@ -3382,7 +3416,15 @@
       const relicsHtml = this.relics.length
         ? `<span class="obj-relics" aria-label="${esc(I18n.t('relic_title'))}">${this.relics.map((id) => ((this.RELICS.find((r) => r.id === id) || {}).icon || '')).join('')}</span>`
         : '';
-      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>${relicsHtml}${ModeSignals.noteHtml('aventura')}`;
+      // La cara del jefe de bioma (JF-ζ): en niveles jefe, el banner de objetivo
+      // muestra nombre + epíteto + PV (cristales como pips) + próximo ataque —
+      // misma presentación que Supervivencia, CERO cambio de reglas (§6).
+      let bossHtml = '';
+      if (this.isBoss(level)) {
+        el.style.borderColor = biome.accent;
+        bossHtml = `<span class="obj-boss-face"><b class="obf-name">${esc(I18n.t('advdex_' + biome.id))}</b><i class="obf-epithet">${esc(I18n.t('advdex_' + biome.id + '_e'))}</i><span class="obf-hp" id="adv-boss-hp" aria-hidden="true"></span><span class="obf-next" id="adv-boss-next" aria-hidden="true"></span></span>`;
+      }
+      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span>${bossHtml}<span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>${relicsHtml}${ModeSignals.noteHtml('aventura')}`;
     },
     refreshGoal() { const g = $('#obj-goal'); if (g) g.textContent = this.objectiveText(); },
     // Intro de capítulo: una tarjeta de bioma (nombre, modificadores, objetivo) mostrada
@@ -6191,6 +6233,7 @@
     start(mode, diff, startLevel, seed) {
       Picker.dismiss();
       { const pl = $('#prelevel'); if (pl) pl.hidden = true; }
+      document.documentElement.style.removeProperty('--boss-accent'); // acento de jefe residual (JF-ζ)
       State.mode = mode;
       if (mode !== 'tutorial') Storage.lastMode = mode; // para marcar el modo actual en el catálogo
       State.diff = Config.MODES[mode].fixedDiff || diff;
