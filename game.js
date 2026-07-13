@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.17';
+  const VERSION = '2.6.18';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -478,6 +478,20 @@
         surv_boss_cage_steal: '¡{b} enjaula tu {p}! Rompe la jaula para recuperarlo',
         surv_master_round: 'Ronda maestra ✦ +1 vida',
         surv_master_round_charge: 'Ronda maestra ✦ +50 de carga',
+        // Minijefes (JF-δ)
+        minidex_magpie: 'La Urraca', minidex_magpie_e: 'la ladrona',
+        minidex_firefly: 'Luciérnaga Dorada', minidex_firefly_e: 'la fugaz',
+        minidex_sentinel: 'El Centinela', minidex_sentinel_e: 'el vigía',
+        minidex_herald: 'El Heraldo', minidex_herald_e: 'el que anuncia',
+        mini_steal: '¡{b} roba iconos! Cázala para recuperarlos',
+        mini_return: '¡Botín recuperado! +{n} iconos',
+        mini_firefly_gift: 'Toque dorado: +24 de frenesí',
+        mini_sentinel_gift: 'Su territorio queda limpio',
+        mini_herald_down: 'El Heraldo ha caído: el jefe llegará debilitado',
+        mini_herald_up: '¡El Heraldo escapó! El jefe llega EMPODERADO',
+        mini_gone: '{b} se marcha…',
+        sr_mini_enter: 'Minijefe: {b}. Converge el icono sobre su ancla para cazarlo',
+        sr_mini_down: '{b}, cazado',
         surv_boss_lvl: 'Nv. {n}',
         surv_boss_hp_sr: 'Vida del jefe: {n} de {m} anclas',
         surv_boss_enter_sr: 'Jefe: {b}, nivel {n}, {k} anclas. Converge los iconos sobre las anclas para dañarlo.',
@@ -699,6 +713,20 @@
         surv_boss_cage_steal: '{b} cages your {p}! Break the cage to get it back',
         surv_master_round: 'Master round ✦ +1 life',
         surv_master_round_charge: 'Master round ✦ +50 charge',
+        // Minibosses (JF-δ)
+        minidex_magpie: 'The Magpie', minidex_magpie_e: 'the thief',
+        minidex_firefly: 'Golden Firefly', minidex_firefly_e: 'the fleeting',
+        minidex_sentinel: 'The Sentinel', minidex_sentinel_e: 'the watcher',
+        minidex_herald: 'The Herald', minidex_herald_e: 'the announcer',
+        mini_steal: '{b} is stealing icons! Hunt it down to get them back',
+        mini_return: 'Loot recovered! +{n} icons',
+        mini_firefly_gift: 'Golden touch: +24 frenzy',
+        mini_sentinel_gift: 'Its territory is cleared',
+        mini_herald_down: 'The Herald has fallen: the boss will arrive weakened',
+        mini_herald_up: 'The Herald escaped! The boss arrives EMPOWERED',
+        mini_gone: '{b} slips away…',
+        sr_mini_enter: 'Miniboss: {b}. Converge the icon on its anchor to hunt it',
+        sr_mini_down: '{b}, hunted down',
         surv_boss_lvl: 'Lv. {n}',
         surv_boss_hp_sr: "Boss health: {n} of {m} anchors",
         surv_boss_enter_sr: 'Boss: {b}, level {n}, {k} anchors. Converge the icons on the anchors to damage it.',
@@ -3387,6 +3415,8 @@
       this._anyBoosterUsed = false; this._t3Count = 0; this._livesLostThisWave = 0; this._waves1Life = 0; // hazañas (SV-31)
       this._lastBossType = null; // eco/jefes SV-40/43 (el override de sim/tests NO se toca aquí)
       Bosses.abort(); // sin encuentro heredado de la run anterior (JF-α)
+      Bosses._miniDry = 0; Bosses._lastWaveMini = false; Bosses._heraldEmpower = false; Bosses._heraldSlain = false; // minijefes (JF-δ)
+      this._minisSeen = 0; this._minisKilled = 0;
       this.scoreBoost = 0; this.magnetMoves = 0; this.goldenWaveWaves = 0;
       this._introUntil = 0; // ventana de gracia del arranque (FBK-07)
       this.mut = this.weeklyMut(); // mutador semanal (GM-22)
@@ -3818,6 +3848,7 @@
       if (this.wave >= 2 && RNG.random() < 0.25) this._placeSlowdown();
       if (this.wave % tn.bossEvery === 0) this.bossEvent();
       this._planBoss(); // decide ya si la PRÓXIMA oleada trae jefe (telegrafiado GM-18)
+      Bosses.maybeMini(); // sorteo de minijefe (JF-δ): sorpresa con pity, tras conocer bossNext
       this._checkWaveRecord();
       this._setFrenzyClass(); this._syncIntensity();
       Render.boardEvent('surv-wave-up', 900);
@@ -4375,19 +4406,23 @@
         if (eb) { eb.hidden = !enc; if (!enc) eb.classList.remove('phase2', 'lvl-high'); }
       }
       if (enc) {
-        const def = Bosses.DEX[enc.id] || {};
-        const secs = Math.max(0, Math.ceil((enc.attackEvery - enc.atkAcc) / 1000));
+        const mini = enc.kind === 'mini';
+        const def = (mini ? Bosses.MINIDEX[enc.id] : Bosses.DEX[enc.id]) || {};
+        // Jefes: cuenta atrás del ataque · minijefes: tiempo que les queda en el tablero.
+        const secs = mini
+          ? Math.max(0, Math.ceil((enc.durMs - enc.ms) / 1000))
+          : Math.max(0, Math.ceil((enc.attackEvery - enc.atkAcc) / 1000));
         const sig = enc.id + '|' + enc.lvl + '|' + enc.phase + '|' + enc.anchorsLeft + '|' + secs + '|' + (enc.telegraphed ? 1 : 0);
         if (r.encSig !== sig) {
           r.encSig = sig;
           const eb = $('#surv-boss');
-          if (eb) { eb.classList.toggle('phase2', enc.phase > 1); eb.classList.toggle('lvl-high', enc.lvl >= 3); }
+          if (eb) { eb.classList.toggle('mini', mini); eb.classList.toggle('phase2', enc.phase > 1); eb.classList.toggle('lvl-high', !mini && enc.lvl >= 3); }
           if (r.encIcon !== enc.id) {
             r.encIcon = enc.id;
             const ic = $('#surv-boss-icon'); if (ic) ic.innerHTML = Bosses.portraitHTML(def);
-            const nm = $('#surv-boss-name'); if (nm) nm.textContent = Bosses.name(enc.id);
+            const nm = $('#surv-boss-name'); if (nm) nm.textContent = mini ? Bosses.miniName(enc.id) : Bosses.name(enc.id);
           }
-          const lv = $('#surv-boss-lvl'); if (lv) lv.textContent = Bosses.lvlLabel(enc.lvl);
+          const lv = $('#surv-boss-lvl'); if (lv) lv.textContent = mini ? '' : Bosses.lvlLabel(enc.lvl);
           const hp = $('#surv-boss-hp');
           if (hp) {
             hp.textContent = '◆'.repeat(enc.anchorsLeft) + '◇'.repeat(Math.max(0, enc.anchorsMax - enc.anchorsLeft));
@@ -4461,6 +4496,146 @@
       lockdown: { acto: 2, accent: '#d6dce8', icon: '🔒',           atkIcon: '▣', anchors: 3, armored: 1, attackMs: 13000, atk: 'locks',   frame: 'surv-lockdown' },
       quake:    { acto: 2, accent: '#ffb24d', icon: 'teleporter',   atkIcon: '▤', anchors: 3, armored: 1, attackMs: 14000, atk: 'shuffle', frame: 'surv-quake', chaosPromote: true },
     },
+    // ---- Minijefes (JF-δ, §3.7/§4.3): entidades de 1 ancla y 1 mecánica que
+    // aparecen POR SORPRESA en oleadas normales (p=0.22, pity 4). Enseñan el
+    // vocabulario del jefe de su acto en versión pequeña; sin card ni bendición.
+    MINI_P: 0.22, MINI_PITY: 4, MINI_FROM_WAVE: 3,
+    MINIDEX: {
+      magpie:  { acto: 1, accent: '#ffd84d', icon: '🐦', atkIcon: '✧', beatMs: 7000,  lifeWaves: 1 },   // roba 1 icono/7s; al morir lo devuelve TODO agrupado
+      firefly: { acto: 1, accent: '#ffe14d', icon: '✨', atkIcon: '✦', beatMs: 3000,  lifeMs: 15000, bonus: true }, // vaga; matarla = frenesí + monedas
+      sentinel:{ acto: 2, accent: '#7ad7ff', icon: '🗼', atkIcon: '❄', beatMs: 8000,  lifeWaves: 1, armor: 1 },     // congela en su fila/columna; al morir la limpia
+      herald:  { acto: 2, accent: '#ff5d73', icon: '📯', atkIcon: '▲', beatMs: 99000, lifeWaves: 1, armor: 1, preBoss: true }, // vivo al llegar el jefe = jefe +1 nivel
+    },
+    _miniDry: 0, _lastWaveMini: false, _heraldEmpower: false, _heraldSlain: false,
+    miniName(id) { return I18n.t('minidex_' + id); },
+    // Sorteo por frontera de oleada (lo llama Survival.newWave). El Heraldo es la
+    // excepción diseñada: SOLO aparece en la oleada previa a jefe (Acto II+).
+    maybeMini() {
+      if (!this.ENCOUNTERS || this.enc) { this._lastWaveMini = false; return; }
+      if (Survival.wave < this.MINI_FROM_WAVE) return;
+      if (Survival.wave % Survival.tune().bossEvery === 0) return; // oleada de jefe
+      const acto = this.actoForWave(Survival.wave);
+      if (Survival.bossNext) {
+        // Oleada previa a jefe: solo el Heraldo (y no siempre) — el telegrafiado manda.
+        if (acto >= 2 && !this._lastWaveMini && RNG.random() < 0.35) this.startMini('herald');
+        else this._lastWaveMini = false;
+        return;
+      }
+      if (this._lastWaveMini) { this._lastWaveMini = false; return; } // nunca 2 seguidos
+      this._miniDry++;
+      if (RNG.random() < this.MINI_P || this._miniDry >= this.MINI_PITY) {
+        const pool = Object.keys(this.MINIDEX).filter((id) => { const d = this.MINIDEX[id]; return d.acto <= acto && !d.preBoss; });
+        if (pool.length) this.startMini(pool[rand(pool.length)]);
+      }
+    },
+    startMini(id) {
+      if (this.enc) return null;
+      const def = this.MINIDEX[id];
+      // 1 ancla bajo un icono (la Luciérnaga y la Urraca se mueven después).
+      const f = Survival._filledIdx();
+      if (!f.length || Survival._specialRoom() <= 0) return null;
+      const idx = f[rand(f.length)];
+      const t = Tiles.make('boss');
+      if (def.armor) { t.hits = def.armor; t.solid = true; }
+      State.tiles[idx] = t;
+      Render.syncCell(idx); Render.cellPulse(idx, 'tide-warn', 700);
+      this.enc = {
+        kind: 'mini', id, lvl: this.actoForWave(Survival.wave), phase: 1,
+        anchorsMax: 1, anchorsLeft: 1, at: idx,
+        ms: 0, atkAcc: 0, reincAcc: 0, attackEvery: def.beatMs,
+        durMs: def.lifeMs || Math.round(Survival.WAVE_MS * 0.9),
+        telegraphed: false, targets: null, flawless: true, attacks: 0, stolen: [],
+      };
+      this._miniDry = 0; this._lastWaveMini = true;
+      Survival._minisSeen = (Survival._minisSeen || 0) + 1;
+      document.documentElement.style.setProperty('--boss-accent', def.accent);
+      Toasts.event(this.miniName(id) + ' · ' + I18n.t('minidex_' + id + '_e'), def.bonus ? 'good' : 'warn', 1900, def.icon);
+      announce(I18n.t('sr_mini_enter').replace('{b}', this.miniName(id)));
+      Sound.danger(); Haptics.tap();
+      Render.hudSoon();
+      return this.enc;
+    },
+    // Comportamiento por latido del minijefe (desde tick, cadencia beatMs).
+    _miniBeat(e) {
+      const size = State.size;
+      if (e.id === 'magpie') {
+        // Roba 1 icono visible (no sobre tiles) y lo guarda bajo el ala.
+        const f = Survival._filledIdx().filter((i) => i !== e.at);
+        if (f.length && State.iconCount > 6) {
+          const j = f[rand(f.length)];
+          e.stolen.push(State.board[j]);
+          State.board[j] = null; State.iconCount--;
+          Render.syncCell(j); FX.burst(j, '#ffd84d', 4);
+          if (e.stolen.length === 1) Toasts.event(I18n.t('mini_steal').replace('{b}', this.miniName(e.id)), 'warn', 1500, '🐦');
+        }
+      } else if (e.id === 'sentinel') {
+        // Congela 1 celda de su fila o columna (territorio visible).
+        const r = e.at / size | 0, c = e.at % size, cand = [];
+        for (let k = 0; k < size; k++) {
+          const a = r * size + k, b = k * size + c;
+          if (State.board[a] !== null && !State.tiles[a]) cand.push(a);
+          if (State.board[b] !== null && !State.tiles[b]) cand.push(b);
+        }
+        if (cand.length && Survival._specialRoom() > 0) {
+          const j = cand[rand(cand.length)];
+          State.tiles[j] = Tiles.make('frozen');
+          Render.syncAll(); Render.iceHit(j);
+        }
+      }
+      // Las entidades vagabundas se recolocan tras actuar.
+      if (e.id === 'firefly' || e.id === 'magpie') this._miniMove(e);
+    },
+    // La entidad se recoloca a una celda vecina con icono (ancla móvil).
+    _miniMove(e) {
+      const size = State.size, r = e.at / size | 0, c = e.at % size;
+      const nb = [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].filter(([rr, cc]) => rr >= 0 && cc >= 0 && rr < size && cc < size);
+      const spots = nb.map(([rr, cc]) => rr * size + cc).filter((j) => State.board[j] !== null && !State.tiles[j]);
+      if (!spots.length) return;
+      const to = spots[rand(spots.length)];
+      const t = State.tiles[e.at];
+      State.tiles[e.at] = null; Render.syncCell(e.at);
+      State.tiles[to] = t; e.at = to;
+      Render.syncCell(to); Render.cellPulse(to, 'tide-warn', 420);
+    },
+    // Muerte del minijefe (su ancla cayó): efecto-firma + botín pequeño.
+    _miniKill(e) {
+      const def = this.MINIDEX[e.id] || {};
+      let coins = 3 + (e.lvl || 1);
+      if (e.id === 'magpie' && e.stolen.length) {
+        // Devuelve TODO lo robado agrupado alrededor de su celda (convergencia servida).
+        const size = State.size, r = e.at / size | 0, c = e.at % size;
+        const near = [];
+        for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) {
+          const rr = r + dr, cc = c + dc;
+          if (rr >= 0 && cc >= 0 && rr < size && cc < size) { const j = rr * size + cc; if (State.board[j] === null && !State.tiles[j]) near.push(j); }
+        }
+        e.stolen.forEach((v) => { if (near.length) { const j = near.splice(rand(near.length), 1)[0]; State.board[j] = v; State.iconCount++; Render.syncCell(j); Render.spawnAnim(j); } });
+        Toasts.event(I18n.t('mini_return').replace('{n}', e.stolen.length), 'good', 1800, '🐦');
+      } else if (e.id === 'firefly') {
+        Survival.addFrenzy(24); coins += 8;
+        Toasts.event(I18n.t('mini_firefly_gift'), 'good', 1700, '✨');
+      } else if (e.id === 'sentinel') {
+        // Limpia su fila y columna (con el mismo suelo anti-inflación de derrotas).
+        const size = State.size, r = e.at / size | 0, c = e.at % size, cleared = [];
+        let budget = Math.max(0, (State.iconCount || 0) - 8);
+        for (let k = 0; k < size && budget > 0; k++) {
+          [r * size + k, k * size + c].forEach((j) => {
+            if (budget > 0 && State.board[j] !== null && Survival._powerClear(j, cleared, 4)) budget--;
+          });
+        }
+        if (cleared.length) { Render.syncAll(); Render.lifeClear(cleared, null); }
+        Toasts.event(I18n.t('mini_sentinel_gift'), 'good', 1700, '🗼');
+      } else if (e.id === 'herald') {
+        this._heraldEmpower = false; this._heraldSlain = true; // el jefe llega debilitado (−1 nivel)
+        Toasts.event(I18n.t('mini_herald_down'), 'good', 1900, '📯');
+      }
+      Meta.addCoins(coins); State.coinsRun += coins; Survival.runCoins += coins; Econ.refresh();
+      Render.coinsReward(coins, I18n.t('coins'));
+      Survival._minisKilled = (Survival._minisKilled || 0) + 1;
+      Sound.record(); Haptics.combo();
+      announce(I18n.t('sr_mini_down').replace('{b}', this.miniName(e.id)));
+      if (State.status === 'playing') Game.evaluate();
+    },
     ROMAN: ['I', 'II', 'III', 'IV'],
     name(id) { return I18n.t('bossdex_' + id); },
     lvlLabel(lvl) { return I18n.t('surv_boss_lvl').replace('{n}', this.ROMAN[lvl - 1] || lvl); },
@@ -4495,6 +4670,8 @@
     },
     // ---- Ciclo de vida (FSM §3.2): entrada → activo → derrota/retirada ----
     startEncounter(id) {
+      // El jefe manda: un minijefe vivo se marcha (el Heraldo consuma su anuncio).
+      if (this.enc && this.enc.kind === 'mini') this.resolve('miniExpire');
       if (this.enc) return null; // invariante: un solo encuentro a la vez
       let eco = false;
       if (id === 'eco' || !this.DEX[id]) {
@@ -4504,7 +4681,11 @@
         if (eco) Feedback.event('echo', { msg: I18n.t('surv_eco').replace('{b}', I18n.t('bossname_' + id)) });
       }
       const def = this.DEX[id];
-      const lvl = this.levelForWave(Survival.wave, { eco });
+      // El Heraldo (JF-δ): si escapó, el jefe entra a nivel +1; si fue cazado, −1.
+      const herald = this._heraldEmpower, slain = this._heraldSlain;
+      this._heraldEmpower = false; this._heraldSlain = false;
+      let lvl = this.levelForWave(Survival.wave, { eco, herald });
+      if (slain) lvl = Math.max(1, lvl - 1);
       const anchors = this._placeAnchors(def, lvl);
       if (!anchors.length) {
         // Sin sustrato para el cuerpo (tablero anómalo): cae al jefe-evento clásico
@@ -4572,6 +4753,16 @@
       const e = this.enc; if (!e || State.status !== 'playing') return;
       e.ms += dt; e.atkAcc += dt; e.reincAcc += dt;
       if (e.reincAcc >= 900) { e.reincAcc = 0; this._reincarnate(); }
+      // Minijefes (JF-δ): latido propio sin telegrafiado de celdas, y se marchan solos.
+      if (e.kind === 'mini') {
+        if (e.atkAcc >= e.attackEvery) {
+          e.atkAcc -= e.attackEvery;
+          this._miniBeat(e); e.attacks++;
+          if (this.enc !== e || State.status !== 'playing') return;
+        }
+        if (e.ms >= e.durMs) this.resolve('miniExpire');
+        return;
+      }
       if (!e.telegraphed && e.atkAcc >= e.attackEvery - this.TELEGRAPH_MS) {
         e.telegraphed = true;
         e.targets = this._pickTargets(e);
@@ -4592,7 +4783,7 @@
       e.anchorsLeft = Math.max(0, e.anchorsLeft - 1);
       FX.burst(idx, (this.DEX[e.id] || {}).accent || '#ffd84d', 6);
       Render.hudSoon();
-      if (e.anchorsLeft <= 0) { this.resolve('defeat'); return; }
+      if (e.anchorsLeft <= 0) { this.resolve(e.kind === 'mini' ? 'miniKill' : 'defeat'); return; }
       // Fase 2 al caer la mitad de las anclas (§3.4): el patrón cambia, no solo escala.
       if (e.phase === 1 && e.anchorsLeft <= Math.floor(e.anchorsMax / 2)) {
         e.phase = 2;
@@ -4623,6 +4814,20 @@
       this.enc = null;
       // Las anclas restantes se retiran con el jefe (en derrota ya no quedan).
       this._anchorIdx().forEach((i) => { State.tiles[i] = null; Render.syncCell(i); });
+      // Minijefes: sin bendición ni beat grande — botín pequeño al cazarlo, o se
+      // marcha solo (el Heraldo que escapa EMPODERA al jefe entrante, §4.3).
+      if (e.kind === 'mini') {
+        if (outcome === 'miniKill') this._miniKill(e);
+        else if (e.id === 'herald') {
+          this._heraldEmpower = true;
+          Toasts.event(I18n.t('mini_herald_up'), 'bad', 2000, '📯');
+        } else {
+          Toasts.event(I18n.t('mini_gone').replace('{b}', this.miniName(e.id)), 'info', 1300, (this.MINIDEX[e.id] || {}).icon);
+        }
+        this._faceOff();
+        Survival.render();
+        return;
+      }
       if (outcome === 'defeat') this._defeatEffect(e);
       if (outcome === 'retreat') {
         const def = this.DEX[e.id] || {};
@@ -4718,7 +4923,7 @@
     },
     // Apaga la presencia visual del jefe (banner, tinte del panel, acento global).
     _faceOff() {
-      const el = $('#surv-boss'); if (el) el.hidden = true;
+      const el = $('#surv-boss'); if (el) { el.hidden = true; el.classList.remove('mini'); }
       const sb = $('#surv-bar'); if (sb) sb.classList.remove('encounter');
       document.documentElement.style.removeProperty('--boss-accent');
     },

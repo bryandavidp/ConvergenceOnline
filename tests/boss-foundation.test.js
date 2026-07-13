@@ -421,8 +421,127 @@ test('JF-γ: fase 2 de Nubarrón deja roca y la de Tectónico añade rocas tras 
 test('JF-β: claves i18n del bestiario en ES y EN', () => {
   const keys = [];
   for (const id of Object.keys(Bosses.DEX)) keys.push('bossdex_' + id, 'bossdex_' + id + '_e', 'bossatk_' + id + '_1', 'bossatk_' + id + '_2');
-  keys.push('surv_boss_lvl', 'surv_boss_hp_sr', 'surv_boss_enter_sr', 'surv_boss_prep', 'surv_boss_phase2', 'surv_boss_defeated', 'surv_boss_retreat');
+  for (const id of Object.keys(Bosses.MINIDEX)) keys.push('minidex_' + id, 'minidex_' + id + '_e');
+  keys.push('surv_boss_lvl', 'surv_boss_hp_sr', 'surv_boss_enter_sr', 'surv_boss_prep', 'surv_boss_phase2', 'surv_boss_defeated', 'surv_boss_retreat',
+    'surv_boss_cage_steal', 'surv_master_round', 'surv_master_round_charge',
+    'mini_steal', 'mini_return', 'mini_firefly_gift', 'mini_sentinel_gift', 'mini_herald_down', 'mini_herald_up', 'mini_gone', 'sr_mini_enter', 'sr_mini_down');
   for (const lang of ['es', 'en']) for (const k of keys) assert.ok(cv.I18n.DICT[lang][k], `falta ${k} en ${lang}`);
+});
+
+test('JF-δ: sorteo de minijefes — pity, exclusiones de oleada de jefe/previa y nunca 2 seguidos', () => {
+  freshRun(4);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(20);
+    // Pity: sin suerte (roll alto), al llegar al umbral aparece igualmente.
+    Survival.bossNext = false;
+    Bosses._miniDry = Bosses.MINI_PITY - 1; Bosses._lastWaveMini = false;
+    withRng(0.99, () => Bosses.maybeMini());
+    assert.ok(Bosses.enc && Bosses.enc.kind === 'mini', 'el pity garantiza el minijefe');
+    const firstId = Bosses.enc.id;
+    assert.ok(['magpie', 'firefly'].includes(firstId), 'Acto I solo trae minis de Acto I');
+    Bosses.abort();
+    // Nunca 2 seguidos.
+    Bosses._lastWaveMini = true; Bosses._miniDry = 99;
+    withRng(0.01, () => Bosses.maybeMini());
+    assert.equal(Bosses.enc, null, 'tras un mini, la siguiente oleada descansa');
+    // Oleada previa a jefe en Acto I: nada (el Heraldo es Acto II+).
+    Survival.bossNext = true; Bosses._lastWaveMini = false;
+    withRng(0.01, () => Bosses.maybeMini());
+    assert.equal(Bosses.enc, null, 'sin Heraldo en Acto I');
+    // Oleada previa a jefe en Acto II: el Heraldo puede aparecer.
+    Survival.wave = 16;
+    withRng(0.01, () => Bosses.maybeMini());
+    assert.ok(Bosses.enc && Bosses.enc.id === 'herald', 'el Heraldo anuncia al jefe en Acto II');
+  } finally { cleanup(); }
+});
+
+test('JF-δ: la Urraca roba con conteo consistente y devolverla agrupa el botín', () => {
+  freshRun(5);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(24);
+    const e = Bosses.startMini('magpie');
+    assert.ok(e);
+    const count0 = State.iconCount;
+    Bosses._miniBeat(e); // roba 1
+    assert.equal(e.stolen.length, 1);
+    assert.equal(State.board.filter((v) => v !== null).length, State.iconCount, 'conteo consistente tras el robo');
+    assert.equal(State.iconCount, count0 - 1);
+    // Cazarla devuelve lo robado.
+    const at = e.at;
+    Bosses.onAnchorHit(at); State.tiles[at] = null;
+    assert.equal(Bosses.enc, null, 'cazada');
+    assert.equal(State.iconCount, count0, 'los iconos robados vuelven al tablero');
+    assert.equal(State.board.filter((v) => v !== null).length, State.iconCount);
+  } finally { cleanup(); }
+});
+
+test('JF-δ: el Centinela congela su territorio y al caer lo limpia con suelo', () => {
+  freshRun(5);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(32);
+    const e = Bosses.startMini('sentinel');
+    assert.ok(e);
+    assert.ok(State.tiles[e.at].hits >= 1, 'el Centinela llega blindado');
+    State.tiles[e.at].hits = 0; State.tiles[e.at].solid = false; // exponerlo para el test
+    const frozen0 = State.tiles.filter((t) => t && t.type === 'frozen').length;
+    Bosses._miniBeat(e);
+    const frozen1 = State.tiles.filter((t) => t && t.type === 'frozen').length;
+    assert.ok(frozen1 >= frozen0, 'congela en su fila/columna cuando hay hueco');
+    const at = e.at;
+    Bosses.onAnchorHit(at); State.tiles[at] = null;
+    assert.equal(Bosses.enc, null);
+    assert.ok(State.iconCount >= 8 || State.board.filter((v) => v !== null).length <= 8, 'suelo anti-inflación respetado');
+    assert.equal(State.board.filter((v) => v !== null).length, State.iconCount, 'conteo consistente');
+  } finally { cleanup(); }
+});
+
+test('JF-δ: el Heraldo — escapar empodera al jefe (+1 nivel) y cazarlo lo debilita (−1)', () => {
+  freshRun(17); // oleada 17: previa al jefe de la 18 (bossEvery 6), Acto II
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(24);
+    const h = Bosses.startMini('herald');
+    assert.ok(h);
+    // Escapa (el jefe llega): startEncounter consume al mini y lee el empoderamiento.
+    Survival.wave = 18;
+    const e = Bosses.startEncounter('meteor');
+    assert.ok(e, 'el jefe arranca consumiendo al Heraldo');
+    assert.equal(e.lvl, 3, 'oleada 18 = Nv.II, +1 por Heraldo vivo = Nv.III');
+    Bosses.abort();
+    // Cazado: el siguiente jefe llega debilitado.
+    Survival.wave = 17;
+    fillIcons(24);
+    const h2 = Bosses.startMini('herald');
+    assert.ok(h2);
+    Bosses.onAnchorHit(h2.at); State.tiles[h2.at] = null;
+    assert.equal(Bosses.enc, null, 'Heraldo cazado');
+    Survival.wave = 18;
+    const e2 = Bosses.startEncounter('frost');
+    assert.equal(e2.lvl, 1, 'Nv.II − 1 por Heraldo caído = Nv.I');
+  } finally { cleanup(); }
+});
+
+test('JF-δ: la Luciérnaga es bonus — cazarla da frenesí; y expira sola', () => {
+  freshRun(5);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(20);
+    const e = Bosses.startMini('firefly');
+    assert.ok(e);
+    Survival.frenzy = 0; Survival.frenzyUntil = 0;
+    Bosses.onAnchorHit(e.at); State.tiles[e.at] = null;
+    assert.equal(Survival.frenzy, 24, 'toque dorado: +24 de frenesí');
+    // Expiración: se marcha sola sin bendición ni beat.
+    fillIcons(20);
+    const e2 = Bosses.startMini('firefly');
+    Survival._boonAt = 0;
+    let g = 0; while (Bosses.enc && g < 400) { Bosses.tick(100); g++; }
+    assert.equal(Bosses.enc, null, 'la Luciérnaga se va sola');
+    assert.equal(Survival._boonAt, 0, 'los minijefes NO dan bendición');
+  } finally { cleanup(); }
 });
 
 test('JF-β: el banner se enciende con el encuentro y se apaga al resolverse', () => {
