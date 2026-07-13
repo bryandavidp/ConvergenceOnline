@@ -6,7 +6,7 @@
 >
 > **Reglas heredadas que este plan respeta en cada propuesta:** sin dark patterns · ningún número cambia sin batería antes/después de `tools/balance-sim.js` · todo FX one-shot <700ms, transform/opacity, con variante `reduced-fx` · toda string nueva en ES+EN en el mismo commit · `cv_meta` retrocompatible con relleno tolerante · triple bump manual de versión en Windows.
 >
-> **Estado:** 📋 planificado — el transcurso se registra en la bitácora (§12). **Prerequisito de arranque de la fase visual (JF-β):** el rediseño del HUD de Supervivencia en curso ([`SURVIVAL_HUD_REDESIGN_PLAN.md`](./SURVIVAL_HUD_REDESIGN_PLAN.md), working tree v2.6.12 sin commitear) debe quedar commiteado — el banner del jefe vive en el mismo contenedor DOM.
+> **Estado:** ✅ **COMPLETADO (v2.6.20)** — las 6 fases JF-α…ζ implementadas, con encuentros en producción. El transcurso detallado está en la bitácora (§12). **Prerequisito de arranque de la fase visual (JF-β):** el rediseño del HUD de Supervivencia en curso ([`SURVIVAL_HUD_REDESIGN_PLAN.md`](./SURVIVAL_HUD_REDESIGN_PLAN.md), working tree v2.6.12 sin commitear) debe quedar commiteado — el banner del jefe vive en el mismo contenedor DOM.
 
 ## Índice
 
@@ -449,6 +449,17 @@ Si hay que recortar: se recorta de ζ hacia α, nunca al revés — α/β son el
 # 12. Registro de implementación (bitácora)
 
 > Formato: entradas en orden cronológico inverso. Cada fase cerrada añade: qué se hizo, desviaciones del plan, verificación (tests/sim/playtest), versión y claves i18n nuevas.
+
+### 2026-07-13 — Fase JF-ζ implementada (v2.6.20) · Aventura + cierre del plan
+
+- **JF-50 · Adaptador de presentación**: en niveles jefe de Aventura (`isBoss`), el banner de objetivo (`obj-banner`) pinta la **cara del jefe** — nombre + epíteto + cristales como pips `◆` + cuenta atrás del próximo ataque (`▲ Ns`), con el acento del bioma tintando el borde. Diffing de 1s en `onTick` (`_rHp`/`_rNext`, mismo presupuesto que Supervivencia). Boss card al montar el nivel (`Render.bossCard`, reutilizada de JF-β) + `announce` accesible. **Cero cambio de reglas**: la mecánica GM-08 (acción cada 20s, cristales = objetivo) queda intacta.
+- **JF-51 · Identidad de los 6 jefes de bioma** (i18n `advdex_*`, ES+EN): Corazón de Nebulosa, El Magnetar, Aurora Hambrienta, El Fundidor, La Nada, Matriarca Cristal. Separados del bestiario de Supervivencia (`bossdex_*`) — regla de exclusividad por modo (§5 del plan de modos): Aventura comparte el *framework de presentación*, no el sistema de anclas/bestiario.
+- **JF-52 · Fase 2 (gated B-J6)**: con ≤2 cristales restantes, el reloj de ataque del jefe acelera **20s→15s** (`_bossMsFor`) — el remate se disputa. **B-J6 verde**: nivel alcanzado por los bots idéntico con y sin fase 2 (skilled p50 12/p90 16 en ambos; average 10 vs 9, dentro de ±1) — no altera la dificultad del modo.
+- **Detalle pulido**: `--boss-accent` residual se limpia en `Adventure.resetRun` y en `Game.start` (cualquier modo) — evita que el acento de un jefe quede pegado tras salir (inofensivo, nada lo consume fuera de contexto de jefe, pero más limpio).
+- **Verificación**: `node --check` ✅ · suite **123/123** (+5 en `tests/boss-adventure.test.js`: paridad i18n de los 6 biomas, niveles jefe con identidad, fase 2 20→15s gated, banner pinta la cara solo en niveles jefe, separación advdex/bossdex) ✅ · eslint ✅ · **navegador**: banner «Corazón de Nebulosa · late entre el polvo · ◆◆ · ▲ 15s» con borde acentuado, fase 2 a 15s con 2 cristales, card montada, acento limpio al salir, cero errores de consola ✅ · B-J6 con sim ✅ · triple bump 2.6.19→**2.6.20**.
+- i18n nuevas (ES+EN): `advdex_{nebula,asteroid,ice,core,void,crystal}(+_e)`.
+
+**— PLAN COMPLETADO —** El sistema de jefes pasó de "efecto instantáneo de 1-2s" a **encuentros con criatura, cuerpo en el tablero, PV, fases, niveles y actos**, con minijefes sorpresa, bestiario vitalicio y presentación coherente en los dos modos con jefes. 8 jefes + 4 minijefes, 118+5 tests, 7 puertas de balance validadas por simulación.
 
 ### 2026-07-13 — Fase JF-ε implementada (v2.6.19) · La Corte Profunda + bestiario + hazañas
 

@@ -1970,6 +1970,14 @@ body.reduced-fx .coach-text { animation: none; }
 .obj-mode-note { flex: 0 1 auto; min-width: 0; max-width: 42%; color: color-mix(in srgb, var(--mode-accent, var(--accent-2)) 72%, #fff); font-size: .68rem; font-weight: 900; text-transform: uppercase; letter-spacing: .35px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.mode-aventura .obj-mode-note { color: color-mix(in srgb, var(--level) 76%, #fff); }
 body.mode-zen .obj-banner { border-color: rgba(155,225,93,.34); background: linear-gradient(180deg, rgba(42,88,58,.42), rgba(14,34,36,.72)); }
+/* Cara del jefe de bioma en Aventura (JF-ζ): identidad compartida con Supervivencia,
+   dentro del banner de objetivo. Presentación pura — la mecánica GM-08 no cambia. */
+.obj-boss-face { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 4px 7px; min-width: 0; }
+.obf-name { color: #fff; font-size: .82rem; font-weight: 950; text-transform: uppercase; letter-spacing: .2px; }
+.obf-epithet { color: color-mix(in srgb, var(--boss-accent, var(--mode-accent, #a06bff)) 62%, #fff); font-size: .68rem; font-style: normal; font-weight: 800; }
+.obf-hp { color: color-mix(in srgb, var(--boss-accent, var(--mode-accent, #a06bff)) 70%, #fff); font-size: .74rem; font-weight: 950; letter-spacing: 1.5px; }
+.obf-next { display: inline-flex; align-items: center; min-height: 20px; padding: 2px 6px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14); background: rgba(0,0,0,.24); color: #fff; font-size: .66rem; font-weight: 950; font-variant-numeric: tabular-nums; }
 
 /* Supervivencia 2.0 */
 body.mode-surv .lvl-chip { display: none; }
