@@ -202,6 +202,7 @@ test('SV-40/43: cada jefe × mutador se ejecuta sin excepción y respeta invaria
     }
   }
   Survival._bossOverride = null; Survival._mutOverride = 'none';
+  if (cv.Bosses) cv.Bosses.abort(); // JF-γ: bossEvent ahora arranca encuentros — no dejar uno vivo
 });
 
 test('SV-02/20/21/22/30/31/32/40/43: claves i18n nuevas en ES y EN', () => {

@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.16';
+  const VERSION = '2.6.17';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -473,8 +473,11 @@
         bossatk_meteor_1: 'Lluvia', bossatk_meteor_2: 'Lluvia y roca',
         bossatk_tide_1: 'Marea', bossatk_tide_2: 'Marea completa',
         bossatk_frost_1: 'Escarcha', bossatk_frost_2: 'Clúster helado',
-        bossatk_lockdown_1: 'Cierre', bossatk_lockdown_2: 'Cierre reforzado',
+        bossatk_lockdown_1: 'Cierre', bossatk_lockdown_2: 'Jaula',
         bossatk_quake_1: 'Terremoto parcial', bossatk_quake_2: 'Terremoto total',
+        surv_boss_cage_steal: '¡{b} enjaula tu {p}! Rompe la jaula para recuperarlo',
+        surv_master_round: 'Ronda maestra ✦ +1 vida',
+        surv_master_round_charge: 'Ronda maestra ✦ +50 de carga',
         surv_boss_lvl: 'Nv. {n}',
         surv_boss_hp_sr: 'Vida del jefe: {n} de {m} anclas',
         surv_boss_enter_sr: 'Jefe: {b}, nivel {n}, {k} anclas. Converge los iconos sobre las anclas para dañarlo.',
@@ -691,8 +694,11 @@
         bossatk_meteor_1: 'Rain', bossatk_meteor_2: 'Rain and rock',
         bossatk_tide_1: 'Tide', bossatk_tide_2: 'Full tide',
         bossatk_frost_1: 'Frost', bossatk_frost_2: 'Frozen cluster',
-        bossatk_lockdown_1: 'Lockdown', bossatk_lockdown_2: 'Hardened lockdown',
+        bossatk_lockdown_1: 'Lockdown', bossatk_lockdown_2: 'Cage',
         bossatk_quake_1: 'Partial quake', bossatk_quake_2: 'Total quake',
+        surv_boss_cage_steal: '{b} cages your {p}! Break the cage to get it back',
+        surv_master_round: 'Master round ✦ +1 life',
+        surv_master_round_charge: 'Master round ✦ +50 charge',
         surv_boss_lvl: 'Lv. {n}',
         surv_boss_hp_sr: "Boss health: {n} of {m} anchors",
         surv_boss_enter_sr: 'Boss: {b}, level {n}, {k} anchors. Converge the icons on the anchors to damage it.',
@@ -3377,6 +3383,7 @@
       this.slowWaves = 0; this._boonAt = 0;
       this._bossSurvivedAt = 0; this._noBoosterSinceBoss = true; this._frenzyT3Seen = false; this._liveRecord = false; // hitos SV-20/21
       this._boonLog = []; this._bossesSurvived = 0; // resumen de la run (SV-22)
+      this._bossesDefeated = 0; this._lastDefeat = null; this._defeatBeat = null; // encuentros (JF-γ)
       this._anyBoosterUsed = false; this._t3Count = 0; this._livesLostThisWave = 0; this._waves1Life = 0; // hazañas (SV-31)
       this._lastBossType = null; // eco/jefes SV-40/43 (el override de sim/tests NO se toca aquí)
       Bosses.abort(); // sin encuentro heredado de la run anterior (JF-α)
@@ -3874,6 +3881,23 @@
         Render.flash(); FX.confetti(d.flawless ? 70 : 56);
         Sound.record(); Haptics.record();
         announce(msg);
+        // Botín del jefe (JF-γ, gated B-J1): monedas por nivel del encuentro.
+        const coins = 8 + 4 * (d.lvl || 1);
+        Meta.addCoins(coins); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
+        Render.coinsReward(coins, I18n.t('coins'));
+        // Ronda maestra (§3.8, homenaje a Gungeon): derrota sin perder vida ni gastar
+        // potenciador durante el ENCUENTRO → +1 vida (o +50 carga si está al tope).
+        if (d.flawless) {
+          if (this.lives < this.MAX_LIVES + 1) {
+            this.lives++;
+            Toasts.event(I18n.t('surv_master_round'), 'good', 2200, '🛡️');
+          } else {
+            this.charge += 50;
+            if (this.charge >= 100) { this.charge -= 100; this.grantRandom(); }
+            Toasts.event(I18n.t('surv_master_round_charge'), 'good', 2200, '⚡');
+          }
+        }
+        this.render();
         return;
       }
       const clean = !!this._noBoosterSinceBoss;
@@ -4419,7 +4443,10 @@
    * vence jugando, no gastando.
    */
   const Bosses = {
-    ENCOUNTERS: false, // JF-γ lo enciende tras validar B-J1/B-J3; tests/sim lo fuerzan
+    // ENCENDIDO en JF-γ (v2.6.17) tras las puertas B-J1/B-J3 (batería en
+    // BALANCE_BASELINE.md). Con false se recupera el jefe-evento clásico intacto —
+    // interruptor de emergencia deliberado.
+    ENCOUNTERS: true,
     TELEGRAPH_MS: 2500, // pre-marca de celdas antes de cada ataque (§5.3)
     ECO_P: 0.15,        // prob. de que el sorteo devuelva un eco «ha vuelto» (§4.4)
     // Registro de jefes (JF-01). Nombres/epítetos i18n (`bossdex_*`) llegan en JF-β;
@@ -4596,12 +4623,91 @@
       this.enc = null;
       // Las anclas restantes se retiran con el jefe (en derrota ya no quedan).
       this._anchorIdx().forEach((i) => { State.tiles[i] = null; Render.syncCell(i); });
+      if (outcome === 'defeat') this._defeatEffect(e);
       if (outcome === 'retreat') {
         const def = this.DEX[e.id] || {};
         Toasts.event(I18n.t('surv_boss_retreat').replace('{b}', this.name(e.id)), 'info', 1400, def.icon);
       }
       this._faceOff();
       Survival._encounterEnd(e, outcome);
+    },
+    // Efecto-firma de derrota (JF-γ, §4.1): cada Señor deja un regalo al caer —
+    // la kill se SIENTE en el tablero, no solo en el toast.
+    _defeatEffect(e) {
+      const cleared = [];
+      // Presupuesto de limpieza (B-J1): los regalos de derrota NUNCA dejan el tablero
+      // por debajo de 8 iconos — sin esto alimentaban el bonus de tablero vacío y el
+      // refill, inflando monedas +18% y score +63% (medido en el A/B del sim).
+      let budget = Math.max(0, (State.iconCount || 0) - 8);
+      const clearOne = (idx) => {
+        if (State.board[idx] === null) { Survival._powerClear(idx, cleared, 4); return; } // solo tile: no gasta presupuesto
+        if (budget > 0 && Survival._powerClear(idx, cleared, 4)) budget--;
+      };
+      if (e.id === 'meteor') {
+        // El cielo escampa: limpia ~12% de los iconos (con suelo de 8).
+        const f = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null) f.push(i);
+        const n = Math.max(2, Math.floor(f.length * 0.12));
+        for (let k = 0; k < n && f.length && budget > 0; k++) clearOne(f.splice(rand(f.length), 1)[0]);
+      } else if (e.id === 'tide') {
+        // La marea se retira: vacía las filas exteriores (con suelo de 8 iconos).
+        const size = State.size;
+        [0, size - 1].forEach((r) => { for (let c = 0; c < size && budget > 0; c++) clearOne(r * size + c); });
+      } else if (e.id === 'frost') {
+        // Deshielo total + 25 de carga.
+        for (let i = 0; i < State.tiles.length; i++) {
+          const t = State.tiles[i];
+          if (t && t.type === 'frozen') { State.tiles[i] = null; cleared.push(i); Render.iceBreak(i); }
+        }
+        Survival.charge += 25;
+        if (Survival.charge >= 100) { Survival.charge -= 100; Survival.grantRandom(); }
+      } else if (e.id === 'lockdown') {
+        // Las jaulas se abren: devuelve lo enjaulado ×2 (el robado + 1 regalo).
+        let returned = 0;
+        for (let i = 0; i < State.tiles.length; i++) {
+          const t = State.tiles[i];
+          if (t && t.type === 'cage') {
+            if (t.loot) { Survival.inv[t.loot] = (Survival.inv[t.loot] || 0) + 2; returned++; }
+            State.tiles[i] = null; cleared.push(i);
+          }
+        }
+        if (!returned) { const id = Survival.BOOSTERS[rand(Survival.BOOSTERS.length)]; Survival.inv[id] = (Survival.inv[id] || 0) + 1; }
+        Survival.buildBar();
+      } else if (e.id === 'quake') {
+        // El mundo se ordena: agrupa el tipo más común en un clúster central (regalo de combo).
+        this._clusterGift();
+      }
+      if (cleared.length) { Render.syncAll(); Render.lifeClear(cleared, null); }
+      if (State.status === 'playing') Game.evaluate();
+    },
+    // Regalo del Tectónico: mueve hasta 8 iconos del tipo más común hacia el centro
+    // (intercambios puros: el conteo del tablero no cambia). FLIP como el terremoto.
+    _clusterGift() {
+      const size = State.size, counts = {};
+      for (let i = 0; i < State.board.length; i++) { const v = State.board[i]; if (v !== null && !State.tiles[i]) counts[v] = (counts[v] || 0) + 1; }
+      let best = null; for (const k in counts) if (!best || counts[k] > counts[best]) best = k;
+      if (!best || counts[best] < 3) return;
+      const srcs = [], spots = [];
+      for (let i = 0; i < State.board.length; i++) {
+        if (State.tiles[i]) continue;
+        if (State.board[i] === best) srcs.push(i);
+        spots.push(i);
+      }
+      const dist = (i) => { const r = (i / size | 0), c = i % size; return Math.abs(r - 3.5) + Math.abs(c - 3.5); };
+      spots.sort((a, b) => dist(a) - dist(b));
+      const dests = spots.slice(0, Math.min(8, srcs.length));
+      const destSet = new Set(dests);
+      const pending = srcs.filter((s) => !destSet.has(s));
+      const srcOf = {};
+      let pi = 0;
+      for (const d of dests) {
+        if (State.board[d] === best) continue;
+        const s = pending[pi++]; if (s == null) break;
+        const tmp = State.board[d];
+        State.board[d] = State.board[s]; State.board[s] = tmp;
+        srcOf[d] = s; if (tmp !== null) srcOf[s] = d;
+      }
+      Render.syncAll();
+      if (!motionOff()) Render.quakeSlide(srcOf);
     },
     abort() {
       if (this.enc) {
@@ -4637,6 +4743,16 @@
         return [...set].filter((j) => State.board[j] === null && !State.tiles[j]);
       }
       if (kind === 'frost') {
+        // Fase 2 (JF-γ): clúster 2×2 compacto — roba movilidad local, no dispersa.
+        if (e.phase > 1) {
+          const room = Survival._specialRoom();
+          const starts = [];
+          for (let r = 0; r < size - 1; r++) for (let c = 0; c < size - 1; c++) {
+            const b = [r * size + c, r * size + c + 1, (r + 1) * size + c, (r + 1) * size + c + 1];
+            if (b.every((j) => State.board[j] !== null && !State.tiles[j])) starts.push(b);
+          }
+          if (starts.length && room >= 4) return starts[rand(starts.length)];
+        }
         const f = Survival._filledIdx(), out = [];
         const n = Math.min(1 + e.lvl + (e.phase > 1 ? 1 : 0), f.length, Survival._specialRoom());
         for (let k = 0; k < n && f.length; k++) out.push(f.splice(rand(f.length), 1)[0]);
@@ -4668,6 +4784,15 @@
         (targets || []).forEach((j) => {
           if (State.board[j] === null && !State.tiles[j]) { State.board[j] = State.pool[rand(State.pool.length)]; State.iconCount++; placed.push(j); }
         });
+        // Fase 2 (JF-γ): el impacto deja 1 roca en el centro de la zona marcada.
+        if (e.phase > 1 && placed.length) {
+          const room = Math.min(Survival._specialRoom(), Math.max(0, Survival._blockCap() - Survival._blockIdx().length));
+          if (room > 0) {
+            const mid = placed[placed.length >> 1];
+            State.board[mid] = null; State.iconCount--;
+            const rk = Tiles.make('rock'); rk.hits = 1; State.tiles[mid] = rk;
+          }
+        }
         Render.syncAll(); if (placed.length) Render.meteor(placed);
         Feedback.event('meteor', { enraged: e.lvl >= 3 });
       } else if (kind === 'tide') {
@@ -4685,19 +4810,55 @@
         Render.syncAll(); placed.forEach((i) => Render.iceHit(i));
         Feedback.event('frost', { enraged: e.lvl >= 3 });
       } else if (kind === 'locks') {
-        const placed = [];
-        (targets || []).forEach((j) => {
-          if (State.board[j] === null && !State.tiles[j]) { const tl = Tiles.make('locked'); tl.hits = e.phase > 1 ? 2 : 1; State.tiles[j] = tl; placed.push(j); }
-        });
-        Render.syncAll(); placed.forEach((i) => Render.cellPulse(i, 'lock-stamp', 520));
+        // Fase 2 (JF-γ): la JAULA — el Cerrajero roba 1 potenciador con stock y lo
+        // enjaula en el tablero; romper la jaula por adyacencia lo devuelve. Sin
+        // stock que robar, cae en el cierre normal (candados).
+        let caged = false;
+        if (e.phase > 1) caged = this._cageSteal(targets);
+        if (!caged) {
+          const placed = [];
+          (targets || []).forEach((j) => {
+            if (State.board[j] === null && !State.tiles[j]) { const tl = Tiles.make('locked'); tl.hits = e.phase > 1 ? 2 : 1; State.tiles[j] = tl; placed.push(j); }
+          });
+          Render.syncAll(); placed.forEach((i) => Render.cellPulse(i, 'lock-stamp', 520));
+        }
         Feedback.event('lockdown');
       } else if (kind === 'shuffle') {
-        if (e.phase > 1) Survival._shuffle(true);
-        else this._shuffleCells(targets);
+        if (e.phase > 1) {
+          // Fase 2 (JF-γ): terremoto total + 2 rocas donde asiente el polvo.
+          Survival._shuffle(true);
+          const room = Math.min(Survival._specialRoom(), Math.max(0, Survival._blockCap() - Survival._blockIdx().length), 2);
+          const em = Survival._emptyIdx();
+          for (let k = 0; k < room && em.length; k++) {
+            const j = em.splice(rand(em.length), 1)[0];
+            const rk = Tiles.make('rock'); rk.hits = 1; State.tiles[j] = rk;
+          }
+          if (room > 0) Render.syncAll();
+        } else this._shuffleCells(targets);
         Feedback.event('quake');
         Render.boardEvent('surv-quake-settle', 420);
       }
       if (State.status === 'playing') Game.evaluate();
+    },
+    // La Jaula del Cerrajero (JF-γ): roba 1 potenciador aleatorio CON stock y lo
+    // planta como tile `cage` (hits=1, romper por adyacencia lo devuelve — ver
+    // crackAt). Devuelve false si no hay nada que robar o dónde plantarla.
+    _cageSteal(targets) {
+      const ids = Survival.BOOSTERS.filter((id) => (Survival.inv[id] || 0) > 0);
+      if (!ids.length) return false;
+      const spot = (targets || []).find((j) => State.board[j] === null && !State.tiles[j]);
+      const em = spot != null ? spot : (Survival._emptyIdx()[0]);
+      if (em == null) return false;
+      if (Survival._specialRoom() <= 0) return false;
+      const id = ids[rand(ids.length)];
+      Survival.inv[id]--;
+      const cg = Tiles.make('cage'); cg.hits = 1; cg.loot = id;
+      State.tiles[em] = cg;
+      Survival.buildBar();
+      Render.syncAll(); Render.cellPulse(em, 'lock-stamp', 620);
+      const pname = ({ freeze: 'Hielo', wild: 'Barrido', x2: 'Doble' }[id]) || Boosters.DEFS[id].name;
+      Toasts.event(I18n.t('surv_boss_cage_steal').replace('{b}', this.name('lockdown')).replace('{p}', pname), 'bad', 2000, '🔒');
+      return true;
     },
     // Terremoto parcial: baraja solo los iconos de las celdas indicadas (2 filas).
     _shuffleCells(cells) {
