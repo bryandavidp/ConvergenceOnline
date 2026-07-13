@@ -51,9 +51,9 @@ function cleanup() {
   State.status = 'idle';
 }
 
-test('JF-01: registro DEX — los 5 señores con acto, acento, anclas y ataque', () => {
+test('JF-01: registro DEX — 5 señores + La Corte Profunda con acto, acento, anclas y ataque', () => {
   const ids = Object.keys(Bosses.DEX);
-  assert.deepEqual(ids.sort(), ['frost', 'lockdown', 'meteor', 'quake', 'tide'].sort());
+  assert.deepEqual(ids.sort(), ['crystalid', 'frost', 'lockdown', 'meteor', 'puppeteer', 'quake', 'tide', 'void'].sort());
   for (const id of ids) {
     const d = Bosses.DEX[id];
     assert.ok(d.acto >= 1 && d.acto <= 3, `${id}: acto válido`);
@@ -424,7 +424,10 @@ test('JF-β: claves i18n del bestiario en ES y EN', () => {
   for (const id of Object.keys(Bosses.MINIDEX)) keys.push('minidex_' + id, 'minidex_' + id + '_e');
   keys.push('surv_boss_lvl', 'surv_boss_hp_sr', 'surv_boss_enter_sr', 'surv_boss_prep', 'surv_boss_phase2', 'surv_boss_defeated', 'surv_boss_retreat',
     'surv_boss_cage_steal', 'surv_master_round', 'surv_master_round_charge',
-    'mini_steal', 'mini_return', 'mini_firefly_gift', 'mini_sentinel_gift', 'mini_herald_down', 'mini_herald_up', 'mini_gone', 'sr_mini_enter', 'sr_mini_down');
+    'mini_steal', 'mini_return', 'mini_firefly_gift', 'mini_sentinel_gift', 'mini_herald_down', 'mini_herald_up', 'mini_gone', 'sr_mini_enter', 'sr_mini_down',
+    'surv_boss_shards', 'surv_boss_regrow', 'surv_boss_devour', 'surv_boss_grow', 'surv_boss_threads', 'surv_boss_heal',
+    'surv_boss_crystalid_warn', 'surv_boss_void_warn', 'surv_boss_puppeteer_warn',
+    'feat_cazador', 'feat_cazador_d', 'feat_ronda_maestra', 'feat_ronda_maestra_d', 'feat_domaecos', 'feat_domaecos_d');
   for (const lang of ['es', 'en']) for (const k of keys) assert.ok(cv.I18n.DICT[lang][k], `falta ${k} en ${lang}`);
 });
 
@@ -584,6 +587,128 @@ test('JF-β: la derrota reemplaza el beat «SUPERADO» por «DERROTADO» una sol
     // El siguiente beat (retirada normal) ya no es de derrota.
     Survival._encounterEnd({ id: 'frost', lvl: 1, flawless: false }, 'retreat');
     assert.equal(Survival._defeatBeat, null);
+  } finally { cleanup(); }
+});
+
+test('JF-ε: el Acto III entra en el pool desde la oleada 24', () => {
+  freshRun(25);
+  try {
+    Bosses.ENCOUNTERS = true;
+    Survival._lastBossType = null;
+    const seen = new Set();
+    const origR = RNG.random; RNG.random = () => 0.2 + 0.79 * Math.random();
+    try { for (let k = 0; k < 300; k++) seen.add(Bosses.pick(26)); } finally { RNG.random = origR; }
+    assert.ok(seen.has('crystalid') && seen.has('void') && seen.has('puppeteer'), 'la Corte Profunda aparece en Acto III');
+    withRng(0.99, () => {
+      for (let k = 0; k < 30; k++) assert.ok(!['crystalid', 'void', 'puppeteer'].includes(Bosses.pick(6)), 'Acto III no baja al Acto I');
+    });
+  } finally { cleanup(); }
+});
+
+test('JF-ε: el Cristálido rebrota en fase 2 (regen por tempo)', () => {
+  freshRun(26);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(28);
+    const e = Bosses.startEncounter('crystalid');
+    assert.ok(e && e.anchorsMax === 4);
+    // Dos golpes → fase 2 con 2 anclas perdidas.
+    const idx = Bosses._anchorIdx();
+    Bosses.onAnchorHit(idx[0]); State.tiles[idx[0]] = null;
+    Bosses.onAnchorHit(idx[1]); State.tiles[idx[1]] = null;
+    assert.equal(e.phase, 2);
+    assert.equal(e.anchorsLeft, 2);
+    // El rebrote devuelve un ancla pasado regenMs.
+    Bosses.tick(12100);
+    assert.equal(e.anchorsLeft, 3, 'regeneró 1 ancla');
+    assert.equal(Bosses._anchorIdx().length, 3, 'el ancla nueva está en el tablero');
+  } finally { cleanup(); }
+});
+
+test('JF-ε: el Vacío devora con conteo consistente, crece en fase 2 y lo devuelve al caer', () => {
+  freshRun(26);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(30);
+    const e = Bosses.startEncounter('void');
+    assert.ok(e && e.anchorsMax === 2);
+    const count0 = State.iconCount;
+    e.targets = Bosses._pickTargets(e);
+    Bosses._attack(e);
+    assert.ok(e.devoured.length >= 1, 'devoró al menos 1');
+    assert.equal(State.board.filter((v) => v !== null).length, State.iconCount, 'conteo consistente tras devorar');
+    assert.equal(State.iconCount, count0 - e.devoured.length);
+    // Fase 2: crece.
+    e.phase = 2;
+    const max0 = e.anchorsMax;
+    e.targets = Bosses._pickTargets(e);
+    Bosses._attack(e);
+    assert.ok(e.anchorsMax >= max0, 'en fase 2 puede crecer (cap 4)');
+    assert.ok(e.anchorsMax <= 4);
+    // Derrota: devuelve TODO lo devorado.
+    const devoured = e.devoured.length;
+    const before = State.iconCount;
+    Bosses._anchorIdx().forEach((i) => { Bosses.onAnchorHit(i); State.tiles[i] = null; });
+    assert.equal(Bosses.enc, null);
+    assert.equal(State.iconCount, before + devoured, 'el Vacío colapsa y lo devuelve todo');
+  } finally { cleanup(); }
+});
+
+test('JF-ε: el Titiritero enhebra tipos, converger uno LE CURA y al caer corta los hilos', () => {
+  freshRun(26);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(30);
+    const e = Bosses.startEncounter('puppeteer');
+    assert.ok(e);
+    e.targets = null;
+    Bosses._attack(e); // enhebra
+    assert.ok(e.threads && e.threads.length === 2, 'dos tipos enhebrados');
+    assert.ok(Bosses.isThreaded(e.threads[0]) && Bosses.isThreaded(e.threads[1]));
+    // Converger un tipo enhebrado cura (si le falta vida).
+    const idx = Bosses._anchorIdx().find((i) => !State.tiles[i].hits); // ancla expuesta
+    Bosses.onAnchorHit(idx); State.tiles[idx] = null;
+    const left0 = e.anchorsLeft;
+    const cellOfThread = State.board.findIndex((v, i) => v === e.threads[0] && !State.tiles[i]);
+    assert.ok(cellOfThread >= 0);
+    Bosses.onThreadedConverge([cellOfThread]);
+    assert.equal(e.anchorsLeft, left0 + 1, 'converger el hilo lo cura 1 ancla');
+    // Derrota: hilos fuera.
+    Bosses._anchorIdx().forEach((i) => { Bosses.onAnchorHit(i); State.tiles[i] = null; });
+    assert.equal(Bosses.enc, null);
+    assert.equal(Bosses.isThreaded('x'), false);
+    assert.equal(State.board.filter((v) => v !== null).length, State.iconCount, 'conteo consistente tras cortar hilos');
+  } finally { cleanup(); }
+});
+
+test('JF-ε: bestiario vitalicio y hazañas de caza (cazador, ronda_maestra, domaecos)', () => {
+  freshRun(6);
+  try {
+    const s = cv.Meta.survData();
+    s.bossDex = {}; s.masterRounds = 0; s.feats = {};
+    State.status = 'playing'; Survival.lives = 2;
+    // seen al arrancar encuentro.
+    Bosses.ENCOUNTERS = true; fillIcons(20);
+    Bosses.startEncounter('frost');
+    assert.equal(cv.Meta.survBossDex().frost.seen, 1);
+    Bosses.abort();
+    // Kills de los 5 Señores → cazador.
+    ['meteor', 'tide', 'frost', 'lockdown'].forEach((id) => cv.Meta.survBossKill(id, 1, false));
+    Survival._encounterEnd({ id: 'quake', lvl: 2, flawless: false, eco: false }, 'defeat');
+    Survival._bossSurvived();
+    assert.equal(cv.Meta.survFeatDone('cazador'), true, 'cazador al derrotar a los 5');
+    // 3 Rondas maestras → ronda_maestra (2 previas + 1 flawless ahora).
+    s.masterRounds = 2;
+    Survival._encounterEnd({ id: 'frost', lvl: 1, flawless: true, eco: false }, 'defeat');
+    Survival.lives = 2; Survival._bossSurvived();
+    assert.equal(cv.Meta.survMasterRounds(), 3);
+    assert.equal(cv.Meta.survFeatDone('ronda_maestra'), true);
+    // Eco de nivel III → domaecos.
+    Survival._encounterEnd({ id: 'meteor', lvl: 3, flawless: false, eco: true }, 'defeat');
+    Survival._bossSurvived();
+    assert.equal(cv.Meta.survFeatDone('domaecos'), true);
+    assert.ok(cv.Meta.survBossKillsTotal() >= 7, 'el bestiario acumula kills');
+    s.bossDex = {}; s.masterRounds = 0; s.feats = {};
   } finally { cleanup(); }
 });
 
