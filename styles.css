@@ -2141,10 +2141,14 @@ body.mode-surv #booster-bar { align-self: start; }
   transform: translate(-50%, -50%);
 }
 .wallet-plus::after { transform: translate(-50%, -50%) rotate(90deg); }
+/* Carril de sucesos: reserva ALTURA ACOTADA para 1 evento (los toasts se serializan
+   en cola, uno visible a la vez) — así el layout no salta al aparecer un toast pero
+   tampoco deja un hueco muerto grande en pantallas altas ni roba espacio al tablero
+   en pantallas cortas. Antes eran 104px fijos (hueco de ~110px sin eventos). */
 .event-dock {
   position: relative;
-  height: 104px;
-  flex: 0 0 104px;
+  height: clamp(44px, 6vh, 56px);
+  flex: none;
   display: block;
   padding: 2px 0;
   overflow: hidden;
