@@ -192,6 +192,10 @@ function runOne(cfg) {
     mistakes: State.mistakes,
     fever: State.feverEver,
     progress: cfg.mode === 'supervivencia' ? Survival.wave : (cfg.mode === 'clasico' ? levelsCleared : State.level),
+    // Encuentros de jefe (JF-γ): visibles para las puertas B-J1/B-J2 (no se imprimen
+    // en la tabla; los consume el análisis de gates y el JSON).
+    kills: cfg.mode === 'supervivencia' ? (Survival._bossesDefeated || 0) : 0,
+    encounters: cfg.mode === 'supervivencia' ? (Survival._bossesSurvived || 0) : 0,
     deadAir: stats.polls ? stats.noMove / stats.polls : 0,
     coins: State.coinsRun + ((Game.metaResult && Game.metaResult.coinsGained) || 0),
     timedOut,

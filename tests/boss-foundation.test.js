@@ -41,8 +41,12 @@ function withRng(v, fn) {
   RNG.random = typeof v === 'function' ? v : () => v;
   try { return fn(); } finally { RNG.random = orig; }
 }
+/* El default de producción del flag se captura ANTES de cualquier test (JF-γ lo
+ * enciende); cleanup lo restaura en vez de forzar un valor. */
+const FLAG_DEFAULT = Bosses.ENCOUNTERS;
 function cleanup() {
-  Bosses.ENCOUNTERS = false; Bosses.abort();
+  Bosses.abort();
+  Bosses.ENCOUNTERS = FLAG_DEFAULT;
   Survival._bossOverride = null; Survival._mutOverride = 'none';
   State.status = 'idle';
 }
@@ -241,10 +245,23 @@ test('JF-α: retirada — el encuentro expira por acumulador de dt y ataca por e
   } finally { cleanup(); }
 });
 
-test('JF-α: flag APAGADO — bossEvent clásico intacto, sin encuentro ni anclas', () => {
+test('JF-γ: el flag de producción está ENCENDIDO y bossEvent arranca encuentros', () => {
+  assert.equal(Bosses.ENCOUNTERS, true, 'JF-γ enciende los encuentros en producción');
   freshRun(6);
   try {
-    assert.equal(Bosses.ENCOUNTERS, false, 'el flag de producción sigue apagado en JF-α');
+    fillIcons(20);
+    Survival._bossOverride = 'meteor';
+    Survival._planBoss(); Survival._nextBoss = 'meteor';
+    Survival.bossEvent();
+    assert.ok(Bosses.enc && Bosses.enc.id === 'meteor', 'bossEvent arranca el encuentro');
+    assert.ok(bossTiles() > 0, 'anclas en el tablero');
+  } finally { cleanup(); }
+});
+
+test('JF-α: interruptor de emergencia — con flag APAGADO el jefe-evento clásico sigue intacto', () => {
+  freshRun(6);
+  try {
+    Bosses.ENCOUNTERS = false;
     fillIcons(20);
     Survival._bossOverride = 'meteor';
     Survival.bossEvent();
@@ -294,6 +311,110 @@ test('JF-α: eco — startEncounter("eco") repite el último jefe real a nivel +
     assert.ok(e);
     assert.equal(e.id, 'frost', 'el eco repite al último jefe real');
     assert.equal(e.lvl, 2, 'eco = nivel +1 (oleada 6 daría Nv.1)');
+  } finally { cleanup(); }
+});
+
+test('JF-γ: fase 2 del Cerrajero — la Jaula roba un potenciador y devolverlo funciona', () => {
+  freshRun(14);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(24);
+    const e = Bosses.startEncounter('lockdown');
+    assert.ok(e);
+    e.phase = 2;
+    Survival.inv = { bomb: 1, freeze: 0, clearLine: 0, wild: 0, x2: 0 };
+    const stole = Bosses._cageSteal(Survival._emptyIdx().slice(0, 3));
+    assert.equal(stole, true, 'con stock, roba');
+    assert.equal(Survival.inv.bomb, 0, 'el potenciador robado sale del inventario');
+    const cageIdx = State.tiles.findIndex((t) => t && t.type === 'cage');
+    assert.ok(cageIdx >= 0, 'jaula plantada en el tablero');
+    assert.equal(State.tiles[cageIdx].loot, 'bomb');
+    // Romperla por adyacencia la devuelve.
+    Bosses.crackAt(cageIdx);
+    assert.equal(State.tiles[cageIdx], null);
+    assert.equal(Survival.inv.bomb, 1, 'jaula rota devuelve el botín');
+    // Sin stock: no roba (cae al cierre normal).
+    Survival.inv = { bomb: 0, freeze: 0, clearLine: 0, wild: 0, x2: 0 };
+    assert.equal(Bosses._cageSteal(Survival._emptyIdx().slice(0, 3)), false);
+  } finally { cleanup(); }
+});
+
+test('JF-γ: efectos de derrota — deshielo de Boreal y jaulas del Cerrajero ×2', () => {
+  freshRun(6);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(24);
+    // Boreal: hielo en el tablero + derrota → descongela todo y da carga.
+    State.tiles[30] = Tiles.make('frozen'); State.tiles[31] = Tiles.make('frozen');
+    Survival.charge = 10;
+    Bosses._defeatEffect({ id: 'frost', lvl: 1 });
+    assert.equal(State.tiles[30], null); assert.equal(State.tiles[31], null);
+    assert.equal(Survival.charge, 35, 'deshielo + 25 de carga');
+    // Cerrajero: jaula pendiente → derrota devuelve ×2.
+    const cg = Tiles.make('cage'); cg.hits = 1; cg.loot = 'freeze'; State.tiles[40] = cg;
+    Survival.inv.freeze = 0;
+    Bosses._defeatEffect({ id: 'lockdown', lvl: 1 });
+    assert.equal(State.tiles[40], null, 'la jaula se abre al caer el jefe');
+    assert.equal(Survival.inv.freeze, 2, 'devuelve lo enjaulado ×2');
+    // La Corriente: derrota vacía las filas exteriores.
+    fillIcons(64);
+    const before = State.board.filter((v) => v !== null).length;
+    Bosses._defeatEffect({ id: 'tide', lvl: 1 });
+    for (let c = 0; c < 8; c++) { assert.equal(State.board[c], null); assert.equal(State.board[56 + c], null); }
+    assert.ok(State.board.filter((v) => v !== null).length < before);
+    assert.equal(State.board.filter((v) => v !== null).length, State.iconCount, 'iconCount consistente tras el efecto');
+  } finally { cleanup(); }
+});
+
+test('JF-γ: botín de derrota y Ronda maestra (+1 vida, o carga al tope)', () => {
+  freshRun(6);
+  try {
+    State.status = 'playing';
+    Survival.lives = 2; Survival.MAX_LIVES = 3; Survival.charge = 0;
+    const coins0 = cv.Meta.coins();
+    Survival._encounterEnd({ id: 'frost', lvl: 2, flawless: true }, 'defeat');
+    Survival._bossSurvived();
+    assert.equal(cv.Meta.coins(), coins0 + 8 + 4 * 2, 'botín: 8 + 4×nivel');
+    assert.equal(Survival.lives, 3, 'Ronda maestra: +1 vida');
+    // Al tope de vidas: la Ronda maestra paga en carga.
+    Survival.lives = Survival.MAX_LIVES + 1; Survival.charge = 0;
+    Survival._encounterEnd({ id: 'frost', lvl: 1, flawless: true }, 'defeat');
+    Survival._bossSurvived();
+    assert.equal(Survival.lives, Survival.MAX_LIVES + 1, 'vidas al tope no suben');
+    assert.equal(Survival.charge, 50, 'paga +50 de carga');
+    // Sin flawless: solo botín.
+    Survival.lives = 2; Survival.charge = 0;
+    Survival._encounterEnd({ id: 'meteor', lvl: 1, flawless: false }, 'defeat');
+    Survival._bossSurvived();
+    assert.equal(Survival.lives, 2); assert.equal(Survival.charge, 0);
+  } finally { cleanup(); }
+});
+
+test('JF-γ: fase 2 de Nubarrón deja roca y la de Tectónico añade rocas tras el terremoto total', () => {
+  freshRun(14);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(20);
+    const e = Bosses.startEncounter('meteor');
+    assert.ok(e);
+    e.phase = 2;
+    e.targets = Survival._emptyIdx().slice(0, 4);
+    const rocks0 = State.tiles.filter((t) => t && t.type === 'rock').length;
+    Bosses._attack(e);
+    const rocks1 = State.tiles.filter((t) => t && t.type === 'rock').length;
+    assert.ok(rocks1 >= rocks0 + 1, 'la lluvia de fase 2 deja roca');
+    assert.equal(State.board.filter((v) => v !== null).length, State.iconCount, 'conteo consistente');
+    Bosses.abort();
+    // Tectónico fase 2: terremoto total + rocas (respetando topes).
+    const e2 = Bosses.startEncounter('quake');
+    assert.ok(e2);
+    e2.phase = 2; e2.targets = null;
+    const rocksQ0 = State.tiles.filter((t) => t && t.type === 'rock').length;
+    Bosses._attack(e2);
+    const rocksQ1 = State.tiles.filter((t) => t && t.type === 'rock').length;
+    assert.ok(rocksQ1 >= rocksQ0, 'rocas no bajan; suben si hay hueco y tope');
+    const blocks = Survival._blockIdx().length;
+    assert.ok(blocks <= Survival._blockCap(), 'tope de bloqueos respetado');
   } finally { cleanup(); }
 });
 
