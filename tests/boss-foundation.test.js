@@ -297,6 +297,56 @@ test('JF-α: eco — startEncounter("eco") repite el último jefe real a nivel +
   } finally { cleanup(); }
 });
 
+test('JF-β: claves i18n del bestiario en ES y EN', () => {
+  const keys = [];
+  for (const id of Object.keys(Bosses.DEX)) keys.push('bossdex_' + id, 'bossdex_' + id + '_e', 'bossatk_' + id + '_1', 'bossatk_' + id + '_2');
+  keys.push('surv_boss_lvl', 'surv_boss_hp_sr', 'surv_boss_enter_sr', 'surv_boss_prep', 'surv_boss_phase2', 'surv_boss_defeated', 'surv_boss_retreat');
+  for (const lang of ['es', 'en']) for (const k of keys) assert.ok(cv.I18n.DICT[lang][k], `falta ${k} en ${lang}`);
+});
+
+test('JF-β: el banner se enciende con el encuentro y se apaga al resolverse', () => {
+  freshRun(6);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(20);
+    const e = Bosses.startEncounter('tide');
+    assert.ok(e);
+    Survival.render();
+    const banner = document.querySelector('#surv-boss');
+    const bar = document.querySelector('#surv-bar');
+    assert.equal(banner.hidden, false, 'banner visible durante el encuentro');
+    assert.ok(bar.classList.contains('encounter'), 'panel tintado');
+    assert.equal(document.querySelector('#surv-boss-name').textContent, cv.I18n.t('bossdex_tide'));
+    assert.equal(document.querySelector('#surv-boss-hp').textContent, '◆'.repeat(e.anchorsMax));
+    assert.match(document.querySelector('#surv-boss-next').textContent, /\d+s$/, 'píldora con cuenta atrás');
+    // Golpe → PV baja y la firma re-renderiza los pips.
+    const idx = Bosses._anchorIdx()[0];
+    Bosses.onAnchorHit(idx); State.tiles[idx] = null;
+    Survival.render();
+    assert.equal(document.querySelector('#surv-boss-hp').textContent, '◆'.repeat(e.anchorsLeft) + '◇'.repeat(e.anchorsMax - e.anchorsLeft));
+    Bosses.resolve('retreat');
+    Survival.render();
+    assert.equal(banner.hidden, true, 'banner apagado tras la retirada');
+    assert.ok(!bar.classList.contains('encounter'));
+  } finally { cleanup(); }
+});
+
+test('JF-β: la derrota reemplaza el beat «SUPERADO» por «DERROTADO» una sola vez', () => {
+  freshRun(6);
+  try {
+    State.status = 'playing'; Survival.lives = 3;
+    Survival._bossesSurvived = 0; Survival._livesLostThisWave = 0;
+    Survival._encounterEnd({ id: 'frost', lvl: 1, flawless: true }, 'defeat');
+    assert.ok(Survival._defeatBeat, 'beat de derrota pendiente');
+    Survival._bossSurvived();
+    assert.equal(Survival._defeatBeat, null, 'beat consumido');
+    assert.equal(Survival._bossesSurvived, 1, 'la derrota también cuenta como superado');
+    // El siguiente beat (retirada normal) ya no es de derrota.
+    Survival._encounterEnd({ id: 'frost', lvl: 1, flawless: false }, 'retreat');
+    assert.equal(Survival._defeatBeat, null);
+  } finally { cleanup(); }
+});
+
 test('JF-α: la re-encarnación repone el icono de un ancla vaciada por vías indirectas', () => {
   freshRun(6);
   try {
