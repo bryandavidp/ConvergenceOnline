@@ -72,6 +72,7 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   min-height: -webkit-fill-available;
+  min-height: var(--app-h, 100dvh);
 }
 button { font: inherit; color: inherit; cursor: pointer; }
 input { font: inherit; }
@@ -98,8 +99,9 @@ h1, h2, h3, p { margin: 0; }
 /* ---------- Pantallas ---------- */
 #app {
   position: relative; z-index: 1;
-  height: 100vh;
-  height: 100dvh;
+  height: 100vh;                    /* fallback navegadores antiguos */
+  height: 100dvh;                   /* viewport dinámico (dvh) donde exista */
+  height: var(--app-h, 100dvh);     /* alto visible EXACTO fijado por JS (gana): sin recorte inferior */
   min-height: 100%;
   min-height: -webkit-fill-available;
   overflow: hidden;
@@ -836,6 +838,9 @@ body.reduced-fx #btn-play { animation: none; }
 .gtop { width: min(620px, 100%); align-self: stretch; display: flex; flex-direction: column; min-height: 0; }
 .gtop-main { display: flex; align-items: center; gap: 10px; }
 .gtop-context { margin-top: auto; display: flex; flex-direction: column; gap: 6px; padding-top: 8px; }
+/* Supervivencia: cromo apilado alto → se compactan los huecos verticales para que el
+   tablero (fijo por ancho) quepa entero con el banco de boosters en pantallas cortas. */
+body.mode-surv .gtop-context { gap: 4px; padding-top: 4px; }
 .gctx { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; flex: 0 0 auto; min-width: 0; }
 /* Fichas de estado: misma familia visual que la bandeja del tablero (borde
    azulado + leve degradado + highlight) para que HUD y tablero se lean como uno. */
@@ -2013,7 +2018,7 @@ body.reduced-fx .surv-boss-flag { animation: none; }
    con duración + mutador semanal). El build deja de ser invisible sin nuevos medidores. */
 .surv-build { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0 auto 6px; width: min(96vw, 620px); max-width: 100%; }
 .sb-chip { font-size: .72rem; font-weight: 800; line-height: 1; color: var(--text);
-  background: rgba(0,0,0,.34); border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px;
+  background: rgba(0,0,0,.34); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px;
   display: inline-flex; align-items: center; gap: 2px; animation: chipPop .24s ease both; }
 body.reduced-fx .sb-chip { animation: none; }
 .sb-chip.sb-mut { cursor: pointer; }
@@ -2077,20 +2082,48 @@ body.aiming .board { cursor: crosshair; }
 .cell.aim-target::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: rgba(0,208,255,.18); pointer-events: none; }
 
 /* Survival HUD redesign: recursos arriba, estado cerca del tablero y toolbelt limpia. */
+/* Layout de supervivencia (SV-HUD): rejilla de 3 filas — HUD arriba, TABLERO en una
+   región flexible en medio, boosters abajo. La clave para que el tablero sea FIJO POR
+   ANCHO y NADA se solape/recorte en ninguna pantalla:
+   · La fila del tablero es `minmax(0, 1fr)`: ocupa TODO el hueco entre el HUD y los
+     boosters (que son `auto`, siempre visibles) — nunca más, nunca menos.
+   · El tablero se dimensiona por ANCHO (96vw, tope 620) pero se acota a la altura de
+     esa región con `max-height: 100%` + `aspect-ratio` → SIEMPRE cuadrado, y jamás
+     invade el HUD ni los boosters (imposible por construcción, sin reservas mágicas).
+   En teléfonos de altura normal manda el ancho (tablero fijo, idéntico entre alturas);
+   solo en ventanas muy cortas (desktop bajo, móvil antiguo, landscape) el tablero se
+   reduce lo justo para caber. Antes: clamp(280px, min(96vw, calc(100svh−494px)), 620px)
+   acoplaba el tablero al alto y lo encogía a 280 (75% del ancho), rompiéndolo. */
 body.mode-surv .screen-game {
-  grid-template-rows: auto auto auto;
-  align-content: start;
-  --board-size: clamp(280px, min(96vw, calc(100svh - 494px)), 620px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-content: stretch;
+  padding-top: max(8px, env(safe-area-inset-top));
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+  --board-size: min(96vw, calc(100vw - 32px), 620px);
 }
-body.mode-surv .gtop,
-body.mode-surv .board-area,
-body.mode-surv #booster-bar { align-self: start; }
+body.mode-surv .gtop { align-self: start; }
+body.mode-surv #booster-bar { align-self: end; }
+body.mode-surv .board-area { min-height: 0; align-self: stretch; }
+/* El tablero llena la ALTURA de la región flexible (height:100%) y queda cuadrado por
+   aspect-ratio, pero se ACOTA por ancho con max-width/max-height = --board-size (96vw,
+   tope 620). Así: en teléfonos manda el ancho (tablero fijo, cuadrado); en ventanas
+   cortas manda la altura de la región (se reduce lo justo). Nunca desborda la región →
+   jamás se solapa con el HUD ni los boosters, en ninguna pantalla. */
+body.mode-surv .board-wrap {
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  max-width: var(--board-size);
+  max-height: var(--board-size);
+}
 .gtop-main {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
 }
+body.mode-surv .gtop-main { margin-bottom: 0; }
+body.mode-surv .wallet-pill { min-height: 24px; padding: 3px 7px; }
 .hud-wallet { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .wallet-pill {
   appearance: none;
@@ -2153,6 +2186,10 @@ body.mode-surv #booster-bar { align-self: start; }
   padding: 2px 0;
   overflow: hidden;
 }
+/* En supervivencia el carril de sucesos es fijo y compacto (el cromo apilado es alto):
+   el texto del toast sigue legible; así la altura de la región del tablero es constante y
+   el tablero fijo por ancho encaja sin recortes. (Solo afecta a Supervivencia.) */
+body.mode-surv .event-dock { height: 22px; }
 .event-dock .toasts {
   position: absolute;
   left: 50%;
@@ -2183,11 +2220,14 @@ body.mode-surv #booster-bar { align-self: start; }
   gap: 6px;
   min-height: 60px;
 }
+/* Fila de puntuación compacta SOLO en Supervivencia (HUD apilado alto → hay que ganar
+   alto para el tablero fijo). Otros modos conservan la fila holgada. */
+body.mode-surv .score-row { grid-template-columns: 48px minmax(0, 1fr) 48px; min-height: 46px; }
 .score-side { display: grid; justify-items: start; align-items: center; min-width: 0; }
 .score-side .power-rings { display: none; }
 body.mode-surv .score-side .power-rings { display: block; }
 body.mode-surv .score-side .gctx { display: none; }
-.score-row .power-rings { width: 54px; height: 54px; }
+.score-row .power-rings { width: 42px; height: 42px; }
 .score-row .pr-flame { font-size: .95rem; }
 .score-spacer { display: block; }
 .gscore {
@@ -2228,11 +2268,11 @@ body.mode-surv .score-side .gctx { display: none; }
   grid-template-columns: minmax(0, 1fr);
   justify-content: stretch;
   align-items: stretch;
-  gap: 8px;
+  gap: 5px;
   margin: 0 auto 6px;
   width: min(96vw, 620px);
   max-width: 100%;
-  padding: 8px 10px;
+  padding: 6px 10px;
   border-radius: 13px;
   background: linear-gradient(180deg, rgba(10,18,44,.76), rgba(8,14,35,.82));
   border: 1px solid rgba(255,216,77,.42);
@@ -2257,9 +2297,22 @@ body.mode-surv .score-side .gctx { display: none; }
   box-sizing: border-box;
   justify-self: stretch;
   margin: 0;
-  padding-top: 8px;
+  padding-top: 5px;
   border-top: 1px solid rgba(145,172,255,.16);
   justify-content: center;
+  /* Una sola línea SIEMPRE: los chips de build (mutador + bendiciones) nunca envuelven
+     a una 2.ª fila (rompería la altura reservada del HUD y desbordaría el tablero fijo);
+     si no caben, hacen scroll horizontal invisible. */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.surv-build::-webkit-scrollbar { display: none; }
+body.mode-surv .surv-build[hidden] {
+  display: flex !important;
+  min-height: 25px;
+  visibility: hidden;
+  pointer-events: none;
 }
 /* ===== Sistema de jefes (JF-β, docs/BOSS_SYSTEM_MASTER_PLAN.md §5) =====
    Banner del encuentro: primera fila DENTRO de #surv-bar, encima de vidas/oleada/
@@ -2307,10 +2360,16 @@ body.reduced-fx .sbx-next.telegraph { animation: none; }
 /* Nivel III+ / eco: borde rojizo ESTÁTICO (sin pulso: presupuesto QP-2). */
 .surv-boss.lvl-high { box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(255,93,115,.55); }
 .surv-bar.encounter { border-color: color-mix(in srgb, var(--boss-accent, var(--gold)) 60%, rgba(255,255,255,.12));
+  min-height: 92px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 9px 24px rgba(0,0,0,.24),
     0 0 18px color-mix(in srgb, var(--boss-accent, var(--gold)) 16%, transparent); }
-/* Presupuesto móvil (§5.1): durante el encuentro el banner sustituye a la subfila. */
+/* Presupuesto móvil (§5.1): durante el encuentro el banner sustituye las filas
+   secundarias para no cambiar el alto del HUD. */
 .surv-bar.encounter .surv-subrow { display: none; }
+body.mode-surv .surv-bar.encounter .surv-build {
+  display: none !important;
+  visibility: hidden;
+}
 /* Celdas del cuerpo del jefe: ancla (bajo un icono) y variante blindada. */
 .cell.tile-boss { border-color: color-mix(in srgb, var(--boss-accent, var(--accent-2)) 86%, #fff);
   background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--boss-accent, var(--accent-2)) 40%, transparent), transparent 58%), rgba(10,18,44,.9);
@@ -2343,11 +2402,14 @@ body.reduced-fx .sbx-next.telegraph { animation: none; }
   background: linear-gradient(90deg, rgba(4,7,20,.92),
     color-mix(in srgb, var(--boss-accent, var(--accent-2)) 24%, rgba(4,7,20,.96)), rgba(4,7,20,.92));
   box-shadow: 0 20px 48px rgba(0,0,0,.55), 0 0 26px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 22%, transparent); }
-.boss-card.show { animation: bossCard 1.15s cubic-bezier(.2,.8,.25,1) both; }
+/* Retención larga (~2s legibles): la presentación del jefe entra rápido, SE MANTIENE
+   para poder leer nombre+epíteto+nivel, y sale. Antes duraba 1.15s (entrada+salida
+   incluidas): apenas medio segundo legible — "pasaba volando" (feedback del propietario). */
+.boss-card.show { animation: bossCard 2.6s cubic-bezier(.2,.8,.25,1) both; }
 @keyframes bossCard {
   0% { opacity: 0; transform: translateY(10px) scale(.94); }
-  12% { opacity: 1; transform: none; }
-  82% { opacity: 1; }
+  7% { opacity: 1; transform: none; }
+  86% { opacity: 1; transform: none; }
   100% { opacity: 0; transform: translateY(-6px) scale(.98); }
 }
 .boss-card strong { display: block; color: #fff; font-size: 1.3rem; line-height: 1.05; text-align: center;
@@ -2369,9 +2431,9 @@ body.mode-surv #btn-hint-tool { display: grid; }
   grid-template-columns: minmax(0, 1fr);
   gap: 6px;
   align-items: stretch;
-  min-height: 82px;
-  margin: 8px auto 0;
-  padding: 8px;
+  min-height: 68px;
+  margin: 6px auto 0;
+  padding: 6px;
   border: 1px solid rgba(145,172,255,.22);
   border-radius: 17px;
   background: linear-gradient(180deg, rgba(18,31,72,.76), rgba(6,11,32,.84));
@@ -2387,7 +2449,7 @@ body.mode-surv .booster-bar { grid-template-columns: minmax(0, 1fr) 56px; }
 .booster {
   position: relative;
   width: auto;
-  height: 68px;
+  height: 56px;
   min-width: 0;
   display: grid;
   grid-template-rows: 1fr auto;
@@ -3889,6 +3951,9 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
     --board-size: min(98vw, 70svh, 620px);
     padding-left: 8px;
     padding-right: 8px;
+  }
+  body.mode-surv .screen-game {
+    --board-size: min(96vw, calc(100vw - 16px), 620px);
   }
   .gtop-main { gap: 8px; }
   .controls { gap: 6px; }

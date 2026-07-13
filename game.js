@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.21';
+  const VERSION = '2.6.27';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -4830,19 +4830,32 @@
       // reutiliza bossWarn hasta los leitmotivs de QP-4.
       document.documentElement.style.setProperty('--boss-accent', def.accent);
       Render.bossCard(this.name(id), I18n.t('bossdex_' + id + '_e') + ' · ' + this.lvlLabel(this.enc.lvl));
+      // Presentación del jefe (§5.2): breve retención de entrada para que la boss card
+      // sea LEGIBLE y el jugador tenga tiempo de reacción antes de que el encuentro
+      // corra. Sin este lock la entrada se sentía instantánea (la card pasaba volando).
+      // El primer ataque llega a ~6s (respiro), muy por encima de este lock.
+      Survival._lock(1200, def.frame);
       Sound.bossWarn(); Haptics.fire(8);
       announce(I18n.t('surv_boss_enter_sr').replace('{b}', this.name(id)).replace('{n}', this.enc.lvl).replace('{k}', this.enc.anchorsMax));
       Render.hudSoon();
       return this.enc;
     },
-    // Coloca las anclas BAJO iconos existentes; respetan SPECIAL_CAP (§3.3). La
-    // Corriente ancla en el anillo exterior (su counterplay vive donde ataca).
+    // Coloca las anclas BAJO iconos existentes. Las anclas son el CUERPO del jefe
+    // (transitorias: se retiran al resolver el encuentro) y son la ÚNICA vía para
+    // dañarlo, así que NO se gatean por SPECIAL_CAP: si el tablero ya viene saturado
+    // de especiales (hielos/candados acumulados o los traps de la propia oleada de
+    // jefe, que se siembran antes), el jefe DEBE aparecer igualmente. Gatearlas por
+    // `_specialRoom()` era la causa del bug «avisa un jefe pero nunca aparece y da
+    // SUPERADO directo»: sin sitio → 0 anclas → fallback al jefe-evento clásico
+    // (mecánica vieja). El exceso sobre el cap es temporal y se autocura al resolver;
+    // mientras dura, `_specialRoom()`→0 frena los ataques que siembran especiales, así
+    // que el jefe no sobrecarga el tablero. La Corriente ancla en el anillo exterior.
     _placeAnchors(def, lvl) {
       const size = State.size;
       const edge = (i) => { const r = i / size | 0, c = i % size; return r === 0 || c === 0 || r === size - 1 || c === size - 1; };
       let f = Survival._filledIdx();
       if (def.edgeAnchors) { const e = f.filter(edge); if (e.length >= def.anchors) f = e; }
-      const n = Math.min(def.anchors, f.length, Math.max(0, Survival._specialRoom()));
+      const n = Math.min(def.anchors, f.length);
       // Nivel III+ blinda un ancla extra, pero siempre queda ≥1 sin blindar (legibilidad).
       const armored = Math.min((def.armored || 0) + (lvl >= 3 ? 1 : 0), Math.max(0, n - 1));
       const placed = [];
@@ -8095,6 +8108,21 @@
     document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
     document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
     document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+    // Altura real del viewport visible (--app-h): unifica el alto del contenedor en
+    // TODOS los navegadores/dispositivos. El clásico `100vh` en móvil vale el viewport
+    // GRANDE (barra de direcciones oculta), por lo que la parte inferior (booster-bar)
+    // quedaba recortada bajo la barra en unos navegadores y bien en otros. Aquí medimos
+    // el alto realmente visible (`visualViewport`) y lo publicamos como var CSS. OJO: el
+    // TABLERO no usa esta var (usa `svh` estable), así que el contenedor se ajusta al
+    // cromo del navegador pero el tablero NO se redimensiona (queda fijo, como pide el diseño).
+    const setAppH = () => {
+      const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+      if (h) document.documentElement.style.setProperty('--app-h', Math.round(h) + 'px');
+    };
+    setAppH();
+    window.addEventListener('resize', setAppH, { passive: true });
+    window.addEventListener('orientationchange', setAppH, { passive: true });
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', setAppH, { passive: true });
     Render.buildBoard();
     FX.init();
     applyReducedFx();
