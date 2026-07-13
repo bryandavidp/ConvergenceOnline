@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.14" />
+  <link rel="stylesheet" href="styles.css?v=2.6.20" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -216,6 +216,15 @@
           <div class="obj-banner" id="obj-banner" hidden></div>
           <!-- Barra de Supervivencia: vidas + oleada + tiempo sobrevivido -->
           <div class="surv-bar" id="surv-bar" hidden>
+            <!-- Banner del encuentro (JF-β): la cara del jefe, visible solo durante el encuentro -->
+            <div class="surv-boss" id="surv-boss" hidden>
+              <span class="sbx-portrait" id="surv-boss-icon" aria-hidden="true"></span>
+              <div class="sbx-mid">
+                <span class="sbx-name"><span id="surv-boss-name"></span><i class="sbx-lvl" id="surv-boss-lvl"></i></span>
+                <span class="sbx-hp" id="surv-boss-hp"></span>
+              </div>
+              <span class="sbx-next" id="surv-boss-next" aria-hidden="true"></span>
+            </div>
             <div class="surv-grid">
               <span class="surv-metric surv-life-box"><span class="surv-k">Vidas</span><span class="surv-lives" id="surv-lives" data-explain="hud_lives_explain">❤️❤️❤️</span></span>
               <div class="surv-wave-wrap">
@@ -598,6 +607,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=2.6.14" defer></script>
+  <script src="game.js?v=2.6.20" defer></script>
 </body>
 </html>

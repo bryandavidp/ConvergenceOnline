@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mockup modal fin de supervivencia v2</title>
+  <style>
+    :root {
+      --bg: #070a18;
+      --panel: #111735;
+      --panel-2: #161d3d;
+      --line: rgba(168, 185, 255, .18);
+      --line-strong: rgba(136, 248, 255, .32);
+      --text: #f7f9ff;
+      --muted: #aeb9db;
+      --soft: #7380a8;
+      --gold: #ffd95c;
+      --teal: #22f1ef;
+      --violet: #9b7cff;
+      --green: #43e69b;
+      --coral: #ff668b;
+      --blue: #4f8dff;
+      font-family: Inter, ui-rounded, "Arial Rounded MT Bold", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 22% 8%, rgba(79, 141, 255, .20), transparent 28%),
+        radial-gradient(circle at 86% 20%, rgba(255, 217, 92, .11), transparent 24%),
+        linear-gradient(180deg, #080b1d 0%, #0c1127 48%, #070a18 100%);
+    }
+
+    .stage {
+      width: 390px;
+      min-height: 844px;
+      padding: 12px;
+      display: grid;
+      place-items: center;
+    }
+
+    .modal {
+      width: 364px;
+      overflow: hidden;
+      border: 1px solid rgba(133, 159, 255, .28);
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.075), transparent 21%),
+        linear-gradient(180deg, #18224b 0%, #101735 48%, #0c1128 100%);
+      box-shadow: 0 26px 64px rgba(0,0,0,.48), 0 0 0 1px rgba(255,255,255,.04) inset;
+    }
+
+    .topline {
+      height: 4px;
+      background: linear-gradient(90deg, transparent 6%, var(--gold), var(--teal), transparent 94%);
+      box-shadow: 0 0 18px rgba(34, 241, 239, .38);
+    }
+
+    .content {
+      padding: 18px 18px 14px;
+    }
+
+    .header {
+      display: grid;
+      grid-template-columns: 46px 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .emblem {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 15px;
+      border: 1px solid rgba(255, 217, 92, .42);
+      background:
+        radial-gradient(circle at 32% 24%, rgba(255,255,255,.30), transparent 28%),
+        linear-gradient(180deg, rgba(255, 217, 92, .22), rgba(0,0,0,.28));
+      box-shadow: 0 0 22px rgba(255, 217, 92, .18), inset 0 1px 0 rgba(255,255,255,.16);
+      font-size: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--gold);
+      font-size: 22px;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.25;
+    }
+
+    .hero {
+      padding: 14px 14px 13px;
+      border: 1px solid rgba(155, 124, 255, .30);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(155, 124, 255, .22), transparent 58%),
+        rgba(8, 12, 31, .32);
+      text-align: center;
+    }
+
+    .record {
+      width: max-content;
+      max-width: 100%;
+      margin: 0 auto 8px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: #241600;
+      background: linear-gradient(180deg, #ffe988, #ffbf4b);
+      box-shadow: 0 8px 20px rgba(255, 184, 66, .18);
+      font-size: 12px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+    }
+
+    .wave {
+      margin-top: 2px;
+      color: var(--violet);
+      font-size: 60px;
+      font-weight: 950;
+      line-height: .92;
+      text-shadow: 0 0 20px rgba(155, 124, 255, .38);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hero-note {
+      margin-top: 7px;
+      color: #ccd4ef;
+      font-size: 12px;
+      font-weight: 820;
+    }
+
+    .score-strip {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 11px 13px;
+      border: 1px solid var(--line-strong);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(34, 241, 239, .11), rgba(16, 29, 58, .58));
+    }
+
+    .score-strip b {
+      color: var(--teal);
+      font-size: 30px;
+      line-height: 1;
+      font-weight: 950;
+      text-shadow: 0 0 18px rgba(34, 241, 239, .28);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .score-strip span {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+
+    .section {
+      margin-top: 14px;
+      padding-top: 13px;
+      border-top: 1px solid rgba(168, 185, 255, .15);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+      color: #dce4ff;
+      font-size: 11px;
+      font-weight: 930;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+    }
+
+    .section-title small {
+      color: var(--soft);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .survival-ledger {
+      display: grid;
+      gap: 9px;
+    }
+
+    .run-card,
+    .service-card {
+      border: 1px solid rgba(168, 185, 255, .16);
+      border-radius: 16px;
+      background: rgba(255,255,255,.04);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .run-card {
+      display: grid;
+      grid-template-columns: 1fr 96px;
+      gap: 10px;
+      align-items: stretch;
+      padding: 10px;
+    }
+
+    .boon-label,
+    .boss-label,
+    .service-label {
+      color: var(--muted);
+      font-size: 9.5px;
+      font-weight: 920;
+      letter-spacing: .55px;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .boon-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .boon-chip {
+      width: 29px;
+      height: 29px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 10px;
+      background: rgba(8, 12, 31, .34);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+      font-size: 16px;
+    }
+
+    .boss-box {
+      display: grid;
+      place-items: center;
+      padding: 9px 8px;
+      border-radius: 13px;
+      border: 1px solid rgba(34, 241, 239, .25);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(34, 241, 239, .14), transparent 60%),
+        rgba(8, 12, 31, .35);
+      text-align: center;
+    }
+
+    .boss-num {
+      margin-top: 4px;
+      color: var(--teal);
+      font-size: 26px;
+      font-weight: 950;
+      line-height: .9;
+      text-shadow: 0 0 14px rgba(34, 241, 239, .25);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .boss-copy {
+      margin-top: 3px;
+      color: #dfe6ff;
+      font-size: 9.5px;
+      font-weight: 900;
+      line-height: 1.05;
+      text-transform: uppercase;
+    }
+
+    .service-card {
+      padding: 10px 11px;
+      background:
+        linear-gradient(135deg, rgba(67, 230, 155, .10), rgba(255, 217, 92, .08)),
+        rgba(255,255,255,.035);
+    }
+
+    .service-top {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .service-rank {
+      margin-top: 4px;
+      color: var(--gold);
+      font-size: 22px;
+      font-weight: 950;
+      line-height: 1;
+      text-shadow: 0 0 14px rgba(255, 217, 92, .24);
+    }
+
+    .service-up {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      color: #102018;
+      background: linear-gradient(180deg, #7cf0b2, #42da89);
+      font-size: 10.5px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-top: 9px;
+    }
+
+    .service-metric {
+      min-height: 47px;
+      display: grid;
+      align-content: center;
+      gap: 3px;
+      padding: 7px 5px;
+      border-radius: 11px;
+      background: rgba(8, 12, 31, .30);
+      text-align: center;
+    }
+
+    .service-metric b {
+      color: #f7f9ff;
+      font-size: 15px;
+      font-weight: 950;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .service-metric span {
+      color: var(--muted);
+      font-size: 8.5px;
+      font-weight: 900;
+      line-height: 1.05;
+      text-transform: uppercase;
+    }
+
+    .service-bar {
+      margin-top: 9px;
+      height: 7px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+    }
+
+    .service-bar span {
+      display: block;
+      width: 53%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--green), var(--gold));
+      box-shadow: 0 0 14px rgba(67, 230, 155, .26);
+    }
+
+    .service-note {
+      margin-top: 7px;
+      color: #cfd8f6;
+      font-size: 10.5px;
+      font-weight: 780;
+      line-height: 1.25;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .stat {
+      min-height: 58px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      padding: 8px 6px;
+      border: 1px solid rgba(168, 185, 255, .14);
+      border-radius: 13px;
+      background: rgba(255,255,255,.045);
+      text-align: center;
+    }
+
+    .stat b {
+      font-size: 20px;
+      line-height: 1;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+
+    .violet { color: var(--violet); }
+    .gold { color: var(--gold); }
+    .green { color: var(--green); }
+    .coral { color: var(--coral); }
+
+    .peak-moment {
+      position: relative;
+      overflow: hidden;
+      padding: 12px;
+      border: 1px solid rgba(255, 217, 92, .42);
+      border-radius: 18px;
+      background:
+        linear-gradient(135deg, rgba(255, 217, 92, .16), rgba(255, 102, 139, .09) 48%, rgba(34, 241, 239, .09)),
+        rgba(255,255,255,.04);
+      box-shadow: 0 14px 28px rgba(255, 190, 70, .09), inset 0 1px 0 rgba(255,255,255,.13);
+    }
+
+    .peak-moment::before {
+      content: '';
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 0;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, var(--gold), var(--coral), transparent);
+      opacity: .9;
+    }
+
+    .peak-main {
+      display: grid;
+      grid-template-columns: 46px 1fr;
+      gap: 11px;
+      align-items: center;
+    }
+
+    .peak-medal {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 15px;
+      color: #231500;
+      background: linear-gradient(180deg, #fff1a0, #ffbc45);
+      box-shadow: 0 9px 18px rgba(255, 190, 70, .20), inset 0 1px 0 rgba(255,255,255,.55);
+      font-size: 23px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .peak-copy {
+      min-width: 0;
+    }
+
+    .peak-kicker {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--gold);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .peak-kicker span:last-child {
+      color: var(--muted);
+      letter-spacing: 0;
+      text-transform: none;
+      white-space: nowrap;
+    }
+
+    .peak-score {
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+      margin-top: 5px;
+      min-width: 0;
+    }
+
+    .peak-score b {
+      color: #fff3a4;
+      font-size: 29px;
+      font-weight: 950;
+      line-height: .95;
+      text-shadow: 0 0 18px rgba(255, 217, 92, .28);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .peak-score span {
+      color: #f4f7ff;
+      font-size: 12px;
+      font-weight: 930;
+      text-transform: uppercase;
+    }
+
+    .peak-detail {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .peak-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 26px;
+      padding: 5px 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 999px;
+      background: rgba(8, 12, 31, .34);
+      color: #eef3ff;
+      font-size: 10.5px;
+      font-weight: 900;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .peak-pill.strong {
+      color: #111827;
+      border-color: rgba(255, 217, 92, .55);
+      background: linear-gradient(180deg, #ffe77f, #ffc34e);
+      box-shadow: 0 8px 16px rgba(255, 190, 70, .12);
+    }
+
+    .peak-foot {
+      margin-top: 10px;
+      padding-top: 9px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      color: #cfd8f6;
+      font-size: 11px;
+      font-weight: 790;
+      line-height: 1.25;
+    }
+
+    .rewards {
+      display: grid;
+      gap: 9px;
+    }
+
+    .reward-top {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 930;
+    }
+
+    .reward-top .gain {
+      color: var(--green);
+    }
+
+    .rank {
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .bar {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+    }
+
+    .bar span {
+      display: block;
+      width: 74%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--gold));
+      box-shadow: 0 0 14px rgba(34, 241, 239, .34);
+    }
+
+    .loot-line {
+      display: flex;
+      justify-content: center;
+      gap: 11px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.055);
+      color: #ffe383;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .next {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 12px;
+      border: 1px solid rgba(79, 141, 255, .38);
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(79, 141, 255, .20), transparent 54%),
+        rgba(255,255,255,.045);
+    }
+
+    .next b {
+      display: block;
+      margin-bottom: 3px;
+      color: #f3f6ff;
+      font-size: 12px;
+      line-height: 1.1;
+    }
+
+    .next span {
+      color: var(--muted);
+      font-size: 10.5px;
+      font-weight: 760;
+      line-height: 1.2;
+    }
+
+    .mini-btn {
+      padding: 9px 12px;
+      border-radius: 13px;
+      color: #fff;
+      background: linear-gradient(180deg, #6aa4ff, #2f63ff);
+      box-shadow: 0 8px 18px rgba(47, 99, 255, .28), inset 0 1px 0 rgba(255,255,255,.35);
+      font-size: 12px;
+      font-weight: 940;
+      white-space: nowrap;
+    }
+
+    .progress-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .task {
+      padding: 8px 9px;
+      border: 1px solid rgba(168, 185, 255, .14);
+      border-radius: 12px;
+      background: rgba(255,255,255,.035);
+    }
+
+    .task-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 6px;
+      color: #eff3ff;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .task-top small {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 820;
+    }
+
+    .task .bar {
+      height: 4px;
+    }
+
+    .task:nth-child(1) .bar span { width: 92%; background: linear-gradient(90deg, var(--coral), var(--green)); }
+    .task:nth-child(2) .bar span { width: 72%; background: linear-gradient(90deg, var(--blue), var(--gold)); }
+    .task:nth-child(3) .bar span { width: 46%; background: linear-gradient(90deg, var(--teal), var(--gold)); }
+    .task:nth-child(4) .bar span { width: 100%; background: linear-gradient(90deg, var(--gold), var(--coral)); }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 48px 48px;
+      gap: 9px;
+      padding: 12px 18px 18px;
+      background: linear-gradient(180deg, rgba(8, 12, 31, 0), rgba(8, 12, 31, .72) 28%);
+    }
+
+    .button {
+      min-height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 15px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 950;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.20);
+    }
+
+    .primary {
+      background: linear-gradient(180deg, #55a0ff, #2461ff);
+      box-shadow: 0 12px 24px rgba(36,97,255,.28), inset 0 1px 0 rgba(255,255,255,.34);
+    }
+
+    .ghost {
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(168,185,255,.14);
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <main class="stage" aria-label="Mockup visual del modal de fin de supervivencia">
+    <section class="modal">
+      <div class="topline"></div>
+      <div class="content">
+        <header class="header">
+          <div class="emblem">🛡️</div>
+          <div>
+            <h1>Fin de supervivencia</h1>
+            <div class="subtitle">Difícil · 1012s sobrevividos · 9 jefes superados</div>
+          </div>
+        </header>
+
+        <section class="hero" aria-label="Resultado principal">
+          <div class="record">🏆 Nuevo récord de supervivencia</div>
+          <div class="eyebrow">Oleada alcanzada</div>
+          <div class="wave">46</div>
+          <div class="hero-note">Tu récord de oleada: 52 · te quedaste a 6</div>
+          <div class="score-strip">
+            <b>690892</b>
+            <span>puntos</span>
+          </div>
+        </section>
+
+        <section class="section" aria-label="Hoja de supervivencia">
+          <div class="section-title">Hoja de supervivencia <small>bendiciones, jefes y rango</small></div>
+          <div class="survival-ledger">
+            <div class="run-card">
+              <div>
+                <div class="boon-label">Bendiciones elegidas</div>
+                <div class="boon-row" aria-label="Bendiciones elegidas en la run">
+                  <span class="boon-chip" title="Ascenso">♟️</span>
+                  <span class="boon-chip" title="Calma">❄️</span>
+                  <span class="boon-chip" title="Furia">⚡</span>
+                  <span class="boon-chip" title="Corazón">❤️</span>
+                  <span class="boon-chip" title="Imán">🧲</span>
+                  <span class="boon-chip" title="Corona">👑</span>
+                  <span class="boon-chip" title="Escudo">🛡️</span>
+                </div>
+              </div>
+              <div class="boss-box">
+                <div class="boss-label">Jefes</div>
+                <div class="boss-num">9</div>
+                <div class="boss-copy">superados</div>
+              </div>
+            </div>
+
+            <div class="service-card">
+              <div class="service-top">
+                <div>
+                  <div class="service-label">Rango de supervivencia</div>
+                  <div class="service-rank">Explorador</div>
+                </div>
+                <div class="service-up">⬆ Ascenso</div>
+              </div>
+              <div class="service-grid">
+                <div class="service-metric"><b>+46</b><span>oleadas esta run</span></div>
+                <div class="service-metric"><b>80/150</b><span>hacia Curtido</span></div>
+                <div class="service-metric"><b>1:1</b><span>oleada = progreso</span></div>
+              </div>
+              <div class="service-bar"><span></span></div>
+              <div class="service-note">Sube porque alcanzaste la oleada 46: cada oleada completada suma servicio al rango de Supervivencia.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" aria-label="Rendimiento">
+          <div class="section-title">Rendimiento <small>lo esencial de la run</small></div>
+          <div class="stats">
+            <div class="stat"><b class="violet">46</b><span>Oleada</span></div>
+            <div class="stat"><b class="gold">52</b><span>Mejor oleada</span></div>
+            <div class="stat"><b class="gold">×33</b><span>Combo máx.</span></div>
+            <div class="stat"><b class="green">1457</b><span>Eliminados</span></div>
+            <div class="stat"><b class="coral">1012s</b><span>Sobreviviste</span></div>
+            <div class="stat"><b class="gold">1137s</b><span>Mejor</span></div>
+          </div>
+        </section>
+
+        <section class="section" aria-label="Mejor momento">
+          <div class="peak-moment">
+            <div class="peak-main">
+              <div class="peak-medal">★</div>
+              <div class="peak-copy">
+                <div class="peak-kicker"><span>Mejor momento</span><span>Pico de la run</span></div>
+                <div class="peak-score"><b>+14857</b><span>puntos</span></div>
+                <div class="peak-detail">
+                  <span class="peak-pill strong">⚡ Combo ×20</span>
+                  <span class="peak-pill">🌊 Oleada 41</span>
+                  <span class="peak-pill">🔥 Cadena perfecta</span>
+                </div>
+              </div>
+            </div>
+            <div class="peak-foot">Combo ×20 en la oleada 41: el tramo donde más puntos generaste de una sola cadena.</div>
+          </div>
+        </section>
+
+        <section class="section" aria-label="Recompensas y progreso">
+          <div class="section-title">Recompensas <small>perfil general</small></div>
+          <div class="rewards">
+            <div class="reward-top">
+              <div><span class="gain">+69554 XP</span> · 🪙 +17428</div>
+              <div class="rank">Perfil: Mítico · Nivel 47</div>
+            </div>
+            <div class="bar"><span></span></div>
+            <div class="loot-line"><span>🪙 +6638</span><span>💎 +35</span><span>🎁 +4</span></div>
+          </div>
+        </section>
+
+        <section class="section" aria-label="Siguiente paso">
+          <div class="next">
+            <div>
+              <b>🎁 Siguiente paso: abrir cofre</b>
+              <span>Tienes recompensa guardada lista para abrir.</span>
+            </div>
+            <div class="mini-btn">Abrir</div>
+          </div>
+        </section>
+
+        <section class="section" aria-label="Progreso cercano">
+          <div class="section-title">Progreso cercano</div>
+          <div class="progress-grid">
+            <div class="task"><div class="task-top"><span>🎯 Misión diaria</span><small>Listo</small></div><div class="bar"><span></span></div></div>
+            <div class="task"><div class="task-top"><span>📅 Reto semanal</span><small>6/12</small></div><div class="bar"><span></span></div></div>
+            <div class="task"><div class="task-top"><span>🏅 Variedad</span><small>3 por probar</small></div><div class="bar"><span></span></div></div>
+            <div class="task"><div class="task-top"><span>🎁 Cofres listos</span><small>4</small></div><div class="bar"><span></span></div></div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="actions">
+        <div class="button primary">↻ Reintentar</div>
+        <div class="button ghost" aria-label="Compartir">↗</div>
+        <div class="button ghost" aria-label="Menú">×</div>
+      </footer>
+    </section>
+  </main>
+</body>
+</html>

@@ -296,7 +296,7 @@ Esfuerzo: 🟢 horas · 🟡 días · 🟡🟡 semana. Cada fase cierra con: tes
 | ID | Tarea | Esf. | Justificación | Dep. | Guardarraíl |
 |---|---|---|---|---|---|
 | SV-40 | Registro declarativo BOSS_DEFS + overrides de test + test de propiedad (§3.4) | 🟡 | Baja el coste marginal de contenido a horas | SV-01 | CI: matriz jefes×boons×muts sin excepciones |
-| SV-41 | Oleadas de élite (§3.5, B-S3) | 🟡🟡 | A-P-E en la fase de rutina; riesgo-recompensa opcional | SV-40, SV-13 | B-S3; élite jamás coincide con oleada de jefe |
+| SV-41 | ~~Oleadas de élite (§3.5, B-S3)~~ **ABSORBIDA por los minijefes del sistema de jefes** (JF-δ, v2.6.18 — ver `BOSS_SYSTEM_MASTER_PLAN.md` §3.7/§4.3 y su bitácora): mismo objetivo (A-P-E en la fase de rutina, riesgo-recompensa opcional, jamás en oleada de jefe) con identidad de criatura en lugar de modificador anónimo | — | Cerrada por sustitución (JF-35) | — | B-J4 en lugar de B-S3 |
 | SV-42 | Mejoras de bendición duplicada (§3.5, B-S4) | 🟡 | Builds reales (mata BAL-5); duplicado→codicia | SV-01, SV-10 | B-S4 tras B-S1 verde |
 | SV-43 | 1–2 jefes nuevos (`lockdown`, `eco`) + «enfurecidos» 24+ (B-S6) | 🟡 | Variedad de amenaza a coste marginal | SV-40 | B-S6; cada jefe con counterplay legible y aviso propio |
 | SV-44 | Mutadores semanales 4→6 (p. ej. «marea alta»: jefes tide más frecuentes; «arsenal»: +2 boosters iniciales, monedas ×0.9) | 🟢 | Más semanas distintas con la tabla existente | SV-40 | Sim con `_mutOverride` por cada uno |

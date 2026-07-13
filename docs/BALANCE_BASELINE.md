@@ -177,6 +177,28 @@ supervivencia  dificil   skilled   563237   887041    480s    x41   oleada 22   
 
 **Época de score:** el baseline de Supervivencia pasa oficialmente de la fila v2.4.0 a esta batería. Los récords personales de score previos quedarán por debajo de lo alcanzable (~+47% p50 estructural por refill+candados); el récord de OLEADA — el ancla real del modo — no se mueve.
 
+## Batería v2.6.17 (JF-γ: ENCUENTROS de jefe encendidos — anclas/PV/fases/niveles) — 40 runs/config
+
+> Plan y puertas en `BOSS_SYSTEM_MASTER_PLAN.md` §8. Medición VÁLIDA = proceso fresco A/B (los valores de monedas "en batería" arrastran un artefacto preexistente de acumulación de Meta entre runs del mismo proceso; afecta igual a antes y después: +0.6%).
+
+**Gates (proceso fresco, 40 runs, flag ON vs flag OFF en el mismo build):**
+
+| config | encuentros/run | kills/run | kill-rate | coins (off→on) | oleada p50 | deadAir (off→on) | score p50 (off→on) |
+|---|---|---|---|---|---|---|---|
+| normal·skilled | 2.0 | 1.5 | **75%** | 616→646 (**+4.9%** ✅ ≤+10%) | 18→18 ✅ | 61%→60% ✅ | 184,904→206,017 (+11.4%) |
+| normal·average | 2.0 | 1.4 | 69% | 494→531 (+7.5% ✅) | 18→18 ✅ | 38%→35% ✅ | −7% |
+| normal·casual | 2.0 | 0.9 | 46% ⚠️ | 341→352 (+3.2% ✅) | 18→18 ✅ | 13%→10% ✅ | ≈0% |
+| dificil·skilled | 4.0 | 1.5 | 37% | 1.015→1.049 (+3.3% ✅) | 22→22 ✅ | 44%→44% ✅ | −13.5% |
+
+**Hallazgos del A/B (aislamiento de causas):**
+1. **Los efectos de derrota limpiaban de más**: sin suelo, inflaban monedas +18% y score +63% vía bonus de tablero vacío + refill + cadenas. Corrección quirúrgica: los regalos de derrota **nunca dejan el tablero por debajo de 8 iconos** (presupuesto en `_defeatEffect`) + lluvia 15%→12%. Tras el suelo: contribución neta ≈0 (coins 646 vs 641 sin efectos).
+2. **El botín (8+4×nivel) + Ronda maestra** cuestan ~+25 monedas/run skilled — dentro de presupuesto.
+3. **Kill-rate casual 46%** supera la expectativa (≤25%): los bots matan jefes "sin querer" al converger encima de anclas orgánicamente. En humanos casuales será menor (el bot no se distrae mirando el banner). Aceptado con nota: vigilar en playtest GM-31.
+4. **Bug corregido por el gate**: `_bossesDefeated` no se reseteaba entre runs (acumulaba entre partidas del mismo proceso — kills/run de 35 a 190). Reset añadido a `Survival.start()`.
+5. **Artefacto de pureza del sim ELIMINADO**: los jefes-evento legacy usaban `setTimeout` reales (marea 1.2s, terremoto 620ms) que disparaban DENTRO de la run siguiente del mismo proceso, contaminando las filas average/casual de otros modos. Los encuentros no usan setTimeouts → las filas no-Supervivencia posteriores a la primera run de Supervivencia CAMBIAN vs baseline por la desaparición de esa contaminación (las filas skilled, previas a toda Supervivencia, son idénticas bit a bit — incluida la del guardarraíl de medallas).
+
+**Época de score (2ª de la temporada)**: +11.4% p50 skilled por el cambio de tempo (ataques repartidos digestibles en vez de un volcado; deadAir baja) — mismo orden que la época del refill v2.6.1 (+19%), aceptado como coste del rediseño. La OLEADA no se mueve en ninguna config.
+
 ## Evaluación de los criterios de aceptación (GM-β)
 
 | Criterio | Resultado | Veredicto |

@@ -1970,6 +1970,14 @@ body.reduced-fx .coach-text { animation: none; }
 .obj-mode-note { flex: 0 1 auto; min-width: 0; max-width: 42%; color: color-mix(in srgb, var(--mode-accent, var(--accent-2)) 72%, #fff); font-size: .68rem; font-weight: 900; text-transform: uppercase; letter-spacing: .35px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.mode-aventura .obj-mode-note { color: color-mix(in srgb, var(--level) 76%, #fff); }
 body.mode-zen .obj-banner { border-color: rgba(155,225,93,.34); background: linear-gradient(180deg, rgba(42,88,58,.42), rgba(14,34,36,.72)); }
+/* Cara del jefe de bioma en Aventura (JF-ζ): identidad compartida con Supervivencia,
+   dentro del banner de objetivo. Presentación pura — la mecánica GM-08 no cambia. */
+.obj-boss-face { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 4px 7px; min-width: 0; }
+.obf-name { color: #fff; font-size: .82rem; font-weight: 950; text-transform: uppercase; letter-spacing: .2px; }
+.obf-epithet { color: color-mix(in srgb, var(--boss-accent, var(--mode-accent, #a06bff)) 62%, #fff); font-size: .68rem; font-style: normal; font-weight: 800; }
+.obf-hp { color: color-mix(in srgb, var(--boss-accent, var(--mode-accent, #a06bff)) 70%, #fff); font-size: .74rem; font-weight: 950; letter-spacing: 1.5px; }
+.obf-next { display: inline-flex; align-items: center; min-height: 20px; padding: 2px 6px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14); background: rgba(0,0,0,.24); color: #fff; font-size: .66rem; font-weight: 950; font-variant-numeric: tabular-nums; }
 
 /* Supervivencia 2.0 */
 body.mode-surv .lvl-chip { display: none; }
@@ -2249,6 +2257,101 @@ body.mode-surv .score-side .gctx { display: none; }
   border-top: 1px solid rgba(145,172,255,.16);
   justify-content: center;
 }
+/* ===== Sistema de jefes (JF-β, docs/BOSS_SYSTEM_MASTER_PLAN.md §5) =====
+   Banner del encuentro: primera fila DENTRO de #surv-bar, encima de vidas/oleada/
+   tiempo. Solo existe durante el encuentro (hidden fuera: coste cero). El acento
+   por jefe llega vía --boss-accent (lo fija Bosses.startEncounter en :root). */
+.surv-boss { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 8px;
+  min-height: 34px; padding: 4px 6px; border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--boss-accent, var(--accent-2)) 62%, rgba(255,255,255,.12));
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--boss-accent, var(--accent-2)) 26%, rgba(8,14,35,.9)),
+    rgba(8,14,35,.78) 58%,
+    color-mix(in srgb, var(--boss-accent, var(--accent-2)) 12%, rgba(8,14,35,.92)));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+  animation: chipPop .24s ease both; }
+body.reduced-fx .surv-boss { animation: none; }
+.sbx-portrait { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--boss-accent, var(--accent-2)) 70%, rgba(255,255,255,.18));
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--boss-accent, var(--accent-2)) 55%, #fff 6%),
+    color-mix(in srgb, var(--boss-accent, var(--accent-2)) 20%, #050814 80%));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 30%, transparent);
+  font-size: .95rem; line-height: 1; }
+.sbx-portrait img, .sbx-portrait span[style] { width: 17px; height: 17px; }
+.sbx-mid { min-width: 0; display: grid; gap: 3px; }
+.sbx-name { display: flex; align-items: baseline; gap: 6px; min-width: 0; color: #fff;
+  font-size: .78rem; font-weight: 950; line-height: 1; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sbx-lvl { color: var(--gold); font-size: .66rem; font-style: normal; font-weight: 950; flex: none; }
+.sbx-hp { color: color-mix(in srgb, var(--boss-accent, var(--accent-2)) 68%, #fff);
+  font-size: .78rem; font-weight: 950; line-height: 1; letter-spacing: 2px;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 44%, transparent); }
+.sbx-next { display: inline-flex; align-items: center; gap: 4px; justify-content: center;
+  min-width: 52px; min-height: 24px; padding: 3px 7px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.22);
+  color: #fff; font-size: .7rem; font-weight: 950; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Telegrafiado del ataque (§5.3): la píldora arde mientras el ataque se pre-marca. */
+.sbx-next.telegraph { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 30%, rgba(0,0,0,.25));
+  animation: boss-flag .5s ease-in-out infinite alternate; }
+body.reduced-fx .sbx-next.telegraph { animation: none; }
+.surv-boss.phase2 { border-color: color-mix(in srgb, var(--boss-accent, var(--accent-2)) 86%, #fff); }
+/* Minijefes (JF-δ): banner compacto — jerarquía de calibres frente al jefe. */
+.surv-boss.mini { min-height: 28px; }
+.surv-boss.mini .sbx-portrait { width: 22px; height: 22px; font-size: .8rem; }
+.surv-boss.mini .sbx-name { font-size: .7rem; }
+/* Nivel III+ / eco: borde rojizo ESTÁTICO (sin pulso: presupuesto QP-2). */
+.surv-boss.lvl-high { box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(255,93,115,.55); }
+.surv-bar.encounter { border-color: color-mix(in srgb, var(--boss-accent, var(--gold)) 60%, rgba(255,255,255,.12));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 9px 24px rgba(0,0,0,.24),
+    0 0 18px color-mix(in srgb, var(--boss-accent, var(--gold)) 16%, transparent); }
+/* Presupuesto móvil (§5.1): durante el encuentro el banner sustituye a la subfila. */
+.surv-bar.encounter .surv-subrow { display: none; }
+/* Celdas del cuerpo del jefe: ancla (bajo un icono) y variante blindada. */
+.cell.tile-boss { border-color: color-mix(in srgb, var(--boss-accent, var(--accent-2)) 86%, #fff);
+  background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--boss-accent, var(--accent-2)) 40%, transparent), transparent 58%), rgba(10,18,44,.9);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 54%, transparent) inset,
+    0 0 15px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 38%, transparent); }
+.cell.tile-boss::after { content: "◆"; position: absolute; right: 3px; top: 2px; z-index: 2;
+  color: color-mix(in srgb, var(--boss-accent, var(--accent-2)) 72%, #fff); font-size: .6rem; line-height: 1;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 50%, transparent); }
+.cell.tile-boss.boss-armored { background:
+  repeating-linear-gradient(45deg, rgba(210,220,240,.16) 0 6px, rgba(35,42,62,.55) 6px 12px), rgba(12,18,38,.86); }
+.cell.tile-boss.boss-armored::after { content: "◈"; }
+/* Hilos del Titiritero (JF-ε): los TIPOS enhebrados se marcan en toda celda que los
+   contenga — convergerlos LE CURA. Estático (sin animación: presupuesto QP-2). */
+.cell.threaded { box-shadow: 0 0 0 2px rgba(255,108,176,.55) inset, 0 0 10px rgba(255,108,176,.25); }
+.cell.threaded::before { content: ""; position: absolute; inset: -6px; z-index: 0; pointer-events: none;
+  background:
+    linear-gradient(35deg, transparent 46%, rgba(255,108,176,.6) 47% 50%, transparent 51%),
+    linear-gradient(145deg, transparent 52%, rgba(255,216,77,.42) 53% 55%, transparent 56%);
+  opacity: .85; }
+/* Jaula del Cerrajero (JF-γ): guarda un potenciador robado; se rompe por adyacencia. */
+.cell.tile-cage { background: #2a2f3c; }
+.cell.tile-cage::before { content: ""; position: absolute; inset: 0; z-index: 1;
+  background: center / 54% no-repeat url("img/ui/lock.png");
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.65)); opacity: .86; }
+/* Boss card (§5.2): franja de presentación sobre el tablero, one-shot ~1.15s.
+   No es modal (pointer-events none); en reduced-fx no existe (el banner informa). */
+.boss-card { position: absolute; z-index: 6; left: 14px; right: 14px; top: 38%; min-height: 74px;
+  display: grid; place-items: center; padding: 12px; border-radius: 12px; pointer-events: none; opacity: 0;
+  border: 1px solid color-mix(in srgb, var(--boss-accent, var(--accent-2)) 64%, rgba(255,255,255,.16));
+  background: linear-gradient(90deg, rgba(4,7,20,.92),
+    color-mix(in srgb, var(--boss-accent, var(--accent-2)) 24%, rgba(4,7,20,.96)), rgba(4,7,20,.92));
+  box-shadow: 0 20px 48px rgba(0,0,0,.55), 0 0 26px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 22%, transparent); }
+.boss-card.show { animation: bossCard 1.15s cubic-bezier(.2,.8,.25,1) both; }
+@keyframes bossCard {
+  0% { opacity: 0; transform: translateY(10px) scale(.94); }
+  12% { opacity: 1; transform: none; }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-6px) scale(.98); }
+}
+.boss-card strong { display: block; color: #fff; font-size: 1.3rem; line-height: 1.05; text-align: center;
+  text-transform: uppercase; font-weight: 950;
+  text-shadow: 0 0 14px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 44%, transparent); }
+.boss-card span { display: block; margin-top: 5px; text-align: center; font-weight: 850; font-size: .74rem;
+  color: color-mix(in srgb, var(--boss-accent, var(--accent-2)) 58%, #fff); }
+
 .occ { gap: 7px; padding: 0 4px; }
 .occ-percent { min-width: 34px; color: var(--warn); font-size: .75rem; font-weight: 950; text-align: right; font-variant-numeric: tabular-nums; }
 .occ-bar-wrap { height: 7px; }

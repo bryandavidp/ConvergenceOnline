@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.14';
+  const VERSION = '2.6.20';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -464,6 +464,67 @@
         surv_boss_enraged_warn: '⚠ ¡Jefe ENFURECIDO inminente!',
         surv_meteor_enraged: '¡Lluvia de iconos ENFURECIDA!', surv_tide_enraged: '¡Marea ENFURECIDA: marco completo!', surv_frost_enraged: 'Frente helado ENFURECIDO',
         bossname_meteor: 'Lluvia de iconos', bossname_tide: 'Marea', bossname_frost: 'Frente helado', bossname_lockdown: 'Cierre', bossname_quake: 'Terremoto',
+        // Bestiario de encuentros (JF-β): nombre + epíteto por jefe, y nombre de ataque por fase.
+        bossdex_meteor: 'Nubarrón', bossdex_meteor_e: 'el cielo a pedazos',
+        bossdex_tide: 'La Corriente', bossdex_tide_e: 'señora de los bordes',
+        bossdex_frost: 'Boreal', bossdex_frost_e: 'el aliento blanco',
+        bossdex_lockdown: 'El Cerrajero', bossdex_lockdown_e: 'guardián de candados',
+        bossdex_quake: 'Tectónico', bossdex_quake_e: 'el que baraja el mundo',
+        bossatk_meteor_1: 'Lluvia', bossatk_meteor_2: 'Lluvia y roca',
+        bossatk_tide_1: 'Marea', bossatk_tide_2: 'Marea completa',
+        bossatk_frost_1: 'Escarcha', bossatk_frost_2: 'Clúster helado',
+        bossatk_lockdown_1: 'Cierre', bossatk_lockdown_2: 'Jaula',
+        bossatk_quake_1: 'Terremoto parcial', bossatk_quake_2: 'Terremoto total',
+        surv_boss_cage_steal: '¡{b} enjaula tu {p}! Rompe la jaula para recuperarlo',
+        surv_master_round: 'Ronda maestra ✦ +1 vida',
+        surv_master_round_charge: 'Ronda maestra ✦ +50 de carga',
+        // Minijefes (JF-δ)
+        minidex_magpie: 'La Urraca', minidex_magpie_e: 'la ladrona',
+        minidex_firefly: 'Luciérnaga Dorada', minidex_firefly_e: 'la fugaz',
+        minidex_sentinel: 'El Centinela', minidex_sentinel_e: 'el vigía',
+        minidex_herald: 'El Heraldo', minidex_herald_e: 'el que anuncia',
+        mini_steal: '¡{b} roba iconos! Cázala para recuperarlos',
+        mini_return: '¡Botín recuperado! +{n} iconos',
+        mini_firefly_gift: 'Toque dorado: +24 de frenesí',
+        mini_sentinel_gift: 'Su territorio queda limpio',
+        mini_herald_down: 'El Heraldo ha caído: el jefe llegará debilitado',
+        mini_herald_up: '¡El Heraldo escapó! El jefe llega EMPODERADO',
+        mini_gone: '{b} se marcha…',
+        sr_mini_enter: 'Minijefe: {b}. Converge el icono sobre su ancla para cazarlo',
+        sr_mini_down: '{b}, cazado',
+        // Acto III: La Corte Profunda (JF-ε)
+        bossdex_crystalid: 'Cristálido', bossdex_crystalid_e: 'el corazón que rebrota',
+        bossdex_void: 'El Vacío', bossdex_void_e: 'la boca paciente',
+        bossdex_puppeteer: 'El Titiritero', bossdex_puppeteer_e: 'amo de los hilos',
+        bossatk_crystalid_1: 'Esquirlas', bossatk_crystalid_2: 'Esquirlas y rebrote',
+        bossatk_void_1: 'Devorar', bossatk_void_2: 'Devorar y crecer',
+        bossatk_puppeteer_1: 'Enhebrar', bossatk_puppeteer_2: 'Re-enhebrar',
+        surv_boss_shards: '¡Esquirlas del Cristálido!',
+        surv_boss_regrow: '¡{b} se regenera! Remátalo con tempo',
+        surv_boss_devour: 'El Vacío devora {n} iconos…',
+        surv_boss_grow: '¡El Vacío CRECE! No lo ignores',
+        surv_boss_threads: '¡Hilos! Converger los tipos marcados LE CURA',
+        surv_boss_heal: '¡{b} se cura con tus hilos!',
+        surv_boss_crystalid_warn: '¡Cristálido inminente: remátalo antes de que rebrote!',
+        surv_boss_void_warn: '¡El Vacío inminente: no dejes que crezca!',
+        surv_boss_puppeteer_warn: '¡El Titiritero inminente: cuidado con los hilos!',
+        // Jefes de bioma de Aventura (JF-ζ): identidad; la mecánica GM-08 no cambia.
+        advdex_nebula: 'Corazón de Nebulosa', advdex_nebula_e: 'late entre el polvo',
+        advdex_asteroid: 'El Magnetar', advdex_asteroid_e: 'pastor de rocas',
+        advdex_ice: 'Aurora Hambrienta', advdex_ice_e: 'la luz que congela',
+        advdex_core: 'El Fundidor', advdex_core_e: 'corazón del núcleo',
+        advdex_void: 'La Nada', advdex_void_e: 'devora-pistas',
+        advdex_crystal: 'Matriarca Cristal', advdex_crystal_e: 'madre del enjambre',
+        feat_cazador: 'Cazador', feat_cazador_d: 'Derrota a los 5 Señores (Nubarrón, Corriente, Boreal, Cerrajero y Tectónico)',
+        feat_ronda_maestra: 'Ronda maestra', feat_ronda_maestra_d: 'Logra 3 Rondas maestras (derrotas sin daño ni potenciadores)',
+        feat_domaecos: 'Domaecos', feat_domaecos_d: 'Derrota a un eco de nivel III o superior',
+        surv_boss_lvl: 'Nv. {n}',
+        surv_boss_hp_sr: 'Vida del jefe: {n} de {m} anclas',
+        surv_boss_enter_sr: 'Jefe: {b}, nivel {n}, {k} anclas. Converge los iconos sobre las anclas para dañarlo.',
+        surv_boss_prep: '{b} prepara: {a}',
+        surv_boss_phase2: '¡Fase 2! {b} cambia de patrón',
+        surv_boss_defeated: '¡{b} DERROTADO!',
+        surv_boss_retreat: '{b} se retira…',
         survmut_ice: 'Semana del hielo: trampas heladas · monedas ×1.15', survmut_chaos: 'Semana del caos: el terremoto ha vuelto', survmut_frenzy: 'Semana de la furia: frenesí +30%',
         dmut_pure: 'Reto de hoy: tablero puro', dmut_ice: 'Reto de hoy: tablero helado', dmut_window: 'Reto de hoy: combos más exigentes', dmut_variety: 'Reto de hoy: más variedad de figuras', dmut_rocks: 'Reto de hoy: campo de rocas', dmut_fast: 'Reto de hoy: ritmo veloz', dmut_crystal: 'Reto de hoy: cristales dobles', dmut_nohints: 'Reto de hoy: sin pistas',
         dmut_pure_n: 'Puro', dmut_ice_n: 'Hielo', dmut_window_n: 'Combos exigentes', dmut_variety_n: 'Variedad', dmut_rocks_n: 'Rocas', dmut_fast_n: 'Veloz', dmut_crystal_n: 'Cristales', dmut_nohints_n: 'Sin pistas',
@@ -664,6 +725,67 @@
         surv_boss_enraged_warn: '⚠ ENRAGED boss incoming!',
         surv_meteor_enraged: 'ENRAGED icon rain!', surv_tide_enraged: 'ENRAGED tide: full frame!', surv_frost_enraged: 'ENRAGED frozen front',
         bossname_meteor: 'Icon rain', bossname_tide: 'Tide', bossname_frost: 'Frozen front', bossname_lockdown: 'Lockdown', bossname_quake: 'Quake',
+        // Encounter bestiary (JF-β): boss name + epithet, and per-phase attack names.
+        bossdex_meteor: 'Stormfront', bossdex_meteor_e: 'the sky in pieces',
+        bossdex_tide: 'The Current', bossdex_tide_e: 'lady of the edges',
+        bossdex_frost: 'Boreal', bossdex_frost_e: 'the white breath',
+        bossdex_lockdown: 'The Locksmith', bossdex_lockdown_e: 'warden of locks',
+        bossdex_quake: 'Tectonic', bossdex_quake_e: 'the world-shuffler',
+        bossatk_meteor_1: 'Rain', bossatk_meteor_2: 'Rain and rock',
+        bossatk_tide_1: 'Tide', bossatk_tide_2: 'Full tide',
+        bossatk_frost_1: 'Frost', bossatk_frost_2: 'Frozen cluster',
+        bossatk_lockdown_1: 'Lockdown', bossatk_lockdown_2: 'Cage',
+        bossatk_quake_1: 'Partial quake', bossatk_quake_2: 'Total quake',
+        surv_boss_cage_steal: '{b} cages your {p}! Break the cage to get it back',
+        surv_master_round: 'Master round ✦ +1 life',
+        surv_master_round_charge: 'Master round ✦ +50 charge',
+        // Minibosses (JF-δ)
+        minidex_magpie: 'The Magpie', minidex_magpie_e: 'the thief',
+        minidex_firefly: 'Golden Firefly', minidex_firefly_e: 'the fleeting',
+        minidex_sentinel: 'The Sentinel', minidex_sentinel_e: 'the watcher',
+        minidex_herald: 'The Herald', minidex_herald_e: 'the announcer',
+        mini_steal: '{b} is stealing icons! Hunt it down to get them back',
+        mini_return: 'Loot recovered! +{n} icons',
+        mini_firefly_gift: 'Golden touch: +24 frenzy',
+        mini_sentinel_gift: 'Its territory is cleared',
+        mini_herald_down: 'The Herald has fallen: the boss will arrive weakened',
+        mini_herald_up: 'The Herald escaped! The boss arrives EMPOWERED',
+        mini_gone: '{b} slips away…',
+        sr_mini_enter: 'Miniboss: {b}. Converge the icon on its anchor to hunt it',
+        sr_mini_down: '{b}, hunted down',
+        // Act III: The Deep Court (JF-ε)
+        bossdex_crystalid: 'Crystalid', bossdex_crystalid_e: 'the regrowing heart',
+        bossdex_void: 'The Void', bossdex_void_e: 'the patient maw',
+        bossdex_puppeteer: 'The Puppeteer', bossdex_puppeteer_e: 'master of threads',
+        bossatk_crystalid_1: 'Shards', bossatk_crystalid_2: 'Shards and regrowth',
+        bossatk_void_1: 'Devour', bossatk_void_2: 'Devour and grow',
+        bossatk_puppeteer_1: 'Threading', bossatk_puppeteer_2: 'Re-threading',
+        surv_boss_shards: 'Crystalid shards!',
+        surv_boss_regrow: '{b} regenerates! Finish it with tempo',
+        surv_boss_devour: 'The Void devours {n} icons…',
+        surv_boss_grow: 'The Void GROWS! Do not ignore it',
+        surv_boss_threads: 'Threads! Converging marked types HEALS it',
+        surv_boss_heal: '{b} heals from your threads!',
+        surv_boss_crystalid_warn: 'Crystalid incoming: finish it before it regrows!',
+        surv_boss_void_warn: 'The Void incoming: do not let it grow!',
+        surv_boss_puppeteer_warn: 'The Puppeteer incoming: beware the threads!',
+        // Adventure biome bosses (JF-ζ): identity only; GM-08 mechanics unchanged.
+        advdex_nebula: 'Nebula Heart', advdex_nebula_e: 'beating in the dust',
+        advdex_asteroid: 'The Magnetar', advdex_asteroid_e: 'shepherd of rocks',
+        advdex_ice: 'Hungry Aurora', advdex_ice_e: 'the freezing light',
+        advdex_core: 'The Smelter', advdex_core_e: 'heart of the core',
+        advdex_void: 'The Nothing', advdex_void_e: 'hint-devourer',
+        advdex_crystal: 'Crystal Matriarch', advdex_crystal_e: 'mother of the swarm',
+        feat_cazador: 'Hunter', feat_cazador_d: 'Defeat the 5 Lords (Stormfront, Current, Boreal, Locksmith and Tectonic)',
+        feat_ronda_maestra: 'Master round', feat_ronda_maestra_d: 'Earn 3 Master rounds (defeats with no damage and no power-ups)',
+        feat_domaecos: 'Echo tamer', feat_domaecos_d: 'Defeat an echo of level III or higher',
+        surv_boss_lvl: 'Lv. {n}',
+        surv_boss_hp_sr: "Boss health: {n} of {m} anchors",
+        surv_boss_enter_sr: 'Boss: {b}, level {n}, {k} anchors. Converge the icons on the anchors to damage it.',
+        surv_boss_prep: '{b} is preparing: {a}',
+        surv_boss_phase2: 'Phase 2! {b} shifts its pattern',
+        surv_boss_defeated: '{b} DEFEATED!',
+        surv_boss_retreat: '{b} retreats…',
         survmut_ice: 'Ice week: frozen traps · coins ×1.15', survmut_chaos: 'Chaos week: the quake is back', survmut_frenzy: 'Fury week: frenzy +30%',
         dmut_pure: "Today's twist: pure board", dmut_ice: "Today's twist: frozen board", dmut_window: "Today's twist: tighter combos", dmut_variety: "Today's twist: more icon variety", dmut_rocks: "Today's twist: rock field", dmut_fast: "Today's twist: fast pace", dmut_crystal: "Today's twist: double crystals", dmut_nohints: "Today's twist: no hints",
         dmut_pure_n: 'Pure', dmut_ice_n: 'Ice', dmut_window_n: 'Tight combos', dmut_variety_n: 'Variety', dmut_rocks_n: 'Rocks', dmut_fast_n: 'Fast', dmut_crystal_n: 'Crystals', dmut_nohints_n: 'No hints',
@@ -1237,6 +1359,8 @@
       }
       if (type === 'rock') el.classList.toggle('rock-cracked', t.hits != null && (t.hits || 1) <= 1);
       else el.classList.remove('rock-cracked');
+      // Ancla de jefe (JF-02): blindada mientras conserva hits (el icono queda atrapado).
+      el.classList.toggle('boss-armored', type === 'boss' && (t.hits || 0) > 0);
       // Glifo de objetos especiales/obstáculos con etiqueta propia (p. ej. "+30").
       el.dataset.tileGlyph = (def && def.trigger) ? def.glyph : '';
     },
@@ -1247,6 +1371,8 @@
       this.setTile(i);
       el.classList.toggle('empty', v === null && !State.tiles[i]);
       el.classList.toggle('has-icon', v !== null);
+      // Hilos del Titiritero (JF-ε): los tipos enhebrados se marcan en toda celda.
+      el.classList.toggle('threaded', v !== null && Bosses.isThreaded(v));
       el.setAttribute('aria-label', this.cellLabel(i));
     },
 
@@ -1683,6 +1809,19 @@
       if (el) el.classList.toggle('urgent', State.combo >= 3 && frac < 0.24);
     },
 
+    // Tarjeta de presentación del jefe (JF-β, patrón Gungeon): franja one-shot
+    // sobre el tablero con nombre + epíteto + nivel. No es modal (pointer-events
+    // none, no bloquea input). En reduced-fx no existe: el banner ya informa.
+    bossCard(title, sub) {
+      if (Settings.reducedFx) return;
+      const parent = document.querySelector('.board-wrap'); if (!parent) return;
+      let el = document.getElementById('boss-card');
+      if (!el) { el = document.createElement('div'); el.id = 'boss-card'; el.className = 'boss-card'; parent.appendChild(el); }
+      el.innerHTML = '<div><strong></strong><span></span></div>';
+      el.querySelector('strong').textContent = title;
+      el.querySelector('span').textContent = sub;
+      el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    },
     // Flash de rango central (¡BIEN!, ¡GENIAL!…)
     rankFlash(text, color) {
       if (Settings.reducedFx) return;
@@ -1840,6 +1979,7 @@
       waveUp:   { kind: 'warn', ms: 1600, icon: 'fire',         snd: 'waveUp',   hap: 'combo' },
       waveSoon: { kind: 'warn', ms: 1500, icon: 'fire',         snd: 'danger',   hap: null,      toast: 'surv_wave_soon' },
       bossWarn: { kind: 'bad',  ms: 2400, icon: null,           snd: 'bossWarn', hap: 'fire' },
+      bossPhase:{ kind: 'warn', ms: 1600, icon: '⚠️',           snd: 'danger',   hap: 'combo' },
     },
     event(id, opts) {
       opts = opts || {};
@@ -2353,6 +2493,9 @@
     if (!m.surv.boonsSeen || typeof m.surv.boonsSeen !== 'object') m.surv.boonsSeen = {};
     if (!m.surv.mutsWon || typeof m.surv.mutsWon !== 'object') m.surv.mutsWon = {};
     if (!m.surv.weekBest || typeof m.surv.weekBest !== 'object') m.surv.weekBest = { week: '', wave: 0, mut: 'none' };
+    // Bestiario de encuentros (JF-ε): {id: {seen, kills, flawless, maxLvl}} — vitalicio, nada decae.
+    if (!m.surv.bossDex || typeof m.surv.bossDex !== 'object') m.surv.bossDex = {};
+    if (typeof m.surv.masterRounds !== 'number') m.surv.masterRounds = 0;
     // Esquema 3: economía ampliada (gemas/tickets/cofres), tableros de tienda y mundos del modo Clásico.
     if (typeof m.gems !== 'number') m.gems = 0;
     if (typeof m.tickets !== 'number') m.tickets = 0;
@@ -2683,6 +2826,20 @@
         return Object.keys(m.surv.boonsSeen).length;
       },
       survBoonsSeenCount: () => Object.keys(m.surv.boonsSeen || {}).length,
+      // Bestiario de encuentros (JF-ε): visto/derrotado/flawless/nivel máx por jefe.
+      _bossDexEntry(id) { if (!m.surv.bossDex) m.surv.bossDex = {}; return m.surv.bossDex[id] || (m.surv.bossDex[id] = { seen: 0, kills: 0, flawless: 0, maxLvl: 0 }); },
+      survBossSeen(id) { const d = Meta._bossDexEntry(id); d.seen++; save(); },
+      survBossKill(id, lvl, flawless) {
+        const d = Meta._bossDexEntry(id);
+        d.kills++;
+        if (flawless) { d.flawless++; m.surv.masterRounds = (m.surv.masterRounds || 0) + 1; }
+        if ((lvl || 1) > d.maxLvl) d.maxLvl = lvl || 1;
+        save();
+        return d;
+      },
+      survBossDex: () => m.surv.bossDex || {},
+      survBossKillsTotal: () => Object.values(m.surv.bossDex || {}).reduce((a, d) => a + (d.kills || 0), 0),
+      survMasterRounds: () => m.surv.masterRounds || 0,
       // Récord semanal ligado al mutador (SV-32): se reinicia solo al cambiar de semana
       // ISO (nunca se muestra como pérdida). Devuelve {isRecord, distinctMuts}.
       survWeekRecord(week, wave, mut) {
@@ -2924,9 +3081,19 @@
       bomb: { glyph: '💣', trigger: 'bomb', cls: 'tile-bomb', desc: 'Bomba oculta: detona figuras cercanas' },
       slowdown: { glyph: '⏳', trigger: 'slowdown', cls: 'tile-slowdown', desc: 'Ralentizador: reduce la velocidad de aparición' },
       timecap: { glyph: '⏰', trigger: 'timecap', cls: 'tile-timecap', desc: 'Cápsula: +5s al detonarla por adyacencia' },
+      // --- Sistema de jefes (JF-02, docs/BOSS_SYSTEM_MASTER_PLAN.md §3.3) ---
+      // Ancla: PV del jefe. No-sólida como el cristal (vive BAJO un icono; converger
+      // ese icono = 1 golpe). La variante blindada lleva `hits`>0 y solid=true en la
+      // INSTANCIA: el icono queda atrapado (semántica de hielo) hasta romper el
+      // blindaje por adyacencia. Inmune a objetos/alivio (_powerClear): al jefe se
+      // le vence jugando, no gastando.
+      boss: { glyph: '◆', solid: false, cls: 'tile-boss', desc: 'Ancla de jefe: converge el icono de encima para dañarla' },
+      // Jaula: guarda algo robado por el jefe (potenciador). Sólida, se rompe por
+      // adyacencia como un candado; al romperse devuelve el botín (t.loot).
+      cage: { glyph: '🔒', solid: true, cls: 'tile-cage', desc: 'Jaula del jefe: rompe por adyacencia para recuperar lo robado' },
     },
     // Lista de clases CSS de casilla (para limpiar/aplicar en Render.setTile).
-    CLASSES: ['tile-rock', 'tile-locked', 'tile-frozen', 'tile-crystal', 'tile-chains', 'tile-web', 'tile-barrier', 'tile-mud', 'tile-bonus', 'tile-portal', 'tile-magicbox', 'tile-bomb', 'tile-slowdown', 'tile-timecap'],
+    CLASSES: ['tile-rock', 'tile-locked', 'tile-frozen', 'tile-crystal', 'tile-chains', 'tile-web', 'tile-barrier', 'tile-mud', 'tile-bonus', 'tile-portal', 'tile-magicbox', 'tile-bomb', 'tile-slowdown', 'tile-timecap', 'tile-boss', 'tile-cage'],
     make(type) { const d = this.DEFS[type]; return d ? Object.assign({ type }, d) : null; },
   };
 
@@ -3055,7 +3222,7 @@
       { id: 'shield', icon: '🛡️' },  // 1ª derrota del capítulo: despeje 30% en vez de fin
     ],
     route: null, relics: [], shieldUsed: false, _routeChapter: -1, log: [],
-    resetRun() { this.route = null; this.relics = []; this.shieldUsed = false; this._routeChapter = -1; this.log = []; this.bossAcc = 0; this._bossWarned = false; },
+    resetRun() { this.route = null; this.relics = []; this.shieldUsed = false; this._routeChapter = -1; this.log = []; this.bossAcc = 0; this._bossWarned = false; this._rHp = -1; this._rNext = -1; document.documentElement.style.removeProperty('--boss-accent'); },
     hasRelic(id) { return this.relics.indexOf(id) !== -1; },
     _applyRoute() {
       if (this.route === 'calm') State.spawnRate = Math.round(State.spawnRate * 1.15);
@@ -3123,17 +3290,27 @@
     },
     // Jefe con comportamiento (GM-08): en niveles jefe, cada 20s el bioma ACTÚA
     // (telegrafiado 3s antes). El jefe deja de ser "más cristales": hace cosas.
-    BOSS_MS: 20000, bossAcc: 0, _bossWarned: false,
+    BOSS_MS: 20000, bossAcc: 0, _bossWarned: false, _rHp: -1, _rNext: -1,
+    // Fase 2 del jefe de bioma (JF-52, gated B-J6): con ≤2 cristales restantes el
+    // jefe acelera su reloj de ataque 20s→15s — el remate se disputa.
+    _bossMsFor() { return this.crystalsLeft() <= 2 ? 15000 : this.BOSS_MS; },
     onTick(dt) {
       if (this.objective !== 'boss' || State.status !== 'playing') return;
       this.bossAcc += dt;
-      if (!this._bossWarned && this.bossAcc >= this.BOSS_MS - 3000) {
+      const ms = this._bossMsFor();
+      if (!this._bossWarned && this.bossAcc >= ms - 3000) {
         this._bossWarned = true;
         Toasts.show(I18n.t('advboss_warn'), 'warn', 1900, '⚠️');
         Render.boardEvent('surv-wave-soon', 620);
         Sound.danger();
       }
-      if (this.bossAcc >= this.BOSS_MS) { this.bossAcc -= this.BOSS_MS; this._bossWarned = false; this.bossAction(); }
+      if (this.bossAcc >= ms) { this.bossAcc -= ms; this._bossWarned = false; this.bossAction(); }
+      // Cara del jefe (JF-ζ): pips de cristales + cuenta del próximo ataque, con
+      // diffing de 1s (mismo presupuesto que el banner de Supervivencia).
+      const hp = $('#adv-boss-hp');
+      if (hp) { const n = this.crystalsLeft(); if (this._rHp !== n) { this._rHp = n; hp.textContent = '◆'.repeat(Math.min(8, n)); } }
+      const nx = $('#adv-boss-next');
+      if (nx) { const s = Math.max(0, Math.ceil((ms - this.bossAcc) / 1000)); if (this._rNext !== s) { this._rNext = s; nx.textContent = '▲ ' + s + 's'; } }
     },
     _placeK(type, k) { const e = this._emptyIdx(); for (let x = 0; x < k && e.length; x++) State.tiles[e.splice(rand(e.length), 1)[0]] = Tiles.make(type); },
     _freezeK(k) { const f = this._filledIdx(); for (let x = 0; x < k && f.length; x++) State.tiles[f.splice(rand(f.length), 1)[0]] = Tiles.make('frozen'); },
@@ -3177,6 +3354,16 @@
       if (this.hasRelic('combo')) State.comboWindow += 400;
       if (this.hasRelic('hint')) State.hintsLeft = Math.min(9, State.hintsLeft + 1);
       this.banner(level);
+      // Cara del jefe de bioma (JF-ζ): card de presentación + acento; se limpia en
+      // niveles normales. Presentación pura — la mecánica (GM-08) no cambia.
+      this._rHp = -1; this._rNext = -1;
+      if (boss) {
+        document.documentElement.style.setProperty('--boss-accent', biome.accent);
+        Render.bossCard(I18n.t('advdex_' + biome.id), I18n.t('advdex_' + biome.id + '_e'));
+        announce(I18n.t('surv_boss_enter_sr').replace('{b}', I18n.t('advdex_' + biome.id)).replace('{n}', this.chapterOf(level) + 1).replace('{k}', this.crystalsLeft()));
+      } else if (State.mode === 'aventura') {
+        document.documentElement.style.removeProperty('--boss-accent');
+      }
     },
 
     _emptyIdx() { const a = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) a.push(i); return a; },
@@ -3229,7 +3416,15 @@
       const relicsHtml = this.relics.length
         ? `<span class="obj-relics" aria-label="${esc(I18n.t('relic_title'))}">${this.relics.map((id) => ((this.RELICS.find((r) => r.id === id) || {}).icon || '')).join('')}</span>`
         : '';
-      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span><span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>${relicsHtml}${ModeSignals.noteHtml('aventura')}`;
+      // La cara del jefe de bioma (JF-ζ): en niveles jefe, el banner de objetivo
+      // muestra nombre + epíteto + PV (cristales como pips) + próximo ataque —
+      // misma presentación que Supervivencia, CERO cambio de reglas (§6).
+      let bossHtml = '';
+      if (this.isBoss(level)) {
+        el.style.borderColor = biome.accent;
+        bossHtml = `<span class="obj-boss-face"><b class="obf-name">${esc(I18n.t('advdex_' + biome.id))}</b><i class="obf-epithet">${esc(I18n.t('advdex_' + biome.id + '_e'))}</i><span class="obf-hp" id="adv-boss-hp" aria-hidden="true"></span><span class="obf-next" id="adv-boss-next" aria-hidden="true"></span></span>`;
+      }
+      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span>${bossHtml}<span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>${relicsHtml}${ModeSignals.noteHtml('aventura')}`;
     },
     refreshGoal() { const g = $('#obj-goal'); if (g) g.textContent = this.objectiveText(); },
     // Intro de capítulo: una tarjeta de bioma (nombre, modificadores, objetivo) mostrada
@@ -3295,6 +3490,10 @@
       { id: 'frenetico', icon: '⚡' },     // 3 frenesíes tier 3 en una run
       { id: 'al_limite', icon: '💔' },     // 2 oleadas completas con 1 vida
       { id: 'economo', icon: '💰' },       // oleada 15 sin revivir
+      // Hazañas de caza (JF-ε): metas del sistema de encuentros.
+      { id: 'cazador', icon: '⚔️' },       // derrotar a los 5 Señores (vitalicio)
+      { id: 'ronda_maestra', icon: '✦' },  // 3 Rondas maestras (vitalicio)
+      { id: 'domaecos', icon: '🔁' },      // derrotar un eco de nivel III+
     ],
     _feat(id) {
       if (Meta.survUnlockFeat(id)) {
@@ -3315,8 +3514,12 @@
       this.slowWaves = 0; this._boonAt = 0;
       this._bossSurvivedAt = 0; this._noBoosterSinceBoss = true; this._frenzyT3Seen = false; this._liveRecord = false; // hitos SV-20/21
       this._boonLog = []; this._bossesSurvived = 0; // resumen de la run (SV-22)
+      this._bossesDefeated = 0; this._lastDefeat = null; this._defeatBeat = null; // encuentros (JF-γ)
       this._anyBoosterUsed = false; this._t3Count = 0; this._livesLostThisWave = 0; this._waves1Life = 0; // hazañas (SV-31)
       this._lastBossType = null; // eco/jefes SV-40/43 (el override de sim/tests NO se toca aquí)
+      Bosses.abort(); // sin encuentro heredado de la run anterior (JF-α)
+      Bosses._miniDry = 0; Bosses._lastWaveMini = false; Bosses._heraldEmpower = false; Bosses._heraldSlain = false; // minijefes (JF-δ)
+      this._minisSeen = 0; this._minisKilled = 0;
       this.scoreBoost = 0; this.magnetMoves = 0; this.goldenWaveWaves = 0;
       this._introUntil = 0; // ventana de gracia del arranque (FBK-07)
       this.mut = this.weeklyMut(); // mutador semanal (GM-22)
@@ -3350,6 +3553,7 @@
     },
     cleanup() {
       this.disarm();
+      Bosses.abort(); // el encuentro no sobrevive al fin de partida (JF-α)
       this.frenzyUntil = 0; this.x2Until = 0; this.freezeUntil = 0; this.lockUntil = 0;
       State.tempMult = 1;
       document.body.classList.remove('aiming', 'surv-frenzy-active', 'surv-frenzy-1', 'surv-frenzy-2', 'surv-frenzy-3');
@@ -3414,6 +3618,12 @@
       lockdown: { warn: 'surv_boss_lockdown_warn', icon: '🔒', base: true, fn: 'lockdown' },
       eco: { warn: 'surv_boss_eco_warn', icon: '🔁', echo: true, fn: 'echoBoss' },
       quake: { warn: 'surv_boss_quake_warn', icon: 'teleporter', chaosOnly: true, fn: 'quake' },
+      // Acto III (JF-ε): `base:false` — NUNCA entran al pool del jefe-evento clásico
+      // (flag apagado); existen aquí para el aviso específico de 3s (GM-18), el
+      // override de sim/tests y el fallback sin sustrato (fn = efecto legacy afín).
+      crystalid: { warn: 'surv_boss_crystalid_warn', icon: '💠', base: false, fn: 'frostSurge' },
+      void: { warn: 'surv_boss_void_warn', icon: '🕳️', base: false, fn: 'lockdown' },
+      puppeteer: { warn: 'surv_boss_puppeteer_warn', icon: '🎭', base: false, fn: 'quake' },
     },
     _bossPool() {
       const chaos = this.weeklyMut().id === 'chaos' || this.mut.id === 'chaos';
@@ -3427,9 +3637,13 @@
     _planBoss() {
       this.bossNext = (this.wave + 1) % this.tune().bossEvery === 0;
       if (!this.bossNext) { this._nextBoss = null; return; }
-      const pool = this._bossPool();
       // Override para sim/tests (espejo de _mutOverride): fuerza el tipo de jefe.
-      this._nextBoss = (this._bossOverride && this.BOSS_DEFS[this._bossOverride]) ? this._bossOverride : pool[rand(pool.length)];
+      if (this._bossOverride && this.BOSS_DEFS[this._bossOverride]) { this._nextBoss = this._bossOverride; return; }
+      // Encuentros (JF-α): identidad sorteada por actos (pools por tramo de oleada,
+      // sin repetición inmediata, eco como regla) — el CUÁNDO no cambia (§3.6).
+      if (Bosses.ENCOUNTERS) { this._nextBoss = Bosses.pick(this.wave + 1); return; }
+      const pool = this._bossPool();
+      this._nextBoss = pool[rand(pool.length)];
     },
     // Mutador semanal (GM-22): hashStr(semana ISO) elige un tema determinista sin
     // servidor — cada semana el modo tiene una razón nueva de visita.
@@ -3687,6 +3901,9 @@
         Feedback.event('bossWarn', { msg: I18n.t(warnKey), icon: def.icon });
         Render.boardEvent('surv-wave-soon', 700);
       }
+      // Encuentro de jefe activo (JF-α): telegrafiado de ataque, ataques y expiración
+      // van por acumuladores de dt (a prueba de pausas y del reloj virtual del sim).
+      Bosses.tick(dt);
       // Beat «¡SUPERADO!» (SV-20): entre el peligro y la bendición.
       if (this._bossSurvivedAt && performance.now() >= this._bossSurvivedAt) { this._bossSurvivedAt = 0; this._bossSurvived(); }
       // Bendición post-jefe pendiente (GM-17): se ofrece cuando el evento se asentó.
@@ -3740,6 +3957,7 @@
       if (this.wave >= 2 && RNG.random() < 0.25) this._placeSlowdown();
       if (this.wave % tn.bossEvery === 0) this.bossEvent();
       this._planBoss(); // decide ya si la PRÓXIMA oleada trae jefe (telegrafiado GM-18)
+      Bosses.maybeMini(); // sorteo de minijefe (JF-δ): sorpresa con pity, tras conocer bossNext
       this._checkWaveRecord();
       this._setFrenzyClass(); this._syncIntensity();
       Render.boardEvent('surv-wave-up', 900);
@@ -3750,14 +3968,37 @@
       const pool = this._bossPool();
       const ev = this._nextBoss != null ? this._nextBoss : (this._bossOverride || pool[rand(pool.length)] || 'meteor');
       this._nextBoss = null;
+      // Sistema de encuentros (JF-α, docs/BOSS_SYSTEM_MASTER_PLAN.md §3): con el flag
+      // encendido el jefe deja de ser un evento instantáneo y pasa a ser una criatura
+      // con anclas/PV/fases que vive ~2 oleadas. El beat de cierre y la bendición se
+      // programan al RESOLVERSE el encuentro (_encounterEnd), no aquí.
+      if (Bosses.ENCOUNTERS) { Bosses.startEncounter(ev); return; }
       const enraged = this.wave >= this.ENRAGE_WAVE; // jefe enfurecido (SV-43)
       this._runBoss(ev, enraged);
+      this._afterBossEvent();
+    },
+    // Pico del jefe (SV-20): la secuencia es anticipación → PELIGRO → «¡SUPERADO!»
+    // (beat propio, +1.2s) → codicia (bendición, +1.7s). El confeti NO va en el
+    // peligro (celebraba la amenaza, N6): se mueve al beat de superación. Lo comparten
+    // el jefe-evento clásico y el fallback sin sustrato del encuentro (JF-α).
+    _afterBossEvent() {
       Haptics.milestone();
-      // Pico del jefe (SV-20): la secuencia es anticipación → PELIGRO (aquí) →
-      // «¡SUPERADO!» (beat propio, +1.2s) → codicia (bendición, +1.7s). El confeti
-      // NO va aquí (celebraba la amenaza, N6): se mueve al beat de superación.
       this._bossSurvivedAt = performance.now() + 1200;
       this._noBoosterSinceBoss = true; // se anula si el jugador gasta un booster
+      this._boonAt = performance.now() + 1700;
+    },
+    // Cierre de un ENCUENTRO (JF-α): mismo ritual pico→bendición que el evento
+    // clásico. La derrota reemplaza el beat «¡SUPERADO!» por «¡DERROTADO!» (JF-β);
+    // el botín de derrota y la Ronda maestra llegan en JF-γ (puerta B-J1).
+    _encounterEnd(e, outcome) {
+      this._lastBossType = e.id;
+      if (outcome === 'defeat') {
+        this._bossesDefeated = (this._bossesDefeated || 0) + 1;
+        this._lastDefeat = { id: e.id, lvl: e.lvl, flawless: !!e.flawless, eco: !!e.eco };
+        this._defeatBeat = e;
+      } else { this._defeatBeat = null; }
+      Haptics.milestone();
+      this._bossSurvivedAt = performance.now() + 1200;
       this._boonAt = performance.now() + 1700;
     },
     // Beat «¡SUPERADO!» (SV-20): el clímax "he sobrevivido al jefe" — el mejor
@@ -3769,6 +4010,42 @@
       this._bossesSurvived = (this._bossesSurvived || 0) + 1;
       // Hazaña 'impecable' (SV-31): superar el jefe sin perder vida en esa oleada.
       if (!this._livesLostThisWave) this._feat('impecable');
+      // Beat «¡DERROTADO!» (JF-β): si el encuentro cayó por anclas, el clímax es la
+      // kill (nombre propio + confeti mayor). Gancho de audio QP-4: fanfarria de
+      // derrota de jefe. El botín y la Ronda maestra llegan en JF-γ.
+      const d = this._defeatBeat; this._defeatBeat = null;
+      if (d) {
+        const msg = I18n.t('surv_boss_defeated').replace('{b}', Bosses.name(d.id));
+        Toasts.show(msg, 'good', 2000, 'trophy');
+        Render.rankFlash(msg, '#ffd24d'); // no-op bajo reduced-fx
+        Render.flash(); FX.confetti(d.flawless ? 70 : 56);
+        Sound.record(); Haptics.record();
+        announce(msg);
+        // Botín del jefe (JF-γ, gated B-J1): monedas por nivel del encuentro.
+        const coins = 8 + 4 * (d.lvl || 1);
+        Meta.addCoins(coins); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
+        Render.coinsReward(coins, I18n.t('coins'));
+        // Ronda maestra (§3.8, homenaje a Gungeon): derrota sin perder vida ni gastar
+        // potenciador durante el ENCUENTRO → +1 vida (o +50 carga si está al tope).
+        if (d.flawless) {
+          if (this.lives < this.MAX_LIVES + 1) {
+            this.lives++;
+            Toasts.event(I18n.t('surv_master_round'), 'good', 2200, '🛡️');
+          } else {
+            this.charge += 50;
+            if (this.charge >= 100) { this.charge -= 100; this.grantRandom(); }
+            Toasts.event(I18n.t('surv_master_round_charge'), 'good', 2200, '⚡');
+          }
+        }
+        // Bestiario y hazañas de caza (JF-ε).
+        Meta.survBossKill(d.id, d.lvl, d.flawless);
+        const dex = Meta.survBossDex();
+        if (['meteor', 'tide', 'frost', 'lockdown', 'quake'].every((k) => (dex[k] || {}).kills > 0)) this._feat('cazador');
+        if (Meta.survMasterRounds() >= 3) this._feat('ronda_maestra');
+        if (d.eco && d.lvl >= 3) this._feat('domaecos');
+        this.render();
+        return;
+      }
       const clean = !!this._noBoosterSinceBoss;
       Toasts.show(I18n.t(clean ? 'surv_boss_cleared_clean' : 'surv_boss_cleared'), 'good', 1800, 'trophy');
       Render.rankFlash(I18n.t('surv_boss_cleared'), '#ffd24d'); // no-op bajo reduced-fx
@@ -3879,7 +4156,7 @@
       // Romper bloqueos ortogonalmente adyacentes a la acción: la casilla
       // central tocada + cada icono eliminado. Da agencia y evita el bloqueo permanente.
       if (ctx) {
-        const seen = new Set();
+        const seen = new Set(), seenBoss = new Set();
         const mark = (idx) => {
           const r = idx / 8 | 0, c = idx % 8;
           const nb = [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]];
@@ -3887,11 +4164,14 @@
             if (rr < 0 || cc < 0 || rr > 7 || cc > 7) continue;
             const j = rr * 8 + cc, t = State.tiles[j];
             if (this._isBlockTile(t) && !seen.has(j)) seen.add(j);
+            // Blindaje de ancla y jaulas (JF-02): también se agrietan por adyacencia.
+            else if (t && ((t.type === 'boss' && (t.hits || 0) > 0) || t.type === 'cage') && !seenBoss.has(j)) seenBoss.add(j);
           }
         };
         if (ctx.center != null) mark(ctx.center);
         if (ctx.cells) ctx.cells.forEach(mark);
         seen.forEach((j) => this._crackBlock(j));
+        seenBoss.forEach((j) => Bosses.crackAt(j));
       }
       this.render();
     },
@@ -3908,6 +4188,7 @@
     onOverflow() {
       this.lives--;
       this._livesLostThisWave = (this._livesLostThisWave || 0) + 1; // hazaña 'impecable' (SV-31)
+      if (Bosses.enc) Bosses.enc.flawless = false; // Ronda maestra (JF-γ): perder vida rompe el flawless
       if (this.lives <= 0) { this.lastChance(); return; }
       Feedback.event('lifeLost', { announce: false });
       announce(I18n.t('sr_life').replace('{n}', this.lives));
@@ -3994,6 +4275,7 @@
     _applyGlobal(id) {
       this.inv[id]--;
       this._noBoosterSinceBoss = false; this._anyBoosterUsed = true; // hazañas (SV-20/21/31)
+      if (Bosses.enc) Bosses.enc.flawless = false; // Ronda maestra (JF-γ): gastar rompe el flawless
       Render.boosterPulse(id);
       if (id === 'freeze') { this.freezeUntil = performance.now() + 7000; Toasts.show(I18n.t('pu_freeze'), 'info', 1500, BOOSTER_IMG.freeze); Render.boardEvent('boost-freeze', 1200); }
       else if (id === 'x2') { this.x2Until = performance.now() + 11000; this._syncMult(); Toasts.show(I18n.t('pu_x2'), 'good', 1500, BOOSTER_IMG.x2); Render.boardEvent('boost-x2', 1200); }
@@ -4029,6 +4311,7 @@
     applyBoosterAt(id, i) {
       if ((this.inv[id] || 0) <= 0) { this.disarm(); return; }
       this._noBoosterSinceBoss = false; this._anyBoosterUsed = true; // hazañas (SV-20/21/31)
+      if (Bosses.enc) Bosses.enc.flawless = false; // Ronda maestra (JF-γ): gastar rompe el flawless
       // Escoba sobre casilla vacía: barrido automático del grupo más repetido.
       if (id === 'wild' && State.board[i] == null) {
         this.inv[id]--; Render.boosterPulse(id); this._lock(420, 'boost-wild'); this._wild();
@@ -4041,6 +4324,9 @@
       const cleared = []; let icons = 0;
       const fxN = id === 'bomb' ? 5 : id === 'clearLine' ? 4 : 6;
       cells.forEach((j) => { icons += this._powerClear(j, cleared, fxN); });
+      // La bomba no destruye anclas/jaulas (inmunes en _powerClear) pero SÍ agrieta
+      // su blindaje 1 nivel (JF-02): el arsenal conserva un rol contra el jefe.
+      if (id === 'bomb') cells.forEach((j) => { const t = State.tiles[j]; if (t && ((t.type === 'boss' && (t.hits || 0) > 0) || t.type === 'cage')) Bosses.crackAt(j); });
       State.removedTotal += icons; State.lastActionCell = i;
       Render.syncAll();
       const msg = id === 'bomb' ? I18n.t('pu_bomb') : id === 'clearLine' ? I18n.t('pu_ray') : icons + ' ' + I18n.t('pu_icons');
@@ -4053,6 +4339,10 @@
     },
     _powerClear(j, cleared, fxN = 5) {
       const t = State.tiles[j], hadIcon = State.board[j] !== null;
+      // Carne del jefe (JF-02): anclas y jaulas son inmunes a objetos y al alivio —
+      // ni el tile ni el icono que vive encima. Al jefe se le vence jugando; la
+      // bomba agrieta blindaje aparte (applyBoosterAt), sin pasar por aquí.
+      if (t && (t.type === 'boss' || t.type === 'cage')) return 0;
       if (!hadIcon && !t) return 0;
       if (hadIcon) {
         FX.burst(j, Icons.colorOf(State.board[j]), fxN);
@@ -4220,6 +4510,46 @@
         const bb = $('#booster-bar'); if (bb) bb.classList.toggle('ready', ready);
         const pr = $('#power-rings'); if (pr) pr.classList.toggle('ready', ready);
       }
+      // Banner del encuentro (JF-β): la cara del jefe ENCIMA de vidas/oleada/tiempo.
+      // Diffing por firma (id|nivel|fase|PV|segundos|telegraph): 1 escritura DOM por
+      // cambio y la cuenta atrás solo re-escribe al cambiar el segundo (§5.6).
+      const enc = Bosses.enc;
+      if (r.encOn !== !!enc) {
+        r.encOn = !!enc; r.encSig = ''; r.encIcon = '';
+        const sb2 = $('#surv-bar'); if (sb2) sb2.classList.toggle('encounter', !!enc);
+        const eb = $('#surv-boss');
+        if (eb) { eb.hidden = !enc; if (!enc) eb.classList.remove('phase2', 'lvl-high'); }
+      }
+      if (enc) {
+        const mini = enc.kind === 'mini';
+        const def = (mini ? Bosses.MINIDEX[enc.id] : Bosses.DEX[enc.id]) || {};
+        // Jefes: cuenta atrás del ataque · minijefes: tiempo que les queda en el tablero.
+        const secs = mini
+          ? Math.max(0, Math.ceil((enc.durMs - enc.ms) / 1000))
+          : Math.max(0, Math.ceil((enc.attackEvery - enc.atkAcc) / 1000));
+        const sig = enc.id + '|' + enc.lvl + '|' + enc.phase + '|' + enc.anchorsLeft + '|' + secs + '|' + (enc.telegraphed ? 1 : 0);
+        if (r.encSig !== sig) {
+          r.encSig = sig;
+          const eb = $('#surv-boss');
+          if (eb) { eb.classList.toggle('mini', mini); eb.classList.toggle('phase2', enc.phase > 1); eb.classList.toggle('lvl-high', !mini && enc.lvl >= 3); }
+          if (r.encIcon !== enc.id) {
+            r.encIcon = enc.id;
+            const ic = $('#surv-boss-icon'); if (ic) ic.innerHTML = Bosses.portraitHTML(def);
+            const nm = $('#surv-boss-name'); if (nm) nm.textContent = mini ? Bosses.miniName(enc.id) : Bosses.name(enc.id);
+          }
+          const lv = $('#surv-boss-lvl'); if (lv) lv.textContent = mini ? '' : Bosses.lvlLabel(enc.lvl);
+          const hp = $('#surv-boss-hp');
+          if (hp) {
+            hp.textContent = '◆'.repeat(enc.anchorsLeft) + '◇'.repeat(Math.max(0, enc.anchorsMax - enc.anchorsLeft));
+            hp.setAttribute('aria-label', I18n.t('surv_boss_hp_sr').replace('{n}', enc.anchorsLeft).replace('{m}', enc.anchorsMax));
+          }
+          const nx = $('#surv-boss-next');
+          if (nx) {
+            nx.textContent = (def.atkIcon || '⚠') + ' ' + secs + 's';
+            nx.classList.toggle('telegraph', !!enc.telegraphed);
+          }
+        }
+      }
       // Fila de build (SV-10/11): chips de SOLO LECTURA con las bendiciones que
       // tienen estado (lo instantáneo ya se ve en vidas/anillo/inventario) y el
       // mutador semanal. El build deja de ser invisible sin añadir medidores.
@@ -4238,6 +4568,756 @@
         const bd = $('#surv-build');
         if (bd) { bd.innerHTML = bsig; bd.hidden = !bsig; }
       }
+    },
+  };
+
+  /* ===================== Bosses (sistema de jefes: encuentros JF-α) =====================
+   * docs/BOSS_SYSTEM_MASTER_PLAN.md — framework de encuentros: el jefe pasa de evento
+   * instantáneo a criatura con cuerpo (anclas en el tablero), PV, fases, nivel y actos
+   * (pools por tramo de oleada, como los pisos de Enter the Gungeon).
+   *
+   * APAGADO por defecto (ENCOUNTERS=false): hasta que JF-γ valide las puertas de
+   * balance B-J1/B-J3 con el simulador, el jefe-evento clásico sigue intacto y este
+   * módulo solo se ejercita desde tests y sim. Garantía de diseño nº1 del plan:
+   * ignorar al jefe = experiencia equivalente a la actual (los ataques reparten la
+   * intensidad del evento único y al retirarse hay bendición como siempre);
+   * derrotarlo (romper todas sus anclas) es upside opcional.
+   *
+   * Mecánica de daño (§3.3): las anclas son tiles `boss` NO-sólidos colocados BAJO
+   * iconos existentes (los spawns nunca caen sobre tiles: un ancla en celda vacía
+   * sería invulnerable, por eso _reincarnate re-encarna el icono si desaparece por
+   * vías indirectas). Converger el icono de encima = 1 golpe (rama en Game.converge).
+   * Blindada = hits>0 y solid=true en la instancia: Engine.converging ya trata solid
+   * como hielo (icono atrapado, corta línea de visión); la adyacencia (o una bomba)
+   * agrieta el blindaje. Anclas y jaulas son inmunes a _powerClear: al jefe se le
+   * vence jugando, no gastando.
+   */
+  const Bosses = {
+    // ENCENDIDO en JF-γ (v2.6.17) tras las puertas B-J1/B-J3 (batería en
+    // BALANCE_BASELINE.md). Con false se recupera el jefe-evento clásico intacto —
+    // interruptor de emergencia deliberado.
+    ENCOUNTERS: true,
+    TELEGRAPH_MS: 2500, // pre-marca de celdas antes de cada ataque (§5.3)
+    ECO_P: 0.15,        // prob. de que el sorteo devuelva un eco «ha vuelto» (§4.4)
+    // Registro de jefes (JF-01). Nombres/epítetos i18n (`bossdex_*`) llegan en JF-β;
+    // acentos y nº de anclas según el mockup aprobado por el propietario
+    // (docs/mockups/boss-system-visual-index.html). attackMs e intensidades de ataque
+    // son PROVISIONALES hasta la puerta B-J3 (JF-γ): la intensidad total del
+    // encuentro (~4 ataques) debe equivaler al evento único de hoy.
+    DEX: {
+      meteor:   { acto: 1, accent: '#ff755b', icon: 'v2:meteor',    atkIcon: '☄', anchors: 3, armored: 0, attackMs: 12000, atk: 'rain',    frame: 'surv-meteor-board' },
+      tide:     { acto: 1, accent: '#59d6ff', icon: '🌊',           atkIcon: '≈', anchors: 3, armored: 0, attackMs: 13000, atk: 'tide',    frame: 'surv-tide', edgeAnchors: true },
+      frost:    { acto: 1, accent: '#94e8ff', icon: 'v2:snowflake', atkIcon: '❄', anchors: 2, armored: 0, attackMs: 12000, atk: 'frost',   frame: 'surv-frost' },
+      lockdown: { acto: 2, accent: '#d6dce8', icon: '🔒',           atkIcon: '▣', anchors: 3, armored: 1, attackMs: 13000, atk: 'locks',   frame: 'surv-lockdown' },
+      quake:    { acto: 2, accent: '#ffb24d', icon: 'teleporter',   atkIcon: '▤', anchors: 3, armored: 1, attackMs: 14000, atk: 'shuffle', frame: 'surv-quake', chaosPromote: true },
+      // --- Acto III: La Corte Profunda (JF-ε) — twists mentales ---
+      crystalid: { acto: 3, accent: '#19f0d0', icon: '💠', atkIcon: '✷', anchors: 4, armored: 0, attackMs: 12000, atk: 'shards',  frame: 'surv-frost', regenMs: 12000 },
+      void:      { acto: 3, accent: '#a06bff', icon: '🕳️', atkIcon: '◉', anchors: 2, armored: 0, attackMs: 11000, atk: 'devour',  frame: 'surv-lockdown', growCap: 4 },
+      puppeteer: { acto: 3, accent: '#ff6cb0', icon: '🎭', atkIcon: '✚', anchors: 3, armored: 1, attackMs: 13000, atk: 'threads', frame: 'surv-quake' },
+    },
+    // ---- Minijefes (JF-δ, §3.7/§4.3): entidades de 1 ancla y 1 mecánica que
+    // aparecen POR SORPRESA en oleadas normales (p=0.22, pity 4). Enseñan el
+    // vocabulario del jefe de su acto en versión pequeña; sin card ni bendición.
+    MINI_P: 0.22, MINI_PITY: 4, MINI_FROM_WAVE: 3,
+    MINIDEX: {
+      magpie:  { acto: 1, accent: '#ffd84d', icon: '🐦', atkIcon: '✧', beatMs: 7000,  lifeWaves: 1 },   // roba 1 icono/7s; al morir lo devuelve TODO agrupado
+      firefly: { acto: 1, accent: '#ffe14d', icon: '✨', atkIcon: '✦', beatMs: 3000,  lifeMs: 15000, bonus: true }, // vaga; matarla = frenesí + monedas
+      sentinel:{ acto: 2, accent: '#7ad7ff', icon: '🗼', atkIcon: '❄', beatMs: 8000,  lifeWaves: 1, armor: 1 },     // congela en su fila/columna; al morir la limpia
+      herald:  { acto: 2, accent: '#ff5d73', icon: '📯', atkIcon: '▲', beatMs: 99000, lifeWaves: 1, armor: 1, preBoss: true }, // vivo al llegar el jefe = jefe +1 nivel
+    },
+    _miniDry: 0, _lastWaveMini: false, _heraldEmpower: false, _heraldSlain: false,
+    miniName(id) { return I18n.t('minidex_' + id); },
+    // Sorteo por frontera de oleada (lo llama Survival.newWave). El Heraldo es la
+    // excepción diseñada: SOLO aparece en la oleada previa a jefe (Acto II+).
+    maybeMini() {
+      if (!this.ENCOUNTERS || this.enc) { this._lastWaveMini = false; return; }
+      if (Survival.wave < this.MINI_FROM_WAVE) return;
+      if (Survival.wave % Survival.tune().bossEvery === 0) return; // oleada de jefe
+      const acto = this.actoForWave(Survival.wave);
+      if (Survival.bossNext) {
+        // Oleada previa a jefe: solo el Heraldo (y no siempre) — el telegrafiado manda.
+        if (acto >= 2 && !this._lastWaveMini && RNG.random() < 0.35) this.startMini('herald');
+        else this._lastWaveMini = false;
+        return;
+      }
+      if (this._lastWaveMini) { this._lastWaveMini = false; return; } // nunca 2 seguidos
+      this._miniDry++;
+      if (RNG.random() < this.MINI_P || this._miniDry >= this.MINI_PITY) {
+        const pool = Object.keys(this.MINIDEX).filter((id) => { const d = this.MINIDEX[id]; return d.acto <= acto && !d.preBoss; });
+        if (pool.length) this.startMini(pool[rand(pool.length)]);
+      }
+    },
+    startMini(id) {
+      if (this.enc) return null;
+      const def = this.MINIDEX[id];
+      // 1 ancla bajo un icono (la Luciérnaga y la Urraca se mueven después).
+      const f = Survival._filledIdx();
+      if (!f.length || Survival._specialRoom() <= 0) return null;
+      const idx = f[rand(f.length)];
+      const t = Tiles.make('boss');
+      if (def.armor) { t.hits = def.armor; t.solid = true; }
+      State.tiles[idx] = t;
+      Render.syncCell(idx); Render.cellPulse(idx, 'tide-warn', 700);
+      this.enc = {
+        kind: 'mini', id, lvl: this.actoForWave(Survival.wave), phase: 1,
+        anchorsMax: 1, anchorsLeft: 1, at: idx,
+        ms: 0, atkAcc: 0, reincAcc: 0, attackEvery: def.beatMs,
+        durMs: def.lifeMs || Math.round(Survival.WAVE_MS * 0.9),
+        telegraphed: false, targets: null, flawless: true, attacks: 0, stolen: [],
+      };
+      this._miniDry = 0; this._lastWaveMini = true;
+      Survival._minisSeen = (Survival._minisSeen || 0) + 1;
+      document.documentElement.style.setProperty('--boss-accent', def.accent);
+      Toasts.event(this.miniName(id) + ' · ' + I18n.t('minidex_' + id + '_e'), def.bonus ? 'good' : 'warn', 1900, def.icon);
+      announce(I18n.t('sr_mini_enter').replace('{b}', this.miniName(id)));
+      Sound.danger(); Haptics.tap();
+      Render.hudSoon();
+      return this.enc;
+    },
+    // Comportamiento por latido del minijefe (desde tick, cadencia beatMs).
+    _miniBeat(e) {
+      const size = State.size;
+      if (e.id === 'magpie') {
+        // Roba 1 icono visible (no sobre tiles) y lo guarda bajo el ala.
+        const f = Survival._filledIdx().filter((i) => i !== e.at);
+        if (f.length && State.iconCount > 6) {
+          const j = f[rand(f.length)];
+          e.stolen.push(State.board[j]);
+          State.board[j] = null; State.iconCount--;
+          Render.syncCell(j); FX.burst(j, '#ffd84d', 4);
+          if (e.stolen.length === 1) Toasts.event(I18n.t('mini_steal').replace('{b}', this.miniName(e.id)), 'warn', 1500, '🐦');
+        }
+      } else if (e.id === 'sentinel') {
+        // Congela 1 celda de su fila o columna (territorio visible).
+        const r = e.at / size | 0, c = e.at % size, cand = [];
+        for (let k = 0; k < size; k++) {
+          const a = r * size + k, b = k * size + c;
+          if (State.board[a] !== null && !State.tiles[a]) cand.push(a);
+          if (State.board[b] !== null && !State.tiles[b]) cand.push(b);
+        }
+        if (cand.length && Survival._specialRoom() > 0) {
+          const j = cand[rand(cand.length)];
+          State.tiles[j] = Tiles.make('frozen');
+          Render.syncAll(); Render.iceHit(j);
+        }
+      }
+      // Las entidades vagabundas se recolocan tras actuar.
+      if (e.id === 'firefly' || e.id === 'magpie') this._miniMove(e);
+    },
+    // La entidad se recoloca a una celda vecina con icono (ancla móvil).
+    _miniMove(e) {
+      const size = State.size, r = e.at / size | 0, c = e.at % size;
+      const nb = [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].filter(([rr, cc]) => rr >= 0 && cc >= 0 && rr < size && cc < size);
+      const spots = nb.map(([rr, cc]) => rr * size + cc).filter((j) => State.board[j] !== null && !State.tiles[j]);
+      if (!spots.length) return;
+      const to = spots[rand(spots.length)];
+      const t = State.tiles[e.at];
+      State.tiles[e.at] = null; Render.syncCell(e.at);
+      State.tiles[to] = t; e.at = to;
+      Render.syncCell(to); Render.cellPulse(to, 'tide-warn', 420);
+    },
+    // Muerte del minijefe (su ancla cayó): efecto-firma + botín pequeño.
+    _miniKill(e) {
+      const def = this.MINIDEX[e.id] || {};
+      let coins = 3 + (e.lvl || 1);
+      if (e.id === 'magpie' && e.stolen.length) {
+        // Devuelve TODO lo robado agrupado alrededor de su celda (convergencia servida).
+        const size = State.size, r = e.at / size | 0, c = e.at % size;
+        const near = [];
+        for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) {
+          const rr = r + dr, cc = c + dc;
+          if (rr >= 0 && cc >= 0 && rr < size && cc < size) { const j = rr * size + cc; if (State.board[j] === null && !State.tiles[j]) near.push(j); }
+        }
+        e.stolen.forEach((v) => { if (near.length) { const j = near.splice(rand(near.length), 1)[0]; State.board[j] = v; State.iconCount++; Render.syncCell(j); Render.spawnAnim(j); } });
+        Toasts.event(I18n.t('mini_return').replace('{n}', e.stolen.length), 'good', 1800, '🐦');
+      } else if (e.id === 'firefly') {
+        Survival.addFrenzy(24); coins += 8;
+        Toasts.event(I18n.t('mini_firefly_gift'), 'good', 1700, '✨');
+      } else if (e.id === 'sentinel') {
+        // Limpia su fila y columna (con el mismo suelo anti-inflación de derrotas).
+        const size = State.size, r = e.at / size | 0, c = e.at % size, cleared = [];
+        let budget = Math.max(0, (State.iconCount || 0) - 8);
+        for (let k = 0; k < size && budget > 0; k++) {
+          [r * size + k, k * size + c].forEach((j) => {
+            if (budget > 0 && State.board[j] !== null && Survival._powerClear(j, cleared, 4)) budget--;
+          });
+        }
+        if (cleared.length) { Render.syncAll(); Render.lifeClear(cleared, null); }
+        Toasts.event(I18n.t('mini_sentinel_gift'), 'good', 1700, '🗼');
+      } else if (e.id === 'herald') {
+        this._heraldEmpower = false; this._heraldSlain = true; // el jefe llega debilitado (−1 nivel)
+        Toasts.event(I18n.t('mini_herald_down'), 'good', 1900, '📯');
+      }
+      Meta.addCoins(coins); State.coinsRun += coins; Survival.runCoins += coins; Econ.refresh();
+      Render.coinsReward(coins, I18n.t('coins'));
+      Survival._minisKilled = (Survival._minisKilled || 0) + 1;
+      Sound.record(); Haptics.combo();
+      announce(I18n.t('sr_mini_down').replace('{b}', this.miniName(e.id)));
+      if (State.status === 'playing') Game.evaluate();
+    },
+    ROMAN: ['I', 'II', 'III', 'IV'],
+    name(id) { return I18n.t('bossdex_' + id); },
+    lvlLabel(lvl) { return I18n.t('surv_boss_lvl').replace('{n}', this.ROMAN[lvl - 1] || lvl); },
+    atkName(e) { return I18n.t('bossatk_' + e.id + (e.phase > 1 ? '_2' : '_1')); },
+    // Retrato del banner: icono v2/png del registro, o el propio emoji como texto.
+    portraitHTML(def) {
+      const n = def && def.icon; if (!n) return '';
+      return /^[a-z0-9:_-]+$/i.test(n) ? iconAnyInline(n) : esc(n);
+    },
+    enc: null, // encuentro activo — INVARIANTE: máximo uno (jefe o minijefe)
+    // ---- Niveles y actos (§3.5): de más bajos a más altos, visibles como Nv. I-III ----
+    actoForWave(w) { return w >= 24 ? 3 : w >= 12 ? 2 : 1; },
+    levelForWave(w, opts) {
+      let lvl = Math.min(3, 1 + Math.floor(w / 12));
+      if (opts && opts.eco) lvl++;    // «ha vuelto a por ti»: retorno a nivel +1
+      if (opts && opts.herald) lvl++; // el Heraldo vivo sube el nivel (JF-δ)
+      return Math.min(4, lvl);        // 4 = PESADILLA, solo por acumulación eco+heraldo
+    },
+    // ---- Sorteo de identidad (§3.6): aleatorio el CUÁL, determinista el CUÁNDO ----
+    pick(wave) {
+      const last = Survival._lastBossType;
+      if (last && this.DEX[last] && RNG.random() < this.ECO_P) return 'eco';
+      const acto = this.actoForWave(wave);
+      const chaos = Survival.weeklyMut().id === 'chaos';
+      let pool = Object.keys(this.DEX).filter((id) => {
+        const d = this.DEX[id];
+        // La semana del caos promueve a Tectónico (quake) desde el Acto I (§3.5).
+        return d.acto <= acto || (chaos && d.chaosPromote);
+      });
+      if (pool.length > 1 && last) pool = pool.filter((id) => id !== last); // sin repetición inmediata
+      return pool[rand(pool.length)] || 'meteor';
+    },
+    // ---- Ciclo de vida (FSM §3.2): entrada → activo → derrota/retirada ----
+    startEncounter(id) {
+      // El jefe manda: un minijefe vivo se marcha (el Heraldo consuma su anuncio).
+      if (this.enc && this.enc.kind === 'mini') this.resolve('miniExpire');
+      if (this.enc) return null; // invariante: un solo encuentro a la vez
+      let eco = false;
+      if (id === 'eco' || !this.DEX[id]) {
+        const prev = Survival._lastBossType;
+        eco = id === 'eco';
+        id = (prev && this.DEX[prev]) ? prev : 'meteor';
+        if (eco) Feedback.event('echo', { msg: I18n.t('surv_eco').replace('{b}', I18n.t('bossname_' + id)) });
+      }
+      const def = this.DEX[id];
+      // El Heraldo (JF-δ): si escapó, el jefe entra a nivel +1; si fue cazado, −1.
+      const herald = this._heraldEmpower, slain = this._heraldSlain;
+      this._heraldEmpower = false; this._heraldSlain = false;
+      let lvl = this.levelForWave(Survival.wave, { eco, herald });
+      if (slain) lvl = Math.max(1, lvl - 1);
+      const anchors = this._placeAnchors(def, lvl);
+      if (!anchors.length) {
+        // Sin sustrato para el cuerpo (tablero anómalo): cae al jefe-evento clásico
+        // con su ritual intacto — el jugador nunca se queda sin jefe ni sin bendición.
+        Survival._runBoss(id, lvl >= 3);
+        Survival._afterBossEvent();
+        return null;
+      }
+      Survival._lastBossType = id;
+      Survival._noBoosterSinceBoss = true;
+      this.enc = {
+        id, lvl, kind: 'boss', phase: 1, eco,
+        anchorsMax: anchors.length, anchorsLeft: anchors.length,
+        ms: 0, atkAcc: Math.max(0, def.attackMs - 6000), // primer ataque a ~6s (respiro de entrada)
+        reincAcc: 0, regenAcc: 0, attackEvery: def.attackMs,
+        durMs: Math.round(Survival.WAVE_MS * 1.8), // ~2 oleadas y se retira (§3.2)
+        telegraphed: false, targets: null, threads: null, devoured: [],
+        flawless: true, attacks: 0,
+      };
+      Meta.survBossSeen(id); // bestiario (JF-ε)
+      // La cara del jefe (JF-β): acento global (banner/anclas/card lo heredan por
+      // CSS), tarjeta de presentación estilo Gungeon y announce accesible. El sting
+      // reutiliza bossWarn hasta los leitmotivs de QP-4.
+      document.documentElement.style.setProperty('--boss-accent', def.accent);
+      Render.bossCard(this.name(id), I18n.t('bossdex_' + id + '_e') + ' · ' + this.lvlLabel(this.enc.lvl));
+      Sound.bossWarn(); Haptics.fire(8);
+      announce(I18n.t('surv_boss_enter_sr').replace('{b}', this.name(id)).replace('{n}', this.enc.lvl).replace('{k}', this.enc.anchorsMax));
+      Render.hudSoon();
+      return this.enc;
+    },
+    // Coloca las anclas BAJO iconos existentes; respetan SPECIAL_CAP (§3.3). La
+    // Corriente ancla en el anillo exterior (su counterplay vive donde ataca).
+    _placeAnchors(def, lvl) {
+      const size = State.size;
+      const edge = (i) => { const r = i / size | 0, c = i % size; return r === 0 || c === 0 || r === size - 1 || c === size - 1; };
+      let f = Survival._filledIdx();
+      if (def.edgeAnchors) { const e = f.filter(edge); if (e.length >= def.anchors) f = e; }
+      const n = Math.min(def.anchors, f.length, Math.max(0, Survival._specialRoom()));
+      // Nivel III+ blinda un ancla extra, pero siempre queda ≥1 sin blindar (legibilidad).
+      const armored = Math.min((def.armored || 0) + (lvl >= 3 ? 1 : 0), Math.max(0, n - 1));
+      const placed = [];
+      for (let k = 0; k < n && f.length; k++) {
+        const idx = f.splice(rand(f.length), 1)[0];
+        const t = Tiles.make('boss');
+        if (k < armored) { t.hits = 1; t.solid = true; }
+        State.tiles[idx] = t; placed.push(idx);
+        Render.syncCell(idx); Render.cellPulse(idx, 'tide-warn', 900);
+      }
+      return placed;
+    },
+    _anchorIdx() { const a = []; for (let i = 0; i < State.tiles.length; i++) { const t = State.tiles[i]; if (t && t.type === 'boss') a.push(i); } return a; },
+    // Re-encarnación: un ancla cuyo icono desapareció por vías indirectas (imán,
+    // reconciliación de pool…) recupera icono — sobre celda vacía sería invulnerable.
+    _reincarnate() {
+      this._anchorIdx().forEach((i) => {
+        if (State.board[i] === null && State.pool && State.pool.length) {
+          State.board[i] = State.pool[rand(State.pool.length)];
+          State.iconCount++;
+          Render.syncCell(i); Render.spawnAnim(i);
+        }
+      });
+    },
+    // ---- Bucle del encuentro: acumuladores de dt (a prueba de pausas y del reloj
+    // virtual del sim; ver Survival.onTick, único llamador) ----
+    tick(dt) {
+      const e = this.enc; if (!e || State.status !== 'playing') return;
+      e.ms += dt; e.atkAcc += dt; e.reincAcc += dt;
+      if (e.reincAcc >= 900) { e.reincAcc = 0; this._reincarnate(); }
+      // Minijefes (JF-δ): latido propio sin telegrafiado de celdas, y se marchan solos.
+      if (e.kind === 'mini') {
+        if (e.atkAcc >= e.attackEvery) {
+          e.atkAcc -= e.attackEvery;
+          this._miniBeat(e); e.attacks++;
+          if (this.enc !== e || State.status !== 'playing') return;
+        }
+        if (e.ms >= e.durMs) this.resolve('miniExpire');
+        return;
+      }
+      // Rebrote del Cristálido (JF-ε): en fase 2, regenera 1 ancla cada regenMs si
+      // no están todas rotas — hay que rematarlo con tempo (counterplay: ráfaga).
+      const defR = this.DEX[e.id];
+      if (defR && defR.regenMs && e.phase > 1 && e.anchorsLeft < e.anchorsMax) {
+        e.regenAcc += dt;
+        if (e.regenAcc >= defR.regenMs) {
+          e.regenAcc = 0;
+          if (this._regrow(e)) Toasts.event(I18n.t('surv_boss_regrow').replace('{b}', this.name(e.id)), 'bad', 1500, defR.icon);
+        }
+      }
+      if (!e.telegraphed && e.atkAcc >= e.attackEvery - this.TELEGRAPH_MS) {
+        e.telegraphed = true;
+        e.targets = this._pickTargets(e);
+        (e.targets || []).forEach((j) => Render.cellPulse(j, 'tide-warn', this.TELEGRAPH_MS));
+        // El banner enciende la píldora (render) y el lector de pantalla oye QUÉ viene.
+        announce(I18n.t('surv_boss_prep').replace('{b}', this.name(e.id)).replace('{a}', this.atkName(e)));
+      }
+      if (e.atkAcc >= e.attackEvery) {
+        e.atkAcc -= e.attackEvery; e.telegraphed = false;
+        this._attack(e); e.attacks++;
+        if (this.enc !== e || State.status !== 'playing') return; // el ataque pudo desbordar (revivir/fin)
+      }
+      if (e.ms >= e.durMs) this.resolve('retreat');
+    },
+    // ---- Golpes, fases y resolución ----
+    onAnchorHit(idx) {
+      const e = this.enc; if (!e) return; // ancla huérfana (defensivo)
+      e.anchorsLeft = Math.max(0, e.anchorsLeft - 1);
+      FX.burst(idx, (this.DEX[e.id] || {}).accent || '#ffd84d', 6);
+      Render.hudSoon();
+      if (e.anchorsLeft <= 0) { this.resolve(e.kind === 'mini' ? 'miniKill' : 'defeat'); return; }
+      // Fase 2 al caer la mitad de las anclas (§3.4): el patrón cambia, no solo escala.
+      if (e.phase === 1 && e.anchorsLeft <= Math.floor(e.anchorsMax / 2)) {
+        e.phase = 2;
+        Feedback.event('bossPhase', { msg: I18n.t('surv_boss_phase2').replace('{b}', this.name(e.id)) });
+        Render.boardEvent('surv-wave-soon', 500);
+      }
+    },
+    // Re-planta un ancla viva (rebrote del Cristálido / crecimiento del Vacío /
+    // curación del Titiritero). `grow` amplía también el máximo (el Vacío crece).
+    _regrow(e, grow) {
+      const f = Survival._filledIdx();
+      if (!f.length || Survival._specialRoom() <= 0) return false;
+      const idx = f[rand(f.length)];
+      State.tiles[idx] = Tiles.make('boss');
+      Render.syncCell(idx); Render.cellPulse(idx, 'tide-warn', 700);
+      if (grow) { e.anchorsMax++; e.anchorsLeft++; }
+      else e.anchorsLeft = Math.min(e.anchorsMax, e.anchorsLeft + 1);
+      Render.hudSoon();
+      return true;
+    },
+    // Titiritero (JF-ε): ¿este tipo de icono está enhebrado? (lo consulta Render.syncCell)
+    isThreaded(v) { const e = this.enc; return !!(e && e.threads && (e.threads[0] === v || e.threads[1] === v)); },
+    // Converger un tipo enhebrado CURA al Titiritero 1 ancla — inversión mental (§4.2).
+    // Counterplay: juega los tipos libres; purga los marcados con objetos (no convergen).
+    onThreadedConverge(conv) {
+      const e = this.enc; if (!e || !e.threads || e.anchorsLeft >= e.anchorsMax) return;
+      const hit = conv.some((j) => { const v = State.board[j]; return v === e.threads[0] || v === e.threads[1]; });
+      if (!hit) return;
+      if (this._regrow(e)) {
+        Toasts.event(I18n.t('surv_boss_heal').replace('{b}', this.name(e.id)), 'bad', 1500, '🎭');
+        Sound.danger();
+      }
+    },
+    // Agrieta blindaje de ancla o jaula por adyacencia/bomba (JF-02).
+    crackAt(j) {
+      const t = State.tiles[j]; if (!t) return;
+      if (t.type === 'boss' && (t.hits || 0) > 0) {
+        t.hits--;
+        if (t.hits <= 0) { t.hits = 0; t.solid = false; } // expuesta: ya se puede golpear
+        Render.setTile(j); Sound.tap();
+        return;
+      }
+      if (t.type === 'cage') {
+        t.hits = (t.hits || 1) - 1;
+        if (t.hits > 0) { Render.setTile(j); Sound.tap(); return; }
+        const loot = t.loot;
+        State.tiles[j] = null; Render.syncCell(j); FX.burst(j, '#ffd84d', 6);
+        if (loot) { Survival.inv[loot] = (Survival.inv[loot] || 0) + 1; Survival.buildBar(); }
+        Sound.eliminate(1); Haptics.tap();
+      }
+    },
+    resolve(outcome) {
+      const e = this.enc; if (!e) return;
+      this.enc = null;
+      // Las anclas restantes se retiran con el jefe (en derrota ya no quedan).
+      this._anchorIdx().forEach((i) => { State.tiles[i] = null; Render.syncCell(i); });
+      // Minijefes: sin bendición ni beat grande — botín pequeño al cazarlo, o se
+      // marcha solo (el Heraldo que escapa EMPODERA al jefe entrante, §4.3).
+      if (e.kind === 'mini') {
+        if (outcome === 'miniKill') this._miniKill(e);
+        else if (e.id === 'herald') {
+          this._heraldEmpower = true;
+          Toasts.event(I18n.t('mini_herald_up'), 'bad', 2000, '📯');
+        } else {
+          Toasts.event(I18n.t('mini_gone').replace('{b}', this.miniName(e.id)), 'info', 1300, (this.MINIDEX[e.id] || {}).icon);
+        }
+        this._faceOff();
+        Survival.render();
+        return;
+      }
+      if (outcome === 'defeat') this._defeatEffect(e);
+      if (outcome === 'retreat') {
+        const def = this.DEX[e.id] || {};
+        Toasts.event(I18n.t('surv_boss_retreat').replace('{b}', this.name(e.id)), 'info', 1400, def.icon);
+      }
+      if (e.threads) Render.syncAll(); // despinta los hilos del Titiritero (enc ya es null)
+      this._faceOff();
+      Survival._encounterEnd(e, outcome);
+    },
+    // Efecto-firma de derrota (JF-γ, §4.1): cada Señor deja un regalo al caer —
+    // la kill se SIENTE en el tablero, no solo en el toast.
+    _defeatEffect(e) {
+      const cleared = [];
+      // Presupuesto de limpieza (B-J1): los regalos de derrota NUNCA dejan el tablero
+      // por debajo de 8 iconos — sin esto alimentaban el bonus de tablero vacío y el
+      // refill, inflando monedas +18% y score +63% (medido en el A/B del sim).
+      let budget = Math.max(0, (State.iconCount || 0) - 8);
+      const clearOne = (idx) => {
+        if (State.board[idx] === null) { Survival._powerClear(idx, cleared, 4); return; } // solo tile: no gasta presupuesto
+        if (budget > 0 && Survival._powerClear(idx, cleared, 4)) budget--;
+      };
+      if (e.id === 'meteor') {
+        // El cielo escampa: limpia ~12% de los iconos (con suelo de 8).
+        const f = []; for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null) f.push(i);
+        const n = Math.max(2, Math.floor(f.length * 0.12));
+        for (let k = 0; k < n && f.length && budget > 0; k++) clearOne(f.splice(rand(f.length), 1)[0]);
+      } else if (e.id === 'tide') {
+        // La marea se retira: vacía las filas exteriores (con suelo de 8 iconos).
+        const size = State.size;
+        [0, size - 1].forEach((r) => { for (let c = 0; c < size && budget > 0; c++) clearOne(r * size + c); });
+      } else if (e.id === 'frost') {
+        // Deshielo total + 25 de carga.
+        for (let i = 0; i < State.tiles.length; i++) {
+          const t = State.tiles[i];
+          if (t && t.type === 'frozen') { State.tiles[i] = null; cleared.push(i); Render.iceBreak(i); }
+        }
+        Survival.charge += 25;
+        if (Survival.charge >= 100) { Survival.charge -= 100; Survival.grantRandom(); }
+      } else if (e.id === 'lockdown') {
+        // Las jaulas se abren: devuelve lo enjaulado ×2 (el robado + 1 regalo).
+        let returned = 0;
+        for (let i = 0; i < State.tiles.length; i++) {
+          const t = State.tiles[i];
+          if (t && t.type === 'cage') {
+            if (t.loot) { Survival.inv[t.loot] = (Survival.inv[t.loot] || 0) + 2; returned++; }
+            State.tiles[i] = null; cleared.push(i);
+          }
+        }
+        if (!returned) { const id = Survival.BOOSTERS[rand(Survival.BOOSTERS.length)]; Survival.inv[id] = (Survival.inv[id] || 0) + 1; }
+        Survival.buildBar();
+      } else if (e.id === 'quake') {
+        // El mundo se ordena: agrupa el tipo más común en un clúster central (regalo de combo).
+        this._clusterGift();
+      } else if (e.id === 'crystalid') {
+        // Estallido: todos los cristales del tablero puntúan y desaparecen.
+        for (let i = 0; i < State.tiles.length; i++) {
+          const t = State.tiles[i];
+          if (t && t.type === 'crystal') { State.score += 50; State.tiles[i] = null; cleared.push(i); }
+        }
+        Render.bump($('#hud-score'));
+      } else if (e.id === 'void') {
+        // Colapsa: devuelve TODO lo devorado agrupado junto al centro (cascada servida).
+        const size = State.size, spots = [];
+        for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) spots.push(i);
+        const dist = (i) => { const r = (i / size | 0), c = i % size; return Math.abs(r - 3.5) + Math.abs(c - 3.5); };
+        spots.sort((a, b) => dist(a) - dist(b));
+        (e.devoured || []).forEach((v) => { const j = spots.shift(); if (j != null) { State.board[j] = v; State.iconCount++; Render.spawnAnim(j); } });
+        if ((e.devoured || []).length) Render.syncAll();
+      } else if (e.id === 'puppeteer') {
+        // Corta los hilos: los tipos enhebrados se liberan (limpieza con suelo).
+        const th = e.threads || [];
+        for (let i = 0; i < State.board.length && budget > 0; i++) {
+          if (th.includes(State.board[i]) && !State.tiles[i]) clearOne(i);
+        }
+      }
+      if (cleared.length) { Render.syncAll(); Render.lifeClear(cleared, null); }
+      if (State.status === 'playing') Game.evaluate();
+    },
+    // Regalo del Tectónico: mueve hasta 8 iconos del tipo más común hacia el centro
+    // (intercambios puros: el conteo del tablero no cambia). FLIP como el terremoto.
+    _clusterGift() {
+      const size = State.size, counts = {};
+      for (let i = 0; i < State.board.length; i++) { const v = State.board[i]; if (v !== null && !State.tiles[i]) counts[v] = (counts[v] || 0) + 1; }
+      let best = null; for (const k in counts) if (!best || counts[k] > counts[best]) best = k;
+      if (!best || counts[best] < 3) return;
+      const srcs = [], spots = [];
+      for (let i = 0; i < State.board.length; i++) {
+        if (State.tiles[i]) continue;
+        if (State.board[i] === best) srcs.push(i);
+        spots.push(i);
+      }
+      const dist = (i) => { const r = (i / size | 0), c = i % size; return Math.abs(r - 3.5) + Math.abs(c - 3.5); };
+      spots.sort((a, b) => dist(a) - dist(b));
+      const dests = spots.slice(0, Math.min(8, srcs.length));
+      const destSet = new Set(dests);
+      const pending = srcs.filter((s) => !destSet.has(s));
+      const srcOf = {};
+      let pi = 0;
+      for (const d of dests) {
+        if (State.board[d] === best) continue;
+        const s = pending[pi++]; if (s == null) break;
+        const tmp = State.board[d];
+        State.board[d] = State.board[s]; State.board[s] = tmp;
+        srcOf[d] = s; if (tmp !== null) srcOf[s] = d;
+      }
+      Render.syncAll();
+      if (!motionOff()) Render.quakeSlide(srcOf);
+    },
+    abort() {
+      if (this.enc) {
+        const th = !!this.enc.threads;
+        this.enc = null;
+        this._anchorIdx().forEach((i) => { State.tiles[i] = null; Render.syncCell(i); });
+        if (th) Render.syncAll();
+      }
+      this._faceOff();
+    },
+    // Apaga la presencia visual del jefe (banner, tinte del panel, acento global).
+    _faceOff() {
+      const el = $('#surv-boss'); if (el) { el.hidden = true; el.classList.remove('mini'); }
+      const sb = $('#surv-bar'); if (sb) sb.classList.remove('encounter');
+      document.documentElement.style.removeProperty('--boss-accent');
+    },
+    // ---- Ataques (JF-α: plomería con números provisionales; JF-γ los somete a B-J3).
+    // Todos siguen el patrón de la marea (GM-20): objetivos elegidos al telegrafiar,
+    // pre-marcados TELEGRAPH_MS antes, ejecutados con lock breve. Counterplay: la
+    // ventana entre ataques es para golpear anclas (§2 P3).
+    _pickTargets(e) {
+      const def = this.DEX[e.id], size = State.size;
+      const kind = def.atk;
+      if (kind === 'rain') {
+        const n = Math.min(1 + e.lvl + (e.phase > 1 ? 1 : 0), 6);
+        const empt = Engine.emptyCells(), out = [];
+        for (let k = 0; k < n && empt.length; k++) out.push(empt.splice(rand(empt.length), 1)[0]);
+        return out;
+      }
+      if (kind === 'tide') {
+        const set = new Set();
+        const rows = e.phase > 1 ? [0, size - 1] : [RNG.random() < 0.5 ? 0 : size - 1];
+        rows.forEach((r) => { for (let c = 0; c < size; c++) set.add(r * size + c); });
+        if (e.phase > 1) [0, size - 1].forEach((c) => { for (let r = 0; r < size; r++) set.add(r * size + c); });
+        return [...set].filter((j) => State.board[j] === null && !State.tiles[j]);
+      }
+      if (kind === 'frost') {
+        // Fase 2 (JF-γ): clúster 2×2 compacto — roba movilidad local, no dispersa.
+        if (e.phase > 1) {
+          const room = Survival._specialRoom();
+          const starts = [];
+          for (let r = 0; r < size - 1; r++) for (let c = 0; c < size - 1; c++) {
+            const b = [r * size + c, r * size + c + 1, (r + 1) * size + c, (r + 1) * size + c + 1];
+            if (b.every((j) => State.board[j] !== null && !State.tiles[j])) starts.push(b);
+          }
+          if (starts.length && room >= 4) return starts[rand(starts.length)];
+        }
+        const f = Survival._filledIdx(), out = [];
+        const n = Math.min(1 + e.lvl + (e.phase > 1 ? 1 : 0), f.length, Survival._specialRoom());
+        for (let k = 0; k < n && f.length; k++) out.push(f.splice(rand(f.length), 1)[0]);
+        return out;
+      }
+      if (kind === 'locks') {
+        const em = Survival._emptyIdx();
+        const room = Math.min(Survival._specialRoom(), Math.max(0, Survival._blockCap() - Survival._blockIdx().length));
+        const n = Math.min(e.phase > 1 ? 3 : 2, em.length, room);
+        const out = [];
+        for (let k = 0; k < n && em.length; k++) out.push(em.splice(rand(em.length), 1)[0]);
+        return out;
+      }
+      if (kind === 'shuffle') {
+        if (e.phase > 1) return null; // terremoto total: el aviso es de tablero, no de celdas
+        const r1 = rand(size); let r2 = rand(size); if (r2 === r1) r2 = (r1 + 1) % size;
+        const out = [];
+        [r1, r2].forEach((r) => { for (let c = 0; c < size; c++) out.push(r * size + c); });
+        return out;
+      }
+      if (kind === 'shards') {
+        // Esquirlas: 2-3 spawns + 1 cristal (puntúa al romperse, pero ocupa).
+        const n = Math.min(2 + (e.phase > 1 ? 1 : 0), 4);
+        const empt = Engine.emptyCells(), out = [];
+        for (let k = 0; k < n && empt.length; k++) out.push(empt.splice(rand(empt.length), 1)[0]);
+        return out;
+      }
+      if (kind === 'devour') {
+        // El Vacío devora 1 icono ortogonalmente adyacente a cada ancla.
+        const out = new Set();
+        this._anchorIdx().forEach((a) => {
+          const r = a / size | 0, c = a % size;
+          const nb = [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]]
+            .filter(([rr, cc]) => rr >= 0 && cc >= 0 && rr < size && cc < size)
+            .map(([rr, cc]) => rr * size + cc)
+            .filter((j) => State.board[j] !== null && !State.tiles[j]);
+          if (nb.length) out.add(nb[rand(nb.length)]);
+        });
+        return [...out];
+      }
+      return null; // threads: marca por TIPO, no por celda (el ataque hace syncAll)
+    },
+    _attack(e) {
+      const def = this.DEX[e.id], kind = def.atk;
+      const targets = e.targets; e.targets = null;
+      Survival._lock(kind === 'shuffle' ? 1150 : 760, def.frame);
+      if (kind === 'rain') {
+        const placed = [];
+        (targets || []).forEach((j) => {
+          if (State.board[j] === null && !State.tiles[j]) { State.board[j] = State.pool[rand(State.pool.length)]; State.iconCount++; placed.push(j); }
+        });
+        // Fase 2 (JF-γ): el impacto deja 1 roca en el centro de la zona marcada.
+        if (e.phase > 1 && placed.length) {
+          const room = Math.min(Survival._specialRoom(), Math.max(0, Survival._blockCap() - Survival._blockIdx().length));
+          if (room > 0) {
+            const mid = placed[placed.length >> 1];
+            State.board[mid] = null; State.iconCount--;
+            const rk = Tiles.make('rock'); rk.hits = 1; State.tiles[mid] = rk;
+          }
+        }
+        Render.syncAll(); if (placed.length) Render.meteor(placed);
+        Feedback.event('meteor', { enraged: e.lvl >= 3 });
+      } else if (kind === 'tide') {
+        let filled = 0;
+        (targets || []).forEach((j) => {
+          if (State.board[j] === null && !State.tiles[j]) { State.board[j] = State.pool[rand(State.pool.length)]; State.iconCount++; filled++; Render.syncCell(j); Render.cellPulse(j, 'tide-fill', 600); }
+        });
+        if (filled) Render.hudSoon();
+        Feedback.event('tide', { enraged: e.phase > 1 });
+      } else if (kind === 'frost') {
+        const placed = [];
+        (targets || []).forEach((j) => {
+          if (State.board[j] !== null && !State.tiles[j]) { State.tiles[j] = Tiles.make('frozen'); placed.push(j); }
+        });
+        Render.syncAll(); placed.forEach((i) => Render.iceHit(i));
+        Feedback.event('frost', { enraged: e.lvl >= 3 });
+      } else if (kind === 'locks') {
+        // Fase 2 (JF-γ): la JAULA — el Cerrajero roba 1 potenciador con stock y lo
+        // enjaula en el tablero; romper la jaula por adyacencia lo devuelve. Sin
+        // stock que robar, cae en el cierre normal (candados).
+        let caged = false;
+        if (e.phase > 1) caged = this._cageSteal(targets);
+        if (!caged) {
+          const placed = [];
+          (targets || []).forEach((j) => {
+            if (State.board[j] === null && !State.tiles[j]) { const tl = Tiles.make('locked'); tl.hits = e.phase > 1 ? 2 : 1; State.tiles[j] = tl; placed.push(j); }
+          });
+          Render.syncAll(); placed.forEach((i) => Render.cellPulse(i, 'lock-stamp', 520));
+        }
+        Feedback.event('lockdown');
+      } else if (kind === 'shards') {
+        // Cristálido: esquirlas — spawns + 1 cristal normal (ocupa, pero puntúa).
+        const placed = [];
+        (targets || []).forEach((j) => {
+          if (State.board[j] === null && !State.tiles[j]) { State.board[j] = State.pool[rand(State.pool.length)]; State.iconCount++; placed.push(j); }
+        });
+        const f2 = Survival._filledIdx();
+        if (f2.length && State.tiles.filter((t) => t && t.type === 'crystal').length < 4) {
+          State.tiles[f2[rand(f2.length)]] = Tiles.make('crystal');
+        }
+        Render.syncAll(); if (placed.length) Render.meteor(placed);
+        Feedback.event('frost', { msg: I18n.t('surv_boss_shards'), icon: '💠' });
+      } else if (kind === 'devour') {
+        // El Vacío: se TRAGA los iconos marcados (los guarda; los devuelve al caer).
+        (targets || []).forEach((j) => {
+          if (State.board[j] !== null && !State.tiles[j]) {
+            e.devoured.push(State.board[j]);
+            State.board[j] = null; State.iconCount--;
+            Render.syncCell(j); FX.burst(j, '#a06bff', 5);
+          }
+        });
+        // Fase 2: CRECE — brota un ancla nueva (cap growCap): empeora si lo ignoras.
+        if (e.phase > 1 && e.anchorsMax < (def.growCap || 4)) {
+          if (this._regrow(e, true)) Toasts.event(I18n.t('surv_boss_grow'), 'bad', 1600, '🕳️');
+        }
+        Feedback.event('lockdown', { msg: I18n.t('surv_boss_devour').replace('{n}', (targets || []).length), icon: '🕳️' });
+      } else if (kind === 'threads') {
+        // Titiritero: enhebra 2 TIPOS — convergerlos LE CURA; los demás le dañan.
+        const present = [...new Set(State.board.filter((v, i) => v !== null && !State.tiles[i]))];
+        if (present.length >= 2) {
+          const a = present.splice(rand(present.length), 1)[0];
+          const b = present.splice(rand(present.length), 1)[0];
+          e.threads = [a, b];
+          Render.syncAll(); // pinta .threaded en las celdas de esos tipos
+        }
+        // Fase 2: además 1 candado en el patrón.
+        if (e.phase > 1) {
+          const room = Math.min(Survival._specialRoom(), Math.max(0, Survival._blockCap() - Survival._blockIdx().length));
+          const em = Survival._emptyIdx();
+          if (room > 0 && em.length) { const tl = Tiles.make('locked'); tl.hits = 1; State.tiles[em[rand(em.length)]] = tl; Render.syncAll(); }
+        }
+        Feedback.event('quake', { msg: I18n.t('surv_boss_threads'), icon: '🎭', snd: 'lockdown', hap: 'clank' });
+      } else if (kind === 'shuffle') {
+        if (e.phase > 1) {
+          // Fase 2 (JF-γ): terremoto total + 2 rocas donde asiente el polvo.
+          Survival._shuffle(true);
+          const room = Math.min(Survival._specialRoom(), Math.max(0, Survival._blockCap() - Survival._blockIdx().length), 2);
+          const em = Survival._emptyIdx();
+          for (let k = 0; k < room && em.length; k++) {
+            const j = em.splice(rand(em.length), 1)[0];
+            const rk = Tiles.make('rock'); rk.hits = 1; State.tiles[j] = rk;
+          }
+          if (room > 0) Render.syncAll();
+        } else this._shuffleCells(targets);
+        Feedback.event('quake');
+        Render.boardEvent('surv-quake-settle', 420);
+      }
+      if (State.status === 'playing') Game.evaluate();
+    },
+    // La Jaula del Cerrajero (JF-γ): roba 1 potenciador aleatorio CON stock y lo
+    // planta como tile `cage` (hits=1, romper por adyacencia lo devuelve — ver
+    // crackAt). Devuelve false si no hay nada que robar o dónde plantarla.
+    _cageSteal(targets) {
+      const ids = Survival.BOOSTERS.filter((id) => (Survival.inv[id] || 0) > 0);
+      if (!ids.length) return false;
+      const spot = (targets || []).find((j) => State.board[j] === null && !State.tiles[j]);
+      const em = spot != null ? spot : (Survival._emptyIdx()[0]);
+      if (em == null) return false;
+      if (Survival._specialRoom() <= 0) return false;
+      const id = ids[rand(ids.length)];
+      Survival.inv[id]--;
+      const cg = Tiles.make('cage'); cg.hits = 1; cg.loot = id;
+      State.tiles[em] = cg;
+      Survival.buildBar();
+      Render.syncAll(); Render.cellPulse(em, 'lock-stamp', 620);
+      const pname = ({ freeze: 'Hielo', wild: 'Barrido', x2: 'Doble' }[id]) || Boosters.DEFS[id].name;
+      Toasts.event(I18n.t('surv_boss_cage_steal').replace('{b}', this.name('lockdown')).replace('{p}', pname), 'bad', 2000, '🔒');
+      return true;
+    },
+    // Terremoto parcial: baraja solo los iconos de las celdas indicadas (2 filas).
+    _shuffleCells(cells) {
+      const idx = (cells || []).filter((i) => State.board[i] !== null && !State.tiles[i]);
+      const n = idx.length; if (n < 2) return;
+      const oldVals = idx.map((p) => State.board[p]);
+      const perm = idx.map((_, k) => k);
+      for (let i = n - 1; i > 0; i--) { const j = rand(i + 1); const t = perm[i]; perm[i] = perm[j]; perm[j] = t; }
+      const srcOf = {};
+      idx.forEach((dest, k) => { State.board[dest] = oldVals[perm[k]]; srcOf[dest] = idx[perm[k]]; });
+      Render.syncAll();
+      if (!motionOff()) Render.quakeSlide(srcOf);
     },
   };
 
@@ -5153,6 +6233,7 @@
     start(mode, diff, startLevel, seed) {
       Picker.dismiss();
       { const pl = $('#prelevel'); if (pl) pl.hidden = true; }
+      document.documentElement.style.removeProperty('--boss-accent'); // acento de jefe residual (JF-ζ)
       State.mode = mode;
       if (mode !== 'tutorial') Storage.lastMode = mode; // para marcar el modo actual en el catálogo
       State.diff = Config.MODES[mode].fixedDiff || diff;
@@ -5402,6 +6483,9 @@
           if (Survival.magnetMoves === 0) Toasts.show(I18n.t('magnet_done'), 'warn', 1500, '🧲');
         }
       }
+      // Titiritero (JF-ε): converger un tipo enhebrado le cura — se evalúa ANTES de
+      // vaciar las celdas (necesita leer los tipos que van a desaparecer).
+      if (State.mode === 'supervivencia' && Bosses.enc && Bosses.enc.threads) Bosses.onThreadedConverge(conv);
       let removed = conv.length;
       State.removedTotal += removed;
       State.lastActionCell = i;
@@ -5445,7 +6529,13 @@
       conv.forEach(idx => {
         const t = State.tiles[idx];
         // Cristal: +50 base; la reliquia de Aventura (GM-07) añade +30.
-        if (t) { if (t.type === 'crystal') State.score += 50 + (State.mode === 'aventura' && Adventure.hasRelic('crystal') ? 30 : 0); State.tiles[idx] = null; }
+        if (t) {
+          if (t.type === 'crystal') State.score += 50 + (State.mode === 'aventura' && Adventure.hasRelic('crystal') ? 30 : 0);
+          // Ancla de jefe (JF-02): converger el icono que vive encima = 1 golpe al
+          // jefe. Las blindadas nunca llegan aquí: su solid=true las excluye de conv.
+          if (t.type === 'boss') Bosses.onAnchorHit(idx);
+          State.tiles[idx] = null;
+        }
         State.board[idx] = null; State.iconCount--;
       });
       Render.clearAnim(conv, i);
@@ -6496,9 +7586,14 @@
     const wb = Meta.survWeekBest(), wk = Survival._weekKey();
     const wl = $('#surv-week-line');
     if (wl) wl.textContent = (wb && wb.week === wk && wb.wave > 0) ? I18n.t('surv_week_best').replace('{w}', wb.wave) : I18n.t('surv_week_best_none');
-    // Medallero de hazañas (SV-31): desbloqueadas / total.
+    // Medallero de hazañas (SV-31) + vitrina compacta del bestiario (JF-ε):
+    // kills totales y Rondas maestras vitalicias.
     const fl = $('#surv-feats-line');
-    if (fl) fl.textContent = '🏅 ' + Meta.survFeatCount() + '/' + Survival.FEATS.length;
+    if (fl) {
+      const kills = Meta.survBossKillsTotal(), mr = Meta.survMasterRounds();
+      fl.textContent = '🏅 ' + Meta.survFeatCount() + '/' + Survival.FEATS.length
+        + (kills ? ' · ⚔️ ' + kills : '') + (mr ? ' · ✦ ' + mr : '');
+    }
   }
   function openSurvivalDiff() {
     survDiff = Config.DIFF_ORDER.indexOf(Storage.survDiff) >= 0 ? Storage.survDiff : 'normal';
@@ -7185,5 +8280,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, Modal, Perf, ModeSignals, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, Modal, Perf, ModeSignals, refreshStart, applyLanguage };
 })();
