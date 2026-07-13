@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.15';
+  const VERSION = '2.6.16';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -464,6 +464,24 @@
         surv_boss_enraged_warn: '⚠ ¡Jefe ENFURECIDO inminente!',
         surv_meteor_enraged: '¡Lluvia de iconos ENFURECIDA!', surv_tide_enraged: '¡Marea ENFURECIDA: marco completo!', surv_frost_enraged: 'Frente helado ENFURECIDO',
         bossname_meteor: 'Lluvia de iconos', bossname_tide: 'Marea', bossname_frost: 'Frente helado', bossname_lockdown: 'Cierre', bossname_quake: 'Terremoto',
+        // Bestiario de encuentros (JF-β): nombre + epíteto por jefe, y nombre de ataque por fase.
+        bossdex_meteor: 'Nubarrón', bossdex_meteor_e: 'el cielo a pedazos',
+        bossdex_tide: 'La Corriente', bossdex_tide_e: 'señora de los bordes',
+        bossdex_frost: 'Boreal', bossdex_frost_e: 'el aliento blanco',
+        bossdex_lockdown: 'El Cerrajero', bossdex_lockdown_e: 'guardián de candados',
+        bossdex_quake: 'Tectónico', bossdex_quake_e: 'el que baraja el mundo',
+        bossatk_meteor_1: 'Lluvia', bossatk_meteor_2: 'Lluvia y roca',
+        bossatk_tide_1: 'Marea', bossatk_tide_2: 'Marea completa',
+        bossatk_frost_1: 'Escarcha', bossatk_frost_2: 'Clúster helado',
+        bossatk_lockdown_1: 'Cierre', bossatk_lockdown_2: 'Cierre reforzado',
+        bossatk_quake_1: 'Terremoto parcial', bossatk_quake_2: 'Terremoto total',
+        surv_boss_lvl: 'Nv. {n}',
+        surv_boss_hp_sr: 'Vida del jefe: {n} de {m} anclas',
+        surv_boss_enter_sr: 'Jefe: {b}, nivel {n}, {k} anclas. Converge los iconos sobre las anclas para dañarlo.',
+        surv_boss_prep: '{b} prepara: {a}',
+        surv_boss_phase2: '¡Fase 2! {b} cambia de patrón',
+        surv_boss_defeated: '¡{b} DERROTADO!',
+        surv_boss_retreat: '{b} se retira…',
         survmut_ice: 'Semana del hielo: trampas heladas · monedas ×1.15', survmut_chaos: 'Semana del caos: el terremoto ha vuelto', survmut_frenzy: 'Semana de la furia: frenesí +30%',
         dmut_pure: 'Reto de hoy: tablero puro', dmut_ice: 'Reto de hoy: tablero helado', dmut_window: 'Reto de hoy: combos más exigentes', dmut_variety: 'Reto de hoy: más variedad de figuras', dmut_rocks: 'Reto de hoy: campo de rocas', dmut_fast: 'Reto de hoy: ritmo veloz', dmut_crystal: 'Reto de hoy: cristales dobles', dmut_nohints: 'Reto de hoy: sin pistas',
         dmut_pure_n: 'Puro', dmut_ice_n: 'Hielo', dmut_window_n: 'Combos exigentes', dmut_variety_n: 'Variedad', dmut_rocks_n: 'Rocas', dmut_fast_n: 'Veloz', dmut_crystal_n: 'Cristales', dmut_nohints_n: 'Sin pistas',
@@ -664,6 +682,24 @@
         surv_boss_enraged_warn: '⚠ ENRAGED boss incoming!',
         surv_meteor_enraged: 'ENRAGED icon rain!', surv_tide_enraged: 'ENRAGED tide: full frame!', surv_frost_enraged: 'ENRAGED frozen front',
         bossname_meteor: 'Icon rain', bossname_tide: 'Tide', bossname_frost: 'Frozen front', bossname_lockdown: 'Lockdown', bossname_quake: 'Quake',
+        // Encounter bestiary (JF-β): boss name + epithet, and per-phase attack names.
+        bossdex_meteor: 'Stormfront', bossdex_meteor_e: 'the sky in pieces',
+        bossdex_tide: 'The Current', bossdex_tide_e: 'lady of the edges',
+        bossdex_frost: 'Boreal', bossdex_frost_e: 'the white breath',
+        bossdex_lockdown: 'The Locksmith', bossdex_lockdown_e: 'warden of locks',
+        bossdex_quake: 'Tectonic', bossdex_quake_e: 'the world-shuffler',
+        bossatk_meteor_1: 'Rain', bossatk_meteor_2: 'Rain and rock',
+        bossatk_tide_1: 'Tide', bossatk_tide_2: 'Full tide',
+        bossatk_frost_1: 'Frost', bossatk_frost_2: 'Frozen cluster',
+        bossatk_lockdown_1: 'Lockdown', bossatk_lockdown_2: 'Hardened lockdown',
+        bossatk_quake_1: 'Partial quake', bossatk_quake_2: 'Total quake',
+        surv_boss_lvl: 'Lv. {n}',
+        surv_boss_hp_sr: "Boss health: {n} of {m} anchors",
+        surv_boss_enter_sr: 'Boss: {b}, level {n}, {k} anchors. Converge the icons on the anchors to damage it.',
+        surv_boss_prep: '{b} is preparing: {a}',
+        surv_boss_phase2: 'Phase 2! {b} shifts its pattern',
+        surv_boss_defeated: '{b} DEFEATED!',
+        surv_boss_retreat: '{b} retreats…',
         survmut_ice: 'Ice week: frozen traps · coins ×1.15', survmut_chaos: 'Chaos week: the quake is back', survmut_frenzy: 'Fury week: frenzy +30%',
         dmut_pure: "Today's twist: pure board", dmut_ice: "Today's twist: frozen board", dmut_window: "Today's twist: tighter combos", dmut_variety: "Today's twist: more icon variety", dmut_rocks: "Today's twist: rock field", dmut_fast: "Today's twist: fast pace", dmut_crystal: "Today's twist: double crystals", dmut_nohints: "Today's twist: no hints",
         dmut_pure_n: 'Pure', dmut_ice_n: 'Ice', dmut_window_n: 'Tight combos', dmut_variety_n: 'Variety', dmut_rocks_n: 'Rocks', dmut_fast_n: 'Fast', dmut_crystal_n: 'Crystals', dmut_nohints_n: 'No hints',
@@ -1685,6 +1721,19 @@
       if (el) el.classList.toggle('urgent', State.combo >= 3 && frac < 0.24);
     },
 
+    // Tarjeta de presentación del jefe (JF-β, patrón Gungeon): franja one-shot
+    // sobre el tablero con nombre + epíteto + nivel. No es modal (pointer-events
+    // none, no bloquea input). En reduced-fx no existe: el banner ya informa.
+    bossCard(title, sub) {
+      if (Settings.reducedFx) return;
+      const parent = document.querySelector('.board-wrap'); if (!parent) return;
+      let el = document.getElementById('boss-card');
+      if (!el) { el = document.createElement('div'); el.id = 'boss-card'; el.className = 'boss-card'; parent.appendChild(el); }
+      el.innerHTML = '<div><strong></strong><span></span></div>';
+      el.querySelector('strong').textContent = title;
+      el.querySelector('span').textContent = sub;
+      el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    },
     // Flash de rango central (¡BIEN!, ¡GENIAL!…)
     rankFlash(text, color) {
       if (Settings.reducedFx) return;
@@ -1842,6 +1891,7 @@
       waveUp:   { kind: 'warn', ms: 1600, icon: 'fire',         snd: 'waveUp',   hap: 'combo' },
       waveSoon: { kind: 'warn', ms: 1500, icon: 'fire',         snd: 'danger',   hap: null,      toast: 'surv_wave_soon' },
       bossWarn: { kind: 'bad',  ms: 2400, icon: null,           snd: 'bossWarn', hap: 'fire' },
+      bossPhase:{ kind: 'warn', ms: 1600, icon: '⚠️',           snd: 'danger',   hap: 'combo' },
     },
     event(id, opts) {
       opts = opts || {};
@@ -3791,13 +3841,15 @@
       this._boonAt = performance.now() + 1700;
     },
     // Cierre de un ENCUENTRO (JF-α): mismo ritual pico→bendición que el evento
-    // clásico; la derrota registra el botín pendiente (beat y recompensa en JF-β/γ).
+    // clásico. La derrota reemplaza el beat «¡SUPERADO!» por «¡DERROTADO!» (JF-β);
+    // el botín de derrota y la Ronda maestra llegan en JF-γ (puerta B-J1).
     _encounterEnd(e, outcome) {
       this._lastBossType = e.id;
       if (outcome === 'defeat') {
         this._bossesDefeated = (this._bossesDefeated || 0) + 1;
         this._lastDefeat = { id: e.id, lvl: e.lvl, flawless: !!e.flawless };
-      }
+        this._defeatBeat = e;
+      } else { this._defeatBeat = null; }
       Haptics.milestone();
       this._bossSurvivedAt = performance.now() + 1200;
       this._boonAt = performance.now() + 1700;
@@ -3811,6 +3863,19 @@
       this._bossesSurvived = (this._bossesSurvived || 0) + 1;
       // Hazaña 'impecable' (SV-31): superar el jefe sin perder vida en esa oleada.
       if (!this._livesLostThisWave) this._feat('impecable');
+      // Beat «¡DERROTADO!» (JF-β): si el encuentro cayó por anclas, el clímax es la
+      // kill (nombre propio + confeti mayor). Gancho de audio QP-4: fanfarria de
+      // derrota de jefe. El botín y la Ronda maestra llegan en JF-γ.
+      const d = this._defeatBeat; this._defeatBeat = null;
+      if (d) {
+        const msg = I18n.t('surv_boss_defeated').replace('{b}', Bosses.name(d.id));
+        Toasts.show(msg, 'good', 2000, 'trophy');
+        Render.rankFlash(msg, '#ffd24d'); // no-op bajo reduced-fx
+        Render.flash(); FX.confetti(d.flawless ? 70 : 56);
+        Sound.record(); Haptics.record();
+        announce(msg);
+        return;
+      }
       const clean = !!this._noBoosterSinceBoss;
       Toasts.show(I18n.t(clean ? 'surv_boss_cleared_clean' : 'surv_boss_cleared'), 'good', 1800, 'trophy');
       Render.rankFlash(I18n.t('surv_boss_cleared'), '#ffd24d'); // no-op bajo reduced-fx
@@ -4275,6 +4340,42 @@
         const bb = $('#booster-bar'); if (bb) bb.classList.toggle('ready', ready);
         const pr = $('#power-rings'); if (pr) pr.classList.toggle('ready', ready);
       }
+      // Banner del encuentro (JF-β): la cara del jefe ENCIMA de vidas/oleada/tiempo.
+      // Diffing por firma (id|nivel|fase|PV|segundos|telegraph): 1 escritura DOM por
+      // cambio y la cuenta atrás solo re-escribe al cambiar el segundo (§5.6).
+      const enc = Bosses.enc;
+      if (r.encOn !== !!enc) {
+        r.encOn = !!enc; r.encSig = ''; r.encIcon = '';
+        const sb2 = $('#surv-bar'); if (sb2) sb2.classList.toggle('encounter', !!enc);
+        const eb = $('#surv-boss');
+        if (eb) { eb.hidden = !enc; if (!enc) eb.classList.remove('phase2', 'lvl-high'); }
+      }
+      if (enc) {
+        const def = Bosses.DEX[enc.id] || {};
+        const secs = Math.max(0, Math.ceil((enc.attackEvery - enc.atkAcc) / 1000));
+        const sig = enc.id + '|' + enc.lvl + '|' + enc.phase + '|' + enc.anchorsLeft + '|' + secs + '|' + (enc.telegraphed ? 1 : 0);
+        if (r.encSig !== sig) {
+          r.encSig = sig;
+          const eb = $('#surv-boss');
+          if (eb) { eb.classList.toggle('phase2', enc.phase > 1); eb.classList.toggle('lvl-high', enc.lvl >= 3); }
+          if (r.encIcon !== enc.id) {
+            r.encIcon = enc.id;
+            const ic = $('#surv-boss-icon'); if (ic) ic.innerHTML = Bosses.portraitHTML(def);
+            const nm = $('#surv-boss-name'); if (nm) nm.textContent = Bosses.name(enc.id);
+          }
+          const lv = $('#surv-boss-lvl'); if (lv) lv.textContent = Bosses.lvlLabel(enc.lvl);
+          const hp = $('#surv-boss-hp');
+          if (hp) {
+            hp.textContent = '◆'.repeat(enc.anchorsLeft) + '◇'.repeat(Math.max(0, enc.anchorsMax - enc.anchorsLeft));
+            hp.setAttribute('aria-label', I18n.t('surv_boss_hp_sr').replace('{n}', enc.anchorsLeft).replace('{m}', enc.anchorsMax));
+          }
+          const nx = $('#surv-boss-next');
+          if (nx) {
+            nx.textContent = (def.atkIcon || '⚠') + ' ' + secs + 's';
+            nx.classList.toggle('telegraph', !!enc.telegraphed);
+          }
+        }
+      }
       // Fila de build (SV-10/11): chips de SOLO LECTURA con las bendiciones que
       // tienen estado (lo instantáneo ya se ve en vidas/anillo/inventario) y el
       // mutador semanal. El build deja de ser invisible sin añadir medidores.
@@ -4327,11 +4428,20 @@
     // son PROVISIONALES hasta la puerta B-J3 (JF-γ): la intensidad total del
     // encuentro (~4 ataques) debe equivaler al evento único de hoy.
     DEX: {
-      meteor:   { acto: 1, accent: '#ff755b', icon: 'v2:meteor',    anchors: 3, armored: 0, attackMs: 12000, atk: 'rain',    frame: 'surv-meteor-board' },
-      tide:     { acto: 1, accent: '#59d6ff', icon: '🌊',           anchors: 3, armored: 0, attackMs: 13000, atk: 'tide',    frame: 'surv-tide', edgeAnchors: true },
-      frost:    { acto: 1, accent: '#94e8ff', icon: 'v2:snowflake', anchors: 2, armored: 0, attackMs: 12000, atk: 'frost',   frame: 'surv-frost' },
-      lockdown: { acto: 2, accent: '#d6dce8', icon: '🔒',           anchors: 3, armored: 1, attackMs: 13000, atk: 'locks',   frame: 'surv-lockdown' },
-      quake:    { acto: 2, accent: '#ffb24d', icon: 'teleporter',   anchors: 3, armored: 1, attackMs: 14000, atk: 'shuffle', frame: 'surv-quake', chaosPromote: true },
+      meteor:   { acto: 1, accent: '#ff755b', icon: 'v2:meteor',    atkIcon: '☄', anchors: 3, armored: 0, attackMs: 12000, atk: 'rain',    frame: 'surv-meteor-board' },
+      tide:     { acto: 1, accent: '#59d6ff', icon: '🌊',           atkIcon: '≈', anchors: 3, armored: 0, attackMs: 13000, atk: 'tide',    frame: 'surv-tide', edgeAnchors: true },
+      frost:    { acto: 1, accent: '#94e8ff', icon: 'v2:snowflake', atkIcon: '❄', anchors: 2, armored: 0, attackMs: 12000, atk: 'frost',   frame: 'surv-frost' },
+      lockdown: { acto: 2, accent: '#d6dce8', icon: '🔒',           atkIcon: '▣', anchors: 3, armored: 1, attackMs: 13000, atk: 'locks',   frame: 'surv-lockdown' },
+      quake:    { acto: 2, accent: '#ffb24d', icon: 'teleporter',   atkIcon: '▤', anchors: 3, armored: 1, attackMs: 14000, atk: 'shuffle', frame: 'surv-quake', chaosPromote: true },
+    },
+    ROMAN: ['I', 'II', 'III', 'IV'],
+    name(id) { return I18n.t('bossdex_' + id); },
+    lvlLabel(lvl) { return I18n.t('surv_boss_lvl').replace('{n}', this.ROMAN[lvl - 1] || lvl); },
+    atkName(e) { return I18n.t('bossatk_' + e.id + (e.phase > 1 ? '_2' : '_1')); },
+    // Retrato del banner: icono v2/png del registro, o el propio emoji como texto.
+    portraitHTML(def) {
+      const n = def && def.icon; if (!n) return '';
+      return /^[a-z0-9:_-]+$/i.test(n) ? iconAnyInline(n) : esc(n);
     },
     enc: null, // encuentro activo — INVARIANTE: máximo uno (jefe o minijefe)
     // ---- Niveles y actos (§3.5): de más bajos a más altos, visibles como Nv. I-III ----
@@ -4387,6 +4497,13 @@
         telegraphed: false, targets: null,
         flawless: true, attacks: 0,
       };
+      // La cara del jefe (JF-β): acento global (banner/anclas/card lo heredan por
+      // CSS), tarjeta de presentación estilo Gungeon y announce accesible. El sting
+      // reutiliza bossWarn hasta los leitmotivs de QP-4.
+      document.documentElement.style.setProperty('--boss-accent', def.accent);
+      Render.bossCard(this.name(id), I18n.t('bossdex_' + id + '_e') + ' · ' + this.lvlLabel(this.enc.lvl));
+      Sound.bossWarn(); Haptics.fire(8);
+      announce(I18n.t('surv_boss_enter_sr').replace('{b}', this.name(id)).replace('{n}', this.enc.lvl).replace('{k}', this.enc.anchorsMax));
       Render.hudSoon();
       return this.enc;
     },
@@ -4432,6 +4549,8 @@
         e.telegraphed = true;
         e.targets = this._pickTargets(e);
         (e.targets || []).forEach((j) => Render.cellPulse(j, 'tide-warn', this.TELEGRAPH_MS));
+        // El banner enciende la píldora (render) y el lector de pantalla oye QUÉ viene.
+        announce(I18n.t('surv_boss_prep').replace('{b}', this.name(e.id)).replace('{a}', this.atkName(e)));
       }
       if (e.atkAcc >= e.attackEvery) {
         e.atkAcc -= e.attackEvery; e.telegraphed = false;
@@ -4450,7 +4569,8 @@
       // Fase 2 al caer la mitad de las anclas (§3.4): el patrón cambia, no solo escala.
       if (e.phase === 1 && e.anchorsLeft <= Math.floor(e.anchorsMax / 2)) {
         e.phase = 2;
-        Render.boardEvent('surv-wave-soon', 500); // beat visual mínimo; cara/sting en JF-β
+        Feedback.event('bossPhase', { msg: I18n.t('surv_boss_phase2').replace('{b}', this.name(e.id)) });
+        Render.boardEvent('surv-wave-soon', 500);
       }
     },
     // Agrieta blindaje de ancla o jaula por adyacencia/bomba (JF-02).
@@ -4476,12 +4596,25 @@
       this.enc = null;
       // Las anclas restantes se retiran con el jefe (en derrota ya no quedan).
       this._anchorIdx().forEach((i) => { State.tiles[i] = null; Render.syncCell(i); });
+      if (outcome === 'retreat') {
+        const def = this.DEX[e.id] || {};
+        Toasts.event(I18n.t('surv_boss_retreat').replace('{b}', this.name(e.id)), 'info', 1400, def.icon);
+      }
+      this._faceOff();
       Survival._encounterEnd(e, outcome);
     },
     abort() {
-      if (!this.enc) return;
-      this.enc = null;
-      this._anchorIdx().forEach((i) => { State.tiles[i] = null; Render.syncCell(i); });
+      if (this.enc) {
+        this.enc = null;
+        this._anchorIdx().forEach((i) => { State.tiles[i] = null; Render.syncCell(i); });
+      }
+      this._faceOff();
+    },
+    // Apaga la presencia visual del jefe (banner, tinte del panel, acento global).
+    _faceOff() {
+      const el = $('#surv-boss'); if (el) el.hidden = true;
+      const sb = $('#surv-bar'); if (sb) sb.classList.remove('encounter');
+      document.documentElement.style.removeProperty('--boss-accent');
     },
     // ---- Ataques (JF-α: plomería con números provisionales; JF-γ los somete a B-J3).
     // Todos siguen el patrón de la marea (GM-20): objetivos elegidos al telegrafiar,
