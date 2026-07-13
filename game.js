@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.18';
+  const VERSION = '2.6.19';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -492,6 +492,25 @@
         mini_gone: '{b} se marcha…',
         sr_mini_enter: 'Minijefe: {b}. Converge el icono sobre su ancla para cazarlo',
         sr_mini_down: '{b}, cazado',
+        // Acto III: La Corte Profunda (JF-ε)
+        bossdex_crystalid: 'Cristálido', bossdex_crystalid_e: 'el corazón que rebrota',
+        bossdex_void: 'El Vacío', bossdex_void_e: 'la boca paciente',
+        bossdex_puppeteer: 'El Titiritero', bossdex_puppeteer_e: 'amo de los hilos',
+        bossatk_crystalid_1: 'Esquirlas', bossatk_crystalid_2: 'Esquirlas y rebrote',
+        bossatk_void_1: 'Devorar', bossatk_void_2: 'Devorar y crecer',
+        bossatk_puppeteer_1: 'Enhebrar', bossatk_puppeteer_2: 'Re-enhebrar',
+        surv_boss_shards: '¡Esquirlas del Cristálido!',
+        surv_boss_regrow: '¡{b} se regenera! Remátalo con tempo',
+        surv_boss_devour: 'El Vacío devora {n} iconos…',
+        surv_boss_grow: '¡El Vacío CRECE! No lo ignores',
+        surv_boss_threads: '¡Hilos! Converger los tipos marcados LE CURA',
+        surv_boss_heal: '¡{b} se cura con tus hilos!',
+        surv_boss_crystalid_warn: '¡Cristálido inminente: remátalo antes de que rebrote!',
+        surv_boss_void_warn: '¡El Vacío inminente: no dejes que crezca!',
+        surv_boss_puppeteer_warn: '¡El Titiritero inminente: cuidado con los hilos!',
+        feat_cazador: 'Cazador', feat_cazador_d: 'Derrota a los 5 Señores (Nubarrón, Corriente, Boreal, Cerrajero y Tectónico)',
+        feat_ronda_maestra: 'Ronda maestra', feat_ronda_maestra_d: 'Logra 3 Rondas maestras (derrotas sin daño ni potenciadores)',
+        feat_domaecos: 'Domaecos', feat_domaecos_d: 'Derrota a un eco de nivel III o superior',
         surv_boss_lvl: 'Nv. {n}',
         surv_boss_hp_sr: 'Vida del jefe: {n} de {m} anclas',
         surv_boss_enter_sr: 'Jefe: {b}, nivel {n}, {k} anclas. Converge los iconos sobre las anclas para dañarlo.',
@@ -727,6 +746,25 @@
         mini_gone: '{b} slips away…',
         sr_mini_enter: 'Miniboss: {b}. Converge the icon on its anchor to hunt it',
         sr_mini_down: '{b}, hunted down',
+        // Act III: The Deep Court (JF-ε)
+        bossdex_crystalid: 'Crystalid', bossdex_crystalid_e: 'the regrowing heart',
+        bossdex_void: 'The Void', bossdex_void_e: 'the patient maw',
+        bossdex_puppeteer: 'The Puppeteer', bossdex_puppeteer_e: 'master of threads',
+        bossatk_crystalid_1: 'Shards', bossatk_crystalid_2: 'Shards and regrowth',
+        bossatk_void_1: 'Devour', bossatk_void_2: 'Devour and grow',
+        bossatk_puppeteer_1: 'Threading', bossatk_puppeteer_2: 'Re-threading',
+        surv_boss_shards: 'Crystalid shards!',
+        surv_boss_regrow: '{b} regenerates! Finish it with tempo',
+        surv_boss_devour: 'The Void devours {n} icons…',
+        surv_boss_grow: 'The Void GROWS! Do not ignore it',
+        surv_boss_threads: 'Threads! Converging marked types HEALS it',
+        surv_boss_heal: '{b} heals from your threads!',
+        surv_boss_crystalid_warn: 'Crystalid incoming: finish it before it regrows!',
+        surv_boss_void_warn: 'The Void incoming: do not let it grow!',
+        surv_boss_puppeteer_warn: 'The Puppeteer incoming: beware the threads!',
+        feat_cazador: 'Hunter', feat_cazador_d: 'Defeat the 5 Lords (Stormfront, Current, Boreal, Locksmith and Tectonic)',
+        feat_ronda_maestra: 'Master round', feat_ronda_maestra_d: 'Earn 3 Master rounds (defeats with no damage and no power-ups)',
+        feat_domaecos: 'Echo tamer', feat_domaecos_d: 'Defeat an echo of level III or higher',
         surv_boss_lvl: 'Lv. {n}',
         surv_boss_hp_sr: "Boss health: {n} of {m} anchors",
         surv_boss_enter_sr: 'Boss: {b}, level {n}, {k} anchors. Converge the icons on the anchors to damage it.',
@@ -1319,6 +1357,8 @@
       this.setTile(i);
       el.classList.toggle('empty', v === null && !State.tiles[i]);
       el.classList.toggle('has-icon', v !== null);
+      // Hilos del Titiritero (JF-ε): los tipos enhebrados se marcan en toda celda.
+      el.classList.toggle('threaded', v !== null && Bosses.isThreaded(v));
       el.setAttribute('aria-label', this.cellLabel(i));
     },
 
@@ -2439,6 +2479,9 @@
     if (!m.surv.boonsSeen || typeof m.surv.boonsSeen !== 'object') m.surv.boonsSeen = {};
     if (!m.surv.mutsWon || typeof m.surv.mutsWon !== 'object') m.surv.mutsWon = {};
     if (!m.surv.weekBest || typeof m.surv.weekBest !== 'object') m.surv.weekBest = { week: '', wave: 0, mut: 'none' };
+    // Bestiario de encuentros (JF-ε): {id: {seen, kills, flawless, maxLvl}} — vitalicio, nada decae.
+    if (!m.surv.bossDex || typeof m.surv.bossDex !== 'object') m.surv.bossDex = {};
+    if (typeof m.surv.masterRounds !== 'number') m.surv.masterRounds = 0;
     // Esquema 3: economía ampliada (gemas/tickets/cofres), tableros de tienda y mundos del modo Clásico.
     if (typeof m.gems !== 'number') m.gems = 0;
     if (typeof m.tickets !== 'number') m.tickets = 0;
@@ -2769,6 +2812,20 @@
         return Object.keys(m.surv.boonsSeen).length;
       },
       survBoonsSeenCount: () => Object.keys(m.surv.boonsSeen || {}).length,
+      // Bestiario de encuentros (JF-ε): visto/derrotado/flawless/nivel máx por jefe.
+      _bossDexEntry(id) { if (!m.surv.bossDex) m.surv.bossDex = {}; return m.surv.bossDex[id] || (m.surv.bossDex[id] = { seen: 0, kills: 0, flawless: 0, maxLvl: 0 }); },
+      survBossSeen(id) { const d = Meta._bossDexEntry(id); d.seen++; save(); },
+      survBossKill(id, lvl, flawless) {
+        const d = Meta._bossDexEntry(id);
+        d.kills++;
+        if (flawless) { d.flawless++; m.surv.masterRounds = (m.surv.masterRounds || 0) + 1; }
+        if ((lvl || 1) > d.maxLvl) d.maxLvl = lvl || 1;
+        save();
+        return d;
+      },
+      survBossDex: () => m.surv.bossDex || {},
+      survBossKillsTotal: () => Object.values(m.surv.bossDex || {}).reduce((a, d) => a + (d.kills || 0), 0),
+      survMasterRounds: () => m.surv.masterRounds || 0,
       // Récord semanal ligado al mutador (SV-32): se reinicia solo al cambiar de semana
       // ISO (nunca se muestra como pérdida). Devuelve {isRecord, distinctMuts}.
       survWeekRecord(week, wave, mut) {
@@ -3391,6 +3448,10 @@
       { id: 'frenetico', icon: '⚡' },     // 3 frenesíes tier 3 en una run
       { id: 'al_limite', icon: '💔' },     // 2 oleadas completas con 1 vida
       { id: 'economo', icon: '💰' },       // oleada 15 sin revivir
+      // Hazañas de caza (JF-ε): metas del sistema de encuentros.
+      { id: 'cazador', icon: '⚔️' },       // derrotar a los 5 Señores (vitalicio)
+      { id: 'ronda_maestra', icon: '✦' },  // 3 Rondas maestras (vitalicio)
+      { id: 'domaecos', icon: '🔁' },      // derrotar un eco de nivel III+
     ],
     _feat(id) {
       if (Meta.survUnlockFeat(id)) {
@@ -3515,6 +3576,12 @@
       lockdown: { warn: 'surv_boss_lockdown_warn', icon: '🔒', base: true, fn: 'lockdown' },
       eco: { warn: 'surv_boss_eco_warn', icon: '🔁', echo: true, fn: 'echoBoss' },
       quake: { warn: 'surv_boss_quake_warn', icon: 'teleporter', chaosOnly: true, fn: 'quake' },
+      // Acto III (JF-ε): `base:false` — NUNCA entran al pool del jefe-evento clásico
+      // (flag apagado); existen aquí para el aviso específico de 3s (GM-18), el
+      // override de sim/tests y el fallback sin sustrato (fn = efecto legacy afín).
+      crystalid: { warn: 'surv_boss_crystalid_warn', icon: '💠', base: false, fn: 'frostSurge' },
+      void: { warn: 'surv_boss_void_warn', icon: '🕳️', base: false, fn: 'lockdown' },
+      puppeteer: { warn: 'surv_boss_puppeteer_warn', icon: '🎭', base: false, fn: 'quake' },
     },
     _bossPool() {
       const chaos = this.weeklyMut().id === 'chaos' || this.mut.id === 'chaos';
@@ -3885,7 +3952,7 @@
       this._lastBossType = e.id;
       if (outcome === 'defeat') {
         this._bossesDefeated = (this._bossesDefeated || 0) + 1;
-        this._lastDefeat = { id: e.id, lvl: e.lvl, flawless: !!e.flawless };
+        this._lastDefeat = { id: e.id, lvl: e.lvl, flawless: !!e.flawless, eco: !!e.eco };
         this._defeatBeat = e;
       } else { this._defeatBeat = null; }
       Haptics.milestone();
@@ -3928,6 +3995,12 @@
             Toasts.event(I18n.t('surv_master_round_charge'), 'good', 2200, '⚡');
           }
         }
+        // Bestiario y hazañas de caza (JF-ε).
+        Meta.survBossKill(d.id, d.lvl, d.flawless);
+        const dex = Meta.survBossDex();
+        if (['meteor', 'tide', 'frost', 'lockdown', 'quake'].every((k) => (dex[k] || {}).kills > 0)) this._feat('cazador');
+        if (Meta.survMasterRounds() >= 3) this._feat('ronda_maestra');
+        if (d.eco && d.lvl >= 3) this._feat('domaecos');
         this.render();
         return;
       }
@@ -4495,6 +4568,10 @@
       frost:    { acto: 1, accent: '#94e8ff', icon: 'v2:snowflake', atkIcon: '❄', anchors: 2, armored: 0, attackMs: 12000, atk: 'frost',   frame: 'surv-frost' },
       lockdown: { acto: 2, accent: '#d6dce8', icon: '🔒',           atkIcon: '▣', anchors: 3, armored: 1, attackMs: 13000, atk: 'locks',   frame: 'surv-lockdown' },
       quake:    { acto: 2, accent: '#ffb24d', icon: 'teleporter',   atkIcon: '▤', anchors: 3, armored: 1, attackMs: 14000, atk: 'shuffle', frame: 'surv-quake', chaosPromote: true },
+      // --- Acto III: La Corte Profunda (JF-ε) — twists mentales ---
+      crystalid: { acto: 3, accent: '#19f0d0', icon: '💠', atkIcon: '✷', anchors: 4, armored: 0, attackMs: 12000, atk: 'shards',  frame: 'surv-frost', regenMs: 12000 },
+      void:      { acto: 3, accent: '#a06bff', icon: '🕳️', atkIcon: '◉', anchors: 2, armored: 0, attackMs: 11000, atk: 'devour',  frame: 'surv-lockdown', growCap: 4 },
+      puppeteer: { acto: 3, accent: '#ff6cb0', icon: '🎭', atkIcon: '✚', anchors: 3, armored: 1, attackMs: 13000, atk: 'threads', frame: 'surv-quake' },
     },
     // ---- Minijefes (JF-δ, §3.7/§4.3): entidades de 1 ancla y 1 mecánica que
     // aparecen POR SORPRESA en oleadas normales (p=0.22, pity 4). Enseñan el
@@ -4697,14 +4774,15 @@
       Survival._lastBossType = id;
       Survival._noBoosterSinceBoss = true;
       this.enc = {
-        id, lvl, kind: 'boss', phase: 1,
+        id, lvl, kind: 'boss', phase: 1, eco,
         anchorsMax: anchors.length, anchorsLeft: anchors.length,
         ms: 0, atkAcc: Math.max(0, def.attackMs - 6000), // primer ataque a ~6s (respiro de entrada)
-        reincAcc: 0, attackEvery: def.attackMs,
+        reincAcc: 0, regenAcc: 0, attackEvery: def.attackMs,
         durMs: Math.round(Survival.WAVE_MS * 1.8), // ~2 oleadas y se retira (§3.2)
-        telegraphed: false, targets: null,
+        telegraphed: false, targets: null, threads: null, devoured: [],
         flawless: true, attacks: 0,
       };
+      Meta.survBossSeen(id); // bestiario (JF-ε)
       // La cara del jefe (JF-β): acento global (banner/anclas/card lo heredan por
       // CSS), tarjeta de presentación estilo Gungeon y announce accesible. El sting
       // reutiliza bossWarn hasta los leitmotivs de QP-4.
@@ -4763,6 +4841,16 @@
         if (e.ms >= e.durMs) this.resolve('miniExpire');
         return;
       }
+      // Rebrote del Cristálido (JF-ε): en fase 2, regenera 1 ancla cada regenMs si
+      // no están todas rotas — hay que rematarlo con tempo (counterplay: ráfaga).
+      const defR = this.DEX[e.id];
+      if (defR && defR.regenMs && e.phase > 1 && e.anchorsLeft < e.anchorsMax) {
+        e.regenAcc += dt;
+        if (e.regenAcc >= defR.regenMs) {
+          e.regenAcc = 0;
+          if (this._regrow(e)) Toasts.event(I18n.t('surv_boss_regrow').replace('{b}', this.name(e.id)), 'bad', 1500, defR.icon);
+        }
+      }
       if (!e.telegraphed && e.atkAcc >= e.attackEvery - this.TELEGRAPH_MS) {
         e.telegraphed = true;
         e.targets = this._pickTargets(e);
@@ -4789,6 +4877,32 @@
         e.phase = 2;
         Feedback.event('bossPhase', { msg: I18n.t('surv_boss_phase2').replace('{b}', this.name(e.id)) });
         Render.boardEvent('surv-wave-soon', 500);
+      }
+    },
+    // Re-planta un ancla viva (rebrote del Cristálido / crecimiento del Vacío /
+    // curación del Titiritero). `grow` amplía también el máximo (el Vacío crece).
+    _regrow(e, grow) {
+      const f = Survival._filledIdx();
+      if (!f.length || Survival._specialRoom() <= 0) return false;
+      const idx = f[rand(f.length)];
+      State.tiles[idx] = Tiles.make('boss');
+      Render.syncCell(idx); Render.cellPulse(idx, 'tide-warn', 700);
+      if (grow) { e.anchorsMax++; e.anchorsLeft++; }
+      else e.anchorsLeft = Math.min(e.anchorsMax, e.anchorsLeft + 1);
+      Render.hudSoon();
+      return true;
+    },
+    // Titiritero (JF-ε): ¿este tipo de icono está enhebrado? (lo consulta Render.syncCell)
+    isThreaded(v) { const e = this.enc; return !!(e && e.threads && (e.threads[0] === v || e.threads[1] === v)); },
+    // Converger un tipo enhebrado CURA al Titiritero 1 ancla — inversión mental (§4.2).
+    // Counterplay: juega los tipos libres; purga los marcados con objetos (no convergen).
+    onThreadedConverge(conv) {
+      const e = this.enc; if (!e || !e.threads || e.anchorsLeft >= e.anchorsMax) return;
+      const hit = conv.some((j) => { const v = State.board[j]; return v === e.threads[0] || v === e.threads[1]; });
+      if (!hit) return;
+      if (this._regrow(e)) {
+        Toasts.event(I18n.t('surv_boss_heal').replace('{b}', this.name(e.id)), 'bad', 1500, '🎭');
+        Sound.danger();
       }
     },
     // Agrieta blindaje de ancla o jaula por adyacencia/bomba (JF-02).
@@ -4833,6 +4947,7 @@
         const def = this.DEX[e.id] || {};
         Toasts.event(I18n.t('surv_boss_retreat').replace('{b}', this.name(e.id)), 'info', 1400, def.icon);
       }
+      if (e.threads) Render.syncAll(); // despinta los hilos del Titiritero (enc ya es null)
       this._faceOff();
       Survival._encounterEnd(e, outcome);
     },
@@ -4880,6 +4995,27 @@
       } else if (e.id === 'quake') {
         // El mundo se ordena: agrupa el tipo más común en un clúster central (regalo de combo).
         this._clusterGift();
+      } else if (e.id === 'crystalid') {
+        // Estallido: todos los cristales del tablero puntúan y desaparecen.
+        for (let i = 0; i < State.tiles.length; i++) {
+          const t = State.tiles[i];
+          if (t && t.type === 'crystal') { State.score += 50; State.tiles[i] = null; cleared.push(i); }
+        }
+        Render.bump($('#hud-score'));
+      } else if (e.id === 'void') {
+        // Colapsa: devuelve TODO lo devorado agrupado junto al centro (cascada servida).
+        const size = State.size, spots = [];
+        for (let i = 0; i < State.board.length; i++) if (State.board[i] === null && !State.tiles[i]) spots.push(i);
+        const dist = (i) => { const r = (i / size | 0), c = i % size; return Math.abs(r - 3.5) + Math.abs(c - 3.5); };
+        spots.sort((a, b) => dist(a) - dist(b));
+        (e.devoured || []).forEach((v) => { const j = spots.shift(); if (j != null) { State.board[j] = v; State.iconCount++; Render.spawnAnim(j); } });
+        if ((e.devoured || []).length) Render.syncAll();
+      } else if (e.id === 'puppeteer') {
+        // Corta los hilos: los tipos enhebrados se liberan (limpieza con suelo).
+        const th = e.threads || [];
+        for (let i = 0; i < State.board.length && budget > 0; i++) {
+          if (th.includes(State.board[i]) && !State.tiles[i]) clearOne(i);
+        }
       }
       if (cleared.length) { Render.syncAll(); Render.lifeClear(cleared, null); }
       if (State.status === 'playing') Game.evaluate();
@@ -4916,8 +5052,10 @@
     },
     abort() {
       if (this.enc) {
+        const th = !!this.enc.threads;
         this.enc = null;
         this._anchorIdx().forEach((i) => { State.tiles[i] = null; Render.syncCell(i); });
+        if (th) Render.syncAll();
       }
       this._faceOff();
     },
@@ -4978,7 +5116,27 @@
         [r1, r2].forEach((r) => { for (let c = 0; c < size; c++) out.push(r * size + c); });
         return out;
       }
-      return null;
+      if (kind === 'shards') {
+        // Esquirlas: 2-3 spawns + 1 cristal (puntúa al romperse, pero ocupa).
+        const n = Math.min(2 + (e.phase > 1 ? 1 : 0), 4);
+        const empt = Engine.emptyCells(), out = [];
+        for (let k = 0; k < n && empt.length; k++) out.push(empt.splice(rand(empt.length), 1)[0]);
+        return out;
+      }
+      if (kind === 'devour') {
+        // El Vacío devora 1 icono ortogonalmente adyacente a cada ancla.
+        const out = new Set();
+        this._anchorIdx().forEach((a) => {
+          const r = a / size | 0, c = a % size;
+          const nb = [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]]
+            .filter(([rr, cc]) => rr >= 0 && cc >= 0 && rr < size && cc < size)
+            .map(([rr, cc]) => rr * size + cc)
+            .filter((j) => State.board[j] !== null && !State.tiles[j]);
+          if (nb.length) out.add(nb[rand(nb.length)]);
+        });
+        return [...out];
+      }
+      return null; // threads: marca por TIPO, no por celda (el ataque hace syncAll)
     },
     _attack(e) {
       const def = this.DEX[e.id], kind = def.atk;
@@ -5028,6 +5186,48 @@
           Render.syncAll(); placed.forEach((i) => Render.cellPulse(i, 'lock-stamp', 520));
         }
         Feedback.event('lockdown');
+      } else if (kind === 'shards') {
+        // Cristálido: esquirlas — spawns + 1 cristal normal (ocupa, pero puntúa).
+        const placed = [];
+        (targets || []).forEach((j) => {
+          if (State.board[j] === null && !State.tiles[j]) { State.board[j] = State.pool[rand(State.pool.length)]; State.iconCount++; placed.push(j); }
+        });
+        const f2 = Survival._filledIdx();
+        if (f2.length && State.tiles.filter((t) => t && t.type === 'crystal').length < 4) {
+          State.tiles[f2[rand(f2.length)]] = Tiles.make('crystal');
+        }
+        Render.syncAll(); if (placed.length) Render.meteor(placed);
+        Feedback.event('frost', { msg: I18n.t('surv_boss_shards'), icon: '💠' });
+      } else if (kind === 'devour') {
+        // El Vacío: se TRAGA los iconos marcados (los guarda; los devuelve al caer).
+        (targets || []).forEach((j) => {
+          if (State.board[j] !== null && !State.tiles[j]) {
+            e.devoured.push(State.board[j]);
+            State.board[j] = null; State.iconCount--;
+            Render.syncCell(j); FX.burst(j, '#a06bff', 5);
+          }
+        });
+        // Fase 2: CRECE — brota un ancla nueva (cap growCap): empeora si lo ignoras.
+        if (e.phase > 1 && e.anchorsMax < (def.growCap || 4)) {
+          if (this._regrow(e, true)) Toasts.event(I18n.t('surv_boss_grow'), 'bad', 1600, '🕳️');
+        }
+        Feedback.event('lockdown', { msg: I18n.t('surv_boss_devour').replace('{n}', (targets || []).length), icon: '🕳️' });
+      } else if (kind === 'threads') {
+        // Titiritero: enhebra 2 TIPOS — convergerlos LE CURA; los demás le dañan.
+        const present = [...new Set(State.board.filter((v, i) => v !== null && !State.tiles[i]))];
+        if (present.length >= 2) {
+          const a = present.splice(rand(present.length), 1)[0];
+          const b = present.splice(rand(present.length), 1)[0];
+          e.threads = [a, b];
+          Render.syncAll(); // pinta .threaded en las celdas de esos tipos
+        }
+        // Fase 2: además 1 candado en el patrón.
+        if (e.phase > 1) {
+          const room = Math.min(Survival._specialRoom(), Math.max(0, Survival._blockCap() - Survival._blockIdx().length));
+          const em = Survival._emptyIdx();
+          if (room > 0 && em.length) { const tl = Tiles.make('locked'); tl.hits = 1; State.tiles[em[rand(em.length)]] = tl; Render.syncAll(); }
+        }
+        Feedback.event('quake', { msg: I18n.t('surv_boss_threads'), icon: '🎭', snd: 'lockdown', hap: 'clank' });
       } else if (kind === 'shuffle') {
         if (e.phase > 1) {
           // Fase 2 (JF-γ): terremoto total + 2 rocas donde asiente el polvo.
@@ -6240,6 +6440,9 @@
           if (Survival.magnetMoves === 0) Toasts.show(I18n.t('magnet_done'), 'warn', 1500, '🧲');
         }
       }
+      // Titiritero (JF-ε): converger un tipo enhebrado le cura — se evalúa ANTES de
+      // vaciar las celdas (necesita leer los tipos que van a desaparecer).
+      if (State.mode === 'supervivencia' && Bosses.enc && Bosses.enc.threads) Bosses.onThreadedConverge(conv);
       let removed = conv.length;
       State.removedTotal += removed;
       State.lastActionCell = i;
@@ -7340,9 +7543,14 @@
     const wb = Meta.survWeekBest(), wk = Survival._weekKey();
     const wl = $('#surv-week-line');
     if (wl) wl.textContent = (wb && wb.week === wk && wb.wave > 0) ? I18n.t('surv_week_best').replace('{w}', wb.wave) : I18n.t('surv_week_best_none');
-    // Medallero de hazañas (SV-31): desbloqueadas / total.
+    // Medallero de hazañas (SV-31) + vitrina compacta del bestiario (JF-ε):
+    // kills totales y Rondas maestras vitalicias.
     const fl = $('#surv-feats-line');
-    if (fl) fl.textContent = '🏅 ' + Meta.survFeatCount() + '/' + Survival.FEATS.length;
+    if (fl) {
+      const kills = Meta.survBossKillsTotal(), mr = Meta.survMasterRounds();
+      fl.textContent = '🏅 ' + Meta.survFeatCount() + '/' + Survival.FEATS.length
+        + (kills ? ' · ⚔️ ' + kills : '') + (mr ? ' · ✦ ' + mr : '');
+    }
   }
   function openSurvivalDiff() {
     survDiff = Config.DIFF_ORDER.indexOf(Storage.survDiff) >= 0 ? Storage.survDiff : 'normal';
