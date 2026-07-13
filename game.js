@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.27';
+  const VERSION = '2.6.30';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -1750,23 +1750,36 @@
     // Chip del multiplicador TOTAL (combo × fiebre × temporal): un único número
     // legible junto al score que responde "¿por cuánto vale ahora cada jugada?" (GM-16).
     _lastMult: 1,
+    _multRiseTimer: 0,
     multChip() {
       const el = $('#hud-mult'); if (!el) return;
+      if (el.hidden) el.hidden = false;
+      el.removeAttribute('hidden');
+      el.style.removeProperty('display');
       // Incluye el multiplicador de bendiciones de Supervivencia (Survival.scoreMult):
       // el chip debe mostrar EXACTAMENTE lo que multiplica cada jugada.
       const v = State.comboMult * Game.feverBoost() * (State.tempMult || 1) * Game.sprintMult()
         * (State.mode === 'supervivencia' ? Survival.scoreMult() : 1);
       const txt = '×' + (v % 1 === 0 ? v : +v.toFixed(1));
       const on = v > 1.001 && State.status === 'playing';
+      const tier = !on ? 0 : v >= 8 ? 5 : v >= 6 ? 4 : v >= 4 ? 3 : v >= 2 ? 2 : 1;
       if (el.textContent !== txt) {
         el.textContent = txt;
         if (on && v > this._lastMult && !Settings.reducedFx) {
-          el.getAnimations().forEach(a => a.cancel());
-          el.animate([{}, { transform: 'scale(1.24)', offset: .5 }, {}], { duration: 260, easing: 'ease' });
+          el.classList.remove('rising');
+          void el.offsetWidth;
+          el.classList.add('rising');
+          clearTimeout(this._multRiseTimer);
+          this._multRiseTimer = setTimeout(() => el.classList.remove('rising'), 460);
         }
       }
       el.classList.toggle('on', on);
+      for (let i = 1; i <= 5; i++) el.classList.toggle('tier-' + i, tier === i);
       el.classList.toggle('hot', on && v >= 6);
+      if (!on) {
+        clearTimeout(this._multRiseTimer);
+        el.classList.remove('rising');
+      }
       this._lastMult = v;
     },
     // Coalescer: marca el HUD como "sucio"; el bucle lo refresca UNA vez por frame.

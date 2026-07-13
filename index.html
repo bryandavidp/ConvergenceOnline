@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.27" />
+  <link rel="stylesheet" href="styles.css?v=2.6.30" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -256,13 +256,39 @@
               </div>
             </div>
             <div class="gscore">
-              <span class="hud-value" id="hud-score">0</span>
-              <span class="score-meta"><span class="score-best" id="hud-best-wrap"><span data-i18n="best_score">Mejor puntuación</span> <b id="hud-best">0</b></span><span class="mult-chip" id="hud-mult" aria-hidden="true">×1</span></span>
+              <span class="score-main"><span class="hud-value" id="hud-score">0</span><span class="mult-chip" id="hud-mult" aria-hidden="true">×1</span></span>
+              <span class="score-meta"><span class="score-best" id="hud-best-wrap"><span data-i18n="best_score">Mejor puntuación</span> <b id="hud-best">0</b></span></span>
             </div>
             <span class="score-spacer" aria-hidden="true"></span>
           </div>
 
-          <!-- Ocupación: franja fina pegada al tablero (estados warn/danger) -->
+        </div>
+        <!-- Velocidad: conservada para Render.hud pero oculta (HUD minimalista) -->
+        <span class="hud-value" id="hud-speed" hidden>3.0s</span>
+      </header>
+
+      <div class="board-area">
+        <div class="board-column">
+          <div class="board-shell">
+            <!-- Indicador de combo (multiplicador): encima del tablero, a la derecha -->
+            <div class="combo" id="combo" hidden aria-hidden="true">
+              <svg viewBox="0 0 44 44" class="combo-ring"><circle class="combo-ring-bg" cx="22" cy="22" r="19"/><circle class="combo-ring-fill" id="combo-ring-fill" cx="22" cy="22" r="19"/></svg>
+              <span class="combo-mult" id="combo-mult">x1</span>
+              <span class="combo-count" id="combo-count">0</span>
+            </div>
+
+            <div class="board-wrap">
+              <div class="board" id="board" role="grid" aria-label="Tablero de juego"></div>
+              <!-- Capa de números flotantes, contenida dentro del tablero -->
+              <div class="popups" id="popups" aria-hidden="true"></div>
+              <!-- Aura de modo Fever -->
+              <div class="fever" id="fever" aria-hidden="true"></div>
+              <!-- Flash de rango de combo -->
+              <div class="rank" id="rank" aria-hidden="true"></div>
+            </div>
+          </div>
+
+          <!-- Ocupación: franja fina justo debajo del tablero (estados warn/danger) -->
           <div class="occ" data-explain="hud_danger_explain">
             <span class="occ-label" id="occ-label">
               <span class="icv2" id="occ-icon" style="--icv2-url:url('img/icons-v2/8-ui/grid.svg')" aria-hidden="true"></span>
@@ -274,27 +300,6 @@
             </div>
             <span class="occ-percent" id="occ-percent">0%</span>
           </div>
-        </div>
-        <!-- Velocidad: conservada para Render.hud pero oculta (HUD minimalista) -->
-        <span class="hud-value" id="hud-speed" hidden>3.0s</span>
-      </header>
-
-      <div class="board-area">
-        <!-- Indicador de combo (multiplicador): encima del tablero, a la derecha -->
-        <div class="combo" id="combo" hidden aria-hidden="true">
-          <svg viewBox="0 0 44 44" class="combo-ring"><circle class="combo-ring-bg" cx="22" cy="22" r="19"/><circle class="combo-ring-fill" id="combo-ring-fill" cx="22" cy="22" r="19"/></svg>
-          <span class="combo-mult" id="combo-mult">x1</span>
-          <span class="combo-count" id="combo-count">0</span>
-        </div>
-
-        <div class="board-wrap">
-          <div class="board" id="board" role="grid" aria-label="Tablero de juego"></div>
-          <!-- Capa de números flotantes, contenida dentro del tablero -->
-          <div class="popups" id="popups" aria-hidden="true"></div>
-          <!-- Aura de modo Fever -->
-          <div class="fever" id="fever" aria-hidden="true"></div>
-          <!-- Flash de rango de combo -->
-          <div class="rank" id="rank" aria-hidden="true"></div>
         </div>
       </div>
 
@@ -607,6 +612,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=2.6.27" defer></script>
+  <script src="game.js?v=2.6.30" defer></script>
 </body>
 </html>

@@ -302,6 +302,13 @@ test('FB-8: cerrar un modal secundario tras game over vuelve al inicio', () => {
   }
 });
 
+test('SV-HUD: el banner de jefe no se apila sobre las filas secundarias', () => {
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  assert.match(css, /\.surv-bar\.encounter\s+\.surv-subrow\s*\{\s*display:\s*none;\s*\}/);
+  assert.match(css, /body\.mode-surv\s+\.surv-build\[hidden\]\s*\{[\s\S]*display:\s*flex\s*!important;[\s\S]*min-height:\s*25px;[\s\S]*visibility:\s*hidden;/);
+  assert.match(css, /body\.mode-surv\s+\.surv-bar\.encounter\s+\.surv-build\s*\{[\s\S]*display:\s*none\s*!important;[\s\S]*visibility:\s*hidden;/);
+});
+
 test('FB-2: Contrarreloj tiene material inicial propio y DDA de hambre acotado', () => {
   const prev = { elapsed: State.elapsed, iconCount: State.iconCount };
   const mode = Config.MODES.contrarreloj;

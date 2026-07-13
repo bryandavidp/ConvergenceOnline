@@ -866,9 +866,9 @@ body.time-critical .board-wrap { box-shadow: 0 0 0 1px rgba(255,93,115,.38), 0 0
   white-space: nowrap; }
 /* Multiplicador TOTAL vivo (GM-16): apagado en gris a ×1, se enciende con el acento
    del modo y pasa a oro cuando la jugada vale ×6 o más. */
-.mult-chip { margin-left: 7px; font-size: clamp(.78rem, 3.4vw, 1.05rem); font-weight: 900;
-  color: rgba(255,255,255,.26); font-variant-numeric: tabular-nums; white-space: nowrap;
-  transition: color .18s ease, text-shadow .18s ease; }
+.mult-chip { margin-left: 6px; font-size: .88rem; font-weight: 800;
+  color: rgba(255,255,255,.42); font-variant-numeric: tabular-nums; white-space: nowrap;
+  transition: color .18s ease, text-shadow .18s ease, opacity .18s ease; }
 .mult-chip.on { color: var(--mode-accent, var(--accent-2)); text-shadow: 0 0 10px color-mix(in srgb, var(--mode-accent, var(--accent-2)) 45%, transparent); }
 .mult-chip.hot { color: var(--gold); text-shadow: 0 0 12px rgba(255,216,77,.55); }
 .controls { display: flex; gap: 8px; flex: 0 0 auto; }
@@ -886,6 +886,12 @@ body.time-critical .board-wrap { box-shadow: 0 0 0 1px rgba(255,93,115,.38), 0 0
 
 /* Ocupación: franja fina pegada al tablero (estados warn/danger) */
 .occ { display: flex; align-items: center; width: 100%; gap: 6px; cursor: pointer; }
+.board-column > .occ {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
 .occ-label { display: flex; align-items: center; gap: 4px; font-size: .75rem; font-weight: 700; color: rgba(255,255,255,.6); white-space: nowrap; transition: color .2s ease; }
 .occ-label .icv2 { width: 14px; height: 14px; background-color: currentColor; }
 .occ-label.warn { color: var(--warn); }
@@ -917,13 +923,37 @@ body.time-critical .board-wrap { box-shadow: 0 0 0 1px rgba(255,93,115,.38), 0 0
 @keyframes bump { 50% { transform: scale(1.18); color: var(--gold); } }
 
 /* Tablero */
-.board-area { width: 100%; flex: 1; display: grid; place-items: center; min-height: 0; position: relative; }
+.board-area {
+  width: 100%;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  position: relative;
+}
+.board-column {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: stretch;
+  row-gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 0;
+}
+.board-shell {
+  position: relative;
+  justify-self: center;
+  width: var(--board-size);
+  height: var(--board-size);
+  aspect-ratio: 1 / 1;
+  max-width: 100%;
+}
 .board-wrap {
   position: relative;
   /* Lado explícito (ancho Y alto) vía --board-size (definido en .screen-game)
      para que el grid interno resuelva height:100% en Safari iOS sin recortes. */
-  width: var(--board-size);
-  height: var(--board-size);
+  width: 100%;
+  height: 100%;
   padding: 10px;
   border-radius: 22px;
   --board-frame: linear-gradient(180deg, rgba(30, 40, 84, 0.78), rgba(15, 22, 50, 0.8));
@@ -1557,8 +1587,7 @@ body.reduced-fx .si-count.go { animation: none !important; }
 /* Indicador de combo: SIEMPRE encima del tablero (nunca dentro), arriba a la
    derecha, anclado al borde superior del tablero. */
 .combo {
-  position: absolute; right: 6px; z-index: var(--z-combo);
-  bottom: calc(50% + var(--board-size) / 2 + 52px);   /* libra la franja de contexto pegada al tablero */
+  position: absolute; right: -8px; top: -12px; z-index: var(--z-combo);
   width: 56px; height: 56px; display: grid; place-items: center; pointer-events: none;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,.6));
 }
@@ -2103,18 +2132,30 @@ body.mode-surv .screen-game {
 }
 body.mode-surv .gtop { align-self: start; }
 body.mode-surv #booster-bar { align-self: end; }
-body.mode-surv .board-area { min-height: 0; align-self: stretch; }
+body.mode-surv .board-area {
+  min-height: 0;
+  align-self: stretch;
+  place-items: center;
+}
+body.mode-surv .board-column { row-gap: 6px; }
 /* El tablero llena la ALTURA de la región flexible (height:100%) y queda cuadrado por
    aspect-ratio, pero se ACOTA por ancho con max-width/max-height = --board-size (96vw,
    tope 620). Así: en teléfonos manda el ancho (tablero fijo, cuadrado); en ventanas
    cortas manda la altura de la región (se reduce lo justo). Nunca desborda la región →
    jamás se solapa con el HUD ni los boosters, en ninguna pantalla. */
-body.mode-surv .board-wrap {
+body.mode-surv .board-shell {
   width: auto;
   height: 100%;
   aspect-ratio: 1 / 1;
   max-width: var(--board-size);
   max-height: var(--board-size);
+  align-self: end;
+}
+body.mode-surv .board-wrap {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
 }
 .gtop-main {
   display: grid;
@@ -2180,16 +2221,15 @@ body.mode-surv .wallet-pill { min-height: 24px; padding: 3px 7px; }
    en pantallas cortas. Antes eran 104px fijos (hueco de ~110px sin eventos). */
 .event-dock {
   position: relative;
-  height: clamp(44px, 6vh, 56px);
+  height: clamp(38px, 5.2vh, 46px);
   flex: none;
   display: block;
   padding: 2px 0;
   overflow: hidden;
 }
-/* En supervivencia el carril de sucesos es fijo y compacto (el cromo apilado es alto):
-   el texto del toast sigue legible; así la altura de la región del tablero es constante y
-   el tablero fijo por ancho encaja sin recortes. (Solo afecta a Supervivencia.) */
-body.mode-surv .event-dock { height: 22px; }
+/* En supervivencia el carril de sucesos es fijo y compacto (el cromo apilado es alto),
+   pero suficientemente alto para que el toast no se recorte verticalmente. */
+body.mode-surv .event-dock { height: 36px; }
 .event-dock .toasts {
   position: absolute;
   left: 50%;
@@ -2197,7 +2237,7 @@ body.mode-surv .event-dock { height: 22px; }
   transform: translate(-50%, -50%);
   z-index: var(--z-toast);
   width: min(420px, 92vw);
-  max-height: calc(100% - 8px);
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -2206,12 +2246,15 @@ body.mode-surv .event-dock { height: 22px; }
   pointer-events: none;
 }
 .event-dock .toast {
-  padding: 9px 12px;
-  border-radius: 13px;
-  font-size: .84rem;
+  min-height: 30px;
+  padding: 5px 11px;
+  border-radius: 12px;
+  font-size: .8rem;
+  line-height: 1.15;
+  box-shadow: 0 6px 16px rgba(0,0,0,.42), 0 0 12px color-mix(in srgb, var(--tc) 28%, transparent), inset 0 1px 0 rgba(255,255,255,.12);
 }
-.event-dock .toast.event { padding-bottom: 11px; }
-.event-dock .toast .toast-ic { width: 24px; height: 24px; }
+.event-dock .toast.event { padding-bottom: 8px; }
+.event-dock .toast .toast-ic { width: 20px; height: 20px; font-size: .86rem; }
 .score-row {
   width: 100%;
   display: grid;
@@ -2248,12 +2291,18 @@ body.mode-surv .score-side .gctx { display: none; }
   line-height: .95;
   white-space: nowrap;
 }
+.score-main {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+  line-height: .95;
+}
 .score-meta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 5px;
+  margin-top: 4px;
   font-size: .68rem;
   font-weight: 900;
   line-height: 1;
@@ -2262,7 +2311,89 @@ body.mode-surv .score-side .gctx { display: none; }
   white-space: nowrap;
 }
 .score-best b { color: var(--gold); font-variant-numeric: tabular-nums; }
-.mult-chip { margin-left: 0; color: rgba(255,255,255,.32); }
+.mult-chip {
+  --mult-a: rgba(234,240,255,.62);
+  --mult-b: rgba(24,230,230,.42);
+  --mult-glow: rgba(255,255,255,0);
+  flex: 0 0 auto;
+  display: block;
+  position: absolute;
+  left: calc(100% + .36rem);
+  bottom: .08em;
+  z-index: 1;
+  width: max-content;
+  min-width: 2ch;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: rgba(234,240,255,.68);
+  -webkit-text-fill-color: currentColor;
+  opacity: .82;
+  font-size: .88rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  line-height: 1;
+  white-space: nowrap;
+  transform-origin: left bottom;
+  pointer-events: none;
+  text-shadow: 0 0 7px rgba(190,210,255,.16);
+  transition: color .18s ease, filter .18s ease, opacity .18s ease, text-shadow .18s ease;
+}
+.mult-chip::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  bottom: -.24em;
+  height: 1px;
+  pointer-events: none;
+  opacity: 0;
+  transform: scaleX(.34);
+  transform-origin: center;
+  background: linear-gradient(90deg, transparent, var(--mult-b), rgba(255,255,255,.86), transparent);
+  box-shadow: 0 0 7px var(--mult-glow);
+}
+.mult-chip.on {
+  opacity: 1;
+  color: var(--mult-a);
+  background: linear-gradient(92deg, var(--mult-a), #fff 48%, var(--mult-b));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--mult-b) 44%, transparent));
+  text-shadow: 0 0 8px var(--mult-glow), 0 0 18px color-mix(in srgb, var(--mult-b) 32%, transparent);
+  animation: mult-drift 1.55s ease-in-out infinite;
+}
+.mult-chip.on::after {
+  opacity: .64;
+  transform: scaleX(1);
+}
+.mult-chip.tier-1 { --mult-a: #8affdf; --mult-b: #25e0ff; --mult-glow: rgba(37,224,255,.30); }
+.mult-chip.tier-2 { --mult-a: #5df3ff; --mult-b: #7b9bff; --mult-glow: rgba(93,243,255,.36); }
+.mult-chip.tier-3 { --mult-a: #98b4ff; --mult-b: #e38bff; --mult-glow: rgba(152,180,255,.42); }
+.mult-chip.tier-4 { --mult-a: #ff86e7; --mult-b: #ffd65f; --mult-glow: rgba(255,134,231,.46); }
+.mult-chip.tier-5 { --mult-a: #fff3a8; --mult-b: #ff746f; --mult-glow: rgba(255,211,95,.54); }
+.mult-chip.hot {
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--mult-b) 50%, transparent));
+  text-shadow: 0 0 10px var(--mult-glow), 0 0 24px color-mix(in srgb, var(--mult-b) 42%, transparent);
+}
+.mult-chip.rising { animation: mult-rise .42s cubic-bezier(.18,.9,.22,1.28); }
+.mult-chip.rising::after { animation: mult-spark .42s ease-out; }
+@keyframes mult-drift {
+  50% { transform: translateY(-1px); }
+}
+@keyframes mult-rise {
+  0% { transform: translateY(2px) scale(.92); opacity: .82; }
+  48% { transform: translateY(-3px) scale(1.16); opacity: 1; }
+  100% { transform: translateY(0) scale(1); }
+}
+@keyframes mult-spark {
+  0% { opacity: 0; transform: translateX(-18%) scaleX(.35); }
+  44% { opacity: .92; }
+  100% { opacity: .72; transform: translateX(0) scaleX(1); }
+}
 .surv-bar {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -4039,6 +4170,8 @@ body.reduced-fx .booster-bar.grant,
 body.reduced-fx .booster.just-granted,
 body.reduced-fx .reward-land,
 body.reduced-fx .grant-flyer,
+body.reduced-fx .mult-chip,
+body.reduced-fx .mult-chip::after,
 body.reduced-fx.time-critical .time-chip {
   animation: none !important;
 }
@@ -4054,7 +4187,7 @@ body.reduced-fx.surv-frenzy-active .board-wrap { animation: none !important; }
   .board-wrap.surv-frost, .board-wrap.surv-wave-up, .board-wrap.surv-wave-soon,
   .board-wrap.surv-damage, .board-wrap.life-blast, .board-wrap.fbk-boon,
   .cell.surv-meteor, .cell.tide-fill .glyph, .cell.lock-stamp,
-  .surv-lives.hit, .grant-pop, .grant-flyer, .reward-land {
+  .surv-lives.hit, .grant-pop, .grant-flyer, .reward-land, .mult-chip, .mult-chip::after {
     animation: none !important;
   }
 }
