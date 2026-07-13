@@ -1212,6 +1212,41 @@ body.time-critical .board-wrap { box-shadow: 0 0 0 1px rgba(255,93,115,.38), 0 0
 .cell.tide-warn { box-shadow: 0 0 0 2px rgba(122,215,255,.8) inset; animation: tide-warn-pulse .3s ease-in-out 4 alternate; }
 @keyframes tide-warn-pulse { from { background: rgba(122,215,255,.06); } to { background: rgba(122,215,255,.26); } }
 body.reduced-fx .cell.tide-warn { animation: none; background: rgba(122,215,255,.18); }
+/* Tells de encuentros: cada familia de ataque deja una pista visual propia. */
+.cell.boss-warn-meteor,
+.cell.boss-warn-tide,
+.cell.boss-warn-frost,
+.cell.boss-warn-lock,
+.cell.boss-warn-quake,
+.cell.boss-warn-shards,
+.cell.boss-warn-void,
+.cell.boss-warn-thread {
+  animation: boss-warn-pulse .42s ease-in-out 6 alternate;
+}
+.cell.boss-warn-meteor { background: rgba(255,104,80,.22); box-shadow: 0 0 0 2px rgba(255,104,80,.92) inset, 0 0 14px rgba(255,104,80,.30); }
+.cell.boss-warn-tide { background: rgba(89,214,255,.22); box-shadow: 0 0 0 2px rgba(89,214,255,.92) inset, inset 0 -10px 18px rgba(70,160,255,.20); }
+.cell.boss-warn-frost { background: rgba(148,232,255,.24); box-shadow: 0 0 0 2px rgba(188,244,255,.95) inset, 0 0 12px rgba(148,232,255,.32); }
+.cell.boss-warn-lock { background: rgba(214,220,232,.18); box-shadow: 0 0 0 2px rgba(214,220,232,.95) inset, inset 0 0 0 5px rgba(80,90,110,.18); }
+.cell.boss-warn-quake { background: rgba(255,178,77,.23); box-shadow: 0 0 0 2px rgba(255,178,77,.95) inset, 0 0 14px rgba(255,178,77,.28); }
+.cell.boss-warn-shards { background: rgba(25,240,208,.23); box-shadow: 0 0 0 2px rgba(25,240,208,.94) inset, 0 0 14px rgba(25,240,208,.30); }
+.cell.boss-warn-void { background: rgba(160,107,255,.24); box-shadow: 0 0 0 2px rgba(160,107,255,.95) inset, inset 0 0 18px rgba(30,0,80,.32); }
+.cell.boss-warn-thread { background: rgba(255,108,176,.22); box-shadow: 0 0 0 2px rgba(255,108,176,.94) inset, inset 0 0 0 5px rgba(255,108,176,.14); }
+@keyframes boss-warn-pulse { 50% { transform: scale(.985); filter: brightness(1.16) saturate(1.08); } }
+.board-wrap.boss-warn-board { animation: boss-warn-board .7s ease-in-out 3 alternate; border-color: color-mix(in srgb, var(--boss-accent, #ffd24d) 72%, #fff); }
+@keyframes boss-warn-board {
+  45% { transform: scale(1.006); box-shadow: 0 18px 44px rgba(0,0,0,.55), inset 0 0 0 2px color-mix(in srgb, var(--boss-accent, #ffd24d) 70%, transparent), 0 0 28px color-mix(in srgb, var(--boss-accent, #ffd24d) 34%, transparent); }
+}
+body.reduced-fx .cell.boss-warn-meteor,
+body.reduced-fx .cell.boss-warn-tide,
+body.reduced-fx .cell.boss-warn-frost,
+body.reduced-fx .cell.boss-warn-lock,
+body.reduced-fx .cell.boss-warn-quake,
+body.reduced-fx .cell.boss-warn-shards,
+body.reduced-fx .cell.boss-warn-void,
+body.reduced-fx .cell.boss-warn-thread,
+body.reduced-fx .board-wrap.boss-warn-board {
+  animation: none !important;
+}
 @keyframes slowdown-bob { 0%,100% { transform: scale(1) rotate(-4deg); } 50% { transform: scale(1.12) rotate(4deg); } }
 
 /* Icono SVG dentro de la celda */
@@ -1489,6 +1524,12 @@ body.reduced-fx .cell.tide-warn { animation: none; background: rgba(122,215,255,
 :root { --fbk-threat: #ff5d73; --fbk-cold: #8cebff; --fbk-boon: #ffd24d; --fbk-warn: #ffb24d; --fbk-info: #7ad7ff; }
 .board-wrap.fbk-boon { animation: fbk-boon .8s ease-out; border-color: rgba(255,210,77,.9); }
 @keyframes fbk-boon { 30% { box-shadow: 0 18px 44px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,210,77,.72), 0 0 34px rgba(255,210,77,.42); } }
+.board-wrap.boss-reward { animation: boss-reward .76s cubic-bezier(.18,.88,.2,1.12); border-color: rgba(255,216,77,.96); }
+@keyframes boss-reward {
+  0% { filter: none; }
+  34% { transform: scale(1.012); filter: brightness(1.13) saturate(1.14); box-shadow: 0 18px 44px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,216,77,.80), 0 0 40px rgba(255,216,77,.44); }
+  100% { filter: none; }
+}
 /* Arranque de Supervivencia (FBK-07): tarjeta de objetivo + cuenta 3·2·1 sobre el
    tablero ya visible (scrim ligero: el tablero se ve detrás para ubicar vidas/oleada). */
 .surv-intro {
@@ -2476,14 +2517,26 @@ body.reduced-fx .surv-boss { animation: none; }
   font-size: .78rem; font-weight: 950; line-height: 1; letter-spacing: 2px;
   text-shadow: 0 0 8px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 44%, transparent); }
 .sbx-next { display: inline-flex; align-items: center; gap: 4px; justify-content: center;
-  min-width: 52px; min-height: 24px; padding: 3px 7px; border-radius: 999px;
+  min-width: 74px; max-width: min(38vw, 156px); min-height: 24px; padding: 3px 7px; border-radius: 999px;
   border: 1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.22);
-  color: #fff; font-size: .7rem; font-weight: 950; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  color: #fff; font-size: .7rem; font-weight: 950; font-variant-numeric: tabular-nums; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; }
 /* Telegrafiado del ataque (§5.3): la píldora arde mientras el ataque se pre-marca. */
 .sbx-next.telegraph { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 30%, rgba(0,0,0,.25));
   animation: boss-flag .5s ease-in-out infinite alternate; }
 body.reduced-fx .sbx-next.telegraph { animation: none; }
 .surv-boss.phase2 { border-color: color-mix(in srgb, var(--boss-accent, var(--accent-2)) 86%, #fff); }
+.surv-boss.resolved { border-color: color-mix(in srgb, var(--boss-accent, var(--gold)) 88%, #fff);
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--boss-accent, var(--gold)) 34%, rgba(8,14,35,.94)),
+    rgba(8,14,35,.84) 62%,
+    color-mix(in srgb, var(--boss-accent, var(--gold)) 14%, rgba(8,14,35,.94))); }
+.surv-boss.defeated { box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 0 18px rgba(255,216,77,.22); }
+.surv-boss.retreating { filter: saturate(.72); }
+.sbx-next.resolved { max-width: min(46vw, 190px); border-color: color-mix(in srgb, var(--boss-accent, var(--gold)) 62%, rgba(255,255,255,.22));
+  background: color-mix(in srgb, var(--boss-accent, var(--gold)) 24%, rgba(0,0,0,.28)); }
+.sbx-next.defeated { color: var(--gold); }
+.sbx-next.retreating { color: rgba(255,255,255,.78); }
 /* Minijefes (JF-δ): banner compacto — jerarquía de calibres frente al jefe. */
 .surv-boss.mini { min-height: 28px; }
 .surv-boss.mini .sbx-portrait { width: 22px; height: 22px; font-size: .8rem; }
@@ -4163,6 +4216,7 @@ body.reduced-fx .board-wrap.impact-heavy,
 body.reduced-fx .board-wrap.time-pressure,
 body.reduced-fx .board-wrap.surv-wave-soon,
 body.reduced-fx .board-wrap.fbk-boon,
+body.reduced-fx .board-wrap.boss-reward,
 body.reduced-fx .board-wrap.surv-damage,
 body.reduced-fx .surv-lives.hit,
 body.reduced-fx .combo.urgent,
@@ -4186,7 +4240,11 @@ body.reduced-fx.surv-frenzy-active .board-wrap { animation: none !important; }
   .board-wrap.surv-meteor-board, .board-wrap.surv-lockdown, .board-wrap.surv-rain,
   .board-wrap.surv-frost, .board-wrap.surv-wave-up, .board-wrap.surv-wave-soon,
   .board-wrap.surv-damage, .board-wrap.life-blast, .board-wrap.fbk-boon,
+  .board-wrap.boss-reward, .board-wrap.boss-warn-board,
   .cell.surv-meteor, .cell.tide-fill .glyph, .cell.lock-stamp,
+  .cell.boss-warn-meteor, .cell.boss-warn-tide, .cell.boss-warn-frost,
+  .cell.boss-warn-lock, .cell.boss-warn-quake, .cell.boss-warn-shards,
+  .cell.boss-warn-void, .cell.boss-warn-thread,
   .surv-lives.hit, .grant-pop, .grant-flyer, .reward-land, .mult-chip, .mult-chip::after {
     animation: none !important;
   }

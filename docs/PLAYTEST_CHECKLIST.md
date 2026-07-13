@@ -53,6 +53,11 @@
 
 - [ ] ⭐ ¿Distingues sin pensar los dos anillos (interior = potenciador, exterior = frenesí)? ¿El 🔥 se enciende solo en frenesí?
 - [ ] ⭐ Oleada previa a jefe: ¿ves la bandera «⚠ Jefe» en la barra Y llega el aviso específico (~3s antes) del tipo correcto (el evento que cae coincide con el aviso)?
+- [ ] ⭐ Entrada de jefe: ¿puedes decir quién es el jefe y leer su nivel antes de que empiece el primer aviso de ataque?
+- [ ] ⭐ Durante el jefe: ¿la píldora del banner deja claro qué ataque viene y cuántos segundos faltan?
+- [ ] ⭐ Fase 2: ¿notas que el jefe cambia de patrón sin que el siguiente ataque te caiga encima inmediatamente?
+- [ ] ⭐ Resolución: ¿distingues si el jefe fue derrotado o se retiró antes de que aparezca la bendición?
+- [ ] ⭐ Recompensa de jefe: ¿entiendes qué botín/beneficio recibiste por matarlo antes de elegir bendición?
 - [ ] ¿El aviso de oleada entrante (78%) te hace mirar el tablero?
 - [ ] Usa cada booster una vez: ¿el modo apuntar (previsualización) deja claro qué celdas afecta?
 - [ ] Pierde una vida: ¿el alivio (despeje) se lee como "segunda oportunidad" y no como bug?

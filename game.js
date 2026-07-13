@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.30';
+  const VERSION = '2.6.32';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -944,6 +944,8 @@
     fever() { this.chord([330, 415, 554, 659], 0.3, 'sawtooth', 0.06, 0.04); },
     milestone() { this.chord([659, 988, 1319], 0.25, 'square', 0.07, 0.06); },
     record() { this.chord([784, 988, 1175, 1568], 0.3, 'sine', 0.12, 0.07); },
+    bossDefeat() { this.tone(176, 0.16, 'sawtooth', 0.09); this.chord([523, 784, 1047, 1568], 0.32, 'sine', 0.10, 0.045); this.tone(2093, 0.12, 'triangle', 0.055, 0.30); },
+    bossReward() { this.chord([659, 880, 1175, 1568], 0.18, 'triangle', 0.085, 0.055); this.tone(1976, 0.12, 'sine', 0.055, 0.30); },
     boardClear() { this.tone(196, 0.12, 'triangle', 0.08);[523, 784, 1047, 1568, 2093].forEach((f, i) => this.tone(f, 0.18, 'sine', 0.105, i * 0.045)); },
     miss() { this.tone(160, 0.12, 'sawtooth', 0.09); },
     danger() { this.tone(120, 0.09, 'sine', 0.08); },
@@ -1499,9 +1501,27 @@
       const x = Math.min(window.innerWidth - 64, r.right + 36);
       return { x, y: r.top + r.height / 2 };
     },
-    rewardFlyout({ iconMarkup, targetEl, label, amount = '+1', tone = 'gold' }) {
+    _boardCenterPoint() {
+      const b = $('#board');
+      const r = b && b.getBoundingClientRect();
+      if (!r || (!r.width && !r.height)) return null;
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    },
+    bossRewardSourcePoint() {
+      const anchors = Array.from(document.querySelectorAll('.cell.tile-boss'));
+      const pts = anchors.map((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width || r.height ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+      }).filter(Boolean);
+      if (!pts.length) return this._boardCenterPoint();
+      return {
+        x: pts.reduce((sum, p) => sum + p.x, 0) / pts.length,
+        y: pts.reduce((sum, p) => sum + p.y, 0) / pts.length,
+      };
+    },
+    rewardFlyout({ iconMarkup, targetEl, label, amount = '+1', tone = 'gold', sourcePoint = null }) {
       if (motionOff() || !iconMarkup || !targetEl) return;
-      const src = this._rewardSourcePoint();
+      const src = sourcePoint || this._rewardSourcePoint();
       const tr = targetEl.getBoundingClientRect();
       if (!src || !tr.width) return;
       const sx = src.x, sy = src.y;
@@ -1554,7 +1574,7 @@
         tone: 'power',
       });
     },
-    coinsReward(amount, label) {
+    coinsReward(amount, label, sourcePoint) {
       amount = Math.max(0, amount | 0);
       if (!amount) return;
       const coinNum = $('#hud-coins');
@@ -1567,6 +1587,7 @@
         label: label || I18n.t('coins'),
         amount: '+' + fmtNum(amount),
         tone: 'coin',
+        sourcePoint,
       });
     },
     // Pérdida de vida (FBK-10): los corazones del HUD reaccionan como DAÑO (sacudida
@@ -3517,6 +3538,7 @@
     lives: 3, wave: 1, waveAcc: 0, survSec: 0, charge: 0, frenzy: 0, frenzyUntil: 0, freezeUntil: 0, x2Until: 0, lockUntil: 0,
     runCoins: 0, runGems: 0, runChests: 0, newWaveRecord: false,
     inv: {},
+    _beatQ: [], _beatSeq: 0,
     _r: {},
     start() {
       const tn = this.tune();
@@ -3524,7 +3546,7 @@
       this.lives = this.MAX_LIVES; this.wave = 1; this.waveAcc = 0; this.survSec = 0; this.charge = 0; this.frenzy = 0;
       this.freezeUntil = 0; this.x2Until = 0; this.frenzyUntil = 0; this.lockUntil = 0; this.runCoins = 0; this.runGems = 0; this.runChests = 0; this.newWaveRecord = false; this.revives = 0; State.tempMult = 1; this._r = { waveWarned: false, bossWarned: false };
       this.armed = null; this._preview = null; document.body.classList.remove('aiming');
-      this.slowWaves = 0; this._boonAt = 0;
+      this.slowWaves = 0; this._boonAt = 0; this._beatQ = []; this._beatSeq = 0;
       this._bossSurvivedAt = 0; this._noBoosterSinceBoss = true; this._frenzyT3Seen = false; this._liveRecord = false; // hitos SV-20/21
       this._boonLog = []; this._bossesSurvived = 0; // resumen de la run (SV-22)
       this._bossesDefeated = 0; this._lastDefeat = null; this._defeatBeat = null; // encuentros (JF-γ)
@@ -3567,6 +3589,7 @@
     cleanup() {
       this.disarm();
       Bosses.abort(); // el encuentro no sobrevive al fin de partida (JF-α)
+      this._beatQ = [];
       this.frenzyUntil = 0; this.x2Until = 0; this.freezeUntil = 0; this.lockUntil = 0;
       State.tempMult = 1;
       document.body.classList.remove('aiming', 'surv-frenzy-active', 'surv-frenzy-1', 'surv-frenzy-2', 'surv-frenzy-3');
@@ -3688,6 +3711,29 @@
     SCORE_BOOST_CAP: 0.5,
     slowWaves: 0, _boonAt: 0, mut: { id: 'none' },
     scoreBoost: 0, magnetMoves: 0, goldenWaveWaves: 0,
+    _scheduleBeat(channel, delayMs, fn) {
+      if (typeof channel !== 'string') { fn = delayMs; delayMs = channel; channel = 'misc'; }
+      if (typeof fn !== 'function') return 0;
+      const beat = { id: ++this._beatSeq, channel, at: performance.now() + Math.max(0, delayMs || 0), fn };
+      this._beatQ.push(beat);
+      this._beatQ.sort((a, b) => a.at - b.at || a.id - b.id);
+      return beat.id;
+    },
+    _clearBeats(channel) {
+      if (!channel) { this._beatQ = []; return; }
+      this._beatQ = (this._beatQ || []).filter((b) => b.channel !== channel);
+    },
+    _pumpBeats(now = performance.now()) {
+      const q = this._beatQ || [];
+      if (!q.length) return;
+      const due = [], pending = [];
+      q.forEach((b) => (b.at <= now ? due : pending).push(b));
+      this._beatQ = pending;
+      due.sort((a, b) => a.at - b.at || a.id - b.id).forEach((b) => {
+        if (State.status !== 'playing') return;
+        try { b.fn(); } catch (err) { console.error('survival beat failed', b.channel, err); }
+      });
+    },
     spawnFactor() { return this.slowWaves > 0 ? 1.25 : 1; },
     offerBoons() {
       // Se excluyen las bendiciones sin efecto posible (vida al tope, impulso al tope):
@@ -3782,12 +3828,13 @@
     },
     _waveReward(clearedWave) {
       if (clearedWave <= 0) return;
+      const quietForBoss = ((clearedWave + 1) % this.tune().bossEvery) === 0;
       if (this.goldenWaveWaves > 0) { this.goldenWaveWaves--; if (!this.goldenWaveWaves) Render.multChip(); }
       let coins = Math.round((4 + clearedWave * 1.45) * this.tune().coinMult * (this.mut.coinMult || 1));
       if (clearedWave >= 15) coins += Math.round(Math.pow(clearedWave - 14, 1.5) * 2); // Kicker
       coins = Math.max(3, coins);
       Meta.addCoins(coins); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
-      Render.coinsReward(coins, I18n.t('coins'));
+      if (!quietForBoss) Render.coinsReward(coins, I18n.t('coins'));
       // Coreografía de toasts (SV-13): en oleadas de hito, la recompensa de monedas
       // se FUSIONA con el toast del hito (antes eran dos toasts pisándose); en el
       // resto, va sola. Protege el canal de feedback en el instante de más carga.
@@ -3796,9 +3843,11 @@
         let txt, ic;
         if (clearedWave % 10 === 0) { Meta.addChest(1); this.runChests++; txt = '+1 ' + I18n.t('tab_chests'); ic = 'chest'; }
         else { const gems = 2 + Math.floor(clearedWave / 5); Meta.addGems(gems); this.runGems += gems; txt = '+' + gems + ' 💎'; ic = 'gem'; }
+        if (quietForBoss) { Econ.refresh(); return; }
         Toasts.event(I18n.t('surv_milestone').replace('{w}', clearedWave) + ' · +' + coins + ' ' + I18n.t('coins') + ' · ' + txt, 'good', 2600, ic);
         Render.flash(); FX.confetti(70); Sound.record(); Haptics.record(); Econ.refresh();
       } else {
+        if (quietForBoss) return;
         Toasts.event(coinTxt, 'good', 1700, 'coin');
       }
     },
@@ -3919,6 +3968,7 @@
       Bosses.tick(dt);
       // Beat «¡SUPERADO!» (SV-20): entre el peligro y la bendición.
       if (this._bossSurvivedAt && performance.now() >= this._bossSurvivedAt) { this._bossSurvivedAt = 0; this._bossSurvived(); }
+      this._pumpBeats();
       // Bendición post-jefe pendiente (GM-17): se ofrece cuando el evento se asentó.
       if (this._boonAt && performance.now() >= this._boonAt) { this._boonAt = 0; this.offerBoons(); }
       const isFrenzy = this.frenzyActive();
@@ -3954,7 +4004,7 @@
         this._reconcileOrphans();
         // "Nuevos iconos" se retrasa 1.2s (SV-13) para no pisar el toast de oleada/jefe.
         const atWave = this.wave;
-        setTimeout(() => { if (State.status === 'playing' && this.wave === atWave) Toasts.event(I18n.t('surv_new_icons'), 'info', 1500, 'v2:four-pointed-star'); }, 1200);
+        this._scheduleBeat('toast', 1200, () => { if (this.wave === atWave) Toasts.event(I18n.t('surv_new_icons'), 'info', 1500, 'v2:four-pointed-star'); });
       }
       // El toast "Oleada N" se SUPRIME en frontera de jefe (SV-13): la bandera ⚠ y el
       // aviso específico ya lo anuncian; dos avisos a la vez saturan. El sonido/anuncio
@@ -3973,7 +4023,7 @@
       Bosses.maybeMini(); // sorteo de minijefe (JF-δ): sorpresa con pity, tras conocer bossNext
       this._checkWaveRecord();
       this._setFrenzyClass(); this._syncIntensity();
-      Render.boardEvent('surv-wave-up', 900);
+      if (!isBossWave) Render.boardEvent('surv-wave-up', 900);
       this.render();
     },
     bossEvent() {
@@ -4011,8 +4061,9 @@
         this._defeatBeat = e;
       } else { this._defeatBeat = null; }
       Haptics.milestone();
-      this._bossSurvivedAt = performance.now() + 1200;
-      this._boonAt = performance.now() + 1700;
+      const now = performance.now();
+      this._bossSurvivedAt = now + (outcome === 'defeat' ? 1300 : 1200);
+      this._boonAt = now + (outcome === 'defeat' ? 3600 : 3000);
     },
     // Beat «¡SUPERADO!» (SV-20): el clímax "he sobrevivido al jefe" — el mejor
     // momento del modo por fin tiene su propia fanfarria. Solo si sigues vivo (el
@@ -4031,24 +4082,32 @@
         const msg = I18n.t('surv_boss_defeated').replace('{b}', Bosses.name(d.id));
         Toasts.show(msg, 'good', 2000, 'trophy');
         Render.rankFlash(msg, '#ffd24d'); // no-op bajo reduced-fx
-        Render.flash(); FX.confetti(d.flawless ? 70 : 56);
-        Sound.record(); Haptics.record();
+        Render.flash(); FX.confetti(d.flawless ? 74 : 60);
+        Sound.bossDefeat(); Haptics.record();
         announce(msg);
         // Botín del jefe (JF-γ, gated B-J1): monedas por nivel del encuentro.
         const coins = 8 + 4 * (d.lvl || 1);
         Meta.addCoins(coins); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
-        Render.coinsReward(coins, I18n.t('coins'));
+        const rewardSource = d.rewardSource || Render.bossRewardSourcePoint();
+        this._scheduleBeat('bossReward', 620, () => {
+          Render.coinsReward(coins, I18n.t('coins'), rewardSource);
+          Toasts.event('+' + fmtNum(coins) + ' ' + I18n.t('coins'), 'good', 1700, 'coin');
+          Render.boardEvent('boss-reward', 760);
+          Sound.bossReward(); Haptics.reward();
+        });
         // Ronda maestra (§3.8, homenaje a Gungeon): derrota sin perder vida ni gastar
         // potenciador durante el ENCUENTRO → +1 vida (o +50 carga si está al tope).
         if (d.flawless) {
+          let masterMsg, masterIcon;
           if (this.lives < this.MAX_LIVES + 1) {
             this.lives++;
-            Toasts.event(I18n.t('surv_master_round'), 'good', 2200, '🛡️');
+            masterMsg = I18n.t('surv_master_round'); masterIcon = '🛡️';
           } else {
             this.charge += 50;
             if (this.charge >= 100) { this.charge -= 100; this.grantRandom(); }
-            Toasts.event(I18n.t('surv_master_round_charge'), 'good', 2200, '⚡');
+            masterMsg = I18n.t('surv_master_round_charge'); masterIcon = '⚡';
           }
+          this._scheduleBeat('bossReward', 1120, () => Toasts.event(masterMsg, 'good', 2200, masterIcon));
         }
         // Bestiario y hazañas de caza (JF-ε).
         Meta.survBossKill(d.id, d.lvl, d.flawless);
@@ -4526,25 +4585,32 @@
       // Banner del encuentro (JF-β): la cara del jefe ENCIMA de vidas/oleada/tiempo.
       // Diffing por firma (id|nivel|fase|PV|segundos|telegraph): 1 escritura DOM por
       // cambio y la cuenta atrás solo re-escribe al cambiar el segundo (§5.6).
-      const enc = Bosses.enc;
+      const enc = Bosses.enc || Bosses.face;
       if (r.encOn !== !!enc) {
         r.encOn = !!enc; r.encSig = ''; r.encIcon = '';
         const sb2 = $('#surv-bar'); if (sb2) sb2.classList.toggle('encounter', !!enc);
         const eb = $('#surv-boss');
-        if (eb) { eb.hidden = !enc; if (!enc) eb.classList.remove('phase2', 'lvl-high'); }
+        if (eb) { eb.hidden = !enc; if (!enc) eb.classList.remove('phase2', 'lvl-high', 'resolved', 'defeated', 'retreating'); }
       }
       if (enc) {
         const mini = enc.kind === 'mini';
         const def = (mini ? Bosses.MINIDEX[enc.id] : Bosses.DEX[enc.id]) || {};
         // Jefes: cuenta atrás del ataque · minijefes: tiempo que les queda en el tablero.
-        const secs = mini
+        const secs = enc.resolved ? 0 : mini
           ? Math.max(0, Math.ceil((enc.durMs - enc.ms) / 1000))
           : Math.max(0, Math.ceil((enc.attackEvery - enc.atkAcc) / 1000));
-        const sig = enc.id + '|' + enc.lvl + '|' + enc.phase + '|' + enc.anchorsLeft + '|' + secs + '|' + (enc.telegraphed ? 1 : 0);
+        const sig = enc.id + '|' + enc.lvl + '|' + enc.phase + '|' + enc.anchorsLeft + '|' + secs + '|' + (enc.telegraphed ? 1 : 0) + '|' + (enc.resolved || '') + '|' + (enc.resolveLabel || '');
         if (r.encSig !== sig) {
           r.encSig = sig;
           const eb = $('#surv-boss');
-          if (eb) { eb.classList.toggle('mini', mini); eb.classList.toggle('phase2', enc.phase > 1); eb.classList.toggle('lvl-high', !mini && enc.lvl >= 3); }
+          if (eb) {
+            eb.classList.toggle('mini', mini);
+            eb.classList.toggle('phase2', enc.phase > 1);
+            eb.classList.toggle('lvl-high', !mini && enc.lvl >= 3);
+            eb.classList.toggle('resolved', !!enc.resolved);
+            eb.classList.toggle('defeated', enc.resolved === 'defeat');
+            eb.classList.toggle('retreating', enc.resolved === 'retreat');
+          }
           if (r.encIcon !== enc.id) {
             r.encIcon = enc.id;
             const ic = $('#surv-boss-icon'); if (ic) ic.innerHTML = Bosses.portraitHTML(def);
@@ -4558,8 +4624,13 @@
           }
           const nx = $('#surv-boss-next');
           if (nx) {
-            nx.textContent = (def.atkIcon || '⚠') + ' ' + secs + 's';
+            nx.textContent = enc.resolved
+              ? enc.resolveLabel
+              : (mini ? ((def.atkIcon || '⚠') + ' ' + secs + 's') : (Bosses.atkName(enc) + ' ' + secs + 's'));
             nx.classList.toggle('telegraph', !!enc.telegraphed);
+            nx.classList.toggle('resolved', !!enc.resolved);
+            nx.classList.toggle('defeated', enc.resolved === 'defeat');
+            nx.classList.toggle('retreating', enc.resolved === 'retreat');
           }
         }
       }
@@ -4611,6 +4682,9 @@
     // interruptor de emergencia deliberado.
     ENCOUNTERS: true,
     TELEGRAPH_MS: 2500, // pre-marca de celdas antes de cada ataque (§5.3)
+    FIRST_ATTACK_MS: 9500, // BP-0: lectura real de card + anclas antes del primer tell
+    PHASE_ATTACK_GRACE_MS: 6200, // BP-0: fase 2 nunca encadena un ataque inmediato
+    RESOLVE_FACE_MS: 2600, // BP-0: el banner se queda tras derrota/retirada
     ECO_P: 0.15,        // prob. de que el sorteo devuelva un eco «ha vuelto» (§4.4)
     // Registro de jefes (JF-01). Nombres/epítetos i18n (`bossdex_*`) llegan en JF-β;
     // acentos y nº de anclas según el mockup aprobado por el propietario
@@ -4662,6 +4736,7 @@
     },
     startMini(id) {
       if (this.enc) return null;
+      this.face = null;
       const def = this.MINIDEX[id];
       // 1 ancla bajo un icono (la Luciérnaga y la Urraca se mueven después).
       const f = Survival._filledIdx();
@@ -4731,17 +4806,19 @@
     },
     // Muerte del minijefe (su ancla cayó): efecto-firma + botín pequeño.
     _miniKill(e) {
-      const def = this.MINIDEX[e.id] || {};
       let coins = 3 + (e.lvl || 1);
       if (e.id === 'magpie' && e.stolen.length) {
         // Devuelve TODO lo robado agrupado alrededor de su celda (convergencia servida).
         const size = State.size, r = e.at / size | 0, c = e.at % size;
+        const dist = (i) => { const rr = i / size | 0, cc = i % size; return Math.abs(rr - r) + Math.abs(cc - c); };
         const near = [];
         for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) {
           const rr = r + dr, cc = c + dc;
           if (rr >= 0 && cc >= 0 && rr < size && cc < size) { const j = rr * size + cc; if (State.board[j] === null && !State.tiles[j]) near.push(j); }
         }
-        e.stolen.forEach((v) => { if (near.length) { const j = near.splice(rand(near.length), 1)[0]; State.board[j] = v; State.iconCount++; Render.syncCell(j); Render.spawnAnim(j); } });
+        const fallback = Survival._emptyIdx().filter((j) => !near.includes(j)).sort((a, b) => dist(a) - dist(b));
+        const spots = near.concat(fallback);
+        e.stolen.forEach((v) => { if (spots.length) { const j = spots.shift(); State.board[j] = v; State.iconCount++; Render.syncCell(j); Render.spawnAnim(j); } });
         Toasts.event(I18n.t('mini_return').replace('{n}', e.stolen.length), 'good', 1800, '🐦');
       } else if (e.id === 'firefly') {
         Survival.addFrenzy(24); coins += 8;
@@ -4772,12 +4849,26 @@
     name(id) { return I18n.t('bossdex_' + id); },
     lvlLabel(lvl) { return I18n.t('surv_boss_lvl').replace('{n}', this.ROMAN[lvl - 1] || lvl); },
     atkName(e) { return I18n.t('bossatk_' + e.id + (e.phase > 1 ? '_2' : '_1')); },
+    warnClass(e) {
+      const kind = (this.DEX[e && e.id] || {}).atk;
+      return ({
+        rain: 'boss-warn-meteor',
+        tide: 'boss-warn-tide',
+        frost: 'boss-warn-frost',
+        locks: 'boss-warn-lock',
+        shuffle: 'boss-warn-quake',
+        shards: 'boss-warn-shards',
+        devour: 'boss-warn-void',
+        threads: 'boss-warn-thread',
+      })[kind] || 'boss-warn-tide';
+    },
     // Retrato del banner: icono v2/png del registro, o el propio emoji como texto.
     portraitHTML(def) {
       const n = def && def.icon; if (!n) return '';
       return /^[a-z0-9:_-]+$/i.test(n) ? iconAnyInline(n) : esc(n);
     },
     enc: null, // encuentro activo — INVARIANTE: máximo uno (jefe o minijefe)
+    face: null, // BP-0: presencia visual post-encuentro (banner de resolución)
     // ---- Niveles y actos (§3.5): de más bajos a más altos, visibles como Nv. I-III ----
     actoForWave(w) { return w >= 24 ? 3 : w >= 12 ? 2 : 1; },
     levelForWave(w, opts) {
@@ -4805,6 +4896,7 @@
       // El jefe manda: un minijefe vivo se marcha (el Heraldo consuma su anuncio).
       if (this.enc && this.enc.kind === 'mini') this.resolve('miniExpire');
       if (this.enc) return null; // invariante: un solo encuentro a la vez
+      this.face = null;
       let eco = false;
       if (id === 'eco' || !this.DEX[id]) {
         const prev = Survival._lastBossType;
@@ -4831,7 +4923,7 @@
       this.enc = {
         id, lvl, kind: 'boss', phase: 1, eco,
         anchorsMax: anchors.length, anchorsLeft: anchors.length,
-        ms: 0, atkAcc: Math.max(0, def.attackMs - 6000), // primer ataque a ~6s (respiro de entrada)
+        ms: 0, atkAcc: Math.max(0, def.attackMs - this.FIRST_ATTACK_MS), // BP-0: entrada legible antes del primer ataque
         reincAcc: 0, regenAcc: 0, attackEvery: def.attackMs,
         durMs: Math.round(Survival.WAVE_MS * 1.8), // ~2 oleadas y se retira (§3.2)
         telegraphed: false, targets: null, threads: null, devoured: [],
@@ -4846,7 +4938,7 @@
       // Presentación del jefe (§5.2): breve retención de entrada para que la boss card
       // sea LEGIBLE y el jugador tenga tiempo de reacción antes de que el encuentro
       // corra. Sin este lock la entrada se sentía instantánea (la card pasaba volando).
-      // El primer ataque llega a ~6s (respiro), muy por encima de este lock.
+      // BP-0: el primer ataque llega a ~9.5s; primero se lee jefe + anclas, luego tell.
       Survival._lock(1200, def.frame);
       Sound.bossWarn(); Haptics.fire(8);
       announce(I18n.t('surv_boss_enter_sr').replace('{b}', this.name(id)).replace('{n}', this.enc.lvl).replace('{k}', this.enc.anchorsMax));
@@ -4896,6 +4988,11 @@
     // ---- Bucle del encuentro: acumuladores de dt (a prueba de pausas y del reloj
     // virtual del sim; ver Survival.onTick, único llamador) ----
     tick(dt) {
+      if (!this.enc && this.face && performance.now() >= (this.face.resolveUntil || 0)) {
+        this.face = null;
+        this._faceOff();
+        Render.hudSoon();
+      }
       const e = this.enc; if (!e || State.status !== 'playing') return;
       e.ms += dt; e.atkAcc += dt; e.reincAcc += dt;
       if (e.reincAcc >= 900) { e.reincAcc = 0; this._reincarnate(); }
@@ -4922,7 +5019,9 @@
       if (!e.telegraphed && e.atkAcc >= e.attackEvery - this.TELEGRAPH_MS) {
         e.telegraphed = true;
         e.targets = this._pickTargets(e);
-        (e.targets || []).forEach((j) => Render.cellPulse(j, 'tide-warn', this.TELEGRAPH_MS));
+        const warn = this.warnClass(e);
+        if (e.targets && e.targets.length) e.targets.forEach((j) => Render.cellPulse(j, warn, this.TELEGRAPH_MS));
+        else Render.boardEvent('boss-warn-board', this.TELEGRAPH_MS);
         // El banner enciende la píldora (render) y el lector de pantalla oye QUÉ viene.
         announce(I18n.t('surv_boss_prep').replace('{b}', this.name(e.id)).replace('{a}', this.atkName(e)));
       }
@@ -4943,6 +5042,12 @@
       // Fase 2 al caer la mitad de las anclas (§3.4): el patrón cambia, no solo escala.
       if (e.phase === 1 && e.anchorsLeft <= Math.floor(e.anchorsMax / 2)) {
         e.phase = 2;
+        const maxAcc = Math.max(0, e.attackEvery - this.PHASE_ATTACK_GRACE_MS);
+        if (e.atkAcc > maxAcc) {
+          e.atkAcc = maxAcc;
+          e.telegraphed = false;
+          e.targets = null;
+        }
         Feedback.event('bossPhase', { msg: I18n.t('surv_boss_phase2').replace('{b}', this.name(e.id)) });
         Render.boardEvent('surv-wave-soon', 500);
       }
@@ -4991,8 +5096,24 @@
         Sound.eliminate(1); Haptics.tap();
       }
     },
+    _setResolveFace(e, outcome) {
+      const defeat = outcome === 'defeat';
+      this.face = {
+        id: e.id, lvl: e.lvl, kind: 'boss', phase: e.phase,
+        anchorsMax: e.anchorsMax,
+        anchorsLeft: defeat ? 0 : Math.max(0, e.anchorsLeft || 0),
+        resolved: outcome,
+        resolveLabel: (defeat ? I18n.t('surv_boss_defeated') : I18n.t('surv_boss_retreat')).replace('{b}', this.name(e.id)),
+        resolveUntil: performance.now() + this.RESOLVE_FACE_MS,
+        attackEvery: e.attackEvery || ((this.DEX[e.id] || {}).attackMs || 12000),
+        atkAcc: 0,
+        telegraphed: false,
+      };
+      Render.hudSoon();
+    },
     resolve(outcome) {
       const e = this.enc; if (!e) return;
+      if (e.kind === 'boss') e.rewardSource = Render.bossRewardSourcePoint();
       this.enc = null;
       // Las anclas restantes se retiran con el jefe (en derrota ya no quedan).
       this._anchorIdx().forEach((i) => { State.tiles[i] = null; Render.syncCell(i); });
@@ -5016,7 +5137,7 @@
         Toasts.event(I18n.t('surv_boss_retreat').replace('{b}', this.name(e.id)), 'info', 1400, def.icon);
       }
       if (e.threads) Render.syncAll(); // despinta los hilos del Titiritero (enc ya es null)
-      this._faceOff();
+      this._setResolveFace(e, outcome);
       Survival._encounterEnd(e, outcome);
     },
     // Efecto-firma de derrota (JF-γ, §4.1): cada Señor deja un regalo al caer —
@@ -5125,11 +5246,13 @@
         this._anchorIdx().forEach((i) => { State.tiles[i] = null; Render.syncCell(i); });
         if (th) Render.syncAll();
       }
+      this.face = null;
       this._faceOff();
     },
     // Apaga la presencia visual del jefe (banner, tinte del panel, acento global).
     _faceOff() {
-      const el = $('#surv-boss'); if (el) { el.hidden = true; el.classList.remove('mini'); }
+      this.face = null;
+      const el = $('#surv-boss'); if (el) { el.hidden = true; el.classList.remove('mini', 'phase2', 'lvl-high', 'resolved', 'defeated', 'retreating'); }
       const sb = $('#surv-bar'); if (sb) sb.classList.remove('encounter');
       document.documentElement.style.removeProperty('--boss-accent');
     },
