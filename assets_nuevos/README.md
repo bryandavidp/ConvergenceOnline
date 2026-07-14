@@ -2,7 +2,34 @@
 
 Investigacion y paquete preparado para un videojuego web match-3/survival con look `Casual Game 3D Cartoon`: bordes gruesos, colores saturados, lectura rapida en mobile y sombreado tipo juguete.
 
-## Decision rapida
+## Revision V2 - decision vigente
+
+La recomendacion anterior se ha revisado tras comparar nuevos packs y auditar la
+iconografia activa del proyecto. La nueva direccion elimina CraftPix Liquid y
+CraftPix Halloween, y reduce la mezcla visual:
+
+| Uso | Carpeta V2 | Decision |
+| --- | --- | --- |
+| UI/base | `listo_para_integrar_v2/01_gvesster_core_ui_512` | Conservar Gvesster |
+| Supervivencia/objetos | `listo_para_integrar_v2/02_gvesster_survival_512` | Sustituye CraftPix Liquid |
+| Match-3 alternativo | `listo_para_integrar_v2/03_gvesster_match3_food_512` | Sustituye CraftPix Fruit si se usan frutas |
+| Halloween | `listo_para_integrar_v2/04_gvesster_events_halloween_512` | Sustituye CraftPix Halloween |
+| Logros/rangos | `listo_para_integrar_v2/05_gvesster_progression_512` | Sustituye CraftPix Achievements y Rhos Ranks |
+| Buffs/debuffs | `listo_para_integrar_v2/06_akami_status_cc0_512` | Complemento CC0 aislado |
+| Botones | `listo_para_integrar_v2/07_vektyr_buttons_512` | Conservar solo como superficie |
+
+Documentos principales:
+
+- `PROPUESTA_COHERENCIA_V2.md`: mapa completo de iconos actuales y reemplazos.
+- `INVESTIGACION_REVISION_V2.md`: candidatos, licencias, enlaces y decisiones.
+- `previews_revision/index.html`: previews de todos los packs de la nueva ronda.
+- `previews_revision/comparison_craftpix_vs_gvesster_v2.png`: comparacion directa.
+- `listo_para_integrar_v2/manifest.json`: archivos, fuentes, licencias y hashes.
+
+La carpeta `listo_para_integrar/` se conserva como archivo V1 para trazabilidad.
+No es la seleccion recomendada para nueva integracion.
+
+## Decision anterior V1 - archivada
 
 Usar `listo_para_integrar/primary_gvesster_ui_512` como familia principal. Es el set que mas se parece a la UI actual del proyecto y mantiene iconos legibles, brillantes y con volumen cartoon.
 

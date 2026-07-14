@@ -1,0 +1,1774 @@
+{
+  "generated_at": "2026-07-14",
+  "canvas": {
+    "width": 512,
+    "height": 512,
+    "format": "PNG RGBA",
+    "padding_px": 42
+  },
+  "root": "assets_nuevos/listo_para_integrar",
+  "sets": [
+    {
+      "id": "primary_gvesster_ui_512",
+      "label": "Gvesster/UI actual del proyecto - base recomendada",
+      "count": 55,
+      "source_url": "https://gvesster.itch.io/free-icon-pack",
+      "license": "Licencia Gvesster Free Icon Pack (uso comercial permitido, credito opcional, no reventa/redistribucion como asset pack)",
+      "license_notes": "Mantener como familia principal: es la que mejor calza con borde grueso, color saturado y shading tipo juguete.",
+      "recommendation": "RECOMENDADO como set principal",
+      "files": [
+        {
+          "file": "primary_gvesster_ui_512/aura.png",
+          "source_file": "img/ui/aura.png",
+          "sha256": "7e3f443767ae3075840f6129c76422a9633acbd50b75ee2585bd2e2c377a2ffa"
+        },
+        {
+          "file": "primary_gvesster_ui_512/bolt.png",
+          "source_file": "img/ui/bolt.png",
+          "sha256": "4447996bef467760a8bf39586665baa566636006598e5846b61724dc9f1cd5fd"
+        },
+        {
+          "file": "primary_gvesster_ui_512/bomb.png",
+          "source_file": "img/ui/bomb.png",
+          "sha256": "82709d0eb3f9465ed151a3edc88ef580320a68e7f942f1a45c76baea9b880908"
+        },
+        {
+          "file": "primary_gvesster_ui_512/book.png",
+          "source_file": "img/ui/book.png",
+          "sha256": "2e4224927dcfa33bc07846c693bc91c1b0045b699309572599a72d1dedaec7da"
+        },
+        {
+          "file": "primary_gvesster_ui_512/calendar.png",
+          "source_file": "img/ui/calendar.png",
+          "sha256": "47d57033822ee95af6415d9d79ed003e1adcd00c5f09be6b09b2819f81b9c3db"
+        },
+        {
+          "file": "primary_gvesster_ui_512/cart.png",
+          "source_file": "img/ui/cart.png",
+          "sha256": "bd1d82a1d1a5c334c195ee92f39b037a8bc1443d78eecb24e1654bf05e621106"
+        },
+        {
+          "file": "primary_gvesster_ui_512/check.png",
+          "source_file": "img/ui/check.png",
+          "sha256": "43b45739c4f16c8be50a57f6ccbd3d54389b400ee399bd62e5cc4cf7b848211f"
+        },
+        {
+          "file": "primary_gvesster_ui_512/chest.png",
+          "source_file": "img/ui/chest.png",
+          "sha256": "9911f5039deb2de87493c1fa5f17c722e5963944df3829c84cec2d29e1f1320e"
+        },
+        {
+          "file": "primary_gvesster_ui_512/clock.png",
+          "source_file": "img/ui/clock.png",
+          "sha256": "ba7ce98fec2bb093cf9bf4eb17a608f757fac493e90ccf466017e660656fb2c0"
+        },
+        {
+          "file": "primary_gvesster_ui_512/close.png",
+          "source_file": "img/ui/close.png",
+          "sha256": "a534e623118424811722cb397a9ea60e9b5ee7010b9aad7601deb67e79f4b1d0"
+        },
+        {
+          "file": "primary_gvesster_ui_512/coin.png",
+          "source_file": "img/ui/coin.png",
+          "sha256": "e80f4c068039d0e522627eff1254ce9f284096b59c05afd3baaba8bb9f355972"
+        },
+        {
+          "file": "primary_gvesster_ui_512/crown.png",
+          "source_file": "img/ui/crown.png",
+          "sha256": "fab932bc16026e291affa9b67393c7a9b88a431ae0d1ceaff34eb81d8f3706da"
+        },
+        {
+          "file": "primary_gvesster_ui_512/crystal.png",
+          "source_file": "img/ui/crystal.png",
+          "sha256": "16f64e47ca244aba64cd5d4d947f398387d615039e2b7b6356867218c9daadda"
+        },
+        {
+          "file": "primary_gvesster_ui_512/dice.png",
+          "source_file": "img/ui/dice.png",
+          "sha256": "9c80f7b1580fec136ed233ff3601b586ee8b24e93719c047d13e7696b10fcec8"
+        },
+        {
+          "file": "primary_gvesster_ui_512/fire.png",
+          "source_file": "img/ui/fire.png",
+          "sha256": "c0a718d1f644c80c65def2858ea2a8e168affaa95175486d0193c237cf544881"
+        },
+        {
+          "file": "primary_gvesster_ui_512/friend.png",
+          "source_file": "img/ui/friend.png",
+          "sha256": "ca4516813e9e2d33e8384555123b3a6610baee5c4c31f7767af1301718e25041"
+        },
+        {
+          "file": "primary_gvesster_ui_512/gem.png",
+          "source_file": "img/ui/gem.png",
+          "sha256": "2a2a125a9a8f57d50fabc2e55334718a76f41acff3168bee5b8e255e1b6a7695"
+        },
+        {
+          "file": "primary_gvesster_ui_512/gift.png",
+          "source_file": "img/ui/gift.png",
+          "sha256": "7b5c08b382a0f3a4eabefe9b096749e0d0e3a19807dc7fdd4764a117ea4af72b"
+        },
+        {
+          "file": "primary_gvesster_ui_512/heart.png",
+          "source_file": "img/ui/heart.png",
+          "sha256": "f7b2f857386c4d3979bf97b751c68ce97e2f27efa7b1bed41a19ac775e3049ba"
+        },
+        {
+          "file": "primary_gvesster_ui_512/house.png",
+          "source_file": "img/ui/house.png",
+          "sha256": "0f2164b2c9f5a1624c69cd9756e62b6db398d29c326c359665e929d40a53533f"
+        },
+        {
+          "file": "primary_gvesster_ui_512/info.png",
+          "source_file": "img/ui/info.png",
+          "sha256": "8cf7cc3d46fcb32980f5129fae567c870778bfa241e251e442d916673a8755e0"
+        },
+        {
+          "file": "primary_gvesster_ui_512/leaf.png",
+          "source_file": "img/ui/leaf.png",
+          "sha256": "1c34d041166126d40235f272dbd3a0d2981cb9d610cab057a293227c56997da7"
+        },
+        {
+          "file": "primary_gvesster_ui_512/lock.png",
+          "source_file": "img/ui/lock.png",
+          "sha256": "81ca9b9c482dc20dd0020a4b5daa307b7b4d2ca183eaeb46d594330d4cd7915e"
+        },
+        {
+          "file": "primary_gvesster_ui_512/luckyblock.png",
+          "source_file": "img/ui/luckyblock.png",
+          "sha256": "176990c7dbe36cc354be0379a5ebec9a705600d4962dbc43c0414d0358585c8b"
+        },
+        {
+          "file": "primary_gvesster_ui_512/magnet.png",
+          "source_file": "img/ui/magnet.png",
+          "sha256": "d5c8c6b50cf2c4020a32ece6e0ac6ca8fa042adb63d2db72b39abd7e9240bdda"
+        },
+        {
+          "file": "primary_gvesster_ui_512/medal.png",
+          "source_file": "img/ui/medal.png",
+          "sha256": "c635098116f46464d3e94e0ae32aceb543b5ea21efd2c8b5843af216a9e0fd21"
+        },
+        {
+          "file": "primary_gvesster_ui_512/minus.png",
+          "source_file": "img/ui/minus.png",
+          "sha256": "29d8723743654904ffad25eea60e92844d2cebec3000ed3c016e1536464daeb3"
+        },
+        {
+          "file": "primary_gvesster_ui_512/music_off.png",
+          "source_file": "img/ui/music-off.png",
+          "sha256": "d8ee60f19687bf8d98f0aff84f1ce36f7a482d436c5e29aebcbbd86b1c632b83"
+        },
+        {
+          "file": "primary_gvesster_ui_512/music_on.png",
+          "source_file": "img/ui/music-on.png",
+          "sha256": "13d04fac7f4f1f6c72bd7b20fe6816c0e94b3e48c67263a1cec8d156f9dc1111"
+        },
+        {
+          "file": "primary_gvesster_ui_512/pencil.png",
+          "source_file": "img/ui/pencil.png",
+          "sha256": "b87c4130f2cae7e0dac4c56c89ca18e1ec80ee48ef02c657453a90a28bb4ad15"
+        },
+        {
+          "file": "primary_gvesster_ui_512/pin.png",
+          "source_file": "img/ui/pin.png",
+          "sha256": "b32fa99f3c893b6aeb721634ce94349e48b125eed94e788ef5c7959896721bea"
+        },
+        {
+          "file": "primary_gvesster_ui_512/planet_hell.png",
+          "source_file": "img/ui/planet-hell.png",
+          "sha256": "611e3e9b3d6877d7df419607741b24fce7ebe80d83fa51a9aa27fa27b28068c1"
+        },
+        {
+          "file": "primary_gvesster_ui_512/planet.png",
+          "source_file": "img/ui/planet.png",
+          "sha256": "06650ab4cfaf08a439ae68a6284320990ff1b705345141008c9ef61a18ae81ae"
+        },
+        {
+          "file": "primary_gvesster_ui_512/player.png",
+          "source_file": "img/ui/player.png",
+          "sha256": "419318c633b96d6364d5568e93d793e38d1c26adb924d50062f68b2f541295b1"
+        },
+        {
+          "file": "primary_gvesster_ui_512/players.png",
+          "source_file": "img/ui/players.png",
+          "sha256": "f8c88baddb1ff428636ac2f218ad57dae3bfc88945a745953e490eb246366049"
+        },
+        {
+          "file": "primary_gvesster_ui_512/plus.png",
+          "source_file": "img/ui/plus.png",
+          "sha256": "7789a659bc02a9147d0d34fae7ee28fb65304b4f2de0bfd0ae14a539f2fd6c39"
+        },
+        {
+          "file": "primary_gvesster_ui_512/potion.png",
+          "source_file": "img/ui/potion.png",
+          "sha256": "8f8aa110cbf4597ec18717d573e68f032cdca720862a261c125d970bb232bacb"
+        },
+        {
+          "file": "primary_gvesster_ui_512/question.png",
+          "source_file": "img/ui/question.png",
+          "sha256": "119e6bbe440a48525e2c9a460d57ccee60151daa359406b34af62c9731439303"
+        },
+        {
+          "file": "primary_gvesster_ui_512/rocket.png",
+          "source_file": "img/ui/rocket.png",
+          "sha256": "2e2a4dc0115ac86ee0265e7ab8f95e72359be1b71c86c40b72637e2aaa4bbe81"
+        },
+        {
+          "file": "primary_gvesster_ui_512/search.png",
+          "source_file": "img/ui/search.png",
+          "sha256": "60e6d5ad6ed32ccaba463a05df20784c5bae040896ea24d51b03b81ce82830c9"
+        },
+        {
+          "file": "primary_gvesster_ui_512/settings.png",
+          "source_file": "img/ui/settings.png",
+          "sha256": "2c5bf1c3c9a46b8df29c0a0b95168d78d06586da13a074ff22addc4ce3696df9"
+        },
+        {
+          "file": "primary_gvesster_ui_512/shield.png",
+          "source_file": "img/ui/shield.png",
+          "sha256": "7c66136f8274e0aa0072437925c500009550484a75517623edd857abcb5774d7"
+        },
+        {
+          "file": "primary_gvesster_ui_512/skull.png",
+          "source_file": "img/ui/skull.png",
+          "sha256": "2823ae35aa63499e23a85a19703cafb6d31cb9e9f8da46dfeafa03bdd89cf2ce"
+        },
+        {
+          "file": "primary_gvesster_ui_512/sound_off.png",
+          "source_file": "img/ui/sound-off.png",
+          "sha256": "e356b889a7b8c2a386b1754ce2c0997d3845e43d67cb26b01678166e43be446f"
+        },
+        {
+          "file": "primary_gvesster_ui_512/sound_on.png",
+          "source_file": "img/ui/sound-on.png",
+          "sha256": "7789729b2ec28d453acb11936b70b6fe2d83c462ac0d57a1f80db95835332bce"
+        },
+        {
+          "file": "primary_gvesster_ui_512/star_empty.png",
+          "source_file": "img/ui/star-empty.png",
+          "sha256": "a4473e3331098ef4af4528ccee8b1543cdb0bcd1da26e558ef67fcd43966d262"
+        },
+        {
+          "file": "primary_gvesster_ui_512/star.png",
+          "source_file": "img/ui/star.png",
+          "sha256": "9f6970745b8fd27ff0e296b634a3bd1e2caada8154b987095757c9924b0acb1f"
+        },
+        {
+          "file": "primary_gvesster_ui_512/stats.png",
+          "source_file": "img/ui/stats.png",
+          "sha256": "4a77002f242aa3cd226116e9054a6052bc5e4110bea9f14ab5cff78b393a92ad"
+        },
+        {
+          "file": "primary_gvesster_ui_512/target.png",
+          "source_file": "img/ui/target.png",
+          "sha256": "fe84d23396d81eaf5b7fc8fbf87f972c19d6d83a87cdedf147f92d7502e51e71"
+        },
+        {
+          "file": "primary_gvesster_ui_512/teleporter.png",
+          "source_file": "img/ui/teleporter.png",
+          "sha256": "1c65dff9af9f038932dd2cf64001ed57d351fc3f61e88616a7a62f9dfa6f47a4"
+        },
+        {
+          "file": "primary_gvesster_ui_512/ticket.png",
+          "source_file": "img/ui/ticket.png",
+          "sha256": "d9e1b5f59f7c45e0857c7118e86e1aa909f2761f175db9bc40e4333ad9e7054e"
+        },
+        {
+          "file": "primary_gvesster_ui_512/trophy.png",
+          "source_file": "img/ui/trophy.png",
+          "sha256": "b023f2ef87e869f16ae27fb497c637b168bba1b5f439dec33ddd70a5a23fc04f"
+        },
+        {
+          "file": "primary_gvesster_ui_512/upgrade.png",
+          "source_file": "img/ui/upgrade.png",
+          "sha256": "b86dc6a2c308bab97baf6d91282c8b7b8da2a9023c0b107ef4d23d58da3fe379"
+        },
+        {
+          "file": "primary_gvesster_ui_512/verify.png",
+          "source_file": "img/ui/verify.png",
+          "sha256": "32612cbe6668b62cef97c994d2a60951d273091052114b9441350d8ccaa8ecf9"
+        },
+        {
+          "file": "primary_gvesster_ui_512/warning.png",
+          "source_file": "img/ui/warning.png",
+          "sha256": "c8f817883caf634a666441a76f6a5b8f99db1b9b1d846afb056fefbf62549d07"
+        }
+      ]
+    },
+    {
+      "id": "secondary_craftpix_fruit_512",
+      "label": "CraftPix Fruit - piezas match-3",
+      "count": 48,
+      "source_url": "https://free-game-assets.itch.io/free-fruit-vector-icon-pack-for-rpg",
+      "license": "CraftPix Freebies License (comercial permitido, sin atribucion requerida, no redistribuir/revender fuentes)",
+      "license_notes": "Buen material de piezas match-3; conviene una pasada de estilo si se mezclan con Gvesster.",
+      "recommendation": "RECOMENDADO para gemas/frutas del tablero",
+      "files": [
+        {
+          "file": "secondary_craftpix_fruit_512/1.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/1.png",
+          "sha256": "f65966248f557028a1c5acee26d93cbde3e5f45cbf07e48b3bcb7ada995fd0b2"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/10.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/10.png",
+          "sha256": "d4c5f4c60a2e8805ef2429bfbc0734ef3f28e2567f4f213d9ec7c4fceb728caf"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/11.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/11.png",
+          "sha256": "e33ca58e7e219291d693a2efb9c4811e62c99d40ecb0323fa6a6c660c8876ec6"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/12.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/12.png",
+          "sha256": "cce0a5266ecbb8431867ed3fd4c0c8d038bc86892dab38fa8693e263e857523b"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/13.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/13.png",
+          "sha256": "66655dd17b97abb71f0c2b5ddff7a76103720056e78c88db184c01608ac7b576"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/14.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/14.png",
+          "sha256": "4bc5d5325eb16b28057f78f813e084a7b6d478c2c3aba8686f47a13d1656d39d"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/15.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/15.png",
+          "sha256": "bf648eb7d54e50584c3cee5477ae208d1e0101c0f516e47ca98b396add991080"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/16.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/16.png",
+          "sha256": "cf4e095a5e751166f48ff8b1f8dc734f18b6aa3c807c420f55ec51231415c29a"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/17.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/17.png",
+          "sha256": "b8a098119038bcd2dce77066e2b3ca261dc4d914b40a4c9293d4fea25e9e11da"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/18.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/18.png",
+          "sha256": "fde15690ebf285496ed6442f4dc7db9af9fe7867e7f01e47a567c6d1ef589e1f"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/19.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/19.png",
+          "sha256": "aab898c2a9654381e2fc522ba5e17ff6fa07e9a873a6edc252a29f98bb30e72f"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/2.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/2.png",
+          "sha256": "14d5ba70442c87047b803d3d19e02d2cc7f4c83e8afc2cb6502cab7e50d887d7"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/20.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/20.png",
+          "sha256": "142c32db2c8eeffc64fccedf8b007a1a8a1f614b73056b3ca645bc5c4cf2aa36"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/21.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/21.png",
+          "sha256": "1dedad8a1c115a236251939cc932a826b4e4bd0fbe0ca285f46feea467bb54c8"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/22.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/22.png",
+          "sha256": "9c0ec8734efb25d7eda3839973217435ca0caf904f7b1c184aeaad5f1516dee2"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/23.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/23.png",
+          "sha256": "f13ffb871d75b36ec94e389e4b499687c70604b04c71aa31ec99be291aeea1b6"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/24.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/24.png",
+          "sha256": "5c8596223b4e826677883abdf8ad53feaf05a86c2cfcb3776e8a3f82f815f5eb"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/25.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/25.png",
+          "sha256": "179fd7b48ac6ef35b3cc4593eef7c5625ccc1128c712f5a2f6de5caaa9899794"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/26.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/26.png",
+          "sha256": "f320ffeab1a4b0558357ab4e9d4e0fd2429d5ffba52566f5f3e981aa873429a1"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/27.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/27.png",
+          "sha256": "4ed5fdb4dda7f6e0a7e3b08dbed0de8bc36aa85d4aa8a59bb3197c36591c6ac3"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/28.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/28.png",
+          "sha256": "21f68c7e05122c94996a11d93331e95b1dba08e5ac4e0fb18293a3397fda8821"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/29.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/29.png",
+          "sha256": "12fb73d4b992f88089b9dd59a1681ba5165f0f36340e00c5b095f31df8a56a85"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/3.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/3.png",
+          "sha256": "d3a320bfb3bc73c07f3af5f301d361d25b27253b5749c845d3bf573fe8338c4d"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/30.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/30.png",
+          "sha256": "4ec7aa35dea095a0277f0b6dd92059b4be970831cd3b4a96788c9b5de9bce41e"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/31.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/31.png",
+          "sha256": "a4ff128ff8e4edf3ddbf0ebd8dd636aa665d83410e1fcda37c5336e2b6a4e14e"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/32.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/32.png",
+          "sha256": "c6fc1b2cfd38fdca9fff68289f2a4fc113092842bdcb25139c42aa0d271f6af6"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/33.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/33.png",
+          "sha256": "952d49aaf3319a83d0659544489c424a5f80468df0d22e9c47a8d11b206cfb78"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/34.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/34.png",
+          "sha256": "d77b3a68ab6d18e9a46ea8367f84bdc7ef85e4cc472ef2b0450cc2a1f75430d7"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/35.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/35.png",
+          "sha256": "9b3aaf6934196979bb403c08bf9f27d97c31c5f105a0d78604f6f91a82c88301"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/36.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/36.png",
+          "sha256": "b4fcf79cd85b56e213130e37048c17b1bb2353103f7bcc61ef914511dbb5ed05"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/37.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/37.png",
+          "sha256": "d6e9549be78aa8a3801ba09bdc8e97b1aac640ced6230abfa1f2b25d7fb45901"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/38.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/38.png",
+          "sha256": "b84c6383b361398ae755199d974e4d64ae5d6c749aeac76fe8ccce2ab3d1f026"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/39.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/39.png",
+          "sha256": "4d76f4dfd83e6abedf87a3873403131709100e19df80fafbf262f9a7a823db69"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/4.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/4.png",
+          "sha256": "195718a9e8c9e8686dbaedba98163416265a77f5ff042c7ec508d9f473bf034c"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/40.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/40.png",
+          "sha256": "35ac92fff73b8edc9304274eada3457bb8e14d7d20a37bddc1e6f7bb16e83d4e"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/41.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/41.png",
+          "sha256": "e4b4c203392f9d2c1e6fd7c268a23a94b35a1d2bbc4c0aa2e8c83591141b55ef"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/42.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/42.png",
+          "sha256": "fbc3acbb2ca1518f224419a82c2c654741f06290a707357ac44271f57cd10aad"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/43.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/43.png",
+          "sha256": "c83cd711c9ef78a95adb4dcb498583c5f81caa0d4670088f490ff41f493bd6a1"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/44.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/44.png",
+          "sha256": "d234d23849a82d99ad1c7572540fe80ac681e03096466b097037d244d9ec8745"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/45.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/45.png",
+          "sha256": "7a6275a39a5596c20ab6b87e38adaeac6fa95a726d112ab78141234064ebe8ff"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/46.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/46.png",
+          "sha256": "4cac871c23e23290948daea3687181585d913c5889d216a6ebda44c5d5266f5f"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/47.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/47.png",
+          "sha256": "10d3263849b83ae225671c4f9d15b7abe60055739ff190baf9cdfa38b30b07d0"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/48.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/48.png",
+          "sha256": "b75bca3df69de5219fd333c0411b8bbb503a804ff4ccf11d3d3224f9f1960a40"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/5.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/5.png",
+          "sha256": "7296a2efac8e573f93fc63854fdefe2ce0eca5c712e3d8825f3f1dedb6104668"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/6.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/6.png",
+          "sha256": "f9b8346b19e1442585538b677c583f9c58b56218e2598e1e02976d138efbcdb7"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/7.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/7.png",
+          "sha256": "6c540c1081bcf56b2c1e56e192705986a4e5be293cc1021f0fb038d53cb98519"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/8.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/8.png",
+          "sha256": "29ed54fecadc2df6dba29bc24690ae2d9c657d5bdc07986ecc98fb5cfb15aaf2"
+        },
+        {
+          "file": "secondary_craftpix_fruit_512/9.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_fruit_icons_itch/PNG/without_shadow/9.png",
+          "sha256": "18e7990777361a4d22fd9b228499ace7dd0950900766cc74d4c1848789817ead"
+        }
+      ]
+    },
+    {
+      "id": "secondary_craftpix_liquid_loot_512",
+      "label": "CraftPix Liquid Loot - pociones y loot",
+      "count": 48,
+      "source_url": "https://free-game-assets.itch.io/free-liquid-loot-vector-game-icons",
+      "license": "CraftPix Freebies License (comercial permitido, sin atribucion requerida, no redistribuir/revender fuentes)",
+      "license_notes": "Encaja en supervivencia, recursos y consumibles; usar selectivamente.",
+      "recommendation": "RECOMENDADO para consumibles/supervivencia",
+      "files": [
+        {
+          "file": "secondary_craftpix_liquid_loot_512/1.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/1.png",
+          "sha256": "eec0e7d1c5b205bff890cd63c98aa31cc2c4dbc2a1d03e6475efb2fc5f5e0bce"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/10.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/10.png",
+          "sha256": "1a76c30cd0324e799d59f1599eaf7f2e200aa9bafd8003dce2a6b0168998c8e2"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/11.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/11.png",
+          "sha256": "251c2d7e31d198d0cbdf326d5a3f52c90a3771743399a105b9f79f7cf82cb271"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/12.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/12.png",
+          "sha256": "cda609fa6188e56cebd5a74b658c12f204660f94cd9e882337f1b677bf839af7"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/13.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/13.png",
+          "sha256": "dc90812a339d4b1437f981aeae894c52c4f71da02312269ae6f823634cca0ff0"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/14.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/14.png",
+          "sha256": "0725cf30398ff32bba412e729ac9aade6a2661e94c68eb9079c6a3240b7d8ce2"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/15.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/15.png",
+          "sha256": "0f4eda5d43a6a864d0ff6d68717f0bf986c9a2f320447f6256049ad07eff6c0c"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/16.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/16.png",
+          "sha256": "6183503c27f1d8691ced640c403e6dec3a883d69772ab38671f764715795e414"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/17.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/17.png",
+          "sha256": "27846fadc489ef3992a065321d0adcc3627a91939d1c357cc1469573d55668fa"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/18.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/18.png",
+          "sha256": "7f9bbce0fc2148962e4aa587b1b3c38b0790fd3dc21f511ac91694681e3ce333"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/19.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/19.png",
+          "sha256": "952048649362e52a82ce2547d4d62b3af579796b4501c26707ee3034f5134f1b"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/2.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/2.png",
+          "sha256": "817fea79f20f72be5ce914e007a7b78064b93c354827d9b4f7244626edd7dd4e"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/20.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/20.png",
+          "sha256": "873997564c9d5c54e2b2fdb3d79e5126c2ee924e0da82297da6100743eeab35a"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/21.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/21.png",
+          "sha256": "7c5f9d1d3dbe181df08191c790184562205a7997618ec0c65e3251235e7a4ace"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/22.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/22.png",
+          "sha256": "e4ed3fcec39c2cce332e007fc9fbbe1ef6280dd7719ac2f7b13f996b6b25f048"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/23.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/23.png",
+          "sha256": "44aa15e5f991cbc4ba669533eb93cde28aacdf87087f1b3d7257c902886e1f83"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/24.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/24.png",
+          "sha256": "c12babe2c2a373d708a98e9e090ce054d449e5d2511856701b9391945ea504c8"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/25.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/25.png",
+          "sha256": "4271334558977ba8cd363f89ccd8c0e8d711d5a2a0be835a1a0a2982301aac23"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/26.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/26.png",
+          "sha256": "32ebac864b703594dedd834630621b7b3bde3ac695ea9731b1b462abc1aece35"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/27.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/27.png",
+          "sha256": "930ada5180f94093510fa375cc461bd013f8ac4b79ae98aa921d5e08f4e629e8"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/28.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/28.png",
+          "sha256": "771bf53c993efb42443a2f8a5f2449951dc6b1bc4a985f7304709cd691998e59"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/29.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/29.png",
+          "sha256": "6c038c4bd8b7c7709b40462efad1f2c04bf75a9ec2c4683924d706257d3088a1"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/3.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/3.png",
+          "sha256": "d32851080594212c918f9778ed860fc01f226d10b8a64792e90a83ba85e74cbb"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/30.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/30.png",
+          "sha256": "f121eb6857cffd8a82bac115afb5833146feb96b6563c20bfc123bfd996b9808"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/31.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/31.png",
+          "sha256": "63295c50c6e2dbc36bb7ea132019d32ca7b2a51545b9e9b572a6d7ee5664a0d0"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/32.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/32.png",
+          "sha256": "094866b2c66ea3836303c0fc99848663982b780f0761810cc8c6f6856147084d"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/33.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/33.png",
+          "sha256": "aa5d664bd70bcbec61b4a18e8f27f802f2613f273d49b0d4e2dd24f251020304"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/34.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/34.png",
+          "sha256": "86e7dba24bddcad29edb2bb7d113454f170680bfe0414e4677460d8d4e7f3e92"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/35.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/35.png",
+          "sha256": "ec7a8a160ad9991886b8eaa199d3cb167f9afff71e18e324255113d3a938629f"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/36.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/36.png",
+          "sha256": "ade3c20c8a37148ab088088a6fa2a78b5a96aabfe37616dd00ce83b3dc6da3c8"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/37.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/37.png",
+          "sha256": "746d9ca850ee2f7936d4aa549a24dae2ef4ba36d671706301692f0e69135ad6d"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/38.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/38.png",
+          "sha256": "9fc69478f80d04b938e4f1c3dcdec3b6e8717fadc10a0c74804ae4cf29d3a3c8"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/39.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/39.png",
+          "sha256": "5804bc2caa71dcfddd342d8ac0f295636fc3f82346e4eb951c4c8e450157b49c"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/4.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/4.png",
+          "sha256": "75ba985e17f5d23c97d471c030dfba145ec4f4a9ff6598c500a0a2328300e91a"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/40.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/40.png",
+          "sha256": "204d70bf0d45b48e3d05a50f6c361bb61aac3471c20a8800d11b9533243f60e0"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/41.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/41.png",
+          "sha256": "aed4b90e9cd736b31a590902d6fd517f49ab2a477272d477360eab7d8588231f"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/42.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/42.png",
+          "sha256": "374d64f140ed419bf92a29ff32025303e0b81a0c33eb5e281016bda8088a8367"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/43.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/43.png",
+          "sha256": "19f5b5b849f063cd467f1fb18cfb9be1a7e8deaf16b6e17123aabe4343ab5661"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/44.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/44.png",
+          "sha256": "2e514129f751e71f86a9eccbec28bebe00b964f40d0172e99f132fe367fe4c83"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/45.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/45.png",
+          "sha256": "a5a66b4176aafdfb75c30f5cc28f89103438dcf1c2f5ddc7b51950d6552dde3c"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/46.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/46.png",
+          "sha256": "862dfef7f2d1e8d19cb100a39f29906ab11e345c416c8c78f3bd2f42ff686749"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/47.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/47.png",
+          "sha256": "c2e75a5d9fc9f7be5418f74cf5627309edb4d10f91ecdc4e9f4f39d949e8ff9a"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/48.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/48.png",
+          "sha256": "c0c37e2fc46e26d720e4094314330263ca626f24ff5576fbcd3c8d472336dfc1"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/5.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/5.png",
+          "sha256": "f551ec66731a30892a2e98c48c3fe065e742ce940149cfebc9eefa548bc9c501"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/6.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/6.png",
+          "sha256": "29d0c147fbd27a6dc4df443dcac0006f1ff7848dc9beb95619482aaf79abb2ce"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/7.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/7.png",
+          "sha256": "3ec990584f19d4ce1fbf4a407a76a5a6d964c9e0778bb9e51939353414a33bbc"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/8.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/8.png",
+          "sha256": "08617f20b49b4703d80713ceed9176d79b3af5dcc8e2fe48a1a22cc2b46daa0f"
+        },
+        {
+          "file": "secondary_craftpix_liquid_loot_512/9.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_liquid_loot_icons_itch/PNG/without_shadow/9.png",
+          "sha256": "303ac36372818098bcab458d3b4bc63a60852c01544dfd8c4b0f4b5aa8bce32d"
+        }
+      ]
+    },
+    {
+      "id": "secondary_craftpix_halloween_512",
+      "label": "CraftPix Halloween - amenazas/eventos",
+      "count": 48,
+      "source_url": "https://free-game-assets.itch.io/free-halloween-game-icons",
+      "license": "CraftPix Freebies License (comercial permitido, sin atribucion requerida, no redistribuir/revender fuentes)",
+      "license_notes": "Tematica oscura pero con buen volumen; util para enemigos, maldiciones y eventos temporales.",
+      "recommendation": "RECOMENDADO con uso puntual",
+      "files": [
+        {
+          "file": "secondary_craftpix_halloween_512/1.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/1.png",
+          "sha256": "a7663176a5d0341694cec618e14885ff2586ed76f806095086241960fc160152"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/10.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/10.png",
+          "sha256": "961c4cbaabe24f322bfb1f5b8698b7e8246414263d2bf6bcab3d746c47fa3e74"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/11.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/11.png",
+          "sha256": "bdda9224c15c66037b5fe6973df6b3ad20e98258ee3a94e8fc3f90515ebf1cd0"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/12.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/12.png",
+          "sha256": "54e025e7895b9e5f68a97d402e7cbed7c0a482841c9929df3089f8f85ecde888"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/13.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/13.png",
+          "sha256": "12b667952f4f2660d58a0b013549157f61f5992aa378a9c5a6aac94f847798ee"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/14.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/14.png",
+          "sha256": "99de7978a0d50a22c647d13b50e0a1b46cd851865cb8a36d9772bf84d0a27ea1"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/15.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/15.png",
+          "sha256": "3049c0f0db406a8b8d316938d99b13cca040143a471e4d1b06ce351c0b66ebb5"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/16.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/16.png",
+          "sha256": "d446deaee798f3919e26a2ddc81dd846d48a3295cd8596f01495c9f686ec70e3"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/17.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/17.png",
+          "sha256": "734241b40b8a0993155f3be31a9b908d0bd3ded619c06845bce7b4498b4bfae9"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/18.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/18.png",
+          "sha256": "2a6912cc7856959f76386589e364846f6cfc0af9c4955f96839ebd3415bc1033"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/19.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/19.png",
+          "sha256": "8f6d4c3a37ac8a7651a8339da21ee8e5836eeaa0199e95c0724f442aaf14a84e"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/2.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/2.png",
+          "sha256": "ef7288a18d2ba0254a939602cf68d42e5d169752f68e18974b61dff2624a26d5"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/20.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/20.png",
+          "sha256": "462b76ff34b86792edba6a72fd37c9b7ad63be7abed507b819ecf3cd6e75cc34"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/21.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/21.png",
+          "sha256": "8488d119796e85755b979ad2cc2faaeeb47444f18594ad4f3a5345b6f3cbc354"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/22.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/22.png",
+          "sha256": "807f729c92ab9759a18c9bcd4a93691b20eea05ec12945a8c01b99a564af2bfb"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/23.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/23.png",
+          "sha256": "50bdf42be4a9da815d7c873c15c2486654cd8af957f78f05a4d22f3a8577ddef"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/24.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/24.png",
+          "sha256": "cf9795fc0f9a7ccc60650ed4d3d06a30d33fe8179a346cbbf85892da9afc1f5b"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/25.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/25.png",
+          "sha256": "1b9736f9807bfdf1ba5f22f44f259441aee2e47703c26a31bd2932c9d9a993a9"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/26.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/26.png",
+          "sha256": "468226bf5fdb3144ce0094d58d421041ccf91c8ce44b903bef793ff69c750831"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/27.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/27.png",
+          "sha256": "ac841ece19f2c745709448b105ce79bfad15b0d938463055cab4933a57238ca3"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/28.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/28.png",
+          "sha256": "b00f2daed031523c01856e29c9308c94c1536b333877b3e3d7284c6972938181"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/29.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/29.png",
+          "sha256": "23b217122dc7b67fee11e085bcb7e99c6f243b96d7b35063621ab9bf4a43e686"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/3.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/3.png",
+          "sha256": "520bd788523aeadd1a7370ce97811fd4e78369e9e6433bbe102f2b4791ce1d37"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/30.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/30.png",
+          "sha256": "fa6f472b5393776752f5ffb93d251a79a276fb3ab55de1cdd101f2931def5167"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/31.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/31.png",
+          "sha256": "f928a3fdbf45ceb426d73d8b13308c6547011e3519a5d2dedff22ed415c97e1e"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/32.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/32.png",
+          "sha256": "cf97f1cc703a4a08008919943743e9b4e90aaa40c2067facb224f5651521f291"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/33.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/33.png",
+          "sha256": "7c8024e3567dc7253775fb8f69bc744ed190d31668920f9d00a3d1c0533231bb"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/34.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/34.png",
+          "sha256": "8a95a2633b969edcdb2ca836cd7948104c4251d470ddf8f0a0012eef280387f2"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/35.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/35.png",
+          "sha256": "003f75e90574c5603e6eb42e06a82f043872cd9f708af4b181080fa4dda2c5c2"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/36.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/36.png",
+          "sha256": "24be9431867a5c9b7dfa1a2e83deebc7bd3d35763c28b73b59b2865d2fb61ed4"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/37.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/37.png",
+          "sha256": "cd4d0ad62313fb261a67019b2167d06835da9351ef5c0c857d2ab3f7f46c12ed"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/38.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/38.png",
+          "sha256": "f6d1e16ef94f8e0b1abd0edb7fd813fc58a6ac527e936503a00fd3e5d1259e6c"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/39.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/39.png",
+          "sha256": "4abc1dd88042f20181bada91120d3d196966ac1beaada78230dda052b62108d9"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/4.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/4.png",
+          "sha256": "453a37653a2d40cfa9ac05dc47f65ff31f4b8cb55c6d9eba76f3258a8633be25"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/40.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/40.png",
+          "sha256": "ebca16e6f7639f97c5869d8fe20956557d62c8a9a1948ffd055fc2fdcbdac614"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/41.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/41.png",
+          "sha256": "3e16a16240b0eda24f71e7b5309ed039725a48054187be067a14273e69238272"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/42.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/42.png",
+          "sha256": "0101db9497774cb22bc39c726c1e37c0d32d781b6cde087cfba7d4e4ffc26d55"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/43.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/43.png",
+          "sha256": "ddfae92ad8fa62ea10dadc30bf9c429e7a12ffcbfc37666f02b0e3b934428e13"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/44.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/44.png",
+          "sha256": "05b62915cc9407af4c5d9b7ee84f2ae9690d6d518b64e1951eef35142bc16a39"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/45.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/45.png",
+          "sha256": "aa5fe84778674bdb01b0eae855078261cdd57f8e8d3414729ccaac086da0773e"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/46.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/46.png",
+          "sha256": "10592be7dd923404383585de89472964dd74fcecae4cfc8a11a0dde5efe18f0a"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/47.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/47.png",
+          "sha256": "17d2d8d93acd6d412724bbde1ac096ce1a0678558c5573c1028c0124a1b08f65"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/48.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/48.png",
+          "sha256": "6f0496ee9bbd9ff1e6c0fd16e4515cca7ef0239f5847e683be31b78c239afc2f"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/5.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/5.png",
+          "sha256": "936d68d94953e6d50532e8aff915f38e991ff559db506a3722df1b3c3e1efc4b"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/6.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/6.png",
+          "sha256": "1e217cdd4bd16556fc4ffa902deecb70cd953c3c3261a71aa2964ceefd0a1069"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/7.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/7.png",
+          "sha256": "513d4bd32f68ae32e13d64140ad76d667f33fa6cfd0e9518dac8ea2ce7a59f1e"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/8.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/8.png",
+          "sha256": "321457542e3997f21c14bb7a07f85209b53c4add444932e15652a06ab55f7c1a"
+        },
+        {
+          "file": "secondary_craftpix_halloween_512/9.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_halloween_icons_itch/PNG/9.png",
+          "sha256": "53003c33ac2c883a2d19894c0a5df0b37d23e1a4421c2ae7c1725d915cf0f0e2"
+        }
+      ]
+    },
+    {
+      "id": "secondary_craftpix_achievements_512",
+      "label": "CraftPix Achievements - medallas/logros",
+      "count": 30,
+      "source_url": "https://free-game-assets.itch.io/free-game-achievement-vector-rpg-icons",
+      "license": "CraftPix Freebies License (comercial permitido, sin atribucion requerida, no redistribuir/revender fuentes)",
+      "license_notes": "Buen volumen para logros; algo mas RPG que casual, pero aprovechable.",
+      "recommendation": "RECOMENDADO para logros",
+      "files": [
+        {
+          "file": "secondary_craftpix_achievements_512/1.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/1.png",
+          "sha256": "1223bce7fe5bced6f14decfe8562d8b55bd9a2d8556c3b907abf70f9e934fc25"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/10.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/10.png",
+          "sha256": "fd62c4b20a6cf51096001d97f3421f215d0b6b2d59944832a423e0f3207b2c35"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/11.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/11.png",
+          "sha256": "1935310958b1f5f57d8c66dc670878452556129d4140f5c95375b8f7f6a53dc7"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/12.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/12.png",
+          "sha256": "edd0f4f27d04f9fd025b4db22cf1766473e70f97f3925146a5a6b35c2cffd02e"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/13.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/13.png",
+          "sha256": "903edadf0a764f30154260fb5bcdef4964262798cd92af51709a04899df3fa50"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/14.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/14.png",
+          "sha256": "4ac44708c8e781654e7e569cddfe9a8c0a252631185287b43bcbb153e96dc96a"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/15.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/15.png",
+          "sha256": "5c7c8a434b712cc3d7fa1484e0a2de5b5a2e43693516deb06ca360b40e74163d"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/16.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/16.png",
+          "sha256": "1a68a4b5bbcbd73fe9edbcdb909a1acb5d813462ca01788800c2181c5ca4d442"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/17.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/17.png",
+          "sha256": "08c8fc1a1a43089e10db020f693abb62e67a0520cdd2ee701261a20cb4c5306d"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/18.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/18.png",
+          "sha256": "f2783e61abfdf84aed2b0f12ff320a7d64378149a2c63b6bb546161e8423f802"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/19.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/19.png",
+          "sha256": "8ab33b3a48410c994edadbb7147fad5720df147d3eb74ea6613e165112831711"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/2.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/2.png",
+          "sha256": "c65163484800640eb6689ace7751782451273783ab745de67b9f4d18d449d8fb"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/20.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/20.png",
+          "sha256": "ad5f8a79b81f4c2cec4120abd30ea2ea026ec574fdadbabd50deb7e272a48958"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/21.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/21.png",
+          "sha256": "87168626d6763e9d2219fa24d07ab53ec2a4cb820a1f85e1d09c83b1c0568169"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/22.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/22.png",
+          "sha256": "4f43b60bf625c92d8552abf921b01243144748b08145e80343f1f63786ed68e5"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/23.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/23.png",
+          "sha256": "f17b8b64218ba420992cdd626be70251134169ba6158e001dcef13dcdce91081"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/24.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/24.png",
+          "sha256": "088e98680f50884922939098544b28d7e7052c20a061242ae0f210863ec5e61a"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/25.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/25.png",
+          "sha256": "80edc69f348e2fae9e0f25f8cad8ed084626e1a40e039a7d8df70c1d2c0fb6b1"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/26.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/26.png",
+          "sha256": "68bbc2b0e78e5fcf0c8317db357f7c68c9c8442da5eb4b14854d5edc8ca11f6c"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/27.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/27.png",
+          "sha256": "f92cddbb28a3a63cfc52f6052dca90440907a8053f8f382cd6c18570f374bac0"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/28.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/28.png",
+          "sha256": "4524aee452686766cf1e591387318391e8c312a4dfcf19f9b8191a269bcad43d"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/29.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/29.png",
+          "sha256": "b6bfecff0ad1f73bfdd6c93109f2366094f963500430cb0a01b4bc398fac47b8"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/3.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/3.png",
+          "sha256": "1f6d53ed10dba40877835e43e67b833c51fde2fc533a9bc949716de166c70150"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/30.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/30.png",
+          "sha256": "979da312653c0927b63f4c525867fe8d72d77d31700eefc2b70ea4256001347e"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/4.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/4.png",
+          "sha256": "e52ac33a4366e0341d561b3a3e6f474e371f8109abeba71ea54853c48a60b1a6"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/5.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/5.png",
+          "sha256": "4dca1e429ac3e45de12d74339e0f709ed8ff90dbd7f299a8e66fe0c17f7181b5"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/6.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/6.png",
+          "sha256": "3793fc7989cb0e250362887bcb14bd4e8d2386789e243ada71b51de7d44f1c98"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/7.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/7.png",
+          "sha256": "c5713e76bfbdc68734752d209c24682c0f3823a4728fa50f28e3b9801bdcafe2"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/8.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/8.png",
+          "sha256": "ee5866e8a517c711c84080b106f08e174622d716c8fbaa1e3cc134f2e64ac99f"
+        },
+        {
+          "file": "secondary_craftpix_achievements_512/9.png",
+          "source_file": "assets_nuevos/_source_extract/craftpix_game_achievement_icons_itch/PNG/9.png",
+          "sha256": "b0022902cc9dd2c298fd0a77bd2184d462a452ddb41fa7bcce04b42f67bcbaa4"
+        }
+      ]
+    },
+    {
+      "id": "secondary_rhos_ranks_sample_512",
+      "label": "Rhos Vector Ranks - muestra CC0 para rangos",
+      "count": 60,
+      "source_url": "https://rhosgfx.itch.io/vector-ranks",
+      "license": "CC0 1.0 Universal",
+      "license_notes": "Muy limpio legalmente y util para rangos/badges; visual mas flat-cartoon que 3D.",
+      "recommendation": "RECOMENDADO como reserva CC0 para rangos",
+      "files": [
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_amethyst_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Amethyst/diamond-amethyst-1.png",
+          "sha256": "3e2effe1c700c7c9b72b7557a50d56c7d8da7c6e149ac589588ac858bd73baa7"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_amethyst_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Amethyst/diamond-amethyst-12.png",
+          "sha256": "0cfbe4910d4b9c6eba136142285af9eca8d8d7b2639ecc103e5eaaec3f0a92b9"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_amethyst_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Amethyst/diamond-amethyst-6.png",
+          "sha256": "79527046102bab4c18db4af9cd0b799219f3636d101091a2fc1aaa0faba836cb"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_bronze_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Bronze/diamond-bronze-1.png",
+          "sha256": "3a99c8fe972834c051bbd1796fdf8098bef0658f59f587312a2f05f6f357d8ea"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_bronze_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Bronze/diamond-bronze-12.png",
+          "sha256": "42220654e3f9401b040da4968f47d7dfdf7b12bd9c45c6ff4035ce7bf205dbf5"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_bronze_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Bronze/diamond-bronze-6.png",
+          "sha256": "7d2fc326bacd0893d8b1503c4ef6ee539c007bdf523a8201a9b3bfc267fb9c1b"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_unranked.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/diamond-unranked.png",
+          "sha256": "3adb58c2283f204c442ff7d9af69750792642c75f778007516e8505cf3a30812"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_gold_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Gold/diamond-gold-1.png",
+          "sha256": "63849661628ef345859083611e2fa84ec21feba378196319fcd1a8c4447f0819"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_gold_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Gold/diamond-gold-12.png",
+          "sha256": "8db2165e8f34460a6d9fe501a6012c0c1680d46fdc5580d74625c55367fe98aa"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_gold_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Gold/diamond-gold-6.png",
+          "sha256": "1e8080904c22bb54da7f8020dded6995770eec76e9991d418dc17a83894cca58"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_master_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Master/diamond-master-1.png",
+          "sha256": "8f29b3e3aaf23c3b0da3d4cb2b20001ab3c39a33e7ef15cc2aeddf25b577c066"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_master_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Master/diamond-master-12.png",
+          "sha256": "05e39a7079c34fc43fa6a3dbfcd835f014e18b4901d0eee15f43ebf2078aaa8a"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_master_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Master/diamond-master-6.png",
+          "sha256": "623f5fcdf1081caac691a5d3490978471af79b28841e4cd1e1ceebab6cb85d05"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_onyx_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Onyx/diamond-onyx-1.png",
+          "sha256": "fb762025dc06f5444bbea19020b03b9295e01d7a507be9f600b25135243ec884"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_onyx_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Onyx/diamond-onyx-12.png",
+          "sha256": "ba1092ea68cbeb98fdfff589f37cebbd9c14ef748ee3bcdcd7ca95165e0f6d56"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_onyx_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Onyx/diamond-onyx-6.png",
+          "sha256": "95596b4be5929ffd41ef8e21f79e75b7e5eef73cb5df12b30d1718acaa8f7a7c"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_platinum_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Platinum/diamond-platinum-1.png",
+          "sha256": "00240c21e38eeb85deea330665c9735a72552f2ba4aa525c27de65eb09a1342d"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_platinum_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Platinum/diamond-platinum-12.png",
+          "sha256": "8a19aad379125a2d5a9f501460eb0ee8d9496eff96dbf349a398ade46205c6ec"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_platinum_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Platinum/diamond-platinum-6.png",
+          "sha256": "fa67745c12120048a95ad8cf6901ea124a8451eabb89625bcb60ddaeae9558c0"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_ruby_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Ruby/diamond-ruby-1.png",
+          "sha256": "ce9e21cb64aa92bf641acc6c6377f641854e29641278ce2b5ef1b747b0c23129"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_ruby_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Ruby/diamond-ruby-12.png",
+          "sha256": "a8488d3734b071580fd8015cac14d7b876480c709f5cf43dbaaafde9c5d02336"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_ruby_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Ruby/diamond-ruby-6.png",
+          "sha256": "cfcf74fbca000720efca9c2aa77e561ebf4621b5ac683d5217502b32af7300af"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_sapphire_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Sapphire/diamond-sapphire-1.png",
+          "sha256": "4049e29b9be9e205b1f66fba68639120334f4d9c7452216b61c2b8f2f204a356"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_sapphire_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Sapphire/diamond-sapphire-12.png",
+          "sha256": "a3b9b32fd9f0fc82d8a6e3c984bf2681f3adc265db0e633f521a7b68eef573ef"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_sapphire_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Sapphire/diamond-sapphire-6.png",
+          "sha256": "8dd5ceba71346e65f7937d7de6fa878e595dbd08735f324ef5224ae06304e68d"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_silver_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Silver/diamond-silver-1.png",
+          "sha256": "d7d6e3c5fadd2e040e157a8c4b00126e8a4d8eabb1d09af68515bd12dfb72ea0"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_silver_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Silver/diamond-silver-12.png",
+          "sha256": "830cf0b6d0e2d603bb39327b0074a9f1b2ace55251d071eb7b0e557decc65dd5"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_silver_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Silver/diamond-silver-6.png",
+          "sha256": "cfd654b77709bc0fb5cc4f7511b8c898765b920774e6c75b71b1d6bcb947491b"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_wood_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Wood/diamond-wood-1.png",
+          "sha256": "6d8aee67c31d42f9f5960938359f2b78032161580b695aedb2f8e61dd0324646"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_wood_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Wood/diamond-wood-12.png",
+          "sha256": "45d61358a2acfe121f20977be5302b1064757a830d12bbf6be11a9440ccfe31e"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/diamond_wood_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Diamond/Diamond (outline)/Wood/diamond-wood-6.png",
+          "sha256": "a0abb5e4406866652374d29d92dea9634656083c425b88509b2ce6a99180dd78"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_amethyst_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Amethyst/hexagon-amethyst-1.png",
+          "sha256": "e55b8314b3c200795551a9ab70c575bc0b35589e4dcd825ab3bb6405389a6c24"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_amethyst_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Amethyst/hexagon-amethyst-12.png",
+          "sha256": "9b3978195efe3bd92358d915f14ea95d3bc292bcfdad06ece26a43d1df2e60cb"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_amethyst_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Amethyst/hexagon-amethyst-6.png",
+          "sha256": "0fc3f15617f5749a24a25360b59194b93b95930fe77116c90baf5927c8890a7b"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_bronze_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Bronze/hexagon-bronze-1.png",
+          "sha256": "074d9545f6e206961e9bdd8b7bc32c91e8fc1102dcb1a01af571724e8acb90b8"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_bronze_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Bronze/hexagon-bronze-12.png",
+          "sha256": "99e7c5e9267628eea3b095efac9fdb5fe80ae8b31596fd012540f74b6fee6484"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_bronze_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Bronze/hexagon-bronze-6.png",
+          "sha256": "69a78b441c6f759d1e361d0aea649e8b0f2b1ab062b29e3c898dd973e1f560c6"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_gold_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Gold/hexagon-gold-1.png",
+          "sha256": "1ecffd72d7732a6c1c79ad0e012bf9f3a75182171b7208e1d052377c36970c61"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_gold_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Gold/hexagon-gold-12.png",
+          "sha256": "e94fddaa72ef76367f13f3287175de7c6ecf6412d7e0f1c02016a4f5fb49553e"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_gold_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Gold/hexagon-gold-6.png",
+          "sha256": "b5790d2e13ece72929932170c3d0125896091da9e4df8a4c9c9e4075e207c580"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_unranked.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/hexagon-unranked.png",
+          "sha256": "7ae02724f84c041e94b9e05e2606d2271bc8b25c7ed63c76a5d2c85f9902cbec"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_master_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Master/hexagon-master-1.png",
+          "sha256": "01e93c4656ef0b28984682b4af5c51b5ccc117a1ad322cbe08ed207dc4ce41d5"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_master_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Master/hexagon-master-12.png",
+          "sha256": "35707329f6dea2cfb5066a824031f8d5725b29c2626bf5c4a1db16f6e66a9844"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_master_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Master/hexagon-master-6.png",
+          "sha256": "b183ec4142aeddaf3c32b478bf26ff076bdf953f58138f2a78ab5e7147912add"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_onyx_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Onyx/hexagon-onyx-1.png",
+          "sha256": "33f514c65f4439b135ceed25b4ee1cfbd2659741feffb3557f98893590297bcb"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_onyx_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Onyx/hexagon-onyx-12.png",
+          "sha256": "b4b95f637a7643ad2b32d18894c28fd42db6b3306861cd7ecc738730a7bc54c6"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_onyx_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Onyx/hexagon-onyx-6.png",
+          "sha256": "2cf55e06c55745862bdaab1ecb524a9b73075c5bab909a9a64c0ccb9e1d2e3de"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_platinum_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Platinum/hexagon-platinum-1.png",
+          "sha256": "c5f34b96f0c3ad5fce3822470156ddea6115cb7021a9408f62e5d67fb14cb380"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_platinum_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Platinum/hexagon-platinum-12.png",
+          "sha256": "af960ad08fadb13d5b32acdb3ec7a5059c5d7d753709103edfbac9786d0717e8"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_platinum_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Platinum/hexagon-platinum-6.png",
+          "sha256": "f624acd6bfb43edcfafd5fd28a3c0d470f957e7dacf538a440595aee24b9cfca"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_ruby_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Ruby/hexagon-ruby-1.png",
+          "sha256": "936ba6c2198a10ce1051f48de055d19fe0e33feefb4a4a4681788ea90ec2334a"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_ruby_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Ruby/hexagon-ruby-12.png",
+          "sha256": "657e7d0fa321d6a597e01344487986ee14482c7bcc3f2bd63bbc4a1b8d01c66e"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_ruby_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Ruby/hexagon-ruby-6.png",
+          "sha256": "450259aef57a20e5051f0d765080cc4243c9e7bdecbe45d375925c7d1f4837ea"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_sapphire_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Sapphire/hexagon-sapphire-1.png",
+          "sha256": "9a37bf863a12596902e7d584ab924184c509db06701d79055b9200497f10b628"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_sapphire_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Sapphire/hexagon-sapphire-12.png",
+          "sha256": "f92e0e80139975e994c8ac37bbef514e374f74eeb1bd9c680fde7b40adcbb7a5"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_sapphire_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Sapphire/hexagon-sapphire-6.png",
+          "sha256": "1a771c4bc1de2a238445c8f00cac812aa838bb776d7441985f87773811b1d3df"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_silver_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Silver/hexagon-silver-1.png",
+          "sha256": "c5bb2812d96be5b25a26f544521950149de05caa55262f3a466acc9f17a80e2c"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_silver_12.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Silver/hexagon-silver-12.png",
+          "sha256": "31ab755649697ce63366926dcf0159de10e33b5aa1b37ae27a0512f48299499d"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_silver_6.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Silver/hexagon-silver-6.png",
+          "sha256": "3f935adecda586e8353b4d9d0f2e6bfb5ced1591722ea9d22fd98d330cdfd587"
+        },
+        {
+          "file": "secondary_rhos_ranks_sample_512/hexagon_wood_1.png",
+          "source_file": "assets_nuevos/_source_extract/rhos_vector_ranks/v1/Hexagon/Hexagon (outline)/Wood/hexagon-wood-1.png",
+          "sha256": "074d9545f6e206961e9bdd8b7bc32c91e8fc1102dcb1a01af571724e8acb90b8"
+        }
+      ]
+    },
+    {
+      "id": "ui_buttons_vektyr_512",
+      "label": "Vektyr Juicy Casual Buttons - botones UI",
+      "count": 48,
+      "source_url": "https://realvektyr.itch.io/juicy-casual-game-buttons",
+      "license": "Uso personal/comercial permitido; no revender ni redistribuir como fuente de arte",
+      "license_notes": "Botones jugosos y coherentes para UI; no sustituye iconografia principal.",
+      "recommendation": "RECOMENDADO para botones",
+      "files": [
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_blue_l_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-blue_L_pillShaped_btn.png",
+          "sha256": "cb2161614054227c951085965cf570d12d28f8d7bc4212f7c1a284b8d6127129"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_blue_l_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-blue_L_rounded_btn.png",
+          "sha256": "4836e7714546ab4ffa0536bd1d77a69f9bea674372db36a8a01e9b0900d79e1c"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_blue_m_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-blue_M_pillShaped_btn.png",
+          "sha256": "fdb2625688a5761cc649977110cff22ccea74d11156c63638b9f8f2011043472"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_blue_m_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-blue_M_rounded_btn.png",
+          "sha256": "e5241a20a18468d59f8f44b794077aa97b4446c24960056e9c41757fd524de08"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_blue_s_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-blue_S_pillShaped_btn.png",
+          "sha256": "ffc9c83285bb85b61e4c754a0a4192eebd1f8c505ffe303c20f4a5044dcd483f"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_blue_s_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-blue_S_rounded_btn.png",
+          "sha256": "bd76c2db00d6c6656577659cca487ae33693c17c9884789118e4089765931b66"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_green_l_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-green_L_pillShaped_btn.png",
+          "sha256": "cf6dc0144773d51c1781d36dcabb32b045edbfc5711b6a80a3415cf4a78384da"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_green_l_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-green_L_rounded_btn.png",
+          "sha256": "c99d9dbf313fc6efb0c5adce2176b998596458de815d7559be2964d736e7651d"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_green_m_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-green_M_pillShaped_btn.png",
+          "sha256": "7f60ee9afba6e3bf6d4e6c8c4c3e1518507015576b9e4774e8206c08faa7cefd"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_green_m_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-green_M_rounded_btn.png",
+          "sha256": "7175e8ddb7ba4b788e164028d84f26d1e63e4f595b0c449efb915e562b0ccc45"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_green_s_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-green_S_pillShaped_btn.png",
+          "sha256": "caded21423cc08cb2698cf2aa99e6e4f486cd520e9b470823ef4638530bf9125"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_green_s_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-green_S_rounded_btn.png",
+          "sha256": "66ddfb09670132133462ab279a81764ab80b545962f1ef14587092bf808e1fe4"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_grey_l_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-grey_L_pillShaped_btn.png",
+          "sha256": "e2e3963ec7e5005f9a5e6274955e33d979b1c1045c85e36cc4328ffd1c5fa9f7"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_grey_l_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-grey_L_rounded_btn.png",
+          "sha256": "f12efae910e8e49526138d12a974046664aa2da8a73225e1db2e8d9cb6b9c82f"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_grey_m_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-grey_M_pillShaped_btn.png",
+          "sha256": "a59675a5201c47f91f8be8ad77677c2047ab34e780760d80d9dc55f60b28b37d"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_grey_m_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-grey_M_rounded_btn.png",
+          "sha256": "3bca05f5ce01c1c7d421bb4e7cc4cfb4ea2a68f7cd5ac02a68f3b08a6a2c34c6"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_grey_s_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-grey_S_pillShaped_btn.png",
+          "sha256": "408dcea00b4e8d1ddaaf998847c341d551be27e11773785fd94578ff60548cb1"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_grey_s_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-grey_S_rounded_btn.png",
+          "sha256": "e17c18c21264e1bb727c73682df4291b610f4b808aa516b32495990a69f71a95"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_orange_l_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-orange_L_pillShaped_btn.png",
+          "sha256": "09f313dcfed26468dc6676446147808b5e1140ce8f1eb20413563145c9fca486"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_orange_l_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-orange_L_rounded_btn.png",
+          "sha256": "d3439565fa968418f965797f44eb7b17cc33c22f15513fae2013aede41329043"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_orange_m_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-orange_M_pillShaped_btn.png",
+          "sha256": "34bf11a81ca53ab52b40fe1038cd5487d180ceea5e176ed048fcc5501d0d7e22"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_orange_m_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-orange_M_rounded_btn.png",
+          "sha256": "cefa2a82d4a58865b2baa5171733f726b771f5a66e744daa33b04b31c0be4b52"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_orange_s_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-orange_S_pillShaped_btn.png",
+          "sha256": "1a702a5e4a0a06cfea86a6884bfc4dd567bb57c915ad13c0b01b3e913cc2fdd9"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_orange_s_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-orange_S_rounded_btn.png",
+          "sha256": "3a723f0d8536c9a647cd868789d1b6ca97545d5faef2c23c0ee3deca02b65ce9"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_pink_l_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-pink_L_pillShaped_btn.png",
+          "sha256": "08761879b2263e193af040b3060e2691f9a13eb10ddba48a7db2f7036bec122d"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_pink_l_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-pink_L_rounded_btn.png",
+          "sha256": "b1fb49f5268b1095c21434a586eeb67051f79f4c2740d09bb49edd7ff3128c5e"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_pink_m_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-pink_M_pillShaped_btn.png",
+          "sha256": "7d994bb2dab55ba64d2ff21b3d5c67f9ca783f46371e3ca1ac0919a8a7eec59c"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_pink_m_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-pink_M_rounded_btn.png",
+          "sha256": "de8cd1d5ef9756188983b40e008cf5d38878f07533129f17b8cfa963ff968260"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_pink_s_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-pink_S_pillShaped_btn.png",
+          "sha256": "82a7abc60aabf70ba9f44c4dbbac245017125d15796708f003bc56e53c7f326e"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_pink_s_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-pink_S_rounded_btn.png",
+          "sha256": "23881f75245c9d1c06e1ae2603937795df2495e4172771bfbf762d2c430ec320"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_purple_l_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-purple_L_pillShaped_btn.png",
+          "sha256": "c505daaa01df5d2651a52fda43275266f355027e044f1a8c3e167e9d4226ce82"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_purple_l_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-purple_L_rounded_btn.png",
+          "sha256": "0d44b4a83b035aa89fd8036945ce5b1ef67c60e592fc9c0383fe00c64db3e47f"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_purple_m_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-purple_M_pillShaped_btn.png",
+          "sha256": "2efe9860de6b514b8c02975727b3fb417b5fe837c818a51c6a0e3f230172652b"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_purple_m_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-purple_M_rounded_btn.png",
+          "sha256": "fed214dd8c3bda64130f78033b66ea71dde7b41dfd7bdaa497c744c8156c7605"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_purple_s_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-purple_S_pillShaped_btn.png",
+          "sha256": "716bd0673e42df8a266a5f1f91df7db47b70bd22e4600190d1a936c72e093e7d"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_purple_s_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-purple_S_rounded_btn.png",
+          "sha256": "94d49c43d08375ad7b01ac7580e03599c608e3bd819f2a321a4ca66bf5e2641e"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_red_l_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-red_L_pillShaped_btn.png",
+          "sha256": "78128020b625038bfcba78a8da6b0860a9be37ea4c19196eedb3d9fb070d4d95"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_red_l_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-red_L_rounded_btn.png",
+          "sha256": "df92d7f32894627ed87ac72f01bef5f536fce4d123feef40ca0aeaba670cf617"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_red_m_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-red_M_pillShaped_btn.png",
+          "sha256": "64c6cc4c62fa493ec691322834ebc70851237a6f61131e56a42109e29f9f96bb"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_red_m_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-red_M_rounded_btn.png",
+          "sha256": "ef2d62559e6327ff2e71bedfcf034f00542be6843e8fe66e976c3def3116221e"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_red_s_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-red_S_pillShaped_btn.png",
+          "sha256": "36f1ee6761bf49b234830e9b7106e49828156a9028e60eb743fcd95fb2d23446"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_red_s_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-red_S_rounded_btn.png",
+          "sha256": "73f61e76beb49ce29a751dbf1dd68b19ceef6d66457e56af5e8b16d2c8edf192"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_yellow_l_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-yellow_L_pillShaped_btn.png",
+          "sha256": "c8cd0d8e52c875e77aa3cc78fa72c3c20bcdb8bc37eb8cfc014dbc525fa93c51"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_yellow_l_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-yellow_L_rounded_btn.png",
+          "sha256": "b19e78cc02c6269f1b9be38c6502e758d51bbc3c91e3053a1724ab9cd14844a9"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_yellow_m_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-yellow_M_pillShaped_btn.png",
+          "sha256": "40b4301a70dff89e0fc533bda9e69afb7e7b804c47bead8c8986d5792a4231c7"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_yellow_m_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-yellow_M_rounded_btn.png",
+          "sha256": "b93a76562ee45424b82acec9d08b4fcd81db992b065167fa613409a8ed6cdd8d"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_yellow_s_pillshaped_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-yellow_S_pillShaped_btn.png",
+          "sha256": "1370b458e2cc204cdaf4f4523867481168ceff3663814b0295735a8495e304a7"
+        },
+        {
+          "file": "ui_buttons_vektyr_512/jcgb_yellow_s_rounded_btn.png",
+          "source_file": "assets_nuevos/_source_extract/vektyr_juicy_casual_buttons/JuicyCasualGameButtons/PNG/JCGB-yellow_S_rounded_btn.png",
+          "sha256": "342745a3cc2c0d365bacc9ccdd6a2a5167ccb4ecfe94140580bf47ed8022d117"
+        }
+      ]
+    }
+  ]
+}

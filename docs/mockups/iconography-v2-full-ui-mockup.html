@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Convergence - sistema UI con nueva iconografia</title>
+  <link rel="stylesheet" href="../../styles.css?v=2.6.32">
+  <style>
+    /* Solo organiza el visor del mockup. La interfaz interior usa styles.css. */
+    body.mockup-body {
+      --app-h: 100%;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+      min-height: 100dvh;
+      background: #050817;
+      overflow: hidden;
+    }
+
+    .mockup-rail {
+      position: relative;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 18px 14px;
+      color: #eaf0ff;
+      background: #090e23;
+      border-right: 1px solid rgba(120, 150, 255, .2);
+      box-shadow: 12px 0 34px rgba(0, 0, 0, .28);
+    }
+
+    .mockup-rail h1 {
+      margin: 0 4px 3px;
+      font-size: 1rem;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .mockup-rail > p {
+      margin: 0 4px 14px;
+      color: #9fb0e0;
+      font-size: .72rem;
+      line-height: 1.35;
+    }
+
+    .mockup-select {
+      width: 100%;
+      min-height: 42px;
+      margin-bottom: 12px;
+      padding: 8px 10px;
+      color: #eaf0ff;
+      background: #131e44;
+      border: 1px solid rgba(142, 177, 255, .34);
+      border-radius: 8px;
+      font: inherit;
+    }
+
+    .mockup-state-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-height: 0;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+
+    .mockup-group {
+      margin: 11px 7px 4px;
+      color: #7587bb;
+      font-size: .62rem;
+      font-weight: 900;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+    }
+
+    .mockup-state {
+      min-height: 34px;
+      padding: 7px 9px;
+      color: #aebce6;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      text-align: left;
+      font-size: .75rem;
+      font-weight: 750;
+    }
+
+    .mockup-state:hover { color: #fff; background: rgba(255, 255, 255, .05); }
+    .mockup-state[aria-current="true"] {
+      color: #fff;
+      background: #182a63;
+      border-color: rgba(0, 208, 255, .36);
+    }
+
+    .mockup-stage {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      min-height: 0;
+      padding: 16px;
+      background:
+        radial-gradient(60% 55% at 50% 42%, rgba(47, 107, 255, .17), transparent 75%),
+        #050817;
+    }
+
+    .mockup-viewport {
+      position: relative;
+      width: min(840px, 100%);
+      height: min(900px, calc(100dvh - 32px));
+      min-height: 620px;
+      overflow: hidden;
+      background: #070b1c;
+      border: 1px solid rgba(142, 177, 255, .3);
+      border-radius: 24px;
+      box-shadow: 0 34px 90px rgba(0, 0, 0, .62), 0 0 0 7px #0c1126;
+      isolation: isolate;
+    }
+
+    .mockup-viewport #app {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100% !important;
+      min-height: 0;
+    }
+
+    .mockup-viewport .stars,
+    .mockup-viewport .overlay,
+    .mockup-viewport .pick-overlay {
+      position: absolute;
+    }
+
+    .mockup-viewport .screen { min-height: 100%; }
+
+    .mockup-viewport img[data-icon] {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .28));
+    }
+
+    .mockup-viewport .ic[data-icon] { width: 1.35em; height: 1.35em; }
+    .mockup-viewport .ic.ic-inline[data-icon] { display: inline-block; vertical-align: -.24em; }
+    .mockup-viewport .m-emblem .ic[data-icon] { width: 36px; height: 36px; }
+    .mockup-viewport .new-art { display: block; width: 100%; height: 100%; }
+    .mockup-viewport .mc-art-icon .new-art { width: 82px; height: 82px; }
+    .mockup-viewport .bn-ic .new-art { width: 30px; height: 30px; }
+    .mockup-viewport .tab-ic .new-art { width: 26px; height: 26px; }
+    .mockup-viewport .tab-home .tab-ic .new-art { width: 30px; height: 30px; }
+    .mockup-viewport .econ-ic .new-art { width: 18px; height: 18px; }
+    .mockup-viewport .appbar-lvl-star { display: block; width: 13px; height: 13px; flex: 0 0 13px; }
+    .mockup-viewport .appbar-lvl-star .new-art { width: 13px; height: 13px; }
+    .mockup-viewport .btn-ic .new-art { width: 24px; height: 24px; }
+    .mockup-viewport .play-ic .new-art { width: 38px; height: 38px; }
+    .mockup-viewport .set-ic .new-art { width: 30px; height: 30px; }
+    .mockup-viewport .daily-icon .new-art { width: 30px; height: 30px; }
+    .mockup-viewport .po-ic .new-art { width: 54px; height: 54px; }
+    .mockup-viewport .wr-glyph .new-art,
+    .mockup-viewport .world-glyph .new-art { width: 40px; height: 40px; }
+    .mockup-viewport .nov-ic .new-art { width: 34px; height: 34px; }
+    .mockup-viewport .medal-ic .new-art { width: 34px; height: 34px; }
+    .mockup-viewport .empty-ic .new-art { width: 54px; height: 54px; }
+    .mockup-viewport .cr-icon .new-art { width: 86px; height: 86px; }
+    .mockup-viewport .surv-week .sw-ic { display: block; width: 32px; height: 32px; flex: 0 0 32px; }
+    .mockup-viewport .surv-week .sw-ic .new-art { width: 32px; height: 32px; }
+    .mockup-viewport .adv-glyph { display: block; width: 42px; height: 42px; flex: 0 0 42px; }
+    .mockup-viewport .adv-glyph .new-art { width: 42px; height: 42px; }
+    .mockup-viewport .chest-big { display: grid; place-items: center; width: 112px; height: 112px; }
+    .mockup-viewport .chest-big .new-art { width: 112px; height: 112px; }
+    .mockup-viewport .surv-systems .ss-ic { display: block; width: 22px; height: 22px; flex: 0 0 22px; }
+    .mockup-viewport .surv-systems .ss-ic .new-art { width: 22px; height: 22px; }
+
+    .mockup-viewport .cell .glyph img[data-icon] {
+      width: 86%;
+      height: 86%;
+      margin: 7%;
+      filter: drop-shadow(0 3px 2px rgba(0, 0, 0, .34));
+    }
+
+    .mockup-viewport .board { --size: 6; }
+    .mockup-viewport .board .cell { min-width: 0; min-height: 0; }
+    .mockup-viewport .static-bar-fill { display: block; height: 100%; border-radius: inherit; }
+    .mockup-viewport .over-hero[hidden],
+    .mockup-viewport .over-run[hidden],
+    .mockup-viewport .over-service[hidden],
+    .mockup-viewport .surv-service[hidden],
+    .mockup-viewport .surv-week[hidden] { display: none !important; }
+
+    .mockup-viewport .mode-how .mc-how-ic .new-art { width: 48px; height: 48px; }
+    .mockup-viewport .mode-hero .mc-go { font-family: system-ui, sans-serif; }
+    .mockup-viewport .mc-art .new-art,
+    .mockup-viewport .ac-art .new-art,
+    .mockup-viewport .m-emblem img[data-icon],
+    .mockup-viewport .db-gift .new-art,
+    .mockup-viewport .db-rocket .new-art {
+      position: relative;
+      z-index: 1;
+    }
+
+    .mockup-viewport .icon-btn .new-art,
+    .mockup-viewport .back-btn .new-art { width: 26px; height: 26px; }
+
+    .mockup-viewport .world-map { scrollbar-width: thin; }
+    .mockup-viewport .shop-list { padding-bottom: 2px; }
+
+    .mockup-viewport .home-scroll { min-width: 0; overflow-x: hidden; }
+    .mockup-viewport .home-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); min-width: 0; }
+    .mockup-viewport .app-card { min-width: 0; }
+    .mockup-viewport .mode-hero > .mc-art {
+      width: 64px;
+      height: 64px;
+      max-width: 100%;
+      aspect-ratio: auto;
+      justify-self: center;
+      overflow: hidden;
+    }
+    .mockup-viewport .mode-hero > .mc-art .new-art {
+      width: 54px;
+      height: 54px;
+      max-width: 100%;
+      max-height: 100%;
+    }
+    .mockup-viewport .mc-feat-ic {
+      display: block;
+      width: 14px;
+      height: 14px;
+      flex: 0 0 14px;
+    }
+    .mockup-viewport .mc-feat-ic .new-art { width: 14px; height: 14px; }
+
+    .mockup-viewport .mock-mode-symbol {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .mockup-viewport .mock-mode-symbol .new-art { width: 84%; height: 84%; }
+
+    @media (max-width: 760px) {
+      body.mockup-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+      .mockup-rail {
+        padding: 8px 10px;
+        border-right: 0;
+        border-bottom: 1px solid rgba(120, 150, 255, .2);
+      }
+      .mockup-rail h1, .mockup-rail > p, .mockup-state-list { display: none; }
+      .mockup-select { margin: 0; min-height: 40px; }
+      .mockup-stage { padding: 0; }
+      .mockup-viewport {
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .mockup-viewport .mode-hero > .mc-art { width: 56px; height: 56px; }
+      .mockup-viewport .mode-hero > .mc-art .new-art { width: 48px; height: 48px; }
+    }
+  </style>
+</head>
+<body class="mockup-body reduced-fx">
+  <aside class="mockup-rail" aria-label="Estados del mockup">
+    <h1>Sistema UI real</h1>
+    <p>Mismo DOM y CSS de Convergence, con la nueva iconografia aplicada.</p>
+    <select class="mockup-select" id="mock-state-select" aria-label="Elegir estado"></select>
+    <nav class="mockup-state-list" id="mock-state-list"></nav>
+  </aside>
+
+  <main class="mockup-stage">
+    <div class="mockup-viewport" id="mockup-viewport">
+      <div class="stars" aria-hidden="true"></div>
+      <div id="app">
+        <!-- PANTALLA: BIENVENIDA -->
+        <section class="screen" id="screen-login" aria-labelledby="login-title" hidden>
+          <div class="panel">
+            <h1 id="login-title" class="logo">Convergence<span class="logo-orbit" aria-hidden="true"></span></h1>
+            <p class="subtitle">Junta iconos iguales en el espacio</p>
+            <form novalidate>
+              <div class="field">
+                <label for="mock-player-name">¿Como te llamas? <span class="opt">(opcional)</span></label>
+                <input id="mock-player-name" type="text" maxlength="16" placeholder="Jugador">
+              </div>
+              <div class="avatar-pick" role="radiogroup" aria-label="Elige un color de avatar">
+                <button type="button" class="avatar-dot sel" role="radio" aria-checked="true" style="--av:#00d0ff"></button>
+                <button type="button" class="avatar-dot" role="radio" aria-checked="false" style="--av:#ff5b6e"></button>
+                <button type="button" class="avatar-dot" role="radio" aria-checked="false" style="--av:#3ad07f"></button>
+                <button type="button" class="avatar-dot" role="radio" aria-checked="false" style="--av:#ffd23f"></button>
+                <button type="button" class="avatar-dot" role="radio" aria-checked="false" style="--av:#a06bff"></button>
+                <button type="button" class="avatar-dot" role="radio" aria-checked="false" style="--av:#ff9838"></button>
+              </div>
+              <button class="btn btn-primary btn-lg" type="button" data-demo-state="home">¡Empezar!</button>
+              <button class="btn btn-ghost" type="button" data-demo-state="home">Jugar como invitado</button>
+            </form>
+          </div>
+        </section>
+
+        <!-- PANTALLA: INICIO -->
+        <section class="screen home" id="screen-start" aria-label="Inicio" hidden>
+          <header class="appbar">
+            <div class="appbar-profile">
+              <button class="appbar-profile-main" type="button" data-demo-state="profile" aria-label="Perfil">
+                <span class="avatar"><span class="avatar-art"><img class="new-art" data-icon="core:player" alt=""></span><span class="avatar-badge">7</span></span>
+                <span class="appbar-id">
+                  <span class="appbar-name-row"><b class="appbar-name">Jugador</b></span>
+                  <span class="appbar-lvl"><span class="appbar-lvl-star"><img class="new-art" data-icon="prog:star" alt=""></span><span class="appbar-lvl-txt">Nivel 7</span><span class="appbar-xp"><span class="appbar-xp-fill" style="width:64%"></span></span><span class="appbar-xp-num">430 / 675</span></span>
+                </span>
+              </button>
+              <button class="appbar-edit" type="button" aria-label="Editar nombre"><img class="new-art" data-icon="core:pencil" alt=""></button>
+            </div>
+            <div class="appbar-econ">
+              <span class="econ-pill econ-coins"><span class="econ-ic"><img class="new-art" data-icon="core:coin" alt=""></span><b>1.240</b><span class="econ-plus"><img class="new-art" data-icon="core:plus" alt=""></span></span>
+              <span class="econ-pill econ-gems"><span class="econ-ic"><img class="new-art" data-icon="core:gem" alt=""></span><b>42</b></span>
+            </div>
+          </header>
+
+          <div class="home-scroll">
+            <div class="daily-banner" data-demo-state="daily">
+              <span class="db-gift" aria-hidden="true"><img class="new-art" data-icon="core:gift" alt=""></span>
+              <div class="db-tx"><b>Recompensa diaria</b><small>¡Vuelve cada dia y gana premios!</small></div>
+              <button class="db-claim" type="button"><span>Reclamar</span><span class="db-badge">1</span></button>
+              <span class="db-rocket" aria-hidden="true"><img class="new-art" data-icon="core:rocket" alt=""></span>
+            </div>
+
+            <div class="level-chip record-chip">
+              <span class="lc-ic"><img class="ic ic-inline" data-icon="prog:trophy" alt=""></span>
+              <span class="lc-best">Mejor puntuacion <b>8.450</b></span>
+            </div>
+
+            <div class="home-cards">
+              <button class="app-card card-purple" type="button" data-demo-state="daily">
+                <span class="ac-tx"><b>Reto del dia</b><small class="ac-daily-state"><span>Tablero de hoy · ¡juegalo!</span><span>Dados locos</span></small></span>
+                <span class="ac-art" aria-hidden="true"><img class="new-art" data-icon="core:target" alt=""></span>
+              </button>
+              <button class="app-card card-blue" type="button" data-demo-state="worlds">
+                <span class="ac-tx"><b>Partida clasica</b><small>Supera niveles y gana estrellas</small></span>
+                <span class="ac-art" aria-hidden="true"><img class="new-art" data-icon="prog:luckyblock" alt=""></span>
+              </button>
+              <button class="app-card card-red" type="button" data-demo-state="survival">
+                <span class="ac-tx"><b>Supervivencia</b><small>Sobrevive a oleadas infinitas</small></span>
+                <span class="ac-art" aria-hidden="true"><img class="new-art" data-icon="core:heart" alt=""></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="home-foot">
+            <button class="btn-hero" type="button" data-demo-state="modes"><span class="play-ic"><img class="new-art" data-icon="core:rocket" alt=""></span><span>Jugar</span></button>
+            <nav class="bottom-nav" aria-label="Navegacion">
+              <button class="bnav" type="button" data-demo-state="profile"><span class="bn-ic"><img class="new-art" data-icon="prog:medal" alt=""></span><small>Logros</small></button>
+              <button class="bnav" type="button" data-demo-state="shop"><span class="bn-ic"><img class="new-art" data-icon="core:cart" alt=""></span><small>Tienda</small></button>
+              <button class="bnav bnav-center" type="button" data-demo-state="home" aria-current="page"><span class="bn-ic"><img class="new-art" data-icon="core:house" alt=""></span><small>Inicio</small></button>
+              <button class="bnav" type="button" data-demo-state="missions"><span class="bn-ic"><img class="new-art" data-icon="core:target" alt=""></span><span class="q-dot"></span><small>Misiones</small></button>
+              <button class="bnav" type="button" data-demo-state="settings"><span class="bn-ic"><img class="new-art" data-icon="core:settings" alt=""></span><small>Ajustes</small></button>
+            </nav>
+          </div>
+        </section>
+
+        <!-- PANTALLA: SELECCION DE MODO -->
+        <section class="screen screen-modes" id="screen-modes" aria-labelledby="modes-title" hidden>
+          <header class="appbar">
+            <div class="appbar-profile">
+              <button class="appbar-profile-main" type="button" data-demo-state="profile">
+                <span class="avatar"><span class="avatar-art"><img class="new-art" data-icon="core:player" alt=""></span><span class="avatar-badge">7</span></span>
+                <span class="appbar-id"><span class="appbar-name-row"><b class="appbar-name">Jugador</b></span><span class="appbar-lvl"><span class="appbar-lvl-star"><img class="new-art" data-icon="prog:star" alt=""></span><span class="appbar-lvl-txt">Nivel 7</span><span class="appbar-xp"><span class="appbar-xp-fill" style="width:64%"></span></span><span class="appbar-xp-num">430 / 675</span></span></span>
+              </button>
+              <button class="appbar-edit" type="button"><img class="new-art" data-icon="core:pencil" alt=""></button>
+            </div>
+            <div class="appbar-econ"><span class="econ-pill econ-coins"><span class="econ-ic"><img class="new-art" data-icon="core:coin" alt=""></span><b>1.240</b><span class="econ-plus"><img class="new-art" data-icon="core:plus" alt=""></span></span><span class="econ-pill econ-gems"><span class="econ-ic"><img class="new-art" data-icon="core:gem" alt=""></span><b>42</b></span></div>
+          </header>
+          <div class="modes-body">
+            <div class="modes-head">
+              <button class="back-btn" type="button" data-demo-state="home" aria-label="Volver"><span aria-hidden="true">‹</span></button>
+              <h2 id="modes-title">Elige tu modo</h2>
+              <p class="modes-sub">Cada modo, una forma diferente de jugar</p>
+            </div>
+            <div class="mode-cards" role="list">
+              <h3 class="group-title mode-group-title">Progresion</h3>
+              <button class="mode-hero mode-current" type="button" role="listitem" data-demo-state="worlds" style="--mode-accent:#2f6bff" aria-current="true">
+                <span class="mc-art mc-art-icon"><img class="new-art" data-icon="prog:luckyblock" alt=""></span>
+                <span class="mc-body"><span class="mc-titlerow"><span class="mc-title">Clasico</span><span class="mc-badge">Niveles</span></span><span class="mc-desc">Avanza por mundos, supera objetivos y gana estrellas.</span><span class="mc-feats"><span class="mc-feat"><span class="mc-feat-ic"><img class="new-art" data-icon="core:lock" alt=""></span>Desbloqueos</span><span class="mc-feat"><span class="mc-feat-ic"><img class="new-art" data-icon="core:target" alt=""></span>Objetivos</span></span></span><span class="mc-go" aria-hidden="true">›</span>
+              </button>
+              <button class="mode-hero" type="button" role="listitem" data-demo-state="adventure" style="--mode-accent:#7a5cff">
+                <span class="mc-art mc-art-icon"><img class="new-art" data-icon="core:rocket" alt=""></span>
+                <span class="mc-body"><span class="mc-titlerow"><span class="mc-title">Aventura</span><span class="mc-badge">Viaje infinito</span></span><span class="mc-desc">Explora biomas, elige rutas y derrota mini-jefes.</span></span><span class="mc-go" aria-hidden="true">›</span>
+              </button>
+              <h3 class="group-title mode-group-title">Puntuacion</h3>
+              <button class="mode-hero" type="button" role="listitem" data-demo-state="survival" style="--mode-accent:#ff5b6e">
+                <span class="mc-art mc-art-icon"><img class="new-art" data-icon="core:heart" alt=""></span>
+                <span class="mc-body"><span class="mc-titlerow"><span class="mc-title">Supervivencia</span><span class="mc-badge">Oleadas</span></span><span class="mc-desc">Resiste oleadas crecientes con vidas, jefes y potenciadores.</span></span><span class="mc-go" aria-hidden="true">›</span>
+              </button>
+              <button class="mode-hero" type="button" role="listitem" data-demo-state="game" style="--mode-accent:#ff6cb0">
+                <span class="mc-art mc-art-icon"><img class="new-art" data-icon="core:clock" alt=""></span>
+                <span class="mc-body"><span class="mc-titlerow"><span class="mc-title">Contrarreloj</span><span class="mc-badge">Tiempo</span></span><span class="mc-desc">Consigue la mayor puntuacion antes de que se agote el tiempo.</span><span class="mc-feats"><span class="mc-feat"><span class="mc-feat-ic"><img class="new-art" data-icon="core:target" alt=""></span>Reto diario</span></span></span><span class="mc-go" aria-hidden="true">›</span>
+              </button>
+              <h3 class="group-title mode-group-title">Relax</h3>
+              <button class="mode-hero" type="button" role="listitem" data-demo-state="game" style="--mode-accent:#9be15d">
+                <span class="mc-art mc-art-icon"><img class="new-art" data-icon="core:leaf" alt=""></span>
+                <span class="mc-body"><span class="mc-titlerow"><span class="mc-title">Zen</span><span class="mc-badge">Sin presion</span></span><span class="mc-desc">Juega a tu ritmo, limpia el tablero y colecciona flores.</span></span><span class="mc-go" aria-hidden="true">›</span>
+              </button>
+              <button class="mode-how" type="button" role="listitem" data-demo-state="how">
+                <span class="mc-how-ic"><img class="new-art" data-icon="core:book" alt=""></span>
+                <span class="mc-body"><span class="mc-title">¿Como se juega?</span><span class="mc-desc">Aprende las reglas basicas de Convergence.</span></span>
+                <span class="mc-how-cta">Ver tutorial ›</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANTALLA: MODO CLASICO -->
+        <section class="screen screen-worlds" id="screen-worlds" aria-labelledby="worlds-title" hidden>
+          <header class="topbar">
+            <button class="icon-btn" type="button" data-demo-state="modes" aria-label="Volver"><span>‹</span></button>
+            <div class="topbar-econ" aria-label="Recursos"><span class="econ-pill econ-coins"><img class="ic ic-inline" data-icon="core:coin" alt=""> 1.240</span><span class="econ-pill econ-gems"><img class="ic ic-inline" data-icon="core:gem" alt=""> 42</span></div>
+            <button class="icon-btn" type="button" data-demo-state="settings" aria-label="Ajustes"><img class="ic ic-inline" data-icon="core:settings" alt=""></button>
+          </header>
+          <h2 id="worlds-title" class="worlds-title">Modo Clasico</h2>
+          <div class="worlds-body">
+            <div class="worlds-main">
+              <div class="world-head">
+                <span class="world-glyph"><img class="new-art" data-icon="core:leaf" alt=""></span>
+                <div class="world-head-tx"><span class="world-name">Bosque Verde</span><span class="world-stars"><img class="ic ic-inline" data-icon="prog:star" alt=""> 18/150</span></div>
+              </div>
+              <div class="world-map" id="mock-world-map" role="list" aria-label="Niveles"></div>
+              <div class="world-nov-wrap">
+                <h3 class="group-title">Novedades de este mundo</h3>
+                <div class="world-nov">
+                  <div class="nov-item"><span class="nov-ic"><img class="new-art" data-icon="surv:coil" alt=""></span><div class="nov-tx"><b>Cadenas</b><small>Toca la figura 2 veces para liberarla</small></div></div>
+                  <div class="nov-item"><span class="nov-ic"><img class="new-art" data-icon="core:plus" alt=""></span><div class="nov-tx"><b>Bonus +30</b><small>Tocalo para puntos extra</small></div></div>
+                  <div class="nov-item"><span class="nov-ic"><img class="new-art" data-icon="core:target" alt=""></span><div class="nov-tx"><b>Nuevos objetivos</b><small>Alcanza la meta en cada nivel</small></div></div>
+                </div>
+              </div>
+            </div>
+            <aside class="worlds-side">
+              <h3 class="group-title">Mundos</h3>
+              <div class="world-rail" role="list">
+                <button class="wr-item sel" type="button" style="--wa:#3ad07f"><span class="wr-glyph"><img class="new-art" data-icon="core:leaf" alt=""></span><span class="wr-tx"><b>1 · Bosque Verde</b><small><img class="ic ic-inline" data-icon="prog:star" alt=""> 12/50</small></span></button>
+                <button class="wr-item locked" type="button" aria-disabled="true" style="--wa:#ffb24d"><span class="wr-glyph"><img class="new-art" data-icon="core:planet_hell" alt=""></span><span class="wr-tx"><b>2 · Desierto Dorado</b><small><img class="ic ic-inline" data-icon="core:lock" alt=""> Bloqueado</small></span></button>
+                <button class="wr-item locked" type="button" aria-disabled="true" style="--wa:#7ad7ff"><span class="wr-glyph"><img class="new-art" data-icon="surv:cloud" alt=""></span><span class="wr-tx"><b>3 · Montaña Helada</b><small><img class="ic ic-inline" data-icon="core:lock" alt=""> Bloqueado</small></span></button>
+                <button class="wr-item locked" type="button" aria-disabled="true" style="--wa:#a06bff"><span class="wr-glyph"><img class="new-art" data-icon="core:potion" alt=""></span><span class="wr-tx"><b>4 · Cueva Misteriosa</b><small><img class="ic ic-inline" data-icon="core:lock" alt=""> Bloqueado</small></span></button>
+                <button class="wr-item locked" type="button" aria-disabled="true" style="--wa:#ff5cf0"><span class="wr-glyph"><img class="new-art" data-icon="core:planet" alt=""></span><span class="wr-tx"><b>5 · Ciudad Neon</b><small><img class="ic ic-inline" data-icon="core:lock" alt=""> Bloqueado</small></span></button>
+              </div>
+              <button class="btn btn-ghost btn-sm world-rewards" type="button" data-demo-state="chests"><img class="ic ic-inline" data-icon="core:gift" alt=""> Ver recompensas</button>
+            </aside>
+          </div>
+          <nav class="worlds-tabs" aria-label="Navegacion">
+            <button class="tab" type="button" data-demo-state="shop"><span class="tab-ic"><img class="new-art" data-icon="core:cart" alt=""></span><small>Tienda</small></button>
+            <button class="tab" type="button" data-demo-state="missions"><span class="tab-ic"><img class="new-art" data-icon="core:target" alt=""></span><small>Misiones</small></button>
+            <button class="tab tab-home" type="button" aria-current="page"><span class="tab-ic"><img class="new-art" data-icon="core:rocket" alt=""></span><small>Jugar</small></button>
+            <button class="tab" type="button" data-demo-state="chests"><span class="tab-ic"><img class="new-art" data-icon="core:chest" alt=""></span><span class="q-dot q-dot-gold"></span><small>Cofres</small></button>
+            <button class="tab" type="button" data-demo-state="profile"><span class="tab-ic"><img class="new-art" data-icon="prog:trophy" alt=""></span><small>Clasificacion</small></button>
+          </nav>
+        </section>
+
+        <!-- PANTALLA: JUEGO -->
+        <section class="screen screen-game" id="screen-game" aria-label="Partida" hidden>
+          <header class="gtop">
+            <div class="gtop-main">
+              <div class="hud-wallet" aria-label="Recursos">
+                <button class="wallet-pill wallet-coins" type="button"><img class="ic ic-inline" data-icon="core:coin" alt=""><b>1.240</b><span class="wallet-plus"></span></button>
+                <button class="wallet-pill wallet-gems" type="button"><img class="ic ic-inline" data-icon="core:gem" alt=""><b>42</b><span class="wallet-plus"></span></button>
+                <span class="wallet-pill wallet-run"><span>Run</span> <b>+86</b></span>
+              </div>
+              <div class="controls"><button class="icon-btn" type="button" data-demo-state="pause" aria-label="Pausa"><img class="new-art" data-icon="core:clock" alt=""></button></div>
+            </div>
+            <div class="event-dock"><div class="toasts" aria-live="polite"></div></div>
+            <div class="gtop-context">
+              <div class="surv-bar">
+                <div class="surv-grid">
+                  <span class="surv-metric surv-life-box"><span class="surv-k">Vidas</span><span class="surv-lives"><img class="ic ic-inline" data-icon="core:heart" alt=""><img class="ic ic-inline" data-icon="core:heart" alt=""><img class="ic ic-inline" data-icon="core:heart" alt=""></span></span>
+                  <div class="surv-wave-wrap"><span class="surv-wave-row"><span class="surv-wave">Oleada 7</span><span class="surv-tier">N2</span></span><span class="surv-waveprog"><span class="surv-waveprog-fill" style="width:62%"></span></span></div>
+                  <span class="surv-metric surv-time-box"><span class="surv-k">Tiempo</span><span class="surv-time">2:41</span></span>
+                </div>
+                <div class="surv-subrow"><span class="surv-best-wave">Record: oleada 12</span><span class="surv-next">Pool +1</span></div>
+                <div class="surv-build"><span class="sb-chip"><img class="ic ic-inline" data-icon="core:shield" alt=""> Guardia</span><span class="sb-chip sb-rare"><img class="ic ic-inline" data-icon="core:fire" alt=""> Frenesi</span></div>
+              </div>
+              <div class="score-row" aria-label="Puntuacion y frenesi">
+                <div class="score-side">
+                  <div class="power-rings" aria-hidden="true"><svg viewBox="0 0 56 56"><circle class="pr-bg" cx="28" cy="28" r="24"></circle><circle class="pr-fill pr-frenzy" cx="28" cy="28" r="24" style="stroke-dashoffset:52"></circle><circle class="pr-bg" cx="28" cy="28" r="17"></circle><circle class="pr-fill pr-charge" cx="28" cy="28" r="17" style="stroke-dashoffset:36"></circle></svg><span class="pr-flame"><img class="new-art" data-icon="core:fire" alt=""></span></div>
+                  <div class="gctx"><span class="g-chip time-chip"><b>2:41</b></span></div>
+                </div>
+                <div class="gscore"><span class="score-main"><span class="hud-value">3.780</span><span class="mult-chip">×3</span></span><span class="score-meta"><span class="score-best">Mejor puntuacion <b>8.450</b></span></span></div>
+                <span class="score-spacer"></span>
+              </div>
+            </div>
+          </header>
+          <div class="board-area">
+            <div class="board-column">
+              <div class="board-shell"><div class="board-wrap" data-board="classic"><div class="board" id="mock-board" role="grid" aria-label="Tablero de juego"></div></div></div>
+              <div class="occ"><span class="occ-label"><img class="ic ic-inline" data-icon="core:stats" alt=""><span class="occ-text">Tablero</span></span><div class="occ-bar-wrap"><div class="bar-fill" style="width:48%"></div></div><span class="occ-percent">48%</span></div>
+            </div>
+          </div>
+          <div class="booster-bar ready">
+            <div class="boosters">
+              <button class="booster" type="button"><span class="b-ic"><img class="ic ic-inline" data-icon="core:bomb" alt=""></span><span class="b-label">Bomba</span><span class="b-count">2</span></button>
+              <button class="booster" type="button"><span class="b-ic"><img class="ic ic-inline" data-icon="status:debuff_freeze" alt=""></span><span class="b-label">Hielo</span><span class="b-count">1</span></button>
+              <button class="booster" type="button"><span class="b-ic"><img class="ic ic-inline" data-icon="core:bolt" alt=""></span><span class="b-label">Rayo</span><span class="b-count">3</span></button>
+            </div>
+            <button class="booster hint-tool" type="button"><span class="b-ic"><img class="ic ic-inline" data-icon="core:search" alt=""></span><span class="b-label">Pista</span><span class="b-count">3</span></button>
+          </div>
+        </section>
+
+        <!-- SELECTOR GLOBAL: BENDICIONES -->
+        <div class="pick-overlay" id="pick-overlay" hidden>
+          <div class="pick-card" role="dialog" aria-modal="true" aria-labelledby="pick-title">
+            <h2 class="pick-title" id="pick-title">Elige una bendicion</h2>
+            <p class="pick-sub">La recompensa se mantiene durante esta partida.</p>
+            <div class="pick-options">
+              <button class="pick-opt rarity-common" type="button"><span class="po-ic"><img class="new-art" data-icon="core:heart" alt=""></span><span class="po-tx"><b>Vida extra</b><small>Recupera 1 vida ahora.</small></span></button>
+              <button class="pick-opt rarity-rare" type="button"><span class="po-ic"><img class="new-art" data-icon="core:bolt" alt=""></span><span class="po-tx"><b>Carga rapida</b><small>El anillo de potenciador se carga antes.</small></span></button>
+              <button class="pick-opt rarity-epic" type="button"><span class="po-ic"><img class="new-art" data-icon="core:fire" alt=""></span><span class="po-tx"><b>Frenesi</b><small>El multiplicador dura mas tiempo.</small></span></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SELECTOR PRE-NIVEL -->
+        <div class="pick-overlay" id="prelevel" hidden>
+          <div class="pick-card" role="dialog" aria-modal="true" aria-labelledby="pl-title">
+            <h2 class="pick-title" id="pl-title">Nivel 12 · Desierto Dorado</h2>
+            <p class="pick-sub">Lleva hasta 2 potenciadores (opcional)</p>
+            <div class="pl-items">
+              <button class="pl-chip on" type="button" aria-pressed="true"><span class="po-ic"><img class="new-art" data-icon="core:bomb" alt=""></span><span class="po-tx"><b>Bomba</b><small><img class="ic ic-inline" data-icon="core:coin" alt=""> 80</small></span></button>
+              <button class="pl-chip" type="button" aria-pressed="false"><span class="po-ic"><img class="new-art" data-icon="status:debuff_freeze" alt=""></span><span class="po-tx"><b>Congelacion</b><small><img class="ic ic-inline" data-icon="core:coin" alt=""> 60</small></span></button>
+              <button class="pl-chip" type="button" aria-pressed="false"><span class="po-ic"><img class="new-art" data-icon="core:bolt" alt=""></span><span class="po-tx"><b>Rayo</b><small><img class="ic ic-inline" data-icon="core:coin" alt=""> 90</small></span></button>
+            </div>
+            <div class="pl-actions"><button class="btn btn-primary" type="button">Jugar · 80 monedas</button><button class="btn btn-ghost" type="button">Sin potenciadores</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODALES REALES -->
+      <div class="overlay" id="overlay" hidden>
+        <div class="modal" id="modal-missions" role="dialog" aria-modal="true" aria-labelledby="missions-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="core:target" alt=""></span><h2 id="missions-title">Misiones</h2></div>
+          <div class="modal-body">
+            <div class="start-missions">
+              <div class="daily daily-run medal-silver"><span class="daily-icon"><img class="new-art" data-icon="core:target" alt=""></span><div class="daily-main"><span class="daily-text">Reto del dia</span><small class="daily-run-best medal-silver">Plata · Mejor marca: 2.840</small><span class="daily-cal" aria-label="Calendario diario"><span class="cal-dot m-gold"></span><span class="cal-dot m-silver"></span><span class="cal-dot m-none"></span><span class="cal-dot m-bronze"></span><span class="cal-dot m-none"></span><span class="cal-dot m-silver"></span><span class="cal-dot m-gold"></span><b class="daily-streak-n"><img class="ic ic-inline" data-icon="core:fire" alt="">3</b></span></div><button class="btn btn-primary btn-sm" type="button" data-demo-state="daily">Jugar</button></div>
+              <div class="daily"><span class="daily-icon"><img class="new-art" data-icon="core:target" alt=""></span><div class="daily-main"><span class="daily-text">Consigue un combo ×8</span><div class="daily-bar"><div class="daily-bar-fill" style="width:62%"></div></div></div><span class="daily-prog">5/8</span></div>
+              <button class="btn btn-ghost btn-sm mission-reroll" type="button"><img class="ic ic-inline" data-icon="core:ticket" alt=""> Cambiar mision</button>
+              <div class="daily weekly"><span class="daily-icon"><img class="new-art" data-icon="core:calendar" alt=""></span><div class="daily-main"><span class="daily-text">Completa 12 partidas esta semana</span><div class="daily-bar"><div class="daily-bar-fill" style="width:58%"></div></div></div><span class="daily-prog">7/12</span></div>
+            </div>
+          </div>
+          <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Cerrar</button></div>
+        </div>
+
+        <div class="modal" id="modal-how" role="dialog" aria-modal="true" aria-labelledby="how-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="core:question" alt=""></span><h2 id="how-title">¿Como se juega?</h2></div>
+          <div class="modal-body">
+            <ul class="how-list">
+              <li><img class="ic ic-inline" data-icon="core:target" alt=""> <span>Toca una <strong>casilla vacia</strong>.</span></li>
+              <li><img class="ic ic-inline" data-icon="core:search" alt=""> <span>Se mira el icono mas cercano en cada direccion (arriba, abajo, izquierda, derecha).</span></li>
+              <li><img class="ic ic-inline" data-icon="prog:star" alt=""> <span>Si <strong>2 o mas coinciden</strong>, ¡convergen y desaparecen!</span></li>
+              <li><img class="ic ic-inline" data-icon="core:fire" alt=""> <span>Encadena eliminaciones rapidas para subir el <strong>combo</strong> y multiplicar puntos.</span></li>
+              <li><img class="ic ic-inline" data-icon="core:warning" alt=""> <span>Los iconos aparecen solos: vacia el tablero antes de que se llene.</span></li>
+            </ul>
+          </div>
+          <div class="modal-actions"><button class="btn btn-primary btn-icon" type="button"><span class="btn-ic"><img class="new-art" data-icon="core:rocket" alt=""></span><span>Tutorial interactivo</span></button><button class="btn btn-ghost" type="button" data-close>Entendido</button></div>
+        </div>
+
+        <div class="modal" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="core:clock" alt=""></span><h2 id="pause-title">Pausa</h2></div>
+          <div class="modal-actions modal-buttons">
+            <button class="btn btn-primary btn-icon" type="button" data-close><span class="btn-ic"><img class="new-art" data-icon="core:rocket" alt=""></span><span>Reanudar</span></button>
+            <button class="btn btn-ghost btn-icon" type="button"><span class="btn-ic"><img class="new-art" data-icon="surv:rebirth" alt=""></span><span>Reiniciar</span></button>
+            <button class="btn btn-ghost btn-icon" type="button" data-demo-state="home"><span class="btn-ic"><img class="new-art" data-icon="core:close" alt=""></span><span>Menu</span></button>
+          </div>
+        </div>
+
+        <div class="modal modal-win" id="modal-level" role="dialog" aria-modal="true" aria-labelledby="level-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="prog:star" alt=""></span><h2 id="level-title">¡Nivel completado!</h2></div>
+          <div class="modal-body">
+            <p class="modal-sub">Has superado el nivel 12 del Bosque Verde.</p>
+            <div class="stats"><div class="stat"><span class="v" style="color:var(--score)">3.780</span><span class="k">Puntuacion</span></div><div class="stat"><span class="v" style="color:var(--gold)">×7</span><span class="k">Combo</span></div><div class="stat"><span class="v" style="color:var(--good)">42</span><span class="k">Eliminados</span></div></div>
+            <div class="next-info"><img class="ic ic-inline" data-icon="prog:star" alt=""><img class="ic ic-inline" data-icon="prog:star" alt=""><img class="ic ic-inline" data-icon="prog:star" alt=""> <strong>3 estrellas</strong></div>
+          </div>
+          <div class="modal-actions modal-buttons"><button class="btn btn-primary btn-lg" type="button">Siguiente nivel ›</button><button class="btn btn-ghost btn-icon" type="button" data-demo-state="worlds"><span class="btn-ic"><img class="new-art" data-icon="core:pin" alt=""></span><span>Volver al mapa</span></button></div>
+        </div>
+
+        <div class="modal modal-over endgame-modal" id="modal-over" role="dialog" aria-modal="true" aria-labelledby="over-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="core:shield" alt=""></span><h2 id="over-title">¡Mision fallida!</h2></div>
+          <div class="modal-body endgame-body">
+            <section class="endgame-section endgame-result"><p class="modal-sub">El tablero se ha desbordado.</p><div class="over-hero"><div class="oh-wave"><span class="oh-label">Oleada alcanzada</span><span class="oh-num">12</span></div><div class="oh-ctx near">A 2 oleadas de tu record</div></div><p class="modal-meta">Supervivencia · Normal · Oleada 12 · 284s</p></section>
+            <section class="endgame-section endgame-ledger"><div class="endgame-section-title"><span>Hoja de supervivencia</span><small>bendiciones, jefes y rango</small></div><div class="over-run"><div class="or-build"><div class="or-label">Bendiciones</div><div class="or-boons"><span class="or-boon"><img class="ic ic-inline" data-icon="core:heart" alt=""></span><span class="or-boon"><img class="ic ic-inline" data-icon="core:bolt" alt=""></span><span class="or-boon"><img class="ic ic-inline" data-icon="core:fire" alt=""></span></div></div><div class="or-boss-card"><span class="or-label">Jefes</span><b>2</b><small>superados</small></div></div><div class="over-service"><div class="os-line"><b>+12 oleadas</b> de servicio · Rango Recluta 38/50</div></div></section>
+            <section class="endgame-section endgame-performance"><div class="endgame-section-title"><span>Rendimiento</span><small>lo esencial de la run</small></div><div class="stats"><div class="stat"><span class="v" style="color:var(--level)">12</span><span class="k">Oleada</span></div><div class="stat"><span class="v" style="color:var(--gold)">×11</span><span class="k">Combo</span></div><div class="stat"><span class="v" style="color:var(--good)">146</span><span class="k">Eliminados</span></div><div class="stat"><span class="v" style="color:var(--time)">284s</span><span class="k">Supervivencia</span></div></div></section>
+            <section class="endgame-section endgame-rewards"><div class="endgame-section-title"><span>Recompensas</span><small>perfil general</small></div><div class="over-xp"><div class="xp-line"><span class="xp-gain">+190 XP</span><span class="xp-coins"><img class="ic ic-inline" data-icon="core:coin" alt=""> +86</span><span class="xp-rank">Habil · Nivel 7</span></div><div class="xpbar"><div class="xpbar-fill" style="width:64%"></div></div><div class="mission-done surv-rewards"><img class="ic ic-inline" data-icon="core:chest" alt=""> 1 cofre conseguido</div></div></section>
+            <section class="endgame-section endgame-next"><div class="next-card"><span class="next-card-ic"><img class="new-art" data-icon="core:heart" alt=""></span><span class="next-card-copy"><b>Siguiente: Supervivencia</b><small>Gana cofres cada 10 oleadas y prueba boosters.</small></span><button class="btn btn-primary btn-sm" type="button">Jugar</button></div></section>
+          </div>
+          <div class="modal-actions modal-buttons"><button class="btn btn-primary btn-icon" id="btn-retry" type="button"><span class="btn-ic"><img class="new-art" data-icon="surv:rebirth" alt=""></span><span>Reintentar</span></button><button class="btn btn-ghost btn-icon" id="btn-share" type="button"><span class="btn-ic"><img class="new-art" data-icon="core:friend" alt=""></span><span>Compartir</span></button><button class="btn btn-ghost btn-icon" id="btn-over-quit" type="button" data-demo-state="home"><span class="btn-ic"><img class="new-art" data-icon="core:close" alt=""></span><span>Menu</span></button></div>
+        </div>
+
+        <div class="modal" id="modal-settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="core:settings" alt=""></span><h2 id="settings-title">Ajustes</h2></div>
+          <div class="modal-body"><div class="settings-list">
+            <div class="set-row"><span class="set-row-l"><span class="set-ic"><img class="new-art" data-icon="core:sound_on" alt=""></span><span>Efectos de sonido</span></span><button class="switch" type="button" role="switch" aria-checked="true"><span class="switch-dot"></span></button></div>
+            <div class="set-row"><span class="set-row-l"><span class="set-ic"><img class="new-art" data-icon="core:music_on" alt=""></span><span>Musica</span></span><button class="switch" type="button" role="switch" aria-checked="true"><span class="switch-dot"></span></button></div>
+            <div class="set-row"><span class="set-row-l"><span class="set-ic"><img class="new-art" data-icon="core:aura" alt=""></span><span>Reducir efectos</span></span><button class="switch" type="button" role="switch" aria-checked="false"><span class="switch-dot"></span></button></div>
+            <div class="set-row"><span class="set-row-l"><span class="set-ic"><img class="new-art" data-icon="core:stats" alt=""></span><span>Texto grande</span></span><button class="switch" type="button" role="switch" aria-checked="false"><span class="switch-dot"></span></button></div>
+            <div class="set-row"><span class="set-row-l"><span class="set-ic"><img class="new-art" data-icon="core:planet" alt=""></span><span>Idioma</span></span><div class="lang-pick"><button class="lang-btn on" type="button">ES</button><button class="lang-btn" type="button">EN</button></div></div>
+          </div></div>
+          <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Cerrar</button></div>
+        </div>
+
+        <div class="modal modal-revive" id="modal-revive" role="dialog" aria-modal="true" aria-labelledby="revive-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="core:heart" alt=""></span><h2 id="revive-title">¡Ultima oportunidad!</h2></div>
+          <div class="modal-body"><p class="modal-sub">Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?</p><p class="revive-gets">Recibes 1 vida y despeja el 60% del tablero</p><p class="revive-count">Uso 1 de 3 en esta partida</p></div>
+          <div class="modal-actions modal-buttons"><button class="btn btn-primary" type="button"><img class="ic ic-inline" data-icon="core:coin" alt=""> Revivir (120)</button><button class="btn btn-ghost" type="button" data-demo-state="gameover">Rendirse</button></div>
+        </div>
+
+        <div class="modal modal-surv-diff" id="modal-surv-diff" role="dialog" aria-modal="true" aria-labelledby="surv-diff-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="core:heart" alt=""></span><h2 id="surv-diff-title">Supervivencia</h2></div>
+          <div class="modal-body">
+            <div class="surv-service"><div class="ss-top"><span class="ss-rank">Recluta</span><span class="ss-feats"><img class="ic ic-inline" data-icon="prog:medal" alt=""> 3/11 · <img class="ic ic-inline" data-icon="surv:sword" alt=""> 6</span></div><div class="ss-bar"><span class="ss-bar-fill" style="width:76%"></span></div><div class="ss-sub"><span>38/50 hacia Explorador</span><span>Mejor semanal: 12</span></div></div>
+            <div class="surv-week"><span class="sw-ic"><img class="new-art" data-icon="core:calendar" alt=""></span><div class="sw-tx"><small class="sw-label">Esta semana</small><b class="sw-effect">Frenesi inestable</b></div></div>
+            <p class="modal-sub">Elige el ritmo de la partida</p>
+            <div class="surv-diff-pick" role="radiogroup"><button class="diff-chip" type="button" role="radio" aria-checked="false"><span class="dc-name">Facil</span><span class="dc-rec">Record 8</span></button><button class="diff-chip on" type="button" role="radio" aria-checked="true"><span class="dc-name">Normal</span><span class="dc-rec">Record 12</span></button><button class="diff-chip" type="button" role="radio" aria-checked="false"><span class="dc-name">Dificil</span><span class="dc-rec">Sin record</span></button></div>
+            <p class="surv-diff-desc">3 vidas · estandar · monedas ×1</p>
+            <h3 class="group-title surv-sys-title">Como funciona</h3>
+            <ul class="surv-systems"><li><span class="ss-ic"><img class="new-art" data-icon="core:bolt" alt=""></span><span>Encadena convergencias para llenar el anillo interior y ganar un potenciador gratis.</span></li><li><span class="ss-ic"><img class="new-art" data-icon="core:fire" alt=""></span><span>Llena el anillo de frenesi para multiplicar tus puntos un rato.</span></li><li><span class="ss-ic"><img class="new-art" data-icon="core:heart" alt=""></span><span>Pierdes una vida si el tablero se desborda; revivir cuesta monedas y sube de precio con cada uso.</span></li></ul>
+          </div>
+          <div class="modal-actions modal-buttons"><button class="btn btn-primary btn-icon" type="button" data-demo-state="game"><span class="btn-ic"><img class="new-art" data-icon="core:heart" alt=""></span><span>Empezar supervivencia</span></button><button class="btn btn-ghost" type="button" data-close>Volver</button></div>
+        </div>
+
+        <div class="modal modal-daily" id="modal-daily" role="dialog" aria-modal="true" aria-labelledby="daily-info-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="core:target" alt=""></span><h2 id="daily-info-title">Reto del dia</h2></div>
+          <div class="modal-body"><div class="daily-info">
+            <div class="di-hero"><b>2026-07-14</b><span>El mismo tablero para todos · cambia a medianoche</span></div>
+            <div class="di-row"><span class="di-k"><img class="ic ic-inline" data-icon="core:dice" alt=""> Mutador de hoy</span><span class="di-v"><b>Dados locos</b><small>Las figuras cambian de posicion al converger.</small></span></div>
+            <div class="di-row"><span class="di-k">Medallas</span><span class="di-medals"><span class="di-medal on"><img class="ic ic-inline" data-icon="prog:medal" alt=""> 1500</span><span class="di-medal on"><img class="ic ic-inline" data-icon="prog:medal" alt=""> 2500</span><span class="di-medal"><img class="ic ic-inline" data-icon="prog:medal" alt=""> 4000</span></span></div>
+            <div class="di-row"><span class="di-k">Mejor marca</span><span class="di-v"><b>Plata · 2.840</b><small>Compite contra tu partida fantasma.</small></span></div>
+            <div class="di-row"><span class="di-k"><img class="ic ic-inline" data-icon="core:fire" alt=""> 3</span><span class="di-v">Racha diaria</span></div>
+          </div></div>
+          <div class="modal-actions modal-buttons"><button class="btn btn-primary btn-icon" type="button" data-demo-state="game"><span class="btn-ic"><img class="new-art" data-icon="core:target" alt=""></span><span>Jugar</span></button><button class="btn btn-ghost" type="button" data-close>Volver</button></div>
+        </div>
+
+        <div class="modal modal-adventure" id="modal-adventure" role="dialog" aria-modal="true" aria-labelledby="adventure-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="core:rocket" alt=""></span><h2 id="adventure-title">Aventura</h2></div>
+          <div class="modal-body"><p class="modal-sub">Viaje infinito por biomas. Cada capitulo cambia las reglas y termina con un mini-jefe.</p><div class="adventure-map"><div class="adv-node done"><span class="adv-glyph"><img class="new-art" data-icon="core:planet" alt=""></span><span class="adv-name">Cap. 1<small>Nebulosa</small></span></div><span class="adv-link"></span><div class="adv-node cur"><span class="adv-glyph"><img class="new-art" data-icon="core:crystal" alt=""></span><span class="adv-name">Cap. 2<small>Asteroides</small></span></div><span class="adv-link"></span><div class="adv-node next"><span class="adv-glyph"><img class="new-art" data-icon="status:debuff_freeze" alt=""></span><span class="adv-name">Cap. 3<small>Hielo</small></span></div></div></div>
+          <div class="modal-actions"><button class="btn btn-primary btn-lg" type="button" data-demo-state="game">Continuar · Nivel 8</button><button class="btn btn-ghost" type="button" data-close>Volver</button></div>
+        </div>
+
+        <div class="modal modal-shop" id="modal-shop" role="dialog" aria-modal="true" aria-labelledby="shop-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="core:cart" alt=""></span><h2 id="shop-title">Tienda</h2></div>
+          <div class="shop-econ"><span class="econ-pill econ-coins"><img class="ic ic-inline" data-icon="core:coin" alt=""> 1.240</span><span class="econ-pill econ-gems"><img class="ic ic-inline" data-icon="core:gem" alt=""> 42</span><span class="econ-pill econ-tickets"><img class="ic ic-inline" data-icon="core:ticket" alt=""> 2</span></div>
+          <p class="shop-hint">Los tableros son solo cambios visuales: no dan ventajas ni desventajas.</p>
+          <div class="modal-body"><div class="shop-list"><h3 class="group-title">Tableros</h3><div class="board-grid">
+            <div class="board-card on"><span class="board-thumb" data-board="classic"></span><span class="board-name">Tablero Clasico</span><span class="board-chars"><span class="board-char">Marco espacial azul</span><span class="board-char">Casillas limpias y legibles</span></span><button class="btn btn-ghost btn-sm" type="button" disabled>Equipado</button></div>
+            <div class="board-card"><span class="board-thumb" data-board="madera"></span><span class="board-name">Tablero de Madera</span><span class="board-chars"><span class="board-char">Marco calido tallado</span><span class="board-char">Acabado de juego casual</span></span><button class="btn btn-primary btn-sm" type="button"><img class="ic ic-inline" data-icon="core:coin" alt=""> 250</button></div>
+            <div class="board-card"><span class="board-thumb" data-board="hielo"></span><span class="board-name">Glaciar</span><span class="board-chars"><span class="board-char">Cristal helado</span><span class="board-char">Brillo azul frio</span></span><button class="btn btn-primary btn-sm" type="button"><img class="ic ic-inline" data-icon="core:coin" alt=""> 300</button></div>
+            <div class="board-card"><span class="board-thumb" data-board="jardin"></span><span class="board-name">Jardin Zen</span><span class="board-chars"><span class="board-char">Se gana con 50 flores zen</span><span class="board-char">Petalos y musgo en calma</span></span><button class="btn btn-ghost btn-sm" type="button" disabled>Exclusivo</button></div>
+          </div><h3 class="group-title">Temas</h3><div class="themes-grid"><div class="shop-item on"><span class="shop-sw" style="background:linear-gradient(135deg,#101a3e,#00d0ff)"></span><span class="shop-name">Cosmos</span><button class="btn btn-ghost btn-sm" type="button" disabled>Equipado</button></div><div class="shop-item"><span class="shop-sw" style="background:linear-gradient(135deg,#1e0a5c,#19f0d0)"></span><span class="shop-name">Neon</span><button class="btn btn-primary btn-sm" type="button"><img class="ic ic-inline" data-icon="core:coin" alt=""> 150</button></div></div></div></div>
+          <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Cerrar</button></div>
+        </div>
+
+        <div class="modal modal-chests" id="modal-chests" role="dialog" aria-modal="true" aria-labelledby="chests-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="core:chest" alt=""></span><h2 id="chests-title">Cofres</h2></div>
+          <div class="shop-econ"><span class="econ-pill econ-coins"><img class="ic ic-inline" data-icon="core:coin" alt=""> 1.240</span><span class="econ-pill econ-gems"><img class="ic ic-inline" data-icon="core:gem" alt=""> 42</span><span class="econ-pill econ-tickets"><img class="ic ic-inline" data-icon="core:ticket" alt=""> 2</span></div>
+          <div class="modal-body"><div class="chests-body"><div class="chest-big ready"><img class="new-art" data-icon="prog:chest" alt=""></div><p class="chest-count">Tienes 2 cofres</p><p class="chest-hint">Consigue mas cofres avanzando en Supervivencia.</p></div></div>
+          <div class="modal-actions modal-buttons"><button class="btn btn-primary btn-lg" type="button"><img class="ic ic-inline" data-icon="prog:gift" alt=""> Abrir cofre</button><button class="btn btn-ghost" type="button"><img class="ic ic-inline" data-icon="core:gem" alt=""> Cofre premium (25)</button><button class="btn btn-ghost" type="button" data-close>Cerrar</button></div>
+        </div>
+
+        <div class="modal modal-multi" id="modal-multi" role="dialog" aria-modal="true" aria-labelledby="multi-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="core:players" alt=""></span><h2 id="multi-title">Multijugador</h2></div>
+          <div class="modal-body"><div class="multi-vs"><span class="multi-p multi-p1"><img class="new-art" data-icon="core:player" alt=""></span><span class="multi-vs-tag">VS</span><span class="multi-p multi-p2"><img class="new-art" data-icon="core:friend" alt=""></span></div><p class="modal-sub">Compite contra otro jugador en el mismo tablero. Gana quien termine primero y consiga la mejor puntuacion.</p><div class="multi-feats"><div class="multi-feat"><span class="feat-ic"><img class="ic ic-inline" data-icon="prog:trophy" alt=""></span><span>Termina primero el tablero</span></div><div class="multi-feat"><span class="feat-ic"><img class="ic ic-inline" data-icon="prog:star" alt=""></span><span>Mejor puntuacion</span></div><div class="multi-feat"><span class="feat-ic"><img class="ic ic-inline" data-icon="core:players" alt=""></span><span>Partidas en linea</span></div></div><p class="multi-soon-badge"><img class="ic ic-inline" data-icon="core:lock" alt=""> Proximamente</p></div>
+          <div class="modal-actions modal-buttons"><button class="btn btn-primary btn-icon" type="button"><span class="btn-ic"><img class="new-art" data-icon="core:calendar" alt=""></span><span>Avisame</span></button><button class="btn btn-ghost" type="button" data-close>Cerrar</button></div>
+        </div>
+
+        <div class="modal modal-profile" id="modal-medals" role="dialog" aria-modal="true" aria-labelledby="medals-title" hidden>
+          <div class="m-head"><span class="m-emblem"><img class="ic" data-icon="core:player" alt=""></span><h2 id="medals-title">Perfil</h2></div>
+          <div class="modal-body"><div class="stats"><div class="stat"><span class="v" style="color:var(--accent-2)">24</span><span class="k">Partidas</span></div><div class="stat"><span class="v" style="color:var(--gold)">×14</span><span class="k">Mejor combo</span></div><div class="stat"><span class="v" style="color:var(--good)">1.286</span><span class="k">Eliminados</span></div><div class="stat"><span class="v" style="color:var(--time)">1h 42m</span><span class="k">Tiempo total</span></div></div><h3 class="group-title">Mejores marcas por modo</h3><div class="profile-lb"><div class="lb-row"><span class="lb-mode"><img class="ic ic-inline" data-icon="prog:luckyblock" alt=""> Clasico</span><span class="lb-best">8.450</span><span class="lb-plays">12</span></div><div class="lb-row"><span class="lb-mode"><img class="ic ic-inline" data-icon="core:rocket" alt=""> Aventura</span><span class="lb-best">5.820</span><span class="lb-plays">5</span></div><div class="lb-row"><span class="lb-mode"><img class="ic ic-inline" data-icon="core:heart" alt=""> Supervivencia</span><span class="lb-best">284s · Oleada 14</span><span class="lb-plays">7</span></div></div><h3 class="group-title">Logros</h3><div class="medals-list"><div class="medal on"><span class="medal-ic"><img class="new-art" data-icon="prog:medal" alt=""></span><span class="medal-tx"><strong>Primer paso</strong><small>Completa tu primera partida</small></span></div><div class="medal on"><span class="medal-ic"><img class="new-art" data-icon="prog:medal" alt=""></span><span class="medal-tx"><strong>En racha</strong><small>Consigue un combo ×10</small></span></div><div class="medal"><span class="medal-ic"><img class="new-art" data-icon="core:lock" alt=""></span><span class="medal-tx"><strong>Imparable</strong><small>Consigue un combo ×20</small></span></div><div class="medal"><span class="medal-ic"><img class="new-art" data-icon="core:lock" alt=""></span><span class="medal-tx"><strong>Leyenda viva</strong><small>Supera 8000 puntos</small></span></div></div></div>
+          <div class="modal-actions"><button class="btn btn-primary" type="button" data-close>Cerrar</button></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const roots = {
+        core: '../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/',
+        surv: '../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/',
+        food: '../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/',
+        prog: '../../assets_nuevos/listo_para_integrar_v2/05_gvesster_progression_512/',
+        status: '../../assets_nuevos/listo_para_integrar_v2/06_akami_status_cc0_512/'
+      };
+
+      document.querySelectorAll('img[data-icon]').forEach((img) => {
+        let token = img.dataset.icon;
+        let [pack, name] = token.split(':');
+        if (!roots[pack] && img.dataset.fallback) {
+          token = img.dataset.fallback;
+          [pack, name] = token.split(':');
+        }
+        img.loading = 'eager';
+        img.decoding = 'sync';
+        img.src = roots[pack] + name + '.png';
+      });
+
+      const states = [
+        { group: 'Pantallas', id: 'login', label: 'Bienvenida', kind: 'screen', target: 'screen-login' },
+        { group: 'Pantallas', id: 'home', label: 'Pantalla de inicio', kind: 'screen', target: 'screen-start' },
+        { group: 'Pantallas', id: 'modes', label: 'Seleccion de modo', kind: 'screen', target: 'screen-modes' },
+        { group: 'Pantallas', id: 'worlds', label: 'Mapa clasico', kind: 'screen', target: 'screen-worlds' },
+        { group: 'Pantallas', id: 'game', label: 'Partida / HUD', kind: 'screen', target: 'screen-game', mode: 'surv' },
+        { group: 'Selectores', id: 'boon', label: 'Eleccion de bendicion', kind: 'picker', target: 'pick-overlay', base: 'screen-game', mode: 'surv' },
+        { group: 'Selectores', id: 'prelevel', label: 'Preparacion de nivel', kind: 'picker', target: 'prelevel', base: 'screen-worlds' },
+        { group: 'Modales', id: 'missions', label: 'Misiones', kind: 'modal', target: 'modal-missions', base: 'screen-start' },
+        { group: 'Modales', id: 'how', label: 'Como se juega', kind: 'modal', target: 'modal-how', base: 'screen-modes' },
+        { group: 'Modales', id: 'pause', label: 'Pausa', kind: 'modal', target: 'modal-pause', base: 'screen-game', mode: 'surv' },
+        { group: 'Modales', id: 'level', label: 'Nivel completado', kind: 'modal', target: 'modal-level', base: 'screen-game' },
+        { group: 'Modales', id: 'gameover', label: 'Game over', kind: 'modal', target: 'modal-over', base: 'screen-game', mode: 'surv' },
+        { group: 'Modales', id: 'settings', label: 'Ajustes', kind: 'modal', target: 'modal-settings', base: 'screen-start' },
+        { group: 'Modales', id: 'revive', label: 'Ultima oportunidad', kind: 'modal', target: 'modal-revive', base: 'screen-game', mode: 'surv' },
+        { group: 'Modales', id: 'survival', label: 'Dificultad supervivencia', kind: 'modal', target: 'modal-surv-diff', base: 'screen-modes' },
+        { group: 'Modales', id: 'daily', label: 'Reto del dia', kind: 'modal', target: 'modal-daily', base: 'screen-start' },
+        { group: 'Modales', id: 'adventure', label: 'Mapa de aventura', kind: 'modal', target: 'modal-adventure', base: 'screen-modes' },
+        { group: 'Modales', id: 'shop', label: 'Tienda', kind: 'modal', target: 'modal-shop', base: 'screen-start' },
+        { group: 'Modales', id: 'chests', label: 'Cofres', kind: 'modal', target: 'modal-chests', base: 'screen-worlds' },
+        { group: 'Modales', id: 'multiplayer', label: 'Multijugador', kind: 'modal', target: 'modal-multi', base: 'screen-modes' },
+        { group: 'Modales', id: 'profile', label: 'Perfil y logros', kind: 'modal', target: 'modal-medals', base: 'screen-start' }
+      ];
+
+      const select = document.getElementById('mock-state-select');
+      const list = document.getElementById('mock-state-list');
+      let group = '';
+      let selectGroup;
+      states.forEach((state) => {
+        if (state.group !== group) {
+          group = state.group;
+          const title = document.createElement('div');
+          title.className = 'mockup-group';
+          title.textContent = group;
+          list.appendChild(title);
+          selectGroup = document.createElement('optgroup');
+          selectGroup.label = group;
+          select.appendChild(selectGroup);
+        }
+        const option = document.createElement('option');
+        option.value = state.id;
+        option.textContent = state.label;
+        selectGroup.appendChild(option);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'mockup-state';
+        button.dataset.mockState = state.id;
+        button.textContent = state.label;
+        list.appendChild(button);
+      });
+
+      const worldMap = document.getElementById('mock-world-map');
+      for (let n = 1; n <= 50; n += 1) {
+        const unlocked = n <= 13;
+        const done = n <= 12;
+        const current = n === 13;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'lvl-node' + (unlocked ? '' : ' locked') + (done ? ' done' : '') + (current ? ' current' : '');
+        if (!unlocked) button.setAttribute('aria-disabled', 'true');
+        button.innerHTML = unlocked
+          ? '<span class="ln-num">' + n + '</span><span class="ln-stars" aria-hidden="true">' + (done ? '<img class="ic ic-inline" data-icon="prog:star" alt=""><img class="ic ic-inline" data-icon="prog:star" alt=""><img class="ic ic-inline" data-icon="prog:star" alt="">' : '') + '</span>'
+          : '<span class="ln-num"><img class="ic ic-inline" data-icon="core:lock" alt=""></span><span class="ln-stars"></span>';
+        worldMap.appendChild(button);
+      }
+      const reward = document.createElement('button');
+      reward.type = 'button';
+      reward.className = 'lvl-reward';
+      reward.innerHTML = '<img class="ic" data-icon="prog:crown" alt="">';
+      worldMap.appendChild(reward);
+
+      const board = document.getElementById('mock-board');
+      const food = ['apple', 'banana', 'blueberry', 'carrot', 'cookie', 'lemon', 'orange', 'strawberry', 'avocado'];
+      const filled = new Set([0, 2, 5, 7, 8, 11, 13, 16, 18, 20, 22, 25, 27, 29, 32, 35]);
+      for (let i = 0; i < 36; i += 1) {
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'cell ' + (filled.has(i) ? 'has-icon' : 'empty');
+        cell.setAttribute('role', 'gridcell');
+        if (filled.has(i)) cell.innerHTML = '<span class="glyph"><img data-icon="food:' + food[i % food.length] + '" alt=""></span>';
+        board.appendChild(cell);
+      }
+
+      function hydrateLateIcons(root) {
+        root.querySelectorAll('img[data-icon]:not([src])').forEach((img) => {
+          const [pack, name] = img.dataset.icon.split(':');
+          img.loading = 'eager';
+          img.decoding = 'sync';
+          img.src = roots[pack] + name + '.png';
+        });
+      }
+      hydrateLateIcons(document);
+
+      function showState(id, updateHash = true) {
+        const state = states.find((item) => item.id === id) || states[1];
+        document.querySelectorAll('.screen, #overlay > .modal, .pick-overlay').forEach((el) => { el.hidden = true; });
+        document.getElementById('overlay').hidden = true;
+        document.body.classList.remove('mode-surv', 'mode-timed', 'mode-aventura', 'mode-zen');
+        if (state.mode) document.body.classList.add('mode-' + state.mode);
+
+        if (state.kind === 'screen') {
+          document.getElementById(state.target).hidden = false;
+        } else if (state.kind === 'picker') {
+          document.getElementById(state.base).hidden = false;
+          document.getElementById(state.target).hidden = false;
+        } else {
+          document.getElementById(state.base).hidden = false;
+          document.getElementById('overlay').hidden = false;
+          document.getElementById(state.target).hidden = false;
+        }
+
+        select.value = state.id;
+        document.querySelectorAll('[data-mock-state]').forEach((button) => {
+          button.setAttribute('aria-current', String(button.dataset.mockState === state.id));
+        });
+        if (updateHash) history.replaceState(null, '', '#' + state.id);
+      }
+
+      select.addEventListener('change', () => showState(select.value));
+      list.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-mock-state]');
+        if (button) showState(button.dataset.mockState);
+      });
+      document.addEventListener('click', (event) => {
+        const action = event.target.closest('[data-demo-state]');
+        if (action) {
+          event.preventDefault();
+          showState(action.dataset.demoState);
+          return;
+        }
+        if (event.target.closest('[data-close]')) showState('home');
+        const sw = event.target.closest('.switch');
+        if (sw) sw.setAttribute('aria-checked', String(sw.getAttribute('aria-checked') !== 'true'));
+        const diff = event.target.closest('.diff-chip');
+        if (diff) {
+          diff.parentElement.querySelectorAll('.diff-chip').forEach((chip) => { chip.classList.remove('on'); chip.setAttribute('aria-checked', 'false'); });
+          diff.classList.add('on');
+          diff.setAttribute('aria-checked', 'true');
+        }
+      });
+
+      showState(location.hash.slice(1) || 'home', false);
+    })();
+  </script>
+</body>
+</html>

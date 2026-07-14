@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Convergence - Rediseño Silkbound</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --void-950: #040506;
+      --void-900: #080b0d;
+      --void-800: #101719;
+      --moss-900: #122218;
+      --moss-700: #294a28;
+      --moss-500: #6a9c52;
+      --mist-100: #f8f5e8;
+      --mist-200: #e7e2d0;
+      --mist-400: #aaa896;
+      --bone-100: #fff9ea;
+      --bone-300: #d9d0b4;
+      --silk-100: #fff8e4;
+      --silk-300: #e6d4a7;
+      --silk-500: #b8995a;
+      --scarlet-300: #ff8171;
+      --scarlet-500: #d83d37;
+      --scarlet-700: #831f28;
+      --coral-300: #f2a06c;
+      --coral-600: #9b4a38;
+      --ink-blue-900: #07111e;
+      --ink-blue-700: #132a3d;
+      --teal-900: #0d2322;
+      --teal-500: #3e9284;
+      --gold-300: #f2d184;
+      --gold-600: #a26e2f;
+      --danger: #ef564d;
+      --success: #87c96d;
+      --focus: #ffe6a9;
+      --shadow-deep: 0 28px 70px rgba(0, 0, 0, .62);
+      --shadow-cut: 0 12px 28px rgba(0, 0, 0, .46);
+      --stroke-hair: rgba(255, 248, 228, .16);
+      --stroke-strong: rgba(255, 248, 228, .34);
+      --panel: rgba(10, 15, 15, .78);
+      --panel-lit: rgba(35, 29, 24, .74);
+      --font-display: Georgia, "Times New Roman", serif;
+      --font-ui: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+      --radius-xs: 6px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --tap: 44px;
+      --board-size: min(68vw, 500px);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--void-950);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--mist-100);
+      font-family: var(--font-ui);
+      background:
+        radial-gradient(circle at 50% 8%, rgba(244, 221, 167, .13), transparent 22%),
+        radial-gradient(circle at 14% 22%, rgba(169, 70, 45, .18), transparent 31%),
+        radial-gradient(circle at 84% 38%, rgba(34, 92, 80, .2), transparent 34%),
+        linear-gradient(180deg, #081015 0%, #050706 48%, #030303 100%);
+      letter-spacing: 0;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .mock-shell {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mist {
+      position: fixed;
+      inset: -12%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: .8;
+      background:
+        radial-gradient(ellipse at 28% 18%, rgba(255, 249, 234, .08), transparent 30%),
+        radial-gradient(ellipse at 72% 30%, rgba(229, 112, 79, .08), transparent 28%),
+        radial-gradient(ellipse at 48% 78%, rgba(93, 144, 113, .1), transparent 36%);
+      filter: blur(24px);
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      opacity: .18;
+      background-image:
+        linear-gradient(115deg, rgba(255,255,255,.04) 0 1px, transparent 1px 5px),
+        radial-gradient(circle at 20% 40%, rgba(255,255,255,.08) 0 1px, transparent 1px 12px);
+      background-size: 19px 19px, 37px 37px;
+      mix-blend-mode: soft-light;
+    }
+
+    .page-nav {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      z-index: 20;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      padding: 5px;
+      border: 1px solid rgba(255, 248, 228, .12);
+      border-radius: 999px;
+      background: rgba(4, 6, 6, .62);
+      box-shadow: 0 12px 28px rgba(0,0,0,.35);
+      backdrop-filter: blur(14px);
+      transform: translateX(-50%);
+    }
+
+    .page-nav a {
+      min-height: 34px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      color: var(--silk-100);
+      text-decoration: none;
+      font-size: .82rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .page-nav a:hover,
+    .page-nav a:focus-visible {
+      outline: 0;
+      background: rgba(216, 61, 55, .22);
+      box-shadow: inset 0 0 0 1px rgba(255, 248, 228, .18);
+    }
+
+    section {
+      position: relative;
+      z-index: 2;
+    }
+
+    .screen-frame {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 74px 22px 30px;
+    }
+
+    .device {
+      position: relative;
+      width: min(1180px, 100%);
+      min-height: min(760px, calc(100vh - 110px));
+      overflow: hidden;
+      border: 1px solid rgba(255, 248, 228, .2);
+      border-radius: 18px;
+      background: var(--void-900);
+      box-shadow: var(--shadow-deep);
+      isolation: isolate;
+    }
+
+    .device::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      border-radius: inherit;
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.04),
+        inset 0 0 80px rgba(0,0,0,.68);
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 52% 16%, rgba(248, 231, 172, .23), transparent 23%),
+        radial-gradient(ellipse at 50% 35%, rgba(125, 41, 38, .25), transparent 38%),
+        linear-gradient(180deg, #12272a 0%, #0c1718 42%, #060706 100%);
+    }
+
+    .scene::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 49% 24%, rgba(255, 246, 204, .18), transparent 14%),
+        radial-gradient(ellipse at 48% 34%, rgba(255, 246, 204, .11), transparent 24%),
+        linear-gradient(90deg, rgba(0,0,0,.78), transparent 24% 76%, rgba(0,0,0,.82));
+    }
+
+    .sun-chamber {
+      position: absolute;
+      left: 50%;
+      top: 5%;
+      width: 34%;
+      height: 62%;
+      min-width: 280px;
+      border-radius: 50% 50% 42% 42%;
+      background:
+        radial-gradient(ellipse at 50% 26%, rgba(255,248,213,.3), transparent 21%),
+        repeating-radial-gradient(ellipse at 50% 22%, rgba(255,238,169,.14) 0 8px, transparent 8px 26px);
+      filter: blur(.4px);
+      opacity: .52;
+      transform: translateX(-50%);
+    }
+
+    .canopy,
+    .foreground,
+    .midground,
+    .silk-lines,
+    .particles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .canopy {
+      z-index: 2;
+      background:
+        radial-gradient(ellipse at 13% -2%, #020303 0 21%, transparent 22%),
+        radial-gradient(ellipse at 30% -7%, #030404 0 18%, transparent 19%),
+        radial-gradient(ellipse at 81% -5%, #020303 0 21%, transparent 22%),
+        linear-gradient(180deg, rgba(0,0,0,.82) 0 10%, transparent 23%);
+    }
+
+    .canopy i,
+    .foreground i,
+    .midground i {
+      position: absolute;
+      display: block;
+    }
+
+    .canopy i {
+      top: -20px;
+      width: 34px;
+      height: 260px;
+      border-radius: 0 0 24px 24px;
+      background:
+        radial-gradient(circle at 50% 72%, rgba(106,156,82,.82) 0 38%, transparent 39%),
+        linear-gradient(180deg, #0c160e, #203719 58%, #0a0d0a);
+      box-shadow: inset -8px 0 0 rgba(0,0,0,.2), 0 22px 44px rgba(0,0,0,.45);
+      filter: saturate(.9);
+    }
+
+    .canopy i:nth-child(1) { left: 10%; height: 330px; transform: rotate(5deg); }
+    .canopy i:nth-child(2) { left: 18%; width: 50px; height: 390px; transform: rotate(-4deg); }
+    .canopy i:nth-child(3) { right: 13%; height: 360px; transform: rotate(-7deg); }
+    .canopy i:nth-child(4) { right: 26%; width: 42px; height: 290px; transform: rotate(4deg); }
+    .canopy i:nth-child(5) { left: 41%; width: 26px; height: 230px; opacity: .78; }
+
+    .midground {
+      z-index: 3;
+    }
+
+    .spool {
+      position: absolute;
+      right: 13%;
+      bottom: 21%;
+      width: min(260px, 28vw);
+      aspect-ratio: 1;
+      border: 3px solid rgba(255, 222, 162, .58);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 244, 203, .08), transparent 26%),
+        repeating-conic-gradient(from -18deg, rgba(255, 229, 171, .16) 0 9deg, transparent 9deg 18deg),
+        radial-gradient(circle, rgba(51, 72, 45, .86), rgba(16, 26, 20, .86));
+      box-shadow: inset 0 0 38px rgba(0,0,0,.55), 0 22px 46px rgba(0,0,0,.42);
+    }
+
+    .spool::before,
+    .spool::after {
+      content: "";
+      position: absolute;
+      inset: 18%;
+      border: 2px solid rgba(255, 236, 190, .28);
+      border-radius: 46% 54% 43% 57%;
+      transform: rotate(28deg);
+    }
+
+    .spool::after {
+      inset: 33%;
+      transform: rotate(-18deg);
+      opacity: .75;
+    }
+
+    .midground .arch {
+      bottom: 17%;
+      width: 58px;
+      height: 170px;
+      border: 2px solid rgba(255, 248, 228, .18);
+      border-bottom: 0;
+      border-radius: 50% 50% 0 0;
+      background: rgba(3,5,5,.23);
+      box-shadow: inset 0 0 22px rgba(0,0,0,.56);
+    }
+
+    .midground .arch:nth-child(2) { left: 13%; opacity: .52; transform: scale(.88); }
+    .midground .arch:nth-child(3) { left: 24%; opacity: .36; transform: scale(.72); }
+    .midground .arch:nth-child(4) { right: 29%; opacity: .42; transform: scale(.78); }
+
+    .silk-lines {
+      z-index: 5;
+      opacity: .62;
+      background:
+        linear-gradient(92deg, transparent 0 16%, rgba(255, 242, 203, .2) 16.1% 16.3%, transparent 16.4%),
+        linear-gradient(88deg, transparent 0 38%, rgba(255, 242, 203, .14) 38.1% 38.25%, transparent 38.35%),
+        linear-gradient(94deg, transparent 0 73%, rgba(255, 242, 203, .16) 73.1% 73.25%, transparent 73.35%),
+        linear-gradient(90deg, transparent 0 87%, rgba(255, 242, 203, .12) 87.1% 87.25%, transparent 87.35%);
+    }
+
+    .silk-lines::before,
+    .silk-lines::after {
+      content: "";
+      position: absolute;
+      left: 10%;
+      top: 24%;
+      width: 78%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,244,215,.34), transparent);
+      transform: rotate(-6deg);
+    }
+
+    .silk-lines::after {
+      top: 36%;
+      transform: rotate(4deg);
+      opacity: .7;
+    }
+
+    .particles {
+      z-index: 6;
+      background-image:
+        radial-gradient(circle, rgba(255,245,212,.9) 0 1px, transparent 1.2px),
+        radial-gradient(circle, rgba(255,116,86,.52) 0 1px, transparent 1.4px),
+        radial-gradient(circle, rgba(111,160,88,.5) 0 1px, transparent 1.3px);
+      background-size: 91px 79px, 137px 101px, 181px 143px;
+      opacity: .34;
+      animation: floatDust 11s linear infinite;
+    }
+
+    @keyframes floatDust {
+      from { background-position: 0 0, 30px 20px, -20px 10px; }
+      to { background-position: 0 -80px, 30px -90px, -20px -130px; }
+    }
+
+    .foreground {
+      z-index: 8;
+      background:
+        radial-gradient(ellipse at 8% 92%, #020303 0 18%, transparent 19%),
+        radial-gradient(ellipse at 76% 96%, #020303 0 22%, transparent 23%),
+        linear-gradient(180deg, transparent 0 68%, #050706 84%, #020202 100%);
+    }
+
+    .foreground .grass {
+      bottom: 0;
+      width: 100%;
+      height: 22%;
+      background:
+        radial-gradient(circle at 10% 10%, #4f823d 0 7px, transparent 8px),
+        radial-gradient(circle at 18% 22%, #243f24 0 8px, transparent 9px),
+        radial-gradient(circle at 32% 13%, #648f45 0 7px, transparent 8px),
+        radial-gradient(circle at 44% 28%, #1b2a1e 0 10px, transparent 11px),
+        radial-gradient(circle at 62% 18%, #516f3c 0 7px, transparent 8px),
+        radial-gradient(circle at 78% 24%, #21351e 0 9px, transparent 10px);
+      background-size: 76px 42px;
+      opacity: .9;
+    }
+
+    .mushroom {
+      bottom: 16%;
+      width: 54px;
+      height: 110px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, transparent 0 36%, #030303 37%);
+    }
+
+    .mushroom::before {
+      content: "";
+      position: absolute;
+      top: 22px;
+      left: -28px;
+      width: 96px;
+      height: 32px;
+      border-radius: 50%;
+      background: #020202;
+    }
+
+    .mushroom.one { left: 6%; transform: rotate(-9deg); }
+    .mushroom.two { left: 25%; bottom: 13%; transform: scale(.74) rotate(8deg); opacity: .82; }
+    .mushroom.three { right: 4%; transform: scale(1.12) rotate(10deg); }
+
+    .home-content {
+      position: relative;
+      z-index: 12;
+      min-height: inherit;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(270px, 380px);
+      gap: clamp(24px, 4vw, 46px);
+      align-items: center;
+      padding: clamp(28px, 6vw, 78px);
+    }
+
+    .brand-lockup {
+      max-width: 560px;
+      min-width: 0;
+    }
+
+    .crest {
+      width: 112px;
+      height: 70px;
+      margin-bottom: 18px;
+      color: var(--silk-100);
+      filter: drop-shadow(0 12px 14px rgba(0,0,0,.5));
+    }
+
+    .brand-lockup h1,
+    .section-title,
+    .system-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-weight: 700;
+      line-height: .92;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+
+    .brand-lockup h1 {
+      font-size: clamp(3rem, 5.8vw, 4.35rem);
+      color: var(--silk-100);
+      text-shadow:
+        0 4px 0 rgba(0,0,0,.34),
+        0 20px 38px rgba(0,0,0,.56),
+        0 0 34px rgba(240, 82, 65, .24);
+    }
+
+    .tagline {
+      max-width: 31rem;
+      margin: 16px 0 0;
+      color: var(--mist-200);
+      font-size: clamp(1rem, 2.2vw, 1.22rem);
+      line-height: 1.55;
+      text-shadow: 0 3px 14px rgba(0,0,0,.72);
+    }
+
+    .menu-panel {
+      align-self: center;
+      display: grid;
+      gap: 12px;
+      width: min(100%, 380px);
+      padding: 16px;
+      border: 1px solid rgba(255, 248, 228, .16);
+      border-radius: 14px;
+      background:
+        linear-gradient(180deg, rgba(255, 249, 226, .06), transparent 26%),
+        rgba(4, 6, 6, .62);
+      box-shadow: var(--shadow-cut), inset 0 1px 0 rgba(255,255,255,.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .slot {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 68px;
+      padding: 10px;
+      border: 1px solid rgba(255, 248, 228, .12);
+      border-radius: 10px;
+      background: rgba(255,255,255,.04);
+    }
+
+    .slot-mark,
+    .mask-chip,
+    .hud-mask,
+    .avatar-mask {
+      position: relative;
+      display: grid;
+      place-items: center;
+      color: var(--void-950);
+      background: var(--silk-100);
+      clip-path: polygon(50% 0, 72% 13%, 86% 42%, 74% 78%, 50% 100%, 26% 78%, 14% 42%, 28% 13%);
+      box-shadow: inset 0 -7px 0 rgba(0,0,0,.12), 0 8px 16px rgba(0,0,0,.35);
+    }
+
+    .slot-mark {
+      width: 42px;
+      height: 42px;
+    }
+
+    .slot-mark::before,
+    .mask-chip::before,
+    .hud-mask::before,
+    .avatar-mask::before {
+      content: "";
+      width: 34%;
+      height: 22%;
+      border-radius: 999px;
+      background: var(--void-950);
+      box-shadow: 22px 0 0 var(--void-950);
+      transform: translateX(-11px);
+    }
+
+    .slot b {
+      display: block;
+      color: var(--bone-100);
+      font-family: var(--font-display);
+      font-size: 1.06rem;
+      line-height: 1.1;
+    }
+
+    .slot small {
+      display: block;
+      margin-top: 4px;
+      color: var(--mist-400);
+      font-size: .8rem;
+      font-weight: 700;
+    }
+
+    .slot strong {
+      color: var(--gold-300);
+      font-size: .9rem;
+    }
+
+    .silk-btn {
+      position: relative;
+      min-height: var(--tap);
+      border: 1px solid rgba(255, 248, 228, .22);
+      border-radius: 9px;
+      padding: 12px 17px;
+      color: var(--bone-100);
+      font-weight: 900;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.16), transparent 28%),
+        linear-gradient(180deg, var(--scarlet-300), var(--scarlet-500) 46%, var(--scarlet-700));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.22),
+        inset 0 -4px 0 rgba(54, 7, 10, .48),
+        0 8px 0 rgba(0,0,0,.34),
+        0 18px 28px rgba(0,0,0,.34);
+    }
+
+    .silk-btn:hover,
+    .silk-btn:focus-visible {
+      outline: 2px solid rgba(255, 230, 169, .7);
+      outline-offset: 2px;
+      filter: brightness(1.08);
+    }
+
+    .silk-btn:active {
+      transform: translateY(3px);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -2px 0 rgba(54, 7, 10, .48),
+        0 4px 0 rgba(0,0,0,.34),
+        0 10px 18px rgba(0,0,0,.28);
+    }
+
+    .silk-btn.secondary {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), transparent 38%),
+        linear-gradient(180deg, rgba(34, 50, 46, .96), rgba(8, 15, 15, .98));
+      color: var(--silk-100);
+    }
+
+    .silk-btn.gold {
+      color: #281608;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.26), transparent 35%),
+        linear-gradient(180deg, #f7dd8f, #d1a24f 50%, #8a5528);
+    }
+
+    .menu-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .menu-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--mist-400);
+      font-size: .78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .game-device {
+      background:
+        radial-gradient(ellipse at 50% -12%, rgba(239, 221, 166, .16), transparent 33%),
+        linear-gradient(180deg, #10191a, #050706 68%, #030303);
+    }
+
+    .game-layout {
+      position: relative;
+      z-index: 12;
+      min-height: inherit;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 16px;
+      padding: clamp(18px, 3vw, 34px);
+    }
+
+    .game-top {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .hud-cluster {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .hud-cluster.right {
+      justify-content: end;
+    }
+
+    .hud-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 40px;
+      min-width: 0;
+      padding: 7px 11px;
+      border: 1px solid rgba(255,248,228,.15);
+      border-radius: 8px;
+      background: rgba(0,0,0,.36);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+      color: var(--mist-200);
+      font-weight: 900;
+    }
+
+    .hud-pill b {
+      color: var(--bone-100);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hud-mask {
+      width: 30px;
+      height: 30px;
+      flex: 0 0 auto;
+    }
+
+    .hud-mask::before {
+      width: 25%;
+      height: 18%;
+      transform: translateX(-8px);
+      box-shadow: 16px 0 0 var(--void-950);
+    }
+
+    .score-lockup {
+      text-align: center;
+      padding: 6px 20px 10px;
+      border-bottom: 1px solid rgba(255,248,228,.24);
+    }
+
+    .score-lockup small {
+      display: block;
+      color: var(--mist-400);
+      font-size: .72rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .score-lockup strong {
+      display: block;
+      color: var(--bone-100);
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 4vw, 3.2rem);
+      line-height: .95;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 6px 20px rgba(0,0,0,.55);
+    }
+
+    .board-stage {
+      display: grid;
+      grid-template-columns: minmax(220px, 270px) minmax(300px, var(--board-size)) minmax(220px, 270px);
+      gap: clamp(14px, 2vw, 22px);
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .side-panel {
+      align-self: stretch;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid rgba(255,248,228,.13);
+      border-radius: 12px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.05), transparent 24%),
+        rgba(0,0,0,.26);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--silk-100);
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    .panel-title small {
+      color: var(--mist-400);
+      font-family: var(--font-ui);
+      font-size: .68rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .quest-card,
+    .tool-card,
+    .rune-card {
+      display: grid;
+      gap: 7px;
+      padding: 10px;
+      border: 1px solid rgba(255,248,228,.12);
+      border-radius: 8px;
+      background: rgba(255,255,255,.04);
+    }
+
+    .quest-card b,
+    .tool-card b,
+    .rune-card b {
+      color: var(--bone-100);
+      font-size: .88rem;
+    }
+
+    .quest-card span,
+    .tool-card span,
+    .rune-card span {
+      color: var(--mist-400);
+      font-size: .78rem;
+      line-height: 1.35;
+    }
+
+    .progress {
+      height: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(255,248,228,.14);
+      border-radius: 999px;
+      background: rgba(0,0,0,.34);
+    }
+
+    .progress i {
+      display: block;
+      height: 100%;
+      width: var(--w, 50%);
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--scarlet-500), var(--gold-300));
+      box-shadow: 0 0 14px rgba(216,61,55,.42);
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .tool-btn {
+      position: relative;
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1;
+      min-height: 62px;
+      border: 1px solid rgba(255,248,228,.16);
+      border-radius: 8px;
+      color: var(--silk-100);
+      background:
+        radial-gradient(circle at 50% 22%, rgba(255,248,228,.1), transparent 32%),
+        linear-gradient(180deg, rgba(38, 56, 52, .94), rgba(7, 12, 12, .98));
+      box-shadow: inset 0 -4px 0 rgba(0,0,0,.3), 0 8px 16px rgba(0,0,0,.28);
+    }
+
+    .tool-btn svg {
+      width: 31px;
+      height: 31px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,.45));
+    }
+
+    .tool-btn[data-count]::after {
+      content: attr(data-count);
+      position: absolute;
+      right: 5px;
+      bottom: 4px;
+      min-width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--scarlet-500);
+      color: white;
+      font-size: .68rem;
+      font-weight: 900;
+    }
+
+    .board-wrap {
+      position: relative;
+      width: var(--board-size);
+      aspect-ratio: 1;
+      padding: clamp(11px, 2vw, 18px);
+      border: 1px solid rgba(255,248,228,.3);
+      border-radius: 18px;
+      background:
+        linear-gradient(135deg, rgba(255,248,228,.1), transparent 18% 82%, rgba(255,248,228,.08)),
+        radial-gradient(circle at 50% 42%, rgba(216,61,55,.2), transparent 46%),
+        linear-gradient(180deg, rgba(24, 33, 30, .95), rgba(4, 7, 7, .98));
+      box-shadow:
+        var(--shadow-deep),
+        inset 0 1px 0 rgba(255,255,255,.1),
+        inset 0 0 0 5px rgba(0,0,0,.3);
+    }
+
+    .board-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border: 1px solid rgba(255,248,228,.16);
+      border-radius: 13px;
+      background:
+        linear-gradient(90deg, transparent 0 12%, rgba(255,248,228,.08) 12.2% 12.5%, transparent 12.8% 87%, rgba(255,248,228,.08) 87.2% 87.5%, transparent 87.8%),
+        linear-gradient(0deg, transparent 0 12%, rgba(255,248,228,.08) 12.2% 12.5%, transparent 12.8% 87%, rgba(255,248,228,.08) 87.2% 87.5%, transparent 87.8%);
+      pointer-events: none;
+    }
+
+    .board {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: clamp(5px, .75vw, 9px);
+      width: 100%;
+      height: 100%;
+    }
+
+    .cell {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      min-height: 0;
+      border: 1px solid rgba(255,248,228,.12);
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 50% 28%, rgba(255,248,228,.08), transparent 30%),
+        linear-gradient(180deg, rgba(255,255,255,.035), rgba(0,0,0,.22)),
+        rgba(8, 14, 14, .8);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.06),
+        inset 0 -4px 0 rgba(0,0,0,.18);
+    }
+
+    .cell.empty {
+      border-style: dashed;
+      background: rgba(255,255,255,.018);
+    }
+
+    .cell.target {
+      border-color: rgba(242,209,132,.58);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 0 0 2px rgba(242,209,132,.08),
+        0 0 22px rgba(242,209,132,.2);
+    }
+
+    .glyph {
+      width: 68%;
+      aspect-ratio: 1;
+      filter: drop-shadow(0 7px 8px rgba(0,0,0,.48));
+    }
+
+    .glyph.mask {
+      background: var(--silk-100);
+      clip-path: polygon(50% 0, 72% 13%, 86% 42%, 74% 78%, 50% 100%, 26% 78%, 14% 42%, 28% 13%);
+    }
+
+    .glyph.mask::before {
+      content: "";
+      position: absolute;
+    }
+
+    .glyph.spool {
+      width: 64%;
+      border: 3px solid var(--gold-300);
+      border-radius: 50%;
+      background:
+        repeating-conic-gradient(from 20deg, rgba(255,248,228,.22) 0 10deg, transparent 10deg 20deg),
+        radial-gradient(circle, #405535, #111a13);
+    }
+
+    .glyph.needle {
+      width: 18%;
+      height: 82%;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--bone-100), #8b8b82);
+      transform: rotate(45deg);
+      box-shadow: 0 0 0 2px rgba(0,0,0,.2);
+    }
+
+    .glyph.needle::before {
+      content: "";
+      position: absolute;
+      top: 6%;
+      left: 50%;
+      width: 150%;
+      aspect-ratio: 1;
+      border: 2px solid rgba(0,0,0,.45);
+      border-radius: 50%;
+      transform: translateX(-50%);
+    }
+
+    .glyph.bell {
+      width: 60%;
+      border-radius: 48% 48% 18% 18%;
+      background:
+        radial-gradient(circle at 50% 84%, #5e3217 0 9%, transparent 10%),
+        linear-gradient(180deg, #f7d989, #a86b2d 70%);
+      clip-path: polygon(20% 22%, 50% 0, 80% 22%, 92% 82%, 8% 82%);
+    }
+
+    .glyph.leaf {
+      width: 68%;
+      border-radius: 0 80% 0 80%;
+      background: linear-gradient(135deg, #8fbf65, #244526);
+      transform: rotate(-22deg);
+    }
+
+    .glyph.coral {
+      width: 64%;
+      clip-path: polygon(47% 0, 62% 18%, 58% 36%, 84% 20%, 94% 38%, 70% 52%, 96% 70%, 78% 88%, 55% 68%, 50% 100%, 34% 70%, 12% 88%, 2% 68%, 28% 52%, 4% 36%, 16% 20%, 38% 36%, 34% 18%);
+      background: linear-gradient(180deg, #f0a06d, #9b3931);
+    }
+
+    .combo-ring {
+      position: absolute;
+      top: -24px;
+      right: 8px;
+      z-index: 4;
+      display: grid;
+      place-items: center;
+      width: 86px;
+      height: 86px;
+      border: 1px solid rgba(255,248,228,.22);
+      border-radius: 50%;
+      background:
+        conic-gradient(var(--scarlet-500) 0 68%, rgba(255,248,228,.12) 68% 100%);
+      box-shadow: 0 16px 30px rgba(0,0,0,.42);
+    }
+
+    .combo-ring::before {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: inherit;
+      background: #080b0d;
+      border: 1px solid rgba(255,248,228,.16);
+    }
+
+    .combo-ring b {
+      position: relative;
+      color: var(--bone-100);
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+    }
+
+    .game-bottom {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .danger-strip {
+      display: grid;
+      gap: 5px;
+      color: var(--mist-400);
+      font-size: .72rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .danger-strip .progress i {
+      --w: 68%;
+      background: linear-gradient(90deg, var(--success), var(--gold-300), var(--scarlet-500));
+    }
+
+    .bottom-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .icon-action {
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border: 1px solid rgba(255,248,228,.16);
+      border-radius: 8px;
+      background: rgba(0,0,0,.3);
+      color: var(--silk-100);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .icon-action svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .system {
+      padding: 84px 22px 70px;
+    }
+
+    .system-inner {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+    }
+
+    .system-title {
+      font-size: clamp(2.35rem, 5vw, 4.8rem);
+      color: var(--silk-100);
+      text-shadow: 0 12px 26px rgba(0,0,0,.45);
+    }
+
+    .system-lead {
+      max-width: 820px;
+      margin: 16px 0 28px;
+      color: var(--mist-200);
+      font-size: 1.05rem;
+      line-height: 1.65;
+    }
+
+    .system-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+    }
+
+    .spec-card {
+      grid-column: span 4;
+      padding: 16px;
+      border: 1px solid rgba(255,248,228,.14);
+      border-radius: 12px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.045), transparent 26%),
+        rgba(0,0,0,.28);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .spec-card.wide {
+      grid-column: span 8;
+    }
+
+    .spec-card.full {
+      grid-column: 1 / -1;
+    }
+
+    .spec-card h3 {
+      margin: 0 0 12px;
+      color: var(--silk-100);
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      line-height: 1.05;
+    }
+
+    .spec-card p {
+      margin: 0;
+      color: var(--mist-400);
+      font-size: .92rem;
+      line-height: 1.5;
+    }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .swatch {
+      min-height: 82px;
+      padding: 9px;
+      border: 1px solid rgba(255,248,228,.13);
+      border-radius: 8px;
+      background: var(--c);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      box-shadow: inset 0 -28px 38px rgba(0,0,0,.35);
+    }
+
+    .swatch b,
+    .swatch span {
+      color: var(--bone-100);
+      text-shadow: 0 2px 8px rgba(0,0,0,.75);
+      font-size: .74rem;
+    }
+
+    .swatch span {
+      color: var(--mist-200);
+      font-weight: 800;
+    }
+
+    .type-demo {
+      display: grid;
+      gap: 12px;
+    }
+
+    .type-demo .display {
+      margin: 0;
+      color: var(--bone-100);
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 6vw, 4.8rem);
+      line-height: .9;
+    }
+
+    .type-demo .heading {
+      margin: 0;
+      color: var(--silk-100);
+      font-family: var(--font-display);
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .type-demo .body {
+      max-width: 560px;
+      color: var(--mist-200);
+      line-height: 1.55;
+    }
+
+    .component-row,
+    .badge-row,
+    .cell-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 5px 9px;
+      border: 1px solid rgba(255,248,228,.16);
+      border-radius: 999px;
+      background: rgba(0,0,0,.28);
+      color: var(--mist-200);
+      font-size: .76rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .badge.red { color: var(--scarlet-300); }
+    .badge.gold { color: var(--gold-300); }
+    .badge.green { color: var(--success); }
+
+    .mask-chip {
+      width: 50px;
+      height: 50px;
+    }
+
+    .avatar-mask {
+      width: 58px;
+      height: 58px;
+      background: var(--c, var(--silk-100));
+    }
+
+    .mini-board {
+      width: 250px;
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+      padding: 12px;
+      border: 1px solid rgba(255,248,228,.22);
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(36,50,46,.9), rgba(3,6,6,.95));
+    }
+
+    .mini-board .cell {
+      border-radius: 7px;
+    }
+
+    .token-table {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .token {
+      min-height: 54px;
+      padding: 8px;
+      border: 1px solid rgba(255,248,228,.12);
+      border-radius: 8px;
+      background: rgba(255,255,255,.035);
+      color: var(--mist-200);
+      font-size: .76rem;
+      line-height: 1.2;
+    }
+
+    .token b {
+      display: block;
+      color: var(--bone-100);
+      font-size: .8rem;
+    }
+
+    .modal-demo {
+      max-width: 360px;
+      padding: 16px;
+      border: 1px solid rgba(255,248,228,.18);
+      border-radius: 12px;
+      background:
+        linear-gradient(180deg, rgba(216,61,55,.16), transparent 24%),
+        rgba(6, 9, 9, .92);
+      box-shadow: var(--shadow-cut);
+    }
+
+    .modal-demo h4 {
+      margin: 0;
+      color: var(--silk-100);
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+    }
+
+    .modal-demo p {
+      margin: 8px 0 14px;
+    }
+
+    .rules {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rules li {
+      padding: 10px;
+      border: 1px solid rgba(255,248,228,.1);
+      border-radius: 8px;
+      background: rgba(255,255,255,.03);
+      color: var(--mist-200);
+      line-height: 1.42;
+    }
+
+    .rules b {
+      display: block;
+      color: var(--silk-100);
+      margin-bottom: 3px;
+    }
+
+    @media (max-width: 1040px) {
+      .home-content {
+        grid-template-columns: 1fr;
+        align-content: center;
+      }
+
+      .menu-panel {
+        justify-self: start;
+      }
+
+      .board-stage {
+        grid-template-columns: minmax(300px, var(--board-size));
+      }
+
+      .side-panel {
+        display: none;
+      }
+
+      .system-grid {
+        grid-template-columns: repeat(6, 1fr);
+      }
+
+      .spec-card,
+      .spec-card.wide {
+        grid-column: span 3;
+      }
+    }
+
+    @media (max-width: 700px) {
+      :root {
+        --board-size: min(92vw, 520px);
+      }
+
+      .page-nav {
+        width: calc(100% - 20px);
+        justify-content: center;
+        overflow-x: auto;
+      }
+
+      .page-nav a {
+        padding-inline: 10px;
+      }
+
+      .screen-frame {
+        padding-inline: 10px;
+      }
+
+      .device {
+        min-height: calc(100vh - 92px);
+        border-radius: 12px;
+      }
+
+      .home-content,
+      .game-layout {
+        padding: 18px;
+      }
+
+      .brand-lockup h1 {
+        font-size: clamp(2.55rem, 12.5vw, 3.1rem);
+      }
+
+      .game-top,
+      .game-bottom {
+        grid-template-columns: 1fr;
+      }
+
+      .score-lockup {
+        order: -1;
+      }
+
+      .hud-cluster,
+      .hud-cluster.right,
+      .bottom-actions {
+        justify-content: center;
+      }
+
+      .combo-ring {
+        width: 68px;
+        height: 68px;
+        top: -12px;
+        right: 18px;
+      }
+
+      .system-grid,
+      .rules {
+        grid-template-columns: 1fr;
+      }
+
+      .spec-card,
+      .spec-card.wide,
+      .spec-card.full {
+        grid-column: 1 / -1;
+      }
+
+      .swatches,
+      .token-table {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mock-shell">
+    <div class="mist" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <nav class="page-nav" aria-label="Secciones del mockup">
+      <a href="#inicio">Inicio</a>
+      <a href="#tablero">Tablero</a>
+      <a href="#sistema">Sistema</a>
+    </nav>
+
+    <section class="screen-frame" id="inicio" aria-labelledby="inicio-title">
+      <div class="device">
+        <div class="scene" aria-hidden="true">
+          <div class="sun-chamber"></div>
+          <div class="canopy"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="midground">
+            <i class="spool"></i>
+            <i class="arch"></i>
+            <i class="arch"></i>
+            <i class="arch"></i>
+          </div>
+          <div class="silk-lines"></div>
+          <div class="particles"></div>
+          <div class="foreground">
+            <i class="grass"></i>
+            <i class="mushroom one"></i>
+            <i class="mushroom two"></i>
+            <i class="mushroom three"></i>
+          </div>
+        </div>
+
+        <div class="home-content">
+          <div class="brand-lockup">
+            <svg class="crest" viewBox="0 0 140 88" aria-hidden="true">
+              <path d="M70 4 C95 12 121 31 129 56 C108 48 88 52 70 80 C52 52 32 48 11 56 C19 31 45 12 70 4Z" fill="currentColor" opacity=".92"/>
+              <path d="M35 48 C47 30 55 21 70 18 C85 21 93 30 105 48" fill="none" stroke="#090b0b" stroke-width="5" stroke-linecap="round"/>
+              <path d="M53 45 C58 41 62 41 67 45 M73 45 C78 41 82 41 87 45" fill="none" stroke="#090b0b" stroke-width="5" stroke-linecap="round"/>
+            </svg>
+            <h1 id="inicio-title">Convergence</h1>
+            <p class="tagline">Un reino de hilos, máscaras y cámaras antiguas: la fantasía de Convergence reimaginada como un tablero vivo, oscuro y luminoso a la vez.</p>
+          </div>
+
+          <div class="menu-panel" aria-label="Menú principal">
+            <div class="slot">
+              <span class="slot-mark" aria-hidden="true"></span>
+              <span><b>Aguja errante</b><small>Capítulo 4 · 72% del mapa</small></span>
+              <strong>12 840</strong>
+            </div>
+            <button class="silk-btn">Continuar</button>
+            <div class="menu-row">
+              <button class="silk-btn secondary">Nuevo viaje</button>
+              <button class="silk-btn secondary">Retos</button>
+            </div>
+            <div class="menu-row">
+              <button class="silk-btn secondary">Reliquias</button>
+              <button class="silk-btn secondary">Opciones</button>
+            </div>
+            <div class="menu-meta">
+              <span>Hilo 684</span>
+              <span>Rosarios 18</span>
+              <span>Rango S</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen-frame" id="tablero" aria-labelledby="tablero-title">
+      <div class="device game-device">
+        <div class="scene" aria-hidden="true">
+          <div class="sun-chamber"></div>
+          <div class="canopy"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="silk-lines"></div>
+          <div class="particles"></div>
+          <div class="foreground"><i class="grass"></i></div>
+        </div>
+
+        <div class="game-layout">
+          <header class="game-top">
+            <div class="hud-cluster">
+              <span class="hud-pill"><span class="hud-mask" aria-hidden="true"></span><b>6</b></span>
+              <span class="hud-pill">Hilo <b>684</b></span>
+              <span class="hud-pill">Llave <b>2</b></span>
+            </div>
+            <div class="score-lockup">
+              <small id="tablero-title">Tablero en juego</small>
+              <strong>12 840</strong>
+            </div>
+            <div class="hud-cluster right">
+              <span class="hud-pill">Oleada <b>07</b></span>
+              <span class="hud-pill">x<b>4</b></span>
+            </div>
+          </header>
+
+          <main class="board-stage">
+            <aside class="side-panel" aria-label="Objetivos">
+              <div class="panel-title">Mandatos <small>Activo</small></div>
+              <div class="quest-card">
+                <b>Tejer cámara sellada</b>
+                <span>Converge 5 símbolos de aguja antes de que el tablero alcance peligro.</span>
+                <div class="progress"><i style="--w:62%"></i></div>
+              </div>
+              <div class="quest-card">
+                <b>Silencio de musgo</b>
+                <span>3 combos sin fallos para despertar la bonificación verde.</span>
+                <div class="progress"><i style="--w:38%"></i></div>
+              </div>
+              <div class="rune-card">
+                <b>Aura de seda</b>
+                <span>Las celdas marcadas duplican puntos durante 12 segundos.</span>
+              </div>
+            </aside>
+
+            <div class="board-wrap" aria-label="Tablero 8 por 8">
+              <div class="combo-ring" aria-label="Combo cuatro"><b>x4</b></div>
+              <div class="board">
+                <span class="cell"><i class="glyph mask"></i></span>
+                <span class="cell"><i class="glyph spool"></i></span>
+                <span class="cell target"><i class="glyph needle"></i></span>
+                <span class="cell empty"></span>
+                <span class="cell"><i class="glyph coral"></i></span>
+                <span class="cell"><i class="glyph bell"></i></span>
+                <span class="cell"><i class="glyph leaf"></i></span>
+                <span class="cell"><i class="glyph mask"></i></span>
+                <span class="cell"><i class="glyph coral"></i></span>
+                <span class="cell empty"></span>
+                <span class="cell"><i class="glyph bell"></i></span>
+                <span class="cell"><i class="glyph spool"></i></span>
+                <span class="cell"><i class="glyph mask"></i></span>
+                <span class="cell target"><i class="glyph needle"></i></span>
+                <span class="cell"><i class="glyph leaf"></i></span>
+                <span class="cell"><i class="glyph bell"></i></span>
+                <span class="cell"><i class="glyph leaf"></i></span>
+                <span class="cell"><i class="glyph mask"></i></span>
+                <span class="cell"><i class="glyph coral"></i></span>
+                <span class="cell"><i class="glyph spool"></i></span>
+                <span class="cell empty"></span>
+                <span class="cell"><i class="glyph bell"></i></span>
+                <span class="cell target"><i class="glyph needle"></i></span>
+                <span class="cell"><i class="glyph coral"></i></span>
+                <span class="cell"><i class="glyph spool"></i></span>
+                <span class="cell target"><i class="glyph needle"></i></span>
+                <span class="cell"><i class="glyph leaf"></i></span>
+                <span class="cell"><i class="glyph mask"></i></span>
+                <span class="cell"><i class="glyph bell"></i></span>
+                <span class="cell"><i class="glyph coral"></i></span>
+                <span class="cell empty"></span>
+                <span class="cell"><i class="glyph spool"></i></span>
+                <span class="cell empty"></span>
+                <span class="cell"><i class="glyph bell"></i></span>
+                <span class="cell"><i class="glyph coral"></i></span>
+                <span class="cell target"><i class="glyph needle"></i></span>
+                <span class="cell"><i class="glyph spool"></i></span>
+                <span class="cell"><i class="glyph leaf"></i></span>
+                <span class="cell"><i class="glyph mask"></i></span>
+                <span class="cell"><i class="glyph bell"></i></span>
+                <span class="cell"><i class="glyph mask"></i></span>
+                <span class="cell"><i class="glyph leaf"></i></span>
+                <span class="cell empty"></span>
+                <span class="cell"><i class="glyph bell"></i></span>
+                <span class="cell"><i class="glyph coral"></i></span>
+                <span class="cell"><i class="glyph spool"></i></span>
+                <span class="cell target"><i class="glyph needle"></i></span>
+                <span class="cell"><i class="glyph leaf"></i></span>
+                <span class="cell"><i class="glyph coral"></i></span>
+                <span class="cell"><i class="glyph spool"></i></span>
+                <span class="cell"><i class="glyph bell"></i></span>
+                <span class="cell"><i class="glyph mask"></i></span>
+                <span class="cell empty"></span>
+                <span class="cell"><i class="glyph leaf"></i></span>
+                <span class="cell"><i class="glyph coral"></i></span>
+                <span class="cell"><i class="glyph spool"></i></span>
+                <span class="cell"><i class="glyph bell"></i></span>
+                <span class="cell"><i class="glyph mask"></i></span>
+                <span class="cell target"><i class="glyph needle"></i></span>
+                <span class="cell"><i class="glyph leaf"></i></span>
+                <span class="cell"><i class="glyph coral"></i></span>
+                <span class="cell empty"></span>
+                <span class="cell"><i class="glyph spool"></i></span>
+                <span class="cell"><i class="glyph mask"></i></span>
+              </div>
+            </div>
+
+            <aside class="side-panel" aria-label="Herramientas">
+              <div class="panel-title">Herramientas <small>Bolsa</small></div>
+              <div class="tool-grid">
+                <button class="tool-btn" data-count="3" aria-label="Aguja">
+                  <svg viewBox="0 0 32 32"><path d="M25 3 7 29"/><path d="M21 3c4 0 6 2 6 6"/></svg>
+                </button>
+                <button class="tool-btn" data-count="2" aria-label="Campana">
+                  <svg viewBox="0 0 32 32"><path d="M8 23h16"/><path d="M10 23c2-4 0-8 3-13 1-2 5-2 6 0 3 5 1 9 3 13"/><path d="M14 26h4"/></svg>
+                </button>
+                <button class="tool-btn" data-count="1" aria-label="Lazo">
+                  <svg viewBox="0 0 32 32"><path d="M8 18c-4-4 0-10 6-5l2 2 2-2c6-5 10 1 6 5-4 4-12 4-16 0Z"/><path d="M16 15v12"/></svg>
+                </button>
+              </div>
+              <div class="tool-card">
+                <b>Estado del tablero</b>
+                <span>Si la ocupación pasa de 75%, las celdas oscuras empiezan a vibrar y la música entra en capa de percusión.</span>
+              </div>
+              <button class="silk-btn gold">Activar canto</button>
+            </aside>
+          </main>
+
+          <footer class="game-bottom">
+            <div class="danger-strip">
+              <span>Ocupación del tablero</span>
+              <div class="progress"><i></i></div>
+            </div>
+            <div class="bottom-actions">
+              <button class="icon-action" aria-label="Pausa">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>
+              </button>
+              <button class="icon-action" aria-label="Mapa">
+                <svg viewBox="0 0 24 24"><path d="M4 6l5-2 6 2 5-2v14l-5 2-6-2-5 2V6Z"/><path d="M9 4v14M15 6v14"/></svg>
+              </button>
+              <button class="icon-action" aria-label="Opciones">
+                <svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/><path d="M3 12h3M18 12h3M12 3v3M12 18v3"/></svg>
+              </button>
+            </div>
+            <div class="danger-strip">
+              <span>Próxima amenaza</span>
+              <div class="progress"><i style="--w:42%"></i></div>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </section>
+
+    <section class="system" id="sistema" aria-labelledby="sistema-title">
+      <div class="system-inner">
+        <h2 class="system-title" id="sistema-title">Design system Silkbound</h2>
+        <p class="system-lead">Sistema visual original para Convergence: fantasía subterránea, seda ritual, máscaras propias, capas de profundidad y controles táctiles compactos. La dirección evita assets, personajes, marcas y composición literal de obras existentes.</p>
+
+        <div class="system-grid">
+          <article class="spec-card wide">
+            <h3>Color</h3>
+            <div class="swatches">
+              <span class="swatch" style="--c:#040506"><b>Void 950</b><span>#040506</span></span>
+              <span class="swatch" style="--c:#101719"><b>Void 800</b><span>#101719</span></span>
+              <span class="swatch" style="--c:#fff8e4"><b>Silk 100</b><span>#FFF8E4</span></span>
+              <span class="swatch" style="--c:#d83d37"><b>Scarlet 500</b><span>#D83D37</span></span>
+              <span class="swatch" style="--c:#294a28"><b>Moss 700</b><span>#294A28</span></span>
+              <span class="swatch" style="--c:#9b4a38"><b>Coral 600</b><span>#9B4A38</span></span>
+              <span class="swatch" style="--c:#132a3d"><b>Ink Blue 700</b><span>#132A3D</span></span>
+              <span class="swatch" style="--c:#f2d184"><b>Gold 300</b><span>#F2D184</span></span>
+            </div>
+          </article>
+
+          <article class="spec-card">
+            <h3>Tipografía</h3>
+            <div class="type-demo">
+              <p class="display">Canto de Hilos</p>
+              <p class="heading">Cámara del musgo</p>
+              <p class="body">Display serif para título y jerarquía narrativa; sans humanista para HUD, botones y números. Los valores usan tabular nums para no saltar durante combos.</p>
+            </div>
+          </article>
+
+          <article class="spec-card">
+            <h3>Botones</h3>
+            <div class="component-row">
+              <button class="silk-btn">Primario</button>
+              <button class="silk-btn secondary">Secundario</button>
+              <button class="silk-btn gold">Recompensa</button>
+            </div>
+          </article>
+
+          <article class="spec-card">
+            <h3>Insignias</h3>
+            <div class="badge-row">
+              <span class="badge red">Amenaza</span>
+              <span class="badge gold">Tesoro</span>
+              <span class="badge green">Bendición</span>
+              <span class="badge">Neutral</span>
+            </div>
+          </article>
+
+          <article class="spec-card">
+            <h3>Avatares</h3>
+            <div class="component-row">
+              <span class="avatar-mask" style="--c:#fff8e4"></span>
+              <span class="avatar-mask" style="--c:#ff8171"></span>
+              <span class="avatar-mask" style="--c:#f2d184"></span>
+              <span class="avatar-mask" style="--c:#87c96d"></span>
+            </div>
+          </article>
+
+          <article class="spec-card wide">
+            <h3>Celdas y símbolos</h3>
+            <div class="component-row">
+              <div class="mini-board">
+                <span class="cell"><i class="glyph mask"></i></span>
+                <span class="cell"><i class="glyph spool"></i></span>
+                <span class="cell target"><i class="glyph needle"></i></span>
+                <span class="cell empty"></span>
+                <span class="cell"><i class="glyph coral"></i></span>
+                <span class="cell"><i class="glyph bell"></i></span>
+                <span class="cell"><i class="glyph leaf"></i></span>
+                <span class="cell"><i class="glyph mask"></i></span>
+                <span class="cell"><i class="glyph bell"></i></span>
+                <span class="cell empty"></span>
+                <span class="cell"><i class="glyph spool"></i></span>
+                <span class="cell"><i class="glyph coral"></i></span>
+                <span class="cell"><i class="glyph leaf"></i></span>
+                <span class="cell"><i class="glyph mask"></i></span>
+                <span class="cell target"><i class="glyph needle"></i></span>
+                <span class="cell"><i class="glyph bell"></i></span>
+              </div>
+              <p>Las piezas deben leerse como reliquias propias: máscara, bobina, aguja, campana, hoja y coral. La celda objetivo usa luz dorada; la vacía queda muy oscura y con trazo discontinuo.</p>
+            </div>
+          </article>
+
+          <article class="spec-card">
+            <h3>Tokens CSS</h3>
+            <div class="token-table">
+              <span class="token"><b>--panel</b>rgba(10,15,15,.78)</span>
+              <span class="token"><b>--stroke-hair</b>rgba(255,248,228,.16)</span>
+              <span class="token"><b>--radius-sm</b>8px</span>
+              <span class="token"><b>--tap</b>44px</span>
+              <span class="token"><b>--shadow-deep</b>0 28px 70px</span>
+              <span class="token"><b>--scarlet-500</b>#d83d37</span>
+              <span class="token"><b>--silk-100</b>#fff8e4</span>
+              <span class="token"><b>--board-size</b>min(78vw,560px)</span>
+            </div>
+          </article>
+
+          <article class="spec-card">
+            <h3>Modal</h3>
+            <div class="modal-demo">
+              <h4>Reliquia hallada</h4>
+              <p>Las ventanas emergen desde negro translúcido, con borde de seda y acento escarlata o dorado según el evento.</p>
+              <button class="silk-btn gold">Tomar</button>
+            </div>
+          </article>
+
+          <article class="spec-card full">
+            <h3>Reglas de dirección visual</h3>
+            <ul class="rules">
+              <li><b>Silueta primero</b>Personajes, HUD y piezas deben leerse en negro, hueso o escarlata antes de añadir textura.</li>
+              <li><b>Profundidad por capas</b>Fondo desenfocado, medio narrativo, tablero nítido y primer plano oscuro para crear teatro 2D.</li>
+              <li><b>Luz cálida escasa</b>El dorado se reserva para recompensa, foco, objetivo y progreso relevante.</li>
+              <li><b>Arte propio</b>Prohibido usar logotipos, personajes, jefes, mapas, iconos o capturas de Team Cherry como assets finales.</li>
+              <li><b>Botones sobrios</b>Controles compactos, táctiles y con relieve; evitar tarjetas coloridas tipo arcade espacial.</li>
+              <li><b>Movimiento</b>Partículas lentas, hilos tensándose, polvo, respiración de luz y sacudidas breves para impacto.</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

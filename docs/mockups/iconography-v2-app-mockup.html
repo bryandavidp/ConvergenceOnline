@@ -1,0 +1,966 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a1128">
+  <title>Convergence - Iconografia V2</title>
+  <link rel="stylesheet" href="../../styles.css?v=2.6.32">
+  <style>
+    body.iconography-mockup {
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: auto;
+      touch-action: auto;
+      overscroll-behavior-y: auto;
+    }
+
+    .mock-app {
+      position: relative;
+      z-index: 1;
+      width: min(1180px, 100%);
+      min-height: 100vh;
+      min-height: 100dvh;
+      margin: 0 auto;
+      padding: max(12px, env(safe-area-inset-top)) clamp(12px, 3vw, 28px) max(18px, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .mock-appbar {
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+    }
+
+    .art-icon {
+      display: block;
+      width: var(--art-size, 32px);
+      height: var(--art-size, 32px);
+      object-fit: contain;
+      flex: 0 0 auto;
+      filter: drop-shadow(0 4px 7px rgba(0, 0, 0, .34));
+    }
+
+    .appbar .art-icon { filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .35)); }
+    .appbar-icon .art-icon { --art-size: 22px; }
+    .avatar .art-icon { --art-size: 39px; }
+    .appbar-lvl-star { width: 15px; height: 15px; object-fit: contain; }
+
+    .mock-tabs {
+      align-self: center;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(116px, 1fr));
+      gap: 4px;
+      width: min(520px, 100%);
+      padding: 4px;
+      border: 1px solid var(--line);
+      background: rgba(6, 10, 28, .74);
+      border-radius: 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .mock-tab {
+      min-width: 0;
+      min-height: 46px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 7px 10px;
+      border: 0;
+      border-radius: 12px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 850;
+      font-size: .82rem;
+      transition: background .16s, color .16s, transform .1s;
+    }
+
+    .mock-tab:active { transform: scale(.97); }
+    .mock-tab[aria-selected="true"] {
+      color: #fff;
+      background: linear-gradient(180deg, rgba(61,123,255,.92), rgba(31,91,230,.92));
+      box-shadow: 0 3px 0 #103a9e, inset 0 1px 0 rgba(255,255,255,.26);
+    }
+    .mock-tab .art-icon { --art-size: 27px; }
+
+    .view-panel { display: none; min-width: 0; animation: screen-in .22s ease both; }
+    .view-panel.is-active { display: block; }
+    .view-panel.collection-view.is-active,
+    .view-panel.event-view.is-active { display: flex; }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(360px, .9fr) minmax(440px, 1.1fr);
+      gap: clamp(18px, 3vw, 34px);
+      align-items: start;
+    }
+
+    .play-column,
+    .side-column,
+    .collection-view,
+    .event-view {
+      min-width: 0;
+    }
+
+    .play-column { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .side-column { display: flex; flex-direction: column; gap: 22px; }
+
+    .mode-line {
+      width: min(500px, 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .mode-name { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .mode-name .art-icon { --art-size: 40px; }
+    .mode-name b { display: block; font-size: 1.05rem; }
+    .mode-name small { display: block; margin-top: 2px; color: var(--muted); font-size: .7rem; font-weight: 750; }
+    .difficulty-tag {
+      flex: 0 0 auto;
+      padding: 6px 10px;
+      border: 1px solid rgba(255,178,77,.45);
+      border-radius: 999px;
+      color: var(--warn);
+      background: rgba(255,178,77,.09);
+      font-size: .68rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .combat-hud {
+      width: min(500px, 100%);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      align-items: stretch;
+      border-block: 1px solid var(--line);
+      background: linear-gradient(90deg, transparent, rgba(24,36,79,.54), transparent);
+    }
+    .hud-stat {
+      min-width: 0;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      text-align: left;
+    }
+    .hud-stat + .hud-stat { border-left: 1px solid var(--line); }
+    .hud-stat .art-icon { --art-size: 31px; }
+    .hud-stat small { display: block; color: var(--muted); font-size: .59rem; font-weight: 800; text-transform: uppercase; }
+    .hud-stat b { display: block; margin-top: 1px; font-size: .88rem; font-variant-numeric: tabular-nums; }
+    .hud-stat.life b { color: var(--time); }
+    .hud-stat.wave b { color: var(--gold); }
+    .hud-stat.timer b { color: var(--accent-2); }
+
+    .boss-row {
+      width: min(500px, 100%);
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 9px;
+      align-items: center;
+      min-height: 50px;
+      padding: 6px 9px;
+      border: 1px solid rgba(180,108,255,.30);
+      border-radius: 12px;
+      background: linear-gradient(90deg, rgba(81,35,126,.44), rgba(14,21,51,.76));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+    .boss-row .art-icon { --art-size: 42px; }
+    .boss-copy { min-width: 0; }
+    .boss-copy span { display: flex; justify-content: space-between; gap: 8px; font-size: .72rem; font-weight: 900; }
+    .boss-copy em { color: #d3b8ff; font-style: normal; }
+    .boss-hp { height: 7px; margin-top: 5px; border-radius: 999px; overflow: hidden; background: rgba(0,0,0,.42); }
+    .boss-hp span { display: block; width: 68%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #a96cff, #ff6cb0); box-shadow: 0 0 10px rgba(255,108,176,.4); }
+    .boss-next { color: var(--muted); font-size: .65rem; font-weight: 800; text-align: right; }
+    .boss-next b { display: block; color: var(--text); font-size: .78rem; }
+
+    .mock-board-wrap {
+      width: min(500px, 100%);
+      aspect-ratio: 1;
+      padding: clamp(9px, 1.5vw, 14px);
+    }
+    .match-board {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: clamp(4px, .8vw, 7px);
+      width: 100%;
+      height: 100%;
+    }
+    .match-tile {
+      position: relative;
+      min-width: 0;
+      border: 1px solid var(--cell-filled-border);
+      border-radius: 13px;
+      padding: 4px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(155deg, rgba(70,91,164,.55), rgba(20,31,70,.66));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 3px 7px rgba(0,0,0,.18);
+      transition: transform .12s, border-color .12s, box-shadow .12s;
+    }
+    .match-tile:hover { transform: translateY(-2px); border-color: rgba(130,225,255,.58); }
+    .match-tile.is-selected {
+      transform: scale(.92);
+      border-color: var(--accent-2);
+      box-shadow: inset 0 0 0 2px rgba(0,208,255,.42), 0 0 16px rgba(0,208,255,.48);
+    }
+    .match-tile .art-icon { width: 84%; height: 84%; }
+    .match-tile.special { background: linear-gradient(155deg, rgba(145,70,176,.64), rgba(45,22,86,.82)); }
+    .match-tile.locked::after {
+      content: '';
+      position: absolute;
+      inset: 5px;
+      border: 1px solid rgba(255,255,255,.20);
+      border-radius: 9px;
+      pointer-events: none;
+    }
+
+    .board-actions {
+      width: min(500px, 100%);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .booster {
+      position: relative;
+      min-width: 0;
+      min-height: 64px;
+      padding: 6px 4px 5px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      background: linear-gradient(180deg, rgba(35,52,106,.76), rgba(12,20,49,.90));
+      color: var(--text);
+      box-shadow: 0 4px 0 rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.10);
+    }
+    .booster .art-icon { --art-size: 36px; }
+    .booster small { color: var(--muted); font-size: .56rem; font-weight: 800; }
+    .booster .qty {
+      position: absolute;
+      right: 4px;
+      top: 4px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--gold);
+      color: #3d2e00;
+      font-size: .58rem;
+      font-weight: 1000;
+    }
+    .booster.is-armed { border-color: var(--gold); box-shadow: 0 3px 0 #6f4a00, 0 0 15px rgba(255,216,77,.34); }
+
+    .selection-line {
+      width: min(500px, 100%);
+      min-height: 22px;
+      color: var(--muted);
+      font-size: .68rem;
+      font-weight: 800;
+      text-align: center;
+    }
+    .selection-line b { color: var(--accent-2); }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+    .section-head h2 { font-size: 1rem; letter-spacing: 0; }
+    .section-head p { margin-top: 3px; color: var(--muted); font-size: .68rem; }
+    .section-head > span { color: var(--muted); font-size: .64rem; font-weight: 850; }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .status-card {
+      position: relative;
+      min-width: 0;
+      min-height: 72px;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid rgba(52,226,155,.24);
+      border-radius: 10px;
+      background: linear-gradient(145deg, rgba(28,73,55,.50), rgba(10,24,37,.72));
+    }
+    .status-card.debuff {
+      border-color: rgba(180,108,255,.32);
+      background: linear-gradient(145deg, rgba(75,35,101,.55), rgba(23,15,50,.76));
+    }
+    .status-card .art-icon { --art-size: 48px; }
+    .status-copy { min-width: 0; }
+    .status-copy b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .74rem; }
+    .status-copy small { display: block; margin-top: 3px; color: var(--muted); font-size: .59rem; line-height: 1.2; }
+    .status-time { align-self: start; color: var(--good); font-size: .6rem; font-weight: 1000; }
+    .status-card.debuff .status-time { color: #d5aeff; }
+
+    .loadout-row {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 7px;
+      margin-top: 10px;
+    }
+    .loadout-slot {
+      position: relative;
+      aspect-ratio: 1;
+      min-width: 0;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(11,18,44,.70);
+    }
+    .loadout-slot .art-icon { width: 80%; height: 80%; }
+    .loadout-slot span {
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 3px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: rgba(5,8,22,.88);
+      color: #fff;
+      font-size: .54rem;
+      font-weight: 950;
+    }
+
+    .reward-track {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .reward-step {
+      position: relative;
+      min-width: 0;
+      padding: 9px 5px 7px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      text-align: center;
+      background: rgba(10,18,42,.68);
+    }
+    .reward-step::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: -11px;
+      width: calc(100% + 8px);
+      height: 3px;
+      background: rgba(255,255,255,.10);
+      z-index: -1;
+    }
+    .reward-step:first-child::before { display: none; }
+    .reward-step.done { border-color: rgba(52,226,155,.42); }
+    .reward-step.current { border-color: var(--gold); box-shadow: 0 0 15px rgba(255,216,77,.20); }
+    .reward-step .art-icon { --art-size: 44px; margin: 0 auto; }
+    .reward-step small { display: block; margin-top: 2px; color: var(--muted); font-size: .56rem; font-weight: 850; }
+
+    .collection-view,
+    .event-view { display: flex; flex-direction: column; gap: 24px; }
+
+    .collection-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .collection-title { display: flex; align-items: center; gap: 10px; }
+    .collection-title .art-icon { --art-size: 48px; }
+    .collection-title h1 { font-size: clamp(1.25rem, 3vw, 1.8rem); }
+    .collection-title p { color: var(--muted); font-size: .72rem; margin-top: 3px; }
+    .filter-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-btn {
+      min-height: 38px;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      font-size: .7rem;
+      font-weight: 850;
+    }
+    .filter-btn[aria-pressed="true"] { color: #fff; border-color: var(--accent-2); background: rgba(0,208,255,.13); }
+
+    .inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 9px;
+    }
+    .inventory-item {
+      position: relative;
+      min-width: 0;
+      aspect-ratio: .86;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 7px 4px 5px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: linear-gradient(155deg, rgba(30,46,96,.74), rgba(10,17,42,.88));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 5px 12px rgba(0,0,0,.18);
+    }
+    .inventory-item:hover { border-color: var(--line-strong); transform: translateY(-2px); }
+    .inventory-item .art-icon { width: 70%; height: 70%; }
+    .inventory-item b { max-width: 100%; color: var(--muted); font-size: .54rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .inventory-item[data-kind="combat"] { border-color: rgba(255,93,115,.24); }
+    .inventory-item[data-kind="resource"] { border-color: rgba(255,216,77,.24); }
+    .inventory-item[data-kind="utility"] { border-color: rgba(0,208,255,.24); }
+    .inventory-item.is-hidden { display: none; }
+
+    .progression-band {
+      display: grid;
+      grid-template-columns: minmax(230px, .75fr) minmax(0, 1.25fr);
+      gap: 22px;
+      align-items: center;
+      padding-block: 18px;
+      border-block: 1px solid var(--line);
+    }
+    .rank-summary { display: flex; align-items: center; gap: 12px; }
+    .rank-summary .art-icon { --art-size: 86px; }
+    .rank-summary small { color: var(--muted); font-size: .65rem; font-weight: 850; text-transform: uppercase; }
+    .rank-summary h2 { margin-top: 2px; color: var(--gold); font-size: 1.3rem; }
+    .rank-summary p { margin-top: 5px; color: var(--muted); font-size: .7rem; }
+    .rank-path { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .rank-node { min-width: 0; text-align: center; opacity: .52; }
+    .rank-node.done, .rank-node.current { opacity: 1; }
+    .rank-node .art-icon { --art-size: 54px; margin: auto; }
+    .rank-node small { color: var(--muted); font-size: .55rem; font-weight: 850; }
+    .rank-node.current .art-icon { filter: drop-shadow(0 0 12px rgba(255,216,77,.55)); }
+
+    .event-header {
+      position: relative;
+      overflow: hidden;
+      min-height: 176px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 18px;
+      padding: clamp(18px, 4vw, 34px);
+      border: 1px solid rgba(180,108,255,.34);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 82% 16%, rgba(255,153,0,.28), transparent 23%),
+        linear-gradient(125deg, #371452, #17143a 58%, #0b1733);
+      box-shadow: 0 14px 32px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.10);
+    }
+    .event-header::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(135deg, transparent 0 36px, rgba(255,255,255,.025) 36px 38px);
+    }
+    .event-copy { position: relative; z-index: 1; }
+    .event-copy small { color: #ffba65; font-size: .66rem; font-weight: 950; text-transform: uppercase; }
+    .event-copy h1 { margin-top: 4px; font-size: clamp(1.6rem, 4vw, 2.6rem); }
+    .event-copy p { max-width: 530px; margin-top: 6px; color: #d2c3eb; font-size: .78rem; line-height: 1.45; }
+    .event-copy .btn { margin-top: 14px; }
+    .event-art { position: relative; z-index: 1; display: flex; align-items: end; }
+    .event-art .art-icon { --art-size: clamp(92px, 14vw, 154px); margin-left: -26px; }
+    .event-art .art-icon:first-child { margin-left: 0; transform: rotate(-8deg); }
+    .event-art .art-icon:last-child { transform: rotate(9deg); }
+
+    .event-body { display: grid; grid-template-columns: 1.2fr .8fr; gap: 28px; align-items: start; }
+    .event-quests { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .event-quest {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .event-quest .art-icon { --art-size: 46px; }
+    .event-quest b { display: block; font-size: .76rem; }
+    .event-quest small { display: block; margin-top: 3px; color: var(--muted); font-size: .62rem; }
+    .quest-progress { min-width: 86px; text-align: right; color: var(--gold); font-size: .66rem; font-weight: 900; }
+    .quest-bar { width: 86px; height: 5px; margin-top: 5px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,.10); }
+    .quest-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff8a45, #b46cff); }
+
+    .event-collection {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+      margin-top: 10px;
+    }
+    .event-token {
+      min-width: 0;
+      aspect-ratio: 1.08;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      border: 1px solid rgba(180,108,255,.26);
+      border-radius: 10px;
+      background: rgba(31,18,62,.62);
+    }
+    .event-token .art-icon { width: 68%; height: 68%; }
+    .event-token small { color: #d5c2f5; font-size: .56rem; font-weight: 850; }
+
+    .mock-footer {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: .62rem;
+    }
+    .mock-footer strong { color: var(--text); }
+    .footer-icons { display: flex; align-items: center; gap: 4px; }
+    .footer-icons .art-icon { --art-size: 24px; }
+
+    @media (max-width: 860px) {
+      .game-layout,
+      .event-body,
+      .progression-band { grid-template-columns: 1fr; }
+      .side-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .side-column > section:last-child { grid-column: 1 / -1; }
+      .inventory-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+      .event-header { grid-template-columns: minmax(0, 1fr) 220px; }
+    }
+
+    @media (max-width: 620px) {
+      .mock-app { padding-inline: 10px; }
+      .mock-appbar { grid-template-columns: 1fr; grid-template-areas: "profile" "econ"; gap: 8px; }
+      .mock-appbar .appbar-econ { justify-self: stretch; justify-content: space-between; }
+      .mock-appbar .appbar-profile { width: 100%; }
+      .mock-tabs { grid-template-columns: repeat(3, 1fr); }
+      .mock-tab { min-width: 0; padding-inline: 5px; font-size: .7rem; }
+      .mock-tab .art-icon { --art-size: 23px; }
+      .side-column { display: flex; }
+      .status-grid { grid-template-columns: 1fr; }
+      .inventory-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .rank-path { grid-template-columns: repeat(5, minmax(52px, 1fr)); overflow-x: auto; padding-bottom: 4px; }
+      .event-header { grid-template-columns: 1fr; padding-bottom: 8px; }
+      .event-art { justify-content: center; }
+      .event-art .art-icon { --art-size: 96px; }
+      .event-copy p { font-size: .72rem; }
+      .mock-footer { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (max-width: 410px) {
+      .combat-hud { grid-template-columns: 1fr 1fr 1fr; }
+      .hud-stat { padding-inline: 4px; gap: 3px; }
+      .hud-stat .art-icon { --art-size: 25px; }
+      .hud-stat small { font-size: .5rem; }
+      .hud-stat b { font-size: .72rem; }
+      .boss-next { display: none; }
+      .match-board { gap: 3px; }
+      .match-tile { border-radius: 9px; padding: 2px; }
+      .board-actions { gap: 5px; }
+      .booster { min-height: 57px; border-radius: 10px; }
+      .booster .art-icon { --art-size: 30px; }
+      .loadout-row { grid-template-columns: repeat(6, minmax(40px, 1fr)); overflow-x: auto; }
+      .inventory-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .event-collection { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .view-panel { animation: none; }
+      .match-tile, .inventory-item { transition: none; }
+    }
+  </style>
+</head>
+<body class="iconography-mockup mode-surv">
+  <div class="stars" aria-hidden="true"></div>
+
+  <main class="mock-app">
+    <header class="appbar mock-appbar" aria-label="Perfil y economia">
+      <div class="appbar-profile">
+        <button class="appbar-profile-main" type="button">
+          <span class="avatar">
+            <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/player.png" alt="">
+            <span class="avatar-badge">27</span>
+          </span>
+          <span class="appbar-id">
+            <span class="appbar-name-row"><span class="appbar-name">Aurora</span></span>
+            <span class="appbar-lvl">
+              <img class="appbar-lvl-star" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/star.png" alt="">
+              <span class="appbar-lvl-txt">Nivel 27</span>
+              <span class="appbar-xp"><span class="appbar-xp-fill" style="width:72%"></span></span>
+              <span class="appbar-xp-num">7.240 / 10.000</span>
+            </span>
+          </span>
+        </button>
+      </div>
+
+      <div class="appbar-econ">
+        <button class="econ-pill econ-coins" type="button">
+          <img class="art-icon econ-ic" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/coin.png" alt="">
+          <b>12.480</b><span class="econ-plus" aria-hidden="true"></span>
+        </button>
+        <button class="econ-pill econ-gems" type="button">
+          <img class="art-icon econ-ic" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/crystal.png" alt="">
+          <b>860</b><span class="econ-plus" aria-hidden="true"></span>
+        </button>
+        <button class="econ-pill econ-tickets" type="button">
+          <img class="art-icon econ-ic" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/ticket.png" alt="">
+          <b>18</b>
+        </button>
+        <button class="icon-btn appbar-icon" type="button" title="Ajustes" aria-label="Ajustes">
+          <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/settings.png" alt="">
+        </button>
+      </div>
+    </header>
+
+    <nav class="mock-tabs" aria-label="Secciones">
+      <button class="mock-tab" type="button" data-view="game" aria-selected="true">
+        <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/shield.png" alt="">Partida
+      </button>
+      <button class="mock-tab" type="button" data-view="collection" aria-selected="false">
+        <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/backpack.png" alt="">Coleccion
+      </button>
+      <button class="mock-tab" type="button" data-view="event" aria-selected="false">
+        <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/04_gvesster_events_halloween_512/pumpkin.png" alt="">Evento
+      </button>
+    </nav>
+
+    <section class="view-panel is-active" data-view-panel="game" aria-label="Partida de supervivencia">
+      <div class="game-layout">
+        <div class="play-column">
+          <div class="mode-line">
+            <div class="mode-name">
+              <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/shield.png" alt="">
+              <span><b>Supervivencia</b><small>Sector Helix · Oleada en curso</small></span>
+            </div>
+            <span class="difficulty-tag">Dificil</span>
+          </div>
+
+          <div class="combat-hud">
+            <div class="hud-stat life">
+              <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/heart.png" alt="">
+              <span><small>Vidas</small><b>3 / 3</b></span>
+            </div>
+            <div class="hud-stat wave">
+              <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/aura.png" alt="">
+              <span><small>Oleada</small><b>12 / 15</b></span>
+            </div>
+            <div class="hud-stat timer">
+              <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/clock.png" alt="">
+              <span><small>Tiempo</small><b>01:42</b></span>
+            </div>
+          </div>
+
+          <div class="boss-row">
+            <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/04_gvesster_events_halloween_512/ghost.png" alt="">
+            <div class="boss-copy">
+              <span><b>El Vigilante</b><em>68%</em></span>
+              <div class="boss-hp"><span></span></div>
+            </div>
+            <div class="boss-next">Fase 2<b>12 mov.</b></div>
+          </div>
+
+          <div class="board-wrap mock-board-wrap" data-board="classic">
+            <div class="match-board" id="match-board" aria-label="Tablero match-3">
+              <button class="match-tile" data-piece="Manzana"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/apple.png" alt="Manzana"></button>
+              <button class="match-tile" data-piece="Arandano"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/blueberry.png" alt="Arandano"></button>
+              <button class="match-tile" data-piece="Limon"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/lemon.png" alt="Limon"></button>
+              <button class="match-tile" data-piece="Aguacate"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/avocado.png" alt="Aguacate"></button>
+              <button class="match-tile special" data-piece="Bomba"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/bomb.png" alt="Bomba"></button>
+              <button class="match-tile" data-piece="Naranja"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/orange.png" alt="Naranja"></button>
+
+              <button class="match-tile" data-piece="Platano"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/banana.png" alt="Platano"></button>
+              <button class="match-tile" data-piece="Fresa"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/strawberry.png" alt="Fresa"></button>
+              <button class="match-tile" data-piece="Aguacate"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/avocado.png" alt="Aguacate"></button>
+              <button class="match-tile" data-piece="Galleta"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/cookie.png" alt="Galleta"></button>
+              <button class="match-tile" data-piece="Manzana"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/apple.png" alt="Manzana"></button>
+              <button class="match-tile" data-piece="Limon"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/lemon.png" alt="Limon"></button>
+
+              <button class="match-tile" data-piece="Arandano"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/blueberry.png" alt="Arandano"></button>
+              <button class="match-tile" data-piece="Zanahoria"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/carrot.png" alt="Zanahoria"></button>
+              <button class="match-tile" data-piece="Fresa"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/strawberry.png" alt="Fresa"></button>
+              <button class="match-tile locked" data-piece="Bloqueada"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/lock.png" alt="Pieza bloqueada"></button>
+              <button class="match-tile" data-piece="Platano"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/banana.png" alt="Platano"></button>
+              <button class="match-tile" data-piece="Naranja"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/orange.png" alt="Naranja"></button>
+
+              <button class="match-tile" data-piece="Galleta"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/cookie.png" alt="Galleta"></button>
+              <button class="match-tile" data-piece="Manzana"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/apple.png" alt="Manzana"></button>
+              <button class="match-tile special" data-piece="Escudo"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/shield.png" alt="Escudo"></button>
+              <button class="match-tile" data-piece="Arandano"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/blueberry.png" alt="Arandano"></button>
+              <button class="match-tile" data-piece="Limon"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/lemon.png" alt="Limon"></button>
+              <button class="match-tile" data-piece="Zanahoria"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/carrot.png" alt="Zanahoria"></button>
+
+              <button class="match-tile" data-piece="Aguacate"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/avocado.png" alt="Aguacate"></button>
+              <button class="match-tile" data-piece="Naranja"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/orange.png" alt="Naranja"></button>
+              <button class="match-tile" data-piece="Fresa"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/strawberry.png" alt="Fresa"></button>
+              <button class="match-tile" data-piece="Platano"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/banana.png" alt="Platano"></button>
+              <button class="match-tile" data-piece="Galleta"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/cookie.png" alt="Galleta"></button>
+              <button class="match-tile special" data-piece="Comodin"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/aura.png" alt="Comodin"></button>
+
+              <button class="match-tile" data-piece="Limon"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/lemon.png" alt="Limon"></button>
+              <button class="match-tile" data-piece="Arandano"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/blueberry.png" alt="Arandano"></button>
+              <button class="match-tile" data-piece="Manzana"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/apple.png" alt="Manzana"></button>
+              <button class="match-tile" data-piece="Zanahoria"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/carrot.png" alt="Zanahoria"></button>
+              <button class="match-tile" data-piece="Naranja"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/orange.png" alt="Naranja"></button>
+              <button class="match-tile" data-piece="Fresa"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/strawberry.png" alt="Fresa"></button>
+            </div>
+          </div>
+
+          <div class="board-actions" aria-label="Potenciadores">
+            <button class="booster" type="button" data-booster="Bomba"><span class="qty">3</span><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/bomb.png" alt=""><small>Bomba</small></button>
+            <button class="booster" type="button" data-booster="Iman"><span class="qty">2</span><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/magnet.png" alt=""><small>Iman</small></button>
+            <button class="booster" type="button" data-booster="Pista"><span class="qty">5</span><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/search.png" alt=""><small>Pista</small></button>
+            <button class="booster" type="button" data-booster="Escudo"><span class="qty">1</span><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/shield.png" alt=""><small>Escudo</small></button>
+          </div>
+          <p class="selection-line" id="selection-line" aria-live="polite">Selecciona una pieza o equipa un potenciador</p>
+        </div>
+
+        <aside class="side-column">
+          <section>
+            <div class="section-head">
+              <div><h2>Efectos activos</h2><p>Bonificaciones y amenazas de la oleada</p></div><span>4 activos</span>
+            </div>
+            <div class="status-grid">
+              <div class="status-card">
+                <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/06_akami_status_cc0_512/buff_strength.png" alt="">
+                <span class="status-copy"><b>Fuerza</b><small>Explosiones +25%</small></span><span class="status-time">38s</span>
+              </div>
+              <div class="status-card">
+                <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/06_akami_status_cc0_512/buff_luck.png" alt="">
+                <span class="status-copy"><b>Fortuna</b><small>Especiales +15%</small></span><span class="status-time">2 ol.</span>
+              </div>
+              <div class="status-card debuff">
+                <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/06_akami_status_cc0_512/debuff_slow.png" alt="">
+                <span class="status-copy"><b>Pesadez</b><small>Reloj -10%</small></span><span class="status-time">18s</span>
+              </div>
+              <div class="status-card debuff">
+                <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/06_akami_status_cc0_512/debuff_curse.png" alt="">
+                <span class="status-copy"><b>Maldicion</b><small>1 casilla sellada</small></span><span class="status-time">1 ol.</span>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="section-head">
+              <div><h2>Kit de supervivencia</h2><p>Objetos equipados para esta incursión</p></div><span>6 / 6</span>
+            </div>
+            <div class="loadout-row">
+              <div class="loadout-slot" title="Pocion"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/potion.png" alt="Pocion"><span>2</span></div>
+              <div class="loadout-slot" title="Hacha"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/axe.png" alt="Hacha"><span>1</span></div>
+              <div class="loadout-slot" title="Antorcha"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/torch.png" alt="Antorcha"><span>3</span></div>
+              <div class="loadout-slot" title="Llave"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/key.png" alt="Llave"><span>1</span></div>
+              <div class="loadout-slot" title="Pergamino"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/scroll.png" alt="Pergamino"><span>2</span></div>
+              <div class="loadout-slot" title="Pizza"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/pizza.png" alt="Pizza"><span>1</span></div>
+            </div>
+          </section>
+
+          <section>
+            <div class="section-head">
+              <div><h2>Recompensas de incursión</h2><p>Siguiente cofre en la oleada 15</p></div><span>12 / 20</span>
+            </div>
+            <div class="reward-track">
+              <div class="reward-step done"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/05_gvesster_progression_512/coin.png" alt=""><small>Oleada 5</small></div>
+              <div class="reward-step done"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/05_gvesster_progression_512/gift.png" alt=""><small>Oleada 10</small></div>
+              <div class="reward-step current"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/05_gvesster_progression_512/chest.png" alt=""><small>Oleada 15</small></div>
+              <div class="reward-step"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/05_gvesster_progression_512/trophy.png" alt=""><small>Oleada 20</small></div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <section class="view-panel collection-view" data-view-panel="collection" aria-label="Coleccion" hidden>
+      <div class="collection-toolbar">
+        <div class="collection-title">
+          <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/backpack.png" alt="">
+          <div><h1>Coleccion</h1><p>42 objetos descubiertos · 18 mejorados</p></div>
+        </div>
+        <div class="filter-row" aria-label="Filtrar coleccion">
+          <button class="filter-btn" type="button" data-filter="all" aria-pressed="true">Todos</button>
+          <button class="filter-btn" type="button" data-filter="combat" aria-pressed="false">Combate</button>
+          <button class="filter-btn" type="button" data-filter="utility" aria-pressed="false">Utilidad</button>
+          <button class="filter-btn" type="button" data-filter="resource" aria-pressed="false">Recursos</button>
+        </div>
+      </div>
+
+      <div class="inventory-grid" id="inventory-grid">
+        <button class="inventory-item" type="button" data-kind="combat"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/sword.png" alt=""><b>Espada</b></button>
+        <button class="inventory-item" type="button" data-kind="combat"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/axe.png" alt=""><b>Hacha</b></button>
+        <button class="inventory-item" type="button" data-kind="combat"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/hammer.png" alt=""><b>Martillo</b></button>
+        <button class="inventory-item" type="button" data-kind="combat"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/shield.png" alt=""><b>Escudo</b></button>
+        <button class="inventory-item" type="button" data-kind="combat"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/bomb.png" alt=""><b>Bomba</b></button>
+        <button class="inventory-item" type="button" data-kind="combat"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/torch.png" alt=""><b>Antorcha</b></button>
+        <button class="inventory-item" type="button" data-kind="utility"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/backpack.png" alt=""><b>Mochila</b></button>
+        <button class="inventory-item" type="button" data-kind="utility"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/key.png" alt=""><b>Llave</b></button>
+        <button class="inventory-item" type="button" data-kind="utility"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/scroll.png" alt=""><b>Pergamino</b></button>
+        <button class="inventory-item" type="button" data-kind="utility"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/shovel.png" alt=""><b>Pala</b></button>
+        <button class="inventory-item" type="button" data-kind="utility"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/magnet.png" alt=""><b>Iman</b></button>
+        <button class="inventory-item" type="button" data-kind="utility"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/potion.png" alt=""><b>Pocion</b></button>
+        <button class="inventory-item" type="button" data-kind="resource"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/coin.png" alt=""><b>Monedas</b></button>
+        <button class="inventory-item" type="button" data-kind="resource"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/crystal.png" alt=""><b>Cristal</b></button>
+        <button class="inventory-item" type="button" data-kind="resource"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/ticket.png" alt=""><b>Tickets</b></button>
+        <button class="inventory-item" type="button" data-kind="resource"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/wheat.png" alt=""><b>Trigo</b></button>
+        <button class="inventory-item" type="button" data-kind="resource"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/clover.png" alt=""><b>Trebol</b></button>
+        <button class="inventory-item" type="button" data-kind="resource"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/cracked-egg.png" alt=""><b>Huevo</b></button>
+        <button class="inventory-item" type="button" data-kind="resource"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/03_gvesster_match3_food_512/cookie.png" alt=""><b>Galleta</b></button>
+        <button class="inventory-item" type="button" data-kind="resource"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/pizza.png" alt=""><b>Racion</b></button>
+        <button class="inventory-item" type="button" data-kind="utility"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/wheel.png" alt=""><b>Ruleta</b></button>
+        <button class="inventory-item" type="button" data-kind="utility"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/02_gvesster_survival_512/trade.png" alt=""><b>Intercambio</b></button>
+        <button class="inventory-item" type="button" data-kind="utility"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/chest.png" alt=""><b>Cofre</b></button>
+        <button class="inventory-item" type="button" data-kind="utility"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/luckyblock.png" alt=""><b>Bloque suerte</b></button>
+      </div>
+
+      <div class="progression-band">
+        <div class="rank-summary">
+          <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/05_gvesster_progression_512/crown.png" alt="">
+          <div><small>Rango de temporada</small><h2>Corona III</h2><p>840 puntos para el siguiente rango</p></div>
+        </div>
+        <div class="rank-path" aria-label="Progreso de rango">
+          <div class="rank-node done"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/05_gvesster_progression_512/verify.png" alt=""><small>Recluta</small></div>
+          <div class="rank-node done"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/05_gvesster_progression_512/medal.png" alt=""><small>Medalla</small></div>
+          <div class="rank-node current"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/05_gvesster_progression_512/crown.png" alt=""><small>Corona</small></div>
+          <div class="rank-node"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/05_gvesster_progression_512/trophy.png" alt=""><small>Trofeo</small></div>
+          <div class="rank-node"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/05_gvesster_progression_512/star.png" alt=""><small>Estelar</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view-panel event-view" data-view-panel="event" aria-label="Evento de Halloween" hidden>
+      <header class="event-header">
+        <div class="event-copy">
+          <small>Evento temporal · 12 dias</small>
+          <h1>Noche de Convergencia</h1>
+          <p>Completa incursiones nocturnas, derrota al Vigilante y llena la bolsa de caramelos antes del amanecer.</p>
+          <button class="btn btn-primary btn-icon" type="button" id="event-claim">
+            <img class="art-icon btn-ic" src="../../assets_nuevos/listo_para_integrar_v2/05_gvesster_progression_512/gift.png" alt="">Reclamar premio diario
+          </button>
+        </div>
+        <div class="event-art" aria-hidden="true">
+          <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/04_gvesster_events_halloween_512/pumpkin.png" alt="">
+          <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/04_gvesster_events_halloween_512/ghost.png" alt="">
+          <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/04_gvesster_events_halloween_512/tot-bag-purple.png" alt="">
+        </div>
+      </header>
+
+      <div class="event-body">
+        <section>
+          <div class="section-head"><div><h2>Misiones del evento</h2><p>Reinicio diario en 08:14:22</p></div><span>3 / 5</span></div>
+          <div class="event-quests">
+            <div class="event-quest">
+              <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/04_gvesster_events_halloween_512/candycorn.png" alt="">
+              <span><b>Recoge 40 caramelos</b><small>Recompensa: 250 monedas</small></span>
+              <span class="quest-progress">32 / 40<span class="quest-bar"><span style="width:80%"></span></span></span>
+            </div>
+            <div class="event-quest">
+              <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/04_gvesster_events_halloween_512/cauldron.png" alt="">
+              <span><b>Activa 6 pociones</b><small>Recompensa: bolsa naranja</small></span>
+              <span class="quest-progress">4 / 6<span class="quest-bar"><span style="width:66%"></span></span></span>
+            </div>
+            <div class="event-quest">
+              <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/04_gvesster_events_halloween_512/coffin.png" alt="">
+              <span><b>Supera la cripta</b><small>Recompensa: cofre espectral</small></span>
+              <span class="quest-progress">1 / 1<span class="quest-bar"><span style="width:100%"></span></span></span>
+            </div>
+            <div class="event-quest">
+              <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/04_gvesster_events_halloween_512/bat.png" alt="">
+              <span><b>Encadena un combo x12</b><small>Recompensa: 30 cristales</small></span>
+              <span class="quest-progress">9 / 12<span class="quest-bar"><span style="width:75%"></span></span></span>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-head"><div><h2>Coleccion nocturna</h2><p>Iconos descubiertos esta temporada</p></div><span>8 / 10</span></div>
+          <div class="event-collection">
+            <div class="event-token"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/04_gvesster_events_halloween_512/bone.png" alt=""><small>Hueso</small></div>
+            <div class="event-token"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/04_gvesster_events_halloween_512/tombstone.png" alt=""><small>Lapida</small></div>
+            <div class="event-token"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/04_gvesster_events_halloween_512/tot-bag-orange.png" alt=""><small>Bolsa solar</small></div>
+            <div class="event-token"><img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/04_gvesster_events_halloween_512/tot-bag-purple.png" alt=""><small>Bolsa lunar</small></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <footer class="mock-footer">
+      <span><strong>Convergence</strong> · Temporada Helix</span>
+      <span class="footer-icons" aria-label="Accesos rapidos">
+        <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/friend.png" alt="Amigos">
+        <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/stats.png" alt="Estadisticas">
+        <img class="art-icon" src="../../assets_nuevos/listo_para_integrar_v2/01_gvesster_core_ui_512/trophy.png" alt="Clasificacion">
+      </span>
+    </footer>
+  </main>
+
+  <script>
+    const tabs = [...document.querySelectorAll('[data-view]')];
+    const panels = [...document.querySelectorAll('[data-view-panel]')];
+
+    function showView(view) {
+      tabs.forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.view === view)));
+      panels.forEach((panel) => {
+        const active = panel.dataset.viewPanel === view;
+        panel.hidden = !active;
+        panel.classList.toggle('is-active', active);
+      });
+    }
+
+    tabs.forEach((tab) => tab.addEventListener('click', () => showView(tab.dataset.view)));
+
+    const selectionLine = document.getElementById('selection-line');
+    document.querySelectorAll('.match-tile').forEach((tile) => {
+      tile.addEventListener('click', () => {
+        document.querySelectorAll('.match-tile').forEach((item) => item.classList.remove('is-selected'));
+        tile.classList.add('is-selected');
+        selectionLine.innerHTML = '<b>' + tile.dataset.piece + '</b> seleccionado';
+      });
+    });
+
+    document.querySelectorAll('[data-booster]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const armed = button.classList.contains('is-armed');
+        document.querySelectorAll('[data-booster]').forEach((item) => item.classList.remove('is-armed'));
+        button.classList.toggle('is-armed', !armed);
+        selectionLine.innerHTML = armed
+          ? 'Selecciona una pieza o equipa un potenciador'
+          : '<b>' + button.dataset.booster + '</b> equipado';
+      });
+    });
+
+    document.querySelectorAll('[data-filter]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const filter = button.dataset.filter;
+        document.querySelectorAll('[data-filter]').forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+        document.querySelectorAll('.inventory-item').forEach((item) => {
+          item.classList.toggle('is-hidden', filter !== 'all' && item.dataset.kind !== filter);
+        });
+      });
+    });
+
+    const claimButton = document.getElementById('event-claim');
+    claimButton.addEventListener('click', () => {
+      claimButton.disabled = true;
+      claimButton.textContent = 'Premio reclamado';
+    });
+  </script>
+</body>
+</html>
