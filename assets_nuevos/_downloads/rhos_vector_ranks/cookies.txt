@@ -1,0 +1,6 @@
+# Netscape HTTP Cookie File
+# http://curl.haxx.se/rfc/cookie_spec.html
+# This is a generated file!  Do not edit.
+
+.itch.io	TRUE	/	TRUE		itchio_token	WyJjaWxUIiwxNzgzOTg1OTg2LCJOVExYc2NkSWlLQUNjSk4iXQ%3d%3d%2eBIU3Cr43EneTq%2bV1czRjUNHCzXs%3d
+.itch.io	TRUE	/	TRUE		ref%3aregister%3areferrer	https%3a%2f%2frhosgfx%2eitch%2eio%2fvector%2dranks%2fpurchase

@@ -13,7 +13,7 @@ require('./dom-stub.js');
 require('../game.js');
 
 const cv = globalThis.window.__cv;
-const { State, Survival, Bosses, Tiles, Engine, Game, RNG } = cv;
+const { State, Survival, Bosses, Tiles, Engine, Game, RNG, Render } = cv;
 cv.Render.buildBoard();
 
 /* Partida de Supervivencia mínima y tablero controlado. OJO: fuera de Game.start
@@ -48,6 +48,7 @@ function cleanup() {
   Bosses.abort();
   Bosses.ENCOUNTERS = FLAG_DEFAULT;
   Survival._bossOverride = null; Survival._mutOverride = 'none';
+  Survival._beatQ = []; Survival._beatSeq = 0;
   State.status = 'idle';
 }
 
@@ -540,6 +541,7 @@ test('JF-δ: la Luciérnaga es bonus — cazarla da frenesí; y expira sola', ()
     // Expiración: se marcha sola sin bendición ni beat.
     fillIcons(20);
     const e2 = Bosses.startMini('firefly');
+    assert.ok(e2);
     Survival._boonAt = 0;
     let g = 0; while (Bosses.enc && g < 400) { Bosses.tick(100); g++; }
     assert.equal(Bosses.enc, null, 'la Luciérnaga se va sola');
@@ -569,8 +571,119 @@ test('JF-β: el banner se enciende con el encuentro y se apaga al resolverse', (
     assert.equal(document.querySelector('#surv-boss-hp').textContent, '◆'.repeat(e.anchorsLeft) + '◇'.repeat(e.anchorsMax - e.anchorsLeft));
     Bosses.resolve('retreat');
     Survival.render();
-    assert.equal(banner.hidden, true, 'banner apagado tras la retirada');
+    assert.equal(banner.hidden, false, 'banner persiste durante la retirada');
+    assert.ok(banner.classList.contains('resolved'));
+    Bosses.face.resolveUntil = globalThis.performance.now() - 1;
+    Bosses.tick(16);
+    Survival.render();
+    assert.equal(banner.hidden, true, 'banner apagado tras expirar la retirada');
     assert.ok(!bar.classList.contains('encounter'));
+  } finally { cleanup(); }
+});
+
+test('BP-0: el banner muestra el ataque y el primer ataque tiene ventana de lectura', () => {
+  freshRun(6);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(20);
+    const e = Bosses.startEncounter('meteor');
+    assert.ok(e);
+    assert.equal(e.attackEvery - e.atkAcc, Bosses.FIRST_ATTACK_MS, 'primer ataque retrasado para leer card/anclas');
+    Survival.render();
+    assert.ok(document.querySelector('#surv-boss-next').textContent.includes(Bosses.atkName(e)), 'pildora nombra el ataque');
+  } finally { cleanup(); }
+});
+
+test('BP-0: fase 2 concede gracia antes del siguiente impacto', () => {
+  freshRun(6);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(20);
+    const e = Bosses.startEncounter('meteor');
+    assert.ok(e);
+    e.atkAcc = e.attackEvery - 100;
+    e.telegraphed = true;
+    e.targets = [0, 1];
+    const idx = Bosses._anchorIdx();
+    Bosses.onAnchorHit(idx[0]); State.tiles[idx[0]] = null;
+    Bosses.onAnchorHit(idx[1]); State.tiles[idx[1]] = null;
+    assert.equal(e.phase, 2);
+    assert.ok(e.attackEvery - e.atkAcc >= Bosses.PHASE_ATTACK_GRACE_MS, 'fase 2 no encadena ataque inmediato');
+    assert.equal(e.telegraphed, false, 'tell anterior cancelado tras cambio de fase');
+    assert.equal(e.targets, null, 'targets viejos descartados');
+  } finally { cleanup(); }
+});
+
+test('BP-0: el banner persiste brevemente tras derrota y luego se apaga', () => {
+  freshRun(6);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(20);
+    const e = Bosses.startEncounter('frost');
+    assert.ok(e);
+    Survival.render();
+    Bosses.resolve('defeat');
+    Survival.render();
+    const banner = document.querySelector('#surv-boss');
+    assert.equal(banner.hidden, false, 'banner visible durante resolucion');
+    assert.ok(banner.classList.contains('resolved'));
+    assert.ok(document.querySelector('#surv-boss-next').textContent.includes(Bosses.name('frost')));
+    Bosses.face.resolveUntil = globalThis.performance.now() - 1;
+    Bosses.tick(16);
+    Survival.render();
+    assert.equal(banner.hidden, true, 'banner apagado al terminar resolucion');
+  } finally { cleanup(); }
+});
+
+test('BP-1: cada ataque de jefe usa una premarca visual especifica', () => {
+  assert.equal(Bosses.warnClass({ id: 'meteor' }), 'boss-warn-meteor');
+  assert.equal(Bosses.warnClass({ id: 'tide' }), 'boss-warn-tide');
+  assert.equal(Bosses.warnClass({ id: 'frost' }), 'boss-warn-frost');
+  assert.equal(Bosses.warnClass({ id: 'lockdown' }), 'boss-warn-lock');
+  assert.equal(Bosses.warnClass({ id: 'quake' }), 'boss-warn-quake');
+  assert.equal(Bosses.warnClass({ id: 'crystalid' }), 'boss-warn-shards');
+  assert.equal(Bosses.warnClass({ id: 'void' }), 'boss-warn-void');
+  assert.equal(Bosses.warnClass({ id: 'puppeteer' }), 'boss-warn-thread');
+});
+
+test('BP-1: el telegraph aplica clase de celda o marco de tablero segun ataque', () => {
+  freshRun(6);
+  try {
+    Bosses.ENCOUNTERS = true;
+    fillIcons(20);
+    let e = Bosses.startEncounter('meteor');
+    assert.ok(e);
+    e.atkAcc = e.attackEvery - Bosses.TELEGRAPH_MS;
+    Bosses.tick(1);
+    assert.ok(Render.cells.some((c) => c.classList.contains('boss-warn-meteor')), 'meteoro usa tell rojo propio');
+    Render.cells.forEach((c) => c.classList.remove('boss-warn-meteor'));
+    Bosses.abort();
+
+    fillIcons(30);
+    e = Bosses.startEncounter('puppeteer');
+    assert.ok(e);
+    e.atkAcc = e.attackEvery - Bosses.TELEGRAPH_MS;
+    Bosses.tick(1);
+    assert.ok(document.querySelector('.board-wrap').classList.contains('boss-warn-board'), 'ataques sin celdas marcan el tablero');
+  } finally {
+    const wrap = document.querySelector('.board-wrap');
+    if (wrap) wrap.classList.remove('boss-warn-board');
+    cleanup();
+  }
+});
+
+test('BP-3: la cola de beats ejecuta en orden y se puede vaciar por canal', () => {
+  freshRun(1);
+  try {
+    const seq = [];
+    const now = globalThis.performance.now();
+    Survival._scheduleBeat('toast', 40, () => seq.push('late'));
+    Survival._scheduleBeat('reward', 10, () => seq.push('early'));
+    Survival._pumpBeats(now + 20);
+    assert.deepEqual(seq, ['early']);
+    Survival._clearBeats('toast');
+    Survival._pumpBeats(now + 80);
+    assert.deepEqual(seq, ['early'], 'el beat vaciado no se ejecuta');
   } finally { cleanup(); }
 });
 
