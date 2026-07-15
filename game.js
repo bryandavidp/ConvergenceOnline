@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.34';
+  const VERSION = '2.6.38';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -338,7 +338,9 @@
         chest_reward_coins: '+{n} monedas', chest_reward_gems: '+{n} gemas', chest_reward_ticket: '+{n} ticket(s)', chest_reward_board: 'Tablero: {n}', chest_reward_theme: 'Tema: {n}',
         soon_badge: 'Próximamente', notify_me: 'Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
         edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
-        home_classic: 'Partida clásica', home_classic_sub: 'Supera niveles y gana estrellas', home_surv_sub: 'Sobrevive a oleadas infinitas',
+        home_classic: 'Partida clásica', home_classic_prefix: 'Partida', home_classic_name: 'Clásica', home_classic_sub: 'Juega en el tablero contra amigos o bots', home_surv_sub: 'Sobrevive a oleadas infinitas',
+        home_tournaments: 'Torneos', home_tournaments_sub: 'Compite y gana recompensas', home_multi_sub: 'Desafía a jugadores en línea',
+        home_diary: 'Diario', home_league: 'Liga', home_friends: 'Amigos',
         home_saved_run: 'Partida guardada', continue_word: 'Continuar', home_status_pending: 'Pendiente', home_status_done: 'Completado',
         home_classic_title: 'Clásico', home_no_record: 'Sin récord', home_today: 'Hoy', home_daily_mission: 'Misión', home_weekly: 'Semanal',
         home_chests: 'Cofres', home_none_ready: 'Ninguno', home_streak: 'Racha', home_play_hint: 'Elige entre 5 modos',
@@ -348,7 +350,7 @@
         home_survmut_none: 'Sin mutador', home_survmut_ice: 'Hielo', home_survmut_chaos: 'Caos', home_survmut_frenzy: 'Furia',
         home_ready_one: '1 listo', home_ready_many: '{n} listos', home_days: '{n} días', home_day: '1 día', home_complete: 'Listo',
         world_bosque: 'Bosque Verde', world_desierto: 'Desierto Dorado', world_montana: 'Montaña Helada', world_cueva: 'Cueva Misteriosa', world_neon: 'Ciudad Neón',
-        profile_action: 'Abrir perfil', edit_name_action: 'Editar nombre', get_coins: 'Conseguir monedas',
+        profile_action: 'Abrir perfil', edit_name_action: 'Editar nombre', get_coins: 'Conseguir monedas', get_gems: 'Conseguir gemas',
         q_missions: 'Misiones', q_daily: 'Diario', q_chests: 'Cofres', q_league: 'Liga', q_friends: 'Amigos', best_score: 'Mejor puntuación', play_word: 'Jugar',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
         hud_danger: 'Peligro', hud_board_fill: 'Tablero',
@@ -609,7 +611,9 @@
         chest_reward_coins: '+{n} coins', chest_reward_gems: '+{n} gems', chest_reward_ticket: '+{n} ticket(s)', chest_reward_board: 'Board: {n}', chest_reward_theme: 'Theme: {n}',
         soon_badge: 'Coming soon', notify_me: 'Notify me', notify_ok: "We'll let you know when it's ready!",
         edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
-        home_classic: 'Classic game', home_classic_sub: 'Beat levels and earn stars', home_surv_sub: 'Survive endless waves',
+        home_classic: 'Classic game', home_classic_prefix: 'Classic', home_classic_name: 'Game', home_classic_sub: 'Play on the board against friends or bots', home_surv_sub: 'Survive endless waves',
+        home_tournaments: 'Tournaments', home_tournaments_sub: 'Compete and win rewards', home_multi_sub: 'Challenge players online',
+        home_diary: 'Daily', home_league: 'League', home_friends: 'Friends',
         home_saved_run: 'Saved game', continue_word: 'Continue', home_status_pending: 'Pending', home_status_done: 'Complete',
         home_classic_title: 'Classic', home_no_record: 'No record', home_today: 'Today', home_daily_mission: 'Mission', home_weekly: 'Weekly',
         home_chests: 'Chests', home_none_ready: 'None', home_streak: 'Streak', home_play_hint: 'Choose from 5 modes',
@@ -619,7 +623,7 @@
         home_survmut_none: 'No modifier', home_survmut_ice: 'Ice', home_survmut_chaos: 'Chaos', home_survmut_frenzy: 'Fury',
         home_ready_one: '1 ready', home_ready_many: '{n} ready', home_days: '{n} days', home_day: '1 day', home_complete: 'Ready',
         world_bosque: 'Green Forest', world_desierto: 'Golden Desert', world_montana: 'Frozen Mountain', world_cueva: 'Mysterious Cave', world_neon: 'Neon City',
-        profile_action: 'Open profile', edit_name_action: 'Edit name', get_coins: 'Get coins',
+        profile_action: 'Open profile', edit_name_action: 'Edit name', get_coins: 'Get coins', get_gems: 'Get gems',
         q_missions: 'Missions', q_daily: 'Daily', q_chests: 'Chests', q_league: 'League', q_friends: 'Friends', best_score: 'Best score', play_word: 'Play',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
         hud_danger: 'Danger', hud_board_fill: 'Board',
@@ -2524,6 +2528,8 @@
     catch (_) { m = JSON.parse(JSON.stringify(def)); }
     // Migración de esquema (rellena campos nuevos sin perder progreso previo).
     if (!m.cosmetics) m.cosmetics = JSON.parse(JSON.stringify(def.cosmetics));
+    if (!m.streak || typeof m.streak !== 'object') m.streak = { count: Number(m.streak) || 0, date: '' };
+    if (typeof m.streak.count !== 'number') m.streak.count = 0;
     if (!m.reward) m.reward = { date: '', day: 0 };
     if (!m.adventure) m.adventure = { maxLevel: 1 };
     if (!m.stats) m.stats = { totalScore: 0, bestCombo: 0, totalTime: 0 };
@@ -2999,7 +3005,12 @@
         el.innerHTML = (this.ICONS[kind] ? iconInline(this.ICONS[kind]) + ' ' : '') + fmtNum(this.valueOf(kind));
       });
       // Pills del nuevo sistema base: solo el número (el icono es un SVG aparte).
-      scope.querySelectorAll('[data-econ-num]').forEach((el) => { el.textContent = fmtNum(this.valueOf(el.dataset.econNum)); });
+      scope.querySelectorAll('[data-econ-num]').forEach((el) => {
+        const value = this.valueOf(el.dataset.econNum);
+        // La cabecera de Inicio replica la lectura compacta del mockup (1000),
+        // mientras el resto del producto conserva el separador de millares.
+        el.textContent = el.closest('#screen-start') && Math.abs(value) < 10000 ? String(Math.floor(value || 0)) : fmtNum(value);
+      });
       const runCoins = $('#hud-run-coins');
       const runWrap = $('#hud-run-coins-wrap');
       if (runCoins) runCoins.textContent = fmtSigned(State.coinsRun || 0);
@@ -7836,7 +7847,7 @@
   const TOPBAR_HTML = `
     <div class="appbar-profile">
       <button class="appbar-profile-main" type="button" data-act="profile" data-i18n-al="profile_action" aria-label="Abrir perfil">
-        <span class="avatar"><span class="avatar-art"><img class="ic" src="img/ui-v2/home/player.png" alt=""></span><span class="avatar-badge">1</span></span>
+        <span class="avatar"><span class="avatar-art"><img class="ic" src="img/ui-generated/home/avatar-robot.png" alt=""></span><span class="avatar-badge">1</span></span>
         <span class="appbar-id">
           <span class="appbar-name-row"><b class="appbar-name">Jugador</b></span>
           <span class="appbar-lvl">
@@ -7850,7 +7861,9 @@
     </div>
     <div class="appbar-econ">
       <span class="econ-pill econ-coins"><span class="econ-ic"><img class="ic" src="img/ui-v2/home/coin.png" alt=""></span><b data-econ-num="coins">0</b><button class="econ-plus" type="button" data-act="buy-coins" data-i18n-al="get_coins" aria-label="Conseguir monedas"><img class="ic" src="img/ui-v2/home/plus.png" alt=""></button></span>
-      <span class="econ-pill econ-gems"><span class="econ-ic"><img class="ic" src="img/ui-v2/home/gem.png" alt=""></span><b data-econ-num="gems">0</b></span>
+      <span class="econ-pill econ-gems"><span class="econ-ic"><img class="ic" src="img/ui-v2/home/gem.png" alt=""></span><b data-econ-num="gems">0</b><button class="econ-plus" type="button" data-act="buy-gems" data-i18n-al="get_gems" aria-label="Conseguir gemas"><img class="ic" src="img/ui-v2/home/plus.png" alt=""></button></span>
+      <span class="econ-pill econ-fire" aria-label="Racha"><span class="econ-ic"><img class="ic" src="img/ui-v2/home/fire.png" alt=""></span><b data-home-streak>0</b></span>
+      <button class="appbar-settings" type="button" data-act="settings" data-i18n-al="tab_set" aria-label="Ajustes"><img class="ic" src="img/ui-generated/home/nav-settings.png" alt=""></button>
     </div>`;
   function mountTopBars() { document.querySelectorAll('[data-topbar]').forEach((el) => { el.innerHTML = TOPBAR_HTML; }); }
   // Rellena los placeholders <span data-art="nombre"> con el SVG de Art (una sola vez).
@@ -7883,6 +7896,7 @@
     const text = (id, value) => { const el = $('#' + id); if (el) el.textContent = value; return el; };
     const setReady = (id, ready) => { const el = $('#' + id); if (el) { el.classList.toggle('is-ready', !!ready); el.classList.toggle('is-done', !!ready); } return el; };
     const worldName = (world) => I18n.t('world_' + world.id);
+    text('home-level-value', I18n.t('lvl') + ' ' + Meta.level());
 
     // Recompensa diaria: muestra el día de la cadena y se compacta al reclamar.
     {
@@ -7899,8 +7913,10 @@
         }
         const badge = bn.querySelector('.db-badge'); if (badge) badge.hidden = !ready;
       }
-      const sub = text('home-reward-sub', I18n.t(ready ? 'home_reward_day' : 'home_reward_claimed').replace('{n}', day));
-      if (sub) sub.removeAttribute('data-i18n');
+      // La copia visible permanece estable como en el mockup; el día y el
+      // estado real siguen disponibles en el botón y su nombre accesible.
+      const sub = text('home-reward-sub', I18n.t('daily_banner_sub'));
+      if (sub) sub.setAttribute('data-i18n', 'daily_banner_sub');
     }
 
     // Contexto: una partida reanudable sustituye temporalmente al récord.
@@ -7935,7 +7951,7 @@
         const medalName = medal === 'none' ? I18n.t('home_status_done') : ModeSignals.dailyMedalLabel(medal);
         const stateText = played ? `${medalName} · ${fmtNum(run.best || 0)}` : `${mutName} · ${I18n.t('home_status_pending')}`;
         const badgeText = played ? medalName : I18n.t('home_status_pending');
-        state.textContent = stateText; state.removeAttribute('data-i18n');
+        state.textContent = I18n.t('home_tournaments_sub'); state.removeAttribute('data-i18n');
         badge.textContent = badgeText; badge.removeAttribute('data-i18n');
         card.classList.toggle('done', played);
         card.classList.remove('medal-bronze', 'medal-silver', 'medal-gold');
@@ -7951,30 +7967,21 @@
       const level = Meta.worldMaxLevel(world.id), stars = Meta.worldStars(world.id);
       const stateText = I18n.t('home_classic_state').replace('{world}', worldName(world)).replace('{n}', level);
       const badgeText = I18n.t('home_classic_stars').replace('{n}', stars);
-      text('home-classic-state', stateText)?.removeAttribute('data-i18n');
+      text('home-classic-state', I18n.t('home_classic_sub'))?.removeAttribute('data-i18n');
       text('home-classic-badge', badgeText);
       const card = $('#home-classic-card'); if (card) card.setAttribute('aria-label', `${I18n.t('home_classic_title')}. ${stateText}. ${badgeText}`);
     }
 
-    // Supervivencia: récord y tema semanal, sin prometer una partida reanudable.
+    // Banda contextual: misión, Reto diario, cofres y racha/ligas.
     {
-      const best = Meta.survBestWave();
-      const mut = Survival.weeklyMut();
-      const stateText = I18n.t('home_surv_week').replace('{n}', I18n.t('home_survmut_' + mut.id));
-      const badgeText = best > 0 ? I18n.t('home_surv_record').replace('{n}', best) : I18n.t('home_no_record');
-      text('home-surv-state', stateText)?.removeAttribute('data-i18n');
-      text('home-surv-badge', badgeText)?.removeAttribute('data-i18n');
-      const card = $('#home-surv-card'); if (card) card.setAttribute('aria-label', `${I18n.t('card_surv')}. ${stateText}. ${badgeText}`);
-    }
-
-    // Panel Hoy: progreso útil sin duplicar el Reto del día de la tarjeta superior.
-    {
-      const dm = Meta.dailyMission(), wk = Meta.weeklyChallenge();
+      const dm = Meta.dailyMission();
       const value = (m) => m.done ? I18n.t('home_complete') : `${Math.min(m.progress || 0, m.target || 1)} / ${m.target || 1}`;
-      const dailyValue = value(dm), weeklyValue = value(wk);
-      text('home-daily-progress', dailyValue); text('home-weekly-progress', weeklyValue);
+      const dailyValue = value(dm);
+      const run = Meta.dailyRunInfo();
+      const dailyRunValue = (run.plays || 0) > 0 ? fmtNum(run.best || 0) : I18n.t('home_status_pending');
+      text('home-daily-progress', dailyValue); text('home-weekly-progress', dailyRunValue);
       const dailyItem = setReady('home-today-daily', dm.done); if (dailyItem) dailyItem.setAttribute('aria-label', `${I18n.t('home_daily_mission')}. ${dailyValue}`);
-      const weeklyItem = setReady('home-today-weekly', wk.done); if (weeklyItem) weeklyItem.setAttribute('aria-label', `${I18n.t('home_weekly')}. ${weeklyValue}`);
+      const weeklyItem = setReady('home-today-weekly', (run.plays || 0) > 0); if (weeklyItem) weeklyItem.setAttribute('aria-label', `${I18n.t('daily_challenge')}. ${dailyRunValue}`);
 
       const chests = Meta.chests();
       const chestState = chests > 0 ? I18n.t(chests === 1 ? 'home_ready_one' : 'home_ready_many').replace('{n}', chests) : I18n.t('home_none_ready');
@@ -7982,9 +7989,10 @@
       const chestBadge = text('home-chests-badge', chests); if (chestBadge) chestBadge.hidden = chests <= 0;
       const chestItem = setReady('home-today-chests', chests > 0); if (chestItem) chestItem.setAttribute('aria-label', `${I18n.t('home_chests')}. ${chestState}`);
 
-      const streak = Meta.streak();
+      const streak = Number(Meta.streak()) || 0;
       const streakText = I18n.t(streak === 1 ? 'home_day' : 'home_days').replace('{n}', streak);
       text('home-streak-state', streakText);
+      document.querySelectorAll('[data-home-streak]').forEach((el) => { el.textContent = streak; });
       const streakItem = $('#home-today-streak'); if (streakItem) streakItem.setAttribute('aria-label', `${I18n.t('home_streak')}. ${streakText}`);
     }
 
@@ -8382,6 +8390,9 @@
       else if (a === 'home-classic') { Sound.ui(); Worlds.open(); }
       else if (a === 'home-surv') { Sound.ensure(); openSurvivalDiff(); }
       else if (a === 'home-daily') { Sound.ensure(); openDailyInfo(); }
+      else if (a === 'home-multi') { Sound.ui(); Toasts.show(I18n.t('multi_soon'), 'info', 1800); }
+      else if (a === 'home-friends') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1600); }
+      else if (a === 'open-guide') { Sound.ui(); Modal.open('modal-how'); }
       else if (a === 'go-surv') { Sound.ensure(); Modal.close(); openSurvivalDiff(); }
       else if (a === 'go-play') { Sound.ensure(); Modal.close(); Screens.show('modes'); }
       else if (a === 'go-daily') { Sound.ensure(); Modal.close(); openDailyInfo(); }

@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.34" />
+  <link rel="stylesheet" href="styles.css?v=2.6.38" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -65,18 +65,36 @@
 
     <!-- ============ PANTALLA: INICIO ============ -->
     <section class="screen home" id="screen-start" aria-labelledby="start-title" hidden>
+      <h1 class="sr-only" id="start-title" data-i18n="tab_home">Inicio</h1>
+      <div class="home-space-art" aria-hidden="true">
+        <span class="space-diamond"></span>
+        <span class="space-cross"></span>
+        <span class="space-planet planet-orange"></span>
+        <span class="space-planet planet-green"></span>
+      </div>
       <!-- Top bar reutilizable (perfil + economía + notificaciones) -->
       <header class="appbar" data-topbar></header>
+      <button class="home-bell" type="button" data-act="nav-missions" aria-label="Misiones">
+        <span class="home-bell-dot" id="missions-dot" hidden></span>
+        <span aria-hidden="true">●</span>
+      </button>
 
       <!-- Zona superior (rellena el alto disponible) -->
       <div class="home-scroll">
         <!-- Recompensa diaria -->
         <div class="daily-banner" id="btn-reward">
-          <span class="db-gift" aria-hidden="true"><img src="img/ui-v2/home/gift.png" alt=""></span>
+          <span class="db-gift" aria-hidden="true"><img src="img/ui-generated/home/daily-gift.png" alt=""></span>
           <div class="db-tx"><b data-i18n="daily_banner_title">Recompensa diaria</b><small id="home-reward-sub" data-i18n="daily_banner_sub">¡Vuelve cada día y gana premios!</small></div>
           <button class="db-claim" type="button" data-act="claim-daily"><span data-i18n="claim">Reclamar</span><span class="db-badge">1</span></button>
-          <span class="db-rocket" aria-hidden="true"><img src="img/ui-v2/home/rocket.png" alt=""></span>
+          <span class="db-rocket" aria-hidden="true"><img src="img/ui-generated/home/hero-rocket.png" alt=""></span>
         </div>
+
+        <section class="home-play-zone" aria-labelledby="home-play-title">
+          <button class="btn-hero" id="btn-play">
+            <span class="play-ic" aria-hidden="true"></span>
+            <span class="btn-hero-copy"><b id="home-play-title" data-i18n="play_word">Jugar</b></span>
+          </button>
+        </section>
 
         <!-- Contexto: una partida recuperable sustituye al récord mientras exista. -->
         <div class="home-context">
@@ -86,53 +104,57 @@
             <span class="home-resume-cta" data-i18n="continue_word">Continuar</span>
           </button>
           <div class="level-chip record-chip" id="home-record-card">
-            <span class="lc-ic" aria-hidden="true"><img class="ic ic-inline" src="img/ui-v2/home/trophy.png" alt=""></span>
-            <span class="lc-best"><span data-i18n="best_score">Mejor puntuación</span> <b id="start-best">0</b></span>
+            <span class="home-level-line"><img src="img/ui-v2/home/rocket.png" alt="" aria-hidden="true"><b id="home-level-value">Nivel 1</b></span>
+            <span class="lc-best"><span data-i18n="best_score">Mejor puntuación</span>: <b id="start-best">0</b></span>
           </div>
         </div>
 
         <!-- 3 tarjetas de atajo -->
         <div class="home-cards">
-          <button class="app-card card-purple" data-act="home-daily" id="home-daily-card">
-            <span class="ac-tx"><b data-i18n="daily_challenge">Reto del día</b><small class="ac-daily-state" id="home-daily-state" data-i18n="daily_pending">Tablero de hoy · ¡juégalo!</small></span>
-            <span class="ac-art ac-art-single" aria-hidden="true"><img src="img/ui-v2/home/target.png" alt=""></span>
-            <span class="ac-status" id="home-daily-badge" data-i18n="home_status_pending">Pendiente</span>
-          </button>
           <button class="app-card card-blue" data-act="home-classic" id="home-classic-card">
-            <span class="ac-tx"><b data-i18n="home_classic_title">Clásico</b><small id="home-classic-state" data-i18n="home_classic_sub">Supera niveles y gana estrellas</small></span>
-            <span class="ac-art ac-art-single" aria-hidden="true"><img src="img/ui-v2/home/star.png" alt=""></span>
+            <span class="ac-tx"><b class="classic-title"><span data-i18n="home_classic_prefix">Partida</span><em data-i18n="home_classic_name">Clásica</em></b><small id="home-classic-state" data-i18n="home_classic_sub">Juega en el tablero contra amigos o bots</small></span>
+            <span class="classic-board" aria-hidden="true"><img src="img/ui-generated/home/classic-board.png" alt=""></span>
             <span class="ac-status" id="home-classic-badge">0 / 150</span>
           </button>
-          <button class="app-card card-red" data-act="home-surv" id="home-surv-card">
-            <span class="ac-tx"><b data-i18n="card_surv">Supervivencia</b><small id="home-surv-state" data-i18n="home_surv_sub">Sobrevive a oleadas infinitas</small></span>
-            <span class="ac-art ac-art-duo" aria-hidden="true"><img src="img/ui-v2/home/heart.png" alt=""><img src="img/ui-v2/home/shield.png" alt=""></span>
-            <span class="ac-status" id="home-surv-badge" data-i18n="home_no_record">Sin récord</span>
+          <button class="app-card card-green" data-act="home-daily" id="home-daily-card">
+            <span class="ac-tx"><b data-i18n="home_tournaments">Torneos</b><small id="home-daily-state" data-i18n="home_tournaments_sub">Compite y gana recompensas</small></span>
+            <span class="ac-art ac-art-trophy" aria-hidden="true"><img src="img/ui-generated/home/tournament-trophy.png" alt=""></span>
+            <span class="ac-status" id="home-daily-badge" data-i18n="home_status_pending">Pendiente</span>
+          </button>
+          <button class="app-card card-orange" data-act="home-multi" id="home-multi-card">
+            <span class="ac-tx"><b data-i18n="card_multi">Multijugador</b><small data-i18n="home_multi_sub">Desafía a jugadores en línea</small></span>
+            <span class="multi-art" aria-hidden="true"><img src="img/ui-generated/home/multiplayer-versus.png" alt=""></span>
+            <span class="ac-status" data-i18n="card_multi_badge">Próximamente</span>
           </button>
         </div>
 
-        <!-- Estado de sesión: progreso accionable sin abrir cuatro modales. -->
-        <section class="home-today" aria-labelledby="home-today-title">
-          <h2 id="home-today-title" data-i18n="home_today">Hoy</h2>
+        <!-- Banda contextual de cinco accesos, como en la referencia. -->
+        <section class="home-today" aria-label="Accesos rápidos">
           <div class="today-grid">
             <button class="today-item" type="button" data-act="nav-missions" id="home-today-daily">
-              <img src="img/ui-v2/home/target.png" alt="" aria-hidden="true">
-              <span data-i18n="home_daily_mission">Misión</span>
+              <img src="img/ui-generated/home/nav-missions.png" alt="" aria-hidden="true">
+              <span data-i18n="tab_missions">Misiones</span>
               <b id="home-daily-progress">0 / 1</b>
             </button>
-            <button class="today-item" type="button" data-act="nav-missions" id="home-today-weekly">
-              <img src="img/ui-v2/home/calendar.png" alt="" aria-hidden="true">
-              <span data-i18n="home_weekly">Semanal</span>
+            <button class="today-item" type="button" data-act="home-daily" id="home-today-weekly">
+              <img src="img/ui-generated/home/nav-daily.png" alt="" aria-hidden="true">
+              <span data-i18n="home_diary">Diario</span>
               <b id="home-weekly-progress">0 / 1</b>
             </button>
             <button class="today-item" type="button" data-act="open-chests" id="home-today-chests">
-              <span class="today-icon-wrap"><img src="img/ui-v2/home/chest.png" alt="" aria-hidden="true"><span class="today-badge" id="home-chests-badge" hidden>0</span></span>
+              <span class="today-icon-wrap"><img src="img/ui-generated/home/nav-chest.png" alt="" aria-hidden="true"><span class="today-badge" id="home-chests-badge" hidden>0</span></span>
               <span data-i18n="home_chests">Cofres</span>
               <b id="home-chests-state" data-i18n="home_none_ready">Ninguno</b>
             </button>
             <button class="today-item" type="button" data-act="nav-medals" id="home-today-streak">
-              <img src="img/ui-v2/home/fire.png" alt="" aria-hidden="true">
-              <span data-i18n="home_streak">Racha</span>
+              <img src="img/ui-generated/home/nav-league.png" alt="" aria-hidden="true">
+              <span data-i18n="home_league">Liga</span>
               <b id="home-streak-state">0 días</b>
+            </button>
+            <button class="today-item" type="button" data-act="home-friends">
+              <img src="img/ui-generated/home/nav-friends.png" alt="" aria-hidden="true">
+              <span data-i18n="home_friends">Amigos</span>
+              <b data-i18n="coming_soon">Próximamente</b>
             </button>
           </div>
         </section>
@@ -142,15 +164,13 @@
 
       <!-- Pie anclado abajo: Jugar (encima) + menús -->
       <div class="home-foot">
-        <button class="btn-hero" id="btn-play"><span class="play-ic" aria-hidden="true"><img class="ic" src="img/ui-v2/home/bolt.png" alt=""></span><span class="btn-hero-copy"><b data-i18n="play_word">Jugar</b><small data-i18n="home_play_hint">Elige entre 5 modos</small></span></button>
-
         <!-- Bottom nav (anclado) -->
         <nav class="bottom-nav" aria-label="Navegación">
-          <button class="bnav" data-act="nav-medals"><span class="bn-ic"><img src="img/ui-v2/home/medal.png" alt=""></span><small data-i18n="tab_log">Logros</small></button>
-          <button class="bnav" data-act="nav-shop"><span class="bn-ic"><img src="img/ui-v2/home/cart.png" alt=""></span><small data-i18n="tab_shop">Tienda</small></button>
-          <button class="bnav bnav-center" data-act="nav-home" aria-current="page"><span class="bn-ic"><img src="img/ui-v2/home/house.png" alt=""></span><small data-i18n="tab_home">Inicio</small></button>
-          <button class="bnav" data-act="nav-missions"><span class="bn-ic"><img src="img/ui-v2/home/target.png" alt=""></span><span class="q-dot" id="missions-dot" hidden></span><small data-i18n="tab_missions">Misiones</small></button>
-          <button class="bnav" data-act="settings"><span class="bn-ic"><img src="img/ui-v2/home/settings.png" alt=""></span><small data-i18n="tab_set">Ajustes</small></button>
+          <button class="bnav" data-act="nav-medals"><span class="bn-ic"><img src="img/ui-generated/home/nav-achievements.png" alt=""></span><small data-i18n="tab_log">Logros</small></button>
+          <button class="bnav" data-act="nav-shop"><span class="bn-ic"><img src="img/ui-generated/home/nav-shop.png" alt=""></span><small data-i18n="tab_shop">Tienda</small></button>
+          <button class="bnav bnav-center" data-act="nav-home" aria-current="page"><span class="bn-ic"><img src="img/ui-generated/home/nav-home.png" alt=""></span><small data-i18n="tab_home">Inicio</small></button>
+          <button class="bnav" data-act="open-guide"><span class="bn-ic"><img src="img/ui-generated/home/nav-guide.png" alt=""></span><small data-i18n="tab_guide">Guía</small></button>
+          <button class="bnav" data-act="settings"><span class="bn-ic"><img src="img/ui-generated/home/nav-settings.png" alt=""></span><small data-i18n="tab_set">Ajustes</small></button>
         </nav>
       </div>
     </section>
@@ -648,6 +668,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=2.6.34" defer></script>
+  <script src="game.js?v=2.6.38" defer></script>
 </body>
 </html>

@@ -1,172 +1,230 @@
-# Rediseño de Inicio con iconografía V2
+# Inicio arcade espacial — plan, implementación y QA
 
 ## Objetivo
 
-Convertir `screen-start` en una home llamativa, comprensible en menos de tres
-segundos y usable con una mano, sin alterar el lenguaje visual existente de
-Convergence. El CTA `JUGAR` debe permanecer en la zona inferior del pulgar y la
-pantalla debe exponer el estado útil que hoy permanece oculto en modales.
+Reconstruir `#screen-start` para reproducir el mockup recibido, conservando el
+estado y los flujos reales de Convergence. La referencia y las capturas de QA se
+guardan en `docs/mockups/`; la pantalla final sigue siendo HTML/CSS interactivo,
+no una imagen plana.
 
-## Principios no negociables
+## Estado del plan
 
-- Conservar los tokens, tipografía, paneles y navegación del design system.
-- Usar PNG reales del paquete `assets_nuevos/listo_para_integrar_v2` en las
-  tarjetas; no recrear ni recolorear sus ilustraciones.
-- Mantener un solo CTA primario: `JUGAR`, inmediatamente sobre la navegación.
-- Comunicar estados con icono + texto; nunca solo mediante color.
-- Objetivos táctiles de 44 px como mínimo y CTA primario de 52 px o más.
-- Mantener compatibilidad ES/EN, texto grande, movimiento reducido y PWA offline.
-
-## Arquitectura de información
-
-1. Perfil, nivel, XP y economía.
-2. Recompensa diaria (se compacta al reclamarla).
-3. Contexto: partida recuperable o mejor puntuación.
-4. Accesos directos: Reto del día, Clásico y Supervivencia.
-5. Panel `HOY`: misión diaria, reto semanal, cofres y racha.
-6. CTA inferior `JUGAR`.
-7. Navegación: Logros, Tienda, Inicio, Misiones y Ajustes.
-
-## Información vital añadida
-
-- Resumen de una partida recuperable mediante `RunSave`.
-- Mutador, medalla y mejor marca del Reto del día.
-- Mundo, nivel y estrellas actuales de Clásico.
-- Mejor oleada y mutador semanal de Supervivencia.
-- Progreso de misión diaria y reto semanal.
-- Número de cofres listos y racha de juego.
-- Día actual de la recompensa diaria.
-
-## Integración de assets
-
-Los originales de 512 px permanecen en `assets_nuevos`. La home consume un
-subconjunto canónico copiado a `img/ui-v2/home/`, que se añade al precache del
-Service Worker.
-
-| Superficie | Asset |
-| --- | --- |
-| Reto del día | `target.png` |
-| Clásico | `star.png` |
-| Supervivencia | `heart.png`, `shield.png` |
-| Panel Hoy | `target.png`, `calendar.png`, `chest.png`, `fire.png` |
-| Contexto y recursos | `player.png`, `pencil.png`, `coin.png`, `gem.png`, `plus.png`, `gift.png`, `rocket.png`, `trophy.png` |
-| Acciones de Inicio | `bolt.png`, `clock.png`, `upgrade.png` |
-| Navegación | `medal.png`, `cart.png`, `house.png`, `target.png`, `settings.png` |
-
-## Fases y avance
-
-| Fase | Estado | Alcance |
+| Fase | Estado | Resultado |
 | --- | --- | --- |
-| 1. Auditoría y documentación | Completada | Estado real, restricciones y hallazgos |
-| 2. Assets V2 | Completada | Subconjunto de producción + precache |
-| 3. Layout | Completada | HTML y CSS responsive |
-| 4. Datos y accesibilidad | Completada | Estados dinámicos, i18n y ARIA |
-| 5. Validación y release | Completada | Tests, lint, responsive, versión y caché |
+| 1. Auditoría de la home existente | Completada | IDs, eventos, persistencia, i18n y PWA inventariados |
+| 2. Sistema visual | Completada | Tokens, fondos, relieve, escala y arte alineados con la referencia 854×1280 |
+| 3. Reconstrucción | Completada | Geometría principal cerrada dentro de ±4 px y navegación encajada al borde inferior |
+| 4. Funcionalidad | Completada | 18 acciones ejercitadas en Chrome; 18 resultados correctos |
+| 5. QA visual | Completada | 854×1280, 1024×1536, 390×844 y 360×640 capturados y auditados |
+| 6. QA técnico | Completada | Sintaxis, tests, lint, caché `2.6.38` y diff verificados |
 
-## Hallazgos
+## Iteración de fidelidad 854×1280 · 2026-07-15
 
-### H-01 · La base ya separa contenido desplazable y pie anclado
+La nueva referencia `Foto 1.jpg` reabre el cierre visual. Su relación 2:3 es
+la fuente de verdad de esta iteración y se auditará a su resolución nativa,
+además de los viewports compactos ya cubiertos.
 
-`screen-start` ya usa `.home-scroll` y `.home-foot`. No se necesita `position:
-fixed`; mover `JUGAR` al último bloque del pie conserva safe areas y evita
-solapamientos con la navegación.
+### Plan ejecutado y diferencias cerradas
 
-### H-02 · La home ya calcula más información de la que muestra
+- **Fondo:** reforzar la nebulosa radial bajo `Jugar`, rayos horizontales,
+  estrellas y objetos espaciales laterales sin restar contraste al contenido.
+- **Cabecera:** compactar el avatar y su badge, acercar identidad y XP, alinear
+  la economía al margen derecho y reproducir la campana separada.
+- **Recompensa:** ajustar altura, radio, degradado violeta/rosa, escala del
+  regalo y posición del cohete para que el fuego conecte con el CTA.
+- **CTA:** igualar proporción, doble contorno cian/violeta, labio inferior,
+  brillo interno, triángulo y escala tipográfica.
+- **Nivel:** centrar el chip inmediatamente bajo el CTA y conservar nivel/récord
+  reales aunque la referencia muestre valores de ejemplo.
+- **Tarjetas:** reducir el aire superior, hacer que tablero/trofeo/versus ocupen
+  el tercio inferior correcto y ajustar los degradados azul/verde/naranja.
+- **Navegación:** afinar radios, divisores, iconos, etiquetas y halo elevado de
+  `Inicio`; las dos bandas deben cerrar exactamente el borde inferior.
+- **Responsive:** mantener la jerarquía en 390×844 y scroll alcanzable en
+  360×640, sin ocultar acciones ni crear overflow horizontal.
 
-`refreshStart()` ya conoce el Reto diario, la racha, `RunSave`, el nivel de
-Aventura, misiones y economía. El rediseño debe exponer esos datos mediante
-helpers pequeños, no crear un segundo estado persistente.
+### Criterios de aceptación
 
-### H-03 · El CTA y los accesos directos tienen roles distintos
+1. Captura Chrome a 854×1280 sin recortes, overflow horizontal ni errores JS.
+2. Regiones principales dentro de ±4 px respecto a las cajas de la referencia,
+   salvo arte orgánico y valores derivados del estado real.
+3. Todas las acciones de Inicio responden y los datos persistidos siguen siendo
+   la única fuente de verdad.
+4. Los 16 assets protagonistas y de navegación proceden de
+   `img/ui-generated/home/`; la
+   captura objetivo no se utiliza como sprite ni fondo.
+5. Capturas y reporte JSON actualizados, caché versionada y suite completa verde.
 
-`JUGAR` abre el catálogo completo; las tarjetas son atajos. Se conserva esta
-regla para evitar que cinco modos compitan simultáneamente en la home.
+## Referencias y evidencia
 
-### H-04 · Supervivencia no genera `RunSave`
+- Objetivo activo 854×1280: [`mockups/home-target-reference-854x1280.jpg`](mockups/home-target-reference-854x1280.jpg)
+- Objetivo anterior 1024×1536: [`mockups/home-target-reference.png`](mockups/home-target-reference.png)
+- Captura Chrome 854×1280: [`mockups/home-actual-854x1280.png`](mockups/home-actual-854x1280.png)
+- Captura Chrome 1024×1536: [`mockups/home-actual-1024x1536.png`](mockups/home-actual-1024x1536.png)
+- Captura Chrome 390×844: [`mockups/home-actual-390x844.png`](mockups/home-actual-390x844.png)
+- Captura Chrome 360×640: [`mockups/home-actual-360x640.png`](mockups/home-actual-360x640.png)
+- Final del scroll 360×640: [`mockups/home-actual-360x640-bottom.png`](mockups/home-actual-360x640-bottom.png)
+- Informe geométrico: [`mockups/home-visual-qa-report.json`](mockups/home-visual-qa-report.json)
+- Runner reproducible: [`../tools/home-visual-qa.js`](../tools/home-visual-qa.js)
 
-El guardado excluye Supervivencia y Contrarreloj. El resumen de partida
-recuperable solo debe aparecer para Clásico, Aventura y otros modos admitidos,
-sin prometer recuperación donde no existe.
+Ejecutar la auditoría desde la raíz:
 
-### H-05 · El estado actual del Reto diario ya incluye mutador y racha
+```powershell
+node tools/home-visual-qa.js > docs/mockups/home-visual-qa-report.json
+```
 
-La tarjeta existente contiene dos líneas muy pequeñas. La implementación
-mantendrá el contenido, pero lo dividirá en una línea de estado legible y un
-badge textual accesible.
+El runner abre Chrome headless real mediante DevTools, fija estados válidos en
+`localStorage`, prueba cuatro viewports, captura la parte inferior del scroll
+corto y ejecuta 18 flujos de Inicio. El auditor distingue el desplazamiento
+vertical deliberado de un overflow horizontal real y excluye únicamente los
+solapes estructurales documentados entre contenido desplazable y cromo fijo.
 
-### H-06 · Los originales V2 necesitaban un derivado de producción
+## Contrato visual implementado
 
-Los PNG originales de 512 px se conservaron intactos en `assets_nuevos` y se
-generó el subconjunto `img/ui-v2/home` a 256×256 px con canal alfa. El conjunto
-final contiene 22 iconos y pesa 998.029 bytes; queda por debajo de 1 MiB para
-reducir el coste de la primera carga y del precache offline.
+- Lienzo azul noche con nebulosa, estrellas y acentos cian/violeta.
+- Cabecera con avatar robot, nombre editable, nivel/XP, monedas, gemas, racha,
+  ajustes y campana.
+- Banner de recompensa diaria con regalo, CTA y cohete superpuesto.
+- CTA `Jugar` como pieza dominante, con volumen, borde luminoso y foco visible.
+- Chip de nivel y mejor puntuación debajo del CTA.
+- Tarjetas azul, verde y naranja para Clásico, Torneos y Multijugador.
+- Banda contextual de cinco acciones y navegación global de cinco acciones con
+  `Inicio` elevado.
+- Tipografía pesada, números tabulares, targets táctiles y estados accesibles.
+- En 1024×1536 la composición usa el ancho completo de la referencia; en móvil
+  se comprime sin overflow horizontal y en pantallas bajas conserva scroll.
 
-### H-07 · Misión diaria y Reto del día no son el mismo objetivo
+## Geometría verificada a 854×1280
 
-La tarjeta principal abre el tablero diario competitivo (mutador, mejor marca y
-medalla). El panel `HOY` muestra la misión diaria de progreso. Se mantienen
-separados y con etiquetas distintas para no hacer creer que completar uno
-completa automáticamente el otro.
+| Región | Implementación Chrome | Referencia aproximada | Desviación |
+| --- | --- | --- | --- |
+| Cabecera | x 27, y 12, 800×194 | contenido x 20–840, y 20–206 | arte dentro de ±3 px |
+| Recompensa | x 27, y 226, 600×142 | x 28, y 226, 600×142 | 1 px en x |
+| CTA `Jugar` | x 143,5, y 396, 567×194 | x 145, y 396, 567×193 | ≤1,5 px |
+| Tarjetas | x 36, y 681, 782×314 | x 36, y 681, 782×314 | 0 px |
+| Banda contextual | x 34, y 1013, 786×138 | x 34, y 1013, 786×138 | 0 px |
+| Navegación | x 34, y 1168, 786×112 | x 34, y 1168, 786×112 | 0 px |
 
-### H-08 · La validación responsive requiere emulación de viewport real
+La captura nativa termina exactamente en `y=1280`: la navegación no queda
+recortada y el documento conserva el mismo ancho que el viewport. Fondo,
+nebulosa, rayos, planetas, diamante, cruz, cohete y halos se pintan como capas
+decorativas independientes para no bloquear interacción ni lectura.
 
-El navegador headless aplica un ancho mínimo a la ventana normal y puede
-producir capturas recortadas engañosas. La validación final se hizo con métricas
-de dispositivo mediante CDP: `innerWidth` y `scrollWidth` coincidieron en 360,
-390 y 430 px. En 360×640 el contenido central conserva scroll propio mientras
-`JUGAR` y la navegación permanecen visibles en la zona inferior.
+## Geometría verificada a 1024×1536
 
-## Matriz de validación
+| Región | Implementación Chrome | Referencia aproximada |
+| --- | --- | --- |
+| Cabecera | x 32, y 12, 960×220 | ancho útil completo |
+| Recompensa | x 44, y 270, 730×177 | x 34, y 270, ~720×171 |
+| CTA `Jugar` | x 172, y 487, 680×220 | x 174, y 488, ~676×222 |
+| Tarjetas | x 44, y 818, 936×374 | x 44, y 818, ~936×374 |
+| Banda contextual | x 44, y 1210, 936×165 | x 40, y 1214, ~944×165 |
+| Navegación | x 40, y 1395, 944×141 | x 40, y 1395, ~944×141 |
 
-- Viewports: 360×640, 390×844, 430×932 y escritorio ≥720 px.
-- Estados: usuario nuevo, recompensa pendiente/reclamada, RunSave presente,
-  reto pendiente/bronce/plata/oro, misión completa, semanal completa, 0/1/N
-  cofres y racha 0/N.
-- Preferencias: ES/EN, texto grande y movimiento reducido.
-- Navegación por teclado y foco visible.
-- Recarga offline con todos los assets V2 disponibles.
+Resultado automático: ancho documental igual al viewport, cero controles con
+overflow horizontal, cero solapamientos no intencionales y cero errores
+JavaScript en las cinco capturas auditadas (incluido el final del scroll). En
+360×640 el contenido central mide 580 px dentro de una zona de 469 px y llega
+íntegro al hacer scroll; la navegación queda anclada.
 
-## Registro de avance
+## Mapa funcional
 
-### 2026-07-14 · Inicio
+| Superficie | Acción real |
+| --- | --- |
+| Perfil | Abrir perfil |
+| Lápiz | Renombrar jugador |
+| `+` de monedas/gemas | Flujo de economía correspondiente |
+| Engranaje / Ajustes | Abrir ajustes |
+| Campana / Misiones | Abrir misiones |
+| Recompensa diaria | Reclamar si está disponible; estado real en ARIA |
+| `Jugar` | Abrir selector completo de modos |
+| Partida clásica | Abrir mapa de mundos |
+| Torneos | Abrir Reto del día |
+| Multijugador | Aviso localizado de próxima función |
+| Cofres / Liga / Logros / Tienda / Guía | Abrir sus flujos existentes |
 
-- Plan trasladado al repositorio.
-- Revisados `index.html`, `styles.css`, `game.js`, `sw.js` y las APIs de `Meta`,
-  `RunSave`, `Worlds`, `DailyMut` y `Survival`.
-- Confirmado que no se tocarán las carpetas de descargas sin seguimiento que ya
-  existían en el árbol de trabajo.
+El texto visible del banner se mantiene estable como en el mockup. El día y el
+estado reclamado siguen expuestos mediante el nombre accesible del botón. Las
+métricas de la banda contextual también siguen actualizándose, aunque se
+ocultan visualmente para respetar la referencia y permanecen en sus etiquetas
+accesibles.
 
-### 2026-07-14 · Implementación
+## Assets
 
-- Reordenada la home: recompensa, contexto recuperable/récord, tres modos
-  prioritarios, resumen `HOY`, CTA inferior y navegación.
-- Sustituida la iconografía de tarjetas, cabecera y navegación por 22 assets V2
-  reales; añadidos al Service Worker.
-- Añadidos estados derivados de `Meta`, `RunSave`, `Worlds`, `DailyMut` y
-  `Survival`, sin duplicar estado persistente.
-- Localizados ES/EN los textos nuevos y los nombres de mundo expuestos en la
-  home. El control de compra de monedas ahora es un botón nativo.
-- Añadido foco visible de 3 px, objetivos táctiles mínimos, estados por texto +
-  color, CTA con animación finita y soporte de movimiento reducido.
-- Añadidas cuatro pruebas específicas del rediseño: jerarquía del CTA, contenido
-  vital, integridad/peso/precache de assets y contrato i18n/ARIA.
-- Validada visualmente la home en 360×640, 390×844 y 430×932 sin overflow
-  horizontal.
-- Corregido el cálculo del próximo día de recompensa: una ausencia de más de un
-  día vuelve a `Día 1`, igual que la lógica real de concesión.
+`img/ui-v2/home/` conserva los microiconos reutilizables de economía y estado.
+Las 16 ilustraciones originales creadas para esta pantalla viven en
+`img/ui-generated/home/`:
 
-### 2026-07-14 · Cierre
+- `avatar-robot.png`
+- `daily-gift.png`
+- `hero-rocket.png`
+- `classic-board.png`
+- `tournament-trophy.png`
+- `multiplayer-versus.png`
+- `nav-missions.png`, `nav-daily.png`, `nav-chest.png`
+- `nav-league.png`, `nav-friends.png`, `nav-achievements.png`
+- `nav-shop.png`, `nav-home.png`, `nav-guide.png`, `nav-settings.png`
 
-- Versión de app, recursos y caché PWA sincronizada en `2.6.34`.
-- Suite completa: 135/135 pruebas superadas.
-- ESLint, `node --check` y `git diff --check`: sin errores.
-- Subconjunto V2 verificado: 22/22 PNG, 256×256 px y 998.029 bytes en total.
+Todos se generaron individualmente en modo creación con ImageGen, con prompts
+de icono 3D casual, vista frontal, luz de borde y croma plano. Después se
+convirtieron a PNG con alfa, se recortaron al contenido transparente y se
+optimizaron a un máximo de 512 px (384 px para navegación). No se usa ningún
+recorte de la captura objetivo como asset de producto. `HOME_GENERATED_ART`
+precarga los 16 archivos desde `sw.js` para funcionamiento offline.
 
-### 2026-07-14 · Auditoría final de iconografía
+## Hallazgos resueltos
 
-- Eliminadas de `screen-start` las tres referencias restantes a la familia SVG:
-  reproducir, refrescar y descargar.
-- `JUGAR`, partida guardada e instalación usan ahora `bolt.png`, `clock.png` y
-  `upgrade.png` del mismo pack casual V2 que las tarjetas.
-- Añadida una prueba que impide volver a introducir rutas `img/ui/` o
-  `img/icons-v2/` dentro de la pantalla de Inicio.
+1. La implementación previa limitaba Inicio a 720 px incluso en el lienzo de
+   1024 px. Se creó un layout de escritorio de 960 px.
+2. La versión compacta dejaba huecos grandes y recortaba Ajustes. Se corrigieron
+   grid, escalas, espaciado y safe area.
+3. El instalador PWA rompía la composición. Se oculta solo en Inicio; el resto
+   de la aplicación conserva su flujo.
+4. Datos antiguos podían guardar `streak` como número y producir `undefined
+   días`. La migración normaliza el valor a `{count,date}`.
+5. La primera semilla visual usaba `350/300`, un estado imposible. El QA usa
+   ahora `105/300`, equivalente al 35 % de progreso visual.
+6. Clásico y Torneos reemplazaban el copy del mockup por estados dinámicos. El
+   copy visible queda estable y el detalle real pasa a `aria-label`.
+7. En 360×640 no cabe toda la composición sin perder legibilidad. Se eligió
+   scroll central con cabecera y navegación persistentes, y se verificó el
+   extremo inferior con una captura separada.
+8. Los iconos secundarios provisionales no reproducían el volumen del mockup.
+   Se generaron diez piezas originales nuevas y se sustituyeron Misiones,
+   Diario, Cofres, Liga, Amigos, Logros, Tienda, Inicio, Guía y Ajustes.
+9. La referencia 854×1280 necesitaba una escala propia entre móvil y el lienzo
+   1024×1536. El breakpoint 720–900 px fija la composición 2:3 sin alterar las
+   superficies de juego ni la versión móvil.
+
+## Registro
+
+### 2026-07-14 — Reconstrucción inicial
+
+- Auditados DOM, eventos, estados persistidos, i18n y assets.
+- Reorganizada la home según la jerarquía del mockup.
+- Conectadas las nuevas superficies a handlers existentes.
+- Añadidos iconos casuales V2, tests específicos y documentación del sistema.
+
+### 2026-07-15 — Inspección completa en navegador
+
+- Intentado el navegador integrado; su runtime no pudo inicializarse por un
+  error de redefinición de `process`.
+- Activada la alternativa reproducible con Chrome real y DevTools Protocol.
+- Capturadas resoluciones 854×1280, 1024×1536, 390×844 y 360×640.
+- Corregidos ancho, alturas, alineación, clipping, scroll corto, copy, XP de QA,
+  avatar, regalo, cohete, tablero, trofeo y versus.
+- Verificados por interacción `Jugar`, Clásico, Torneos, Guía y Ajustes.
+- Sustituidos los recortes provisionales por seis assets originales generados:
+  robot, regalo, cohete, tablero, trofeo y versus.
+- Eliminado `img/ui-v3/`; ningún recorte de la referencia permanece conectado
+  ni almacenado como asset de producción.
+- Convertidos los cromas a alfa, optimizados los PNG e incorporados al caché
+  offline como `HOME_GENERATED_ART`.
+- Incorporada la referencia nativa 854×1280 y cerradas sus cajas principales:
+  banner 600×142, CTA 567×194, tarjetas 782×314 y navegación 786×112.
+- Generados e integrados diez iconos de navegación originales adicionales; el
+  inventario offline pasa de seis a 16 assets.
+- Ampliada la regresión interactiva de cinco a 18 comprobaciones; todas pasan.
+- Validado el scroll 360×640 tanto arriba como abajo, sin overflow horizontal,
+  solapes no intencionales ni errores JavaScript.
+- Sincronizados app, recursos y service worker en la versión `2.6.38`.
