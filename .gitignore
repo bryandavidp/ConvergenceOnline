@@ -1,3 +1,8 @@
 /assets_nuevos/*
 ./assets_nuevos/*
 assets_nuevos/*
+
+# Archivos .zip: assets de descarga temporales, nunca deben ir al repo
+# (dos superaban el limite de 100 MB de GitHub y se purgaron del historial)
+*.zip
+assets_nuevos/**/*.zip
