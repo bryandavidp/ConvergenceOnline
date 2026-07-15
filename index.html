@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.32" />
+  <link rel="stylesheet" href="styles.css?v=2.6.34" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -72,49 +72,85 @@
       <div class="home-scroll">
         <!-- Recompensa diaria -->
         <div class="daily-banner" id="btn-reward">
-          <span class="db-gift" data-art="gift" aria-hidden="true"></span>
-          <div class="db-tx"><b data-i18n="daily_banner_title">Recompensa diaria</b><small data-i18n="daily_banner_sub">¡Vuelve cada día y gana premios!</small></div>
-          <button class="db-claim" data-act="claim-daily"><span data-i18n="claim">Reclamar</span><span class="db-badge">1</span></button>
-          <span class="db-rocket" data-art="rocket" aria-hidden="true"></span>
+          <span class="db-gift" aria-hidden="true"><img src="img/ui-v2/home/gift.png" alt=""></span>
+          <div class="db-tx"><b data-i18n="daily_banner_title">Recompensa diaria</b><small id="home-reward-sub" data-i18n="daily_banner_sub">¡Vuelve cada día y gana premios!</small></div>
+          <button class="db-claim" type="button" data-act="claim-daily"><span data-i18n="claim">Reclamar</span><span class="db-badge">1</span></button>
+          <span class="db-rocket" aria-hidden="true"><img src="img/ui-v2/home/rocket.png" alt=""></span>
         </div>
 
-        <!-- Chip nivel + mejor puntuación -->
-        <div class="level-chip record-chip">
-          <span class="lc-ic" aria-hidden="true"><img class="ic ic-inline" src="img/ui/trophy.png" alt=""></span>
-          <span class="lc-best"><span data-i18n="best_score">Mejor puntuación</span> <b id="start-best">0</b></span>
+        <!-- Contexto: una partida recuperable sustituye al récord mientras exista. -->
+        <div class="home-context">
+          <button class="home-resume" id="btn-resume-run" hidden>
+            <span class="home-resume-ic" aria-hidden="true"><img class="ic" src="img/ui-v2/home/clock.png" alt=""></span>
+            <span class="home-resume-copy"><small data-i18n="home_saved_run">Partida guardada</small><b id="home-resume-state">Continuar partida</b></span>
+            <span class="home-resume-cta" data-i18n="continue_word">Continuar</span>
+          </button>
+          <div class="level-chip record-chip" id="home-record-card">
+            <span class="lc-ic" aria-hidden="true"><img class="ic ic-inline" src="img/ui-v2/home/trophy.png" alt=""></span>
+            <span class="lc-best"><span data-i18n="best_score">Mejor puntuación</span> <b id="start-best">0</b></span>
+          </div>
         </div>
 
         <!-- 3 tarjetas de atajo -->
         <div class="home-cards">
           <button class="app-card card-purple" data-act="home-daily" id="home-daily-card">
             <span class="ac-tx"><b data-i18n="daily_challenge">Reto del día</b><small class="ac-daily-state" id="home-daily-state" data-i18n="daily_pending">Tablero de hoy · ¡juégalo!</small></span>
-            <span class="ac-art" data-art="target" aria-hidden="true"></span>
+            <span class="ac-art ac-art-single" aria-hidden="true"><img src="img/ui-v2/home/target.png" alt=""></span>
+            <span class="ac-status" id="home-daily-badge" data-i18n="home_status_pending">Pendiente</span>
           </button>
-          <button class="app-card card-blue" data-act="home-classic">
-            <span class="ac-tx"><b data-i18n="home_classic">Partida clásica</b><small data-i18n="home_classic_sub">Supera niveles y gana estrellas</small></span>
-            <span class="ac-art" data-art="boardMini" aria-hidden="true"></span>
+          <button class="app-card card-blue" data-act="home-classic" id="home-classic-card">
+            <span class="ac-tx"><b data-i18n="home_classic_title">Clásico</b><small id="home-classic-state" data-i18n="home_classic_sub">Supera niveles y gana estrellas</small></span>
+            <span class="ac-art ac-art-single" aria-hidden="true"><img src="img/ui-v2/home/star.png" alt=""></span>
+            <span class="ac-status" id="home-classic-badge">0 / 150</span>
           </button>
-          <button class="app-card card-red" data-act="home-surv">
-            <span class="ac-tx"><b data-i18n="card_surv">Supervivencia</b><small data-i18n="home_surv_sub">Sobrevive a oleadas infinitas</small></span>
-            <span class="ac-art" data-art="heartFoes" aria-hidden="true"></span>
+          <button class="app-card card-red" data-act="home-surv" id="home-surv-card">
+            <span class="ac-tx"><b data-i18n="card_surv">Supervivencia</b><small id="home-surv-state" data-i18n="home_surv_sub">Sobrevive a oleadas infinitas</small></span>
+            <span class="ac-art ac-art-duo" aria-hidden="true"><img src="img/ui-v2/home/heart.png" alt=""><img src="img/ui-v2/home/shield.png" alt=""></span>
+            <span class="ac-status" id="home-surv-badge" data-i18n="home_no_record">Sin récord</span>
           </button>
         </div>
 
-        <button class="btn btn-ghost btn-sm home-install btn-icon" id="btn-install" hidden><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/download.svg')" aria-hidden="true"></span><span data-i18n="install">Instalar app</span></button>
+        <!-- Estado de sesión: progreso accionable sin abrir cuatro modales. -->
+        <section class="home-today" aria-labelledby="home-today-title">
+          <h2 id="home-today-title" data-i18n="home_today">Hoy</h2>
+          <div class="today-grid">
+            <button class="today-item" type="button" data-act="nav-missions" id="home-today-daily">
+              <img src="img/ui-v2/home/target.png" alt="" aria-hidden="true">
+              <span data-i18n="home_daily_mission">Misión</span>
+              <b id="home-daily-progress">0 / 1</b>
+            </button>
+            <button class="today-item" type="button" data-act="nav-missions" id="home-today-weekly">
+              <img src="img/ui-v2/home/calendar.png" alt="" aria-hidden="true">
+              <span data-i18n="home_weekly">Semanal</span>
+              <b id="home-weekly-progress">0 / 1</b>
+            </button>
+            <button class="today-item" type="button" data-act="open-chests" id="home-today-chests">
+              <span class="today-icon-wrap"><img src="img/ui-v2/home/chest.png" alt="" aria-hidden="true"><span class="today-badge" id="home-chests-badge" hidden>0</span></span>
+              <span data-i18n="home_chests">Cofres</span>
+              <b id="home-chests-state" data-i18n="home_none_ready">Ninguno</b>
+            </button>
+            <button class="today-item" type="button" data-act="nav-medals" id="home-today-streak">
+              <img src="img/ui-v2/home/fire.png" alt="" aria-hidden="true">
+              <span data-i18n="home_streak">Racha</span>
+              <b id="home-streak-state">0 días</b>
+            </button>
+          </div>
+        </section>
+
+        <button class="btn btn-ghost btn-sm home-install btn-icon" id="btn-install" hidden><span class="btn-ic" aria-hidden="true"><img class="ic" src="img/ui-v2/home/upgrade.png" alt=""></span><span data-i18n="install">Instalar app</span></button>
       </div>
 
       <!-- Pie anclado abajo: Jugar (encima) + menús -->
       <div class="home-foot">
-        <button class="btn btn-ghost btn-icon home-resume" id="btn-resume-run" hidden><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/8-ui/refresh.svg')" aria-hidden="true"></span><span data-i18n="resume_run">Continuar partida</span></button>
-        <button class="btn-hero" id="btn-play"><span class="play-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="play_word">Jugar</span></button>
+        <button class="btn-hero" id="btn-play"><span class="play-ic" aria-hidden="true"><img class="ic" src="img/ui-v2/home/bolt.png" alt=""></span><span class="btn-hero-copy"><b data-i18n="play_word">Jugar</b><small data-i18n="home_play_hint">Elige entre 5 modos</small></span></button>
 
         <!-- Bottom nav (anclado) -->
         <nav class="bottom-nav" aria-label="Navegación">
-          <button class="bnav" data-act="nav-medals"><span class="bn-ic" data-art="medal"></span><small data-i18n="tab_log">Logros</small></button>
-          <button class="bnav" data-act="nav-shop"><span class="bn-ic" data-art="cart"></span><small data-i18n="tab_shop">Tienda</small></button>
-          <button class="bnav bnav-center" data-act="nav-home" aria-current="page"><span class="bn-ic" data-art="home"></span><small data-i18n="tab_home">Inicio</small></button>
-          <button class="bnav" data-act="nav-missions"><span class="bn-ic" data-art="target"></span><span class="q-dot" id="missions-dot" hidden></span><small data-i18n="tab_missions">Misiones</small></button>
-          <button class="bnav" data-act="settings"><span class="bn-ic" data-art="gear"></span><small data-i18n="tab_set">Ajustes</small></button>
+          <button class="bnav" data-act="nav-medals"><span class="bn-ic"><img src="img/ui-v2/home/medal.png" alt=""></span><small data-i18n="tab_log">Logros</small></button>
+          <button class="bnav" data-act="nav-shop"><span class="bn-ic"><img src="img/ui-v2/home/cart.png" alt=""></span><small data-i18n="tab_shop">Tienda</small></button>
+          <button class="bnav bnav-center" data-act="nav-home" aria-current="page"><span class="bn-ic"><img src="img/ui-v2/home/house.png" alt=""></span><small data-i18n="tab_home">Inicio</small></button>
+          <button class="bnav" data-act="nav-missions"><span class="bn-ic"><img src="img/ui-v2/home/target.png" alt=""></span><span class="q-dot" id="missions-dot" hidden></span><small data-i18n="tab_missions">Misiones</small></button>
+          <button class="bnav" data-act="settings"><span class="bn-ic"><img src="img/ui-v2/home/settings.png" alt=""></span><small data-i18n="tab_set">Ajustes</small></button>
         </nav>
       </div>
     </section>
@@ -612,6 +648,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=2.6.32" defer></script>
+  <script src="game.js?v=2.6.34" defer></script>
 </body>
 </html>

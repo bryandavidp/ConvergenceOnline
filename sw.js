@@ -1,6 +1,6 @@
 /* Convergencia — Service Worker (offline-first).
  * Sube CACHE al publicar una versión nueva para invalidar la caché anterior. */
-const CACHE = 'cv-cache-v2.6.32';
+const CACHE = 'cv-cache-v2.6.34';
 const ASSETS = [
   './', './index.html', './styles.css', './game.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
@@ -8,6 +8,9 @@ const ASSETS = [
 // Iconos de UI (pack en img/ui). Se precachean en best-effort: si alguno falla,
 // no rompe la instalación (de todos modos el fetch los cachea en runtime).
 const UI_ICONS = ['aura','bolt','bomb','book','calendar','cart','check','chest','clock','close','coin','crown','crystal','dice','fire','friend','gem','gift','heart','house','info','leaf','lock','luckyblock','magnet','medal','minus','music-off','music-on','pencil','pin','planet','planet-hell','player','players','plus','potion','question','rocket','search','settings','shield','skull','sound-off','sound-on','star','star-empty','stats','target','teleporter','ticket','trophy','upgrade','verify','warning'].map((n) => './img/ui/' + n + '.png');
+// Subconjunto Gvesster V2 usado por la home. Son derivados 256×256 de los
+// originales RGBA de 512 px; preservan el arte y reducen el coste offline.
+const HOME_V2_ICONS = ['bolt','calendar','cart','chest','clock','coin','fire','gem','gift','heart','house','medal','pencil','player','plus','rocket','settings','shield','star','target','trophy','upgrade'].map((n) => './img/ui-v2/home/' + n + '.png');
 const V2_ICONS = [
   './img/icons-v2/1-game/double.svg',
   './img/icons-v2/2-items/map.svg',
@@ -47,6 +50,7 @@ self.addEventListener('install', (e) => {
     caches.open(CACHE)
       .then((c) => c.addAll(ASSETS).then(() => Promise.all([
         c.addAll(UI_ICONS).catch(() => {}),
+        c.addAll(HOME_V2_ICONS).catch(() => {}),
         c.addAll(V2_ICONS).catch(() => {}),
       ])))
       .then(() => self.skipWaiting())

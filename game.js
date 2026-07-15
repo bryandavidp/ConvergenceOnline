@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.32';
+  const VERSION = '2.6.34';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -339,6 +339,16 @@
         soon_badge: 'Próximamente', notify_me: 'Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
         edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
         home_classic: 'Partida clásica', home_classic_sub: 'Supera niveles y gana estrellas', home_surv_sub: 'Sobrevive a oleadas infinitas',
+        home_saved_run: 'Partida guardada', continue_word: 'Continuar', home_status_pending: 'Pendiente', home_status_done: 'Completado',
+        home_classic_title: 'Clásico', home_no_record: 'Sin récord', home_today: 'Hoy', home_daily_mission: 'Misión', home_weekly: 'Semanal',
+        home_chests: 'Cofres', home_none_ready: 'Ninguno', home_streak: 'Racha', home_play_hint: 'Elige entre 5 modos',
+        home_reward_day: 'Día {n} · vuelve cada día y gana premios', home_reward_claimed: 'Día {n} reclamado',
+        home_saved_classic: '{world} · Nivel {n}', home_saved_mode: '{mode} · Nivel {n}', home_classic_state: '{world} · Nivel {n}',
+        home_classic_stars: '{n}/150 estrellas', home_surv_record: 'Mejor oleada {n}', home_surv_week: 'Semana: {n}',
+        home_survmut_none: 'Sin mutador', home_survmut_ice: 'Hielo', home_survmut_chaos: 'Caos', home_survmut_frenzy: 'Furia',
+        home_ready_one: '1 listo', home_ready_many: '{n} listos', home_days: '{n} días', home_day: '1 día', home_complete: 'Listo',
+        world_bosque: 'Bosque Verde', world_desierto: 'Desierto Dorado', world_montana: 'Montaña Helada', world_cueva: 'Cueva Misteriosa', world_neon: 'Ciudad Neón',
+        profile_action: 'Abrir perfil', edit_name_action: 'Editar nombre', get_coins: 'Conseguir monedas',
         q_missions: 'Misiones', q_daily: 'Diario', q_chests: 'Cofres', q_league: 'Liga', q_friends: 'Amigos', best_score: 'Mejor puntuación', play_word: 'Jugar',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
         hud_danger: 'Peligro', hud_board_fill: 'Tablero',
@@ -600,6 +610,16 @@
         soon_badge: 'Coming soon', notify_me: 'Notify me', notify_ok: "We'll let you know when it's ready!",
         edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
         home_classic: 'Classic game', home_classic_sub: 'Beat levels and earn stars', home_surv_sub: 'Survive endless waves',
+        home_saved_run: 'Saved game', continue_word: 'Continue', home_status_pending: 'Pending', home_status_done: 'Complete',
+        home_classic_title: 'Classic', home_no_record: 'No record', home_today: 'Today', home_daily_mission: 'Mission', home_weekly: 'Weekly',
+        home_chests: 'Chests', home_none_ready: 'None', home_streak: 'Streak', home_play_hint: 'Choose from 5 modes',
+        home_reward_day: 'Day {n} · come back daily for prizes', home_reward_claimed: 'Day {n} claimed',
+        home_saved_classic: '{world} · Level {n}', home_saved_mode: '{mode} · Level {n}', home_classic_state: '{world} · Level {n}',
+        home_classic_stars: '{n}/150 stars', home_surv_record: 'Best wave {n}', home_surv_week: 'Week: {n}',
+        home_survmut_none: 'No modifier', home_survmut_ice: 'Ice', home_survmut_chaos: 'Chaos', home_survmut_frenzy: 'Fury',
+        home_ready_one: '1 ready', home_ready_many: '{n} ready', home_days: '{n} days', home_day: '1 day', home_complete: 'Ready',
+        world_bosque: 'Green Forest', world_desierto: 'Golden Desert', world_montana: 'Frozen Mountain', world_cueva: 'Mysterious Cave', world_neon: 'Neon City',
+        profile_action: 'Open profile', edit_name_action: 'Edit name', get_coins: 'Get coins',
         q_missions: 'Missions', q_daily: 'Daily', q_chests: 'Chests', q_league: 'League', q_friends: 'Friends', best_score: 'Best score', play_word: 'Play',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
         hud_danger: 'Danger', hud_board_fill: 'Board',
@@ -2811,6 +2831,10 @@
       // ---- Recompensa diaria ----
       rewardReady: () => m.reward.date !== today(),
       rewardDay: () => m.reward.day || 0,
+      rewardNextDay() {
+        const y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+        return m.reward.date === y ? (m.reward.day || 0) + 1 : 1;
+      },
       advMax: () => (m.adventure && m.adventure.maxLevel) || 1,
       advReach(level) { if (level > ((m.adventure && m.adventure.maxLevel) || 1)) { m.adventure.maxLevel = level; save(); } },
       // Intro de capítulo vista (una vez por capítulo). Campo nuevo tolerante a esquema.
@@ -7811,8 +7835,8 @@
   /* ===================== Top bar reutilizable (sistema base) ===================== */
   const TOPBAR_HTML = `
     <div class="appbar-profile">
-      <button class="appbar-profile-main" type="button" data-act="profile" aria-label="Perfil">
-        <span class="avatar"><span class="avatar-art">${Art.avatar()}</span><span class="avatar-badge">1</span></span>
+      <button class="appbar-profile-main" type="button" data-act="profile" data-i18n-al="profile_action" aria-label="Abrir perfil">
+        <span class="avatar"><span class="avatar-art"><img class="ic" src="img/ui-v2/home/player.png" alt=""></span><span class="avatar-badge">1</span></span>
         <span class="appbar-id">
           <span class="appbar-name-row"><b class="appbar-name">Jugador</b></span>
           <span class="appbar-lvl">
@@ -7822,11 +7846,11 @@
           </span>
         </span>
       </button>
-      <button class="appbar-edit" type="button" data-act="edit-name" aria-label="Editar nombre">${Art.pencil()}</button>
+      <button class="appbar-edit" type="button" data-act="edit-name" data-i18n-al="edit_name_action" aria-label="Editar nombre"><img class="ic" src="img/ui-v2/home/pencil.png" alt=""></button>
     </div>
     <div class="appbar-econ">
-      <span class="econ-pill econ-coins"><span class="econ-ic">${Art.coin()}</span><b data-econ-num="coins">0</b><span class="econ-plus" data-act="buy-coins" role="button" aria-label="Conseguir monedas">${Art.plus()}</span></span>
-      <span class="econ-pill econ-gems"><span class="econ-ic">${Art.gem()}</span><b data-econ-num="gems">0</b></span>
+      <span class="econ-pill econ-coins"><span class="econ-ic"><img class="ic" src="img/ui-v2/home/coin.png" alt=""></span><b data-econ-num="coins">0</b><button class="econ-plus" type="button" data-act="buy-coins" data-i18n-al="get_coins" aria-label="Conseguir monedas"><img class="ic" src="img/ui-v2/home/plus.png" alt=""></button></span>
+      <span class="econ-pill econ-gems"><span class="econ-ic"><img class="ic" src="img/ui-v2/home/gem.png" alt=""></span><b data-econ-num="gems">0</b></span>
     </div>`;
   function mountTopBars() { document.querySelectorAll('[data-topbar]').forEach((el) => { el.innerHTML = TOPBAR_HTML; }); }
   // Rellena los placeholders <span data-art="nombre"> con el SVG de Art (una sola vez).
@@ -7856,89 +7880,116 @@
 
   function refreshStart() {
     updateTopBars();
-    { const sb = $('#start-best'); if (sb) sb.textContent = Storage.best; }
-    // Banner de recompensa diaria: visible siempre; badge/botón activos si toca reclamar.
+    const text = (id, value) => { const el = $('#' + id); if (el) el.textContent = value; return el; };
+    const setReady = (id, ready) => { const el = $('#' + id); if (el) { el.classList.toggle('is-ready', !!ready); el.classList.toggle('is-done', !!ready); } return el; };
+    const worldName = (world) => I18n.t('world_' + world.id);
+
+    // Recompensa diaria: muestra el día de la cadena y se compacta al reclamar.
     {
-      const ready = Meta.rewardReady(); const bn = $('#btn-reward'); if (bn) bn.classList.toggle('claimed', !ready);
-      const bd = bn && bn.querySelector('.db-badge'); if (bd) bd.hidden = !ready;
+      const ready = Meta.rewardReady();
+      const day = ready ? Meta.rewardNextDay() : Math.max(1, Meta.rewardDay());
+      const bn = $('#btn-reward');
+      if (bn) {
+        const rewardText = I18n.t(ready ? 'home_reward_day' : 'home_reward_claimed').replace('{n}', day);
+        bn.classList.toggle('claimed', !ready);
+        const claim = bn.querySelector('.db-claim');
+        if (claim) {
+          claim.disabled = !ready;
+          claim.setAttribute('aria-label', ready ? `${I18n.t('claim')}. ${rewardText}` : rewardText);
+        }
+        const badge = bn.querySelector('.db-badge'); if (badge) badge.hidden = !ready;
+      }
+      const sub = text('home-reward-sub', I18n.t(ready ? 'home_reward_day' : 'home_reward_claimed').replace('{n}', day));
+      if (sub) sub.removeAttribute('data-i18n');
     }
-    // Botón "Continuar partida": solo si hay un snapshot reanudable.
-    { const rr = $('#btn-resume-run'); if (rr) rr.hidden = !RunSave.load(); }
-    // Tarjeta "Reto del día" del home: estado (sin jugar / hecho + mejor marca de hoy).
+
+    // Contexto: una partida reanudable sustituye temporalmente al récord.
     {
-      const card = $('#home-daily-card'), st = $('#home-daily-state');
-      if (card && st) {
-        const dr = Meta.dailyRunInfo();
-        const played = (dr.plays || 0) > 0;
-        const medal = Meta.dailyMedal(dr.best || 0);
+      text('start-best', fmtNum(Storage.best || 0));
+      const snapshot = RunSave.load();
+      const resume = $('#btn-resume-run'), record = $('#home-record-card');
+      if (resume) resume.hidden = !snapshot;
+      if (record) record.hidden = !!snapshot;
+      if (snapshot && resume) {
+        let summary;
+        if (snapshot.mode === 'clasico') {
+          const world = Worlds.LIST.find((w) => w.id === snapshot.world) || Worlds.LIST[0];
+          summary = I18n.t('home_saved_classic').replace('{world}', worldName(world)).replace('{n}', snapshot.worldLevel || snapshot.level || 1);
+        } else {
+          summary = I18n.t('home_saved_mode').replace('{mode}', I18n.modeT(snapshot.mode, 'name')).replace('{n}', snapshot.level || 1);
+        }
+        text('home-resume-state', summary);
+        resume.setAttribute('aria-label', I18n.t('home_saved_run') + '. ' + summary + '. ' + I18n.t('continue_word'));
+      }
+    }
+
+    // Reto del día: mutador + resultado/medalla en una sola lectura accesible.
+    {
+      const card = $('#home-daily-card'), state = $('#home-daily-state'), badge = $('#home-daily-badge');
+      if (card && state && badge) {
+        const run = Meta.dailyRunInfo();
+        const played = (run.plays || 0) > 0;
+        const medal = Meta.dailyMedal(run.best || 0);
+        const mut = DailyMut.pick(new Date().toISOString().slice(0, 10));
+        const mutName = I18n.t('dmut_' + mut + '_n');
+        const medalName = medal === 'none' ? I18n.t('home_status_done') : ModeSignals.dailyMedalLabel(medal);
+        const stateText = played ? `${medalName} · ${fmtNum(run.best || 0)}` : `${mutName} · ${I18n.t('home_status_pending')}`;
+        const badgeText = played ? medalName : I18n.t('home_status_pending');
+        state.textContent = stateText; state.removeAttribute('data-i18n');
+        badge.textContent = badgeText; badge.removeAttribute('data-i18n');
         card.classList.toggle('done', played);
         card.classList.remove('medal-bronze', 'medal-silver', 'medal-gold');
         if (played && medal !== 'none') card.classList.add('medal-' + medal);
-        // Racha de medallas (GM-14) y mutador del día (GM-15) en la tarjeta.
-        const streak = Meta.dailyStreak();
-        const streakTxt = streak > 0 ? ' · 🔥' + streak : '';
-        const mut = DailyMut.pick(new Date().toISOString().slice(0, 10));
-        const mutTxt = '🎲 ' + I18n.t('dmut_' + mut + '_n');
-        if (played) {
-          const line1 = I18n.t('daily_home_done').replace('{n}', dr.best).replace('{m}', ModeSignals.dailyMedalLabel(medal));
-          st.innerHTML = `<span>${esc(line1)}</span><span>${esc(mutTxt + streakTxt)}</span>`;
-          st.removeAttribute('data-i18n');
-        }
-        else {
-          st.innerHTML = `<span>${esc(I18n.t('daily_home_pending'))}</span><span>${esc(mutTxt + streakTxt)}</span>`;
-          st.removeAttribute('data-i18n');
-        }
+        card.setAttribute('aria-label', `${I18n.t('daily_challenge')}. ${stateText}. ${badgeText}`);
       }
     }
-    // Cabecera compacta: perfil (izq) + economía (der), sin tarjeta.
-    const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
-    const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
-    { const a = $('#home-avatar'); if (a) a.style.setProperty('--av', prof.color); }
-    { const n = $('#home-name'); if (n) n.textContent = prof.name; }
-    { const l = $('#home-level'); if (l) l.textContent = I18n.t('lvl') + ' ' + lvl; }
-    { const xf = $('#home-xp-fill'); if (xf) xf.style.width = Math.min(100, have / need * 100).toFixed(0) + '%'; }
-    Econ.refresh(); // recalcula pills y badges de sumideros (misiones/cofres) vía updateSinkBadges
-    // Misiones (gancho de retención) con barra de progreso visible, en el panel lateral.
-    const mi = $('#start-missions');
-    if (mi) {
-      const row = (cls, icon, m, doneTxt) => {
-        const tgt = m.target || 1, cur = Math.min(m.progress || 0, tgt);
-        const pct = m.done ? 100 : Math.min(100, cur / tgt * 100);
-        const prog = m.done ? '✅' : `${cur}/${tgt}`;
-        return `<div class="daily ${cls} ${m.done ? 'done' : ''}"><span class="daily-icon">${icon}</span><div class="daily-main"><span class="daily-text">${m.done ? doneTxt : esc(m.text)}</span><div class="daily-bar"><div class="daily-bar-fill" style="width:${pct.toFixed(0)}%"></div></div></div><span class="daily-prog">${prog}</span></div>`;
-      };
-      // Reto del día (tablero seedeado por fecha, igual para todos los jugadores).
-      const dr = Meta.dailyRunInfo();
-      const medal = Meta.dailyMedal(dr.best || 0);
-      const medalText = medal !== 'none' ? ModeSignals.dailyMedalLabel(medal) + ' · ' : '';
-      const drBest = dr.best > 0 ? `<small class="daily-run-best medal-${medal}">${esc(medalText + I18n.t('daily_best').replace('{n}', dr.best))}</small>` : '';
-      // Calendario compacto de medallas (GM-14): 14 días + racha con congelación ética.
-      const streak = Meta.dailyStreak();
-      const calDots = Meta.dailyCalendar(14).map((c) => `<span class="cal-dot m-${c.medal}" title="${c.date}"></span>`).join('');
-      const calHtml = `<span class="daily-cal" aria-label="${esc(I18n.t('daily_cal_al'))}">${calDots}${streak > 0 ? `<b class="daily-streak-n">🔥${streak}</b>` : ''}</span>`;
-      const daily = `<div class="daily daily-run medal-${medal}"><span class="daily-icon">🎯</span><div class="daily-main"><span class="daily-text">${esc(I18n.t('daily_challenge'))}</span>${drBest}${calHtml}</div><button class="btn btn-primary btn-sm" data-daily-run>${esc(I18n.t('daily_play'))}</button></div>`;
-      const dm = Meta.dailyMission();
-      // Reroll de misión diaria (sumidero de tickets): solo si no está hecha y hay ticket.
-      const reroll = (!dm.done && Meta.tickets() > 0)
-        ? `<button class="btn btn-ghost btn-sm mission-reroll" data-reroll>🎟️ ${esc(I18n.t('reroll_mission'))}</button>` : '';
-      mi.innerHTML = daily + row('', '🎯', dm, I18n.t('daily_done')) + reroll + row('weekly', '🗓️', Meta.weeklyChallenge(), I18n.t('weekly_done'));
-      const db = mi.querySelector('[data-daily-run]');
-      if (db) db.addEventListener('click', () => { Sound.ensure(); Modal.close(); openDailyInfo(); });
-      const rb = mi.querySelector('[data-reroll]');
-      if (rb) rb.addEventListener('click', () => {
-        const next = Meta.rerollDaily();
-        if (!next) { Sound.miss(); return; }
-        Sound.ui(); Toasts.show(I18n.t('mission_rerolled'), 'good', 1800, '🎯');
-        refreshStart();
-      });
+
+    // Clásico: primer mundo desbloqueado aún incompleto, nivel actual y estrellas.
+    {
+      const unlocked = Worlds.LIST.filter((w) => Worlds.unlocked(w.id));
+      const world = unlocked.find((w) => Meta.worldCleared(w.id) < Worlds.PER_WORLD) || unlocked[unlocked.length - 1] || Worlds.LIST[0];
+      const level = Meta.worldMaxLevel(world.id), stars = Meta.worldStars(world.id);
+      const stateText = I18n.t('home_classic_state').replace('{world}', worldName(world)).replace('{n}', level);
+      const badgeText = I18n.t('home_classic_stars').replace('{n}', stars);
+      text('home-classic-state', stateText)?.removeAttribute('data-i18n');
+      text('home-classic-badge', badgeText);
+      const card = $('#home-classic-card'); if (card) card.setAttribute('aria-label', `${I18n.t('home_classic_title')}. ${stateText}. ${badgeText}`);
     }
-    // Hint de continuar Aventura (gancho de progresión) bajo el botón Jugar.
-    const ph = $('#play-hint');
-    if (ph) {
-      const am = (Meta.advMax && Meta.advMax()) || 1;
-      if (am > 1) { ph.hidden = false; ph.textContent = '🚀 ' + I18n.t('lvl') + ' ' + am; }
-      else ph.hidden = true;
+
+    // Supervivencia: récord y tema semanal, sin prometer una partida reanudable.
+    {
+      const best = Meta.survBestWave();
+      const mut = Survival.weeklyMut();
+      const stateText = I18n.t('home_surv_week').replace('{n}', I18n.t('home_survmut_' + mut.id));
+      const badgeText = best > 0 ? I18n.t('home_surv_record').replace('{n}', best) : I18n.t('home_no_record');
+      text('home-surv-state', stateText)?.removeAttribute('data-i18n');
+      text('home-surv-badge', badgeText)?.removeAttribute('data-i18n');
+      const card = $('#home-surv-card'); if (card) card.setAttribute('aria-label', `${I18n.t('card_surv')}. ${stateText}. ${badgeText}`);
     }
+
+    // Panel Hoy: progreso útil sin duplicar el Reto del día de la tarjeta superior.
+    {
+      const dm = Meta.dailyMission(), wk = Meta.weeklyChallenge();
+      const value = (m) => m.done ? I18n.t('home_complete') : `${Math.min(m.progress || 0, m.target || 1)} / ${m.target || 1}`;
+      const dailyValue = value(dm), weeklyValue = value(wk);
+      text('home-daily-progress', dailyValue); text('home-weekly-progress', weeklyValue);
+      const dailyItem = setReady('home-today-daily', dm.done); if (dailyItem) dailyItem.setAttribute('aria-label', `${I18n.t('home_daily_mission')}. ${dailyValue}`);
+      const weeklyItem = setReady('home-today-weekly', wk.done); if (weeklyItem) weeklyItem.setAttribute('aria-label', `${I18n.t('home_weekly')}. ${weeklyValue}`);
+
+      const chests = Meta.chests();
+      const chestState = chests > 0 ? I18n.t(chests === 1 ? 'home_ready_one' : 'home_ready_many').replace('{n}', chests) : I18n.t('home_none_ready');
+      text('home-chests-state', chestState)?.removeAttribute('data-i18n');
+      const chestBadge = text('home-chests-badge', chests); if (chestBadge) chestBadge.hidden = chests <= 0;
+      const chestItem = setReady('home-today-chests', chests > 0); if (chestItem) chestItem.setAttribute('aria-label', `${I18n.t('home_chests')}. ${chestState}`);
+
+      const streak = Meta.streak();
+      const streakText = I18n.t(streak === 1 ? 'home_day' : 'home_days').replace('{n}', streak);
+      text('home-streak-state', streakText);
+      const streakItem = $('#home-today-streak'); if (streakItem) streakItem.setAttribute('aria-label', `${I18n.t('home_streak')}. ${streakText}`);
+    }
+
+    const play = $('#btn-play'); if (play) play.setAttribute('aria-label', `${I18n.t('play_word')}. ${I18n.t('home_play_hint')}`);
+    Econ.refresh();
   }
 
   function applyReducedFx() {

@@ -117,7 +117,7 @@ Uso extensivo de `color-mix(in srgb, ...)` como mecanismo de "tinte en runtime" 
   - `.btn-ghost`: translúcido blanco.
   - `.btn-lg`/`.btn-sm`: variantes de tamaño (font 1.15rem/.88rem).
   - `.btn-icon`/`.btn-ic`: fila flex icono+label.
-  - `#btn-play` (CTA home): gradiente cian, `animation: ctaPulse 2.4s infinite`.
+  - `#btn-play` (CTA home): gradiente cian, anclado sobre la navegación y `animation: ctaPulse 2.4s` limitada a 2 ciclos; se elimina con movimiento reducido.
   - `.btn-hero`: variante ancha dentro de modal/home, gradiente `--grad-play`.
   - `.btn-reward`: CTA de recompensa diaria, gradiente dorado, `animation: rewardPulse 1.8s infinite`.
 - **`.icon-btn`** — cuadrado 44×44, esquinas redondeadas (o circular en `.controls`), hover ilumina, active `scale(.94)`.
@@ -129,7 +129,9 @@ Uso extensivo de `color-mix(in srgb, ...)` como mecanismo de "tinte en runtime" 
 - **`.combo`** — anillo SVG de progreso + texto de multiplicador + contador, 4 tiers de color escalonados.
 - **`.surv-bar`** — HUD de Supervivencia: vidas (emoji), nombre de oleada + badge de tier, barra de progreso de oleada, mejor oleada, tiempo transcurrido.
 - **`.booster-bar`** — bandeja inferior de potenciadores: medidor de carga, medidor de frenesí (gradiente naranja→rojo→morado), fila de botones `.booster` (58×56, icono + contador).
-- **`.app-card`** — tarjetas de acceso rápido del home, gradiente por variante de color.
+- **`.app-card`** — tarjetas de acceso rápido del home, gradiente por variante de color, asset PNG V2 real y badge textual de estado. La home prioriza Reto del día, Clásico y Supervivencia.
+- **`.home-context`** — muestra una partida recuperable cuando existe `RunSave`; en su ausencia muestra la mejor puntuación. Los dos estados son mutuamente excluyentes.
+- **`.home-today`/`.today-grid`** — resumen accionable de misión diaria, semanal, cofres y racha. Usa cuatro columnas `minmax(0,1fr)` y texto además de color para comunicar estado.
 - **`.diff-chip`** — pills de selección de dificultad, estado `[aria-checked="true"]` con borde/fondo verde.
 - **`.econ-pill`** — chip de moneda, borde/glow por tipo de divisa.
 - **`.level-chip`/`.record-chip`** — pill de nivel/mejor puntuación, variante "record" con brillo radial dorado.
