@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.38';
+  const VERSION = '2.6.40';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -72,6 +72,7 @@
     _updateShown = true;
     const box = document.createElement('div');
     box.className = 'update-banner'; box.setAttribute('role', 'status');
+    document.body.classList.add('has-update-banner');
     const msg = document.createElement('span');
     msg.textContent = I18n.t('update_ready');
     const btn = document.createElement('button');
@@ -339,8 +340,9 @@
         soon_badge: 'Próximamente', notify_me: 'Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
         edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
         home_classic: 'Partida clásica', home_classic_prefix: 'Partida', home_classic_name: 'Clásica', home_classic_sub: 'Juega en el tablero contra amigos o bots', home_surv_sub: 'Sobrevive a oleadas infinitas',
-        home_tournaments: 'Torneos', home_tournaments_sub: 'Compite y gana recompensas', home_multi_sub: 'Desafía a jugadores en línea',
+        home_tournaments: 'Torneo diario', home_tournaments_sub: 'Compite por medallas cada día', home_multi_sub: 'Desafía a jugadores en línea',
         home_diary: 'Diario', home_league: 'Liga', home_friends: 'Amigos',
+        home_multi_soon: 'Multijugador. Próximamente', home_league_soon: 'Liga. Próximamente', home_friends_soon: 'Amigos. Próximamente',
         home_saved_run: 'Partida guardada', continue_word: 'Continuar', home_status_pending: 'Pendiente', home_status_done: 'Completado',
         home_classic_title: 'Clásico', home_no_record: 'Sin récord', home_today: 'Hoy', home_daily_mission: 'Misión', home_weekly: 'Semanal',
         home_chests: 'Cofres', home_none_ready: 'Ninguno', home_streak: 'Racha', home_play_hint: 'Elige entre 5 modos',
@@ -366,7 +368,7 @@
         tutorial_btn: 'Tutorial interactivo', understood: 'Entendido',
         pause: 'Pausa', resume: 'Reanudar', restart: 'Reiniciar', menu: 'Menú', close: 'Cerrar', back: 'Volver', retry: 'Reintentar', share: 'Compartir',
         settings_title: '⚙️ Ajustes', shop_title: '🛍️ Tienda', shop_hint: 'Temas del tablero. Pulsa para previsualizar.',
-        profile_title: '📊 Perfil', best_by_mode: 'Mejores marcas por modo', achievements: 'Logros',
+        profile_title: '📊 Perfil', achievements_title: '🏆 Logros', best_by_mode: 'Mejores marcas por modo', achievements: 'Logros',
         adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
         revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
         revive_gets: 'Recibes 1 vida y despeja el 60% del tablero', revive_count: 'Revivir {n}/{max}', revive_short: 'Te faltan {n} monedas',
@@ -612,8 +614,9 @@
         soon_badge: 'Coming soon', notify_me: 'Notify me', notify_ok: "We'll let you know when it's ready!",
         edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
         home_classic: 'Classic game', home_classic_prefix: 'Classic', home_classic_name: 'Game', home_classic_sub: 'Play on the board against friends or bots', home_surv_sub: 'Survive endless waves',
-        home_tournaments: 'Tournaments', home_tournaments_sub: 'Compete and win rewards', home_multi_sub: 'Challenge players online',
+        home_tournaments: 'Daily tournament', home_tournaments_sub: 'Compete for medals every day', home_multi_sub: 'Challenge players online',
         home_diary: 'Daily', home_league: 'League', home_friends: 'Friends',
+        home_multi_soon: 'Multiplayer. Coming soon', home_league_soon: 'League. Coming soon', home_friends_soon: 'Friends. Coming soon',
         home_saved_run: 'Saved game', continue_word: 'Continue', home_status_pending: 'Pending', home_status_done: 'Complete',
         home_classic_title: 'Classic', home_no_record: 'No record', home_today: 'Today', home_daily_mission: 'Mission', home_weekly: 'Weekly',
         home_chests: 'Chests', home_none_ready: 'None', home_streak: 'Streak', home_play_hint: 'Choose from 5 modes',
@@ -639,7 +642,7 @@
         tutorial_btn: 'Interactive tutorial', understood: 'Got it',
         pause: 'Paused', resume: 'Resume', restart: 'Restart', menu: 'Menu', close: 'Close', back: 'Back', retry: 'Retry', share: 'Share',
         settings_title: '⚙️ Settings', shop_title: '🛍️ Shop', shop_hint: 'Board themes. Tap to preview.',
-        profile_title: '📊 Profile', best_by_mode: 'Best by mode', achievements: 'Achievements',
+        profile_title: '📊 Profile', achievements_title: '🏆 Achievements', best_by_mode: 'Best by mode', achievements: 'Achievements',
         adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
         revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
         revive_gets: 'Get 1 life and clear 60% of the board', revive_count: 'Revive {n}/{max}', revive_short: 'You need {n} more coins',
@@ -1039,6 +1042,14 @@
     const v = Math.floor(+n || 0);
     const sign = v < 0 ? '-' : '';
     return sign + String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  };
+  const fmtCompact = (n) => {
+    const v = Math.floor(+n || 0), sign = v < 0 ? '-' : '', abs = Math.abs(v);
+    if (abs < 10000) return sign + String(abs);
+    const unit = abs >= 999500 ? 'M' : 'K';
+    const scaled = unit === 'M' ? abs / 1000000 : abs / 1000;
+    const digits = scaled < 10 ? 1 : 0;
+    return sign + scaled.toFixed(digits).replace(/\.0$/, '') + unit;
   };
   const fmtSigned = (n) => (n > 0 ? '+' : '') + fmtNum(n);
   // Escapado HTML único para TODO texto interpolado en template strings que acaben en
@@ -3007,9 +3018,9 @@
       // Pills del nuevo sistema base: solo el número (el icono es un SVG aparte).
       scope.querySelectorAll('[data-econ-num]').forEach((el) => {
         const value = this.valueOf(el.dataset.econNum);
-        // La cabecera de Inicio replica la lectura compacta del mockup (1000),
-        // mientras el resto del producto conserva el separador de millares.
-        el.textContent = el.closest('#screen-start') && Math.abs(value) < 10000 ? String(Math.floor(value || 0)) : fmtNum(value);
+        // Inicio mantiene la economía en una línea incluso con saldos grandes;
+        // el resto del producto conserva el valor completo con separadores.
+        el.textContent = el.closest('#screen-start') ? fmtCompact(value) : fmtNum(value);
       });
       const runCoins = $('#hud-run-coins');
       const runWrap = $('#hud-run-coins-wrap');
@@ -7863,7 +7874,6 @@
       <span class="econ-pill econ-coins"><span class="econ-ic"><img class="ic" src="img/ui-v2/home/coin.png" alt=""></span><b data-econ-num="coins">0</b><button class="econ-plus" type="button" data-act="buy-coins" data-i18n-al="get_coins" aria-label="Conseguir monedas"><img class="ic" src="img/ui-v2/home/plus.png" alt=""></button></span>
       <span class="econ-pill econ-gems"><span class="econ-ic"><img class="ic" src="img/ui-v2/home/gem.png" alt=""></span><b data-econ-num="gems">0</b><button class="econ-plus" type="button" data-act="buy-gems" data-i18n-al="get_gems" aria-label="Conseguir gemas"><img class="ic" src="img/ui-v2/home/plus.png" alt=""></button></span>
       <span class="econ-pill econ-fire" aria-label="Racha"><span class="econ-ic"><img class="ic" src="img/ui-v2/home/fire.png" alt=""></span><b data-home-streak>0</b></span>
-      <button class="appbar-settings" type="button" data-act="settings" data-i18n-al="tab_set" aria-label="Ajustes"><img class="ic" src="img/ui-generated/home/nav-settings.png" alt=""></button>
     </div>`;
   function mountTopBars() { document.querySelectorAll('[data-topbar]').forEach((el) => { el.innerHTML = TOPBAR_HTML; }); }
   // Rellena los placeholders <span data-art="nombre"> con el SVG de Art (una sola vez).
@@ -7891,13 +7901,28 @@
     if (name) { const p = Storage.profile || { color: '#00d0ff' }; p.name = name; Storage.profile = p; Storage.user = name; updateTopBars(); refreshStart(); }
   }
 
+  function syncHomeChests() {
+    const chests = Meta.chests();
+    const chestState = chests > 0
+      ? I18n.t(chests === 1 ? 'home_ready_one' : 'home_ready_many').replace('{n}', chests)
+      : I18n.t('home_none_ready');
+    const state = $('#home-chests-state');
+    if (state) { state.textContent = chestState; state.removeAttribute('data-i18n'); }
+    const badge = $('#home-chests-badge');
+    if (badge) { badge.textContent = chests; badge.hidden = chests <= 0; }
+    const item = $('#home-today-chests');
+    if (item) {
+      item.classList.toggle('is-ready', chests > 0);
+      item.classList.toggle('is-done', chests > 0);
+      item.setAttribute('aria-label', `${I18n.t('home_chests')}. ${chestState}`);
+    }
+  }
+
   function refreshStart() {
     updateTopBars();
     const text = (id, value) => { const el = $('#' + id); if (el) el.textContent = value; return el; };
     const setReady = (id, ready) => { const el = $('#' + id); if (el) { el.classList.toggle('is-ready', !!ready); el.classList.toggle('is-done', !!ready); } return el; };
     const worldName = (world) => I18n.t('world_' + world.id);
-    text('home-level-value', I18n.t('lvl') + ' ' + Meta.level());
-
     // Recompensa diaria: muestra el día de la cadena y se compacta al reclamar.
     {
       const ready = Meta.rewardReady();
@@ -7921,11 +7946,15 @@
 
     // Contexto: una partida reanudable sustituye temporalmente al récord.
     {
-      text('start-best', fmtNum(Storage.best || 0));
+      const best = fmtNum(Storage.best || 0);
+      text('start-best', best);
       const snapshot = RunSave.load();
       const resume = $('#btn-resume-run'), record = $('#home-record-card');
       if (resume) resume.hidden = !snapshot;
-      if (record) record.hidden = !!snapshot;
+      if (record) {
+        record.hidden = !!snapshot;
+        record.setAttribute('aria-label', `${I18n.t('best_score')}: ${best}`);
+      }
       if (snapshot && resume) {
         let summary;
         if (snapshot.mode === 'clasico') {
@@ -7983,17 +8012,10 @@
       const dailyItem = setReady('home-today-daily', dm.done); if (dailyItem) dailyItem.setAttribute('aria-label', `${I18n.t('home_daily_mission')}. ${dailyValue}`);
       const weeklyItem = setReady('home-today-weekly', (run.plays || 0) > 0); if (weeklyItem) weeklyItem.setAttribute('aria-label', `${I18n.t('daily_challenge')}. ${dailyRunValue}`);
 
-      const chests = Meta.chests();
-      const chestState = chests > 0 ? I18n.t(chests === 1 ? 'home_ready_one' : 'home_ready_many').replace('{n}', chests) : I18n.t('home_none_ready');
-      text('home-chests-state', chestState)?.removeAttribute('data-i18n');
-      const chestBadge = text('home-chests-badge', chests); if (chestBadge) chestBadge.hidden = chests <= 0;
-      const chestItem = setReady('home-today-chests', chests > 0); if (chestItem) chestItem.setAttribute('aria-label', `${I18n.t('home_chests')}. ${chestState}`);
+      syncHomeChests();
 
       const streak = Number(Meta.streak()) || 0;
-      const streakText = I18n.t(streak === 1 ? 'home_day' : 'home_days').replace('{n}', streak);
-      text('home-streak-state', streakText);
       document.querySelectorAll('[data-home-streak]').forEach((el) => { el.textContent = streak; });
-      const streakItem = $('#home-today-streak'); if (streakItem) streakItem.setAttribute('aria-label', `${I18n.t('home_streak')}. ${streakText}`);
     }
 
     const play = $('#btn-play'); if (play) play.setAttribute('aria-label', `${I18n.t('play_word')}. ${I18n.t('home_play_hint')}`);
@@ -8055,7 +8077,18 @@
   }
   function openSettings() { buildSettings(); Modal.open('modal-settings'); }
 
-  function openMedals() {
+  function openMedals(view = 'profile') {
+    const achievementsOnly = view === 'achievements';
+    const modal = $('#modal-medals');
+    if (modal) modal.classList.toggle('achievements-only', achievementsOnly);
+    const title = $('#medals-title');
+    if (title) {
+      const key = achievementsOnly ? 'achievements_title' : 'profile_title';
+      title.textContent = I18n.t(key);
+      title.setAttribute('data-i18n', key);
+    }
+    const emblem = modal && modal.querySelector('.m-emblem img');
+    if (emblem) emblem.src = achievementsOnly ? 'img/ui-generated/home/nav-achievements.png' : 'img/ui/player.png';
     // Estadísticas de por vida
     const st = Meta.stats();
     const sEl = $('#profile-stats');
@@ -8243,6 +8276,7 @@
     const el = $('#chests-body'); if (!el) return;
     Econ.refresh();
     const n = Meta.chests();
+    syncHomeChests();
     // Sin cofres: en vez de solo el contador a 0, una guía accionable de cómo ganarlos.
     const guide = n <= 0
       ? emptyState('', I18n.t('empty_chests_title'), I18n.t('empty_chests_sub'), I18n.t('empty_cta_surv'), 'go-surv')
@@ -8262,6 +8296,9 @@
   function doOpenChest() {
     const r = Meta.openChest();
     if (!r) { Sound.miss(); Toasts.show(I18n.t('chests_none'), 'warn', 2800, 'chest'); buildChests(); return; }
+    // El modal y la banda de Inicio comparten el mismo estado; proyectarlo en
+    // el mismo tick evita que el badge conserve el valor anterior al cerrar.
+    syncHomeChests();
     Sound.success();
     if (r.rarity === 'cosmetic') setTimeout(() => Sound.record(), 120);
     revealChestReward(r, false);
@@ -8390,8 +8427,6 @@
       else if (a === 'home-classic') { Sound.ui(); Worlds.open(); }
       else if (a === 'home-surv') { Sound.ensure(); openSurvivalDiff(); }
       else if (a === 'home-daily') { Sound.ensure(); openDailyInfo(); }
-      else if (a === 'home-multi') { Sound.ui(); Toasts.show(I18n.t('multi_soon'), 'info', 1800); }
-      else if (a === 'home-friends') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1600); }
       else if (a === 'open-guide') { Sound.ui(); Modal.open('modal-how'); }
       else if (a === 'go-surv') { Sound.ensure(); Modal.close(); openSurvivalDiff(); }
       else if (a === 'go-play') { Sound.ensure(); Modal.close(); Screens.show('modes'); }
@@ -8402,7 +8437,7 @@
       else if (a === 'open-shop') { Sound.ensure(); Modal.close(); openShop(); }
       else if (a === 'open-missions') { Sound.ui(); refreshStart(); Modal.close(); Modal.open('modal-missions'); }
       else if (a === 'claim-daily') claimDailyReward();
-      else if (a === 'nav-medals') { Sound.ensure(); openMedals(); }
+      else if (a === 'nav-achievements') { Sound.ensure(); openMedals('achievements'); }
       else if (a === 'nav-shop') { Sound.ensure(); openShop(); }
       else if (a === 'nav-missions') { Sound.ui(); Modal.open('modal-missions'); }
       else if (a === 'nav-home') Sound.ui();

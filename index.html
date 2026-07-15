@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.38" />
+  <link rel="stylesheet" href="styles.css?v=2.6.40" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -72,12 +72,8 @@
         <span class="space-planet planet-orange"></span>
         <span class="space-planet planet-green"></span>
       </div>
-      <!-- Top bar reutilizable (perfil + economía + notificaciones) -->
+      <!-- Top bar reutilizable (perfil + economía). Misiones y Ajustes viven en sus menús. -->
       <header class="appbar" data-topbar></header>
-      <button class="home-bell" type="button" data-act="nav-missions" aria-label="Misiones">
-        <span class="home-bell-dot" id="missions-dot" hidden></span>
-        <span aria-hidden="true">●</span>
-      </button>
 
       <!-- Zona superior (rellena el alto disponible) -->
       <div class="home-scroll">
@@ -103,9 +99,9 @@
             <span class="home-resume-copy"><small data-i18n="home_saved_run">Partida guardada</small><b id="home-resume-state">Continuar partida</b></span>
             <span class="home-resume-cta" data-i18n="continue_word">Continuar</span>
           </button>
-          <div class="level-chip record-chip" id="home-record-card">
-            <span class="home-level-line"><img src="img/ui-v2/home/rocket.png" alt="" aria-hidden="true"><b id="home-level-value">Nivel 1</b></span>
-            <span class="lc-best"><span data-i18n="best_score">Mejor puntuación</span>: <b id="start-best">0</b></span>
+          <div class="level-chip record-chip" id="home-record-card" aria-label="Mejor puntuación: 0">
+            <img class="home-score-art" src="img/ui-generated/home/nav-achievements.png" alt="" aria-hidden="true">
+            <span class="home-score-copy"><span data-i18n="best_score">Mejor puntuación</span><b id="start-best">0</b></span>
           </div>
         </div>
 
@@ -121,7 +117,7 @@
             <span class="ac-art ac-art-trophy" aria-hidden="true"><img src="img/ui-generated/home/tournament-trophy.png" alt=""></span>
             <span class="ac-status" id="home-daily-badge" data-i18n="home_status_pending">Pendiente</span>
           </button>
-          <button class="app-card card-orange" data-act="home-multi" id="home-multi-card">
+          <button class="app-card card-orange is-disabled" id="home-multi-card" type="button" disabled aria-disabled="true" data-i18n-al="home_multi_soon">
             <span class="ac-tx"><b data-i18n="card_multi">Multijugador</b><small data-i18n="home_multi_sub">Desafía a jugadores en línea</small></span>
             <span class="multi-art" aria-hidden="true"><img src="img/ui-generated/home/multiplayer-versus.png" alt=""></span>
             <span class="ac-status" data-i18n="card_multi_badge">Próximamente</span>
@@ -146,12 +142,12 @@
               <span data-i18n="home_chests">Cofres</span>
               <b id="home-chests-state" data-i18n="home_none_ready">Ninguno</b>
             </button>
-            <button class="today-item" type="button" data-act="nav-medals" id="home-today-streak">
+            <button class="today-item is-disabled" type="button" id="home-today-league" disabled aria-disabled="true" data-i18n-al="home_league_soon">
               <img src="img/ui-generated/home/nav-league.png" alt="" aria-hidden="true">
               <span data-i18n="home_league">Liga</span>
-              <b id="home-streak-state">0 días</b>
+              <b data-i18n="coming_soon">Próximamente</b>
             </button>
-            <button class="today-item" type="button" data-act="home-friends">
+            <button class="today-item is-disabled" type="button" id="home-today-friends" disabled aria-disabled="true" data-i18n-al="home_friends_soon">
               <img src="img/ui-generated/home/nav-friends.png" alt="" aria-hidden="true">
               <span data-i18n="home_friends">Amigos</span>
               <b data-i18n="coming_soon">Próximamente</b>
@@ -166,7 +162,7 @@
       <div class="home-foot">
         <!-- Bottom nav (anclado) -->
         <nav class="bottom-nav" aria-label="Navegación">
-          <button class="bnav" data-act="nav-medals"><span class="bn-ic"><img src="img/ui-generated/home/nav-achievements.png" alt=""></span><small data-i18n="tab_log">Logros</small></button>
+          <button class="bnav" data-act="nav-achievements"><span class="bn-ic"><img src="img/ui-generated/home/nav-achievements.png" alt=""></span><small data-i18n="tab_log">Logros</small></button>
           <button class="bnav" data-act="nav-shop"><span class="bn-ic"><img src="img/ui-generated/home/nav-shop.png" alt=""></span><small data-i18n="tab_shop">Tienda</small></button>
           <button class="bnav bnav-center" data-act="nav-home" aria-current="page"><span class="bn-ic"><img src="img/ui-generated/home/nav-home.png" alt=""></span><small data-i18n="tab_home">Inicio</small></button>
           <button class="bnav" data-act="open-guide"><span class="bn-ic"><img src="img/ui-generated/home/nav-guide.png" alt=""></span><small data-i18n="tab_guide">Guía</small></button>
@@ -656,10 +652,10 @@
     <div class="modal modal-profile" id="modal-medals" role="dialog" aria-modal="true" aria-labelledby="medals-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/player.png" alt=""></span><h2 id="medals-title" data-i18n="profile_title">Perfil</h2></div>
       <div class="modal-body">
-        <div class="stats" id="profile-stats"></div>
-        <h3 class="group-title" data-i18n="best_by_mode">Mejores marcas por modo</h3>
-        <div class="profile-lb" id="profile-lb"></div>
-        <h3 class="group-title" data-i18n="achievements">Logros</h3>
+        <div class="stats profile-only" id="profile-stats"></div>
+        <h3 class="group-title profile-only" data-i18n="best_by_mode">Mejores marcas por modo</h3>
+        <div class="profile-lb profile-only" id="profile-lb"></div>
+        <h3 class="group-title achievements-heading" data-i18n="achievements">Logros</h3>
         <div class="medals-list" id="medals-list"></div>
       </div>
       <div class="modal-actions">
@@ -668,6 +664,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=2.6.38" defer></script>
+  <script src="game.js?v=2.6.40" defer></script>
 </body>
 </html>

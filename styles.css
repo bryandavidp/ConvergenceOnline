@@ -3139,6 +3139,15 @@ body.reduced-fx .chapter-intro, body.reduced-fx .chapter-intro .ci-tap { animati
   animation: toast-in .3s ease both;
 }
 .update-banner button { flex: 0 0 auto; }
+body[data-screen="start"] .update-banner {
+  bottom: max(100px, calc(90px + env(safe-area-inset-bottom)));
+}
+body.has-update-banner[data-screen="start"] .update-banner {
+  bottom: max(8px, env(safe-area-inset-bottom));
+}
+body.has-update-banner[data-screen="start"] #screen-start .home-foot {
+  padding-bottom: 60px;
+}
 
 /* Aviso de navegador no soportado (sin color-mix ni dvh: debe funcionar en navegadores viejos) */
 .browser-warn {
@@ -3382,7 +3391,6 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
 #screen-start .appbar,
 #screen-start .home-scroll,
 #screen-start .home-foot { position: relative; z-index: 2; }
-#screen-start .home-bell { position: absolute; z-index: 8; }
 #screen-start .home-space-art { position: absolute; z-index: 1; inset: 0; overflow: hidden; pointer-events: none; }
 #screen-start .home-space-art::before {
   content: ''; position: absolute; left: 9%; top: 33%; width: 4px; height: 4px; border-radius: 50%; background: #19d7ff;
@@ -3395,7 +3403,6 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
 #screen-start .planet-orange { left: 6%; top: 38%; width: 34px; height: 34px; background: radial-gradient(circle at 32% 25%, #ffd467 0 10%, #f4992e 34%, #c94e20 72%, #70200f 100%); box-shadow: 0 0 13px rgba(255,116,31,.5); }
 #screen-start .planet-green { right: 4%; top: 42%; width: 24px; height: 24px; background: radial-gradient(circle at 31% 25%, #9bff65 0 10%, #39ba4b 38%, #14712d 76%, #08381c 100%); box-shadow: 0 0 12px rgba(70,226,87,.42); }
 .screen:not(.home) .econ-fire,
-.screen:not(.home) .appbar-settings,
 .screen:not(.home) .econ-gems .econ-plus { display: none; }
 
 #screen-start .appbar {
@@ -3450,20 +3457,6 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
 #screen-start .appbar .econ-ic { width: 32px; height: 32px; margin-left: -3px; }
 #screen-start .appbar .econ-plus { width: 30px; height: 30px; }
 #screen-start .econ-fire { min-width: 70px; }
-#screen-start .appbar-settings {
-  width: 50px; height: 50px; padding: 9px; border: 2px solid #26366e; border-radius: 17px;
-  background: linear-gradient(180deg, #172554, #0a1237); box-shadow: 0 4px 0 rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.15);
-}
-#screen-start .home-bell {
-  position: absolute; z-index: 8; top: 90px; right: max(14px, calc((100% - 720px) / 2 + 14px));
-  width: 54px; height: 54px; border: 2px solid #24376f; border-radius: 17px;
-  color: transparent; background:
-    radial-gradient(circle at 50% 38%, #e6edff 0 10px, transparent 11px),
-    linear-gradient(180deg, #1d2b61, #0a1237);
-  box-shadow: 0 4px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.18), 0 0 14px rgba(54,104,255,.25);
-}
-#screen-start .home-bell::before { content: ''; position: absolute; left: 16px; top: 17px; width: 20px; height: 18px; border-radius: 11px 11px 6px 6px; background: #c8d5ff; box-shadow: 0 9px 0 -6px #fff; }
-#screen-start .home-bell-dot { position: absolute; right: -3px; top: -3px; width: 15px; height: 15px; border: 2px solid #ff8898; border-radius: 50%; background: #f21f42; box-shadow: 0 0 8px rgba(255,42,72,.7); }
 
 #screen-start .home-scroll {
   width: min(720px, 100%);
@@ -3510,14 +3503,18 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
 @keyframes homePlayGlow { 50% { filter: brightness(1.08); box-shadow: 0 0 0 5px rgba(160,53,255,.9), 0 8px 0 #0c227d, 0 0 34px #05c8ff, 0 0 58px rgba(131,38,255,.78), inset 0 4px 0 rgba(255,255,255,.34), inset 0 -8px 15px rgba(0,26,126,.45); } }
 
 #screen-start .home-context { min-height: 58px; margin-top: -18px; }
-#screen-start .record-chip { display: flex; flex-direction: column; gap: 1px; min-width: 205px; padding: 6px 18px 8px; border: 2px solid #142a65; border-radius: 18px; background: linear-gradient(180deg, #0d2255, #071538); box-shadow: 0 4px 0 #03091d, inset 0 1px 0 rgba(255,255,255,.1); }
+#screen-start .record-chip {
+  display: inline-grid; grid-template-columns: 43px auto; align-items: center; gap: 10px;
+  min-width: 220px; min-height: 54px; padding: 5px 18px 7px 12px;
+  border: 2px solid #2451a4; border-radius: 19px;
+  background: radial-gradient(circle at 18% 10%, rgba(0,208,255,.18), transparent 42%), linear-gradient(180deg, #102963, #07163c);
+  box-shadow: 0 4px 0 #03091d, 0 0 18px rgba(28,117,255,.2), inset 0 1px 0 rgba(255,255,255,.12);
+}
 #screen-start .record-chip::after { display: none; }
-#screen-start .home-level-line { display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: #0fd0ff; }
-#screen-start .home-level-line img { width: 29px; height: 29px; object-fit: contain; }
-#screen-start .home-level-line b { color: #0fd0ff; font-size: 1.1rem; }
-#screen-start .record-chip .lc-best { gap: 4px; color: #cbd4f1; font-size: .72rem; }
-#screen-start .record-chip .lc-best span { color: #cbd4f1; font-size: .72rem; text-transform: none; letter-spacing: 0; }
-#screen-start .record-chip #start-best { font-size: .95rem; color: #ffe21f; }
+#screen-start .home-score-art { width: 43px; height: 43px; object-fit: contain; filter: drop-shadow(0 5px 4px rgba(0,0,0,.38)); }
+#screen-start .home-score-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; }
+#screen-start .home-score-copy span { color: #cbd7fa; font-size: .7rem; font-weight: 850; letter-spacing: .1px; white-space: nowrap; }
+#screen-start .record-chip #start-best { color: #ffe21f; font-size: 1.15rem; font-weight: 950; line-height: 1; text-shadow: 0 0 12px rgba(255,216,77,.42), 0 2px 0 rgba(0,0,0,.45); font-variant-numeric: tabular-nums; }
 #screen-start .home-resume { width: min(430px, 88%); border-width: 2px; box-shadow: 0 4px 0 #04102c, 0 0 18px rgba(0,208,255,.32); }
 
 #screen-start .home-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
@@ -3529,6 +3526,13 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
 #screen-start .card-blue { border-color: #1698ff; background: linear-gradient(180deg, #075ec3, #07347b 55%, #061d52); }
 #screen-start .card-green { border-color: #48df6b; background: linear-gradient(180deg, #078341, #075b35 55%, #02382a); }
 #screen-start .card-orange { border-color: #ffaf25; background: linear-gradient(180deg, #d45706, #993305 55%, #5e1d08); }
+#screen-start .app-card[disabled] {
+  cursor: not-allowed; filter: grayscale(.92) saturate(.28) brightness(.76); opacity: .72;
+  border-color: #68728c; background: linear-gradient(180deg, #485269, #30394e 55%, #20283a);
+  box-shadow: 0 7px 0 rgba(0,0,0,.42), 0 14px 22px rgba(0,0,0,.28), inset 0 2px 0 rgba(255,255,255,.11);
+}
+#screen-start .app-card[disabled]:active { transform: none; }
+#screen-start .app-card[disabled] .ac-status { display: inline-flex; position: absolute; z-index: 4; bottom: 12px; color: #e5e9f5; border-color: rgba(255,255,255,.2); background: rgba(15,21,35,.78); }
 #screen-start .ac-tx { position: relative; z-index: 2; gap: 5px; }
 #screen-start .ac-tx b { font-size: clamp(.82rem, 2.8vw, 1.1rem); letter-spacing: -.2px; line-height: 1.08; text-shadow: 0 3px 0 rgba(0,0,0,.4); }
 #screen-start .classic-title { display: flex; flex-direction: column; }
@@ -3558,6 +3562,8 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
 #screen-start .today-item > span:not(.today-icon-wrap) { color: #dbe3ff; font-size: .7rem; }
 #screen-start .today-item b { color: #aebce6; font-size: .58rem; }
 #screen-start .today-item b { display: none; }
+#screen-start .today-item[disabled] { cursor: not-allowed; filter: grayscale(1); opacity: .43; }
+#screen-start .today-item[disabled]:active { transform: none; }
 
 #screen-start .home-foot { z-index: 10; padding: 0; background: none; }
 #screen-start .bottom-nav { width: min(720px, 100%); margin: 0 auto; min-height: 86px; padding: 8px 8px max(8px, env(safe-area-inset-bottom)); border: 2px solid #14295d; border-bottom: 0; border-radius: 28px 28px 0 0; background: linear-gradient(180deg, rgba(13,29,68,.99), rgba(4,13,38,.99)); box-shadow: 0 -5px 25px rgba(0,0,0,.34), inset 0 2px 0 rgba(255,255,255,.08); }
@@ -3575,22 +3581,18 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
   #screen-start .appbar-profile-main { gap: 14px; }
   #screen-start .avatar { width: 200px; height: 200px; border: 5px solid #2fc7ff; border-radius: 50%; background: radial-gradient(circle at 50% 38%, #174d8e, #050c32 72%); box-shadow: 0 0 0 4px #6944fa, 0 0 22px rgba(0,198,255,.72), inset 0 0 18px rgba(0,208,255,.38); }
   #screen-start .avatar-badge { left: -10px; bottom: -10px; min-width: 58px; height: 62px; border-width: 4px; border-radius: 14px; font-size: 1.55rem; }
-  #screen-start .appbar-name { font-size: 2rem; }
+  #screen-start .appbar-name { max-width: 178px; overflow: hidden; text-overflow: ellipsis; font-size: 2rem; }
   #screen-start .appbar-edit { width: 42px; height: 42px; padding: 8px; border-radius: 11px; }
   #screen-start .appbar-lvl { position: relative; top: 28px; width: 380px; gap: 7px 12px; }
   #screen-start .appbar-lvl-star { font-size: 1.4rem; }
   #screen-start .appbar-lvl-txt { font-size: 1.16rem; }
   #screen-start .appbar-xp { height: 22px; border-width: 5px; }
   #screen-start .appbar-xp-num { position: absolute; right: 13px; bottom: 2px; transform: none; z-index: 1; font-size: .95rem; }
-  #screen-start .appbar-econ { align-self: start; padding-top: 15px; gap: 12px; transform: translateX(20px); }
+  #screen-start .appbar-econ { align-self: start; padding-top: 15px; gap: 12px; transform: none; }
   #screen-start .appbar .econ-pill { min-height: 64px; padding: 7px 12px; gap: 7px; border-width: 3px; font-size: 1.5rem; }
   #screen-start .appbar .econ-ic { width: 45px; height: 45px; }
   #screen-start .appbar .econ-plus { width: 40px; height: 40px; }
   #screen-start .econ-fire { min-width: 105px; }
-  #screen-start .appbar-settings { width: 66px; height: 66px; padding: 12px; border-width: 3px; border-radius: 21px; }
-  #screen-start .home-bell { top: 128px; width: 78px; height: 78px; right: max(26px, calc((100% - 960px) / 2)); border-width: 3px; border-radius: 24px; }
-  #screen-start .home-bell::before { left: 23px; top: 23px; width: 29px; height: 28px; border-radius: 15px 15px 8px 8px; }
-  #screen-start .home-bell-dot { width: 22px; height: 22px; }
   #screen-start .home-scroll { width: min(960px, calc(100% - 40px)); padding: 38px 12px 20px; gap: 18px; }
   #screen-start .daily-banner { align-self: flex-start; width: 730px; min-height: 170px; overflow: visible; padding: 17px 30px 17px 26px; gap: 22px; border-width: 3px; border-radius: 34px; }
   #screen-start .db-gift { width: 150px; height: 150px; margin: -8px 0 -5px -4px; }
@@ -3605,12 +3607,10 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
   #screen-start .play-ic { border-top-width: 43px; border-bottom-width: 43px; border-left-width: 60px; }
   #screen-start .btn-hero-copy b { font-size: 5.25rem; text-shadow: 0 8px 0 #6c83c7, 0 13px 16px rgba(0,0,0,.44); }
   #screen-start .home-context { min-height: 78px; margin-top: -22px; }
-  #screen-start .record-chip { min-width: 290px; padding: 8px 22px 11px; border-width: 3px; border-radius: 23px; }
-  #screen-start .home-level-line img { width: 41px; height: 41px; }
-  #screen-start .home-level-line b { font-size: 1.45rem; }
-  #screen-start .record-chip .lc-best,
-  #screen-start .record-chip .lc-best span { font-size: .91rem; }
-  #screen-start .record-chip #start-best { font-size: 1.2rem; }
+  #screen-start .record-chip { grid-template-columns: 52px auto; min-width: 280px; min-height: 70px; padding: 7px 24px 9px 14px; border-width: 3px; border-radius: 23px; }
+  #screen-start .home-score-art { width: 52px; height: 52px; }
+  #screen-start .home-score-copy span { font-size: .9rem; }
+  #screen-start .record-chip #start-best { font-size: 1.38rem; }
   #screen-start .home-cards { flex: 0 0 374px; height: 374px; gap: 20px; }
   #screen-start .app-card { min-height: 0; height: 374px; padding: 24px 14px 18px; border-width: 3px; border-radius: 30px; }
   #screen-start .ac-tx b { font-size: 1.52rem; }
@@ -3636,29 +3636,81 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
 /* La referencia maestra mide 854×1280 (2:3). Entre tablet y escritorio se
    escala el mismo lienzo, en vez de conservar las cotas de 1024×1536 y mandar
    la banda contextual por debajo del viewport. */
-@media (min-width: 720px) and (max-width: 900px) {
+@media (min-width: 720px) and (max-width: 819px) {
+  #screen-start .appbar { width: calc(100% - 24px); min-height: 164px; padding: 8px 4px 14px; }
+  #screen-start .appbar-profile { width: 315px; margin-left: -8px; }
+  #screen-start .appbar-profile-main { gap: 10px; }
+  #screen-start .avatar { width: 144px; height: 144px; border-width: 4px; }
+  #screen-start .avatar-badge { left: -7px; bottom: -7px; min-width: 43px; height: 47px; border-width: 3px; border-radius: 11px; font-size: 1.12rem; }
+  #screen-start .appbar-id { width: 158px; }
+  #screen-start .appbar-name { max-width: 125px; overflow: hidden; text-overflow: ellipsis; font-size: 1.55rem; }
+  #screen-start .appbar-edit { width: 32px; height: 32px; padding: 6px; border-radius: 9px; }
+  #screen-start .appbar-lvl { top: 18px; width: 286px; gap: 5px 9px; }
+  #screen-start .appbar-lvl-star { font-size: 1.02rem; }
+  #screen-start .appbar-lvl-txt { font-size: .9rem; }
+  #screen-start .appbar-xp { height: 17px; border-width: 4px; }
+  #screen-start .appbar-xp-num { right: 9px; bottom: 1px; font-size: .73rem; }
+  #screen-start .appbar-econ { padding-top: 2px; gap: 6px; transform: none; }
+  #screen-start .appbar .econ-pill { min-height: 46px; padding: 4px 6px; gap: 3px; border-width: 2px; font-size: 1.05rem; }
+  #screen-start .appbar .econ-ic { width: 32px; height: 32px; }
+  #screen-start .appbar .econ-plus { width: 28px; height: 28px; }
+  #screen-start .econ-fire { min-width: 72px; }
+
+  #screen-start .home-scroll { width: calc(100% - 16px); padding: 20px 8px 17px; gap: 15px; }
+  #screen-start .daily-banner { align-self: flex-start; width: calc(100% - 172px); min-height: 132px; padding: 12px 15px 12px 18px; gap: 13px; border-width: 3px; border-radius: 27px; }
+  #screen-start .db-gift { width: 102px; height: 102px; margin: -5px 0 -3px -2px; }
+  #screen-start .db-tx b { font-size: 1.25rem; }
+  #screen-start .db-tx small { font-size: .88rem; }
+  #screen-start .db-claim { min-height: 49px; padding: 8px 14px; border-width: 2px; border-radius: 17px; font-size: .88rem; }
+  #screen-start .db-rocket { right: -172px; top: -12px; width: 184px; height: 170px; transform: none; }
+  #screen-start .home-play-zone { min-height: 198px; padding: 18px 0 8px; }
+  #screen-start .btn-hero { width: min(548px, 80vw); min-height: 180px; gap: 31px; border-width: 7px; border-radius: 39px; }
+  #screen-start .play-ic { border-top-width: 37px; border-bottom-width: 37px; border-left-width: 51px; }
+  #screen-start .btn-hero-copy { width: 258px; }
+  #screen-start .btn-hero-copy b { font-size: 4.55rem; transform: translateY(-10px) scale(1.18, 1.14); }
+  #screen-start .home-context { min-height: 64px; margin-top: -18px; }
+  #screen-start .record-chip { grid-template-columns: 45px auto; min-width: 232px; min-height: 60px; padding: 5px 18px 7px 11px; border-width: 2px; border-radius: 20px; }
+  #screen-start .home-score-art { width: 45px; height: 45px; }
+  #screen-start .home-score-copy span { font-size: .76rem; }
+  #screen-start .record-chip #start-best { font-size: 1.16rem; }
+
+  #screen-start .home-cards { flex: 0 0 290px; height: 290px; gap: 10px; margin-inline: 4px; }
+  #screen-start .app-card { height: 290px; padding: 18px 9px 14px; border-width: 2px; border-radius: 24px; }
+  #screen-start .ac-tx b { font-size: 1.24rem; }
+  #screen-start .ac-tx small { max-width: 172px; font-size: .86rem; line-height: 1.23; }
+  #screen-start .ac-art-trophy { width: 205px; height: 164px; margin-top: 14px; }
+  #screen-start .classic-board { width: 215px; height: 158px; margin-top: 8px; border-radius: 0 0 19px 19px; }
+  #screen-start .multi-art { width: 204px; min-height: 150px; margin-top: 9px; }
+  #screen-start .home-today { height: 130px; min-height: 130px; max-height: 130px; margin-inline: 4px; padding: 10px 6px 7px; border-width: 2px; border-radius: 26px; }
+  #screen-start .today-item { min-height: 106px; padding: 0 2px; }
+  #screen-start .today-item img, #screen-start .today-icon-wrap { width: 76px; height: 76px; }
+  #screen-start .today-item > span:not(.today-icon-wrap) { font-size: .88rem; }
+  #screen-start .bottom-nav { width: calc(100% - 24px); min-height: 106px; padding: 6px 10px max(6px, env(safe-area-inset-bottom)); border-width: 2px; border-radius: 27px 27px 0 0; }
+  #screen-start .bnav { min-height: 87px; }
+  #screen-start .bn-ic { width: 60px; height: 60px; }
+  #screen-start .bnav small { font-size: .86rem; }
+  #screen-start .bnav-center .bn-ic { width: 92px; height: 92px; margin-top: -44px; padding: 18px; border-width: 3px; }
+  body[data-screen="start"] .update-banner { bottom: max(116px, calc(106px + env(safe-area-inset-bottom))); }
+}
+
+@media (min-width: 820px) and (max-width: 900px) {
   #screen-start .appbar { width: 800px; min-height: 183px; padding: 8px 3px 17px; }
   #screen-start .appbar-profile { width: 352px; margin-left: -10px; }
   #screen-start .appbar-profile-main { gap: 12px; }
   #screen-start .avatar { width: 167px; height: 167px; border-width: 4px; box-shadow: 0 0 0 3px #6944fa, 0 0 19px rgba(0,198,255,.72), inset 0 0 15px rgba(0,208,255,.38); }
   #screen-start .avatar-badge { left: -8px; bottom: -8px; min-width: 48px; height: 52px; border-width: 3px; border-radius: 12px; font-size: 1.29rem; }
-  #screen-start .appbar-name { position: relative; top: 4px; max-width: none; overflow: visible; text-overflow: clip; font-size: 2rem; }
+  #screen-start .appbar-name { position: relative; top: 4px; max-width: 135px; overflow: hidden; text-overflow: ellipsis; font-size: 1.75rem; }
   #screen-start .appbar-edit { position: relative; top: -15px; width: 35px; height: 35px; padding: 7px; border-radius: 9px; }
   #screen-start .appbar-lvl { top: 18px; width: 313px; gap: 6px 10px; }
   #screen-start .appbar-lvl-star { position: relative; top: -6px; font-size: 1.17rem; }
   #screen-start .appbar-lvl-txt { position: relative; top: -6px; font-size: .97rem; }
   #screen-start .appbar-xp { position: relative; top: 2px; height: 18px; border-width: 4px; }
   #screen-start .appbar-xp-num { right: 11px; bottom: 1px; font-size: .79rem; }
-  #screen-start .appbar-econ { padding-top: 2px; gap: 10px; transform: translateX(17px); }
+  #screen-start .appbar-econ { padding-top: 2px; gap: 8px; transform: none; }
   #screen-start .appbar .econ-pill { min-height: 53px; padding: 6px 10px; gap: 6px; border-width: 2px; font-size: 1.25rem; }
   #screen-start .appbar .econ-ic { width: 38px; height: 38px; }
   #screen-start .appbar .econ-plus { width: 33px; height: 33px; }
   #screen-start .econ-fire { min-width: 88px; }
-  #screen-start .appbar-settings { width: 55px; height: 55px; padding: 10px; border-width: 2px; border-radius: 18px; }
-  #screen-start .home-bell { top: 107px; right: max(22px, calc((100% - 800px) / 2)); width: 65px; height: 65px; border-width: 2px; border-radius: 20px; }
-  #screen-start .home-bell::before { left: 19px; top: 19px; width: 24px; height: 23px; border-radius: 13px 13px 7px 7px; }
-  #screen-start .home-bell-dot { width: 18px; height: 18px; }
-
   #screen-start .home-scroll { width: 820px; padding: 20px 10px 17px; gap: 15px; }
   #screen-start .daily-banner { width: 600px; min-height: 142px; padding: 11px 15px 11px 22px; gap: 23px; border-width: 3px; border-radius: 28px; }
   #screen-start .db-gift { width: 125px; height: 125px; margin: -7px 0 -4px -3px; }
@@ -3675,12 +3727,10 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
   #screen-start .btn-hero-copy { width: 272px; }
   #screen-start .btn-hero-copy b { font-size: 5.1rem; transform: translateY(-14px) scale(1.25, 1.2); text-shadow: 0 7px 0 #6c83c7, 0 11px 13px rgba(0,0,0,.44); }
   #screen-start .home-context { min-height: 65px; margin-top: -18px; }
-  #screen-start .record-chip { position: relative; top: 5px; min-width: 242px; padding: 4px 18px 6px; border-width: 2px; border-radius: 19px; }
-  #screen-start .home-level-line img { width: 30px; height: 30px; }
-  #screen-start .home-level-line b { font-size: 1.15rem; }
-  #screen-start .record-chip .lc-best,
-  #screen-start .record-chip .lc-best span { font-size: .76rem; }
-  #screen-start .record-chip #start-best { font-size: 1rem; }
+  #screen-start .record-chip { position: relative; top: 5px; grid-template-columns: 45px auto; min-width: 242px; min-height: 60px; padding: 4px 18px 6px 11px; border-width: 2px; border-radius: 19px; }
+  #screen-start .home-score-art { width: 45px; height: 45px; }
+  #screen-start .home-score-copy span { font-size: .76rem; }
+  #screen-start .record-chip #start-best { font-size: 1.13rem; }
 
   #screen-start .home-cards { position: relative; top: -2px; flex: 0 0 314px; height: 314px; gap: 17px; margin-inline: 9px; }
   #screen-start .app-card { height: 314px; padding: 20px 12px 15px; border-width: 2px; border-radius: 25px; }
@@ -3700,17 +3750,19 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
   #screen-start .bn-ic { width: 66px; height: 66px; }
   #screen-start .bnav small { font-size: .92rem; }
   #screen-start .bnav-center .bn-ic { width: 100px; height: 100px; margin-top: -48px; padding: 20px; border-width: 3px; }
+  body[data-screen="start"] .update-banner { bottom: max(122px, calc(112px + env(safe-area-inset-bottom))); }
 }
 
 @media (max-width: 600px) {
+  body.has-update-banner[data-screen="start"] #screen-start .home-foot { padding-bottom: 76px; }
   #screen-start .appbar { display: block; position: relative; min-height: 76px; padding-inline: 8px; }
-  #screen-start .appbar-profile { position: relative; width: 170px; }
-  #screen-start .appbar-profile-main { width: 155px; gap: 7px; }
+  #screen-start .appbar-profile { position: relative; width: 176px; }
+  #screen-start .appbar-profile-main { width: 160px; gap: 7px; }
   #screen-start .avatar { width: 74px; height: 69px; }
   #screen-start .avatar-badge { min-width: 30px; height: 33px; font-size: .78rem; }
   #screen-start .appbar-id { width: 78px; }
   #screen-start .appbar-name { font-size: .82rem; }
-  #screen-start .appbar-edit { position: absolute; left: 128px; top: 4px; width: 22px; height: 22px; padding: 4px; }
+  #screen-start .appbar-edit { position: absolute; left: 143px; top: 4px; width: 22px; height: 22px; padding: 4px; }
   #screen-start .appbar-lvl-star { font-size: .73rem; }
   #screen-start .appbar-lvl-txt { font-size: .68rem; }
   #screen-start .appbar-xp { height: 10px; }
@@ -3720,9 +3772,6 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
   #screen-start .appbar .econ-ic { width: 24px; height: 24px; }
   #screen-start .appbar .econ-plus { width: 22px; height: 22px; }
   #screen-start .econ-fire { min-width: 48px; }
-  #screen-start .appbar-settings { width: 40px; height: 40px; padding: 7px; border-radius: 14px; }
-  #screen-start .home-bell { top: 72px; width: 45px; height: 45px; border-radius: 14px; }
-  #screen-start .home-bell::before { left: 13px; top: 14px; width: 17px; height: 16px; }
   #screen-start .home-scroll { padding: 7px 12px 12px; gap: 11px; }
   #screen-start .daily-banner { min-height: 72px; padding: 9px 66px 9px 11px; border-radius: 20px; }
   #screen-start .db-gift { width: 57px; height: 57px; }
@@ -3736,9 +3785,10 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
   #screen-start .btn-hero-copy b { font-size: 2.7rem; }
   #screen-start .home-play-zone::after { right: -8px; top: -16px; }
   #screen-start .home-context { margin-top: -20px; }
-  #screen-start .record-chip { min-width: 175px; padding: 4px 12px 6px; }
-  #screen-start .home-level-line img { width: 24px; height: 24px; }
-  #screen-start .home-level-line b { font-size: .9rem; }
+  #screen-start .record-chip { grid-template-columns: 34px auto; min-width: 168px; min-height: 46px; gap: 7px; padding: 4px 11px 6px 8px; }
+  #screen-start .home-score-art { width: 34px; height: 34px; }
+  #screen-start .home-score-copy span { font-size: .58rem; }
+  #screen-start .record-chip #start-best { font-size: .88rem; }
   #screen-start .home-cards { gap: 8px; }
   #screen-start .app-card { min-height: 184px; padding: 12px 5px 9px; border-radius: 20px; }
   #screen-start .ac-tx b { font-size: .68rem; letter-spacing: -.45px; }
@@ -3763,7 +3813,6 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
 @media (max-width: 370px) {
   #screen-start .appbar .econ-fire { display: none; }
   #screen-start .appbar-econ { transform: scale(.8); }
-  #screen-start .home-bell { top: 68px; }
   #screen-start .home-scroll { padding-inline: 8px; }
   #screen-start .db-tx small { display: none; }
   #screen-start .db-gift { width: 48px; height: 48px; }
@@ -3848,6 +3897,8 @@ body.reduced-fx #screen-start .btn-hero { animation: none; }
 #modal-daily { --modal-accent: var(--accent-2); width: min(430px, 100%); }
 #modal-shop { --modal-accent: var(--gold); }
 #modal-medals { --modal-accent: var(--good); }
+#modal-medals.achievements-only .profile-only,
+#modal-medals.achievements-only .achievements-heading { display: none; }
 
 .daily-info { display: flex; flex-direction: column; gap: 10px; }
 .di-hero,

@@ -14,9 +14,57 @@ no una imagen plana.
 | 1. Auditoría de la home existente | Completada | IDs, eventos, persistencia, i18n y PWA inventariados |
 | 2. Sistema visual | Completada | Tokens, fondos, relieve, escala y arte alineados con la referencia 854×1280 |
 | 3. Reconstrucción | Completada | Geometría principal cerrada dentro de ±4 px y navegación encajada al borde inferior |
-| 4. Funcionalidad | Completada | 18 acciones ejercitadas en Chrome; 18 resultados correctos |
-| 5. QA visual | Completada | 854×1280, 1024×1536, 390×844 y 360×640 capturados y auditados |
-| 6. QA técnico | Completada | Sintaxis, tests, lint, caché `2.6.38` y diff verificados |
+| 4. Funcionalidad | Completada | 22 comprobaciones interactivas en Chrome; 22 resultados correctos |
+| 5. QA visual | Completada | 12 auditorías entre 360 y 1024 px, incluido estrés de cabecera, sin overflow ni solapes |
+| 6. QA técnico | Completada | Sintaxis, tests, lint, caché `2.6.40` y diff verificados |
+
+## Iteración de coherencia funcional · 2026-07-15
+
+Esta pasada corrige las regresiones detectadas después del rediseño sin
+desmontar la composición aprobada. El plan y su resultado final son:
+
+| Trabajo | Estado | Implementación |
+| --- | --- | --- |
+| Cabecera horizontal | Completado | Economía compacta, nombre con elipsis solo al agotar espacio y breakpoints separados 720–819 / 820–900 px |
+| Acciones duplicadas | Completado | Eliminados el engranaje superior y la campana flotante; Ajustes y Misiones conservan una única entrada cada uno |
+| Resumen central | Completado | El chip muestra exclusivamente `Mejor puntuación`, sin repetir el nivel de la cabecera |
+| Rutas de menú | Completado | `Logros` abre una vista de logros; Perfil mantiene estadísticas y récords; ya no comparten presentación |
+| Funciones futuras | Completado | Multijugador, Liga y Amigos son controles nativos desactivados, grises, accesibles y sin handlers ficticios |
+| Cofres en tiempo real | Completado | `syncHomeChests()` actualiza contador, badge, estado y ARIA en el mismo tick de cada apertura, incluido el paso a cero |
+| Aviso PWA | Completado | Cuando hay actualización, el pie reserva espacio y el aviso no tapa ningún menú |
+| Regresión | Completado | Tests estáticos, interacciones reales, aperturas consecutivas de cofres y geometría responsive automatizadas |
+
+### Hallazgos de esta pasada
+
+- El solape no procedía de un único tamaño: entre 720 y 819 px heredábamos
+  simultáneamente cotas pensadas para 1024 y para el lienzo 854. Ahora ese
+  intervalo tiene una escala propia y 820–900 conserva la referencia 2:3.
+- Los saldos largos ensanchaban las pills indefinidamente. En Inicio se muestran
+  como `10K`/`1M`, mientras el resto del producto conserva el número completo.
+- `Liga` reutilizaba el handler de Perfil/Logros y Multijugador/Amigos simulaban
+  disponibilidad mediante avisos. Se retiraron esas rutas hasta que exista una
+  función real.
+- El modelo de cofres sí persistía el decremento; el defecto estaba en la
+  proyección de Inicio, que solo se refrescaba al volver a entrar. La fuente de
+  verdad no cambió: se centralizó su render.
+- El aviso de nueva versión podía cubrir los accesos rápidos en móvil. Inicio
+  ahora amplía temporalmente el pie y mantiene todos los targets visibles.
+
+### Cobertura de aceptación
+
+- Viewports: 360×640, 390×844, 601×900, 719×1024, 720×1024,
+  768×1024, 819×1180, 820×1180, 854×1280 y 1024×1536.
+- Auditoría adicional a 720×1024 con nombre de 16 caracteres y monedas/gemas
+  de ocho cifras.
+- Cero controles recortados, cero solapes no intencionales y ancho documental
+  igual al viewport.
+- Multijugador, Liga y Amigos verificados como `disabled`; Ajustes verificado
+  como entrada única; puntuación verificada sin texto de nivel.
+- Dos cofres abiertos de forma consecutiva: `2 → 1 → 0`, badge oculto al final
+  y estado de Inicio actualizado antes de cerrar el modal.
+- Navegador integrado: inspección visual a 854×1280, 390×844 y 768×1024;
+  `Logros` validado como diálogo independiente y las tres funciones futuras
+  comprobadas como no activables.
 
 ## Iteración de fidelidad 854×1280 · 2026-07-15
 
@@ -28,14 +76,14 @@ además de los viewports compactos ya cubiertos.
 
 - **Fondo:** reforzar la nebulosa radial bajo `Jugar`, rayos horizontales,
   estrellas y objetos espaciales laterales sin restar contraste al contenido.
-- **Cabecera:** compactar el avatar y su badge, acercar identidad y XP, alinear
-  la economía al margen derecho y reproducir la campana separada.
+- **Cabecera:** compactar el avatar y su badge, acercar identidad y XP y alinear
+  la economía al margen derecho; Misiones vive en su acceso de la banda.
 - **Recompensa:** ajustar altura, radio, degradado violeta/rosa, escala del
   regalo y posición del cohete para que el fuego conecte con el CTA.
 - **CTA:** igualar proporción, doble contorno cian/violeta, labio inferior,
   brillo interno, triángulo y escala tipográfica.
-- **Nivel:** centrar el chip inmediatamente bajo el CTA y conservar nivel/récord
-  reales aunque la referencia muestre valores de ejemplo.
+- **Puntuación:** centrar bajo el CTA un chip dedicado únicamente al récord; el
+  nivel y el XP permanecen en la cabecera.
 - **Tarjetas:** reducir el aire superior, hacer que tablero/trofeo/versus ocupen
   el tercio inferior correcto y ajustar los degradados azul/verde/naranja.
 - **Navegación:** afinar radios, divisores, iconos, etiquetas y halo elevado de
@@ -48,8 +96,8 @@ además de los viewports compactos ya cubiertos.
 1. Captura Chrome a 854×1280 sin recortes, overflow horizontal ni errores JS.
 2. Regiones principales dentro de ±4 px respecto a las cajas de la referencia,
    salvo arte orgánico y valores derivados del estado real.
-3. Todas las acciones de Inicio responden y los datos persistidos siguen siendo
-   la única fuente de verdad.
+3. Todas las acciones implementadas responden; las futuras están desactivadas
+   de forma explícita y los datos persistidos siguen siendo la única fuente de verdad.
 4. Los 16 assets protagonistas y de navegación proceden de
    `img/ui-generated/home/`; la
    captura objetivo no se utiliza como sprite ni fondo.
@@ -70,23 +118,24 @@ además de los viewports compactos ya cubiertos.
 Ejecutar la auditoría desde la raíz:
 
 ```powershell
-node tools/home-visual-qa.js > docs/mockups/home-visual-qa-report.json
+node tools/home-visual-qa.js
 ```
 
 El runner abre Chrome headless real mediante DevTools, fija estados válidos en
-`localStorage`, prueba cuatro viewports, captura la parte inferior del scroll
-corto y ejecuta 18 flujos de Inicio. El auditor distingue el desplazamiento
+`localStorage`, prueba diez viewports, captura la parte inferior del scroll
+corto, añade un caso de estrés, ejecuta 22 comprobaciones de Inicio y escribe
+`docs/mockups/home-visual-qa-report.json`. El auditor distingue el desplazamiento
 vertical deliberado de un overflow horizontal real y excluye únicamente los
 solapes estructurales documentados entre contenido desplazable y cromo fijo.
 
 ## Contrato visual implementado
 
 - Lienzo azul noche con nebulosa, estrellas y acentos cian/violeta.
-- Cabecera con avatar robot, nombre editable, nivel/XP, monedas, gemas, racha,
-  ajustes y campana.
+- Cabecera con avatar robot, nombre editable, nivel/XP, monedas, gemas y racha;
+  Ajustes permanece únicamente en la navegación inferior.
 - Banner de recompensa diaria con regalo, CTA y cohete superpuesto.
 - CTA `Jugar` como pieza dominante, con volumen, borde luminoso y foco visible.
-- Chip de nivel y mejor puntuación debajo del CTA.
+- Chip exclusivo de mejor puntuación debajo del CTA.
 - Tarjetas azul, verde y naranja para Clásico, Torneos y Multijugador.
 - Banda contextual de cinco acciones y navegación global de cinco acciones con
   `Inicio` elevado.
@@ -134,14 +183,17 @@ JavaScript en las cinco capturas auditadas (incluido el final del scroll). En
 | Perfil | Abrir perfil |
 | Lápiz | Renombrar jugador |
 | `+` de monedas/gemas | Flujo de economía correspondiente |
-| Engranaje / Ajustes | Abrir ajustes |
-| Campana / Misiones | Abrir misiones |
+| Ajustes (navegación inferior) | Abrir ajustes |
+| Misiones (banda contextual) | Abrir misiones |
 | Recompensa diaria | Reclamar si está disponible; estado real en ARIA |
 | `Jugar` | Abrir selector completo de modos |
 | Partida clásica | Abrir mapa de mundos |
 | Torneos | Abrir Reto del día |
-| Multijugador | Aviso localizado de próxima función |
-| Cofres / Liga / Logros / Tienda / Guía | Abrir sus flujos existentes |
+| Multijugador | Desactivado y gris hasta disponer de matchmaking real |
+| Liga / Amigos | Desactivados y grises hasta su implementación |
+| Cofres | Abrir inventario; contador de Inicio sincronizado en cada apertura |
+| Logros | Abrir la vista exclusiva de logros |
+| Tienda / Guía | Abrir sus flujos existentes |
 
 El texto visible del banner se mantiene estable como en el mockup. El día y el
 estado reclamado siguen expuestos mediante el nombre accesible del botón. Las
@@ -193,8 +245,8 @@ precarga los 16 archivos desde `sw.js` para funcionamiento offline.
    Se generaron diez piezas originales nuevas y se sustituyeron Misiones,
    Diario, Cofres, Liga, Amigos, Logros, Tienda, Inicio, Guía y Ajustes.
 9. La referencia 854×1280 necesitaba una escala propia entre móvil y el lienzo
-   1024×1536. El breakpoint 720–900 px fija la composición 2:3 sin alterar las
-   superficies de juego ni la versión móvil.
+   1024×1536. El breakpoint 820–900 px fija la composición 2:3 y 720–819 px usa
+   una transición fluida que evita el solape horizontal.
 
 ## Registro
 
@@ -228,3 +280,23 @@ precarga los 16 archivos desde `sw.js` para funcionamiento offline.
 - Validado el scroll 360×640 tanto arriba como abajo, sin overflow horizontal,
   solapes no intencionales ni errores JavaScript.
 - Sincronizados app, recursos y service worker en la versión `2.6.38`.
+
+### 2026-07-15 — Corrección de coherencia y estados
+
+- Repetida la inspección con el navegador integrado ya operativo y con Chrome
+  headless reproducible; se cubrieron escritorio, tablet, móvil y nombres/saldos
+  extremos.
+- Eliminados la campana flotante y el Ajustes superior; la navegación conserva
+  una sola entrada funcional por destino.
+- Rediseñado el chip central como mejor puntuación exclusiva.
+- Separados Perfil y Logros, con título, emblema y contenido propios.
+- Desactivados de forma nativa Multijugador, Liga y Amigos, sin handlers ni
+  modales engañosos.
+- Centralizada la proyección de cofres y verificada la secuencia `2 → 1 → 0` en
+  tiempo real.
+- Añadida protección contra overflow con formato compacto de economía y
+  breakpoint específico 720–819 px.
+- El aviso PWA reserva espacio en el pie de Inicio para no cubrir acciones.
+- Ampliado el runner a 12 auditorías geométricas y 22 comprobaciones
+  interactivas; todos los veredictos quedan en verde.
+- Sincronizados aplicación, recursos y service worker en `2.6.40`.

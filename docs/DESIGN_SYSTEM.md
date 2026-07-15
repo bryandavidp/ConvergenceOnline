@@ -101,7 +101,8 @@ Uso extensivo de `color-mix(in srgb, ...)` como mecanismo de "tinte en runtime" 
 - `max-width:460px` / `max-width:380px` — compactación progresiva de appbar/avatar/modal.
 - `max-width:719px` — breakpoint "teléfono" general (tamaño de board, HUD compacto), con sub-breakpoints por `max-height` (760px, 680px).
 - `min-width:720px` — "tablet/escritorio": layout de 2 columnas en mundos, tablero fijo más grande.
-- `min-width:720px and max-width:900px` — lienzo 2:3 específico de Inicio para reproducir 854×1280 sin heredar las cotas de 1024×1536.
+- `min-width:720px and max-width:819px` — transición específica de Inicio: reduce avatar, economía, banner y tarjetas sin offsets que provoquen overflow.
+- `min-width:820px and max-width:900px` — lienzo 2:3 de Inicio para reproducir 854×1280 sin heredar las cotas de 1024×1536.
 - `min-width:720px and max-height:760px` — modo compacto de selección de modo en escritorio.
 - `min-height:900px and max-width:719px` — teléfonos altos → tablero más grande.
 - `hover:hover` — gatea `:hover` en celdas para no dejar estados "pegados" en touch.
@@ -123,33 +124,36 @@ Uso extensivo de `color-mix(in srgb, ...)` como mecanismo de "tinte en runtime" 
   - `.btn-reward`: CTA de recompensa diaria, gradiente dorado, `animation: rewardPulse 1.8s infinite`.
 - **`.icon-btn`** — cuadrado 44×44, esquinas redondeadas (o circular en `.controls`), hover ilumina, active `scale(.94)`.
 - **`.modal`** — layout flex columna (header fijo / body scrollable / footer fijo), `max-height: min(90dvh, calc(100dvh - insets - 24px))`, ancho `min(456px,100%)`, radio 22px, barra de acento superior vía `::before` coloreada por `--modal-accent`, animación de entrada `modal-in .26s cubic-bezier(.2,.9,.3,1.2)`. Cada modal define su propio `--modal-accent` (how=good, pause/adventure=level, settings=accent-2, missions/shop=gold, revive/surv-diff=bad, medals=good).
-- **`.appbar`** — grid reutilizado en home/modos/mundos: avatar circular con glow cian, barra de XP, pills de economía.
+- **`.appbar`** — grid reutilizado en home/modos/mundos: avatar circular con glow cian, barra de XP y pills de economía. En Inicio no contiene Ajustes; sus saldos se compactan (`10K`, `1M`) para mantener una sola línea.
 - **`.bottom-nav`/`.worlds-tabs`** — barras de tabs ancladas abajo con safe-area; en Inicio hay cinco destinos globales (`Logros`, `Tienda`, `Inicio`, `Guía`, `Ajustes`) y el item central se eleva como un FAB circular cian.
 - **`.board`/`.board-wrap`** — ver §7.
 - **`.toasts`/`.toast`** — columna anclada encima del tablero, crece hacia arriba; acento `--tc` por tipo (info/good/warn/bad).
 - **`.combo`** — anillo SVG de progreso + texto de multiplicador + contador, 4 tiers de color escalonados.
 - **`.surv-bar`** — HUD de Supervivencia: vidas (emoji), nombre de oleada + badge de tier, barra de progreso de oleada, mejor oleada, tiempo transcurrido.
 - **`.booster-bar`** — bandeja inferior de potenciadores: medidor de carga, medidor de frenesí (gradiente naranja→rojo→morado), fila de botones `.booster` (58×56, icono + contador).
-- **`.app-card`** — tarjetas arcade de acceso rápido del home, con borde saturado, relieve 3D y gradiente por variante. La home prioriza Clásico, Torneos/Reto diario y Multijugador (este último comunica `Próximamente`; no simula matchmaking).
+- **`.app-card`** — tarjetas arcade de acceso rápido del home, con borde saturado, relieve 3D y gradiente por variante. La home prioriza Clásico y Torneo diario; Multijugador usa `disabled`, escala de grises y una etiqueta `Próximamente`, sin simular matchmaking.
 - **`.home-context`** — muestra una partida recuperable cuando existe `RunSave`; en su ausencia muestra la mejor puntuación. Los dos estados son mutuamente excluyentes.
-- **`.home-today`/`.today-grid`** — banda contextual de cinco accesos: Misiones, Diario, Cofres, Liga y Amigos. Usa cinco columnas `minmax(0,1fr)` y conserva texto además de color para comunicar estado.
+- **`.home-today`/`.today-grid`** — banda contextual de cinco accesos: Misiones, Diario, Cofres, Liga y Amigos. Usa cinco columnas `minmax(0,1fr)`; Liga y Amigos permanecen nativamente desactivados y en gris hasta que existan sus flujos.
 - **`.diff-chip`** — pills de selección de dificultad, estado `[aria-checked="true"]` con borde/fondo verde.
 - **`.econ-pill`** — chip de moneda, borde/glow por tipo de divisa.
-- **`.level-chip`/`.record-chip`** — pill de nivel/mejor puntuación, variante "record" con brillo radial dorado.
+- **`.level-chip`/`.record-chip`** — `.level-chip` sirve para nivel en contextos generales; el `.record-chip` de Inicio es semánticamente exclusivo de `Mejor puntuación`, con trofeo, valor dorado y sin duplicar el nivel de la cabecera.
 
 ### Contrato visual de Inicio
 
 Inicio define tokens locales para no contaminar las superficies de juego:
 `--home-cyan:#05c8ff`, `--home-blue:#0867ed`, `--home-violet:#8529ff` y
-`--home-ink:#020b2a`. Sus superficies siguen cuatro reglas:
+`--home-ink:#020b2a`. Sus superficies siguen cinco reglas:
 
 1. Fondo azul noche con nebulosas y estrellas decorativas no interactivas.
 2. Borde luminoso + labio oscuro de 4–8 px para comunicar pulsabilidad.
-3. Jerarquía por saturación: CTA azul, Clásico azul, Torneos verde y
-   Multijugador naranja; estados siguen usando texto y `aria-label`.
+3. Jerarquía por saturación: CTA azul, Clásico azul y Torneo diario verde; una
+   función futura pierde saturación, contraste y elevación, además de usar
+   `disabled`, texto y `aria-label`.
 4. Dos bandas de navegación: una contextual dentro del scroll y una global
    anclada al safe area. En viewports bajos el contenido central desplaza; la
    cabecera y la navegación global permanecen accesibles.
+5. Una función tiene una sola entrada principal: Misiones vive en la banda
+   contextual y Ajustes en la navegación global; no se duplican como flotantes.
 
 Las ilustraciones protagonistas de Inicio son PNG originales con alfa bajo
 `img/ui-generated/home/`. Comparten render 3D casual, materiales brillantes,
