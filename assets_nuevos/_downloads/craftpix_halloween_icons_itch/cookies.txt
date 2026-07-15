@@ -1,6 +1,0 @@
-# Netscape HTTP Cookie File
-# http://curl.haxx.se/rfc/cookie_spec.html
-# This is a generated file!  Do not edit.
-
-.itch.io	TRUE	/	TRUE		itchio_token	WyJGd2RMIiwxNzgzOTg2MDEzLCJYQ2hSSG5tdjQwZ0V4N3EiXQ%3d%3d%2eNzi3aoGrj7vQafnHqpP4uXOfEaU%3d
-.itch.io	TRUE	/	TRUE		ref%3aregister%3areferrer	https%3a%2f%2ffree%2dgame%2dassets%2eitch%2eio%2ffree%2dhalloween%2dgame%2dicons%2fpurchase
