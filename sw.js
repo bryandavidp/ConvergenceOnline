@@ -1,8 +1,8 @@
 /* Convergencia — Service Worker (offline-first).
  * Sube CACHE al publicar una versión nueva para invalidar la caché anterior. */
-const CACHE = 'cv-cache-v2.6.40';
+const CACHE = 'cv-cache-v2.6.52';
 const ASSETS = [
-  './', './index.html', './styles.css', './game.js', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=2.6.52', './game.js?v=2.6.52', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
 ];
 // Iconos de UI (pack en img/ui). Se precachean en best-effort: si alguno falla,
@@ -15,6 +15,9 @@ const HOME_GENERATED_ART = [
   'avatar-robot','classic-board','daily-gift','hero-rocket','multiplayer-versus','tournament-trophy',
   'nav-achievements','nav-chest','nav-daily','nav-friends','nav-guide','nav-home','nav-league','nav-missions','nav-settings','nav-shop',
 ].map((n) => './img/ui-generated/home/' + n + '.png');
+const MODE_GENERATED_ART = [
+  'mode-classic','mode-multiplayer','mode-survival','mode-timed','mode-zen',
+].map((n) => './img/ui-generated/modes/' + n + '.png');
 const V2_ICONS = [
   './img/icons-v2/1-game/double.svg',
   './img/icons-v2/2-items/map.svg',
@@ -27,6 +30,8 @@ const V2_ICONS = [
   './img/icons-v2/6-buildings/flag.svg',
   './img/icons-v2/6-buildings/town.svg',
   './img/icons-v2/8-ui/arrow-left.svg',
+  './img/icons-v2/8-ui/arrow-left-02.svg',
+  './img/icons-v2/8-ui/arrow-right-03.svg',
   './img/icons-v2/8-ui/circle-ring.svg',
   './img/icons-v2/8-ui/cross.svg',
   './img/icons-v2/8-ui/grid.svg',
@@ -56,6 +61,7 @@ self.addEventListener('install', (e) => {
         c.addAll(UI_ICONS).catch(() => {}),
         c.addAll(HOME_V2_ICONS).catch(() => {}),
         c.addAll(HOME_GENERATED_ART).catch(() => {}),
+        c.addAll(MODE_GENERATED_ART).catch(() => {}),
         c.addAll(V2_ICONS).catch(() => {}),
       ])))
       .then(() => self.skipWaiting())

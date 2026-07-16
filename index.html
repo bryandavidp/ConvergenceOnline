@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.40" />
+  <link rel="stylesheet" href="styles.css?v=2.6.52" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -173,17 +173,48 @@
 
     <!-- ============ PANTALLA: SELECCIÓN DE MODO ============ -->
     <section class="screen screen-modes" id="screen-modes" aria-labelledby="modes-title" hidden>
-      <!-- Top bar reutilizable (igual que en Inicio) -->
-      <header class="appbar" data-topbar></header>
+      <div class="mode-mock-shell">
+        <div class="mode-mock-space" aria-hidden="true"></div>
 
-      <div class="modes-body">
-        <div class="modes-head">
-          <button class="back-btn" id="modes-back" aria-label="Volver"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/arrow-left.svg')" aria-hidden="true"></span></button>
-          <h2 id="modes-title" data-i18n="modes_title">Elige tu modo</h2>
-          <p class="modes-sub" data-i18n="modes_sub">Cada modo, una forma diferente de jugar</p>
-        </div>
-        <!-- Tarjetas de modo (3 héroe + ¿Cómo se juega?), generadas por JS -->
-        <div class="mode-cards" id="mode-cards" role="list"></div>
+        <header class="mode-mock-header" data-mode-topbar data-i18n-al="modes_profile_resources" aria-label="Perfil y recursos">
+          <button class="mode-mock-profile" type="button" data-act="profile" data-i18n-al="profile_action" aria-label="Abrir perfil">
+            <span class="mode-mock-avatar">
+              <span class="mode-mock-avatar-crop"><img src="img/ui-generated/home/avatar-robot.png" alt=""></span>
+              <span class="mode-mock-level-badge avatar-badge">1</span>
+            </span>
+            <span class="mode-mock-identity"><b class="appbar-name">Jugador</b><span class="appbar-lvl-txt">Nivel 1</span></span>
+          </button>
+
+          <div class="mode-mock-wallet" data-i18n-al="modes_resources" aria-label="Recursos">
+            <button class="mode-mock-pill mode-mock-coins" type="button" data-act="buy-coins" data-i18n-al="get_coins" aria-label="Conseguir monedas">
+              <span class="mode-mock-coin" aria-hidden="true">★</span><b data-econ-num="coins" data-econ-compact>0</b><span class="mode-mock-plus" aria-hidden="true">+</span>
+            </button>
+            <button class="mode-mock-pill mode-mock-gems" type="button" data-act="buy-gems" data-i18n-al="get_gems" aria-label="Conseguir gemas">
+              <img src="img/ui-v2/home/gem.png" alt=""><b data-econ-num="gems" data-econ-compact>0</b><span class="mode-mock-plus" aria-hidden="true">+</span>
+            </button>
+            <span class="mode-mock-pill mode-mock-fire" data-i18n-al="home_streak" aria-label="Racha">
+              <img src="img/ui-v2/home/fire.png" alt=""><b data-home-streak>0</b>
+            </span>
+            <button class="mode-mock-settings" id="modes-settings" type="button" data-i18n-al="menu_settings" aria-label="Ajustes">
+              <img src="img/ui-generated/home/nav-settings.png" alt="">
+            </button>
+          </div>
+        </header>
+
+        <section class="mode-mock-main" data-i18n-al="modes_catalog" aria-label="Catálogo de modos">
+          <button class="mode-mock-back" id="modes-back" type="button" data-i18n-al="back" aria-label="Volver">
+            <img src="img/icons-v2/8-ui/arrow-left-02.svg" alt="">
+          </button>
+
+          <div class="mode-mock-heading">
+            <span class="mode-mock-spark mode-mock-spark-left" aria-hidden="true"></span>
+            <h1 id="modes-title" data-i18n="modes_title" tabindex="-1">Elige tu modo</h1>
+            <span class="mode-mock-spark mode-mock-spark-right" aria-hidden="true"></span>
+            <p data-i18n="modes_sub">Cada modo, una forma diferente de jugar</p>
+          </div>
+
+          <div class="mode-mock-catalog" id="mode-cards" role="group" aria-labelledby="modes-title"></div>
+        </section>
       </div>
     </section>
 
@@ -664,6 +695,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=2.6.40" defer></script>
+  <script src="game.js?v=2.6.52" defer></script>
 </body>
 </html>

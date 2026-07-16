@@ -15,8 +15,64 @@ no una imagen plana.
 | 2. Sistema visual | Completada | Tokens, fondos, relieve, escala y arte alineados con la referencia 854×1280 |
 | 3. Reconstrucción | Completada | Geometría principal cerrada dentro de ±4 px y navegación encajada al borde inferior |
 | 4. Funcionalidad | Completada | 22 comprobaciones interactivas en Chrome; 22 resultados correctos |
-| 5. QA visual | Completada | 12 auditorías entre 360 y 1024 px, incluido estrés de cabecera, sin overflow ni solapes |
-| 6. QA técnico | Completada | Sintaxis, tests, lint, caché `2.6.40` y diff verificados |
+| 5. QA visual | Completada | 16 auditorías entre 360 y 1024 px, incluido estrés de cabecera, sin overflow ni solapes |
+| 6. QA técnico | Completada | Sintaxis, 139 tests, QA interactivo, caché `2.6.45` y diff verificados |
+
+## Iteración de acabado visual y recompensa · 2026-07-15
+
+Esta fase cierra los detalles que todavía separaban Inicio de la captura: la
+voz tipográfica, el volumen del CTA, la escala continua de la cabecera, la
+economía y el estado reclamado de la recompensa. No introduce rutas nuevas ni
+cambia la fuente de verdad de los datos.
+
+| Trabajo | Estado | Contrato de implementación y prueba |
+| --- | --- | --- |
+| Tipografía | Completado | Inicio declara una familia redondeada propia; nombre, recompensa, CTA, tarjetas y navegación comparten familia y mantienen una jerarquía de pesos 700–900 |
+| CTA `Jugar` | Completado | Pieza azul dominante con doble contorno cian/violeta, labio, brillo superior, triángulo blanco y texto pesado; se miden borde, fondo, sombra y geometría real |
+| Botón `Inicio` | Completado | El icono existente vive dentro de un disco 1:1, `border-radius:50%`, aro cian, halo azul y elevación sobre la barra |
+| Recompensa diaria | Completado | Transición `disponible → is-popping → is-claimed`; la explosión termina antes de ocultar el contenido y `visibility:hidden` conserva la caja reservada |
+| Avatar | Completado | Tamaño fluido con `clamp()`, relación 1:1 y badge proporcional; se eliminan el óvalo móvil y los saltos de escala de tamaño entre breakpoints |
+| Monedas y gemas | Completado | Cápsulas oscuras con borde y relieve, moneda de estrella, números tabulares y botones `+` circulares verdes; no se usa `transform:scale()` para falsear sus cajas |
+| Regresión responsive | Validado | Viewports fuente 390, 720, 854 y 1024 px, más pares limítrofes 719/720, 819/820, 900/901, 853/854 y 1023/1024 |
+
+Resultado de cierre: los siete veredictos del QA visual (`layouts`, `design`,
+`continuity`, `interactions`, `semantics`, `disabled` y `runtime`) son
+positivos; pasaron 23 interacciones reales, cinco pares de continuidad y la
+suite completa de 139 tests. Aplicación, recursos y service worker quedan
+sincronizados en `2.6.45`.
+
+### Ciclo de vida de la recompensa
+
+1. Mientras `Meta.rewardReady()` es verdadero, el banner está visible y el
+   botón de reclamar acepta una única activación.
+2. La activación bloquea inmediatamente el botón y añade `is-popping`. La
+   animación `dailyRewardBubblePop` comprime, expande y fragmenta visualmente la
+   superficie como una burbuja; economía, persistencia y ARIA se actualizan en
+   el mismo flujo.
+3. `animationend` —con timeout de seguridad— retira `is-popping` y aplica
+   `is-claimed`. Este estado usa `visibility:hidden`, `opacity:0` y
+   `pointer-events:none`, nunca `display:none`: el rectángulo del banner, el CTA
+   y las tarjetas deben conservar exactamente sus coordenadas.
+4. Con movimiento reducido se salta la coreografía, pero se alcanza el mismo
+   estado final y se conserva el hueco. El foco sale del control oculto hacia
+   `Jugar` cuando seguía perteneciendo al banner.
+
+### Cobertura añadida
+
+- `tests/home-redesign.test.js` protege la familia tipográfica local, las capas
+  del CTA, el círculo de Inicio, el avatar cuadrado fluido, las pills de
+  economía, los `+` circulares y los dos estados de la recompensa.
+- `tools/home-visual-qa.js` registra estilos tipográficos computados y cajas de
+  avatar, economía, CTA e Inicio. La reclamación comprueba tanto el cambio de
+  monedas como la secuencia de clases y compara antes/después los rectángulos
+  de recompensa, CTA y tarjetas con tolerancia de 1 px.
+- La auditoría de continuidad compara componentes a ambos lados de cada
+  breakpoint. Un cambio de un solo píxel de viewport no puede producir un
+  salto superior al 12 % en tamaño; posición, límites y solapes se verifican
+  de forma independiente en cada composición responsive.
+- El veredicto final separa `layouts`, `design`, `continuity`, `interactions`,
+  `semantics`, `disabled` y `runtime`, de modo que una pantalla sin overflow no
+  pueda darse por correcta si pierde la fidelidad visual.
 
 ## Iteración de coherencia funcional · 2026-07-15
 

@@ -1357,10 +1357,9 @@ body.reduced-fx .board-wrap.boss-warn-board {
 /* Chips del HUD e iconos de botón: un poco mayores que el texto adyacente. */
 .g-chip .ic-inline, .g-chip .icv2-inline, .icon-btn .ic-inline, .icon-btn .icv2-inline, .lc-ic .ic-inline, .lc-ic .icv2-inline { width: 1.25em; height: 1.25em; }
 .cell.spawn .glyph { animation: glyph-in .28s cubic-bezier(.2,.9,.3,1.3) both; }
-/* Desaparición del icono = "POP SECO": desde su tamaño base se mantiene OPACO y
-   luego desaparece de GOLPE (encoge un poco, NUNCA crece). El chasquido coincide
-   con el estallido de esquirlas (FX._iconBurst en POP_AT). El colapso es más seco
-   cuanto mayor es el combo (--clear-snap más pequeño). */
+/* Salida temática reservada a limpiezas auxiliares (bombas/objetos). Las
+   convergencias retiran el glyph al instante y animan un clon hacia el centro,
+   por lo que nunca reciben la clase .clear ni este pseudo-burst. */
 .cell.clear .glyph { animation: var(--clear-animation); }
 .cell.clear .glyph::after {
   content: '';
@@ -1377,7 +1376,7 @@ body.reduced-fx .board-wrap.boss-warn-board {
 @keyframes glyph-out {
   0%   { transform: scale(1); opacity: 1; animation-timing-function: ease-in; }
   16%  { transform: scale(1); opacity: 1; animation-timing-function: cubic-bezier(.3,.85,.4,1); } /* brevísimo hold, luego colapso rápido */
-  100% { transform: scale(var(--clear-snap, .3)); opacity: 0; }                                    /* POP seco: revienta junto con las esquirlas */
+  100% { transform: scale(var(--clear-snap, .3)); opacity: 0; }
 }
 @keyframes clear-ring {
   0% { opacity: .5; transform: scale(.55); }
@@ -1993,14 +1992,26 @@ body.mode-clasico #power-rings { display: none; }
    mientras la partícula está activa (capas transitorias y acotadas), evitando
    saturar el compositor de Safari (que provocaba un blanqueo temporal). */
 .fxp { position: absolute; top: 0; left: 0; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; opacity: 0; }
-/* Onda expansiva del punto de convergencia: anillo (color/tamaño/posición y la
-   animación se fijan por JS). Aquí solo la forma de anillo y el centro de escala. */
-#fx-wave {
+/* Coreografía local de convergencia: comparte transform con .board-wrap, por lo que
+   ficha, destino, onda y partículas permanecen alineados durante impactos/resizes. */
+.converge-layer { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: visible; }
+.converge-tile {
+  position: absolute; top: 0; left: 0; z-index: 2; opacity: 0;
+  pointer-events: none; transform-origin: 50% 50%; margin: 0;
+}
+.converge-tile .glyph, .converge-tile .glyph svg { display: block; }
+.converge-particle {
+  position: absolute; top: 0; left: 0; z-index: 4; width: 6px; height: 6px;
+  border-radius: 50%; opacity: 0; pointer-events: none; transform-origin: 50% 50%;
+}
+.converge-wave, #fx-wave {
   position: absolute; top: 0; left: 0; width: 40px; height: 40px;
   pointer-events: none; opacity: 0; transform-origin: 50% 50%;
   border: 3px solid #fff; border-radius: 50%; background: transparent;
   box-sizing: border-box;
 }
+.converge-wave { z-index: 3; }
+body.reduced-fx .converge-layer { display: none; }
 .fever {
   position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: 20px;
   background: radial-gradient(120% 120% at 50% 50%, rgba(255,150,50,0) 52%, rgba(255,110,40,.5) 100%);
@@ -3758,7 +3769,7 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
   #screen-start .appbar { display: block; position: relative; min-height: 76px; padding-inline: 8px; }
   #screen-start .appbar-profile { position: relative; width: 176px; }
   #screen-start .appbar-profile-main { width: 160px; gap: 7px; }
-  #screen-start .avatar { width: 74px; height: 69px; }
+  #screen-start .avatar { width: 74px; height: 74px; }
   #screen-start .avatar-badge { min-width: 30px; height: 33px; font-size: .78rem; }
   #screen-start .appbar-id { width: 78px; }
   #screen-start .appbar-name { font-size: .82rem; }
@@ -3767,7 +3778,7 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
   #screen-start .appbar-lvl-txt { font-size: .68rem; }
   #screen-start .appbar-xp { height: 10px; }
   #screen-start .appbar-xp-num { display: none; }
-  #screen-start .appbar-econ { position: absolute; right: 5px; top: 13px; gap: 4px; transform: scale(.82); transform-origin: top right; }
+  #screen-start .appbar-econ { position: absolute; right: 5px; top: 13px; gap: 4px; transform: none; transform-origin: top right; }
   #screen-start .appbar .econ-pill { min-height: 38px; gap: 2px; padding: 3px 4px; font-size: .78rem; }
   #screen-start .appbar .econ-ic { width: 24px; height: 24px; }
   #screen-start .appbar .econ-plus { width: 22px; height: 22px; }
@@ -3812,7 +3823,7 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
 
 @media (max-width: 370px) {
   #screen-start .appbar .econ-fire { display: none; }
-  #screen-start .appbar-econ { transform: scale(.8); }
+  #screen-start .appbar-econ { transform: none; }
   #screen-start .home-scroll { padding-inline: 8px; }
   #screen-start .db-tx small { display: none; }
   #screen-start .db-gift { width: 48px; height: 48px; }
@@ -3829,6 +3840,552 @@ body.large-text #screen-start .classic-board,
 body.large-text #screen-start .ac-art,
 body.large-text #screen-start .multi-art { grid-column: 2; grid-row: 1 / span 2; }
 body.reduced-fx #screen-start .btn-hero { animation: none; }
+
+/* -------------------------------------------------------------------------
+   Inicio · pase visual final
+   Estas reglas viven después de todos los breakpoints del home para que la
+   geometría sea fluida y no vuelva a quedar fragmentada entre 600/720/820px.
+   ------------------------------------------------------------------------- */
+#screen-start {
+  --home-rounded: ui-rounded, "Arial Rounded MT Bold", "Trebuchet MS", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--home-rounded);
+  text-rendering: geometricPrecision;
+}
+
+/* Jerarquía tipográfica redondeada, con escalas continuas entre teléfono y
+   tablet. Los pesos intermedios caen de forma segura al bold local. */
+#screen-start .appbar-name {
+  font-family: var(--home-rounded);
+  font-size: clamp(.84rem, 3.65vw, 2.25rem);
+  font-weight: 900;
+  line-height: .98;
+  letter-spacing: -.01em;
+}
+#screen-start .appbar-lvl-txt {
+  font-size: clamp(.68rem, 2.05vw, 1.35rem);
+  font-weight: 800;
+  line-height: 1;
+}
+#screen-start .appbar-xp-num {
+  font-size: clamp(.64rem, 1.85vw, 1.18rem);
+  font-weight: 700;
+  line-height: 1;
+}
+#screen-start .db-tx b {
+  font-size: clamp(.78rem, 3.15vw, 2rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -.01em;
+}
+#screen-start .db-tx small {
+  font-size: clamp(.66rem, 2.05vw, 1.35rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+#screen-start .db-claim {
+  font-family: var(--home-rounded);
+  font-size: clamp(.72rem, 2.1vw, 1.35rem);
+  font-weight: 900;
+  line-height: 1;
+}
+#screen-start .ac-tx b {
+  font-size: clamp(.68rem, 2.9vw, 1.85rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -.02em;
+}
+#screen-start .classic-title em { font-size: 1.2em; }
+#screen-start .ac-tx small {
+  font-size: clamp(.58rem, 2vw, 1.28rem);
+  font-weight: 700;
+  line-height: 1.22;
+}
+#screen-start .home-score-copy span {
+  font-size: clamp(.58rem, 1.52vw, .98rem);
+  font-weight: 800;
+  line-height: 1.05;
+}
+#screen-start .record-chip #start-best {
+  font-size: clamp(.88rem, 2.35vw, 1.5rem);
+  font-weight: 900;
+}
+#screen-start .today-item > span:not(.today-icon-wrap),
+#screen-start .bnav small {
+  font-family: var(--home-rounded);
+  font-size: clamp(.58rem, 1.9vw, 1.18rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -.015em;
+}
+
+/* Avatar: siempre cuadrado, algo más contenido que la versión anterior y sin
+   estirar el arte. El escalado del PNG es uniforme y sólo recorta el cuerpo. */
+#screen-start .avatar {
+  --home-avatar-size: clamp(68px, 18.25vw, 188px);
+  width: clamp(68px, 18.25vw, 188px);
+  height: clamp(68px, 18.25vw, 188px);
+  aspect-ratio: 1;
+  flex: 0 0 var(--home-avatar-size);
+  margin-right: clamp(0px, 1.05vw, 10px);
+  border: clamp(3px, .48vw, 5px) solid #2fc7ff;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, #174d8e, #050c32 72%);
+  box-shadow:
+    0 0 0 clamp(3px, .38vw, 4px) #6944fa,
+    0 0 clamp(15px, 2.25vw, 24px) rgba(0,198,255,.72),
+    inset 0 0 clamp(12px, 1.75vw, 18px) rgba(0,208,255,.38);
+}
+#screen-start .avatar-art {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 50%;
+}
+#screen-start .avatar-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: scale(1.32) translateY(8%);
+  transform-origin: center;
+}
+#screen-start .avatar-badge {
+  left: calc(0px - clamp(6px, .95vw, 10px));
+  bottom: calc(0px - clamp(6px, .95vw, 10px));
+  min-width: clamp(30px, 5.65vw, 58px);
+  height: clamp(33px, 6.05vw, 62px);
+  border-width: clamp(3px, .4vw, 4px);
+  border-radius: clamp(9px, 1.4vw, 14px);
+  font-size: clamp(.78rem, 2.35vw, 1.55rem);
+  font-weight: 900;
+}
+
+/* Marcadores de economía: volumen oscuro, acento propio por recurso y un +
+   circular real. El PNG de cruz queda oculto para no conservar su silueta
+   cuadrada/pixelada. */
+#screen-start .appbar-econ {
+  position: absolute;
+  grid-area: auto;
+  left: 45.3%;
+  right: auto;
+  top: clamp(11px, 1.1vw, 12px);
+  justify-self: auto;
+  padding-top: clamp(1px, .23vw, 2px);
+  gap: clamp(4px, .92vw, 12px);
+  transform: none;
+  overflow: visible;
+}
+#screen-start .appbar .econ-pill {
+  min-height: clamp(32px, 6.2vw, 64px);
+  justify-content: center;
+  gap: clamp(3px, .55vw, 7px);
+  padding: clamp(3px, .68vw, 7px) clamp(4px, .75vw, 8px);
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(180deg, #111b49 0%, #080f31 72%, #050a22 100%);
+  border: clamp(1px, .24vw, 3px) solid #24366f;
+  box-shadow:
+    0 clamp(2px, .42vw, 4px) 0 rgba(0,0,0,.58),
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -2px 5px rgba(0,0,0,.24),
+    0 0 14px rgba(44,91,255,.14);
+  isolation: isolate;
+}
+#screen-start .appbar .econ-coins {
+  min-width: clamp(72px, 17.1vw, 175px);
+  background:
+    radial-gradient(circle at 13% 48%, rgba(255,184,28,.30), transparent 36%),
+    linear-gradient(180deg, #151b43 0%, #090f2e 72%, #060a22 100%);
+}
+#screen-start .appbar .econ-gems {
+  min-width: clamp(64px, 15.35vw, 157px);
+  background:
+    radial-gradient(circle at 14% 48%, rgba(0,205,255,.25), transparent 38%),
+    linear-gradient(180deg, #111b49 0%, #080f31 72%, #050a22 100%);
+}
+#screen-start .appbar .econ-fire {
+  min-width: clamp(42px, 10.3vw, 105px);
+  background:
+    radial-gradient(circle at 24% 48%, rgba(255,85,34,.24), transparent 42%),
+    linear-gradient(180deg, #141a42 0%, #080e2d 72%, #050a22 100%);
+}
+#screen-start .appbar .econ-ic {
+  width: clamp(20px, 4.45vw, 46px);
+  height: clamp(20px, 4.45vw, 46px);
+  margin-left: calc(0px - clamp(2px, .35vw, 4px));
+}
+#screen-start .appbar .econ-ic img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+#screen-start .appbar .econ-coins .econ-ic {
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border: clamp(1px, .23vw, 2px) solid #f3a500;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 28%, #fff9b0 0 7%, transparent 8%),
+    radial-gradient(circle at 45% 40%, #ffe95c 0 34%, #ffc51d 53%, #ed8f00 76%, #8b4800 100%);
+  box-shadow:
+    0 0 9px rgba(255,187,32,.64),
+    inset 0 2px 0 rgba(255,255,255,.58),
+    inset 0 -2px 3px rgba(133,66,0,.42);
+  filter: none;
+}
+#screen-start .appbar .econ-coins .econ-ic img { display: none; }
+#screen-start .appbar .econ-coins .econ-ic::before {
+  content: "★";
+  color: #fff27a;
+  font-family: Arial, sans-serif;
+  font-size: clamp(.72rem, 2.55vw, 1.55rem);
+  line-height: 1;
+  transform: translateY(-1px);
+  text-shadow: 0 1px 0 #d88400, 0 0 3px rgba(255,255,255,.52);
+}
+#screen-start .appbar .econ-gems .econ-ic { filter: drop-shadow(0 0 8px rgba(0,207,255,.42)); }
+#screen-start .appbar .econ-fire .econ-ic { filter: drop-shadow(0 0 7px rgba(255,77,37,.38)); }
+#screen-start .appbar .econ-pill b {
+  min-width: max-content;
+  color: #fff;
+  font-family: var(--home-rounded);
+  font-size: clamp(.68rem, 2.5vw, 1.55rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 0 rgba(0,0,0,.46);
+}
+#screen-start .appbar .econ-plus {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(18px, 3.85vw, 40px);
+  height: clamp(18px, 3.85vw, 40px);
+  flex: 0 0 auto;
+  padding: 0;
+  border: clamp(1px, .22vw, 2px) solid #2d9a35;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(180deg, #78ef50 0%, #27bc32 48%, #148b25 100%);
+  box-shadow:
+    0 clamp(1px, .28vw, 3px) 0 #09651b,
+    0 0 8px rgba(71,231,66,.48),
+    inset 0 2px 0 rgba(255,255,255,.50);
+}
+#screen-start .appbar .econ-plus img { display: none; }
+#screen-start .appbar .econ-plus::before {
+  content: "+";
+  display: block;
+  color: #fff;
+  font-family: var(--home-rounded);
+  font-size: clamp(.9rem, 2.65vw, 1.6rem);
+  font-weight: 900;
+  line-height: .72;
+  transform: translateY(-1px);
+  text-shadow: 0 2px 0 rgba(0,82,18,.55);
+}
+#screen-start .appbar .econ-plus:active {
+  transform: translateY(2px) scale(.94);
+  box-shadow: 0 1px 0 #09651b, inset 0 1px 0 rgba(255,255,255,.42);
+}
+
+/* CTA principal: proporción 560x190 en la referencia 854px, marco cian/violeta
+   a dos capas, brillo interior y triángulo redondeado reutilizando el SVG. */
+#screen-start .btn-hero {
+  --play-radius: clamp(28px, 4.7vw, 48px);
+  --play-frame: clamp(4px, .55vw, 6px);
+  --play-depth: clamp(4px, .82vw, 8px);
+  position: relative;
+  top: auto;
+  z-index: 1;
+  isolation: isolate;
+  overflow: visible;
+  width: min(82%, 560px);
+  min-height: 0;
+  aspect-ratio: 2.95 / 1;
+  gap: clamp(18px, 3vw, 30px);
+  padding: clamp(9px, 1.2vw, 13px) clamp(20px, 3.25vw, 34px) clamp(11px, 1.55vw, 16px);
+  border: clamp(4px, .72vw, 8px) solid transparent;
+  border-radius: var(--play-radius);
+  color: #fff;
+  background:
+    linear-gradient(180deg, #25caff 0%, #087fe9 47%, #1235bd 100%) padding-box,
+    linear-gradient(135deg, #27ecff 0 47%, #7163ff 72%, #d13eea 100%) border-box;
+  box-shadow:
+    0 var(--play-depth) 0 #0b2278,
+    0 0 clamp(24px, 3.25vw, 34px) rgba(0,207,255,.82),
+    0 0 clamp(36px, 5.2vw, 54px) rgba(126,48,255,.62),
+    inset 0 3px 0 rgba(255,255,255,.32),
+    inset 0 -9px 16px rgba(0,25,126,.42);
+  animation: homePlayGlowPolished 2.8s ease-in-out 2;
+}
+#screen-start .btn-hero::before {
+  content: "";
+  position: absolute;
+  inset: calc(0px - var(--play-frame));
+  z-index: 0;
+  padding: var(--play-frame);
+  border-radius: calc(var(--play-radius) + var(--play-frame));
+  background: linear-gradient(135deg, #10e8ff 0 45%, #536dff 65%, #c83eea 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+#screen-start .btn-hero::after {
+  content: "";
+  position: absolute;
+  inset: clamp(7px, 1vw, 10px);
+  z-index: 0;
+  height: auto;
+  border-radius: calc(var(--play-radius) - 8px);
+  background:
+    radial-gradient(ellipse 2px 9px at 12% 27%, #79efff, transparent 72%),
+    radial-gradient(ellipse 9px 2px at 12% 27%, #79efff, transparent 72%),
+    radial-gradient(ellipse 2px 8px at 88% 31%, #7defff, transparent 72%),
+    radial-gradient(ellipse 8px 2px at 88% 31%, #7defff, transparent 72%),
+    radial-gradient(ellipse 1px 6px at 18% 76%, rgba(94,214,255,.82), transparent 74%),
+    radial-gradient(ellipse 6px 1px at 18% 76%, rgba(94,214,255,.82), transparent 74%),
+    linear-gradient(180deg, rgba(118,232,255,.26), transparent 43%);
+  pointer-events: none;
+}
+#screen-start .play-ic {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: clamp(44px, 9.4vw, 96px);
+  height: clamp(44px, 9.4vw, 96px);
+  flex: 0 0 auto;
+  border: 0;
+  transform: translateX(clamp(-48px, -4.7vw, -18px));
+  background: linear-gradient(180deg, #fff, #e9efff);
+  -webkit-mask: url("img/icons-v2/9-media/play.svg") center / contain no-repeat;
+  mask: url("img/icons-v2/9-media/play.svg") center / contain no-repeat;
+  filter:
+    drop-shadow(0 var(--play-depth) 1px #8799ca)
+    drop-shadow(0 0 8px rgba(255,255,255,.48));
+}
+#screen-start .btn-hero-copy {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  align-items: center;
+}
+#screen-start .btn-hero-copy b {
+  font-family: var(--home-rounded);
+  font-size: clamp(2.7rem, 10vw, 6.4rem);
+  font-weight: 900;
+  line-height: .88;
+  letter-spacing: -.035em;
+  transform: translate(-4px, -1px) scaleX(1.31);
+  transform-origin: center;
+  text-shadow:
+    0 var(--play-depth) 0 #8799ca,
+    0 calc(var(--play-depth) + 4px) 10px rgba(0,0,0,.48);
+}
+#screen-start .btn-hero:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 calc(var(--play-depth) - 3px) 0 #0b2278,
+    0 0 24px rgba(0,207,255,.72),
+    0 0 38px rgba(126,48,255,.54),
+    inset 0 3px 0 rgba(255,255,255,.28),
+    inset 0 -7px 13px rgba(0,25,126,.40);
+}
+@keyframes homePlayGlowPolished {
+  50% { filter: brightness(1.055) saturate(1.04); }
+}
+
+/* Inicio se lee dentro de su medallón, como en la referencia. */
+#screen-start .bnav-center {
+  --home-center-size: clamp(72px, 14.7vw, 142px);
+  z-index: 3;
+  gap: 0;
+  overflow: visible;
+  color: #fff;
+}
+#screen-start .bnav-center .bn-ic {
+  width: var(--home-center-size);
+  height: var(--home-center-size);
+  flex: 0 0 var(--home-center-size);
+  margin-top: calc(0px - clamp(18px, 3.7vw, 35px));
+  padding:
+    clamp(11px, 2vw, 21px)
+    clamp(13px, 2.2vw, 23px)
+    clamp(24px, 4.05vw, 42px);
+  border: clamp(3px, .42vw, 4px) solid #12d8ff;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 31%, #20b8ff 0%, #0877e8 49%, #1434a8 100%);
+  box-shadow:
+    0 clamp(4px, .6vw, 7px) 0 #082b78,
+    0 0 0 clamp(4px, .7vw, 7px) rgba(11,109,255,.28),
+    0 0 clamp(22px, 3.2vw, 34px) rgba(0,209,255,.86),
+    inset 0 3px 0 rgba(255,255,255,.36),
+    inset 0 -7px 12px rgba(0,31,120,.34);
+}
+#screen-start .bnav-center .bn-ic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+#screen-start .bnav-center small {
+  position: relative;
+  z-index: 4;
+  margin-top: calc(0px - clamp(24px, 3.5vw, 36px));
+  color: #fff;
+  font-size: clamp(.6rem, 1.75vw, 1.1rem);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 2px 0 rgba(0,0,0,.58);
+  pointer-events: none;
+}
+
+/* Recompensa diaria: el hueco se conserva después de reclamar. La burbuja
+   explota visualmente, pero el item sigue ocupando exactamente la misma fila. */
+#screen-start .daily-banner {
+  --reward-slot-height: 86px;
+  --reward-gift-size: 76px;
+  height: var(--reward-slot-height);
+  min-height: var(--reward-slot-height);
+  max-height: var(--reward-slot-height);
+  flex: 0 0 var(--reward-slot-height);
+  top: clamp(4px, 1.05vw, 9px);
+  transform-origin: 50% 50%;
+}
+#screen-start .db-tx small { font-size: clamp(.66rem, 1.9vw, 1.2rem); }
+#screen-start .daily-banner.is-popping {
+  visibility: visible;
+  pointer-events: none;
+  will-change: transform, opacity, filter;
+  animation: dailyRewardBubblePop .58s cubic-bezier(.18,.76,.22,1) both;
+}
+#screen-start .daily-banner.is-popping::before {
+  content: "";
+  position: absolute;
+  inset: 5%;
+  z-index: 8;
+  border: clamp(2px, .4vw, 4px) solid rgba(116,229,255,.92);
+  border-radius: inherit;
+  box-shadow: 0 0 20px rgba(104,91,255,.72), inset 0 0 18px rgba(255,255,255,.3);
+  pointer-events: none;
+  animation: dailyRewardBubbleRing .58s ease-out both;
+}
+#screen-start .daily-banner.is-popping::after {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  z-index: 9;
+  background:
+    radial-gradient(circle at 10% 48%, #65edff 0 3px, transparent 4px),
+    radial-gradient(circle at 25% 8%, #9e71ff 0 4px, transparent 5px),
+    radial-gradient(circle at 53% 3%, #fff 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 12%, #d956ff 0 4px, transparent 5px),
+    radial-gradient(circle at 94% 48%, #63eaff 0 3px, transparent 4px),
+    radial-gradient(circle at 82% 88%, #9f64ff 0 3px, transparent 4px),
+    radial-gradient(circle at 22% 90%, #fff 0 2px, transparent 3px);
+  pointer-events: none;
+  animation: dailyRewardBubbleParticles .58s ease-out both;
+}
+#screen-start .daily-banner.is-popping.claimed .db-gift,
+#screen-start .daily-banner.is-popping.is-claimed .db-gift {
+  width: var(--reward-gift-size);
+  height: var(--reward-gift-size);
+}
+#screen-start .daily-banner.is-popping.claimed .db-claim,
+#screen-start .daily-banner.is-popping.is-claimed .db-claim {
+  display: inline-flex;
+  align-items: center;
+}
+#screen-start .daily-banner.is-popping.claimed .db-rocket,
+#screen-start .daily-banner.is-popping.is-claimed .db-rocket { display: block; }
+#screen-start .daily-banner.claimed:not(.is-popping),
+#screen-start .daily-banner.is-claimed:not(.is-popping) {
+  visibility: hidden;
+  opacity: 0;
+  transform: none;
+  filter: none;
+  pointer-events: none;
+}
+@keyframes dailyRewardBubblePop {
+  0% { opacity: 1; transform: scale(1); filter: brightness(1) saturate(1); }
+  34% { opacity: 1; transform: scale(1.075); filter: brightness(1.18) saturate(1.16); }
+  58% { opacity: .96; transform: scale(.93); filter: brightness(1.28) saturate(1.05); }
+  100% { opacity: 0; transform: scale(.18); filter: blur(4px) brightness(1.55); }
+}
+@keyframes dailyRewardBubbleRing {
+  0% { opacity: 0; transform: scale(.78); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.32); }
+}
+@keyframes dailyRewardBubbleParticles {
+  0% { opacity: 0; transform: scale(.72); }
+  28% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.38); }
+}
+
+/* Las cotas del banner coinciden con las que ya usaba cada composición, pero
+   ahora también son su flex-basis para que nunca colapse. */
+@media (max-width: 600px) {
+  #screen-start .daily-banner {
+    --reward-slot-height: 72px;
+    --reward-gift-size: 57px;
+  }
+}
+@media (max-width: 370px) {
+  #screen-start .daily-banner { --reward-gift-size: 48px; }
+}
+@media (max-width: 600px) {
+  #screen-start .appbar-econ { left: 47%; }
+}
+@media (max-width: 370px) {
+  #screen-start .appbar-econ { left: 51%; }
+}
+@media (min-width: 601px) and (max-width: 650px) {
+  /* En este intervalo el lápiz roza la cápsula de monedas por menos de 5 px. */
+  #screen-start .appbar-edit { transform: translateY(6px); }
+  #screen-start .appbar-edit:active { transform: translateY(6px) scale(.92); }
+}
+@media (min-width: 720px) and (max-width: 819px) {
+  #screen-start .daily-banner {
+    --reward-slot-height: 132px;
+    --reward-gift-size: 102px;
+  }
+}
+@media (min-width: 820px) and (max-width: 900px) {
+  #screen-start .daily-banner {
+    --reward-slot-height: 142px;
+    --reward-gift-size: 125px;
+  }
+}
+@media (min-width: 901px) {
+  #screen-start .daily-banner {
+    --reward-slot-height: 170px;
+    --reward-gift-size: 150px;
+  }
+  #screen-start .btn-hero {
+    width: clamp(560px, calc(100vw - 340px), 672px);
+  }
+}
+
+body.reduced-fx #screen-start .btn-hero { animation: none; }
+body.reduced-fx #screen-start .daily-banner.is-popping {
+  animation: dailyRewardQuietFade .14s linear both;
+}
+body.reduced-fx #screen-start .daily-banner.is-popping::before,
+body.reduced-fx #screen-start .daily-banner.is-popping::after { display: none; }
+@keyframes dailyRewardQuietFade {
+  to { opacity: 0; visibility: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #screen-start .btn-hero { animation: none; }
+  #screen-start .daily-banner.is-popping { animation: dailyRewardQuietFade .14s linear both; }
+  #screen-start .daily-banner.is-popping::before,
+  #screen-start .daily-banner.is-popping::after { display: none; }
+}
 
 /* Modales: cabecera/emblema común, scroll más legible y bloques de resultado. */
 .modal {
@@ -4864,15 +5421,1107 @@ body.perf-2 .cell.tile-slowdown::after, body.perf-2 .cell.tile-timecap::after { 
 .daily-run.medal-gold { border-color: rgba(255,216,77,.34); }
 .mission-reroll { margin: 2px 0 8px; width: 100%; }
 
-/* ---------- Vuelo de convergencia: iconos viajando hacia la casilla tocada ---------- */
-.fly-glyph {
-  position: absolute;
-  z-index: var(--z-popup);
-  width: calc(88% / var(--size, 8));
-  aspect-ratio: 1 / 1;
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
+/* =========================================================================
+   MOCKUP · Selección de modo 2026-07
+   El documento docs/mockups/mode-selection-redesign-mockup.html consume esta
+   hoja directamente. Todo queda aislado por la clase del body para no alterar
+   #screen-modes hasta cerrar la aprobación visual del mockup.
+   ========================================================================= */
+body.mode-selection-mockup {
+  --mode-mock-font: ui-rounded, "Arial Rounded MT Bold", "Trebuchet MS", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mode-mock-body-font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  color: #f5f7ff;
+  background: #000d32;
+  font-family: var(--mode-mock-font);
+  text-rendering: geometricPrecision;
+  scrollbar-width: none;
 }
-.fly-glyph svg { width: 100%; height: 100%; display: block; }
-body.reduced-fx .fly-glyph { display: none; }
+html.mode-selection-mockup-root {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+html.mode-selection-mockup-root::-webkit-scrollbar { width: 0; height: 0; }
+body.mode-selection-mockup::-webkit-scrollbar { width: 0; height: 0; }
+.mode-selection-mockup button { font-family: inherit; }
+.mode-mock-shell {
+  position: relative;
+  isolation: isolate;
+  width: min(853px, 100%);
+  height: 100vh;
+  min-height: 0;
+  margin: 0 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+  background:
+    radial-gradient(74% 24% at 50% 18%, rgba(34,67,184,.23), transparent 67%),
+    radial-gradient(38% 34% at -4% 62%, rgba(12,87,188,.16), transparent 72%),
+    radial-gradient(42% 36% at 104% 68%, rgba(63,31,169,.15), transparent 72%),
+    linear-gradient(180deg, #000b30 0%, #00113d 52%, #000d32 100%);
+}
+.mode-mock-shell::-webkit-scrollbar { width: 0; height: 0; }
+.mode-mock-space,
+.mode-mock-space::before,
+.mode-mock-space::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.mode-mock-space {
+  opacity: .72;
+  background:
+    radial-gradient(circle at 20.5% 13.9%, #167af0 0 2px, transparent 3px),
+    radial-gradient(circle at 23.1% 11.5%, #515cff 0 2px, transparent 3px),
+    radial-gradient(circle at 77.5% 11.7%, #215df2 0 2px, transparent 3px),
+    radial-gradient(circle at 80.1% 14.1%, #134dcb 0 1px, transparent 3px),
+    radial-gradient(circle at 16.8% 16.6%, #114bd8 0 1px, transparent 3px),
+    radial-gradient(circle at 89.3% 15.9%, #2237b8 0 1px, transparent 3px),
+    radial-gradient(circle at 4% 43%, rgba(45,112,255,.32) 0 1px, transparent 3px),
+    radial-gradient(circle at 96% 48%, rgba(97,55,255,.30) 0 1px, transparent 3px),
+    radial-gradient(circle at 5% 77%, rgba(33,91,224,.28) 0 1px, transparent 3px),
+    radial-gradient(circle at 96% 82%, rgba(62,47,211,.32) 0 1px, transparent 3px);
+}
+.mode-mock-space::before {
+  background: repeating-linear-gradient(118deg, transparent 0 70px, rgba(22,77,180,.035) 71px 72px, transparent 73px 142px);
+  mask-image: linear-gradient(180deg, transparent 10%, #000 28%, #000 88%, transparent);
+}
+
+/* Cabecera 853 × 111: replica la composición del rediseño de Inicio, pero sin
+   lápiz ni XP porque no aparecen en la referencia del selector. */
+.mode-mock-header {
+  position: relative;
+  z-index: 3;
+  height: 111px;
+  border-bottom: 2px solid rgba(22,49,113,.52);
+  box-shadow: 0 4px 14px rgba(1,23,76,.28);
+}
+.mode-mock-profile {
+  position: absolute;
+  left: 31px;
+  top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 100px;
+  padding: 0;
+  color: #f7f7ff;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+.mode-mock-avatar {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  flex: 0 0 90px;
+  display: grid;
+  place-items: center;
+  border: 4px solid #36c9ff;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, #174e91, #050c33 72%);
+  box-shadow:
+    0 0 0 4px #7046f4,
+    0 0 20px rgba(27,185,255,.70),
+    inset 0 0 15px rgba(42,207,255,.34);
+  transform: translateY(-6px);
+}
+.mode-mock-avatar-crop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 50%;
+}
+.mode-mock-avatar-crop img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: scale(1.46) translateY(11%);
+  transform-origin: center;
+}
+.mode-mock-level-badge {
+  position: absolute;
+  left: -13px;
+  bottom: -8px;
+  z-index: 2;
+  min-width: 38px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0 7px;
+  border: 3px solid #173a85;
+  border-radius: 13px;
+  color: #fff;
+  background: linear-gradient(180deg, #27c8ff, #087ce2 65%, #0550b9);
+  box-shadow: 0 3px 0 #062c7a, 0 0 12px rgba(0,191,255,.58), inset 0 1px 0 rgba(255,255,255,.42);
+  font-size: 23px;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 2px 0 rgba(0,54,126,.7);
+  transform: translateY(4px);
+}
+.mode-mock-identity { display: flex; flex-direction: column; gap: 3px; transform: translateY(-3px); }
+.mode-mock-identity b { font-size: 26px; font-weight: 900; line-height: 1; letter-spacing: -.02em; text-shadow: 0 3px 0 rgba(0,0,0,.45); }
+.mode-mock-identity span { color: #18cef8; font-size: 19px; font-weight: 800; line-height: 1.2; }
+.mode-mock-wallet {
+  position: absolute;
+  left: 382px;
+  top: 27px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 59px;
+}
+.mode-mock-pill {
+  min-width: 0;
+  height: 53px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 2px solid #26376e;
+  border-radius: 999px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 13% 50%, rgba(41,113,255,.18), transparent 40%),
+    linear-gradient(180deg, #111b47 0%, #080f31 72%, #050a22 100%);
+  box-shadow: 0 3px 0 rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.17), 0 0 14px rgba(37,80,216,.16);
+  font-size: 21px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 0 rgba(0,0,0,.55);
+  transform: translateY(-2px);
+}
+.mode-mock-coins { width: 144px; }
+.mode-mock-gems { width: 134px; margin-left: 1px; }
+.mode-mock-fire { width: 82px; gap: 6px; }
+.mode-mock-pill > img { width: 39px; height: 39px; object-fit: contain; flex: 0 0 auto; }
+.mode-mock-fire > img { width: 38px; height: 38px; filter: drop-shadow(0 0 8px rgba(255,73,35,.42)); }
+.mode-mock-coin {
+  width: 39px;
+  height: 39px;
+  flex: 0 0 39px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #ef9e00;
+  border-radius: 50%;
+  color: #fff176;
+  background:
+    radial-gradient(circle at 35% 26%, #fffab5 0 8%, transparent 9%),
+    radial-gradient(circle at 45% 40%, #ffe85b 0 34%, #ffc31b 54%, #e98a00 77%, #844400 100%);
+  box-shadow: 0 0 9px rgba(255,187,32,.65), inset 0 2px 0 rgba(255,255,255,.54), inset 0 -2px 3px rgba(129,62,0,.45);
+  font-family: Arial, sans-serif;
+  font-size: 24px;
+  line-height: 1;
+  text-shadow: 0 1px 0 #d88400;
+}
+.mode-mock-plus {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #2d9637;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(180deg, #7aed52 0%, #27bb32 50%, #148925 100%);
+  box-shadow: 0 2px 0 #09641a, 0 0 8px rgba(71,231,66,.48), inset 0 2px 0 rgba(255,255,255,.48);
+  font-size: 27px;
+  font-weight: 900;
+  line-height: .7;
+  text-shadow: 0 2px 0 rgba(0,82,18,.55);
+}
+.mode-mock-settings {
+  width: 58px;
+  height: 58px;
+  margin-left: 2px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid #27396f;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #182451, #0d163b);
+  box-shadow: 0 3px 0 rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.14), 0 0 15px rgba(70,79,196,.24);
+}
+.mode-mock-settings img { width: 32px; height: 32px; object-fit: contain; transform: translate(-1px, -1px); }
+
+/* Título y navegación. */
+.mode-mock-main { position: relative; z-index: 2; }
+.mode-mock-heading {
+  position: relative;
+  height: 148px;
+  padding-top: 31px;
+  text-align: center;
+}
+.mode-mock-heading h1 {
+  color: #f7f6ff;
+  font-size: 49.5px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.025em;
+  text-shadow: 0 4px 0 rgba(0,0,0,.42), 0 0 18px rgba(89,102,255,.12);
+  transform: translate(-1px, 3px);
+}
+.mode-mock-heading p {
+  margin-top: 7px;
+  transform: translateY(5px);
+  color: #b9c3e9;
+  font-family: var(--mode-mock-body-font);
+  font-size: 21.5px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+.mode-mock-back {
+  position: absolute;
+  left: 23px;
+  top: 32px;
+  z-index: 3;
+  width: 81px;
+  height: 75px;
+  display: grid;
+  place-items: center;
+  padding: 23px;
+  border: 2px solid #293b70;
+  border-radius: 21px;
+  background: linear-gradient(180deg, #1b2856, #101943 100%);
+  box-shadow: 0 4px 0 #06102e, 0 10px 20px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.12);
+}
+.mode-mock-back { padding: 0; }
+.mode-mock-back img { width: 40px; height: 33px; object-fit: fill; filter: brightness(0) invert(1) drop-shadow(0 2px 0 rgba(0,0,0,.38)); }
+.mode-mock-spark {
+  position: absolute;
+  top: 43px;
+  width: 39px;
+  height: 39px;
+  clip-path: polygon(50% 0, 62% 37%, 100% 50%, 62% 63%, 50% 100%, 38% 63%, 0 50%, 38% 37%);
+}
+.mode-mock-spark-left { left: 215px; background: linear-gradient(135deg, #ff63fc, #9c39ef); filter: drop-shadow(0 0 10px #9d34f2); }
+.mode-mock-spark-right { right: 214px; background: linear-gradient(135deg, #4ddcff, #1687f5); filter: drop-shadow(0 0 11px #087de7); }
+
+/* Catálogo: las primeras cuatro cajas ocupan exactamente el primer viewport de
+   la referencia. Los modos adicionales continúan debajo mediante scroll. */
+.mode-mock-catalog {
+  width: 740px;
+  max-width: calc(100% - 110px);
+  margin: 0 0 0 55px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 32px;
+}
+.mode-mock-card {
+  --mode-mock-accent: #f05b5d;
+  position: relative;
+  width: 100%;
+  height: 220px;
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 234px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 24px;
+  overflow: hidden;
+  padding: 24px 21px;
+  border: 3px solid color-mix(in srgb, var(--mode-mock-accent) 72%, #b9dfff 10%);
+  border-radius: 35px;
+  color: #fff;
+  text-align: left;
+  background: linear-gradient(115deg, #741a21 0%, #48101d 58%, #260a19 100%);
+  box-shadow:
+    0 10px 25px rgba(0,0,0,.38),
+    0 0 15px color-mix(in srgb, var(--mode-mock-accent) 31%, transparent),
+    inset 0 2px 0 rgba(255,255,255,.13),
+    inset 0 -4px 15px rgba(0,0,0,.15);
+  transition: transform .12s ease, filter .12s ease;
+}
+.mode-mock-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(72% 130% at 2% 18%, color-mix(in srgb, var(--mode-mock-accent) 31%, transparent), transparent 64%),
+    linear-gradient(180deg, rgba(255,255,255,.08), transparent 20%, rgba(0,0,0,.08));
+}
+.mode-mock-card:not(:disabled):hover { filter: brightness(1.06); transform: translateY(-2px); }
+.mode-mock-card:not(:disabled):active { transform: translateY(2px) scale(.995); }
+.mode-selection-mockup button:focus-visible { outline: 4px solid #fff; outline-offset: 4px; }
+.mode-mock-art {
+  position: relative;
+  z-index: 1;
+  width: 234px;
+  height: 174px;
+  display: grid;
+  place-items: center;
+}
+.mode-mock-art img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 9px 8px rgba(0,0,0,.33)); }
+.mode-mock-card-survival .mode-mock-art img { transform: translateY(2px) scale(1.05, 1.10); }
+.mode-mock-copy {
+  position: relative;
+  z-index: 1;
+  align-self: start;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 13px;
+}
+.mode-mock-title-row { display: flex; align-items: center; gap: 12px; min-width: 0; white-space: nowrap; }
+.mode-mock-card-title {
+  flex: 0 0 auto;
+  color: #fff;
+  font-size: 38px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.035em;
+  text-shadow: 0 3px 0 rgba(0,0,0,.34);
+  transform: translateY(-4px);
+}
+.mode-mock-tag {
+  flex: 0 1 auto;
+  align-self: flex-start;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 11px;
+  color: #ffe4e7;
+  background: color-mix(in srgb, var(--mode-mock-accent) 38%, #531623);
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mode-mock-card-survival .mode-mock-title-row { gap: 14px; }
+.mode-mock-card-survival .mode-mock-copy { gap: 16px; }
+.mode-mock-card-survival .mode-mock-card-title { font-size: 34px; letter-spacing: -.03em; }
+.mode-mock-card-survival .mode-mock-tag {
+  flex: 0 0 166px;
+  justify-content: center;
+  margin-top: 1px;
+}
+.mode-mock-description {
+  display: block;
+  max-width: 100%;
+  color: #e4c5cf;
+  font-family: var(--mode-mock-body-font);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 27px;
+  letter-spacing: -.012em;
+}
+.mode-mock-go {
+  position: absolute;
+  right: 25px;
+  top: 86px;
+  z-index: 2;
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid color-mix(in srgb, var(--mode-mock-accent) 58%, rgba(255,255,255,.15));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--mode-mock-accent) 20%, rgba(7,12,42,.72));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 6px 15px rgba(0,0,0,.22);
+}
+.mode-mock-go img { width: 22px; height: 30px; object-fit: fill; transform: translate(2.5px, -.5px) scale(.84, 1.23); filter: brightness(0) invert(1) drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
+
+.mode-mock-card-tall { height: 290px; padding-top: 25px; padding-bottom: 104px; align-items: start; }
+.mode-mock-card-tall .mode-mock-art { height: 214px; margin-top: -2px; }
+.mode-mock-card-tall .mode-mock-copy { padding-top: 7px; gap: 10px; }
+.mode-mock-card-tall .mode-mock-go { top: 96px; }
+.mode-mock-card-classic {
+  --mode-mock-accent: #18a9ec;
+  height: 289px;
+  background: linear-gradient(120deg, #043e7d 0%, #071b50 56%, #06133d 100%);
+}
+.mode-mock-card-classic .mode-mock-title-row { gap: 15px; }
+.mode-mock-card-classic .mode-mock-card-title { font-size: 40px; letter-spacing: -.015em; }
+.mode-mock-card-classic .mode-mock-tag {
+  flex: 0 0 122px;
+  justify-content: center;
+  margin-top: 1px;
+  color: #56dffa;
+  background: #073d83;
+}
+.mode-mock-card-classic .mode-mock-description { color: #bdcbed; }
+.mode-mock-card-classic .mode-mock-art { width: 218px; transform: translateX(9px); }
+.mode-mock-card-classic .mode-mock-art img { object-fit: fill; transform: translateY(8px); }
+.mode-mock-card-classic .mode-mock-go { top: 98px; }
+.mode-mock-card-multi {
+  --mode-mock-accent: #8a4be5;
+  height: 291px;
+  cursor: not-allowed;
+  opacity: 1;
+  background: linear-gradient(120deg, #281a7a 0%, #181356 57%, #0e103f 100%);
+}
+.mode-mock-card-multi .mode-mock-title-row { gap: 11px; }
+.mode-mock-card-multi .mode-mock-copy { gap: 16px; }
+.mode-mock-card-multi .mode-mock-card-title { font-size: 34px; letter-spacing: -.032em; }
+.mode-mock-card-multi .mode-mock-tag {
+  flex: 0 0 159px;
+  justify-content: center;
+  margin-top: 2px;
+  color: #ebd9ff;
+  background: #542490;
+}
+.mode-mock-card-multi .mode-mock-description { color: #c5c3e7; }
+.mode-mock-card-multi .mode-mock-art { width: 232px; height: 219px; transform: translateY(12px) scaleY(1.03); }
+.mode-mock-card-multi .mode-mock-go { opacity: .72; }
+.mode-mock-card-multi .mode-mock-go { top: 95px; }
+
+.mode-mock-features {
+  position: absolute;
+  left: 276px;
+  right: 37px;
+  bottom: 15px;
+  z-index: 2;
+  height: 78px;
+  display: grid;
+  align-items: stretch;
+  overflow: hidden;
+  border: 2px solid rgba(57,91,172,.20);
+  border-radius: 15px;
+  background: rgba(3,12,43,.38);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+.mode-mock-features-four { grid-template-columns: 91px 90px 93px 1fr; }
+.mode-mock-features-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mode-mock-features > span {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 8px;
+  border-right: 1px solid rgba(89,111,182,.20);
+  color: #d6def5;
+  text-align: left;
+}
+.mode-mock-features > span:last-child { border-right: 0; }
+.mode-mock-features img { width: 39px; height: 39px; flex: 0 0 39px; object-fit: contain; filter: drop-shadow(0 4px 3px rgba(0,0,0,.35)); }
+.mode-mock-features small { font-family: var(--mode-mock-body-font); font-size: 15px; font-weight: 600; line-height: 1.12; white-space: nowrap; }
+.mode-mock-features .mode-mock-more { padding-inline: 6px; }
+.mode-mock-features .mode-mock-more small { font-size: 16px; }
+.mode-mock-card-multi .mode-mock-features { height: 74px; bottom: 17px; }
+.mode-mock-card-classic .mode-mock-features > span {
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 3px;
+  text-align: center;
+}
+.mode-mock-card-classic .mode-mock-features { bottom: 14px; }
+.mode-mock-card-classic .mode-mock-features img { width: 39px; height: 39px; flex-basis: 39px; transform: translateY(-8px); }
+.mode-mock-card-classic .mode-mock-features small { font-size: 15px; line-height: 1; }
+.mode-mock-card-multi .mode-mock-features { right: 25px; bottom: 16px; height: 73px; grid-template-columns: 166px 115px 152px; }
+.mode-mock-card-multi .mode-mock-features > span { gap: 4px; padding-inline: 5px; }
+.mode-mock-card-multi .mode-mock-features img { width: 36px; height: 36px; flex-basis: 36px; }
+.mode-mock-card-multi .mode-mock-features small { font-size: 14px; }
+.mode-mock-card-multi .mode-mock-features > span:nth-child(2) img {
+  filter: hue-rotate(165deg) saturate(1.25) brightness(1.08) drop-shadow(0 4px 3px rgba(0,0,0,.35));
+}
+.mode-mock-card-multi .mode-mock-features > span:last-child img { filter: invert(61%) sepia(88%) saturate(1617%) hue-rotate(165deg) brightness(104%) drop-shadow(0 4px 3px rgba(0,0,0,.35)); }
+
+.mode-mock-card-survival .mode-mock-description { transform: translateY(-6px); }
+.mode-mock-card-classic .mode-mock-description { letter-spacing: 0; transform: translateY(-8px); }
+.mode-mock-card-multi .mode-mock-description { letter-spacing: -.016em; transform: translateY(-7px); }
+
+/* Ayuda. */
+.mode-mock-help {
+  position: relative;
+  width: 100%;
+  height: 132px;
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 98px minmax(0, 1fr) 229px;
+  align-items: center;
+  gap: 14px;
+  padding: 17px 24px 17px 27px;
+  overflow: hidden;
+  border: 2px solid #153a7d;
+  border-radius: 27px;
+  color: #fff;
+  text-align: left;
+  background: linear-gradient(110deg, #03205f, #041a52 60%, #011647);
+  box-shadow: 0 8px 20px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.mode-mock-help-art { width: 91px; height: 91px; display: grid; place-items: center; }
+.mode-mock-help-art img { width: 100%; height: 100%; object-fit: contain; transform: translate(-3px, -8px) scale(1.01, .96); filter: drop-shadow(0 7px 5px rgba(0,0,0,.34)); }
+.mode-mock-help-copy { min-width: 0; display: flex; flex-direction: column; gap: 5px; transform: translateY(1px); }
+.mode-mock-help-copy b { font-size: 25px; font-weight: 900; line-height: 1; letter-spacing: -.025em; }
+.mode-mock-help-copy span { color: #c3ceec; font-family: var(--mode-mock-body-font); font-size: 16px; font-weight: 600; line-height: 1.43; letter-spacing: 0; }
+.mode-mock-help-cta {
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  padding: 0 17px 2px 22px;
+  border: 2px solid #259bdd;
+  border-radius: 20px;
+  color: #fff;
+  background: linear-gradient(180deg, #1384dd, #075db9 62%, #03459d);
+  box-shadow: 0 4px 0 #032f7d, 0 0 16px rgba(21,151,232,.35), inset 0 2px 0 rgba(255,255,255,.25);
+  font-size: 20.5px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow: 0 2px 0 rgba(0,47,111,.62);
+  transform: translateY(-1px);
+}
+.mode-mock-help-cta img { width: 20px; height: 20px; transform: translateX(2px) scaleX(.67); filter: brightness(0) invert(1); }
+
+/* Modos no presentes en la captura: mismos materiales y retícula, con copy
+   tomado exclusivamente de Config.MODES. */
+.mode-mock-extra-heading {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: #9baddd;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.mode-mock-extra-heading::before,
+.mode-mock-extra-heading::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(94,129,225,.34)); }
+.mode-mock-extra-heading::after { transform: scaleX(-1); }
+.mode-mock-card-extra { height: 270px; padding-top: 27px; padding-bottom: 98px; align-items: start; }
+.mode-mock-card-extra .mode-mock-art { height: 196px; margin-top: -2px; }
+.mode-mock-card-extra .mode-mock-copy { padding-top: 4px; }
+.mode-mock-card-extra .mode-mock-description { font-size: 19px; line-height: 1.34; }
+.mode-mock-card-extra .mode-mock-go { top: 91px; }
+.mode-mock-card-extra .mode-mock-features { height: 69px; }
+.mode-mock-card-extra .mode-mock-features small { white-space: normal; text-align: center; }
+.mode-mock-card-adventure { --mode-mock-accent: #8b62ff; background: linear-gradient(120deg, #382087, #24155e 58%, #120f42); }
+.mode-mock-card-adventure .mode-mock-tag { color: #eadfff; background: #56309b; }
+.mode-mock-card-adventure .mode-mock-description { color: #cec6ed; }
+.mode-mock-card-adventure .mode-mock-art img { transform: scale(1.08); }
+.mode-mock-card-timed { --mode-mock-accent: #ff6cb0; background: linear-gradient(120deg, #75214e, #4a1642 58%, #260f32); }
+.mode-mock-card-timed .mode-mock-tag { color: #ffe1f0; background: #8c2d64; }
+.mode-mock-card-timed .mode-mock-description { color: #edc6dd; }
+.mode-mock-card-timed .mode-mock-art img { transform: scale(1.08); }
+.mode-mock-card-zen { --mode-mock-accent: #9be15d; background: linear-gradient(120deg, #275f3c, #163c35 58%, #0c252c); }
+.mode-mock-card-zen .mode-mock-tag { color: #e8ffd5; background: #477b35; }
+.mode-mock-card-zen .mode-mock-description { color: #d2e8cd; }
+.mode-mock-card-zen .mode-mock-art img { transform: scale(1.05); }
+
+/* 684–852 px: se conserva la composición canónica de 853 px mediante una
+   escala única. Así no existen saltos de tamaño entre tablet y referencia. */
+@media (min-width: 684px) and (max-width: 852px) {
+  body.mode-selection-mockup { --mode-scale: calc(100vw / 853px); height: 100dvh; }
+  .mode-mock-shell {
+    left: 50%;
+    width: 853px;
+    max-width: none;
+    height: calc(100dvh / var(--mode-scale));
+    margin: 0 0 0 -426.5px;
+    transform: scale(var(--mode-scale));
+    transform-origin: 50% 0;
+  }
+}
+
+/* 320–683 px: reflow nativo y táctil; ningún control se reduce con transform. */
+@media (max-width: 683px) {
+  body.mode-selection-mockup,
+  .mode-mock-shell { height: 100dvh; }
+  .mode-mock-shell { left: auto; width: 100%; margin: 0 auto; transform: none; }
+
+  .mode-mock-header { height: 88px; }
+  .mode-mock-profile { left: 8px; top: 8px; height: 72px; gap: 9px; }
+  .mode-mock-avatar {
+    width: 66px;
+    height: 66px;
+    flex-basis: 66px;
+    border-width: 3px;
+    transform: none;
+  }
+  .mode-mock-level-badge {
+    left: -6px;
+    bottom: -5px;
+    min-width: 28px;
+    height: 29px;
+    padding-inline: 5px;
+    border-width: 2px;
+    border-radius: 10px;
+    font-size: 16px;
+    transform: none;
+  }
+  .mode-mock-identity b { font-size: 18px; }
+  .mode-mock-identity span { font-size: 14px; }
+
+  .mode-mock-wallet {
+    left: auto;
+    right: 3px;
+    top: 20px;
+    height: 44px;
+    gap: 3px;
+    transform: none;
+  }
+  .mode-mock-pill { height: 44px; gap: 2px; padding: 2px; font-size: 12.5px; transform: none; }
+  .mode-mock-coins { width: clamp(70px, 22vw, 90px); }
+  .mode-mock-gems { width: clamp(66px, 21vw, 86px); margin-left: 0; }
+  .mode-mock-fire { width: 48px; gap: 2px; }
+  .mode-mock-coin,
+  .mode-mock-pill > img { width: 20px; height: 20px; flex-basis: 20px; }
+  .mode-mock-coin { border-width: 1px; font-size: 13px; }
+  .mode-mock-plus {
+    width: 16px;
+    height: 16px;
+    flex-basis: 16px;
+    border-width: 1px;
+    font-size: 15px;
+  }
+  .mode-mock-fire > img { width: 21px; height: 21px; }
+  .mode-mock-settings { width: 44px; height: 44px; margin-left: 0; }
+  .mode-mock-settings img { width: 30px; height: 30px; transform: none; }
+
+  .mode-mock-heading { height: 120px; padding-top: 25px; }
+  .mode-mock-heading h1 { font-size: clamp(26px, 7vw, 36px); }
+  .mode-mock-heading p {
+    max-width: 80%;
+    margin: 5px auto 0;
+    transform: none;
+    font-size: clamp(13.5px, 2.6vw, 18px);
+  }
+  .mode-mock-back {
+    left: 10px;
+    top: 20px;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    border-radius: 15px;
+  }
+  .mode-mock-back img { width: 27px; height: 22px; }
+  .mode-mock-spark { top: 33px; width: clamp(18px, 4vw, 28px); height: clamp(18px, 4vw, 28px); }
+  .mode-mock-spark-left { left: calc(50% - clamp(125px, 24vw, 170px)); }
+  .mode-mock-spark-right { right: calc(50% - clamp(125px, 24vw, 170px)); }
+
+  .mode-mock-catalog {
+    width: calc(100% - 24px);
+    max-width: 594px;
+    margin-inline: auto;
+    gap: clamp(16px, 3vw, 22px);
+  }
+  .mode-mock-card,
+  .mode-mock-card-tall,
+  .mode-mock-card-extra {
+    height: auto;
+    min-height: 208px;
+    grid-template-columns: clamp(92px, 27vw, 150px) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 9px;
+    padding: 14px 52px 14px 10px;
+    border-radius: clamp(24px, 5vw, 30px);
+  }
+  .mode-mock-card-tall,
+  .mode-mock-card-extra { min-height: 234px; padding-bottom: 72px; }
+  .mode-mock-card .mode-mock-art,
+  .mode-mock-card-tall .mode-mock-art,
+  .mode-mock-card-extra .mode-mock-art {
+    width: clamp(92px, 27vw, 150px);
+    height: clamp(118px, 30vw, 148px);
+    margin: 0;
+    transform: none;
+  }
+  .mode-mock-card .mode-mock-art img { object-fit: contain; transform: none; }
+  .mode-mock-card .mode-mock-copy { align-self: center; gap: 7px; padding-top: 0; }
+  .mode-mock-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    white-space: normal;
+  }
+  .mode-mock-card .mode-mock-card-title {
+    font-size: clamp(18px, 4vw, 28px);
+    letter-spacing: -.025em;
+    transform: none;
+  }
+  .mode-mock-card-classic .mode-mock-card-title { font-size: clamp(20px, 4.4vw, 30px); }
+  .mode-mock-card .mode-mock-tag {
+    flex: 0 1 auto;
+    width: max-content;
+    max-width: 100%;
+    min-height: 24px;
+    margin: 0;
+    padding: 3px 7px;
+    font-size: clamp(9px, 1.75vw, 11px);
+  }
+  .mode-mock-card .mode-mock-description {
+    font-size: clamp(12.5px, 2.25vw, 15.5px);
+    line-height: 1.3;
+    letter-spacing: -.012em;
+    transform: none;
+  }
+  .mode-mock-description br { display: none; }
+  .mode-mock-go,
+  .mode-mock-card-tall .mode-mock-go,
+  .mode-mock-card-extra .mode-mock-go {
+    right: 8px;
+    top: 50%;
+    width: clamp(44px, 7vw, 52px);
+    height: clamp(44px, 7vw, 52px);
+    padding: 0;
+    transform: translateY(-50%);
+  }
+  .mode-mock-go img { width: 16px; height: 22px; transform: none; }
+  .mode-mock-card-tall .mode-mock-go,
+  .mode-mock-card-extra .mode-mock-go { top: calc((100% - 72px) / 2); }
+  .mode-mock-card .mode-mock-features {
+    left: 10px;
+    right: 10px;
+    bottom: 8px;
+    height: 58px;
+    border-radius: 12px;
+  }
+  .mode-mock-features-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .mode-mock-features-three,
+  .mode-mock-card-multi .mode-mock-features { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mode-mock-card .mode-mock-features > span {
+    flex-direction: column;
+    gap: 1px;
+    padding: 3px;
+    text-align: center;
+  }
+  .mode-mock-card .mode-mock-features img {
+    width: clamp(22px, 6vw, 28px);
+    height: clamp(22px, 6vw, 28px);
+    flex-basis: clamp(22px, 6vw, 28px);
+    transform: none;
+  }
+  .mode-mock-card .mode-mock-features small,
+  .mode-mock-features .mode-mock-more small {
+    font-size: clamp(10px, 1.7vw, 11.5px);
+    line-height: 1.05;
+    white-space: normal;
+  }
+
+  .mode-mock-help {
+    height: auto;
+    min-height: 148px;
+    grid-template-columns: 70px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    gap: 8px 10px;
+    padding: 12px;
+    border-radius: 24px;
+  }
+  .mode-mock-help-art { width: 70px; height: 70px; }
+  .mode-mock-help-art img { transform: none; }
+  .mode-mock-help-copy { gap: 6px; transform: none; }
+  .mode-mock-help-copy b { font-size: clamp(20px, 5vw, 25px); }
+  .mode-mock-help-copy span { font-size: clamp(12.5px, 2.2vw, 15px); }
+  .mode-mock-help-copy br { display: none; }
+  .mode-mock-help-cta {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: 44px;
+    margin: 0;
+    padding-inline: 14px;
+    border-radius: 16px;
+    font-size: 15px;
+    transform: none;
+  }
+  .mode-mock-extra-heading { height: 40px; font-size: 14px; }
+}
+
+@media (min-width: 480px) and (max-width: 683px) {
+  .mode-mock-title-row { flex-direction: row; align-items: center; gap: 6px; white-space: nowrap; }
+}
+
+@media (min-width: 520px) and (max-width: 683px) {
+  .mode-mock-help {
+    min-height: 112px;
+    grid-template-columns: 78px minmax(0, 1fr) 180px;
+    grid-template-rows: auto;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+  .mode-mock-help-art { width: 78px; height: 78px; }
+  .mode-mock-help-cta { grid-column: 3; height: 46px; font-size: 16px; }
+}
+
+@media (max-width: 479px) {
+  .mode-mock-identity { display: none; }
+}
+
+@media (max-width: 360px) {
+  .mode-mock-back { top: 10px; width: 48px; height: 48px; }
+  .mode-mock-spark-left { display: none; }
+}
+
+/* =========================================================================
+   PRODUCCIÓN · Puente del selector de modo aprobado
+   `#screen-modes` reutiliza el mismo marcado `.mode-mock-*` del mockup. Este
+   bloque sólo resuelve el contenedor real de la app, su altura dinámica y los
+   selectores antiguos con mayor especificidad; el mockup aislado no cambia.
+   ========================================================================= */
+#screen-modes {
+  --mode-mock-font: ui-rounded, "Arial Rounded MT Bold", "Trebuchet MS", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mode-mock-body-font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  display: block;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: var(--mode-mock-font);
+  text-rendering: geometricPrecision;
+}
+
+/* La pantalla vive dentro de #app, cuya altura visible se publica en
+   `--app-h`; 100vh no es fiable con el cromo móvil abierto. */
+#screen-modes .mode-mock-shell {
+  width: min(853px, 100%);
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  margin-inline: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Resets quirúrgicos por si el HTML conserva clases reutilizadas de la
+   versión anterior (`appbar`, `modes-body`, `modes-head`, `mode-cards`). */
+#screen-modes .mode-mock-header {
+  display: block;
+  width: auto;
+  height: calc(111px + env(safe-area-inset-top));
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+}
+#screen-modes .mode-mock-profile { top: calc(20px + env(safe-area-inset-top)); }
+#screen-modes .mode-mock-profile { left: calc(31px + env(safe-area-inset-left)); }
+#screen-modes .mode-mock-wallet {
+  left: auto;
+  right: calc(20px + env(safe-area-inset-right));
+  top: calc(27px + env(safe-area-inset-top));
+}
+#screen-modes .mode-mock-back { left: calc(23px + env(safe-area-inset-left)); }
+#screen-modes .mode-mock-identity {
+  max-width: 200px;
+  overflow: hidden;
+}
+#screen-modes .mode-mock-identity b,
+#screen-modes .mode-mock-identity span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#screen-modes .mode-mock-main {
+  display: block;
+  width: auto;
+  min-height: calc(100% - 111px - env(safe-area-inset-top));
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+}
+#screen-modes .mode-mock-heading { margin: 0; }
+#screen-modes .mode-mock-catalog {
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
+  padding: 0 0 calc(32px + env(safe-area-inset-bottom));
+}
+#screen-modes .mode-mock-card,
+#screen-modes .mode-mock-help { font-family: var(--mode-mock-font); }
+
+/* `#modes-title` pertenecía al selector compacto anterior y, por usar ID,
+   ganaría a `.mode-mock-heading h1` si no se restablece aquí. Las estrellas
+   aprobadas son nodos propios, no los pseudo-elementos antiguos. */
+#screen-modes #modes-title {
+  color: #f7f6ff;
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: #f7f6ff;
+  font-size: 49.5px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.025em;
+  text-shadow: 0 4px 0 rgba(0,0,0,.42), 0 0 18px rgba(89,102,255,.12);
+  transform: translate(-1px, 3px);
+}
+#screen-modes #modes-title::before,
+#screen-modes #modes-title::after { content: none; }
+#screen-modes #modes-title:focus,
+#screen-modes #modes-title:focus-visible { outline: none; }
+#screen-modes .mode-mock-heading p,
+#screen-modes .mode-mock-heading .modes-sub {
+  margin-top: 7px;
+  color: #b9c3e9;
+  font-family: var(--mode-mock-body-font);
+  font-size: 21.5px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0;
+  transform: translateY(5px);
+}
+
+/* Producción recibe copy i18n como texto continuo. No depende de saltos <br>
+   escritos para una lengua concreta y mantiene cada párrafo lejos del CTA. */
+#screen-modes .mode-mock-description,
+#screen-modes .mode-mock-help-copy span {
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  text-wrap: pretty;
+}
+#screen-modes .mode-mock-description br,
+#screen-modes .mode-mock-help-copy br { display: none; }
+#screen-modes .mode-mock-card-survival .mode-mock-description { max-width: 292px; }
+#screen-modes .mode-mock-card-classic .mode-mock-description { max-width: 315px; }
+#screen-modes .mode-mock-card-multi .mode-mock-description { max-width: 354px; }
+#screen-modes .mode-mock-card-extra .mode-mock-description { max-width: 354px; }
+#screen-modes .mode-mock-card-multi .mode-mock-features small { white-space: normal; }
+#screen-modes .mode-mock-status {
+  align-self: flex-start;
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border: 1px solid rgba(215,190,255,.28);
+  border-radius: 999px;
+  color: #e5d4ff;
+  background: rgba(75,35,139,.64);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+/* El copy inglés es más ancho; las chispas se apartan del H1 en ambos
+   regímenes para conservar aire y evitar cualquier solapamiento. */
+html[lang="en"] #screen-modes .mode-mock-spark-left { left: 174px; }
+html[lang="en"] #screen-modes .mode-mock-spark-right { right: 173px; }
+
+#screen-modes .mode-mock-card:disabled,
+#screen-modes .mode-mock-card[aria-disabled="true"] { cursor: not-allowed; }
+#screen-modes .mode-mock-card:disabled .mode-mock-go,
+#screen-modes .mode-mock-card[aria-disabled="true"] .mode-mock-go { opacity: .72; }
+#screen-modes button:focus-visible {
+  outline: 4px solid #fff;
+  outline-offset: 4px;
+}
+
+/* 684–852 px: misma retícula canónica de 853 px y una sola escala. La
+   altura lógica compensa la escala para ocupar exactamente el #app visible. */
+@media (min-width: 684px) and (max-width: 852px) {
+  body[data-screen="modes"] { --mode-scale: calc((100vw - env(safe-area-inset-left) - env(safe-area-inset-right)) / 853px); }
+  #screen-modes .mode-mock-shell {
+    left: calc(env(safe-area-inset-left) + (100vw - env(safe-area-inset-left) - env(safe-area-inset-right)) / 2);
+    width: 853px;
+    max-width: none;
+    height: calc(var(--app-h, 100dvh) / var(--mode-scale));
+    max-height: none;
+    margin: 0 0 0 -426.5px;
+    transform: scale(var(--mode-scale));
+    transform-origin: 50% 0;
+  }
+}
+
+/* 320–683 px: reflow nativo ya definido por el mockup, pero encerrado en la
+   altura real de la app y sin las anchuras editoriales del lienzo de 853 px. */
+@media (max-width: 683px) {
+  #screen-modes .mode-mock-shell {
+    left: auto;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    margin: 0 auto;
+    transform: none;
+  }
+  #screen-modes .mode-mock-header { height: calc(88px + env(safe-area-inset-top)); }
+  #screen-modes .mode-mock-profile {
+    left: calc(8px + env(safe-area-inset-left));
+    top: calc(8px + env(safe-area-inset-top));
+  }
+  #screen-modes .mode-mock-wallet {
+    right: calc(3px + env(safe-area-inset-right));
+    top: calc(20px + env(safe-area-inset-top));
+  }
+  #screen-modes .mode-mock-back { left: calc(10px + env(safe-area-inset-left)); }
+  #screen-modes .mode-mock-main { min-height: calc(100% - 88px - env(safe-area-inset-top)); }
+  #screen-modes #modes-title {
+    font-size: clamp(26px, 7vw, 36px);
+  }
+  #screen-modes .mode-mock-heading p,
+  #screen-modes .mode-mock-heading .modes-sub {
+    max-width: 80%;
+    margin: 5px auto 0;
+    font-size: clamp(13.5px, 2.6vw, 18px);
+    transform: none;
+  }
+  #screen-modes .mode-mock-card .mode-mock-description { max-width: 100%; }
+  #screen-modes .mode-mock-status { min-height: 20px; padding: 2px 7px; font-size: 9px; }
+  html[lang="en"] #screen-modes .mode-mock-spark-left { left: calc(50% - clamp(145px, 32vw, 220px)); }
+  html[lang="en"] #screen-modes .mode-mock-spark-right { right: calc(50% - clamp(145px, 32vw, 220px)); }
+}
+
+@media (max-width: 560px) {
+  #screen-modes .mode-mock-identity { display: none; }
+}
+
+/* La preferencia "Texto grande" también alcanza el selector, cuyas medidas
+   editoriales usan px para clavar la referencia. En ese estado las tarjetas
+   ganan alto y el catálogo sigue desplazable, sin recortar copy ni rasgos. */
+body.large-text #screen-modes #modes-title { font-size: 54px; }
+body.large-text #screen-modes .mode-mock-card-title { font-size: 41px; }
+body.large-text #screen-modes .mode-mock-card-survival .mode-mock-card-title,
+body.large-text #screen-modes .mode-mock-card-multi .mode-mock-card-title { font-size: 37px; }
+body.large-text #screen-modes .mode-mock-description {
+  max-width: 370px;
+  font-size: 21px;
+  line-height: 1.38;
+}
+body.large-text #screen-modes .mode-mock-help-copy b { font-size: 28px; }
+body.large-text #screen-modes .mode-mock-help-copy span { font-size: 18px; }
+
+@media (min-width: 684px) {
+  body.large-text #screen-modes .mode-mock-card-survival { height: 250px; }
+  body.large-text #screen-modes .mode-mock-card-classic,
+  body.large-text #screen-modes .mode-mock-card-multi { height: 330px; }
+  body.large-text #screen-modes .mode-mock-card-extra { height: 360px; }
+  body.large-text #screen-modes .mode-mock-help { height: 152px; }
+}
+
+@media (max-width: 683px) {
+  body.large-text #screen-modes #modes-title { font-size: clamp(30px, 8vw, 40px); }
+  body.large-text #screen-modes .mode-mock-card,
+  body.large-text #screen-modes .mode-mock-card-tall,
+  body.large-text #screen-modes .mode-mock-card-extra { height: auto; min-height: 254px; }
+  body.large-text #screen-modes .mode-mock-card-tall,
+  body.large-text #screen-modes .mode-mock-card-extra { min-height: 292px; padding-bottom: 82px; }
+  body.large-text #screen-modes .mode-mock-card-title,
+  body.large-text #screen-modes .mode-mock-card-survival .mode-mock-card-title,
+  body.large-text #screen-modes .mode-mock-card-multi .mode-mock-card-title { font-size: clamp(22px, 5vw, 32px); }
+  body.large-text #screen-modes .mode-mock-description {
+    max-width: 100%;
+    font-size: clamp(15px, 3vw, 18px);
+    line-height: 1.4;
+  }
+}
+
+html[lang="en"] body.large-text #screen-modes .mode-mock-spark-left { left: 135px; }
+html[lang="en"] body.large-text #screen-modes .mode-mock-spark-right { right: 134px; }
+
+@media (max-width: 683px) {
+  html[lang="en"] body.large-text #screen-modes .mode-mock-spark-left { left: calc(50% - clamp(165px, 40vw, 240px)); }
+  html[lang="en"] body.large-text #screen-modes .mode-mock-spark-right { right: calc(50% - clamp(165px, 40vw, 240px)); }
+}

@@ -91,7 +91,7 @@ async function seed(cdp) {
     localStorage.setItem('cv_profile', JSON.stringify({name:'Jugador', color:'#00d0ff'}));
     // Estado válido de nivel 1: conserva el 35 % visual de la referencia sin
     // fabricar un XP mayor que el umbral real del juego (300).
-    localStorage.setItem('cv_meta', JSON.stringify({xp:105, level:1, coins:1000, gems:30, streak:{count:0,date:''}}));
+    localStorage.setItem('cv_meta', JSON.stringify({xp:105, level:1, coins:1000, gems:30, chests:2, streak:{count:0,date:''}}));
     return true;
   })()`);
 }
@@ -105,7 +105,16 @@ async function navigateHome(cdp) {
   await cdp.send('Page.reload', { ignoreCache: true });
   await reloaded;
   await ready(cdp);
-  await sleep(250);
+  await evaluate(cdp, `Promise.all([...document.images].map((img) => {
+    if (img.complete) return typeof img.decode === 'function' ? img.decode().catch(() => {}) : true;
+    return new Promise((resolve) => {
+      img.addEventListener('load', resolve, {once:true});
+      img.addEventListener('error', resolve, {once:true});
+    });
+  })).then(() => true)`);
+  // Chrome puede tardar varios frames en componer las capas PNG/glow aun con
+  // decode() resuelto; evitamos capturas parciales negras en el artefacto QA.
+  await sleep(900);
 }
 
 async function viewport(cdp, width, height, scale = 1) {
@@ -126,9 +135,34 @@ async function screenshot(cdp, name) {
 
 async function audit(cdp) {
   return evaluate(cdp, `(() => {
-    const ids = ['#screen-start','.appbar','.daily-banner','.home-play-zone','#btn-play','.home-context','.home-cards','.home-today','.bottom-nav'];
+    const ids = ['#screen-start','.appbar','.appbar-profile','.avatar','.appbar-edit','.appbar-econ','.econ-coins','.econ-gems','.econ-fire','.econ-plus','.daily-banner','.home-play-zone','#btn-play','.home-context','.record-chip','.home-cards','.home-today','.bottom-nav','.bnav-center','.bnav-center .bn-ic'];
     const rect = (el) => { const r=el.getBoundingClientRect(); return {x:+r.x.toFixed(1),y:+r.y.toFixed(1),w:+r.width.toFixed(1),h:+r.height.toFixed(1),bottom:+r.bottom.toFixed(1)}; };
     const boxes = Object.fromEntries(ids.map((selector) => [selector, rect(document.querySelector(selector))]));
+    const textStyle = (selector) => {
+      const el=document.querySelector(selector), s=getComputedStyle(el);
+      return {family:s.fontFamily,size:+parseFloat(s.fontSize).toFixed(1),weight:+s.fontWeight||0,lineHeight:s.lineHeight,letterSpacing:s.letterSpacing};
+    };
+    const typography={
+      player:textStyle('.appbar-name'), rewardTitle:textStyle('.db-tx b'), rewardBody:textStyle('.db-tx small'),
+      play:textStyle('.btn-hero-copy b'), cardTitle:textStyle('.ac-tx b'), nav:textStyle('.bnav small')
+    };
+    const circular = (el) => {
+      const r=el.getBoundingClientRect(), radius=getComputedStyle(el).borderTopLeftRadius;
+      return Math.abs(r.width-r.height)<=1.1 && (radius.includes('%') || parseFloat(radius)>=Math.min(r.width,r.height)*.45);
+    };
+    const avatar=document.querySelector('.avatar'), homeIcon=document.querySelector('.bnav-center .bn-ic');
+    const plusButtons=[...document.querySelectorAll('#screen-start .econ-plus')];
+    const econPills=[...document.querySelectorAll('#screen-start .appbar-econ .econ-pill')];
+    const playButton=document.querySelector('#btn-play'), playStyle=getComputedStyle(playButton);
+    const primaryFamilies=new Set(Object.values(typography).map((value)=>value.family));
+    const design={
+      avatarCircular:circular(avatar),
+      homeCircular:circular(homeIcon),
+      economyStyled:econPills.length===3 && econPills.every((el)=>getComputedStyle(el).backgroundImage!=='none' && parseFloat(getComputedStyle(el).borderWidth)>=1),
+      plusCircular:plusButtons.length===2 && plusButtons.every((el)=>circular(el) && (getComputedStyle(el).backgroundImage!=='none' || getComputedStyle(el).backgroundColor!=='rgba(0, 0, 0, 0)')),
+      ctaStyled:playStyle.backgroundImage!=='none' && playStyle.boxShadow!=='none' && parseFloat(playStyle.borderWidth)>=4,
+      typographyAligned:primaryFamilies.size===1 && typography.play.weight>=900 && typography.play.size>typography.rewardTitle.size && typography.rewardTitle.size>typography.rewardBody.size && typography.cardTitle.weight>=800
+    };
     const visible = [...document.querySelectorAll('#screen-start button')].filter((el) => {
       const r=el.getBoundingClientRect(), s=getComputedStyle(el);
       return !el.hidden && s.display!=='none' && r.width>0 && r.height>0 && r.bottom>0 && r.top<innerHeight;
@@ -144,18 +178,33 @@ async function audit(cdp) {
       // El lápiz está deliberadamente superpuesto al bloque de perfil. En
       // scroll corto el contenido pasa por debajo de cabecera/nav fijas.
       const intentionalProfile=actions.includes('profile') && actions.includes('edit-name');
-      const scrollAgainstChrome=(first.closest('.home-scroll') && (second.closest('.appbar') || second.closest('.bottom-nav') || second.classList.contains('home-bell')))
-        || (second.closest('.home-scroll') && (first.closest('.appbar') || first.closest('.bottom-nav') || first.classList.contains('home-bell')));
+      const scrollAgainstChrome=(first.closest('.home-scroll') && (second.closest('.appbar') || second.closest('.bottom-nav')))
+        || (second.closest('.home-scroll') && (first.closest('.appbar') || first.closest('.bottom-nav')));
       if (intentionalProfile || scrollAgainstChrome) continue;
       const a=visible[i].getBoundingClientRect(), b=visible[j].getBoundingClientRect();
       const area=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
       if (area > 80 && !visible[i].contains(visible[j]) && !visible[j].contains(visible[i])) overlaps.push([visible[i].id||visible[i].dataset.act,visible[j].id||visible[j].dataset.act,Math.round(area)]);
     }
+    const profileRect=document.querySelector('.appbar-profile').getBoundingClientRect();
+    const econRect=document.querySelector('.appbar-econ').getBoundingClientRect();
+    const intersection=(a,b)=>Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))
+      *Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+    // Los wrappers de Perfil y Economía pueden cruzar sus cajas vacías sin que
+    // ningún píxel interactivo se solape. Auditamos las piezas visuales reales.
+    const profilePieces=['.avatar','.appbar-name','.appbar-edit','.appbar-lvl-star','.appbar-lvl-txt','.appbar-xp','.appbar-xp-num']
+      .map((selector)=>document.querySelector(selector)?.getBoundingClientRect()).filter(Boolean);
+    const econPieces=[...document.querySelectorAll('#screen-start .appbar-econ .econ-pill')].map((el)=>el.getBoundingClientRect());
+    const headerOverlap=Math.max(0,...profilePieces.flatMap((a)=>econPieces.map((b)=>intersection(a,b))));
+    const recordText=document.querySelector('.record-chip')?.textContent || '';
     return {
       viewport:{w:innerWidth,h:innerHeight,dpr:devicePixelRatio},
       document:{scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight},
       homeScroll:{clientHeight:document.querySelector('.home-scroll').clientHeight,scrollHeight:document.querySelector('.home-scroll').scrollHeight},
       boxes, clipped, overlaps,
+      header:{overlap:+headerOverlap.toFixed(1),within:profileRect.left>=-.5 && econRect.right<=innerWidth+.5},
+      typography, design,
+      semantics:{scoreOnly:!/(Nivel|Level)/i.test(recordText),settingsCount:document.querySelectorAll('#screen-start [data-act=settings]').length},
+      disabled:{multiplayer:document.querySelector('#home-multi-card')?.disabled===true,league:document.querySelector('#home-today-league')?.disabled===true,friends:document.querySelector('#home-today-friends')?.disabled===true},
       text:{name:document.querySelector('.appbar-name')?.textContent,coins:document.querySelector('[data-econ-num=coins]')?.textContent,gems:document.querySelector('[data-econ-num=gems]')?.textContent,best:document.querySelector('#start-best')?.textContent},
       errors:window.__qaErrors || []
     };
@@ -169,6 +218,14 @@ async function interactionAudit(cdp) {
     const wait=(ms=60)=>new Promise(r=>setTimeout(r,ms));
     const modalOpen=(selector)=>!document.querySelector(selector)?.hidden;
     const close=(selector)=>document.querySelector(selector+' [data-close]')?.click();
+
+    result.singleSettings=document.querySelectorAll('#screen-start [data-act=settings]').length===1
+      && document.querySelector('#screen-start [data-act=settings]')?.closest('.bottom-nav')!==null;
+    result.scoreOnly=!/(Nivel|Level)/i.test(document.querySelector('.record-chip')?.textContent||'');
+    result.multiplayerDisabled=document.querySelector('#home-multi-card')?.disabled===true;
+    result.leagueDisabled=document.querySelector('#home-today-league')?.disabled===true;
+    result.friendsDisabled=document.querySelector('#home-today-friends')?.disabled===true;
+
     click('#btn-play'); await new Promise(r=>setTimeout(r,80));
     result.play=!document.querySelector('#screen-modes').hidden;
     document.querySelector('#modes-back')?.click(); await new Promise(r=>setTimeout(r,50));
@@ -187,7 +244,9 @@ async function interactionAudit(cdp) {
     close('#modal-settings'); await wait();
 
     click('[data-act=profile]'); await wait();
-    result.profile=modalOpen('#modal-medals');
+    result.profile=modalOpen('#modal-medals')
+      && !document.querySelector('#modal-medals')?.classList.contains('achievements-only')
+      && getComputedStyle(document.querySelector('#modal-medals .profile-only')).display!=='none';
     close('#modal-medals'); await wait();
 
     const nativePrompt=window.prompt;
@@ -203,39 +262,84 @@ async function interactionAudit(cdp) {
     result.gemsShop=modalOpen('#modal-shop');
     close('#modal-shop'); await wait();
 
-    click('.home-bell'); await wait();
+    click('#home-today-daily'); await wait();
     result.missions=modalOpen('#modal-missions');
     close('#modal-missions'); await wait();
 
+    const reward=document.querySelector('#btn-reward');
+    const geometry=(el)=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};};
+    const sameGeometry=(a,b,tolerance=1)=>Object.keys(a).every((key)=>Math.abs(a[key]-b[key])<=tolerance);
+    const rewardBefore=geometry(reward), playBefore=geometry(document.querySelector('.home-play-zone')), cardsBefore=geometry(document.querySelector('.home-cards'));
     const beforeCoins=Number((document.querySelector('#screen-start [data-econ-num=coins]')?.textContent||'0').replace(/\D/g,''));
-    click('[data-act=claim-daily]'); await wait(100);
+    click('[data-act=claim-daily]'); await wait(30);
+    const enteredPop=reward.classList.contains('is-popping') && !reward.classList.contains('is-claimed');
+    await wait(1020);
     const afterCoins=Number((document.querySelector('#screen-start [data-econ-num=coins]')?.textContent||'0').replace(/\D/g,''));
-    result.dailyReward=afterCoins>beforeCoins && document.querySelector('[data-act=claim-daily]')?.disabled;
+    const rewardAfter=geometry(reward), playAfter=geometry(document.querySelector('.home-play-zone')), cardsAfter=geometry(document.querySelector('.home-cards'));
+    const rewardStyle=getComputedStyle(reward);
+    result.dailyReward=afterCoins>beforeCoins && enteredPop && reward.classList.contains('is-claimed')
+      && !reward.classList.contains('is-popping') && document.querySelector('[data-act=claim-daily]')?.disabled
+      && (rewardStyle.visibility==='hidden' || Number(rewardStyle.opacity)===0);
+    result.dailyRewardStable=sameGeometry(rewardBefore,rewardAfter) && sameGeometry(playBefore,playAfter) && sameGeometry(cardsBefore,cardsAfter);
 
     click('[data-act=home-daily]'); await wait();
     result.daily=modalOpen('#modal-daily');
     close('#modal-daily'); await wait();
     click('[data-act=open-chests]'); await wait();
     result.chests=modalOpen('#modal-chests');
+    const initialChestBadge=document.querySelector('#home-chests-badge');
+    const initialChestState=document.querySelector('#home-chests-state');
+    const startedAtTwo=initialChestBadge?.hidden===false && initialChestBadge?.textContent==='2' && /2/.test(initialChestState?.textContent||'');
+    click('#btn-open-chest'); await wait(30);
+    const firstLive=initialChestBadge?.hidden===false && initialChestBadge?.textContent==='1' && /1/.test(initialChestState?.textContent||'');
+    await wait(620);
+    click('#btn-open-chest'); await wait(30);
+    const secondLive=initialChestBadge?.hidden===true
+      && !document.querySelector('#home-today-chests')?.classList.contains('is-ready')
+      && !/1|2/.test(initialChestState?.textContent||'');
+    result.chestsLive=startedAtTwo && firstLive && secondLive;
+    await wait(620);
     close('#modal-chests'); await wait();
-    click('[data-act=nav-medals]'); await wait();
-    result.achievements=modalOpen('#modal-medals');
+    click('[data-act=nav-achievements]'); await wait();
+    result.achievements=modalOpen('#modal-medals')
+      && document.querySelector('#modal-medals')?.classList.contains('achievements-only')
+      && /Logros|Achievements/i.test(document.querySelector('#medals-title')?.textContent||'')
+      && getComputedStyle(document.querySelector('#modal-medals .profile-only')).display==='none';
     close('#modal-medals'); await wait();
     click('[data-act=nav-shop]'); await wait();
     result.shop=modalOpen('#modal-shop');
     close('#modal-shop'); await wait();
 
-    const toastCount=()=>document.querySelectorAll('#toasts .toast').length;
-    let beforeToasts=toastCount();
-    click('[data-act=home-multi]'); await wait();
-    result.multiplayerNotice=toastCount()>beforeToasts;
-    beforeToasts=toastCount();
-    click('[data-act=home-friends]'); await wait();
-    result.friendsNotice=toastCount()>beforeToasts;
     click('[data-act=nav-home]'); await wait();
     result.home=!document.querySelector('#screen-start').hidden;
     return result;
   })()`);
+}
+
+function continuityAudit(results) {
+  const pairs = [
+    ['719x1024', '720x1024'],
+    ['819x1180', '820x1180'],
+    ['900x1280', '901x1280'],
+    ['853x1280', '854x1280'],
+    ['1023x1536', '1024x1536'],
+  ];
+  const selectors = ['.avatar', '.appbar-econ', '#btn-play', '.bnav-center .bn-ic'];
+  const report = {};
+  for (const [beforeKey, afterKey] of pairs) {
+    const before = results[beforeKey], after = results[afterKey];
+    report[`${beforeKey}->${afterKey}`] = Object.fromEntries(selectors.map((selector) => {
+      const a = before.boxes[selector], b = after.boxes[selector];
+      const delta = {
+        x: +Math.abs(a.x - b.x).toFixed(1), y: +Math.abs(a.y - b.y).toFixed(1),
+        w: +Math.abs(a.w - b.w).toFixed(1), h: +Math.abs(a.h - b.h).toFixed(1),
+      };
+      const largest = Math.max(a.w, a.h, b.w, b.h);
+      const sizeLimit = Math.max(4, largest * .12);
+      return [selector, { ...delta, pass: delta.w <= sizeLimit && delta.h <= sizeLimit }];
+    }));
+  }
+  return report;
 }
 
 async function main() {
@@ -258,15 +362,25 @@ async function main() {
 
     const results = {};
     for (const spec of [
+      { width: 853, height: 1280, scale: 1 },
       { width: 854, height: 1280, scale: 1, name: 'home-actual-854x1280.png' },
+      { width: 1023, height: 1536, scale: 1 },
       { width: 1024, height: 1536, scale: 1, name: 'home-actual-1024x1536.png' },
+      { width: 601, height: 900, scale: 1 },
+      { width: 719, height: 1024, scale: 1 },
+      { width: 720, height: 1024, scale: 1 },
+      { width: 768, height: 1024, scale: 1 },
+      { width: 819, height: 1180, scale: 1 },
+      { width: 820, height: 1180, scale: 1 },
+      { width: 900, height: 1280, scale: 1 },
+      { width: 901, height: 1280, scale: 1 },
       { width: 390, height: 844, scale: 1, name: 'home-actual-390x844.png' },
       { width: 360, height: 640, scale: 1, name: 'home-actual-360x640.png' },
     ]) {
       await viewport(cdp, spec.width, spec.height, spec.scale);
       await navigateHome(cdp);
       results[`${spec.width}x${spec.height}`] = await audit(cdp);
-      await screenshot(cdp, spec.name);
+      if (spec.name) await screenshot(cdp, spec.name);
       if (spec.width === 360) {
         await evaluate(cdp, `(() => { const el=document.querySelector('.home-scroll'); el.scrollTop=el.scrollHeight; return {top:el.scrollTop,max:el.scrollHeight-el.clientHeight}; })()`);
         await sleep(120);
@@ -274,9 +388,40 @@ async function main() {
         await screenshot(cdp, 'home-actual-360x640-bottom.png');
       }
     }
+    results.continuity = continuityAudit(results);
     await viewport(cdp, 390, 844, 1);
     await navigateHome(cdp);
     results.interactions = await interactionAudit(cdp);
+    results.interactionErrors = await evaluate(cdp, `window.__qaErrors || []`);
+
+    await viewport(cdp, 720, 1024, 1);
+    await evaluate(cdp, `(() => {
+      localStorage.setItem('cv_profile', JSON.stringify({name:'WWWWWWWWWWWWWWWW', color:'#00d0ff'}));
+      const meta=JSON.parse(localStorage.getItem('cv_meta')||'{}');
+      meta.coins=99999999; meta.gems=99999999;
+      localStorage.setItem('cv_meta', JSON.stringify(meta));
+      return true;
+    })()`);
+    const stressReloaded=cdp.once('Page.loadEventFired');
+    await cdp.send('Page.reload', { ignoreCache: true });
+    await stressReloaded;
+    await ready(cdp);
+    await sleep(250);
+    results.headerStress = await audit(cdp);
+
+    const viewportAudits=Object.entries(results).filter(([,value])=>value?.viewport);
+    const designViewports=['390x844','720x1024','854x1280','1024x1536'].map((key)=>results[key]);
+    const continuityChecks=Object.values(results.continuity).flatMap((pair)=>Object.values(pair));
+    results.verdict={
+      interactions:Object.values(results.interactions).every(Boolean),
+      layouts:viewportAudits.every(([,value])=>value.document.scrollWidth<=value.viewport.w && value.clipped.length===0 && value.overlaps.length===0 && value.header.overlap===0 && value.header.within),
+      design:designViewports.every((value)=>Object.values(value.design).every(Boolean)),
+      continuity:continuityChecks.every((value)=>value.pass),
+      disabled:viewportAudits.every(([,value])=>Object.values(value.disabled).every(Boolean)),
+      semantics:viewportAudits.every(([,value])=>value.semantics.scoreOnly && value.semantics.settingsCount===1),
+      runtime:viewportAudits.every(([,value])=>value.errors.length===0) && results.interactionErrors.length===0,
+    };
+    fs.writeFileSync(path.join(OUT, 'home-visual-qa-report.json'), JSON.stringify(results, null, 2) + '\n');
     cdp.close();
     process.stdout.write(JSON.stringify(results, null, 2));
   } finally {

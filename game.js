@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.40';
+  const VERSION = '2.6.52';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -316,14 +316,19 @@
         play: 'Jugar', reward: 'Recompensa diaria', menu_profile: 'Logros', menu_shop: 'Tienda',
         menu_settings: 'Ajustes', how: '¿Cómo se juega?', install: 'Instalar app', sound: 'Sonido', best: 'Mejor puntuación:',
         tab_log: 'Logros', tab_shop: 'Tienda', tab_home: 'Inicio', tab_guide: 'Guía', tab_set: 'Ajustes', missions_title: '🎯 Misiones',
-        modes_title: 'Elige tu modo', modes_sub: 'Cada modo, una forma diferente de jugar', group_mode: 'Modo', group_diff: 'Dificultad',
-        card_surv: 'Supervivencia', card_surv_badge: 'OLEADAS INFINITAS', card_surv_desc: 'Aguanta oleadas cada vez más intensas y supera tu mejor marca.',
-        card_classic: 'Clásico', card_classic_badge: 'POR NIVELES', card_classic_desc: 'Supera mapas con objetivos, obstáculos y desafíos nuevos.',
+        modes_title: 'Elige tu modo', modes_sub: 'Cada modo, una forma diferente de jugar', modes_more: 'Más modos',
+        modes_profile_resources: 'Perfil y recursos', modes_resources: 'Recursos', modes_catalog: 'Catálogo de modos', econ_balance: 'Saldo: {n}',
+        group_mode: 'Modo', group_diff: 'Dificultad',
+        card_surv: 'Supervivencia', card_surv_badge: 'OLEADAS INFINITAS', card_surv_desc: 'Enfréntate a oleadas crecientes de enemigos. Cada vez son más fuertes. ¿Cuánto tiempo podrás sobrevivir?',
+        card_classic: 'Clásico', card_classic_badge: 'POR NIVELES', card_classic_desc: 'Supera niveles con diferentes mapas y desafíos únicos. Nuevos obstáculos, mecánicas y objetos te esperan en cada uno.',
         group_prog: 'Progresión', group_score: 'Puntuación', group_relax: 'Relax',
         card_adv_badge: 'INFINITO', card_contra_badge: 'CONTRARRELOJ', card_zen_badge: 'RELAX', card_contra_daily: 'Incluye el Reto del día',
-        card_multi: 'Multijugador', card_multi_badge: 'PRÓXIMAMENTE', card_multi_desc: 'Desafía a otros jugadores en línea cuando esté disponible.',
+        card_multi: 'Multijugador', card_multi_badge: 'PRÓXIMAMENTE', card_multi_tag: 'COMPITE EN LÍNEA', card_multi_desc: 'Desafía a otros jugadores en línea cuando esté disponible.',
         card_feat_locks: 'Bloqueos', card_feat_objects: 'Objetos', card_feat_events: 'Eventos', card_feat_more: '¡Y mucho más!',
         card_feat_first: 'Termina primero el tablero', card_feat_best: 'Mejor puntuación', card_feat_online: 'Partidas en línea',
+        card_feat_biomes: 'Biomas', card_feat_goals: 'Objetivos', card_feat_minibosses: 'Mini-jefes',
+        card_feat_time: 'Gana tiempo', card_feat_pressure: 'Presión creciente',
+        card_feat_no_penalties: 'Sin penalizaciones', card_feat_no_limit: 'Sin límite', card_feat_relaxed: 'Ritmo relajado',
         how_card_desc: 'Repasa las reglas, consejos y todo lo que necesitas saber para dominar el juego.', how_card_cta: 'Ver información', multi_soon: 'Multijugador en línea: ¡muy pronto!',
         classic_title: 'Modo Clásico', world_news: 'Novedades de este mundo', worlds_label: 'Mundos', all_rewards: '🎁 Ver recompensas',
         to_map: 'Volver al mapa', classic_lvl_sub: 'Nivel {n} · {w}', classic_next: 'Siguiente nivel →',
@@ -590,14 +595,19 @@
         play: 'Play', reward: 'Daily reward', menu_profile: 'Profile', menu_shop: 'Shop',
         menu_settings: 'Settings', how: 'How to play?', install: 'Install app', sound: 'Sound', best: 'Best score:',
         tab_log: 'Trophies', tab_shop: 'Shop', tab_home: 'Home', tab_guide: 'Guide', tab_set: 'Settings', missions_title: '🎯 Missions',
-        modes_title: 'Choose your mode', modes_sub: 'Each mode, a different way to play', group_mode: 'Mode', group_diff: 'Difficulty',
-        card_surv: 'Survival', card_surv_badge: 'ENDLESS WAVES', card_surv_desc: 'Survive rising waves and beat your best run.',
-        card_classic: 'Classic', card_classic_badge: 'BY LEVELS', card_classic_desc: 'Clear maps with fresh goals, obstacles and challenges.',
+        modes_title: 'Choose your mode', modes_sub: 'Each mode, a different way to play', modes_more: 'More modes',
+        modes_profile_resources: 'Profile and resources', modes_resources: 'Resources', modes_catalog: 'Mode catalog', econ_balance: 'Balance: {n}',
+        group_mode: 'Mode', group_diff: 'Difficulty',
+        card_surv: 'Survival', card_surv_badge: 'ENDLESS WAVES', card_surv_desc: 'Face growing waves of enemies. They get stronger every time. How long can you survive?',
+        card_classic: 'Classic', card_classic_badge: 'BY LEVELS', card_classic_desc: 'Clear levels across different maps and unique challenges. New obstacles, mechanics and objects await in each one.',
         group_prog: 'Progression', group_score: 'Score', group_relax: 'Relax',
         card_adv_badge: 'ENDLESS', card_contra_badge: 'TIME ATTACK', card_zen_badge: 'RELAX', card_contra_daily: 'Includes the Daily challenge',
-        card_multi: 'Multiplayer', card_multi_badge: 'COMING SOON', card_multi_desc: 'Challenge other players online when it is available.',
+        card_multi: 'Multiplayer', card_multi_badge: 'COMING SOON', card_multi_tag: 'COMPETE ONLINE', card_multi_desc: 'Challenge other players online when it is available.',
         card_feat_locks: 'Locks', card_feat_objects: 'Objects', card_feat_events: 'Events', card_feat_more: 'And much more!',
         card_feat_first: 'Finish the board first', card_feat_best: 'Best score', card_feat_online: 'Online matches',
+        card_feat_biomes: 'Biomes', card_feat_goals: 'Goals', card_feat_minibosses: 'Mini-bosses',
+        card_feat_time: 'Gain time', card_feat_pressure: 'Rising pressure',
+        card_feat_no_penalties: 'No penalties', card_feat_no_limit: 'No limit', card_feat_relaxed: 'Relaxed pace',
         how_card_desc: 'Review the rules, tips and everything you need to master the game.', how_card_cta: 'See info', multi_soon: 'Online multiplayer: coming soon!',
         classic_title: 'Classic Mode', world_news: "This world's news", worlds_label: 'Worlds', all_rewards: '🎁 See rewards',
         to_map: 'Back to map', classic_lvl_sub: 'Level {n} · {w}', classic_next: 'Next level →',
@@ -1331,13 +1341,12 @@
   /* ===================== Render (DOM) ===================== */
   const Render = {
     boardEl: null, cells: [], glyphs: [],
-    popupsEl: null, popupPool: [], popupNext: 0,
+    popupsEl: null, popupPool: [], popupNext: 0, convergeLayer: null,
 
     buildBoard() {
       this.boardEl = $('#board');
       this.popupsEl = $('#popups');
       this.boardEl.style.setProperty('--size', State.size);
-      this.popupsEl.style.setProperty('--size', State.size); // para dimensionar .fly-glyph
       this.boardEl.innerHTML = '';
       this.cells = []; this.glyphs = []; this._cellId = []; this._cellTile = [];
       const frag = document.createDocumentFragment();
@@ -1356,6 +1365,10 @@
       this.boardEl.appendChild(frag);
       // pool de popups
       this.popupsEl.innerHTML = '';
+      this.convergeLayer = document.createElement('div');
+      this.convergeLayer.className = 'converge-layer';
+      this.convergeLayer.setAttribute('aria-hidden', 'true');
+      this.popupsEl.appendChild(this.convergeLayer);
       this.popupPool = [];
       for (let i = 0; i < 14; i++) {
         const p = document.createElement('div');
@@ -1363,6 +1376,9 @@
         this.popupsEl.appendChild(p);
         this.popupPool.push(p);
       }
+      // buildBoard normalmente precede a FX.init; esta rama mantiene el pool unido
+      // si en el futuro el tablero se reconstruye durante la misma sesión.
+      if (FX.layer) FX._attachConvergeLayer(this.convergeLayer);
     },
 
     cellLabel(i) {
@@ -1425,12 +1441,24 @@
       el.classList.add('spawn');
     },
     clearAnim(indices, target) {
-      // Vuelo de convergencia: si se conoce la casilla tocada, los iconos "viajan"
-      // hacia ella antes del estallido (visualiza la metáfora del juego).
-      if (target != null) this.convergeFly(indices, target);
-      // La explosión del icono crece con la racha de combo (frenesí en el tablero):
-      // suave en combos bajos y cada vez más violenta/llamativa al subir. SIN giro,
-      // solo escala de "boom" (estallido) y overshoot.
+      // En una convergencia, FX ya ha clonado la casilla completa (cuerpo + icono).
+      // Se retira el contenido real en el mismo tick para que el vuelo se lea como
+      // una continuación limpia, sin duplicarlo con glyph-out ni pseudo-bursts.
+      // Las limpiezas especiales (sin target) conservan su salida temática propia.
+      if (target != null) {
+        indices.forEach(i => {
+          const el = this.cells[i];
+          el.classList.remove('spawn', 'clear');
+          el.style.removeProperty('--clear-snap');
+          if (State.board[i] === null) {
+            el.classList.remove('has-icon');
+            el.classList.toggle('empty', !State.tiles[i]);
+            this.setGlyph(i, null);
+          }
+        });
+        return;
+      }
+
       const combo = Math.max(1, State.combo || 1);
       const t = clamp((combo - 1) / 19, 0, 1);        // 0..1 ramp sobre combo 1..20
       const snap = (0.45 - t * 0.38).toFixed(2);      // colapso del pop 0.45 → 0.07 (más seco a más combo)
@@ -1449,42 +1477,6 @@
           // icono nuevo (spawn/penalización), board[i]!==null y NO se toca.
           if (State.board[i] === null) this.setGlyph(i, null);
         }, { once: true });
-      });
-    },
-    // Clones de los iconos convergentes volando hacia la casilla tocada (WAAPI,
-    // compositor-only: solo transform/opacity). Pool propio en la capa de popups.
-    _flyPool: null, _flyNext: 0,
-    convergeFly(indices, target) {
-      if (Settings.reducedFx) return;
-      if (!this._flyPool) {
-        this._flyPool = [];
-        for (let k = 0; k < 8; k++) {
-          const s = document.createElement('span');
-          s.className = 'fly-glyph';
-          s.setAttribute('aria-hidden', 'true');
-          this.popupsEl.appendChild(s);
-          this._flyPool.push(s);
-        }
-      }
-      const size = State.size;
-      const w = this.popupsEl.clientWidth || 0; if (!w) return;
-      const cellPx = w / size;
-      const tr = (target / size | 0), tc = target % size;
-      indices.forEach((i) => {
-        const id = this._cellId[i]; if (!id) return;   // aún no borrado (se borra al final del pop)
-        const r = (i / size | 0), c = i % size;
-        const s = this._flyPool[this._flyNext = (this._flyNext + 1) % this._flyPool.length];
-        s.innerHTML = Icons.svg(id);
-        s.style.left = ((c + 0.5) / size * 100) + '%';
-        s.style.top = ((r + 0.5) / size * 100) + '%';
-        const dx = (tc - c) * cellPx, dy = (tr - r) * cellPx;
-        s.getAnimations().forEach((a) => a.cancel());
-        const anim = s.animate([
-          { opacity: .95, transform: 'translate(-50%,-50%) scale(.92)' },
-          { opacity: .8, transform: `translate(calc(-50% + ${dx * 0.85}px), calc(-50% + ${dy * 0.85}px)) scale(.5)`, offset: .8 },
-          { opacity: 0, transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.2)` },
-        ], { duration: 230, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'forwards' });
-        if (anim && anim.finished) anim.finished.then(() => { s.style.opacity = '0'; anim.cancel(); }).catch(() => { });
       });
     },
 
@@ -2135,9 +2127,18 @@
    * "gravedad" se precalcula como keyframes parabólicos.
    */
   const FX = {
-    layer: null, pool: [], idx: 0, active: 0, cap: 40, w: 0, h: 0, boardRect: null, supported: true, wave: null,
-    POOL: 140,                // backstop absoluto para bursts de convergencia (FB-1)
+    layer: null, pool: [], idx: 0, active: 0, cap: 40, w: 0, h: 0, boardRect: null, supported: true,
+    wave: null, convergeHost: null, convergeGroups: [], convergeGroupIdx: 0,
+    POOL: 140,                // backstop absoluto para celebraciones y recompensas
     ABS_MAX: 140,
+    CONVERGE_GROUPS: 3,       // tres coreografías completas pueden convivir sin reciclar nodos
+    MAX_CONVERGE_ICONS: 5,    // cuatro direcciones + una casilla extra de Imán
+    BURST_PARTICLES: 12,
+    CONVERGE_TRAVEL_MS: 260,
+    CONVERGE_IMPACT_DELAY: 260,
+    CONVERGE_WAVE_MS: 280,
+    BURST_THRESHOLDS: [3, 6, 10, 15, 20, 30],
+    BURST_ACCENTS: ['#ffffff', '#34e29b', '#00d0ff', '#b46cff', '#ff5cf0', '#ffd84d', '#ff9838'],
     // Estrella REDONDEADA (5 puntas con esquinas suaves) como máscara SVG: escala
     // a cualquier tamaño (mask-size 100%) y el fondo/gradiente se ve a través.
     STAR_MASK: "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20fill='%23fff'%20d='M12%202.5c.5%200%20.9.3%201.1.7l2.4%205%205.4.8c1%20.1%201.4%201.3.7%202l-3.9%203.8.9%205.4c.2%201-.9%201.8-1.8%201.3L12%2018.9l-4.8%202.5c-.9.5-2-.3-1.8-1.3l.9-5.4L3.4%2011c-.7-.7-.3-1.9.7-2l5.4-.8%202.4-5c.2-.4.6-.7%201.1-.7z'/%3E%3C/svg%3E\")",
@@ -2162,22 +2163,108 @@
         this.pool.push({ el: s, anim: null, busy: false });
         frag.appendChild(s);
       }
-      // Onda expansiva del punto de convergencia (elemento dedicado: anillo con
-      // glow propio vía CSS, así no contamina el pool con filtros costosos).
+      // #fx-wave queda reservado a boardClear. La convergencia usa ondas locales
+      // para no perder su impacto cuando ambas celebraciones coinciden.
       this.wave = document.createElement('span'); this.wave.id = 'fx-wave';
       frag.appendChild(this.wave);
       this.layer.appendChild(frag);
+      this._attachConvergeLayer(Render.convergeLayer);
       this.resize();
       window.addEventListener('resize', () => this.resize(), { passive: true });
       window.addEventListener('scroll', () => this.syncBoardRect(), { passive: true });
+      if (window.visualViewport) window.visualViewport.addEventListener('resize', () => this.resize(), { passive: true });
     },
-    resize() { this.w = window.innerWidth; this.h = window.innerHeight; this.syncBoardRect(); },
+    _attachConvergeLayer(host) {
+      if (!host) return;
+      this._cancelConvergeAnimations();
+      host.innerHTML = '';
+      this.convergeHost = host;
+      this.convergeGroups = [];
+      this.convergeGroupIdx = 0;
+      const frag = document.createDocumentFragment();
+      for (let g = 0; g < this.CONVERGE_GROUPS; g++) {
+        const group = { tiles: [], particles: [], wave: null };
+        for (let i = 0; i < this.MAX_CONVERGE_ICONS; i++) {
+          const tile = document.createElement('span');
+          tile.className = 'cell has-icon converge-tile';
+          tile.setAttribute('aria-hidden', 'true');
+          const glyph = document.createElement('span'); glyph.className = 'glyph';
+          tile.appendChild(glyph);
+          group.tiles.push({ el: tile, glyph, anim: null });
+          frag.appendChild(tile);
+        }
+        for (let i = 0; i < this.BURST_PARTICLES; i++) {
+          const particle = document.createElement('span');
+          particle.className = 'converge-particle';
+          group.particles.push({ el: particle, anim: null });
+          frag.appendChild(particle);
+        }
+        group.wave = document.createElement('span');
+        group.wave.className = 'converge-wave';
+        frag.appendChild(group.wave);
+        this.convergeGroups.push(group);
+      }
+      host.appendChild(frag);
+    },
+    _cancelConvergeGroup(group) {
+      if (!group) return;
+      [...group.tiles, ...group.particles].forEach((slot) => {
+        const anim = slot.anim;
+        if (anim) {
+          try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) { }
+        }
+        slot.anim = null;
+        slot.el.style.opacity = '0';
+      });
+      if (group.wave && group.wave.getAnimations) group.wave.getAnimations().forEach((a) => { try { a.cancel(); } catch (_) { } });
+      if (group.wave) group.wave.style.opacity = '0';
+    },
+    _cancelConvergeAnimations() { this.convergeGroups.forEach((group) => this._cancelConvergeGroup(group)); },
+    _nextConvergeGroup() {
+      if (!this.convergeGroups.length) this._attachConvergeLayer(Render.convergeLayer);
+      if (!this.convergeGroups.length) return null;
+      const group = this.convergeGroups[this.convergeGroupIdx];
+      this.convergeGroupIdx = (this.convergeGroupIdx + 1) % this.convergeGroups.length;
+      this._cancelConvergeGroup(group);
+      return group;
+    },
+    resize() {
+      this._cancelConvergeAnimations();
+      this.w = window.innerWidth; this.h = window.innerHeight; this.syncBoardRect();
+    },
     syncBoardRect() { const el = $('#board'); this.boardRect = el ? el.getBoundingClientRect() : null; },
     // Coordenadas (viewport) del centro de la celda i
     cellXY(i) {
       const s = State.size, r = this.boardRect;
       if (!r || !r.width) return { x: this.w / 2, y: this.h / 2 };
       return { x: r.left + ((i % s) + 0.5) / s * r.width, y: r.top + ((i / s | 0) + 0.5) / s * r.height };
+    },
+    // Métrica local exacta: tablero y clones comparten .board-wrap, por lo que siguen
+    // juntos durante impact(), resize y skins. Se descuenta el gap real una sola vez.
+    _gridMetrics() {
+      const el = $('#board'), host = this.convergeHost, r = this.boardRect, s = State.size;
+      if (!el || !host || !r || !r.width) return null;
+      const hr = host.getBoundingClientRect();
+      const sx = hr.width && host.clientWidth ? hr.width / host.clientWidth : 1;
+      const sy = hr.height && host.clientHeight ? hr.height / host.clientHeight : 1;
+      const left = hr.width ? (r.left - hr.left) / sx : 0;
+      const top = hr.height ? (r.top - hr.top) / sy : 0;
+      const width = r.width / sx, height = r.height / sy;
+      let gapX = 0, gapY = 0;
+      if (typeof window.getComputedStyle === 'function') {
+        const cs = window.getComputedStyle(el);
+        gapX = parseFloat(cs.columnGap) || 0;
+        gapY = parseFloat(cs.rowGap) || 0;
+      }
+      const cellW = (width - gapX * (s - 1)) / s;
+      const cellH = (height - gapY * (s - 1)) / s;
+      return {
+        cellW, cellH, cellPx: Math.min(cellW, cellH),
+        xy: (i) => {
+          const row = (i / s) | 0, col = i % s;
+          return { x: left + col * (cellW + gapX) + cellW / 2, y: top + row * (cellH + gapY) + cellH / 2 };
+        },
+      };
     },
     // Busca una ranura LIBRE (sin cancelar las activas: cero churn de capas).
     _slot() {
@@ -2285,43 +2372,6 @@
         else this._emit(origin.x, origin.y, Math.cos(a) * (260 + Math.random() * 280), Math.sin(a) * (260 + Math.random() * 280) - 80, 520, 0.82 + Math.random() * 0.32, 6 + Math.random() * 5, col, 1, (Math.random() - 0.5) * 720);
       }
     },
-    // Duración del efecto ambiental (onda + camino), sincronizado con styles.css.
-    DUR_CLEAR: 460,
-    // Estrellita de "camino": pop en (x,y) tras `delay` ms; se mantiene y se
-    // desvanece junto con TODO el efecto al terminar DUR_CLEAR (mismo final).
-    // Reutiliza el pool y el gobernador. Sin glow (son muchas).
-    _spark(x, y, size, color, delay, force) {
-      if (!this.supported || this.active >= (force ? this.ABS_MAX : this.cap)) return;
-      const p = this._slot(); if (!p) return;
-      const el = p.el;
-      el.style.width = size + 'px'; el.style.height = size + 'px';
-      el.style.background = color;
-      this._setStar(el, true); el.style.filter = 'none'; el.style.transformOrigin = '50% 50%';
-      const ox = (x - size / 2).toFixed(1), oy = (y - size / 2).toFixed(1);
-      const tr = (sc, rot) => 'translate3d(' + ox + 'px,' + oy + 'px,0) scale(' + sc + ') rotate(' + rot + 'deg)';
-      const dur = Math.max(140, this.DUR_CLEAR - delay);
-      const oin = Math.min(0.5, 100 / dur);
-      const ohold = Math.min(0.8, Math.max(oin + 0.05, (260 - delay) / dur));
-      const frames = [
-        { transform: tr(0.3, 0), opacity: 0, offset: 0, easing: 'ease-out' },
-        { transform: tr(1, 0), opacity: 1, offset: oin, easing: 'linear' },
-        { transform: tr(1, 0), opacity: 1, offset: ohold, easing: 'ease-out' },
-        // Salida "pop" explotando, igual que las estrellas grandes.
-        { transform: tr(1.6, 16), opacity: 0, offset: 1 },
-      ];
-      p.busy = true; this.active++;
-      let anim;
-      try { anim = el.animate(frames, { duration: dur, delay: delay || 0, fill: 'both' }); }
-      catch (_) { p.busy = false; this.active--; return; }
-      p.anim = anim;
-      const done = () => {
-        if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); }
-        el.style.opacity = '0';
-        if (p.anim === anim) p.anim = null;
-        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) { }
-      };
-      anim.onfinish = done; anim.oncancel = done;
-    },
     // Mini-estrella que sale volando de (x0,y0) hacia (x1,y1): pop + viaje hacia
     // afuera con desaceleración elegante y desvanecido. Reutiliza el pool.
     _flyStar(x0, y0, x1, y1, size, color, delay, dur, force) {
@@ -2351,70 +2401,120 @@
       };
       anim.onfinish = done; anim.oncancel = done;
     },
-    // Estallido sutil de mini-estrellitas en todas direcciones desde (cx,cy),
-    // sincronizado con la explosión de la estrella central → toque de "celebración".
-    _miniBurst(cx, cy, color, cellPx, force) {
-      const n = 3 + ((State.combo || 0) >= 6 ? 1 : 0);   // sutil (no exagerado)
-      const size = Math.max(4, cellPx * 0.16);
-      const dist = cellPx * 0.78;
-      const delay = this.DUR_CLEAR * 0.5;                // estalla con la explosión central
-      const dur = this.DUR_CLEAR - delay;                // termina junto con todo
-      const base = Math.random() * 6.283;
-      for (let k = 0; k < n; k++) {
-        const a = base + k / n * 6.283 + (Math.random() - 0.5) * 0.35;
-        const d = dist * (0.8 + Math.random() * 0.4);
-        this._flyStar(cx, cy, cx + Math.cos(a) * d, cy + Math.sin(a) * d, size, color, delay, dur, force);
+    // Copia la ficha COMPLETA: cuerpo cuadrado, borde, estados de tile y glifo. La
+    // trayectoria usa avance no lineal (4%→36%→78%→100%) para simular la aceleración
+    // de un imán y que todas las fichas, cercanas o lejanas, impacten simultáneamente.
+    _flyTile(slot, id, source, from, to, cellW, cellH) {
+      if (!slot || !id) return false;
+      const el = slot.el, glyph = slot.glyph;
+      let classes = [];
+      if (source && source.classList) {
+        try { classes = Array.from(source.classList); } catch (_) { }
+        if (!classes.length && source.classList._set) classes = Array.from(source.classList._set);
       }
-    },
-    _beam(x0, y0, x1, y1, color, delay, dur, force) {
-      if (!this.supported || this.active >= (force ? this.ABS_MAX : this.cap)) return;
-      const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy);
-      if (len < 8) return;
-      const p = this._slot(); if (!p) return;
-      const el = p.el;
-      el.style.width = len.toFixed(1) + 'px';
-      el.style.height = '3px';
-      el.style.borderRadius = '999px';
-      el.style.background = 'linear-gradient(90deg, rgba(255,255,255,.08), ' + color + ', rgba(255,255,255,.04))';
-      el.style.transformOrigin = '0 50%';
-      el.style.filter = 'drop-shadow(0 0 5px ' + color + ')';
-      this._setStar(el, false);
-      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-      const tr = (sc) => 'translate3d(' + x0.toFixed(1) + 'px,' + y0.toFixed(1) + 'px,0) rotate(' + angle.toFixed(2) + 'deg) scaleX(' + sc + ')';
-      p.busy = true; this.active++;
+      const transient = new Set(['empty', 'spawn', 'clear', 'hint', 'miss', 'penalty', 'aim-target', 'ice-hit', 'ice-shatter']);
+      classes = classes.filter((c) => !transient.has(c));
+      classes.push('cell', 'has-icon', 'converge-tile');
+      el.className = Array.from(new Set(classes)).join(' ');
+      el.dataset.tileGlyph = (source && source.dataset && source.dataset.tileGlyph) || '';
+      glyph.innerHTML = Icons.svg(id);
+      el.style.width = cellW.toFixed(1) + 'px'; el.style.height = cellH.toFixed(1) + 'px';
+      const tr = (x, y, scale) => 'translate3d(' + (x - cellW / 2).toFixed(1) + 'px,' + (y - cellH / 2).toFixed(1) + 'px,0) scale(' + scale + ')';
+      const at = (t) => ({ x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t });
+      const p1 = at(0.04), p2 = at(0.36), p3 = at(0.78);
       let anim;
       try {
         anim = el.animate([
-          { transform: tr(0.05), opacity: 0, offset: 0 },
-          { transform: tr(1), opacity: .9, offset: .18, easing: 'ease-out' },
-          { transform: tr(1), opacity: .35, offset: .58 },
-          { transform: tr(.98), opacity: 0, offset: 1 },
-        ], { duration: dur || this.DUR_CLEAR, delay: delay || 0, fill: 'both' });
-      } catch (_) { p.busy = false; this.active--; return; }
-      p.anim = anim;
+          { transform: tr(from.x, from.y, 1), opacity: 1, offset: 0 },
+          { transform: tr(p1.x, p1.y, 1.03), opacity: 1, offset: 0.18 },
+          { transform: tr(p2.x, p2.y, 0.90), opacity: 1, offset: 0.58 },
+          { transform: tr(p3.x, p3.y, 0.55), opacity: 0.96, offset: 0.82 },
+          { transform: tr(to.x, to.y, 0.06), opacity: 0, offset: 1 },
+        ], { duration: this.CONVERGE_TRAVEL_MS, easing: 'linear', fill: 'both' });
+      } catch (_) { glyph.innerHTML = ''; return false; }
+      slot.anim = anim;
       const done = () => {
-        if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); }
-        el.style.opacity = '0';
-        if (p.anim === anim) p.anim = null;
+        if (slot.anim !== anim) return;
+        slot.anim = null; el.style.opacity = '0'; glyph.innerHTML = '';
         try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) { }
       };
       anim.onfinish = done; anim.oncancel = done;
+      return true;
     },
-    // Estallido del icono al "reventar": esquirlas que salen disparadas en todas
-    // direcciones. La cantidad y la velocidad CRECEN con la racha de combo (suave
-    // en combos bajos, violento al subir). delay = momento del chasquido del icono.
-    _iconBurst(x, y, color, force) {
-      const t = clamp(((State.combo || 1) - 1) / 19, 0, 1);   // 0..1 sobre combo 1..20
-      const n = Math.round(3 + t * 4);                         // 3 -> 7 esquirlas (plan comun FB-1)
-      const spMax = 150 + t * 320;                            // velocidad crece con el combo
-      const life = 0.26 + t * 0.08;
-      for (let k = 0; k < n; k++) {
-        const a = Math.random() * 6.283, sp = spMax * (0.4 + Math.random() * 0.6);
-        this._emit(x, y, Math.cos(a) * sp, Math.sin(a) * sp, 280, life, 4 + Math.random() * 4, color, 0, 0, 0, force);
+    _burstProfile(iconColors, comboColor, combo = State.combo || 1) {
+      combo = Math.max(1, Number(combo) || 1);
+      const tier = this.BURST_THRESHOLDS.reduce((n, threshold) => n + (combo >= threshold ? 1 : 0), 0);
+      const power = clamp((combo - 1) / 29, 0, 1);
+      const palette = [];
+      [...(Array.isArray(iconColors) ? iconColors : [iconColors]), comboColor, ...this.BURST_ACCENTS].forEach((c) => {
+        if (c && !palette.includes(c)) palette.push(c);
+      });
+      const baseColors = new Set(Array.isArray(iconColors) ? iconColors.filter(Boolean) : [iconColors].filter(Boolean)).size;
+      return {
+        colors: palette.slice(0, Math.min(palette.length, Math.max(baseColors, 1 + tier))),
+        distanceScale: 1 + power * 0.22,
+        sizeScale: 1 + power * 0.12,
+      };
+    },
+    _burstParticle(slot, center, tx, ty, duration, size, color) {
+      if (!slot) return false;
+      const el = slot.el;
+      el.style.width = size.toFixed(1) + 'px'; el.style.height = size.toFixed(1) + 'px';
+      el.style.background = color; el.style.borderRadius = '50%';
+      const ox = center.x - size / 2, oy = center.y - size / 2;
+      const tr = (dx, dy, scale) => 'translate3d(' + (ox + dx).toFixed(1) + 'px,' + (oy + dy).toFixed(1) + 'px,0) scale(' + scale + ')';
+      let anim;
+      try {
+        anim = el.animate([
+          { transform: tr(0, 0, 0.25), opacity: 0, offset: 0 },
+          { transform: tr(0, 0, 1), opacity: 1, offset: 0.025 },
+          { transform: tr(tx, ty, 0), opacity: 0, offset: 1 },
+        ], { duration: duration * 1000, delay: this.CONVERGE_IMPACT_DELAY, easing: 'ease-out', fill: 'both' });
+      } catch (_) { return false; }
+      slot.anim = anim;
+      const done = () => {
+        if (slot.anim !== anim) return;
+        slot.anim = null; el.style.opacity = '0';
+        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) { }
+      };
+      anim.onfinish = done; anim.oncancel = done;
+      return true;
+    },
+    _iconBurst(slots, center, iconColors, comboColor, cellPx) {
+      const profile = this._burstProfile(iconColors, comboColor);
+      const size = cellPx * 0.13 * profile.sizeScale;
+      let emitted = 0;
+      for (let k = 0; k < this.BURST_PARTICLES; k++) {
+        const angle = (k / this.BURST_PARTICLES) * 360 + (Math.random() * 20 - 10);
+        const dist = cellPx * (0.75 + Math.random() * 0.50) * profile.distanceScale;
+        const rad = angle * Math.PI / 180;
+        if (this._burstParticle(slots[k], center, Math.cos(rad) * dist, Math.sin(rad) * dist,
+          0.5 + Math.random() * 0.4, size, profile.colors[k % profile.colors.length])) emitted++;
       }
+      return emitted;
+    },
+    _convergeWave(el, center, cellPx, color) {
+      if (!el) return null;
+      if (el.getAnimations) el.getAnimations().forEach((a) => a.cancel());
+      const comboPower = clamp(((State.combo || 1) - 1) / 29, 0, 1);
+      const size = cellPx * 1.12;
+      const finalScale = 1.28 + comboPower * 0.14;
+      const glow = cellPx * (0.11 + comboPower * 0.04);
+      el.style.width = size.toFixed(1) + 'px'; el.style.height = size.toFixed(1) + 'px';
+      el.style.borderWidth = clamp(cellPx * 0.045, 2, 4).toFixed(1) + 'px';
+      el.style.borderColor = color || '#fff';
+      el.style.boxShadow = '0 0 ' + glow.toFixed(1) + 'px ' + (color || '#fff') + ', inset 0 0 ' + glow.toFixed(1) + 'px ' + (color || '#fff');
+      const tr = (scale) => 'translate3d(' + (center.x - size / 2).toFixed(1) + 'px,' + (center.y - size / 2).toFixed(1) + 'px,0) scale(' + scale + ')';
+      try {
+        return el.animate([
+          { transform: tr(0.16), opacity: 0, offset: 0 },
+          { transform: tr(0.32), opacity: 0.94, offset: 0.12, easing: 'cubic-bezier(.15,.65,.25,1)' },
+          { transform: tr(finalScale), opacity: 0, offset: 1 },
+        ], { duration: this.CONVERGE_WAVE_MS, delay: this.CONVERGE_IMPACT_DELAY, easing: 'ease-out', fill: 'both' });
+      } catch (_) { return null; }
     },
     scoreToHud(centerIdx, color, tier) {
-      if (Settings.reducedFx || !this.supported) return;
+      if (motionOff() || !this.supported) return;
       this.syncBoardRect();
       const hud = $('#hud-score');
       if (!hud) return;
@@ -2431,65 +2531,34 @@
           ty + (Math.random() - 0.5) * 14,
           5 + Math.random() * 4,
           color || '#ffd84d',
-          80 + k * 36,
+          this.CONVERGE_IMPACT_DELAY + 80 + k * 36,
           460 + Math.random() * 120,
           true
         );
       }
     },
-    // Convergencia (un solo efecto, SINCRONIZADO con glyph-out = DUR_CLEAR):
-    // estrella contenida en la casilla central (la "X") + una estrella IGUAL sobre
-    // cada icono eliminado (el icono "se convierte" en estrella al desaparecer) +
-    // un camino de estrellitas mucho más pequeñas dibujado del centro hacia afuera.
-    // Todo aparece y desaparece a la vez. color = color por tier de combo.
+    // Convergencia magnética: viaja la ficha cuadrada COMPLETA, todos los bloques
+    // colapsan a la vez y allí se reproduce el burst radial anterior + una onda corta.
+    // Cada grupo tiene 5 fichas, 12 partículas y 1 onda precreadas: cero churn DOM.
     converge(centerIdx, cells, color) {
-      if (Settings.reducedFx || !this.supported) return;
+      if (motionOff() || !this.supported) return;
       this.syncBoardRect();
-      const r = this.boardRect, sz = State.size;
+      const r = this.boardRect;
       if (!r || !r.width) return;
-      const cellPx = r.width / sz;
-      const force = true;
-      const rcXY = (row, col) => ({ x: r.left + (col + 0.5) / sz * r.width, y: r.top + (row + 0.5) / sz * r.height });
-      const cr = (centerIdx / sz) | 0, cc = centerIdx % sz;
-      const C = rcXY(cr, cc);
-      const tiny = Math.max(4, cellPx * 0.15);        // estrellitas de camino (mucho menores)
-      const SWEEP = 170;                              // barrido del camino (dentro de DUR_CLEAR)
-
-      // 1) Onda expansiva elegante en el punto de convergencia: un anillo que crece
-      // desde el centro y se desvanece, a la misma velocidad que la eliminación.
-      if (this.wave) {
-        const w = Math.round(cellPx * 1.7);           // diámetro base del anillo
-        this.wave.style.width = w + 'px'; this.wave.style.height = w + 'px';
-        this.wave.style.borderColor = color;
-        this.wave.style.boxShadow = '0 0 7px ' + color + ', inset 0 0 7px ' + color;
-        const wt = (sc) => 'translate3d(' + (C.x - w / 2).toFixed(1) + 'px,' + (C.y - w / 2).toFixed(1) + 'px,0) scale(' + sc + ')';
-        try {
-          this.wave.animate([
-            { transform: wt(0.18), opacity: 0, offset: 0, easing: 'ease-out' },
-            { transform: wt(0.42), opacity: 0.95, offset: 0.16, easing: 'cubic-bezier(.15,.6,.3,1)' },
-            { transform: wt(1.0), opacity: 0, offset: 1 },
-          ], { duration: this.DUR_CLEAR, fill: 'forwards' });
-        } catch (_) { }
-      }
-
-      // 2) Estallido de esquirlas en cada icono eliminado (la "explosión"; tiene
-      // PRIORIDAD de ranuras) + camino de estrellitas hacia el icono. El icono se
-      // elimina con su propio "pop seco" (glyph-out), no crece.
-      for (const idx of cells) {
-        const ir = (idx / sz) | 0, ic = idx % sz;
-        const ip = rcXY(ir, ic);
-        this._beam(C.x, C.y, ip.x, ip.y, color, 0, this.DUR_CLEAR * 0.78, force);
-        this._iconBurst(ip.x, ip.y, color, force);
-        const dr = Math.sign(ir - cr), dc = Math.sign(ic - cc);
-        const N = Math.max(Math.abs(ir - cr), Math.abs(ic - cc));  // distancia en celdas
-        for (let d = 0.7; d <= N - 0.4 + 1e-6; d += 0.9) {
-          const pos = rcXY(cr + dr * d, cc + dc * d);
-          this._spark(pos.x, pos.y, tiny, color, (d / N) * SWEEP, force);
-        }
-      }
-
-      // 3) Toque de "celebración": mini-estrellitas desde el centro (secundario).
-      this._miniBurst(C.x, C.y, color, cellPx, force);
+      const grid = this._gridMetrics(); if (!grid) return;
+      const group = this._nextConvergeGroup(); if (!group) return;
+      const center = grid.xy(centerIdx);
+      const activeCells = cells.slice(0, this.MAX_CONVERGE_ICONS);
+      const iconColors = [];
+      let flights = 0;
+      activeCells.forEach((idx, k) => {
+        const id = (Render._cellId && Render._cellId[idx]) || State.board[idx];
+        iconColors.push(Icons.colorOf(id));
+        if (this._flyTile(group.tiles[k], id, Render.cells[idx], grid.xy(idx), center, grid.cellW, grid.cellH)) flights++;
+      });
+      const particles = this._iconBurst(group.particles, center, iconColors, color, grid.cellPx);
+      const wave = this._convergeWave(group.wave, center, grid.cellPx, color);
+      return { flights, particles, wave: !!wave };
     },
     // Conservado por compatibilidad con el bucle; las partículas son autónomas (WAAPI).
     step() { return false; },
@@ -3020,7 +3089,12 @@
         const value = this.valueOf(el.dataset.econNum);
         // Inicio mantiene la economía en una línea incluso con saldos grandes;
         // el resto del producto conserva el valor completo con separadores.
-        el.textContent = el.closest('#screen-start') ? fmtCompact(value) : fmtNum(value);
+        el.textContent = (el.closest('#screen-start') || el.hasAttribute('data-econ-compact')) ? fmtCompact(value) : fmtNum(value);
+        const modePill = el.closest('#screen-modes .mode-mock-pill');
+        if (modePill && (el.dataset.econNum === 'coins' || el.dataset.econNum === 'gems')) {
+          const actionKey = el.dataset.econNum === 'coins' ? 'get_coins' : 'get_gems';
+          modePill.setAttribute('aria-label', `${I18n.t(actionKey)}. ${I18n.t('econ_balance').replace('{n}', fmtNum(value))}`);
+        }
       });
       const runCoins = $('#hud-run-coins');
       const runWrap = $('#hud-run-coins-wrap');
@@ -5082,7 +5156,8 @@
     onAnchorHit(idx) {
       const e = this.enc; if (!e) return; // ancla huérfana (defensivo)
       e.anchorsLeft = Math.max(0, e.anchorsLeft - 1);
-      FX.burst(idx, (this.DEX[e.id] || {}).accent || '#ffd84d', 6);
+      // El icono del ancla ya recibe el burst radial de la convergencia. No se
+      // añade aquí un segundo estallido heredado sobre la misma casilla.
       Render.hudSoon();
       if (e.anchorsLeft <= 0) { this.resolve(e.kind === 'mini' ? 'miniKill' : 'defeat'); return; }
       // Fase 2 al caer la mitad de las anclas (§3.4): el patrón cambia, no solo escala.
@@ -6660,9 +6735,9 @@
       // Puntos (icono×10×nivel × combo × dificultad × modo × fever)
       const scoreBefore = State.score;
       if (State.mode === 'supervivencia' && Survival.magnetMoves > 0) {
-        // Imán (bendición): atrae la figura MÁS CERCANA al toque — legible y con
-        // rayo de conexión (entra en conv antes de FX.converge). Si no hay nada
-        // que atraer, el uso NO se consume.
+        // Imán (bendición): atrae la figura MÁS CERCANA al toque y la incorpora
+        // al mismo burst radial de la convergencia. Si no hay nada que atraer,
+        // el uso NO se consume.
         let extra = -1, bestD = Infinity;
         const r0 = i / 8 | 0, c0 = i % 8;
         for (let j = 0; j < State.board.length; j++) {
@@ -6673,7 +6748,6 @@
         }
         if (extra !== -1) {
           conv.push(extra);
-          FX.burst(extra, Icons.colorOf(State.board[extra]), 4);
           Survival.magnetMoves--;
           if (Survival.magnetMoves === 0) Toasts.show(I18n.t('magnet_done'), 'warn', 1500, '🧲');
         }
@@ -6711,10 +6785,9 @@
         Toasts.show(got > 0 ? `+${got}s` : '⏱️ tope', 'info', 1100);
       }
 
-      // Estrellas de convergencia: estrella en la casilla central + una estrella
-      // sobre cada icono eliminado + camino de estrellitas, TODO sincronizado con
-      // la desaparición de los iconos (glyph-out). Se lanza en el mismo frame que
-      // Render.clearAnim para que empiecen y terminen exactamente a la vez.
+      // FX clona las fichas completas antes de vaciar el tablero: cuerpo cuadrado e
+      // icono son atraídos al punto tocado; al colapsar allí recuperan el burst radial
+      // anterior y una onda corta. Render.clearAnim vacía los originales en este tick.
       FX.converge(i, conv, color);
       const rewardTier = removed >= 4 ? 3 : removed >= 3 ? 2 : (State.comboMult >= 2 || State.combo >= 3 ? 1 : 0);
       if (rewardTier) Render.impact(rewardTier);
@@ -7651,82 +7724,121 @@
       onPick: (d) => { Storage.zenDiff = d; Game.start('zen', d); },
     });
   }
-  // Catálogo completo de la pantalla "Elige tu modo": los 5 modos jugables agrupados
-  // (Progresión / Puntuación / Relax). El Tutorial NO es una tarjeta aquí — vive en el
-  // modal "¿Cómo se juega?". Multijugador queda fuera de V1 (volverá con la capa online).
+  // Catálogo completo de la pantalla "Elige tu modo". El Tutorial vive en el
+  // modal de ayuda y Multijugador se muestra únicamente como anticipo deshabilitado.
   const MODE_CARDS = [
     {
-      group: 'group_prog', key: 'clasico', accent: '#2f6bff', svg: 'island', art: 'classic',
-      i18n: 'card_classic', badge: 'card_classic_badge', desc: 'card_classic_desc',
-      feats: [['lock', 'card_feat_locks'], ['target', 'card_feat_objects'], ['bolt', 'card_feat_events'], ['v2:four-pointed-star', 'card_feat_more']],
-      action: () => openWorldsMap()
-    },
-    {
-      group: 'group_prog', key: 'aventura', accent: '#7a5cff', mode: 'aventura',
-      badge: 'card_adv_badge', feats: [],
-      action: () => openAdventure()
-    },
-    {
-      group: 'group_score', key: 'supervivencia', accent: '#ff5b6e', svg: 'heartFoes', art: 'surv',
-      i18n: 'card_surv', badge: 'card_surv_badge', desc: 'card_surv_desc', feats: [],
+      key: 'supervivencia', accent: '#f05b5d', cardClass: 'mode-mock-card-survival',
+      art: 'img/ui-generated/modes/mode-survival.png', i18n: 'card_surv', badge: 'card_surv_badge', desc: 'card_surv_desc',
       action: () => openSurvivalDiff()
     },
     {
-      group: 'group_score', key: 'contrarreloj', accent: '#ff6cb0', mode: 'contrarreloj',
-      badge: 'card_contra_badge', feats: [['target', 'card_contra_daily']],
+      key: 'clasico', accent: '#18a9ec', cardClass: 'mode-mock-card-classic mode-mock-card-tall',
+      art: 'img/ui-generated/modes/mode-classic.png', i18n: 'card_classic', badge: 'card_classic_badge', desc: 'card_classic_desc',
+      featuresClass: 'mode-mock-features-four',
+      features: [
+        ['img/ui/lock.png', 'card_feat_locks'],
+        ['img/ui-v2/home/target.png', 'card_feat_objects'],
+        ['img/ui-v2/home/bolt.png', 'card_feat_events'],
+        [null, 'card_feat_more', 'mode-mock-more'],
+      ],
+      action: () => openWorldsMap()
+    },
+    {
+      key: 'aventura', accent: '#8b62ff', cardClass: 'mode-mock-card-adventure mode-mock-card-extra', extra: true,
+      art: 'img/ui-generated/home/hero-rocket.png', mode: 'aventura', badge: 'card_adv_badge',
+      featuresClass: 'mode-mock-features-three',
+      features: [
+        ['img/ui/planet.png', 'card_feat_biomes'],
+        ['img/ui-v2/home/target.png', 'card_feat_goals'],
+        ['img/ui/skull.png', 'card_feat_minibosses'],
+      ],
+      action: () => openAdventure()
+    },
+    {
+      key: 'contrarreloj', accent: '#ff6cb0', cardClass: 'mode-mock-card-timed mode-mock-card-extra', extra: true,
+      art: 'img/ui-generated/modes/mode-timed.png', mode: 'contrarreloj', badge: 'card_contra_badge',
+      featuresClass: 'mode-mock-features-three',
+      features: [
+        ['img/ui-v2/home/clock.png', 'card_feat_time'],
+        ['img/ui-v2/home/bolt.png', 'card_feat_pressure'],
+        ['img/ui-v2/home/trophy.png', 'card_feat_best'],
+      ],
       action: () => { Modal.close(); Game.start('contrarreloj', 'normal'); }
     },
     {
-      group: 'group_relax', key: 'zen', accent: '#9be15d', mode: 'zen',
-      badge: 'card_zen_badge', feats: [],
+      key: 'zen', accent: '#9be15d', cardClass: 'mode-mock-card-zen mode-mock-card-extra', extra: true,
+      art: 'img/ui-generated/modes/mode-zen.png', mode: 'zen', badge: 'card_zen_badge',
+      featuresClass: 'mode-mock-features-three',
+      features: [
+        ['img/ui/leaf.png', 'card_feat_no_penalties'],
+        ['img/icons-v2/8-ui/rest.svg', 'card_feat_no_limit'],
+        ['img/ui/heart.png', 'card_feat_relaxed'],
+      ],
       action: () => launchZen()
     },
   ];
-  const MODE_GROUPS = ['group_prog', 'group_score', 'group_relax'];
+  const MULTIPLAYER_CARD = {
+    key: 'multijugador', accent: '#8a4be5', cardClass: 'mode-mock-card-multi mode-mock-card-tall',
+    art: 'img/ui-generated/modes/mode-multiplayer.png', i18n: 'card_multi', badge: 'card_multi_tag', desc: 'card_multi_desc',
+    featuresClass: 'mode-mock-features-three', disabled: true,
+    features: [
+      ['img/ui-v2/home/trophy.png', 'card_feat_first'],
+      ['img/ui-v2/home/medal.png', 'card_feat_best'],
+      ['img/icons-v2/9-media/wi-fi.svg', 'card_feat_online'],
+    ],
+  };
   function buildModeMenu() {
     const cont = $('#mode-cards'); if (!cont) return;
     const cardTitle = (c) => c.i18n ? I18n.t(c.i18n) : I18n.modeT(c.mode, 'name');
     const cardDesc = (c) => c.desc ? I18n.t(c.desc) : I18n.modeT(c.mode, 'desc');
-    const featIcon = (tok) => {
-      const mapped = EMOJI_IMG[tok] || (/^(v2:)?[a-z][a-z0-9-]*$/.test(tok) ? tok : null);
-      return mapped ? iconAnyInline(mapped) : tok;
+    const featuresHTML = (c) => c.features && c.features.length
+      ? `<span class="mode-mock-features ${c.featuresClass || ''}">${c.features.map(([src, label, className]) => `<span${className ? ` class="${className}"` : ''}>${src ? `<img src="${src}" alt="">` : ''}<small>${esc(I18n.t(label))}</small></span>`).join('')}</span>`
+      : '';
+    const cardHTML = (c) => {
+      const titleId = `mode-card-${c.key}-title`;
+      const descId = `mode-card-${c.key}-desc`;
+      const statusId = `mode-card-${c.key}-status`;
+      const labelledBy = c.disabled ? `${titleId} ${statusId}` : titleId;
+      return `<button type="button" class="mode-mock-card ${c.cardClass}" data-mode="${c.key}" style="--mode-mock-accent:${c.accent}" aria-labelledby="${labelledBy}" aria-describedby="${descId}"${c.disabled ? ' disabled aria-disabled="true"' : ''}>
+        <span class="mode-mock-art" aria-hidden="true"><img src="${c.art}" alt=""></span>
+        <span class="mode-mock-copy">
+          <span class="mode-mock-title-row"><b class="mode-mock-card-title" id="${titleId}">${esc(cardTitle(c))}</b><span class="mode-mock-tag">${esc(I18n.t(c.badge))}</span></span>
+          <span class="mode-mock-description" id="${descId}">${esc(cardDesc(c))}</span>
+          ${c.disabled ? `<span class="mode-mock-status" id="${statusId}">${esc(I18n.t('coming_soon'))}</span>` : ''}
+        </span>
+        <span class="mode-mock-go" aria-hidden="true"><img src="img/icons-v2/8-ui/arrow-right-03.svg" alt=""></span>
+        ${featuresHTML(c)}
+      </button>`;
     };
-    const featsHTML = (feats) => feats && feats.length
-      ? `<span class="mc-feats">${feats.map(f => `<span class="mc-feat"><span class="mc-feat-ic">${featIcon(f[0])}</span>${esc(I18n.t(f[1]))}</span>`).join('')}</span>` : '';
-    const artHTML = (c) => (c.svg && Art[c.svg])
-      ? `<span class="mc-art mc-art-${c.art}" aria-hidden="true">${Art[c.svg]()}</span>`
-      : `<span class="mc-art mc-art-icon" aria-hidden="true">${MODE_IMG[c.key] ? iconAnyInline(MODE_IMG[c.key]) : ''}</span>`;
-    const current = Storage.lastMode;
-    const cardHTML = (c) => `<button type="button" class="mode-hero${c.key === current ? ' mode-current' : ''}" role="listitem" data-mode="${c.key}" style="--mode-accent:${c.accent}" aria-label="${esc(cardTitle(c))}"${c.key === current ? ' aria-current="true"' : ''}>
-        ${artHTML(c)}
-        <span class="mc-body">
-          <span class="mc-titlerow"><span class="mc-title">${esc(cardTitle(c))}</span><span class="mc-badge">${esc(I18n.t(c.badge))}</span></span>
-          <span class="mc-desc">${esc(cardDesc(c))}</span>
-          ${featsHTML(c.feats)}
-        </span>
-        <span class="mc-go" aria-hidden="true">›</span>
+    const howHTML = `<button type="button" class="mode-mock-help" data-mode="how" aria-labelledby="mode-how-title" aria-describedby="mode-how-desc">
+        <span class="mode-mock-help-art" aria-hidden="true"><img src="img/ui-generated/home/nav-guide.png" alt=""></span>
+        <span class="mode-mock-help-copy"><b id="mode-how-title">${esc(I18n.t('how_title'))}</b><span id="mode-how-desc">${esc(I18n.t('how_card_desc'))}</span></span>
+        <span class="mode-mock-help-cta">${esc(I18n.t('how_card_cta'))}<img src="img/icons-v2/8-ui/arrow-right-03.svg" alt=""></span>
       </button>`;
-    const groupsHTML = MODE_GROUPS.map((g) => {
-      const cards = MODE_CARDS.filter((c) => c.group === g);
-      if (!cards.length) return '';
-      return `<h3 class="group-title mode-group-title">${esc(I18n.t(g))}</h3>${cards.map(cardHTML).join('')}`;
-    }).join('');
-    const howHTML = `<button type="button" class="mode-how" role="listitem" data-mode="how">
-        <span class="mc-how-ic" aria-hidden="true">${Art.book()}</span>
-        <span class="mc-body">
-          <span class="mc-title">${esc(I18n.t('how_title'))}</span>
-          <span class="mc-desc">${esc(I18n.t('how_card_desc'))}</span>
-        </span>
-        <span class="mc-how-cta">${esc(I18n.t('how_card_cta'))} ›</span>
-      </button>`;
-    cont.innerHTML = groupsHTML + howHTML;
+    const primary = MODE_CARDS.filter((c) => !c.extra);
+    const extras = MODE_CARDS.filter((c) => c.extra);
+    cont.innerHTML = primary.map(cardHTML).join('') + cardHTML(MULTIPLAYER_CARD) + howHTML +
+      `<div class="mode-mock-extra-heading"><span>${esc(I18n.t('modes_more'))}</span></div>` +
+      extras.map(cardHTML).join('');
     MODE_CARDS.forEach((c) => {
       const el = cont.querySelector(`[data-mode="${c.key}"]`);
       if (el) el.addEventListener('click', () => { Sound.ui(); c.action(); });
     });
     const hb = cont.querySelector('[data-mode="how"]');
     if (hb) hb.addEventListener('click', () => { Sound.ui(); Modal.open('modal-how'); });
-    Econ.refresh();
+    Econ.refresh(cont);
+  }
+  function openModeMenu() {
+    buildModeMenu();
+    updateTopBars();
+    Screens.show('modes');
+    const shell = $('#screen-modes .mode-mock-shell'); if (shell) shell.scrollTop = 0;
+    requestAnimationFrame(() => { const title = $('#modes-title'); if (title) title.focus({ preventScroll: true }); });
+  }
+  function closeModeMenu() {
+    Screens.show('start');
+    requestAnimationFrame(() => { const play = $('#btn-play'); if (play) play.focus({ preventScroll: true }); });
   }
   // Aventura → mapa de capítulos (modal-adventure); su botón "Continuar" lanza la partida.
   function openAdventure() { buildAdventureMap(); Modal.open('modal-adventure'); }
@@ -7886,12 +7998,19 @@
   function updateTopBars() {
     const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
     const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
-    document.querySelectorAll('[data-topbar]').forEach((bar) => {
+    document.querySelectorAll('[data-topbar], [data-mode-topbar]').forEach((bar) => {
       const n = bar.querySelector('.appbar-name'); if (n) n.textContent = prof.name;
       const l = bar.querySelector('.appbar-lvl-txt'); if (l) l.textContent = I18n.t('lvl') + ' ' + lvl;
       const xf = bar.querySelector('.appbar-xp-fill'); if (xf) xf.style.width = Math.min(100, have / need * 100).toFixed(0) + '%';
       const xn = bar.querySelector('.appbar-xp-num'); if (xn) xn.textContent = have + ' / ' + need;
       const bd = bar.querySelector('.avatar-badge'); if (bd) bd.textContent = lvl;
+      const streak = bar.querySelector('[data-home-streak]');
+      if (streak) {
+        const value = Meta.streak();
+        streak.textContent = value;
+        const modeFire = streak.closest('#screen-modes .mode-mock-fire');
+        if (modeFire) modeFire.setAttribute('aria-label', `${I18n.t('home_streak')}: ${value}`);
+      }
     });
     Econ.refresh();
   }
@@ -7918,6 +8037,47 @@
     }
   }
 
+  let dailyRewardPopTimer = 0;
+  let dailyRewardPopBanner = null;
+  let dailyRewardPopEnd = null;
+
+  function clearDailyRewardPopWatch() {
+    if (dailyRewardPopTimer) clearTimeout(dailyRewardPopTimer);
+    if (dailyRewardPopBanner && dailyRewardPopEnd) dailyRewardPopBanner.removeEventListener('animationend', dailyRewardPopEnd);
+    dailyRewardPopTimer = 0;
+    dailyRewardPopBanner = null;
+    dailyRewardPopEnd = null;
+  }
+
+  function finishDailyRewardPop(banner) {
+    clearDailyRewardPopWatch();
+    if (!banner) return;
+
+    // No ocultamos un ancestro que todavía conserva el foco. El CTA principal es
+    // el siguiente destino lógico; si Inicio ya no está visible, soltamos el foco.
+    const active = document.activeElement;
+    const play = $('#btn-play');
+    const focusStillOwnedByClaim = !active || active === document.body || banner.contains(active);
+    if (focusStillOwnedByClaim) {
+      if (play && !play.disabled && !play.closest('[hidden]')) {
+        try { play.focus({ preventScroll: true }); }
+        catch (_) { play.focus(); }
+      } else if (active && banner.contains(active) && typeof active.blur === 'function') active.blur();
+    }
+
+    banner.classList.remove('claimed', 'is-popping');
+    banner.removeAttribute('aria-busy');
+    if (Meta.rewardReady()) {
+      // Salvaguarda para un cambio de día mientras terminaba el FX.
+      banner.classList.remove('is-claimed');
+      banner.removeAttribute('aria-hidden');
+      refreshStart();
+      return;
+    }
+    banner.classList.add('is-claimed');
+    banner.setAttribute('aria-hidden', 'true');
+  }
+
   function refreshStart() {
     updateTopBars();
     const text = (id, value) => { const el = $('#' + id); if (el) el.textContent = value; return el; };
@@ -7930,10 +8090,28 @@
       const bn = $('#btn-reward');
       if (bn) {
         const rewardText = I18n.t(ready ? 'home_reward_day' : 'home_reward_claimed').replace('{n}', day);
-        bn.classList.toggle('claimed', !ready);
+        const popping = !ready && bn.classList.contains('is-popping');
+        // El estado final conserva la caja del banner (CSS solo lo hace invisible),
+        // mientras que el estado intermedio debe seguir visible hasta animationend.
+        bn.classList.remove('claimed');
+        if (ready) {
+          clearDailyRewardPopWatch();
+          bn.classList.remove('is-popping', 'is-claimed');
+          bn.removeAttribute('aria-busy');
+          bn.removeAttribute('aria-hidden');
+        } else if (popping) {
+          bn.classList.remove('is-claimed');
+          bn.setAttribute('aria-busy', 'true');
+          bn.removeAttribute('aria-hidden');
+        } else {
+          bn.classList.remove('is-popping');
+          bn.classList.add('is-claimed');
+          bn.removeAttribute('aria-busy');
+          bn.setAttribute('aria-hidden', 'true');
+        }
         const claim = bn.querySelector('.db-claim');
         if (claim) {
-          claim.disabled = !ready;
+          claim.disabled = !ready || popping;
           claim.setAttribute('aria-label', ready ? `${I18n.t('claim')}. ${rewardText}` : rewardText);
         }
         const badge = bn.querySelector('.db-badge'); if (badge) badge.hidden = !ready;
@@ -8320,11 +8498,49 @@
     if (btn) btn.textContent = max > 1 ? `Continuar · Nivel ${max}` : 'Empezar la aventura';
   }
   function claimDailyReward() {
-    if (!Meta.rewardReady()) return;
+    const banner = $('#btn-reward');
+    const claim = banner && banner.querySelector('.db-claim');
+    // La persistencia también protege la economía, pero el bloqueo inmediato evita
+    // dobles clics y dos coreografías compitiendo por el mismo banner.
+    if (!Meta.rewardReady() || (banner && banner.classList.contains('is-popping')) || (claim && claim.disabled)) return;
+
+    clearDailyRewardPopWatch();
+    if (claim) claim.disabled = true;
+    if (banner) {
+      banner.classList.remove('claimed', 'is-claimed');
+      banner.removeAttribute('aria-hidden');
+      banner.setAttribute('aria-busy', 'true');
+
+      const onPopEnd = (event) => {
+        // Los pseudo-elementos también emiten animationend sobre el banner. Solo
+        // la animación principal puede cerrar la transición; el timeout es el seguro
+        // para CSS ausente, animación cancelada o navegadores con eventos incompletos.
+        if (event.target === banner && event.animationName === 'dailyRewardBubblePop') finishDailyRewardPop(banner);
+      };
+      dailyRewardPopBanner = banner;
+      dailyRewardPopEnd = onPopEnd;
+      banner.addEventListener('animationend', onPopEnd);
+      banner.classList.add('is-popping');
+    }
+
     const amt = Meta.claimReward();
+    if (!amt) {
+      clearDailyRewardPopWatch();
+      if (banner) {
+        banner.classList.remove('is-popping');
+        banner.removeAttribute('aria-busy');
+      }
+      refreshStart();
+      return;
+    }
     Sound.success(); FX.confetti(28);
     Toasts.show(`🎁 +${amt} monedas · día ${Meta.rewardDay()}`, 'good', 2600);
+    // refreshStart actualiza economía/etiquetas, pero respeta is-popping y no
+    // adelanta el estado invisible antes de que concluya la animación.
     refreshStart();
+    if (!banner) return;
+    if (motionOff()) finishDailyRewardPop(banner);
+    else dailyRewardPopTimer = setTimeout(() => finishDailyRewardPop(banner), 900);
   }
 
   /* ===================== init / wiring ===================== */
@@ -8423,13 +8639,13 @@
       else if (a === 'buy-coins') { Sound.ensure(); openShop(); }
       else if (a === 'buy-gems') { Sound.ensure(); openShop(); }
       else if (a === 'bell') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
-      else if (a === 'play') { Sound.ensure(); Screens.show('modes'); }
+      else if (a === 'play') { Sound.ensure(); openModeMenu(); }
       else if (a === 'home-classic') { Sound.ui(); Worlds.open(); }
       else if (a === 'home-surv') { Sound.ensure(); openSurvivalDiff(); }
       else if (a === 'home-daily') { Sound.ensure(); openDailyInfo(); }
       else if (a === 'open-guide') { Sound.ui(); Modal.open('modal-how'); }
       else if (a === 'go-surv') { Sound.ensure(); Modal.close(); openSurvivalDiff(); }
-      else if (a === 'go-play') { Sound.ensure(); Modal.close(); Screens.show('modes'); }
+      else if (a === 'go-play') { Sound.ensure(); Modal.close(); openModeMenu(); }
       else if (a === 'go-daily') { Sound.ensure(); Modal.close(); openDailyInfo(); }
       else if (a === 'go-classic') { Sound.ensure(); Modal.close(); Worlds.open(); }
       else if (a === 'go-adventure') { Sound.ensure(); Modal.close(); openAdventure(); }
@@ -8445,14 +8661,14 @@
 
     // Inicio (el grueso del cableado vive en el handler delegado data-act de arriba).
     const on = (id, ev, fn, opts) => { const el = $('#' + id); if (el) el.addEventListener(ev, fn, opts); };
-    { const bp = $('#btn-play'); if (bp) bp.addEventListener('click', () => { Sound.ensure(); Screens.show('modes'); }); }
+    { const bp = $('#btn-play'); if (bp) bp.addEventListener('click', () => { Sound.ensure(); openModeMenu(); }); }
     { const rr = $('#btn-resume-run'); if (rr) rr.addEventListener('click', () => { Sound.ensure(); if (!Game.resumeSaved()) { rr.hidden = true; Sound.miss(); } }); }
     { const bi = $('#btn-install'); if (bi) bi.addEventListener('click', () => PWA.promptInstall()); }
     // Al cerrar la tienda, revertir cualquier previsualización al tema equipado.
     { const sc = $('#shop-close'); if (sc) sc.addEventListener('click', () => Cosmetics.apply()); }
 
     // Modos
-    on('modes-back', 'click', () => Screens.show('start'));
+    on('modes-back', 'click', () => closeModeMenu());
     { const ms = $('#modes-settings'); if (ms) ms.addEventListener('click', () => { Sound.ui(); openSettings(); }); }
     { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { Modal.close(); Game.start('aventura', 'normal'); }); }
     document.querySelectorAll('[data-surv-diff]').forEach((b) => b.addEventListener('click', () => {
@@ -8464,7 +8680,7 @@
     { const ss = $('#btn-surv-start'); if (ss) ss.addEventListener('click', () => { Sound.ensure(); startSurvivalSelected(); }); }
 
     // Modo Clásico (mapa de mundos)
-    { const wb = $('#worlds-back'); if (wb) wb.addEventListener('click', () => Screens.show('modes')); }
+    { const wb = $('#worlds-back'); if (wb) wb.addEventListener('click', () => openModeMenu()); }
     { const ws = $('#worlds-settings'); if (ws) ws.addEventListener('click', () => { Sound.ui(); openSettings(); }); }
     { const wr = $('#world-rewards'); if (wr) wr.addEventListener('click', () => Worlds.claimReward()); }
     { const b = $('#wt-shop'); if (b) b.addEventListener('click', () => { Sound.ui(); openShop(); }); }

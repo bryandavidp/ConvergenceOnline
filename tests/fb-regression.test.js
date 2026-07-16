@@ -9,7 +9,7 @@ const { makeEl, getMemoEl } = require('./dom-stub.js');
 require('../game.js');
 
 const cv = globalThis.window.__cv;
-const { FX, State, Config, I18n, Settings, Adventure, Meta, ModeSignals, Game, Toasts, Boards, Themes, Modal } = cv;
+const { FX, State, Render, Bosses, Config, I18n, Settings, Adventure, Meta, ModeSignals, Game, Toasts, Boards, Themes, Modal } = cv;
 const root = path.join(__dirname, '..');
 
 function withRandomSequence(seq, fn) {
@@ -77,28 +77,138 @@ function resetFxPool() {
   FX.active = 0;
   FX.supported = true;
   FX.wave = makeEl('span');
+  FX.convergeHost = makeEl('div');
+  FX.convergeGroups = Array.from({ length: FX.CONVERGE_GROUPS }, () => ({
+    tiles: Array.from({ length: FX.MAX_CONVERGE_ICONS }, () => {
+      const el = makeEl('span'), glyph = makeEl('span');
+      el.appendChild(glyph); return { el, glyph, anim: null };
+    }),
+    particles: Array.from({ length: FX.BURST_PARTICLES }, () => ({ el: makeEl('span'), anim: null })),
+    wave: makeEl('span'),
+  }));
+  FX.convergeGroupIdx = 0;
 }
 
-test('FB-1: la convergencia emite el mismo plan con cap 18 que con cap 50', () => {
-  const prevCombo = State.combo;
+test('FX: la convergencia mueve una ficha por icono y explota una vez en el centro', () => {
+  const cells = [24, 30, 3, 59];
+  const prev = {
+    size: State.size, combo: State.combo, board: State.board,
+    cells: Render.cells, cellId: Render._cellId, reducedFx: Settings.reducedFx, cap: FX.cap,
+    gridMetrics: FX._gridMetrics, nextGroup: FX._nextConvergeGroup,
+    flyTile: FX._flyTile, iconBurst: FX._iconBurst, convergeWave: FX._convergeWave,
+  };
   State.size = 8;
   State.combo = 20;
-  const cells = [24, 30, 3, 59];
+  State.board = new Array(64).fill(null);
+  cells.forEach((i, k) => { State.board[i] = ['circle_red', 'square_blue', 'triangle_green', 'star_yellow'][k]; });
+  Render.cells = Array.from({ length: 64 }, () => makeEl('button'));
+  Render.cells.forEach((el) => el.classList.add('cell', 'has-icon'));
+  Render._cellId = [...State.board];
+  Settings.reducedFx = false;
 
-  resetFxPool();
-  FX.cap = 18;
-  FX.converge(27, cells, '#ffd84d');
-  const lowCap = FX.active;
+  const run = (cap) => {
+    resetFxPool(); FX.cap = cap;
+    const group = FX.convergeGroups[0];
+    const flights = [], bursts = [], waves = [];
+    FX._gridMetrics = () => ({ cellW: 40, cellH: 40, cellPx: 40, xy: (i) => ({ x: i % 8 * 45 + 20, y: (i / 8 | 0) * 45 + 20 }) });
+    FX._nextConvergeGroup = () => group;
+    FX._flyTile = (slot, id, source, from, to, cellW, cellH) => {
+      flights.push({ slot, id, source, from, to, cellW, cellH }); return true;
+    };
+    FX._iconBurst = (slots, center, iconColors, comboColor, cellPx) => {
+      bursts.push({ slots, center, iconColors, comboColor, cellPx }); return FX.BURST_PARTICLES;
+    };
+    FX._convergeWave = (wave, center, cellPx, color) => { waves.push({ wave, center, cellPx, color }); return {}; };
+    const result = FX.converge(27, cells, '#ffd84d');
+    return { flights, bursts, waves, result };
+  };
 
-  resetFxPool();
-  FX.cap = 50;
-  FX.converge(27, cells, '#ffd84d');
-  const highCap = FX.active;
+  try {
+    const lowCap = run(1);
+    const highCap = run(50);
+    const plan = ({ flights, bursts, waves, result }) => ({
+      flights: flights.map(({ id, from, to, cellW, cellH }) => ({ id, from, to, cellW, cellH })),
+      bursts: bursts.map(({ center, iconColors, comboColor, cellPx }) => ({ center, iconColors, comboColor, cellPx })),
+      waves: waves.map(({ center, cellPx, color }) => ({ center, cellPx, color })),
+      result,
+    });
+    assert.deepEqual(plan(lowCap), plan(highCap), 'el plan magnético no debe depender del cap de partículas');
+    assert.equal(lowCap.flights.length, cells.length);
+    assert.equal(lowCap.bursts.length, 1);
+    assert.equal(lowCap.waves.length, 1);
+    assert.equal(lowCap.result.flights, cells.length);
+    assert.equal(lowCap.result.particles, FX.BURST_PARTICLES);
+    assert.equal(lowCap.result.wave, true);
+    assert.ok(lowCap.flights.every(({ to, cellW, cellH }) =>
+      to.x === lowCap.waves[0].center.x && to.y === lowCap.waves[0].center.y && cellW === 40 && cellH === 40),
+    'todas las fichas completas deben terminar en el mismo punto de convergencia');
+    assert.ok(lowCap.flights.every(({ source }, k) => source === Render.cells[cells[k]]),
+      'el vuelo debe copiar la casilla cuadrada original, no solo el glifo');
+    assert.deepEqual(lowCap.flights.map(({ id }) => id), cells.map((i) => State.board[i]),
+      'cada clon debe conservar el arte exacto del icono original');
+    assert.deepEqual(lowCap.bursts[0].center, lowCap.waves[0].center,
+      'explosión y onda deben nacer exactamente donde colapsan las fichas');
+    assert.equal(FX.active, 0, 'la convergencia no debe consumir el pool de partículas');
+  } finally {
+    State.size = prev.size; State.combo = prev.combo; State.board = prev.board;
+    Render.cells = prev.cells; Render._cellId = prev.cellId;
+    Settings.reducedFx = prev.reducedFx; FX.cap = prev.cap;
+    FX._gridMetrics = prev.gridMetrics; FX._nextConvergeGroup = prev.nextGroup;
+    FX._flyTile = prev.flyTile; FX._iconBurst = prev.iconBurst; FX._convergeWave = prev.convergeWave;
+  }
+});
 
-  State.combo = prevCombo;
-  assert.equal(lowCap, highCap, 'el burst de convergencia no debe depender de FX.cap');
-  assert.ok(lowCap > 18, 'el caso debe superar el cap móvil antiguo para detectar regresiones');
-  assert.ok(lowCap <= FX.ABS_MAX, 'la convergencia debe respetar el backstop absoluto');
+test('FX: la convergencia retira el glyph sin reactivar la salida CSS heredada', () => {
+  const prev = {
+    cells: Render.cells,
+    glyphs: Render.glyphs,
+    cellId: Render._cellId,
+    board: State.board,
+    tiles: State.tiles,
+    combo: State.combo,
+  };
+  const convergenceCell = makeEl('button');
+  const auxiliaryCell = makeEl('button');
+  convergenceCell.classList.add('has-icon', 'clear', 'spawn');
+  auxiliaryCell.classList.add('has-icon');
+  convergenceCell.style.setProperty('--clear-snap', '.2');
+  Render.cells = [convergenceCell, auxiliaryCell];
+  Render.glyphs = [makeEl('span'), makeEl('span')];
+  Render._cellId = ['circle_red', 'square_blue'];
+  Render.glyphs[0].innerHTML = '<svg></svg>';
+  Render.glyphs[1].innerHTML = '<svg></svg>';
+  State.board = [null, null];
+  State.tiles = [null, null];
+  State.combo = 1;
+
+  try {
+    Render.clearAnim([0], 27);
+    assert.equal(convergenceCell.classList.contains('clear'), false);
+    assert.equal(convergenceCell.classList.contains('spawn'), false);
+    assert.equal(convergenceCell.classList.contains('has-icon'), false);
+    assert.equal(convergenceCell.style.getPropertyValue('--clear-snap'), '');
+    assert.equal(Render._cellId[0], null);
+    assert.equal(Render.glyphs[0].innerHTML, '');
+
+    Render.clearAnim([1]);
+    assert.equal(auxiliaryCell.classList.contains('clear'), true,
+      'las limpiezas que no son convergencias deben conservar su salida temática');
+  } finally {
+    Render.cells = prev.cells;
+    Render.glyphs = prev.glyphs;
+    Render._cellId = prev.cellId;
+    State.board = prev.board;
+    State.tiles = prev.tiles;
+    State.combo = prev.combo;
+  }
+});
+
+test('FX: Imán y anclas no superponen un burst antiguo al vuelo magnético', () => {
+  const source = fs.readFileSync(path.join(root, 'game.js'), 'utf8');
+  assert.doesNotMatch(source, /conv\.push\(extra\);\s*FX\.burst\(/,
+    'el icono atraído por Imán ya forma parte de FX.converge');
+  assert.doesNotMatch(Bosses.onAnchorHit.toString(), /FX\.burst\(/,
+    'un ancla convergente no debe recibir un segundo estallido');
 });
 
 test('FB-1: los emisores forzados respetan ABS_MAX', () => {
@@ -111,6 +221,166 @@ test('FB-1: los emisores forzados respetan ABS_MAX', () => {
   assert.equal(FX.active, FX.ABS_MAX, 'force no puede rebasar ABS_MAX');
 });
 
+test('FX: la ficha completa conserva cuerpo/icono y usa aceleración magnética común', () => {
+  resetFxPool();
+  const records = [];
+  const slot = FX.convergeGroups[0].tiles[0];
+  const source = makeEl('button');
+  source.classList.add('cell', 'has-icon', 'tile-crystal', 'spawn');
+  source.dataset.tileGlyph = '+50';
+  slot.el.animate = (frames, options) => {
+    const anim = { frames, options, onfinish: null, oncancel: null, cancel() {} };
+    records.push(anim); return anim;
+  };
+
+  assert.equal(FX._flyTile(slot, 'circle_red', source, { x: 20, y: 30 }, { x: 140, y: 170 }, 50, 46), true);
+  assert.equal(records.length, 1);
+  const [{ frames, options }] = records;
+  assert.equal(options.duration, FX.CONVERGE_TRAVEL_MS);
+  assert.equal(options.delay || 0, 0);
+  assert.equal(frames.length, 5);
+  assert.equal(frames[0].opacity, 1);
+  assert.equal(frames.at(-1).opacity, 0);
+  assert.deepEqual(frames.map(({ offset }) => offset), [0, 0.18, 0.58, 0.82, 1]);
+  assert.match(frames[0].transform, new RegExp(`translate3d\\(${(20 - 25).toFixed(1)}px,${(30 - 23).toFixed(1)}px`));
+  assert.match(frames.at(-1).transform, new RegExp(`translate3d\\(${(140 - 25).toFixed(1)}px,${(170 - 23).toFixed(1)}px`));
+  assert.equal(slot.el.style.width, '50.0px');
+  assert.equal(slot.el.style.height, '46.0px');
+  assert.equal(slot.el.className.includes('tile-crystal'), true);
+  assert.equal(slot.el.className.includes('spawn'), false);
+  assert.equal(slot.el.dataset.tileGlyph, '+50');
+  assert.match(slot.glyph.innerHTML, /<svg/);
+  records[0].onfinish();
+  assert.equal(slot.anim, null);
+  assert.equal(slot.glyph.innerHTML, '');
+});
+
+test('FX: la explosión radial anterior reaparece solo en el centro y escala con la celda', () => {
+  resetFxPool();
+  const comboBak = State.combo;
+  const slots = FX.convergeGroups[0].particles;
+  const records = [];
+  slots.forEach((slot) => {
+    slot.el.animate = (frames, options) => {
+      const anim = { frames, options, onfinish: null, oncancel: null, cancel() {} };
+      records.push({ el: slot.el, frames, options, anim }); return anim;
+    };
+  });
+
+  try {
+    State.combo = 1;
+    withRandomSequence(Array(36).fill(0.5), () => {
+      assert.equal(FX._iconBurst(slots, { x: 100, y: 120 }, ['#ff5b6e'], '#fff', 40), 12);
+    });
+  } finally { State.combo = comboBak; }
+
+  assert.equal(records.length, FX.BURST_PARTICLES);
+  records.forEach(({ el, frames, options }, k) => {
+    assert.equal(options.delay, FX.CONVERGE_TRAVEL_MS);
+    assert.equal(options.duration, 700);
+    assert.equal(frames[0].opacity, 0, 'ninguna partícula debe verse durante el viaje');
+    assert.equal(frames[1].opacity, 1);
+    assert.equal(el.style.width, '5.2px');
+    const final = frames.at(-1).transform;
+    const angle = k * 30 * Math.PI / 180;
+    const x = 100 - 2.6 + Math.cos(angle) * 40;
+    const y = 120 - 2.6 + Math.sin(angle) * 40;
+    assert.match(final, new RegExp(`translate3d\\(${x.toFixed(1)}px,${y.toFixed(1)}px`));
+  });
+
+  const low = FX._burstProfile('#ff5b6e', '#fff', 1);
+  const high = FX._burstProfile('#ff5b6e', '#ffd84d', 30);
+  assert.ok(high.colors.length > low.colors.length);
+  assert.ok(high.distanceScale > low.distanceScale);
+  assert.ok(high.sizeScale > low.sizeScale);
+});
+
+test('FX: onda y explosión empiezan exactamente cuando terminan las fichas', () => {
+  resetFxPool();
+  const comboBak = State.combo;
+  const wave = FX.convergeGroups[0].wave;
+  const records = [];
+  let cancelled = 0;
+  wave.getAnimations = () => [{ cancel() { cancelled++; } }];
+  wave.animate = (frames, options) => { records.push({ frames, options }); return {}; };
+
+  try {
+    for (const combo of [1, 30]) {
+      State.combo = combo;
+      FX._convergeWave(wave, { x: 100, y: 120 }, 50, '#b46cff');
+    }
+  } finally { State.combo = comboBak; }
+
+  assert.equal(records.length, 2);
+  assert.equal(cancelled, 2, 'una onda nueva debe cancelar cualquier onda magnética anterior');
+  records.forEach(({ frames, options }) => {
+    assert.equal(options.duration, FX.CONVERGE_WAVE_MS);
+    assert.equal(options.delay, FX.CONVERGE_TRAVEL_MS);
+    assert.equal(frames[0].opacity, 0, 'la onda debe permanecer invisible durante el viaje');
+  });
+});
+
+test('FX: la geometría local respeta gaps y escala igual en móvil, tableta y escritorio', () => {
+  const board = getMemoEl('q:#board');
+  const prev = {
+    host: FX.convergeHost, rect: FX.boardRect, size: State.size,
+    getComputedStyle: window.getComputedStyle,
+  };
+  const host = makeEl('div');
+  FX.convergeHost = host;
+  State.size = 8;
+  let gap = 0;
+  window.getComputedStyle = () => ({ columnGap: `${gap}px`, rowGap: `${gap}px` });
+
+  const measure = (width, cssGap, scale) => {
+    gap = cssGap;
+    host.clientWidth = width + 20; host.clientHeight = width + 20;
+    host.getBoundingClientRect = () => ({ left: 0, top: 0, width: (width + 20) * scale, height: (width + 20) * scale });
+    FX.boardRect = { left: 10 * scale, top: 10 * scale, width: width * scale, height: width * scale };
+    return FX._gridMetrics();
+  };
+
+  try {
+    const mobile = measure(356, 3.9, 1);
+    const mobileScaled = measure(356, 3.9, 2);
+    const desktop = measure(618, 5, 1);
+    assert.ok(Math.abs(mobile.cellPx - 41.0875) < 1e-9);
+    assert.ok(Math.abs(desktop.cellPx - 72.875) < 1e-9);
+    assert.deepEqual(mobileScaled.xy(0), mobile.xy(0), 'el scale del tablero no debe desalinear la capa local');
+    assert.deepEqual(mobileScaled.xy(63), mobile.xy(63));
+    assert.equal(mobileScaled.cellPx, mobile.cellPx);
+    assert.equal(board != null, true);
+  } finally {
+    FX.convergeHost = prev.host; FX.boardRect = prev.rect; State.size = prev.size;
+    if (prev.getComputedStyle === undefined) delete window.getComputedStyle;
+    else window.getComputedStyle = prev.getComputedStyle;
+  }
+});
+
+test('FX: reduced-fx omite fichas, explosión y onda magnética', () => {
+  const prev = {
+    reducedFx: Settings.reducedFx, nextGroup: FX._nextConvergeGroup,
+    flyTile: FX._flyTile, iconBurst: FX._iconBurst, convergeWave: FX._convergeWave,
+  };
+  let flights = 0, bursts = 0, waves = 0;
+  Settings.reducedFx = true;
+  FX._nextConvergeGroup = () => FX.convergeGroups[0];
+  FX._flyTile = () => { flights++; return true; };
+  FX._iconBurst = () => { bursts++; return 12; };
+  FX._convergeWave = () => { waves++; return {}; };
+  try { FX.converge(27, [24, 30], '#fff'); }
+  finally {
+    Settings.reducedFx = prev.reducedFx;
+    FX._nextConvergeGroup = prev.nextGroup;
+    FX._flyTile = prev.flyTile;
+    FX._iconBurst = prev.iconBurst;
+    FX._convergeWave = prev.convergeWave;
+  }
+  assert.equal(flights, 0);
+  assert.equal(bursts, 0);
+  assert.equal(waves, 0);
+});
+
 test('FB-1: aviso reduced-fx heredado y limpieza de popup.show quedan protegidos', () => {
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const langBak = Settings.lang;
@@ -120,6 +390,11 @@ test('FB-1: aviso reduced-fx heredado y limpieza de popup.show quedan protegidos
     assert.ok(/settings|ajustes/i.test(I18n.t('perf_light_on')));
   }
   Settings.lang = langBak;
+  assert.ok(/\.converge-layer\b/.test(css), 'la coreografía debe vivir en una capa local al tablero');
+  assert.ok(/\.converge-tile\b/.test(css), 'debe viajar la ficha cuadrada completa');
+  assert.ok(/\.converge-particle\b/.test(css), 'la explosión central debe conservar partículas dedicadas');
+  assert.ok(!/\.converge-fly\b/.test(css), 'el clon que movía solo el glifo no debe volver');
+  assert.ok(!/\.fly-glyph\b/.test(css), 'la implementación antigua desacoplada del pool no debe volver');
   assert.ok(!/\.popup\.show/.test(css), 'la ruta muerta .popup.show no debe volver');
   assert.ok(!/popup-float-flat/.test(css), 'el override muerto de perf-2 no debe volver');
 });

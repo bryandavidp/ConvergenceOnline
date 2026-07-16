@@ -155,6 +155,68 @@ Inicio define tokens locales para no contaminar las superficies de juego:
 5. Una función tiene una sola entrada principal: Misiones vive en la banda
    contextual y Ajustes en la navegación global; no se duplican como flotantes.
 
+### Acabado de fidelidad de Inicio
+
+La tipografía de `#screen-start` es una decisión local del componente. Nombre
+de jugador, recompensa, CTA, tarjetas y etiquetas heredan una misma familia
+redondeada y pesada; no deben resolver cada uno a una fuente distinta. La
+jerarquía se comprueba con estilos computados: `Jugar` es el texto mayor y de
+peso 900 o superior, el título de recompensa supera al cuerpo y los títulos de
+tarjeta mantienen al menos peso 800. Los números de economía y puntuación usan
+variantes tabulares para que no cambie el ancho al actualizarse.
+
+El contrato del CTA `#btn-play` combina seis capas, todas necesarias:
+
+1. superficie azul `linear-gradient` de claro a profundo;
+2. borde cian ancho y segundo aro violeta mediante `box-shadow`;
+3. labio inferior azul oscuro que comunica profundidad;
+4. brillo interior superior en `::after`;
+5. triángulo blanco con sombra fría;
+6. texto blanco extrapesado con sombra/relieve, sin sustituirlo por una imagen.
+
+En el lienzo 854×1280 su caja de referencia es 560×190 px, radio 40 px y marco
+principal de 6–7 px. En tamaños menores sus proporciones escalan, pero el texto nunca puede
+salirse ni el botón perder el doble contorno.
+
+El destino activo `Inicio` conserva el icono existente, pero su superficie es
+un círculo real: ancho y alto idénticos, `border-radius:50%`, aro cian, fondo
+radial azul, labio inferior y halo. El círculo se eleva sobre la barra; el área
+del botón completo sigue perteneciendo al grid de cinco destinos y no invade
+los controles adyacentes.
+
+La cabecera aplica estas invariantes responsive:
+
+- avatar con `width:clamp(...)`, `aspect-ratio:1` y badge proporcional; ningún
+  breakpoint puede declarar pares no cuadrados como 74×69;
+- economía dimensionada por sus cajas reales, no mediante `transform:scale()`;
+- monedas, gemas y racha permanecen dentro del viewport y no se solapan con el
+  perfil aun con nombre o saldos extremos;
+- los `+` de monedas y gemas son discos verdes completos —degradado, borde,
+  brillo y sombra— con icono centrado, no una cruz flotando sobre la pill.
+
+Las dimensiones visuales objetivo de economía son:
+
+| Ancho | Monedas | Gemas | Racha | Gap |
+| --- | ---: | ---: | ---: | ---: |
+| 390 px | ~72×32 | ~64×32 | ~42×32 | 3–4 px |
+| 720 px | ~123×44 | ~114×44 | ~74×44 | 6 px |
+| 854 px | 146×52 | 131×52 | 88×52 | 8 px |
+| 1024 px | escala fluida hasta el máximo de escritorio | escala fluida | escala fluida | 10–12 px |
+
+La recompensa diaria tiene tres estados visuales, sin cambiar nunca la caja
+reservada en el flujo:
+
+| Estado | Clase | Render |
+| --- | --- | --- |
+| Disponible | sin modificador | Banner y botón interactivos |
+| Explosión | `.is-popping` | `dailyRewardBubblePop`, fragmentos/brillos y bloqueo inmediato del control |
+| Reclamada | `.is-claimed` | `visibility:hidden; opacity:0; pointer-events:none`; queda prohibido `display:none` |
+
+El paso final se sincroniza con `animationend` y dispone de timeout de
+seguridad. Con movimiento reducido se omite el efecto, pero se conserva el
+mismo estado, semántica y rectángulo. La regresión compara recompensa, CTA y
+tarjetas antes/después con una tolerancia máxima de 1 px.
+
 Las ilustraciones protagonistas de Inicio son PNG originales con alfa bajo
 `img/ui-generated/home/`. Comparten render 3D casual, materiales brillantes,
 volúmenes redondeados y luz de borde cian/violeta. El conjunto incluye avatar,
@@ -172,7 +234,7 @@ fuente de recortes en producción.
 
 El archivo define **~50 animaciones**. Las agrupamos por propósito (nombres exactos entre paréntesis para buscarlas en el CSS original):
 
-- **Transiciones de pantalla/UI genérica:** entrada de pantalla (`screen-in`), pulso de CTA home (`ctaPulse`), pulso de recompensa (`rewardPulse`), aparición de modal (`modal-in`), entrada/salida/pop de toast (`toast-in`, `toast-out`, `toast-pop`), aparición de chip de icono (`chipPop`), "bump" de valor numérico (`bump`), spin decorativo del logo (`heroSpin`).
+- **Transiciones de pantalla/UI genérica:** entrada de pantalla (`screen-in`), pulso de CTA home (`ctaPulse`), pulso de recompensa (`rewardPulse`), explosión de burbuja al reclamar (`dailyRewardBubblePop`), aparición de modal (`modal-in`), entrada/salida/pop de toast (`toast-in`, `toast-out`, `toast-pop`), aparición de chip de icono (`chipPop`), "bump" de valor numérico (`bump`), spin decorativo del logo (`heroSpin`).
 - **Progresión/mapas:** pulso de nodo de nivel actual (`nodepulse`), estrellas apareciendo (`starpop`), estrella perdida (`starShake`), wobble de cofre listo (`chestWobble`), apertura one-shot de cofre (`chestOpen`) y pop de tarjeta de recompensa (`rewardPop`).
 - **Ciclo de vida de icono en tablero:** aparición (`glyph-in`), eliminación genérica (`glyph-out` + burst `clear-ring`) y **9 variantes temáticas por skin de tablero** (`clear-wood`, `clear-ice`, `clear-lava`, `clear-crystal`, `clear-magic`, `clear-future`, `clear-gold`, `clear-leaf`, `clear-cosmic`, cada una con su burst a juego: `clear-dust`, `clear-shards`, `clear-magma`, `clear-prism`, `clear-rune`, `clear-scan`, `clear-gold-spark`, `clear-leaf-burst`, `clear-star-burst`).
 - **Feedback de error/refuerzo en celda:** shake de fallo (`miss`), pop de penalización (`penalty-pop`), shake de tablero (`board-shake`), impacto/rotura de hielo (`ice-hit`, `ice-shatter`).
