@@ -154,6 +154,16 @@ test('modos: el CSS construye un cilindro 3D fijo y respeta movimiento reducido'
   assert.match(css, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?#screen-start \.home-mode-track/);
 });
 
+test('modos: las cards laterales conservan profundidad con una inclinación más frontal', () => {
+  assert.match(css, /INICIO 3\.3[^\n]*LATERALES MÁS FRONTALES/);
+  assert.match(css, /data-distance="1"\]\[data-side="previous"\][^}]*--home-side-upright:\s*18deg/,
+    'la card anterior debe compensar parte de los 60 grados del cilindro');
+  assert.match(css, /data-distance="1"\]\[data-side="next"\][^}]*--home-side-upright:\s*-18deg/,
+    'la card siguiente debe aplicar la compensación simétrica');
+  assert.match(css, /data-distance="1"\] \.home-mode-card\s*\{[^}]*rotateY\(var\(--home-side-upright\)\)[^}]*scale\(\.91\)/s,
+    'la corrección debe ocurrir en la card, sin romper la geometría del anillo');
+});
+
 test('modos: las cards son estrechas, verticales y dejan sobresalir el arte', () => {
   assert.match(css, /INICIO 3\.1[^\n]*CARDS VERTICALES CON ARTE SOBRESALIENTE/);
   assert.match(css, /--home-mode-card-w:\s*clamp\(236px,\s*62vw,\s*340px\)/,

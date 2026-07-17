@@ -171,6 +171,11 @@ indefinidamente. Seleccionar una card no altera `Storage.lastMode`; esa clave se
 escribe solo cuando `Game.start()` inicia una partida real. Al volver o recargar,
 Inicio enfoca ese modo; si no existe uno válido, enfoca Clásico.
 
+Las caras adyacentes permanecen en sus posiciones geométricas de ±60°, pero su
+propia superficie compensa 18° hacia la cámara. Esta corrección solo afecta a
+`data-distance="1"`: hace las cards laterales más legibles sin aplanar el anillo
+ni alterar la continuidad del giro.
+
 El destino activo `Inicio` conserva el icono existente, pero su superficie es
 un círculo real: ancho y alto idénticos, `border-radius:50%`, aro cian, fondo
 radial azul, labio inferior y halo. El círculo se eleva sobre la barra; el área

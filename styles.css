@@ -7662,3 +7662,15 @@ body.large-text #screen-start .home-mode-description { -webkit-line-clamp: 1; }
   #screen-start .appbar .econ-pill { padding-inline: 3px; gap: 2px; }
   #screen-start .appbar .econ-pill b { font-size: .62rem; }
 }
+
+/* =========================================================================
+   INICIO 3.3 · LATERALES MÁS FRONTALES
+   El anillo conserva sus caras a 60°, pero las dos vecinas compensan parte de
+   ese giro sobre su propio eje. Así siguen marcando profundidad sin quedar
+   excesivamente tumbadas hacia el fondo.
+   ========================================================================= */
+#screen-start .home-mode-slot[data-distance="1"][data-side="previous"] { --home-side-upright: 18deg; }
+#screen-start .home-mode-slot[data-distance="1"][data-side="next"] { --home-side-upright: -18deg; }
+#screen-start .home-mode-slot[data-distance="1"] .home-mode-card {
+  transform: translate(-50%, -50%) rotateY(var(--home-side-upright)) scale(.91);
+}
