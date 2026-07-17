@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.62';
+  const VERSION = '2.6.66';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -344,7 +344,10 @@
         powerup_empty: 'No te quedan de este power-up',
         equipped: 'Equipado', equip: 'Equipar', free: 'Gratis', no_coins: 'Monedas insuficientes',
         shop_boards: 'Tableros visuales', shop_themes: 'Temas de color', shop_hint2: 'Los tableros son solo cambios visuales: no dan ventajas ni desventajas. Equipa tu estilo favorito para jugar.', board_unlocked: '¡Tablero desbloqueado!',
-        chests_title: '🎁 Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre contiene monedas, gemas, tickets o un cosmético raro.', chests_none: 'No tienes cofres · gana uno en Supervivencia, mundos, rachas o el Jardín Zen', chest_reward: '¡Recompensa! {r}', open_chest: '🎁 Abrir cofre',
+        chests_title: 'Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre contiene monedas, gemas, tickets o un cosmético raro.', chests_none: 'No tienes cofres · gana uno en Supervivencia, mundos, rachas o el Jardín Zen', chest_reward: '¡Recompensa! {r}', open_chest: 'Abrir cofre',
+        chests_kicker: 'Recompensas', chests_subtitle: 'Juega, consigue cofres y descubre premios increíbles.', chests_progress_title: 'Tu progreso', chests_progress_rule: 'Gana 1 cofre cada 10 oleadas en Supervivencia.',
+        chests_play_survival: 'Jugar Supervivencia', chests_next_wave: 'Próximo cofre en {n} oleadas', chests_open_now: 'O abrir ahora', chests_open_saved: 'Abrir cofre guardado', chests_available: 'Disponibles',
+        chests_contents_note: 'Los cofres contienen monedas, gemas, tickets y cosméticos.', chest_opening: 'El cofre se está abriendo…',
         chest_reveal_title: 'Contenido del cofre', chest_cosmetic_title: '¡COSMÉTICO!', chest_rarity_common: 'Recompensa', chest_rarity_jackpot: 'Jackpot', chest_rarity_cosmetic: 'Especial', chest_continue: 'Seguir', chest_equip: 'Equipar',
         chest_reward_coins: '+{n} monedas', chest_reward_gems: '+{n} gemas', chest_reward_ticket: '+{n} ticket(s)', chest_reward_board: 'Tablero: {n}', chest_reward_theme: 'Tema: {n}',
         soon_badge: 'Próximamente', notify_me: 'Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
@@ -628,7 +631,10 @@
         powerup_empty: 'No more of this power-up',
         equipped: 'Equipped', equip: 'Equip', free: 'Free', no_coins: 'Not enough coins',
         shop_boards: 'Visual boards', shop_themes: 'Color themes', shop_hint2: 'Boards are visual-only cosmetics: no advantages or disadvantages. Equip your favorite style before playing.', board_unlocked: 'Board unlocked!',
-        chests_title: '🎁 Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest contains coins, gems, tickets or a rare cosmetic.', chests_none: 'No chests · earn them in Survival, worlds, streaks or the Zen Garden', chest_reward: 'Reward! {r}', open_chest: '🎁 Open chest',
+        chests_title: 'Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest contains coins, gems, tickets or a rare cosmetic.', chests_none: 'No chests · earn them in Survival, worlds, streaks or the Zen Garden', chest_reward: 'Reward! {r}', open_chest: 'Open chest',
+        chests_kicker: 'Rewards', chests_subtitle: 'Play, earn chests and discover incredible prizes.', chests_progress_title: 'Your progress', chests_progress_rule: 'Earn 1 chest every 10 waves in Survival.',
+        chests_play_survival: 'Play Survival', chests_next_wave: 'Next chest in {n} waves', chests_open_now: 'Or open now', chests_open_saved: 'Open saved chest', chests_available: 'Available',
+        chests_contents_note: 'Chests contain coins, gems, tickets and cosmetics.', chest_opening: 'The chest is opening…',
         chest_reveal_title: 'Chest contents', chest_cosmetic_title: 'COSMETIC!', chest_rarity_common: 'Reward', chest_rarity_jackpot: 'Jackpot', chest_rarity_cosmetic: 'Special', chest_continue: 'Continue', chest_equip: 'Equip',
         chest_reward_coins: '+{n} coins', chest_reward_gems: '+{n} gems', chest_reward_ticket: '+{n} ticket(s)', chest_reward_board: 'Board: {n}', chest_reward_theme: 'Theme: {n}',
         soon_badge: 'Coming soon', notify_me: 'Notify me', notify_ok: "We'll let you know when it's ready!",
@@ -2097,6 +2103,91 @@
       document.querySelectorAll('.screen').forEach(s => { s.hidden = s.id !== 'screen-' + name; });
     },
   };
+
+  /* ===================== Hub views =====================
+   * Las secciones de metajuego comparten la pantalla de Inicio, su appbar y su
+   * navegación inferior. Solo las decisiones transitorias de una partida
+   * siguen usando Modal (pausa, reanimación y resultados). */
+  const HubViews = {
+    current: 'home',
+    host: null,
+    homeMain: null,
+    _last: null,
+    init() {
+      this.host = $('#hub-views');
+      this.homeMain = document.querySelector('#screen-start .home-main');
+      if (!this.host || !this.homeMain) return;
+      document.querySelectorAll('[data-hub-view]').forEach((view) => {
+        view.hidden = true;
+        this.host.appendChild(view);
+      });
+      this.host.hidden = true;
+      document.body.dataset.homeView = 'home';
+      this._updateNav('nav-home');
+    },
+    _view(name) {
+      return this.host && this.host.querySelector(`[data-hub-view="${name}"]`);
+    },
+    _updateNav(action) {
+      document.querySelectorAll('#screen-start .bottom-nav .bnav').forEach((button) => {
+        if (action && button.dataset.act === action) button.setAttribute('aria-current', 'page');
+        else button.removeAttribute('aria-current');
+      });
+    },
+    open(name, options = {}) {
+      const view = this._view(name); if (!view) return false;
+      const openingFromHome = document.body.dataset.screen === 'start' && this.current === 'home';
+      if (openingFromHome) this._last = document.activeElement;
+
+      // Un siguiente paso del resumen puede llevar directamente a Tienda,
+      // Misiones o Cofres. Al abandonar ese resumen la run queda cerrada.
+      if (document.body.dataset.screen === 'game' && State.status === 'over') {
+        Loop.stop(); Music.stop(); State.status = 'idle'; ModeSignals.clear();
+        if (typeof Survival !== 'undefined') Survival.cleanup();
+      }
+
+      Screens.show('start');
+      if (this.homeMain) this.homeMain.hidden = true;
+      if (this.host) this.host.hidden = false;
+      this.host.querySelectorAll('[data-hub-view]').forEach((item) => { item.hidden = item !== view; });
+      const scroll = view.querySelector('.view-body'); if (scroll) scroll.scrollTop = 0;
+      this.current = name;
+      document.body.dataset.homeView = name;
+      document.body.classList.add('hub-view-open');
+      this._updateNav(options.nav || null);
+      updateTopBars(); Econ.refresh();
+
+      const heading = view.querySelector('h1, h2');
+      if (heading) {
+        heading.setAttribute('tabindex', '-1');
+        requestAnimationFrame(() => {
+          try { heading.focus({ preventScroll: true }); } catch (_) { heading.focus(); }
+        });
+        announce(heading.textContent || name);
+      }
+      return true;
+    },
+    home(options = {}) {
+      if (!this.host || !this.homeMain) return;
+      const shouldFocus = options.focus !== false;
+      this.host.querySelectorAll('[data-hub-view]').forEach((view) => { view.hidden = true; });
+      this.host.hidden = true;
+      this.homeMain.hidden = false;
+      this.current = 'home';
+      document.body.dataset.homeView = 'home';
+      document.body.classList.remove('hub-view-open');
+      this._updateNav('nav-home');
+      updateTopBars();
+      if (shouldFocus) {
+        const target = this._last && this._last.isConnected ? this._last : document.querySelector('[data-act="nav-home"]');
+        if (target && target.focus) requestAnimationFrame(() => {
+          try { target.focus({ preventScroll: true }); } catch (_) { target.focus(); }
+        });
+      }
+      this._last = null;
+    },
+  };
+
   const Modal = {
     _last: null,
     _id: null,
@@ -8058,12 +8149,13 @@
     const key = HOME_MODE_CARDS.some((c) => c.key === mode) ? mode : HomeModeCarousel.initialMode();
     HomeModeCarousel.select(key, { instant: true, announce: false });
     refreshStart();
+    HubViews.home({ focus: false });
     Screens.show('start');
     if (focusMode) requestAnimationFrame(() => HomeModeCarousel.update({ focus: true, announce: false }));
   }
 
-  // Aventura → mapa de capítulos (modal-adventure); su botón "Continuar" lanza la partida.
-  function openAdventure() { buildAdventureMap(); Modal.open('modal-adventure'); }
+  // Aventura → vista de capítulos; su botón "Continuar" lanza la partida.
+  function openAdventure() { buildAdventureMap(); HubViews.open('adventure'); }
   // Estado vacío reutilizable: icono (opcional) + título + subtítulo + CTA (data-act delegado).
   // Evita que cofres/logros/clasificación se vean "rotos" cuando aún no hay datos.
   function emptyState(icon, title, sub, ctaText, ctaAct) {
@@ -8074,10 +8166,10 @@
   // Clásico → mapa de mundos (Fase 2 lo sustituye por la pantalla dedicada).
   function openWorldsMap() {
     if (typeof Worlds !== 'undefined' && Worlds.open) { Worlds.open(); return; }
-    buildAdventureMap(); Modal.open('modal-adventure');
+    buildAdventureMap(); HubViews.open('adventure');
   }
-  // Multijugador: fuera de V1 (volverá con la capa online, ROADMAP §8). El modal-multi
-  // queda latente en el HTML pero ninguna superficie de V1 lo abre.
+  // Multijugador: fuera de V1 (volverá con la capa online, ROADMAP §8). La vista
+  // queda latente en el HTML pero ninguna superficie de V1 la abre.
   let survDiff = Config.DIFF_ORDER.indexOf(Storage.survDiff) >= 0 ? Storage.survDiff : 'normal';
   function renderSurvivalDiff() {
     document.querySelectorAll('[data-surv-diff]').forEach((btn) => {
@@ -8137,11 +8229,11 @@
       wk.hidden = false;
     }
     renderSurvivalDiff();
-    Modal.open('modal-surv-diff');
+    HubViews.open('surv-diff');
   }
   function startSurvivalSelected() {
     Storage.survDiff = survDiff;
-    Modal.close();
+    HubViews.home({ focus: false });
     Game.start('supervivencia', survDiff);
   }
   function buildDailyInfo() {
@@ -8185,7 +8277,7 @@
   }
   function openDailyInfo() {
     buildDailyInfo();
-    Modal.open('modal-daily');
+    HubViews.open('daily');
   }
 
   /* ===================== Top bar reutilizable (sistema base) ===================== */
@@ -8470,19 +8562,19 @@
       if (Settings.lang === btn.dataset.lang) return; Settings.lang = btn.dataset.lang; Sound.ui(); applyLanguage();
     }));
   }
-  function openSettings() { buildSettings(); Modal.open('modal-settings'); }
+  function openSettings() { buildSettings(); HubViews.open('settings', { nav: 'settings' }); }
 
   function openMedals(view = 'profile') {
     const achievementsOnly = view === 'achievements';
-    const modal = $('#modal-medals');
-    if (modal) modal.classList.toggle('achievements-only', achievementsOnly);
+    const viewRoot = $('#view-medals');
+    if (viewRoot) viewRoot.classList.toggle('achievements-only', achievementsOnly);
     const title = $('#medals-title');
     if (title) {
       const key = achievementsOnly ? 'achievements_title' : 'profile_title';
       title.textContent = I18n.t(key);
       title.setAttribute('data-i18n', key);
     }
-    const emblem = modal && modal.querySelector('.m-emblem img');
+    const emblem = viewRoot && viewRoot.querySelector('.m-emblem img');
     if (emblem) emblem.src = achievementsOnly ? 'img/ui-generated/home/nav-achievements.png' : 'img/ui/player.png';
     // Estadísticas de por vida
     const st = Meta.stats();
@@ -8520,7 +8612,7 @@
         `<div class="medal ${a.unlocked ? 'on' : ''}"><span class="medal-ic">${a.unlocked ? iconInline('medal') : iconInline('lock')}</span><span class="medal-tx"><strong>${a.name}</strong><small>${a.desc}</small></span></div>`
       ).join('');
     }
-    Modal.open('modal-medals');
+    HubViews.open('medals', { nav: achievementsOnly ? 'nav-achievements' : null });
   }
 
   // Tienda de temas (compra/equipa con monedas; previsualización en vivo)
@@ -8591,7 +8683,7 @@
       e.stopPropagation(); Meta.equip('theme', b.dataset.equip); Cosmetics.apply(); Sound.ui(); refreshStart(); buildShop();
     }));
   }
-  function openShop() { buildShop(); Modal.open('modal-shop'); }
+  function openShop() { buildShop(); HubViews.open('shop', { nav: 'nav-shop' }); }
 
   // --- Cofres: abrir y entregar recompensa aleatoria ---
   function setChestButtonsBusy(on) {
@@ -8608,24 +8700,27 @@
     if (ob) {
       ob.disabled = false;
       ob.classList.toggle('is-poor', n <= 0);
+      ob.setAttribute('aria-label', I18n.t('chests_open_saved') + ': ' + n);
       ob.removeAttribute('aria-disabled');
     }
+    const saved = $('#saved-chest-count'); if (saved) saved.textContent = n;
     const pb = $('#btn-open-premium');
     if (pb) {
-      pb.innerHTML = `💎 ${esc(I18n.t('premium_chest'))} (${Meta.PREMIUM_CHEST_GEMS})`;
       const poor = Meta.gems() < Meta.PREMIUM_CHEST_GEMS;
       pb.disabled = false;
       pb.classList.toggle('is-poor', poor);
+      pb.setAttribute('aria-label', `${I18n.t('premium_chest')}: ${Meta.PREMIUM_CHEST_GEMS}`);
       pb.removeAttribute('aria-disabled');
     }
+    const premiumCost = $('#premium-chest-cost'); if (premiumCost) premiumCost.textContent = Meta.PREMIUM_CHEST_GEMS;
   }
   function chestRewardInfo(r) {
     if (!r) return null;
-    if (r.kind === 'coins') return { icon: '🪙', rarity: r.rarity || 'common', label: I18n.t('chest_reward_coins').replace('{n}', r.amount) };
-    if (r.kind === 'gems') return { icon: '💎', rarity: 'common', label: I18n.t('chest_reward_gems').replace('{n}', r.amount) };
-    if (r.kind === 'ticket') return { icon: '🎟️', rarity: 'common', label: I18n.t('chest_reward_ticket').replace('{n}', r.amount) };
+    if (r.kind === 'coins') return { icon: '🪙', asset: 'img/ui/coin.png', rarity: r.rarity || 'common', label: I18n.t('chest_reward_coins').replace('{n}', r.amount) };
+    if (r.kind === 'gems') return { icon: '💎', asset: 'img/ui/gem.png', rarity: 'common', label: I18n.t('chest_reward_gems').replace('{n}', r.amount) };
+    if (r.kind === 'ticket') return { icon: '🎟️', asset: 'img/ui/ticket.png', rarity: 'common', label: I18n.t('chest_reward_ticket').replace('{n}', r.amount) };
     const key = r.cosmeticKind === 'theme' ? 'chest_reward_theme' : 'chest_reward_board';
-    return { icon: '✨', rarity: 'cosmetic', label: I18n.t(key).replace('{n}', r.name || r.id) };
+    return { icon: '✨', asset: 'img/ui/gift.png', rarity: 'cosmetic', label: I18n.t(key).replace('{n}', r.name || r.id) };
   }
   function showChestReward(r) {
     const el = $('#chests-body'); if (!el) return;
@@ -8634,15 +8729,18 @@
     const title = cosmetic ? I18n.t('chest_cosmetic_title') : I18n.t('chest_reveal_title');
     const rarity = I18n.t('chest_rarity_' + info.rarity);
     const equip = cosmetic ? `<button class="btn btn-primary btn-sm" data-chest-equip>${esc(I18n.t('chest_equip'))}</button>` : '';
-    el.innerHTML = `<div class="chest-reveal rarity-${info.rarity}">
-      <span class="cr-rarity">${esc(rarity)}</span>
-      <span class="cr-icon">${info.icon}</span>
-      <b>${esc(title)}</b>
-      <strong>${esc(info.label)}</strong>
-      <div class="cr-actions">${equip}<button class="btn btn-ghost btn-sm" data-chest-next>${esc(I18n.t('chest_continue'))}</button></div>
+    el.innerHTML = `<div class="chest-reward-stage rarity-${info.rarity}">
+      <img class="chest-reward-open" src="img/ui-generated/chests/chest-open.png" alt="" aria-hidden="true">
+      <div class="chest-reveal rarity-${info.rarity}">
+        <span class="cr-rarity">${esc(rarity)}</span>
+        <span class="cr-icon"><img src="${info.asset}" alt="" aria-hidden="true"></span>
+        <b>${esc(title)}</b>
+        <strong>${esc(info.label)}</strong>
+        <div class="cr-actions">${equip}<button class="btn btn-ghost btn-sm" data-chest-next>${esc(I18n.t('chest_continue'))}</button></div>
+      </div>
     </div>`;
     const next = el.querySelector('[data-chest-next]');
-    if (next) next.addEventListener('click', () => { Sound.ui(); buildChests(); });
+    if (next) next.addEventListener('click', () => { Sound.ui(); el.removeAttribute('aria-busy'); setChestButtonsBusy(false); buildChests(); });
     const eq = el.querySelector('[data-chest-equip]');
     if (eq) eq.addEventListener('click', () => {
       if (r.cosmeticKind === 'board') { Meta.equipBoard(r.id); Boards.apply(); }
@@ -8650,34 +8748,60 @@
       Sound.success(); Econ.refresh(); refreshStart(); buildShop(); buildChests();
       Toasts.show(I18n.t('equipped'), 'good', 1500, info.icon);
     });
+    announce(I18n.t('chest_reward').replace('{r}', info.label));
   }
   function revealChestReward(r, premium) {
     const el = $('#chests-body');
-    const big = el && el.querySelector('.chest-big');
+    const hero = el && el.querySelector('.chest-hero');
     const info = chestRewardInfo(r);
+    const reduceMotion = Settings.reducedFx || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     setChestButtonsBusy(true);
-    if (big && !Settings.reducedFx) { big.classList.remove('ready'); big.classList.add('opening'); }
+    if (el) el.setAttribute('aria-busy', 'true');
+    if (hero && !reduceMotion) {
+      hero.classList.remove('ready');
+      hero.classList.add('is-opening');
+      setTimeout(() => { if (hero.isConnected) hero.classList.add('is-open'); }, 360);
+    }
+    announce(I18n.t('chest_opening'));
     const finish = () => {
-      if (!Settings.reducedFx) FX.confetti(info.rarity === 'cosmetic' ? 160 : (premium ? 120 : 80));
+      if (!reduceMotion) FX.confetti(info.rarity === 'cosmetic' ? 160 : (premium ? 120 : 80));
       showChestReward(r);
       Toasts.show(I18n.t('chest_reward').replace('{r}', info.label), 'good', info.rarity === 'common' ? 2200 : 2800, info.icon);
       Econ.refresh();
       syncChestButtons();
-      setChestButtonsBusy(false);
+      // La recompensa conserva el foco de la secuencia: no se puede abrir otro
+      // cofre hasta pulsar Seguir (o Equipar).
+      setChestButtonsBusy(true);
     };
-    setTimeout(finish, Settings.reducedFx ? 0 : 520);
+    setTimeout(finish, reduceMotion ? 0 : 1120);
   }
   function buildChests() {
     const el = $('#chests-body'); if (!el) return;
+    el.removeAttribute('aria-busy');
     Econ.refresh();
     const n = Meta.chests();
     syncHomeChests();
-    // Sin cofres: en vez de solo el contador a 0, una guía accionable de cómo ganarlos.
-    const guide = n <= 0
-      ? emptyState('', I18n.t('empty_chests_title'), I18n.t('empty_chests_sub'), I18n.t('empty_cta_surv'), 'go-surv')
-      : `<p class="chest-hint">${I18n.t('chests_hint')}</p>`;
-    el.innerHTML = `<div class="chest-big${n > 0 ? ' ready' : ''}">${iconInline('chest')}</div>
-      <p class="chest-count">${I18n.t('chests_have').replace('{n}', n)}</p>${guide}`;
+    const bestWave = Math.max(0, Meta.survBestWave() | 0);
+    const waveProgress = bestWave % 10;
+    const wavesLeft = 10 - waveProgress;
+    const track = $('#chest-progress-track');
+    const fill = $('#chest-progress-fill');
+    const value = $('#chest-progress-value');
+    const next = $('#chest-next-wave');
+    if (track) track.setAttribute('aria-valuenow', String(waveProgress));
+    if (fill) fill.style.width = (waveProgress * 10) + '%';
+    if (value) value.textContent = waveProgress + ' / 10';
+    if (next) next.textContent = I18n.t('chests_next_wave').replace('{n}', wavesLeft);
+    el.innerHTML = `<div class="chest-hero${n > 0 ? ' ready' : ' empty'}">
+      <div class="chest-stage" aria-hidden="true">
+        <span class="chest-stage-ring"></span>
+        <span class="chest-spark chest-spark-one"></span><span class="chest-spark chest-spark-two"></span><span class="chest-spark chest-spark-three"></span>
+        <img class="chest-closed" src="img/ui-generated/home/nav-chest.png" alt="">
+        <img class="chest-open" src="img/ui-generated/chests/chest-open.png" alt="">
+      </div>
+      <p class="chest-count">${esc(I18n.t('chests_have').replace('{n}', n))}</p>
+      <p class="chest-hint">${esc(n > 0 ? I18n.t('chests_hint') : I18n.t('empty_chests_sub'))}</p>
+    </div>`;
     syncChestButtons();
   }
   function doOpenPremiumChest() {
@@ -8687,11 +8811,11 @@
     if (r.rarity === 'jackpot' || r.rarity === 'cosmetic') setTimeout(() => Sound.record(), 120);
     revealChestReward(r, true);
   }
-  function openChests() { buildChests(); Modal.open('modal-chests'); }
+  function openChests() { buildChests(); HubViews.open('chests'); }
   function doOpenChest() {
     const r = Meta.openChest();
     if (!r) { Sound.miss(); Toasts.show(I18n.t('chests_none'), 'warn', 2800, 'chest'); buildChests(); return; }
-    // El modal y la banda de Inicio comparten el mismo estado; proyectarlo en
+    // La vista y la banda de Inicio comparten el mismo estado; proyectarlo en
     // el mismo tick evita que el badge conserve el valor anterior al cerrar.
     syncHomeChests();
     Sound.success();
@@ -8793,6 +8917,7 @@
     applyReducedFx();
     Perf.init();
     applyLargeText();
+    HubViews.init();
     mountTopBars();
     fillArt();
     I18n.apply();
@@ -8838,7 +8963,7 @@
     { const ni = $('#player-name'), pr = Storage.profile; if (ni && pr && pr.name && pr.name !== 'Invitado') ni.value = pr.name; }
     { const lf = $('#login-form'); if (lf) lf.addEventListener('submit', (e) => { e.preventDefault(); const ni = $('#player-name'); enterApp(ni ? ni.value.trim() : ''); }); }
     { const g = $('#btn-guest'); if (g) g.addEventListener('click', () => enterApp('Invitado')); }
-    { const bt = $('#btn-tutorial'); if (bt) bt.addEventListener('click', () => { Modal.close(); Coach.start(); }); }
+    { const bt = $('#btn-tutorial'); if (bt) bt.addEventListener('click', () => { HubViews.home({ focus: false }); Coach.start(); }); }
     { const cs = $('#coach-skip'); if (cs) cs.addEventListener('click', () => Coach.skip()); }
     { const cp = $('#coach-play'); if (cp) cp.addEventListener('click', () => { Sound.ensure(); Coach.play1(); }); }
     // "Novedades" al actualizar de versión (no en el primer arranque).
@@ -8858,7 +8983,7 @@
       else if (a === 'buy-gems') { Sound.ensure(); openShop(); }
       else if (a === 'bell') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
       else if (a === 'home-daily') { Sound.ensure(); openDailyInfo(); }
-      else if (a === 'open-guide') { Sound.ui(); Modal.open('modal-how'); }
+      else if (a === 'open-guide') { Sound.ui(); HubViews.open('how', { nav: 'open-guide' }); }
       else if (a === 'go-surv') { Sound.ensure(); Modal.close(); openSurvivalDiff(); }
       else if (a === 'go-play') { Sound.ensure(); Modal.close(); showHome(State.mode, true); }
       else if (a === 'go-daily') { Sound.ensure(); Modal.close(); openDailyInfo(); }
@@ -8866,12 +8991,12 @@
       else if (a === 'go-adventure') { Sound.ensure(); Modal.close(); openAdventure(); }
       else if (a === 'open-chests') { Sound.ensure(); Modal.close(); openChests(); }
       else if (a === 'open-shop') { Sound.ensure(); Modal.close(); openShop(); }
-      else if (a === 'open-missions') { Sound.ui(); refreshStart(); Modal.close(); Modal.open('modal-missions'); }
+      else if (a === 'open-missions') { Sound.ui(); refreshStart(); Modal.close(); HubViews.open('missions'); }
       else if (a === 'claim-daily') claimDailyReward();
       else if (a === 'nav-achievements') { Sound.ensure(); openMedals('achievements'); }
       else if (a === 'nav-shop') { Sound.ensure(); openShop(); }
-      else if (a === 'nav-missions') { Sound.ui(); Modal.open('modal-missions'); }
-      else if (a === 'nav-home') Sound.ui();
+      else if (a === 'nav-missions') { Sound.ui(); HubViews.open('missions'); }
+      else if (a === 'nav-home') { Sound.ui(); HubViews.home(); refreshStart(); }
     });
 
     // Inicio (el grueso del cableado vive en el handler delegado data-act de arriba).
@@ -8882,7 +9007,7 @@
     { const sc = $('#shop-close'); if (sc) sc.addEventListener('click', () => Cosmetics.apply()); }
 
     // Lanzadores de modos que necesitan una configuración intermedia.
-    { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { Modal.close(); Game.start('aventura', 'normal'); }); }
+    { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { HubViews.home({ focus: false }); Game.start('aventura', 'normal'); }); }
     document.querySelectorAll('[data-surv-diff]').forEach((b) => b.addEventListener('click', () => {
       survDiff = b.dataset.survDiff || 'normal';
       Storage.survDiff = survDiff;
@@ -8896,14 +9021,14 @@
     { const ws = $('#worlds-settings'); if (ws) ws.addEventListener('click', () => { Sound.ui(); openSettings(); }); }
     { const wr = $('#world-rewards'); if (wr) wr.addEventListener('click', () => Worlds.claimReward()); }
     { const b = $('#wt-shop'); if (b) b.addEventListener('click', () => { Sound.ui(); openShop(); }); }
-    { const b = $('#wt-missions'); if (b) b.addEventListener('click', () => { Sound.ui(); Modal.open('modal-missions'); }); }
+    { const b = $('#wt-missions'); if (b) b.addEventListener('click', () => { Sound.ui(); HubViews.open('missions'); }); }
     { const b = $('#wt-play'); if (b) b.addEventListener('click', () => Sound.ui()); }
     { const b = $('#wt-chests'); if (b) b.addEventListener('click', () => { Sound.ui(); openChests(); }); }
     { const oc = $('#btn-open-chest'); if (oc) oc.addEventListener('click', doOpenChest); }
     { const op = $('#btn-open-premium'); if (op) op.addEventListener('click', doOpenPremiumChest); }
     { const b = $('#wt-rank'); if (b) b.addEventListener('click', () => { Sound.ui(); openMedals(); }); }
     { const lm = $('#btn-level-map'); if (lm) lm.addEventListener('click', () => Game.toWorldsMap()); }
-    { const mn = $('#btn-multi-notify'); if (mn) mn.addEventListener('click', () => { Sound.success(); Toasts.show(I18n.t('notify_ok'), 'good', 1800); Modal.close(); }); }
+    { const mn = $('#btn-multi-notify'); if (mn) mn.addEventListener('click', () => { Sound.success(); Toasts.show(I18n.t('notify_ok'), 'good', 1800); HubViews.home(); }); }
 
     // Juego
     on('btn-hint', 'click', () => Game.hint());
@@ -8931,13 +9056,15 @@
     on('btn-over-quit', 'click', () => Game.quit());
     { const rv = $('#btn-revive'); if (rv) rv.addEventListener('click', () => Survival.revive()); }
     { const gu = $('#btn-giveup'); if (gu) gu.addEventListener('click', () => Survival.giveUp()); }
-    { const ds = $('#btn-daily-start'); if (ds) ds.addEventListener('click', () => { Sound.ensure(); Modal.close(); Game.startDaily(); }); }
+    { const ds = $('#btn-daily-start'); if (ds) ds.addEventListener('click', () => { Sound.ensure(); HubViews.home({ focus: false }); Game.startDaily(); }); }
     document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => Modal.close()));
+    document.querySelectorAll('[data-view-back]').forEach(b => b.addEventListener('click', () => HubViews.home()));
 
     // Teclas globales
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        if (State.status === 'playing') Game.pause();
+        if (document.body.dataset.screen === 'start' && HubViews.current !== 'home') HubViews.home();
+        else if (State.status === 'playing') Game.pause();
         else if (State.status === 'paused') Game.resume();
       } else if (e.key.toLowerCase() === 'p' && (State.status === 'playing' || State.status === 'paused')) {
         State.status === 'playing' ? Game.pause() : Game.resume();
@@ -8969,5 +9096,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, Modal, Perf, ModeSignals, HomeModeCarousel, buildHomeModeCarousel, showHome, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, Modal, HubViews, Perf, ModeSignals, HomeModeCarousel, buildHomeModeCarousel, showHome, refreshStart, applyLanguage };
 })();

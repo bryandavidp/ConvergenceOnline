@@ -9,7 +9,7 @@ const { makeEl, getMemoEl } = require('./dom-stub.js');
 require('../game.js');
 
 const cv = globalThis.window.__cv;
-const { FX, State, Render, Bosses, Config, I18n, Settings, Adventure, Meta, ModeSignals, Game, Toasts, Boards, Themes, Modal } = cv;
+const { FX, State, Render, Bosses, Config, I18n, Settings, Adventure, Meta, ModeSignals, Game, Toasts, Boards, Themes } = cv;
 const root = path.join(__dirname, '..');
 
 function withRandomSequence(seq, fn) {
@@ -518,7 +518,7 @@ test('FB-4: textos del reto diario no vuelven a usar ellipsis ni ocultar chips',
   assert.doesNotMatch(badge[0], /ellipsis/);
   assert.doesNotMatch(css, /\.mc-feats \{ display: none; \}/);
   assert.match(css, /\.ac-daily-state span/);
-  assert.match(css, /#modal-daily/);
+  assert.match(css, /#view-daily/);
 });
 
 test('FB-7: el drop cosmético concede no poseídos y grantTheme es idempotente', () => {
@@ -567,15 +567,17 @@ test('FB-7: pool cosmético vacío cae a gemas normales o jackpot premium', () =
   }
 });
 
-test('FB-7: UI de cofres conserva feedback clicable y tarjeta persistente', () => {
+test('FB-7: UI de cofres conserva feedback clicable y revelado persistente', () => {
   const js = fs.readFileSync(path.join(root, 'game.js'), 'utf8');
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const prevLang = Settings.lang;
   assert.doesNotMatch(js, /ob\.disabled = n <= 0/);
   assert.doesNotMatch(js, /pb\.disabled = Meta\.gems\(\) < Meta\.PREMIUM_CHEST_GEMS/);
   assert.match(js, /classList\.toggle\('is-poor'/);
-  assert.match(css, /\.chest-big\.opening/);
+  assert.match(css, /\.chest-hero\.is-opening/);
+  assert.match(css, /\.chest-hero\.is-open/);
   assert.match(css, /\.chest-reveal/);
+  assert.match(js, /setTimeout\(finish, reduceMotion \? 0 : 1120\)/);
   try {
     for (const lang of ['es', 'en']) {
       Settings.lang = lang;
@@ -588,38 +590,16 @@ test('FB-7: UI de cofres conserva feedback clicable y tarjeta persistente', () =
   }
 });
 
-test('FB-8: cerrar un modal secundario tras game over vuelve al inicio', () => {
-  const prev = {
-    status: State.status,
-    mode: State.mode,
-    screen: document.body.dataset.screen,
-    modalId: Modal._id,
-  };
-  try {
-    State.status = 'over';
-    State.mode = 'supervivencia';
-    document.body.dataset.screen = 'game';
+test('FB-8: navegar a una vista del hub tras game over cierra la run', () => {
+  const js = fs.readFileSync(path.join(root, 'game.js'), 'utf8');
+  const start = js.indexOf('open(name, options = {})');
+  const end = js.indexOf('home(options = {})', start);
+  const openView = js.slice(start, end);
 
-    Modal.open('modal-over');
-    Modal.close();
-    assert.equal(State.status, 'over', 'cerrar el resumen no debe saltar antes de abrir la opcion');
-    assert.equal(document.body.dataset.screen, 'game');
-
-    Modal.open('modal-chests');
-    Modal.close();
-
-    assert.equal(State.status, 'idle');
-    assert.equal(document.body.dataset.screen, 'start');
-    assert.equal(document.querySelector('#overlay').hidden, true);
-  } finally {
-    document.querySelector('#overlay').hidden = true;
-    document.body.classList.remove('modal-open');
-    Modal._last = null;
-    State.status = prev.status;
-    State.mode = prev.mode;
-    document.body.dataset.screen = prev.screen;
-    Modal._id = prev.modalId;
-  }
+  assert.ok(start >= 0 && end > start, 'debe existir HubViews.open');
+  assert.match(openView, /document\.body\.dataset\.screen === 'game' && State\.status === 'over'/);
+  assert.match(openView, /State\.status = 'idle'/);
+  assert.match(openView, /Screens\.show\('start'\)/);
 });
 
 test('SV-HUD: el banner de jefe no se apila sobre las filas secundarias', () => {

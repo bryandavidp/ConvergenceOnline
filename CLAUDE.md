@@ -18,7 +18,7 @@ Contexto de proyecto para Claude Code. **Léelo antes de explorar el repo** — 
 
 | Archivo/carpeta | Contenido |
 |---|---|
-| `index.html` | Todo el DOM estático: 4 pantallas + 13 modales |
+| `index.html` | Todo el DOM estático: 4 pantallas, 10 vistas internas del hub y 4 modales transitorios de partida |
 | `styles.css` (2258 líneas) | Todo el CSS — tokens, componentes, animaciones, 9 skins de tablero |
 | `game.js` (3969 líneas) | Toda la lógica, un único IIFE — ver tabla de módulos abajo |
 | `sw.js` | Service Worker (cache-first offline) |
@@ -33,7 +33,7 @@ Contexto de proyecto para Claude Code. **Léelo antes de explorar el repo** — 
 
 Estos documentos existen precisamente para que **no tengas que releer el código fuente completo** en cada iteración. Consúltalos primero; solo baja a `game.js`/`styles.css` para el detalle de implementación puntual una vez sepas qué buscas.
 
-- **`docs/ARCHITECTURE.md`** — dónde está cada cosa, mapa de los ~39 módulos internos de `game.js` con línea aproximada, flujo de arranque, modelo de renderizado, máquina de estados de pantallas/modales, notas de PWA.
+- **`docs/ARCHITECTURE.md`** — dónde está cada cosa, mapa de los módulos internos de `game.js`, flujo de arranque, modelo de renderizado, navegación de pantallas/vistas y notas de PWA.
 - **`docs/REQUIREMENTS.md`** — requisitos funcionales/no funcionales derivados del código (útil para saber "qué debería pasar" sin adivinar).
 - **`docs/MIGRATION_SPEC.md`** — especificación exhaustiva y autocontenida de reglas de juego, fórmulas exactas, modelo de datos (`localStorage`), economía, progresión, combos, boosters, i18n, con checklist de paridad. Es la fuente de verdad para valores numéricos exactos.
 - **`docs/DESIGN_SYSTEM.md`** — tokens de color/tipografía, inventario de componentes CSS, las ~50 animaciones (`@keyframes`) con su trigger, sistema de iconografía, accesibilidad.

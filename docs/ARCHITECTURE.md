@@ -27,7 +27,7 @@ Mecánica base: el tablero es una grilla 8×8; el jugador toca una celda **vací
 
 ```
 /
-├── index.html              # Todo el DOM estático: 4 "screens" + ~13 modales
+├── index.html              # DOM estático: 4 screens + 10 hub views + 4 modales de partida
 ├── styles.css              # Todo el CSS de la app (2258 líneas) — ver DESIGN_SYSTEM.md
 ├── game.js                 # Toda la lógica de la app, un solo IIFE (3969 líneas) — ver MIGRATION_SPEC.md
 ├── sw.js                   # Service Worker: precache + estrategia de fetch offline-first
@@ -70,7 +70,7 @@ Todo vive dentro de un único `(() => { 'use strict'; ... })()`. Está organizad
 | 11 | `Engine` | 469 | Lógica pura de tablero (detección de convergencia, spawns, pools de iconos) |
 | 12 | `Render` | 611 | Capa de renderizado DOM (memoiza por celda para evitar tocar el DOM sin cambios) |
 | 13 | `Toasts` / `announce` | 862 | Notificaciones toast + región para lector de pantalla |
-| 14 | `Screens` / `Modal` | 921 | Router simple de pantallas y modales |
+| 14 | `Screens` / `HubViews` / `Modal` | 921 | Router de pantallas, vistas internas del hub y diálogos de partida |
 | 15 | `FX` | 955 | Sistema de partículas DOM/WAAPI (sin canvas) |
 | 16 | `Music` | 1241 | Música de fondo generativa (osciladores) |
 | 17 | `Meta` | 1275 | Perfil de progresión/economía persistente (`cv_meta`) |
@@ -93,7 +93,7 @@ Todo vive dentro de un único `(() => { 'use strict'; ... })()`. Está organizad
 | 34 | `Loop` | 2631 | El único `requestAnimationFrame` del juego |
 | 35 | `Game` | 2688 | Orquestador top-level (start/activate/evaluate/win/lose) |
 | 36 | `Input` | 3438 | Wiring de puntero/teclado sobre el tablero |
-| 37 | Constructores de menú | 3476–3817 | Tarjetas de modo, modal de dificultad, top bars, ajustes, perfil, tienda, cofres, mapa de aventura, recompensa diaria |
+| 37 | Constructores de menú | 3476–3817 | Tarjetas de modo, vista de dificultad, top bars, ajustes, perfil, tienda, cofres, mapa de aventura, recompensa diaria |
 | 38 | `init()` | 3819 | Bootstrap/wiring general, se llama en `DOMContentLoaded` |
 | 39 | Dev hook | 3968 | Si la URL tiene `?dev`, expone los módulos en `window.__cv` |
 
@@ -116,9 +116,9 @@ No hay virtual DOM ni diffing genérico. `Render` (módulo 12) mutua el DOM real
 7. Etiqueta de versión, listeners de "unlock" de audio (requisito iOS).
 8. Construcción del selector de avatar.
 9. Se define `enterApp()` y se muestra la pantalla `login` o `start` según exista `Storage.user`.
-10. Se cablean **todos** los listeners de botones/modales/`data-act` (delegación de eventos por atributo), atajos de teclado globales (Escape/P/H), y pausa automática al ocultar la pestaña.
+10. Se cablean **todos** los listeners de botones/vistas/modales/`data-act` (delegación de eventos por atributo), atajos de teclado globales (Escape/P/H), y pausa automática al ocultar la pestaña.
 
-## 7. Máquina de estados: pantallas y modales
+## 7. Máquina de estados: pantallas, vistas del hub y modales
 
 `Screens.show(name)` fija `document.body.dataset.screen` y alterna `hidden` en cada `.screen` para que coincida con `#screen-{name}`. **No hay historial** — solo el estado actual.
 
@@ -131,13 +131,15 @@ Pantallas (`<section class="screen" id="screen-X">` en `index.html`):
 | `worlds` | Mapa de mundos del modo Clásico (nodos de nivel + panel lateral + tabs) |
 | `game` | Pantalla de juego (tablero + HUD) |
 
-`Modal.open(id)`/`close()` gestiona un overlay con **un solo modal activo a la vez**, captura y restaura foco (accesibilidad). Hay 13 modales definidos en `index.html` (misiones, cómo jugar, pausa, nivel completado, fin de partida, ajustes, revivir, dificultad de supervivencia, mapa de aventura, tienda, cofres, multijugador, perfil). Detalle completo de cada uno en [`MIGRATION_SPEC.md` §12](./MIGRATION_SPEC.md#12-pantallas--máquina-de-estados).
+`HubViews.open(name)`/`home()` cambia únicamente el contenido central de Inicio y mantiene montadas la appbar y la navegación inferior. Sus 10 vistas son Misiones, Guía, Ajustes, dificultad de Supervivencia, Diario, Aventura, Tienda, Cofres, Multijugador y Logros/Perfil. Escape y los botones `data-view-back` regresan a Inicio; abrir Tienda, Guía, Ajustes o Logros desde la barra inferior cambia directamente de vista.
 
-Picker (`#pick-overlay`) y PreLevel (`#prelevel`) son capas globales dentro de `<main>`, no hijas de una pantalla concreta. Esto permite abrir el selector de ritmo de Zen sobre Inicio y el lanzador pre-nivel sobre el mapa de mundos aunque `#screen-game` esté oculto; `Game.start()` limpia ambas capas de forma defensiva antes de montar una partida nueva.
+`Modal.open(id)`/`close()` queda reservado a estados transitorios de una partida y gestiona un overlay con **un solo diálogo activo a la vez**, capturando y restaurando foco. Los únicos cuatro modales son pausa, nivel completado, fin de partida y revivir.
+
+Picker y PreLevel están dentro de `<main>`, no son hijos de una pantalla concreta. Esto permite abrir el selector de ritmo de Zen sobre Inicio y el lanzador pre-nivel sobre el mapa de mundos aunque `#screen-game` esté oculto; `Game.start()` limpia ambas capas de forma defensiva antes de montar una partida nueva.
 
 ## 8. PWA / Service Worker
 
-- `sw.js` define `CACHE = 'cv-cache-v1.7.1'` — **debe subirse manualmente en cada release** (no hay automatización de versión).
+- `sw.js` define `CACHE = 'cv-cache-v2.6.66'` — **debe subirse manualmente en cada release** (no hay automatización de versión).
 - Precachea: assets core (`index.html`, `styles.css`, `game.js`, manifest, iconos PWA), más 3 listas *best-effort* (`.catch(()=>{})` cada una): `UI_ICONS` (PNG legacy), `V2_ICONS` (SVG v2, subset), `UI_SYSTEM` (sprites de botones/ventanas).
 - **Hallazgo:** `UI_SYSTEM` referencia `img/ui-system/*.png` (botones, checkboxes, ventanas, scrollbar) que **no existe en el repo**. No rompe nada (está en un `.catch()`), pero es un cabo suelto: o bien un pack cosmético planeado y nunca añadido, o un remanente de un sistema de UI con sprites que fue reemplazado por los componentes CSS actuales (botones/modales hechos con gradientes y box-shadows). Confirmado por grep: `styles.css` no referencia `ui-system` en absoluto.
 - Estrategia de fetch: navegación → *network-first* con fallback a caché (y fallback final a `index.html` cacheado si no hay red); resto de peticiones GET del mismo origen → *cache-first* con relleno de red en background.

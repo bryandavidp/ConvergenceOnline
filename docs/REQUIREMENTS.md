@@ -36,7 +36,7 @@ Convergence es un juego de puzzle casual, mobile-first, instalable como PWA, jug
 - RF-32: Debe existir un sistema de logros/medallas con condiciones variadas (partidas jugadas, combos, puntuación, iconos eliminados, racha de días jugados, etc.), cada uno desbloqueable una única vez con fecha de desbloqueo persistida.
 - RF-33: Debe existir una recompensa diaria por inicio de sesión con racha (streak): la recompensa crece con los días consecutivos hasta un tope, y la racha se reinicia si se salta un día.
 - RF-34: Debe existir al menos 3 monedas/recursos (moneda principal, gema, ticket) con distintas fuentes de obtención (fin de partida, niveles, oleadas, cofres, recompensa diaria).
-- RF-35: Debe existir un sistema de cofres acumulables que, al abrirse, entregan una recompensa aleatoria de una tabla de probabilidades con al menos 3 tramos de rareza.
+- RF-35: Debe existir un sistema de cofres acumulables que, al abrirse, entregan una recompensa aleatoria de una tabla de probabilidades con al menos 3 tramos de rareza. La apertura debe visualizar primero la animación del cofre y después revelar el premio, respetando ambos modos de reducción de movimiento.
 - RF-36: Debe existir un leaderboard local (mejor puntuación por modo + mejor puntuación global histórica).
 - RF-37: Debe registrarse estadísticas agregadas de por vida (puntuación total, mejor combo, tiempo total jugado, partidas jugadas, iconos eliminados en total).
 
@@ -49,6 +49,7 @@ Convergence es un juego de puzzle casual, mobile-first, instalable como PWA, jug
 - RF-50: Ajustes persistentes: efectos de sonido (on/off), música (on/off), vibración/háptica (on/off, si el dispositivo lo soporta), modo de "reducir efectos" (independiente del ajuste de accesibilidad del SO), texto grande, idioma.
 - RF-51: Cambiar el idioma debe re-renderizar inmediatamente toda la UI dinámica sin recargar la página.
 - RF-52: Debe poder editarse el nombre de jugador y elegirse un color de avatar en el alta inicial.
+- RF-53: Misiones, Guía, Ajustes, dificultad de Supervivencia, Diario, Aventura, Tienda, Cofres, Multijugador y Logros/Perfil deben navegar como vistas completas dentro de Inicio, conservando appbar y menú inferior. Los modales quedan reservados a interrupciones transitorias de la partida.
 
 ### 2.6 Internacionalización
 - RF-60: Toda la interfaz debe soportar como mínimo español e inglés mediante un diccionario clave→texto, con selección de idioma por defecto basada en el idioma del navegador y overridable manualmente.
@@ -68,7 +69,7 @@ Convergence es un juego de puzzle casual, mobile-first, instalable como PWA, jug
 - RF-90: Elementos interactivos deben cumplir un tamaño mínimo de toque (~44px, con variante ~52px para acciones primarias).
 - RF-91: Debe existir una región `aria-live` para anunciar eventos relevantes a lectores de pantalla.
 - RF-92: Debe respetarse `prefers-reduced-motion` del sistema operativo, además de ofrecer un ajuste propio de "reducir efectos" independiente y más granular.
-- RF-93: Estados de foco visibles (`:focus-visible`) en todos los controles interactivos y navegación coherente por teclado (al menos Escape para cerrar modales/pausar).
+- RF-93: Estados de foco visibles (`:focus-visible`) en todos los controles interactivos y navegación coherente por teclado (Escape regresa de una vista del hub, cierra un diálogo o pausa/reanuda según el contexto).
 
 ## 3. Requisitos no funcionales
 
@@ -86,8 +87,8 @@ Convergence es un juego de puzzle casual, mobile-first, instalable como PWA, jug
 
 Estos puntos existen como intención en el código (UI, campos de datos, comentarios) pero **no tienen lógica funcional completa** — cualquier migración debe decidir explícitamente si los implementa desde cero o los mantiene como placeholder:
 
-- Multijugador real (solo modal "Próximamente" + botón "Avísame").
-- Gasto de gemas y tickets: se generan y acumulan, pero no hay sumideros (*sinks*) de gasto implementados en el código leído (el botón "comprar gemas" muestra un toast de "disponible pronto").
+- Multijugador real (solo vista "Próximamente" + botón "Avísame").
+- Gasto de tickets: se generan y acumulan, pero todavía no tienen un sumidero confirmado. Las gemas sí se gastan al abrir el cofre premium.
 - Pack de assets `img/ui-system/` (sprites de botones/ventanas/checkboxes): referenciado por `sw.js` para precache pero **ausente físicamente del repo** y **no usado por `styles.css`** — parece un sistema de UI con sprites descartado en favor de componentes CSS puros.
 - Coste en monedas de los boosters de Supervivencia (`Boosters.DEFS[*].cost` existe como dato pero no se ve gastado en el código leído — los boosters se obtienen gratis al inicio de la partida y vía la barra de carga/frenesí, no comprados).
 - Tile `infected` (definido en `Tiles.DEFS` con descripción "se propaga si no la limpias") sin uso activo confirmado en las reglas leídas de Aventura/Clásico/Supervivencia.

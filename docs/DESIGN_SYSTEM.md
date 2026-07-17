@@ -35,7 +35,7 @@ Segundo bloque `:root` ("SISTEMA BASE 2.0", línea ~228) — gradientes por modo
 
 Propiedades custom **scoped por componente** (se declaran en el elemento y las heredan sus hijos — funcionan como "tokens locales"):
 - `.board-wrap`: `--board-frame`, `--board-pattern`, `--board-pattern-opacity`, `--board-pattern-size`, `--board-bg-animation`, `--board-border`, `--board-trim`, `--board-glow`, `--cell-empty-bg`, `--cell-empty-border`, `--cell-filled-bg`, `--cell-filled-border`, `--cell-hover-bg`, `--clear-animation`, `--clear-burst`, `--clear-burst-animation` — re-definidas por completo por cada skin de tablero (ver §7).
-- `.modal`: `--modal-accent` (por defecto `var(--accent-2)`, sobreescrito por id de modal, ver §5).
+- `.modal` / `.hub-view`: `--modal-accent` (por defecto `var(--accent-2)`, sobreescrito por diálogo o vista, ver §5).
 - `.toast`: `--tc` (por defecto `var(--accent-2)`, sobreescrito por `.info/.good/.warn/.bad`).
 - `.mode-hero`/`.mode-card`: `--mode-accent` (inyectado inline por JS, fallback `#00d0ff`/`#1f5be6`).
 - `.world-head`/`.wr-item`: `--world-accent`/`--wa` (inyectado por JS, fallback `#3ad07f`).
@@ -122,7 +122,9 @@ Uso extensivo de `color-mix(in srgb, ...)` como mecanismo de "tinte en runtime" 
   - `.btn-hero`: variante ancha dentro de modal/home, gradiente `--grad-play`.
   - `.btn-reward`: CTA de recompensa diaria, gradiente dorado, `animation: rewardPulse 1.8s infinite`.
 - **`.icon-btn`** — cuadrado 44×44, esquinas redondeadas (o circular en `.controls`), hover ilumina, active `scale(.94)`.
-- **`.modal`** — layout flex columna (header fijo / body scrollable / footer fijo), `max-height: min(90dvh, calc(100dvh - insets - 24px))`, ancho `min(456px,100%)`, radio 22px, barra de acento superior vía `::before` coloreada por `--modal-accent`, animación de entrada `modal-in .26s cubic-bezier(.2,.9,.3,1.2)`. Cada modal define su propio `--modal-accent` (how=good, pause/adventure=level, settings=accent-2, missions/shop=gold, revive/surv-diff=bad, medals=good).
+- **`.hub-view` / `.hub-views`** — router visual dentro de Inicio. Ocupa todo el espacio entre appbar y barra inferior, cambia el contenido central con `hubViewIn` y ofrece cuerpo scrollable más footer opcional. Las vistas reutilizan la cabecera, economía y navegación persistentes; no usan backdrop ni semántica de diálogo.
+- **`.modal`** — diálogo reservado a pausa, nivel completado, fin de partida y revivir. Layout flex columna (header fijo / body scrollable / footer fijo), `max-height: min(90dvh, calc(100dvh - insets - 24px))`, ancho `min(456px,100%)`, radio 22px y animación `modal-in`.
+- **`.view-chests`** — vista propia de recompensas: título centrado, hero de cofre sobre escenario cósmico, progreso de Supervivencia, CTA y dos tarjetas de apertura. En alturas compactas sus bloques no encogen; el contenedor central pasa a scroll manteniendo appbar y barra inferior fijas.
 - **`.appbar`** — grid reutilizado en Inicio y mundos: avatar circular con glow cian, barra de XP y pills de economía. En Inicio no contiene Ajustes; sus saldos se compactan (`10K`, `1M`) para mantener una sola línea.
 - **`.bottom-nav`/`.worlds-tabs`** — barras de tabs ancladas abajo con safe-area; en Inicio hay cinco destinos globales (`Logros`, `Tienda`, `Inicio`, `Guía`, `Ajustes`) y el item central se eleva como un FAB circular cian.
 - **`.board`/`.board-wrap`** — ver §7.
@@ -234,8 +236,8 @@ fuente de recortes en producción.
 
 El archivo define **~50 animaciones**. Las agrupamos por propósito (nombres exactos entre paréntesis para buscarlas en el CSS original):
 
-- **Transiciones de pantalla/UI genérica:** entrada de pantalla (`screen-in`), pulso de CTA home (`ctaPulse`), pulso de recompensa (`rewardPulse`), explosión de burbuja al reclamar (`dailyRewardBubblePop`), aparición de modal (`modal-in`), entrada/salida/pop de toast (`toast-in`, `toast-out`, `toast-pop`), aparición de chip de icono (`chipPop`), "bump" de valor numérico (`bump`), spin decorativo del logo (`heroSpin`).
-- **Progresión/mapas:** pulso de nodo de nivel actual (`nodepulse`), estrellas apareciendo (`starpop`), estrella perdida (`starShake`), wobble de cofre listo (`chestWobble`), apertura one-shot de cofre (`chestOpen`) y pop de tarjeta de recompensa (`rewardPop`).
+- **Transiciones de pantalla/UI genérica:** entrada de pantalla (`screen-in`), cambio de vista interna (`hubViewIn`), pulso de CTA home (`ctaPulse`), pulso de recompensa (`rewardPulse`), explosión de burbuja al reclamar (`dailyRewardBubblePop`), aparición de modal (`modal-in`), entrada/salida/pop de toast (`toast-in`, `toast-out`, `toast-pop`), aparición de chip de icono (`chipPop`), "bump" de valor numérico (`bump`), spin decorativo del logo (`heroSpin`).
+- **Progresión/mapas:** pulso de nodo de nivel actual (`nodepulse`), estrellas apareciendo (`starpop`), estrella perdida (`starShake`), wobble de cofre listo (`chestWobble`) y pop de tarjeta de recompensa (`rewardPop`). La pantalla de Cofres usa una secuencia propia: idle (`chestHeroIdle`), vibración (`chestHeroRattle`), apertura y destello (`chestHeroOpen`, `chestHeroFlash`, `chestSparkFly`), seguida por aparición del premio (`rewardRays`, `rewardChestSettle`, `chestPrizeRise`).
 - **Ciclo de vida de icono en tablero:** aparición (`glyph-in`), eliminación genérica (`glyph-out` + burst `clear-ring`) y **9 variantes temáticas por skin de tablero** (`clear-wood`, `clear-ice`, `clear-lava`, `clear-crystal`, `clear-magic`, `clear-future`, `clear-gold`, `clear-leaf`, `clear-cosmic`, cada una con su burst a juego: `clear-dust`, `clear-shards`, `clear-magma`, `clear-prism`, `clear-rune`, `clear-scan`, `clear-gold-spark`, `clear-leaf-burst`, `clear-star-burst`).
 - **Feedback de error/refuerzo en celda:** shake de fallo (`miss`), pop de penalización (`penalty-pop`), shake de tablero (`board-shake`), impacto/rotura de hielo (`ice-hit`, `ice-shatter`).
 - **Ambiente de fondo del tablero por skin** (drift continuo detrás del grid): `board-drift`, `board-wood`, `board-ice`, `board-lava`, `board-prism`, `board-runes`, `board-scan`, `board-gold`, `board-leaf`, `board-stars` (una por cada uno de los 9 skins + genérico).

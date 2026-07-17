@@ -132,7 +132,7 @@ Densidad de obstáculos por nivel: `dens = min(0.13, 0.015 + n*0.0021 + worldInd
 
 **Reto del día — mutador (v2.4.0, GM-15):** `hash32('mut:' + fecha) % 8` elige entre `pure/ice(4 heladas)/window(combo −500ms, mín 1500)/variety(pool de 6)/rocks(3)/fast(curva de spawn ×0.9)/crystal(2 cristales)/nohints`. Se aplica tras montar el nivel consumiendo RNG seedeado (idéntico para todos). **Calendario y racha (v2.4.0, GM-14):** `dailyRun.history` guarda la medalla de cada día (tope 60, FIFO); la racha cuenta días consecutivos con medalla ≥ bronce con **1 congelación de regalo +1 por cada 7 días** (un día perdido pausa, no borra); cada 7 días de racha → +1 cofre (una vez por hito, `streakRewarded`).
 
-**Ficha y objetivo vivo del reto (v2.6.0, FB-4):** los umbrales viven en `Meta.DAILY_MEDALS = [750,1500,2500]` y `Meta.dailyNextMedal(score)` devuelve el siguiente corte o `null`. El home y el panel de misiones abren `modal-daily` antes de jugar: muestra fecha, tablero compartido, mutador con efecto, medallas, mejor marca/ghost, racha y bonus de primer intento. En partida diaria, `#daily-note` muestra la siguiente medalla con número y se actualiza al cruzar 750/1500/2500 con toast una vez por umbral.
+**Ficha y objetivo vivo del reto (v2.6.0, FB-4):** los umbrales viven en `Meta.DAILY_MEDALS = [750,1500,2500]` y `Meta.dailyNextMedal(score)` devuelve el siguiente corte o `null`. El home y el panel de misiones abren `view-daily` antes de jugar: muestra fecha, tablero compartido, mutador con efecto, medallas, mejor marca/ghost, racha y bonus de primer intento. En partida diaria, `#daily-note` muestra la siguiente medalla con número y se actualiza al cruzar 750/1500/2500 con toast una vez por umbral.
 
 ### 2.5 Supervivencia (`supervivencia`)
 `timed:false, penalties:true, mult:1.5, fast:true, endless:true`. Ver detalle completo en §2.5.1 más abajo y potenciadores en §7.
@@ -552,32 +552,37 @@ Catálogo = 3 ciclos de las 16 formas = **48 iconos** de la forma `{shape}_{colo
 
 ## 12. Pantallas y máquina de estados
 
-Ver también [`ARCHITECTURE.md` §7](./ARCHITECTURE.md#7-máquina-de-estados-pantallas-y-modales) para el mecanismo genérico (`Screens.show`/`Modal.open`).
+Ver también [`ARCHITECTURE.md` §7](./ARCHITECTURE.md#7-máquina-de-estados-pantallas-vistas-del-hub-y-modales) para el mecanismo genérico (`Screens.show`/`HubViews.open`/`Modal.open`).
 
-**Pantallas:** `login`, `start`, `modes`, `worlds`, `game` (una `<section class="screen">` por cada una, sin historial, sin animación de salida).
+**Pantallas:** `login`, `start`, `worlds`, `game` (una `<section class="screen">` por cada una, sin historial, sin animación de salida). El catálogo de modos vive directamente en `start`.
 
-**Modales** (overlay, uno activo a la vez, foco capturado/restaurado):
+**Vistas del hub** (contenido central de `start`; appbar y navegación inferior persistentes):
 
 | id | Contenido |
 |---|---|
-| `modal-missions` | Lista de misiones diarias + desafío semanal |
-| `modal-how` | Reglas del juego + botón de tutorial interactivo |
+| `view-missions` | Lista de misiones diarias + desafío semanal |
+| `view-how` | Reglas del juego + botón de tutorial interactivo |
+| `view-settings` | Toggles de ajustes + selector de idioma |
+| `view-surv-diff` | Selección de dificultad de Supervivencia + botón empezar |
+| `view-daily` | Ficha previa del reto diario: mutador, medallas, mejor marca, ghost, racha y primer intento |
+| `view-adventure` | Overview del mapa de capítulos de Aventura |
+| `view-shop` | Tienda (skins de tablero + temas) |
+| `view-chests` | Pantalla propia de cofres: progreso, aperturas, animación y revelado de premio |
+| `view-multi` | Placeholder "Multijugador — Próximamente" |
+| `view-medals` | Perfil: stats de por vida, mejores marcas por modo, logros |
+
+**Modales transitorios de partida** (overlay, uno activo a la vez, foco capturado/restaurado):
+
+| id | Contenido |
+|---|---|
 | `modal-pause` | Reanudar / reiniciar / salir |
 | `modal-level` | Nivel completado: stats, preview del siguiente nivel, botones siguiente/mapa |
 | `modal-over` | Fin de partida: stats, barra de XP, logros desbloqueados, reintentar/compartir/salir |
-| `modal-settings` | Toggles de ajustes + selector de idioma |
 | `modal-revive` | "Última oportunidad" de Supervivencia — revivir pagando monedas |
-| `modal-surv-diff` | Selección de dificultad de Supervivencia + botón empezar |
-| `modal-daily` | Ficha previa del reto diario: mutador, medallas, mejor marca, ghost, racha y primer intento |
-| `modal-adventure` | Overview del mapa de capítulos de Aventura |
-| `modal-shop` | Tienda (skins de tablero + temas) |
-| `modal-chests` | Inventario de cofres + botón abrir |
-| `modal-multi` | Placeholder "Multijugador — Próximamente" |
-| `modal-medals` | Perfil: stats de por vida, mejores marcas por modo, logros |
 
 `Game.pause()`/`resume()` alternan `State.status` entre `'playing'`/`'paused'` junto con abrir/cerrar `modal-pause`. Valores de `State.status`: `'idle'`, `'playing'`, `'paused'`, `'over'`, `'levelComplete'`.
 
-No existe un router genérico más allá de `Screens`/`Modal`: las transiciones son llamadas imperativas repartidas entre `Game`, `Worlds` y los constructores de menú, cableadas en `init()` más un único listener delegado por atributo `data-act` (para acciones reutilizables del top-bar/home: `settings`, `profile`, `edit-name`, `buy-coins`, `buy-gems`, `play`, `home-classic`, `home-surv`, `home-daily`, `go-daily`, `home-multi`, `claim-daily`, `nav-medals`, `nav-shop`, `nav-missions`, `nav-home`).
+`Screens` decide la pantalla raíz; `HubViews` decide la vista interna de Inicio; `Modal` se limita a diálogos de partida. Las transiciones siguen siendo llamadas imperativas repartidas entre `Game`, `Worlds` y los constructores de menú, cableadas en `init()` más un listener delegado por `data-act`.
 
 ---
 

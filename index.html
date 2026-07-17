@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.62" />
+  <link rel="stylesheet" href="styles.css?v=2.6.66" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -74,6 +74,10 @@
       </div>
       <!-- Top bar reutilizable (perfil + economía). Misiones y Ajustes viven en sus menús. -->
       <header class="appbar" data-topbar></header>
+
+      <!-- Las vistas del hub se montan aquí al iniciar. Comparten cabecera y menú
+           inferior; ya no bloquean la interfaz dentro de un modal. -->
+      <div class="hub-views" id="hub-views"></div>
 
       <!-- Hub fijo: accesos compactos + selector de modos cilíndrico. -->
       <div class="home-main">
@@ -361,22 +365,23 @@
 
   </main>
 
-  <!-- ============ MODALES ============ -->
+  <!-- ============ CAPAS TRANSITORIAS + VISTAS DEL HUB ============ -->
   <div class="overlay" id="overlay" hidden>
-    <!-- Misiones (lanzadas desde el FAB lateral del inicio) -->
-    <div class="modal" id="modal-missions" role="dialog" aria-modal="true" aria-labelledby="missions-title" hidden>
+    <!-- Estas vistas se trasladan a #hub-views en el arranque. Permanecen aquí
+         en el HTML para mantener una única fuente de contenido sin duplicados. -->
+    <section class="hub-view view-missions" id="view-missions" data-hub-view="missions" aria-labelledby="missions-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/target.png" alt=""></span><h2 id="missions-title" data-i18n="missions_title">Misiones</h2></div>
-      <div class="modal-body">
+      <div class="modal-body view-body">
         <div class="start-missions" id="start-missions"></div>
       </div>
-      <div class="modal-actions">
-        <button class="btn btn-primary" data-close data-i18n="close">Cerrar</button>
+      <div class="modal-actions view-actions">
+        <button class="btn btn-primary" data-view-back data-i18n="back">Volver</button>
       </div>
-    </div>
+    </section>
     <!-- Cómo jugar -->
-    <div class="modal" id="modal-how" role="dialog" aria-modal="true" aria-labelledby="how-title" hidden>
+    <section class="hub-view view-how" id="view-how" data-hub-view="how" aria-labelledby="how-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/question.png" alt=""></span><h2 id="how-title" data-i18n="how_title">¿Cómo se juega?</h2></div>
-      <div class="modal-body">
+      <div class="modal-body view-body">
         <ul class="how-list">
           <li><img class="ic ic-inline" src="img/ui/target.png" alt=""> <span data-i18n-html="how1">Toca una <strong>casilla vacía</strong>.</span></li>
           <li>👀 <span data-i18n-html="how2">Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).</span></li>
@@ -385,11 +390,11 @@
           <li><img class="ic ic-inline" src="img/ui/warning.png" alt=""> <span data-i18n-html="how5">Los iconos aparecen solos: vacía el tablero antes de que se llene.</span></li>
         </ul>
       </div>
-      <div class="modal-actions">
+      <div class="modal-actions view-actions">
         <button class="btn btn-primary btn-icon" id="btn-tutorial"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="tutorial_btn">Tutorial interactivo</span></button>
-        <button class="btn btn-ghost" data-close data-i18n="understood">Entendido</button>
+        <button class="btn btn-ghost" data-view-back data-i18n="understood">Entendido</button>
       </div>
-    </div>
+    </section>
 
     <!-- Pausa -->
     <div class="modal" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
@@ -464,15 +469,15 @@
     </div>
 
     <!-- Ajustes -->
-    <div class="modal" id="modal-settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+    <section class="hub-view view-settings" id="view-settings" data-hub-view="settings" aria-labelledby="settings-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/settings.png" alt=""></span><h2 id="settings-title" data-i18n="settings_title">Ajustes</h2></div>
-      <div class="modal-body">
+      <div class="modal-body view-body">
         <div class="settings-list" id="settings-list"></div>
       </div>
-      <div class="modal-actions">
-        <button class="btn btn-primary" data-close data-i18n="close">Cerrar</button>
+      <div class="modal-actions view-actions">
+        <button class="btn btn-primary" data-view-back data-i18n="back">Volver</button>
       </div>
-    </div>
+    </section>
 
     <!-- Última oportunidad (Supervivencia) -->
     <div class="modal modal-revive" id="modal-revive" role="dialog" aria-modal="true" aria-labelledby="revive-title" hidden>
@@ -490,9 +495,9 @@
     </div>
 
     <!-- Dificultad de Supervivencia -->
-    <div class="modal modal-surv-diff" id="modal-surv-diff" role="dialog" aria-modal="true" aria-labelledby="surv-diff-title" hidden>
+    <section class="hub-view view-surv-diff" id="view-surv-diff" data-hub-view="surv-diff" aria-labelledby="surv-diff-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/heart.png" alt=""></span><h2 id="surv-diff-title" data-i18n="surv_diff_title">Supervivencia</h2></div>
-      <div class="modal-body">
+      <div class="modal-body view-body">
         <!-- Hoja de Servicio (SV-30/31/32): rango vitalicio + récord semanal + hazañas -->
         <div class="surv-service" id="surv-service" hidden>
           <div class="ss-top"><span class="ss-rank" id="surv-rank-name">Recluta</span><span class="ss-feats" id="surv-feats-line"></span></div>
@@ -518,39 +523,39 @@
           <li><span class="ss-ic" aria-hidden="true">❤️</span><span data-i18n="surv_sys_lives">Pierdes una vida si el tablero se desborda; revivir cuesta monedas y sube de precio con cada uso.</span></li>
         </ul>
       </div>
-      <div class="modal-actions modal-buttons">
+      <div class="modal-actions view-actions modal-buttons">
         <button class="btn btn-primary btn-icon" id="btn-surv-start"><span class="btn-ic"><img class="ic" src="img/ui/heart.png" alt=""></span><span data-i18n="surv_start">Empezar supervivencia</span></button>
-        <button class="btn btn-ghost" data-close data-i18n="back">Volver</button>
+        <button class="btn btn-ghost" data-view-back data-i18n="back">Volver</button>
       </div>
-    </div>
+    </section>
 
     <!-- Reto del día -->
-    <div class="modal modal-daily" id="modal-daily" role="dialog" aria-modal="true" aria-labelledby="daily-info-title" hidden>
+    <section class="hub-view view-daily" id="view-daily" data-hub-view="daily" aria-labelledby="daily-info-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/target.png" alt=""></span><h2 id="daily-info-title" data-i18n="daily_challenge">Reto del día</h2></div>
-      <div class="modal-body">
+      <div class="modal-body view-body">
         <div class="daily-info" id="daily-info"></div>
       </div>
-      <div class="modal-actions modal-buttons">
+      <div class="modal-actions view-actions modal-buttons">
         <button class="btn btn-primary btn-icon" id="btn-daily-start"><span class="btn-ic"><img class="ic" src="img/ui/target.png" alt=""></span><span data-i18n="daily_play">Jugar</span></button>
-        <button class="btn btn-ghost" data-close data-i18n="back">Volver</button>
+        <button class="btn btn-ghost" data-view-back data-i18n="back">Volver</button>
       </div>
-    </div>
+    </section>
 
     <!-- Mapa de Aventura -->
-    <div class="modal modal-adventure" id="modal-adventure" role="dialog" aria-modal="true" aria-labelledby="adventure-title" hidden>
+    <section class="hub-view view-adventure" id="view-adventure" data-hub-view="adventure" aria-labelledby="adventure-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/rocket.png" alt=""></span><h2 id="adventure-title" data-i18n="adventure_title">Aventura</h2></div>
-      <div class="modal-body">
+      <div class="modal-body view-body">
         <p class="modal-sub" data-i18n="adventure_sub">Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.</p>
         <div class="adventure-map" id="adventure-map"></div>
       </div>
-      <div class="modal-actions">
+      <div class="modal-actions view-actions">
         <button class="btn btn-primary btn-lg" id="adventure-continue">Continuar</button>
-        <button class="btn btn-ghost" data-close data-i18n="back">Volver</button>
+        <button class="btn btn-ghost" data-view-back data-i18n="back">Volver</button>
       </div>
-    </div>
+    </section>
 
     <!-- Tienda: tableros + temas -->
-    <div class="modal modal-shop" id="modal-shop" role="dialog" aria-modal="true" aria-labelledby="shop-title" hidden>
+    <section class="hub-view view-shop" id="view-shop" data-hub-view="shop" aria-labelledby="shop-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/cart.png" alt=""></span><h2 id="shop-title" data-i18n="shop_title">Tienda</h2></div>
       <div class="shop-econ">
         <span class="econ-pill econ-coins" data-econ="coins">🪙 0</span>
@@ -558,36 +563,68 @@
         <span class="econ-pill econ-tickets" data-econ="tickets">🎟️ 0</span>
       </div>
       <p class="shop-hint" data-i18n="shop_hint2">Los tableros son solo cambios visuales: no dan ventajas ni desventajas.</p>
-      <div class="modal-body">
+      <div class="modal-body view-body">
         <div class="shop-list" id="shop-list"></div>
       </div>
-      <div class="modal-actions">
-        <button class="btn btn-primary" id="shop-close" data-close data-i18n="close">Cerrar</button>
+      <div class="modal-actions view-actions">
+        <button class="btn btn-primary" id="shop-close" data-view-back data-i18n="back">Volver</button>
       </div>
-    </div>
+    </section>
 
     <!-- Cofres -->
-    <div class="modal modal-chests" id="modal-chests" role="dialog" aria-modal="true" aria-labelledby="chests-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/chest.png" alt=""></span><h2 id="chests-title" data-i18n="chests_title">Cofres</h2></div>
-      <div class="shop-econ">
-        <span class="econ-pill econ-coins" data-econ="coins">🪙 0</span>
-        <span class="econ-pill econ-gems" data-econ="gems">💎 0</span>
-        <span class="econ-pill econ-tickets" data-econ="tickets">🎟️ 0</span>
+    <section class="hub-view view-chests" id="view-chests" data-hub-view="chests" aria-labelledby="chests-title" hidden>
+      <header class="chests-heading">
+        <p class="chests-kicker" data-i18n="chests_kicker">Recompensas</p>
+        <h2 id="chests-title" data-i18n="chests_title">Cofres</h2>
+        <p data-i18n="chests_subtitle">Juega, consigue cofres y descubre premios increíbles.</p>
+      </header>
+
+      <div class="modal-body view-body chests-scroll">
+        <div class="chests-body" id="chests-body" aria-live="polite"></div>
+
+        <section class="chest-progress-card" aria-labelledby="chest-progress-title">
+          <div class="chest-progress-copy">
+            <span class="chest-section-label" id="chest-progress-title" data-i18n="chests_progress_title">Tu progreso</span>
+            <p data-i18n="chests_progress_rule">Gana 1 cofre cada 10 oleadas en Supervivencia.</p>
+          </div>
+          <div class="chest-progress-row">
+            <span class="chest-progress-icon" aria-hidden="true"><img src="img/ui-generated/home/nav-chest.png" alt=""></span>
+            <div class="chest-progress-track-wrap">
+              <div class="chest-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" id="chest-progress-track"><span id="chest-progress-fill"></span></div>
+              <span class="chest-progress-value" id="chest-progress-value">0 / 10</span>
+            </div>
+          </div>
+          <button class="chest-survival-cta" type="button" data-act="go-surv">
+            <span class="chest-survival-icon" aria-hidden="true"><img src="img/ui/target.png" alt=""></span>
+            <span><b data-i18n="chests_play_survival">Jugar Supervivencia</b><small id="chest-next-wave" data-i18n="chests_next_wave">Próximo cofre en 10 oleadas</small></span>
+            <span class="chest-chevron" aria-hidden="true">›</span>
+          </button>
+        </section>
+
+        <div class="chest-open-divider"><span data-i18n="chests_open_now">O abrir ahora</span></div>
+
+        <div class="chest-open-options">
+          <button class="chest-action-card chest-action-earned" id="btn-open-chest" type="button">
+            <span class="chest-action-art" aria-hidden="true"><img src="img/ui-generated/home/nav-chest.png" alt=""></span>
+            <span class="chest-action-copy"><b data-i18n="chests_open_saved">Abrir cofre guardado</b><small><span data-i18n="chests_available">Disponibles</span> · <strong id="saved-chest-count">0</strong></small></span>
+          </button>
+          <button class="chest-action-card chest-action-premium" id="btn-open-premium" type="button">
+            <span class="chest-action-art" aria-hidden="true"><img src="img/ui-generated/home/nav-chest.png" alt=""></span>
+            <span class="chest-action-copy"><b data-i18n="premium_chest">Cofre premium</b><small><img src="img/ui/gem.png" alt="" aria-hidden="true"> <strong id="premium-chest-cost">25</strong></small></span>
+          </button>
+        </div>
+
+        <div class="chest-info-strip">
+          <span class="chest-info-icon" aria-hidden="true"><img src="img/ui/info.png" alt=""></span>
+          <p data-i18n="chests_contents_note">Los cofres contienen monedas, gemas, tickets y cosméticos.</p>
+        </div>
       </div>
-      <div class="modal-body">
-        <div class="chests-body" id="chests-body"></div>
-      </div>
-      <div class="modal-actions modal-buttons">
-        <button class="btn btn-primary btn-lg" id="btn-open-chest" data-i18n="open_chest">🎁 Abrir cofre</button>
-        <button class="btn btn-ghost" id="btn-open-premium">💎 Cofre premium (25)</button>
-        <button class="btn btn-ghost" data-close data-i18n="close">Cerrar</button>
-      </div>
-    </div>
+    </section>
 
     <!-- Multijugador (próximamente) -->
-    <div class="modal modal-multi" id="modal-multi" role="dialog" aria-modal="true" aria-labelledby="multi-title" hidden>
+    <section class="hub-view view-multi" id="view-multi" data-hub-view="multi" aria-labelledby="multi-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/players.png" alt=""></span><h2 id="multi-title" data-i18n="card_multi">Multijugador</h2></div>
-      <div class="modal-body">
+      <div class="modal-body view-body">
         <div class="multi-vs" aria-hidden="true">
           <span class="multi-p multi-p1"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/user.svg')" aria-hidden="true"></span></span>
           <span class="multi-vs-tag">VS</span>
@@ -601,28 +638,28 @@
         </div>
         <p class="multi-soon-badge"><span class="icv2 icv2-inline" style="--icv2-url:url('img/icons-v2/8-ui/prohibited.svg')" aria-hidden="true"></span> <span data-i18n="soon_badge">Próximamente</span></p>
       </div>
-      <div class="modal-actions modal-buttons">
+      <div class="modal-actions view-actions modal-buttons">
         <button class="btn btn-primary btn-icon" id="btn-multi-notify"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/notification.svg')" aria-hidden="true"></span><span data-i18n="notify_me">Avísame</span></button>
-        <button class="btn btn-ghost" data-close data-i18n="close">Cerrar</button>
+        <button class="btn btn-ghost" data-view-back data-i18n="back">Volver</button>
       </div>
-    </div>
+    </section>
 
     <!-- Perfil: estadísticas + leaderboard + logros -->
-    <div class="modal modal-profile" id="modal-medals" role="dialog" aria-modal="true" aria-labelledby="medals-title" hidden>
+    <section class="hub-view view-profile" id="view-medals" data-hub-view="medals" aria-labelledby="medals-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/player.png" alt=""></span><h2 id="medals-title" data-i18n="profile_title">Perfil</h2></div>
-      <div class="modal-body">
+      <div class="modal-body view-body">
         <div class="stats profile-only" id="profile-stats"></div>
         <h3 class="group-title profile-only" data-i18n="best_by_mode">Mejores marcas por modo</h3>
         <div class="profile-lb profile-only" id="profile-lb"></div>
         <h3 class="group-title achievements-heading" data-i18n="achievements">Logros</h3>
         <div class="medals-list" id="medals-list"></div>
       </div>
-      <div class="modal-actions">
-        <button class="btn btn-primary" data-close data-i18n="close">Cerrar</button>
+      <div class="modal-actions view-actions">
+        <button class="btn btn-primary" data-view-back data-i18n="back">Volver</button>
       </div>
-    </div>
+    </section>
   </div>
 
-  <script src="game.js?v=2.6.62" defer></script>
+  <script src="game.js?v=2.6.66" defer></script>
 </body>
 </html>
