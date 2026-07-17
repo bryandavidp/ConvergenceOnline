@@ -27,7 +27,7 @@ Mecánica base: el tablero es una grilla 8×8; el jugador toca una celda **vací
 
 ```
 /
-├── index.html              # Todo el DOM estático: 5 "screens" + ~13 modales (459 líneas)
+├── index.html              # Todo el DOM estático: 4 "screens" + ~13 modales
 ├── styles.css              # Todo el CSS de la app (2258 líneas) — ver DESIGN_SYSTEM.md
 ├── game.js                 # Toda la lógica de la app, un solo IIFE (3969 líneas) — ver MIGRATION_SPEC.md
 ├── sw.js                   # Service Worker: precache + estrategia de fetch offline-first
@@ -112,7 +112,7 @@ No hay virtual DOM ni diffing genérico. `Render` (módulo 12) mutua el DOM real
 3. `FX.init()`.
 4. Aplica clases `reduced-fx`/`large-text` según `Settings`.
 5. `mountTopBars()`, `fillArt()`, `I18n.apply()`, `Cosmetics.apply()`, `Boards.apply()`.
-6. `Input.init()`, `buildModeMenu()`, `PWA.init()`.
+6. `Input.init()`, `buildHomeModeCarousel()`, `PWA.init()`.
 7. Etiqueta de versión, listeners de "unlock" de audio (requisito iOS).
 8. Construcción del selector de avatar.
 9. Se define `enterApp()` y se muestra la pantalla `login` o `start` según exista `Storage.user`.
@@ -127,14 +127,13 @@ Pantallas (`<section class="screen" id="screen-X">` en `index.html`):
 | id | Rol |
 |---|---|
 | `login` | Bienvenida / alta de nombre |
-| `start` | Hub principal (recompensa diaria, mejor puntuación, 3 tarjetas de acceso, nav inferior) |
-| `modes` | Selección de modo ("elige tu modo") |
+| `start` | Hub principal fijo: recompensa, accesos, carrusel cilíndrico de modos, contexto y nav inferior |
 | `worlds` | Mapa de mundos del modo Clásico (nodos de nivel + panel lateral + tabs) |
 | `game` | Pantalla de juego (tablero + HUD) |
 
 `Modal.open(id)`/`close()` gestiona un overlay con **un solo modal activo a la vez**, captura y restaura foco (accesibilidad). Hay 13 modales definidos en `index.html` (misiones, cómo jugar, pausa, nivel completado, fin de partida, ajustes, revivir, dificultad de supervivencia, mapa de aventura, tienda, cofres, multijugador, perfil). Detalle completo de cada uno en [`MIGRATION_SPEC.md` §12](./MIGRATION_SPEC.md#12-pantallas--máquina-de-estados).
 
-Picker (`#pick-overlay`) y PreLevel (`#prelevel`) son capas globales dentro de `<main>`, no hijas de una pantalla concreta. Esto permite abrir el selector de ritmo de Zen sobre la pantalla de modos y el lanzador pre-nivel sobre el mapa de mundos aunque `#screen-game` esté oculto; `Game.start()` limpia ambas capas de forma defensiva antes de montar una partida nueva.
+Picker (`#pick-overlay`) y PreLevel (`#prelevel`) son capas globales dentro de `<main>`, no hijas de una pantalla concreta. Esto permite abrir el selector de ritmo de Zen sobre Inicio y el lanzador pre-nivel sobre el mapa de mundos aunque `#screen-game` esté oculto; `Game.start()` limpia ambas capas de forma defensiva antes de montar una partida nueva.
 
 ## 8. PWA / Service Worker
 

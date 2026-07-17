@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.52" />
+  <link rel="stylesheet" href="styles.css?v=2.6.61" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -75,90 +75,65 @@
       <!-- Top bar reutilizable (perfil + economía). Misiones y Ajustes viven en sus menús. -->
       <header class="appbar" data-topbar></header>
 
-      <!-- Zona superior (rellena el alto disponible) -->
-      <div class="home-scroll">
-        <!-- Recompensa diaria -->
-        <div class="daily-banner" id="btn-reward">
-          <span class="db-gift" aria-hidden="true"><img src="img/ui-generated/home/daily-gift.png" alt=""></span>
-          <div class="db-tx"><b data-i18n="daily_banner_title">Recompensa diaria</b><small id="home-reward-sub" data-i18n="daily_banner_sub">¡Vuelve cada día y gana premios!</small></div>
-          <button class="db-claim" type="button" data-act="claim-daily"><span data-i18n="claim">Reclamar</span><span class="db-badge">1</span></button>
-          <span class="db-rocket" aria-hidden="true"><img src="img/ui-generated/home/hero-rocket.png" alt=""></span>
-        </div>
-
-        <section class="home-play-zone" aria-labelledby="home-play-title">
-          <button class="btn-hero" id="btn-play">
-            <span class="play-ic" aria-hidden="true"></span>
-            <span class="btn-hero-copy"><b id="home-play-title" data-i18n="play_word">Jugar</b></span>
-          </button>
-        </section>
-
-        <!-- Contexto: una partida recuperable sustituye al récord mientras exista. -->
-        <div class="home-context">
-          <button class="home-resume" id="btn-resume-run" hidden>
-            <span class="home-resume-ic" aria-hidden="true"><img class="ic" src="img/ui-v2/home/clock.png" alt=""></span>
-            <span class="home-resume-copy"><small data-i18n="home_saved_run">Partida guardada</small><b id="home-resume-state">Continuar partida</b></span>
-            <span class="home-resume-cta" data-i18n="continue_word">Continuar</span>
-          </button>
-          <div class="level-chip record-chip" id="home-record-card" aria-label="Mejor puntuación: 0">
-            <img class="home-score-art" src="img/ui-generated/home/nav-achievements.png" alt="" aria-hidden="true">
-            <span class="home-score-copy"><span data-i18n="best_score">Mejor puntuación</span><b id="start-best">0</b></span>
+      <!-- Hub fijo: accesos compactos + selector de modos cilíndrico. -->
+      <div class="home-main">
+        <nav class="home-quick-dock" data-i18n-al="home_quick_actions" aria-label="Eventos y accesos rápidos">
+          <div class="daily-banner home-quick-item" id="btn-reward">
+            <span class="db-gift" aria-hidden="true"><img src="img/ui-generated/home/daily-gift.png" alt=""></span>
+            <span class="db-tx"><b data-i18n="daily_banner_title">Recompensa diaria</b><small id="home-reward-sub" data-i18n="daily_banner_sub">¡Vuelve cada día y gana premios!</small></span>
+            <button class="db-claim" type="button" data-act="claim-daily"><span class="sr-only" data-i18n="claim">Reclamar</span><span class="db-badge">1</span></button>
           </div>
-        </div>
 
-        <!-- 3 tarjetas de atajo -->
-        <div class="home-cards">
-          <button class="app-card card-blue" data-act="home-classic" id="home-classic-card">
-            <span class="ac-tx"><b class="classic-title"><span data-i18n="home_classic_prefix">Partida</span><em data-i18n="home_classic_name">Clásica</em></b><small id="home-classic-state" data-i18n="home_classic_sub">Juega en el tablero contra amigos o bots</small></span>
-            <span class="classic-board" aria-hidden="true"><img src="img/ui-generated/home/classic-board.png" alt=""></span>
-            <span class="ac-status" id="home-classic-badge">0 / 150</span>
+          <button class="home-quick-item" type="button" data-act="nav-missions" id="home-today-daily">
+            <span class="home-quick-icon"><img src="img/ui-generated/home/nav-missions.png" alt="" aria-hidden="true"></span>
+            <span class="home-quick-copy"><span data-i18n="tab_missions">Misiones</span><b id="home-daily-progress">0 / 1</b></span>
           </button>
-          <button class="app-card card-green" data-act="home-daily" id="home-daily-card">
-            <span class="ac-tx"><b data-i18n="home_tournaments">Torneos</b><small id="home-daily-state" data-i18n="home_tournaments_sub">Compite y gana recompensas</small></span>
-            <span class="ac-art ac-art-trophy" aria-hidden="true"><img src="img/ui-generated/home/tournament-trophy.png" alt=""></span>
-            <span class="ac-status" id="home-daily-badge" data-i18n="home_status_pending">Pendiente</span>
-          </button>
-          <button class="app-card card-orange is-disabled" id="home-multi-card" type="button" disabled aria-disabled="true" data-i18n-al="home_multi_soon">
-            <span class="ac-tx"><b data-i18n="card_multi">Multijugador</b><small data-i18n="home_multi_sub">Desafía a jugadores en línea</small></span>
-            <span class="multi-art" aria-hidden="true"><img src="img/ui-generated/home/multiplayer-versus.png" alt=""></span>
-            <span class="ac-status" data-i18n="card_multi_badge">Próximamente</span>
-          </button>
-        </div>
 
-        <!-- Banda contextual de cinco accesos, como en la referencia. -->
-        <section class="home-today" aria-label="Accesos rápidos">
-          <div class="today-grid">
-            <button class="today-item" type="button" data-act="nav-missions" id="home-today-daily">
-              <img src="img/ui-generated/home/nav-missions.png" alt="" aria-hidden="true">
-              <span data-i18n="tab_missions">Misiones</span>
-              <b id="home-daily-progress">0 / 1</b>
+          <button class="home-quick-item" type="button" data-act="home-daily" id="home-daily-card">
+            <span class="home-quick-icon"><img src="img/ui-generated/home/nav-daily.png" alt="" aria-hidden="true"></span>
+            <span class="home-quick-copy"><span data-i18n="daily_challenge">Reto del día</span><small id="home-daily-state" data-i18n="home_status_pending">Pendiente</small></span>
+            <b class="home-quick-badge" id="home-daily-badge" data-i18n="home_status_pending">Pendiente</b>
+          </button>
+
+          <button class="home-quick-item" type="button" data-act="open-chests" id="home-today-chests">
+            <span class="home-quick-icon"><img src="img/ui-generated/home/nav-chest.png" alt="" aria-hidden="true"><span class="today-badge" id="home-chests-badge" hidden>0</span></span>
+            <span class="home-quick-copy"><span data-i18n="home_chests">Cofres</span><b id="home-chests-state" data-i18n="home_none_ready">Ninguno</b></span>
+          </button>
+        </nav>
+
+        <section class="home-mode-stage" aria-labelledby="home-modes-title">
+          <header class="home-mode-heading">
+            <span class="home-mode-kicker" data-i18n="home_modes_label">Modos de juego</span>
+            <h2 id="home-modes-title" data-i18n="modes_title">Elige tu modo</h2>
+            <p id="home-carousel-hint" data-i18n="home_carousel_hint">Desliza horizontalmente · toca la tarjeta para entrar</p>
+          </header>
+
+          <div class="home-mode-carousel" id="home-mode-carousel" role="region" aria-roledescription="carousel" aria-labelledby="home-modes-title" aria-describedby="home-carousel-hint">
+            <div class="home-mode-viewport" id="home-mode-viewport">
+              <div class="home-mode-track" id="mode-cards" role="group" aria-labelledby="home-modes-title"></div>
+            </div>
+            <div class="home-mode-dots" id="home-mode-dots" role="group" data-i18n-al="home_mode_pages" aria-label="Seleccionar modo"></div>
+            <p class="sr-only" id="home-mode-status" aria-live="polite" aria-atomic="true"></p>
+          </div>
+
+          <!-- Contexto: una partida recuperable sustituye al récord mientras exista. -->
+          <div class="home-context">
+            <button class="home-resume" id="btn-resume-run" hidden>
+              <span class="home-resume-ic" aria-hidden="true"><img class="ic" src="img/ui-v2/home/clock.png" alt=""></span>
+              <span class="home-resume-copy"><small data-i18n="home_saved_run">Partida guardada</small><b id="home-resume-state">Continuar partida</b></span>
+              <span class="home-resume-cta" data-i18n="continue_word">Continuar</span>
             </button>
-            <button class="today-item" type="button" data-act="home-daily" id="home-today-weekly">
-              <img src="img/ui-generated/home/nav-daily.png" alt="" aria-hidden="true">
-              <span data-i18n="home_diary">Diario</span>
-              <b id="home-weekly-progress">0 / 1</b>
-            </button>
-            <button class="today-item" type="button" data-act="open-chests" id="home-today-chests">
-              <span class="today-icon-wrap"><img src="img/ui-generated/home/nav-chest.png" alt="" aria-hidden="true"><span class="today-badge" id="home-chests-badge" hidden>0</span></span>
-              <span data-i18n="home_chests">Cofres</span>
-              <b id="home-chests-state" data-i18n="home_none_ready">Ninguno</b>
-            </button>
-            <button class="today-item is-disabled" type="button" id="home-today-league" disabled aria-disabled="true" data-i18n-al="home_league_soon">
-              <img src="img/ui-generated/home/nav-league.png" alt="" aria-hidden="true">
-              <span data-i18n="home_league">Liga</span>
-              <b data-i18n="coming_soon">Próximamente</b>
-            </button>
-            <button class="today-item is-disabled" type="button" id="home-today-friends" disabled aria-disabled="true" data-i18n-al="home_friends_soon">
-              <img src="img/ui-generated/home/nav-friends.png" alt="" aria-hidden="true">
-              <span data-i18n="home_friends">Amigos</span>
-              <b data-i18n="coming_soon">Próximamente</b>
-            </button>
+            <div class="level-chip record-chip" id="home-record-card" aria-label="Mejor puntuación: 0">
+              <img class="home-score-art" src="img/ui-generated/home/nav-achievements.png" alt="" aria-hidden="true">
+              <span class="home-score-copy"><span data-i18n="best_score">Mejor puntuación</span><b id="start-best">0</b></span>
+            </div>
           </div>
         </section>
 
         <button class="btn btn-ghost btn-sm home-install btn-icon" id="btn-install" hidden><span class="btn-ic" aria-hidden="true"><img class="ic" src="img/ui-v2/home/upgrade.png" alt=""></span><span data-i18n="install">Instalar app</span></button>
       </div>
 
-      <!-- Pie anclado abajo: Jugar (encima) + menús -->
+      <!-- Pie anclado: navegación global. -->
       <div class="home-foot">
         <!-- Bottom nav (anclado) -->
         <nav class="bottom-nav" aria-label="Navegación">
@@ -168,53 +143,6 @@
           <button class="bnav" data-act="open-guide"><span class="bn-ic"><img src="img/ui-generated/home/nav-guide.png" alt=""></span><small data-i18n="tab_guide">Guía</small></button>
           <button class="bnav" data-act="settings"><span class="bn-ic"><img src="img/ui-generated/home/nav-settings.png" alt=""></span><small data-i18n="tab_set">Ajustes</small></button>
         </nav>
-      </div>
-    </section>
-
-    <!-- ============ PANTALLA: SELECCIÓN DE MODO ============ -->
-    <section class="screen screen-modes" id="screen-modes" aria-labelledby="modes-title" hidden>
-      <div class="mode-mock-shell">
-        <div class="mode-mock-space" aria-hidden="true"></div>
-
-        <header class="mode-mock-header" data-mode-topbar data-i18n-al="modes_profile_resources" aria-label="Perfil y recursos">
-          <button class="mode-mock-profile" type="button" data-act="profile" data-i18n-al="profile_action" aria-label="Abrir perfil">
-            <span class="mode-mock-avatar">
-              <span class="mode-mock-avatar-crop"><img src="img/ui-generated/home/avatar-robot.png" alt=""></span>
-              <span class="mode-mock-level-badge avatar-badge">1</span>
-            </span>
-            <span class="mode-mock-identity"><b class="appbar-name">Jugador</b><span class="appbar-lvl-txt">Nivel 1</span></span>
-          </button>
-
-          <div class="mode-mock-wallet" data-i18n-al="modes_resources" aria-label="Recursos">
-            <button class="mode-mock-pill mode-mock-coins" type="button" data-act="buy-coins" data-i18n-al="get_coins" aria-label="Conseguir monedas">
-              <span class="mode-mock-coin" aria-hidden="true">★</span><b data-econ-num="coins" data-econ-compact>0</b><span class="mode-mock-plus" aria-hidden="true">+</span>
-            </button>
-            <button class="mode-mock-pill mode-mock-gems" type="button" data-act="buy-gems" data-i18n-al="get_gems" aria-label="Conseguir gemas">
-              <img src="img/ui-v2/home/gem.png" alt=""><b data-econ-num="gems" data-econ-compact>0</b><span class="mode-mock-plus" aria-hidden="true">+</span>
-            </button>
-            <span class="mode-mock-pill mode-mock-fire" data-i18n-al="home_streak" aria-label="Racha">
-              <img src="img/ui-v2/home/fire.png" alt=""><b data-home-streak>0</b>
-            </span>
-            <button class="mode-mock-settings" id="modes-settings" type="button" data-i18n-al="menu_settings" aria-label="Ajustes">
-              <img src="img/ui-generated/home/nav-settings.png" alt="">
-            </button>
-          </div>
-        </header>
-
-        <section class="mode-mock-main" data-i18n-al="modes_catalog" aria-label="Catálogo de modos">
-          <button class="mode-mock-back" id="modes-back" type="button" data-i18n-al="back" aria-label="Volver">
-            <img src="img/icons-v2/8-ui/arrow-left-02.svg" alt="">
-          </button>
-
-          <div class="mode-mock-heading">
-            <span class="mode-mock-spark mode-mock-spark-left" aria-hidden="true"></span>
-            <h1 id="modes-title" data-i18n="modes_title" tabindex="-1">Elige tu modo</h1>
-            <span class="mode-mock-spark mode-mock-spark-right" aria-hidden="true"></span>
-            <p data-i18n="modes_sub">Cada modo, una forma diferente de jugar</p>
-          </div>
-
-          <div class="mode-mock-catalog" id="mode-cards" role="group" aria-labelledby="modes-title"></div>
-        </section>
       </div>
     </section>
 
@@ -695,6 +623,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=2.6.52" defer></script>
+  <script src="game.js?v=2.6.61" defer></script>
 </body>
 </html>

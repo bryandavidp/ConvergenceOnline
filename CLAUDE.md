@@ -18,7 +18,7 @@ Contexto de proyecto para Claude Code. **Léelo antes de explorar el repo** — 
 
 | Archivo/carpeta | Contenido |
 |---|---|
-| `index.html` (459 líneas) | Todo el DOM estático: 5 pantallas + 13 modales |
+| `index.html` | Todo el DOM estático: 4 pantallas + 13 modales |
 | `styles.css` (2258 líneas) | Todo el CSS — tokens, componentes, animaciones, 9 skins de tablero |
 | `game.js` (3969 líneas) | Toda la lógica, un único IIFE — ver tabla de módulos abajo |
 | `sw.js` | Service Worker (cache-first offline) |

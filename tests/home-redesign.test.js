@@ -20,48 +20,48 @@ const HOME_GENERATED_ART = [
   'nav-missions', 'nav-settings', 'nav-shop',
 ];
 
-test('home: coloca el CTA primario entre la recompensa y los modos', () => {
+test('home: concentra accesos, modos y navegación en un hub fijo', () => {
   const html = read('index.html');
-  const scroll = html.indexOf('<div class="home-scroll">');
-  const reward = html.indexOf('id="btn-reward"');
-  const play = html.indexOf('id="btn-play"');
-  const cards = html.indexOf('<div class="home-cards">');
+  const main = html.indexOf('<div class="home-main">');
+  const quick = html.indexOf('class="home-quick-dock"');
+  const modes = html.indexOf('class="home-mode-stage"');
+  const context = html.indexOf('class="home-context"');
   const nav = html.indexOf('<nav class="bottom-nav"');
 
-  assert.ok(scroll >= 0, 'debe existir una zona desplazable');
-  assert.ok(play > reward && play < cards, 'JUGAR debe dominar el centro, antes de los modos');
-  assert.ok(nav > cards, 'la navegación global debe cerrar la composición');
-  assert.equal((html.match(/id="btn-play"/g) || []).length, 1, 'debe existir un único CTA JUGAR');
+  assert.ok(main >= 0, 'debe existir el contenedor fijo de Inicio');
+  assert.ok(quick > main && modes > quick && context > modes && nav > context,
+    'accesos, carrusel, contexto y navegación deben respetar la jerarquía del hub');
+  assert.doesNotMatch(html, /class="home-scroll"|id="btn-play"|id="screen-modes"/,
+    'no debe quedar scroll, CTA Jugar ni pantalla intermedia');
+  assert.match(html, /id="mode-cards"[^>]*role="group"/,
+    'el catálogo de modos debe vivir directamente en Inicio');
 });
 
 test('home: refleja la arquitectura del mockup y conserva estados reales', () => {
   const html = read('index.html');
-  const home = html.slice(html.indexOf('<section class="screen home"'), html.indexOf('<!-- ============ PANTALLA: SELECCIÓN DE MODO'));
+  const home = html.slice(html.indexOf('<section class="screen home"'), html.indexOf('<section class="screen screen-worlds"'));
   for (const id of [
-    'btn-resume-run', 'home-daily-state', 'home-classic-state', 'home-multi-card',
-    'home-daily-progress', 'home-weekly-progress', 'home-chests-state',
-    'home-today-league', 'home-today-friends',
+    'btn-resume-run', 'home-daily-state', 'home-daily-badge', 'home-daily-progress',
+    'home-chests-state', 'home-mode-carousel', 'home-mode-status', 'home-record-card',
   ]) assert.match(html, new RegExp(`id="${id}"`), `falta el estado ${id}`);
 
-  for (const art of ['classic-board', 'daily-gift', 'hero-rocket', 'multiplayer-versus', 'tournament-trophy', 'nav-achievements', 'nav-chest', 'nav-daily', 'nav-friends', 'nav-guide', 'nav-home', 'nav-league', 'nav-missions', 'nav-settings', 'nav-shop']) {
+  for (const art of ['daily-gift', 'nav-achievements', 'nav-chest', 'nav-daily', 'nav-guide', 'nav-home', 'nav-missions', 'nav-settings', 'nav-shop']) {
     assert.match(home, new RegExp(`img/ui-generated/home/${art}\\.png`), `falta el arte generado ${art}`);
   }
   for (const icon of ['clock', 'upgrade']) {
     assert.match(home, new RegExp(`img/ui-v2/home/${icon}\\.png`), `falta el asset de acción V2 ${icon}`);
   }
-  assert.match(home, /class="classic-board"/, 'Clásico debe mostrar el tablero del mockup');
-  assert.match(home, /class="multi-art"/, 'Multijugador debe mostrar el versus del mockup');
   assert.match(home, /data-act="open-guide"/, 'la navegación global debe exponer Guía');
   assert.match(home, /data-act="nav-achievements"/, 'Logros debe tener una acción propia');
   assert.equal((home.match(/data-act="settings"/g) || []).length, 1, 'Ajustes debe existir solo en la navegación inferior');
   assert.doesNotMatch(home, /home-bell/, 'Misiones no debe duplicarse como botón flotante');
   assert.doesNotMatch(home, /home-level-value|home-level-line/, 'el resumen central debe mostrar solo la mejor puntuación');
   assert.match(home, /id="home-record-card"[^>]+aria-label="Mejor puntuación: 0"/, 'la puntuación debe tener semántica propia');
-  for (const id of ['home-multi-card', 'home-today-league', 'home-today-friends']) {
-    assert.match(home, new RegExp(`id="${id}"[^>]+disabled[^>]+aria-disabled="true"`), `${id} debe estar desactivado hasta su implementación`);
-  }
+  assert.doesNotMatch(home, /home-multi-card|home-today-league|home-today-friends|home-weekly-progress/,
+    'el hub no debe conservar atajos duplicados del diseño anterior');
   assert.doesNotMatch(home, /img\/ui\//, 'Inicio no debe consumir iconos del pack anterior');
-  assert.doesNotMatch(home, /img\/icons-v2\//, 'Inicio no debe mezclar la familia SVG plana con los PNG casuales');
+  assert.doesNotMatch(home, /home-carousel-arrow|arrow-(?:left|right)-0[23]\.svg/,
+    'el carrusel debe comunicar el scroll sin flechas visuales redundantes');
 });
 
 test('home: el subconjunto V2 está optimizado, completo y precargado', () => {
@@ -111,7 +111,10 @@ test('home: los estados dinámicos incluyen i18n y etiquetas accesibles', () => 
   assert.match(js, /const worldName = \(world\) => I18n\.t\('world_' \+ world\.id\)/);
   assert.match(js, /resume\.setAttribute\('aria-label'/);
   assert.match(js, /card\.setAttribute\('aria-label'/);
-  assert.match(js, /play\.setAttribute\('aria-label'/);
+  assert.match(js, /button\.setAttribute\('aria-label',[\s\S]*?home_mode_(?:play|select)/,
+    'la card activa debe describir su acción');
+  assert.match(js, /home-mode-status[\s\S]*?home_mode_position/,
+    'los cambios del carrusel deben anunciarse en su live region');
   assert.match(js, /<button class="econ-plus"[^>]+data-i18n-al="get_coins"/);
   assert.match(js, /world_bosque: 'Green Forest'/, 'los nombres de mundo deben localizarse en inglés');
   assert.match(topbar, /img\/ui-generated\/home\/avatar-robot\.png/, 'la cabecera debe usar el avatar generado');
@@ -134,17 +137,19 @@ test('home: sincroniza el contador de cofres y separa Perfil de Logros', () => {
   assert.doesNotMatch(js, /'home-multi'|'home-friends'/, 'las funciones no disponibles no deben conservar handlers engañosos');
 });
 
-test('home: fija el contrato visual de tipografía, CTA, avatar, economía e Inicio', () => {
+test('home: fija el contrato visual del hub, cilindro, avatar y economía', () => {
   const css = read('styles.css');
 
   assert.match(css, /#screen-start[^\{]*\{[^}]*font-family\s*:/s,
     'Inicio debe declarar una familia tipográfica propia y coherente');
-  assert.match(css, /#screen-start \.btn-hero\s*\{[^}]*border[^}]*border-radius[^}]*background:\s*linear-gradient[^}]*box-shadow/s,
-    'Jugar debe conservar doble borde, volumen, degradado y glow');
-  assert.match(css, /#screen-start \.btn-hero::after\s*\{[^}]*linear-gradient/s,
-    'Jugar debe incluir su brillo superior de la referencia');
-  assert.match(css, /#screen-start \.play-ic\s*\{[^}]*border-left[^}]*#fff/s,
-    'Jugar debe mostrar el triángulo blanco construido a escala');
+  assert.match(css, /#screen-start \.home-main\s*\{[^}]*overflow:\s*hidden/s,
+    'el contenido principal debe quedar fijo sin scroll vertical');
+  assert.match(css, /#screen-start \.home-mode-track\s*\{[^}]*transform-style:\s*preserve-3d[^}]*translateZ\([^}]*rotateY\(/s,
+    'el carrusel debe rotar como un cilindro en profundidad');
+  assert.match(css, /#screen-start \.home-mode-slot\s*\{[^}]*rotateY\(var\(--card-angle\)\)\s*translateZ\(var\(--home-mode-radius\)\)/s,
+    'cada modo debe ocupar una cara del anillo');
+  assert.match(css, /#screen-start \.home-mode-card\s*\{[^}]*backface-visibility:\s*hidden/s,
+    'las caras traseras no deben atravesar el cilindro');
   assert.match(css, /\.bnav-center \.bn-ic\s*\{[^}]*border-radius:\s*50%/s,
     'el icono de Inicio debe vivir en un botón realmente circular');
 
@@ -160,6 +165,11 @@ test('home: fija el contrato visual de tipografía, CTA, avatar, economía e Ini
     'los botones + deben ser discos verdes completos, no cruces flotantes');
   assert.doesNotMatch(css, /#screen-start \.appbar-econ\s*\{[^}]*transform:\s*scale/s,
     'la economía debe dimensionarse de forma fluida sin escalado visual que altere su caja');
+  assert.match(css, /INICIO 3\.2[^\n]*ECONOMÍA ESBELTA Y FLUIDA/);
+  assert.match(css, /#screen-start \.appbar-econ\s*\{[^}]*--home-econ-height:\s*clamp\(29px,\s*3\.9svh,\s*36px\)[^}]*width:\s*clamp\(148px,\s*46vw,\s*360px\)/s,
+    'la economía debe ser baja, alargada y usar el ancho disponible');
+  assert.match(css, /#screen-start \.appbar \.econ-coins \.econ-ic\s*\{[^}]*box-shadow:\s*\n\s*0 1px 2px rgba\(0,0,0,\.38\)/s,
+    'la moneda debe conservar volumen sin un halo que tape su silueta');
 });
 
 test('home: la recompensa diaria hace pop y desaparece conservando su hueco', () => {

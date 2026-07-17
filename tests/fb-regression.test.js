@@ -83,6 +83,7 @@ function resetFxPool() {
       const el = makeEl('span'), glyph = makeEl('span');
       el.appendChild(glyph); return { el, glyph, anim: null };
     }),
+    trails: Array.from({ length: FX.MAX_CONVERGE_ICONS }, () => ({ el: makeEl('span'), anim: null })),
     particles: Array.from({ length: FX.BURST_PARTICLES }, () => ({ el: makeEl('span'), anim: null })),
     wave: makeEl('span'),
   }));
@@ -95,7 +96,7 @@ test('FX: la convergencia mueve una ficha por icono y explota una vez en el cent
     size: State.size, combo: State.combo, board: State.board,
     cells: Render.cells, cellId: Render._cellId, reducedFx: Settings.reducedFx, cap: FX.cap,
     gridMetrics: FX._gridMetrics, nextGroup: FX._nextConvergeGroup,
-    flyTile: FX._flyTile, iconBurst: FX._iconBurst, convergeWave: FX._convergeWave,
+    flyTile: FX._flyTile, tracePath: FX._tracePath, iconBurst: FX._iconBurst, convergeWave: FX._convergeWave,
   };
   State.size = 8;
   State.combo = 20;
@@ -109,34 +110,40 @@ test('FX: la convergencia mueve una ficha por icono y explota una vez en el cent
   const run = (cap) => {
     resetFxPool(); FX.cap = cap;
     const group = FX.convergeGroups[0];
-    const flights = [], bursts = [], waves = [];
+    const flights = [], trails = [], bursts = [], waves = [];
     FX._gridMetrics = () => ({ cellW: 40, cellH: 40, cellPx: 40, xy: (i) => ({ x: i % 8 * 45 + 20, y: (i / 8 | 0) * 45 + 20 }) });
     FX._nextConvergeGroup = () => group;
     FX._flyTile = (slot, id, source, from, to, cellW, cellH) => {
       flights.push({ slot, id, source, from, to, cellW, cellH }); return true;
+    };
+    FX._tracePath = (slot, from, to, cellPx, color) => {
+      trails.push({ slot, from, to, cellPx, color }); return true;
     };
     FX._iconBurst = (slots, center, iconColors, comboColor, cellPx) => {
       bursts.push({ slots, center, iconColors, comboColor, cellPx }); return FX.BURST_PARTICLES;
     };
     FX._convergeWave = (wave, center, cellPx, color) => { waves.push({ wave, center, cellPx, color }); return {}; };
     const result = FX.converge(27, cells, '#ffd84d');
-    return { flights, bursts, waves, result };
+    return { flights, trails, bursts, waves, result };
   };
 
   try {
     const lowCap = run(1);
     const highCap = run(50);
-    const plan = ({ flights, bursts, waves, result }) => ({
+    const plan = ({ flights, trails, bursts, waves, result }) => ({
       flights: flights.map(({ id, from, to, cellW, cellH }) => ({ id, from, to, cellW, cellH })),
+      trails: trails.map(({ from, to, cellPx, color }) => ({ from, to, cellPx, color })),
       bursts: bursts.map(({ center, iconColors, comboColor, cellPx }) => ({ center, iconColors, comboColor, cellPx })),
       waves: waves.map(({ center, cellPx, color }) => ({ center, cellPx, color })),
       result,
     });
     assert.deepEqual(plan(lowCap), plan(highCap), 'el plan magnético no debe depender del cap de partículas');
     assert.equal(lowCap.flights.length, cells.length);
+    assert.equal(lowCap.trails.length, cells.length);
     assert.equal(lowCap.bursts.length, 1);
     assert.equal(lowCap.waves.length, 1);
     assert.equal(lowCap.result.flights, cells.length);
+    assert.equal(lowCap.result.trails, cells.length);
     assert.equal(lowCap.result.particles, FX.BURST_PARTICLES);
     assert.equal(lowCap.result.wave, true);
     assert.ok(lowCap.flights.every(({ to, cellW, cellH }) =>
@@ -154,7 +161,8 @@ test('FX: la convergencia mueve una ficha por icono y explota una vez en el cent
     Render.cells = prev.cells; Render._cellId = prev.cellId;
     Settings.reducedFx = prev.reducedFx; FX.cap = prev.cap;
     FX._gridMetrics = prev.gridMetrics; FX._nextConvergeGroup = prev.nextGroup;
-    FX._flyTile = prev.flyTile; FX._iconBurst = prev.iconBurst; FX._convergeWave = prev.convergeWave;
+    FX._flyTile = prev.flyTile; FX._tracePath = prev.tracePath;
+    FX._iconBurst = prev.iconBurst; FX._convergeWave = prev.convergeWave;
   }
 });
 
@@ -221,6 +229,36 @@ test('FB-1: los emisores forzados respetan ABS_MAX', () => {
   assert.equal(FX.active, FX.ABS_MAX, 'force no puede rebasar ABS_MAX');
 });
 
+test('FX: la estela crece hasta el centro y conserva el camino tras el impacto', () => {
+  resetFxPool();
+  const slot = FX.convergeGroups[0].trails[0];
+  const records = [];
+  slot.el.animate = (frames, options) => {
+    const anim = { frames, options, onfinish: null, oncancel: null, cancel() {} };
+    records.push(anim); return anim;
+  };
+
+  assert.equal(FX._tracePath(slot, { x: 20, y: 30 }, { x: 140, y: 30 }, 40, '#ff5b6e'), true);
+  assert.equal(records.length, 1);
+  const [{ frames, options }] = records;
+  const impactOffset = FX.CONVERGE_TRAVEL_MS / (FX.CONVERGE_TRAVEL_MS + FX.CONVERGE_TRAIL_FADE_MS);
+  assert.equal(options.duration, FX.CONVERGE_TRAVEL_MS + FX.CONVERGE_TRAIL_FADE_MS);
+  assert.equal(options.easing, 'linear');
+  assert.equal(frames.length, 8);
+  assert.equal(frames[5].offset, impactOffset);
+  assert.equal(frames[5].opacity, 0.94, 'el recorrido completo debe seguir visible al impactar');
+  assert.ok(frames[6].offset > impactOffset, 'la estela debe permanecer después del impacto');
+  assert.equal(frames.at(-1).opacity, 0);
+  assert.match(frames[0].transform, /translate3d\(20\.0px,27\.9px,0\) rotate\(0\.00deg\) scaleX\(0\.015\)/);
+  assert.match(frames[5].transform, /scaleX\(1\)$/);
+  assert.equal(slot.el.style.width, '120.0px');
+  assert.equal(slot.el.style.height, '4.2px');
+  assert.equal(slot.el.style.color, '#ff5b6e');
+  records[0].onfinish();
+  assert.equal(slot.anim, null);
+  assert.equal(slot.el.style.opacity, '0');
+});
+
 test('FX: la ficha completa conserva cuerpo/icono y usa aceleración magnética común', () => {
   resetFxPool();
   const records = [];
@@ -238,11 +276,13 @@ test('FX: la ficha completa conserva cuerpo/icono y usa aceleración magnética 
   const [{ frames, options }] = records;
   assert.equal(options.duration, FX.CONVERGE_TRAVEL_MS);
   assert.equal(options.delay || 0, 0);
-  assert.equal(frames.length, 5);
+  assert.equal(frames.length, 6);
   assert.equal(frames[0].opacity, 1);
   assert.equal(frames.at(-1).opacity, 0);
-  assert.deepEqual(frames.map(({ offset }) => offset), [0, 0.18, 0.58, 0.82, 1]);
+  assert.deepEqual(frames.map(({ offset }) => offset), [0, 0.10, 0.32, 0.62, 0.84, 1]);
   assert.match(frames[0].transform, new RegExp(`translate3d\\(${(20 - 25).toFixed(1)}px,${(30 - 23).toFixed(1)}px`));
+  assert.match(frames[1].transform, /translate3d\(-6\.4px,5\.3px/, 'la micro-anticipación debe retroceder sin retrasar el disparo');
+  assert.match(frames[4].transform, /scale3d\(/, 'la fase rápida debe estirar la ficha en la dirección del viaje');
   assert.match(frames.at(-1).transform, new RegExp(`translate3d\\(${(140 - 25).toFixed(1)}px,${(170 - 23).toFixed(1)}px`));
   assert.equal(slot.el.style.width, '50.0px');
   assert.equal(slot.el.style.height, '46.0px');
@@ -357,15 +397,17 @@ test('FX: la geometría local respeta gaps y escala igual en móvil, tableta y e
   }
 });
 
-test('FX: reduced-fx omite fichas, explosión y onda magnética', () => {
+test('FX: reduced-fx omite fichas, estelas, explosión y onda magnética', () => {
   const prev = {
     reducedFx: Settings.reducedFx, nextGroup: FX._nextConvergeGroup,
-    flyTile: FX._flyTile, iconBurst: FX._iconBurst, convergeWave: FX._convergeWave,
+    flyTile: FX._flyTile, tracePath: FX._tracePath,
+    iconBurst: FX._iconBurst, convergeWave: FX._convergeWave,
   };
-  let flights = 0, bursts = 0, waves = 0;
+  let flights = 0, trails = 0, bursts = 0, waves = 0;
   Settings.reducedFx = true;
   FX._nextConvergeGroup = () => FX.convergeGroups[0];
   FX._flyTile = () => { flights++; return true; };
+  FX._tracePath = () => { trails++; return true; };
   FX._iconBurst = () => { bursts++; return 12; };
   FX._convergeWave = () => { waves++; return {}; };
   try { FX.converge(27, [24, 30], '#fff'); }
@@ -373,10 +415,12 @@ test('FX: reduced-fx omite fichas, explosión y onda magnética', () => {
     Settings.reducedFx = prev.reducedFx;
     FX._nextConvergeGroup = prev.nextGroup;
     FX._flyTile = prev.flyTile;
+    FX._tracePath = prev.tracePath;
     FX._iconBurst = prev.iconBurst;
     FX._convergeWave = prev.convergeWave;
   }
   assert.equal(flights, 0);
+  assert.equal(trails, 0);
   assert.equal(bursts, 0);
   assert.equal(waves, 0);
 });
@@ -392,6 +436,7 @@ test('FB-1: aviso reduced-fx heredado y limpieza de popup.show quedan protegidos
   Settings.lang = langBak;
   assert.ok(/\.converge-layer\b/.test(css), 'la coreografía debe vivir en una capa local al tablero');
   assert.ok(/\.converge-tile\b/.test(css), 'debe viajar la ficha cuadrada completa');
+  assert.ok(/\.converge-trail\b/.test(css), 'cada ficha debe marcar su recorrido con una estela');
   assert.ok(/\.converge-particle\b/.test(css), 'la explosión central debe conservar partículas dedicadas');
   assert.ok(!/\.converge-fly\b/.test(css), 'el clon que movía solo el glifo no debe volver');
   assert.ok(!/\.fly-glyph\b/.test(css), 'la implementación antigua desacoplada del pool no debe volver');

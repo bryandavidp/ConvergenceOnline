@@ -93,9 +93,9 @@ Uso extensivo de `color-mix(in srgb, ...)` como mecanismo de "tinte en runtime" 
 
 **App shell:** `html, body { height:100% }`; `body` usa cadena de fallback `min-height: 100vh; min-height: 100dvh; min-height: -webkit-fill-available;`, `overflow:hidden`, `overscroll-behavior:none`, `touch-action:manipulation`. `#app`: `height:100vh/100dvh`, `overflow:hidden`.
 
-**Sistema de pantallas:** cada pantalla es `<section class="screen" id="screen-...">`; visibilidad vía atributo nativo `hidden`, reforzado globalmente con `[hidden]{display:none!important}`. `.screen` base: `position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;` + padding con `env(safe-area-inset-*)`, animación de entrada `screen-in .25s ease both` (fade + slide desde abajo). **No hay animación de salida** — el cambio de pantalla es instantáneo al alternar `hidden`. Variantes (`.screen.home`, `.screen-modes`, `.screen-worlds`, `.screen-game`) sobreescriben el `justify-content`/`align-items`, y `.screen-game` cambia a CSS Grid (ver §7).
+**Sistema de pantallas:** cada pantalla es `<section class="screen" id="screen-...">`; visibilidad vía atributo nativo `hidden`, reforzado globalmente con `[hidden]{display:none!important}`. `.screen` base: `position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;` + padding con `env(safe-area-inset-*)`, animación de entrada `screen-in .25s ease both` (fade + slide desde abajo). **No hay animación de salida** — el cambio de pantalla es instantáneo al alternar `hidden`. Variantes (`.screen.home`, `.screen-worlds`, `.screen-game`) sobreescriben el `justify-content`/`align-items`, y `.screen-game` cambia a CSS Grid (ver §7). La selección de modo ya no es una pantalla: forma parte de `#screen-start`.
 
-**Uso de grid:** `.appbar` (grid 2 columnas "profile econ"), `.home-cards`/`.mode-grid`/`.world-map`/`.board-grid`/`.stats`/`.surv-diff-pick` (grid), `.screen-game` (grid 3 filas `3fr auto 2fr`), `.worlds-body` en ≥720px (`1fr 250px`).
+**Uso de grid:** `.appbar` (grid 2 columnas "profile econ"), `.home-quick-dock`/`.world-map`/`.board-grid`/`.stats`/`.surv-diff-pick` (grid), `.screen-game` (grid 3 filas `3fr auto 2fr`), `.worlds-body` en ≥720px (`1fr 250px`). El carrusel de Inicio usa transformaciones 3D, no una rejilla bidimensional.
 
 **Breakpoints (mobile-first):**
 - `max-width:460px` / `max-width:380px` — compactación progresiva de appbar/avatar/modal.
@@ -103,7 +103,7 @@ Uso extensivo de `color-mix(in srgb, ...)` como mecanismo de "tinte en runtime" 
 - `min-width:720px` — "tablet/escritorio": layout de 2 columnas en mundos, tablero fijo más grande.
 - `min-width:720px and max-width:819px` — transición específica de Inicio: reduce avatar, economía, banner y tarjetas sin offsets que provoquen overflow.
 - `min-width:820px and max-width:900px` — lienzo 2:3 de Inicio para reproducir 854×1280 sin heredar las cotas de 1024×1536.
-- `min-width:720px and max-height:760px` — modo compacto de selección de modo en escritorio.
+- `min-width:900px and max-height:820px` — composición horizontal compacta del carrusel en escritorio.
 - `min-height:900px and max-width:719px` — teléfonos altos → tablero más grande.
 - `hover:hover` — gatea `:hover` en celdas para no dejar estados "pegados" en touch.
 - `prefers-reduced-motion:reduce` — interruptor global de animaciones (ver §10).
@@ -119,23 +119,22 @@ Uso extensivo de `color-mix(in srgb, ...)` como mecanismo de "tinte en runtime" 
   - `.btn-ghost`: translúcido blanco.
   - `.btn-lg`/`.btn-sm`: variantes de tamaño (font 1.15rem/.88rem).
   - `.btn-icon`/`.btn-ic`: fila flex icono+label.
-  - `#btn-play` (CTA home): botón héroe central azul/cian con doble aro neón, relieve 3D y triángulo blanco; `homePlayGlow` se limita a 2 ciclos y se elimina con movimiento reducido.
   - `.btn-hero`: variante ancha dentro de modal/home, gradiente `--grad-play`.
   - `.btn-reward`: CTA de recompensa diaria, gradiente dorado, `animation: rewardPulse 1.8s infinite`.
 - **`.icon-btn`** — cuadrado 44×44, esquinas redondeadas (o circular en `.controls`), hover ilumina, active `scale(.94)`.
 - **`.modal`** — layout flex columna (header fijo / body scrollable / footer fijo), `max-height: min(90dvh, calc(100dvh - insets - 24px))`, ancho `min(456px,100%)`, radio 22px, barra de acento superior vía `::before` coloreada por `--modal-accent`, animación de entrada `modal-in .26s cubic-bezier(.2,.9,.3,1.2)`. Cada modal define su propio `--modal-accent` (how=good, pause/adventure=level, settings=accent-2, missions/shop=gold, revive/surv-diff=bad, medals=good).
-- **`.appbar`** — grid reutilizado en home/modos/mundos: avatar circular con glow cian, barra de XP y pills de economía. En Inicio no contiene Ajustes; sus saldos se compactan (`10K`, `1M`) para mantener una sola línea.
+- **`.appbar`** — grid reutilizado en Inicio y mundos: avatar circular con glow cian, barra de XP y pills de economía. En Inicio no contiene Ajustes; sus saldos se compactan (`10K`, `1M`) para mantener una sola línea.
 - **`.bottom-nav`/`.worlds-tabs`** — barras de tabs ancladas abajo con safe-area; en Inicio hay cinco destinos globales (`Logros`, `Tienda`, `Inicio`, `Guía`, `Ajustes`) y el item central se eleva como un FAB circular cian.
 - **`.board`/`.board-wrap`** — ver §7.
 - **`.toasts`/`.toast`** — columna anclada encima del tablero, crece hacia arriba; acento `--tc` por tipo (info/good/warn/bad).
 - **`.combo`** — anillo SVG de progreso + texto de multiplicador + contador, 4 tiers de color escalonados.
 - **`.surv-bar`** — HUD de Supervivencia: vidas (emoji), nombre de oleada + badge de tier, barra de progreso de oleada, mejor oleada, tiempo transcurrido.
 - **`.booster-bar`** — bandeja inferior de potenciadores: medidor de carga, medidor de frenesí (gradiente naranja→rojo→morado), fila de botones `.booster` (58×56, icono + contador).
-- **`.app-card`** — tarjetas arcade de acceso rápido del home, con borde saturado, relieve 3D y gradiente por variante. La home prioriza Clásico y Torneo diario; Multijugador usa `disabled`, escala de grises y una etiqueta `Próximamente`, sin simular matchmaking.
+- **`.home-mode-carousel`/`.home-mode-track`/`.home-mode-slot`** — selector principal de Inicio. Seis caras equidistantes rotan sobre Y con `preserve-3d`; la cara activa recibe foco y acción, las adyacentes anticipan la continuidad del anillo. Se controla mediante gesto horizontal, puntos o teclado, sin flechas visuales redundantes. Multijugador conserva `disabled` y `Próximamente`.
 - **`.home-context`** — muestra una partida recuperable cuando existe `RunSave`; en su ausencia muestra la mejor puntuación. Los dos estados son mutuamente excluyentes.
-- **`.home-today`/`.today-grid`** — banda contextual de cinco accesos: Misiones, Diario, Cofres, Liga y Amigos. Usa cinco columnas `minmax(0,1fr)`; Liga y Amigos permanecen nativamente desactivados y en gris hasta que existan sus flujos.
+- **`.home-quick-dock`/`.home-quick-item`** — banda fija de cuatro accesos: recompensa, Misiones, Diario y Cofres. Usa cuatro columnas `minmax(0,1fr)` y no crea una segunda navegación de funciones futuras.
 - **`.diff-chip`** — pills de selección de dificultad, estado `[aria-checked="true"]` con borde/fondo verde.
-- **`.econ-pill`** — chip de moneda, borde/glow por tipo de divisa.
+- **`.econ-pill`** — cápsula económica baja y alargada, con borde y relieve sutil por tipo de divisa; la moneda evita halos intensos para conservar una silueta legible.
 - **`.level-chip`/`.record-chip`** — `.level-chip` sirve para nivel en contextos generales; el `.record-chip` de Inicio es semánticamente exclusivo de `Mejor puntuación`, con trofeo, valor dorado y sin duplicar el nivel de la cabecera.
 
 ### Contrato visual de Inicio
@@ -146,37 +145,31 @@ Inicio define tokens locales para no contaminar las superficies de juego:
 
 1. Fondo azul noche con nebulosas y estrellas decorativas no interactivas.
 2. Borde luminoso + labio oscuro de 4–8 px para comunicar pulsabilidad.
-3. Jerarquía por saturación: CTA azul, Clásico azul y Torneo diario verde; una
-   función futura pierde saturación, contraste y elevación, además de usar
-   `disabled`, texto y `aria-label`.
-4. Dos bandas de navegación: una contextual dentro del scroll y una global
-   anclada al safe area. En viewports bajos el contenido central desplaza; la
-   cabecera y la navegación global permanecen accesibles.
+3. Jerarquía por profundidad: el modo activo ocupa el plano frontal; las caras
+   vecinas permanecen visibles y Multijugador pierde saturación, contraste y
+   elevación, además de usar `disabled`, texto y `aria-label`.
+4. El hub ocupa exactamente el viewport y no tiene scroll vertical: appbar,
+   dock contextual, cilindro, contexto y navegación global se reparten el alto.
 5. Una función tiene una sola entrada principal: Misiones vive en la banda
    contextual y Ajustes en la navegación global; no se duplican como flotantes.
 
 ### Acabado de fidelidad de Inicio
 
 La tipografía de `#screen-start` es una decisión local del componente. Nombre
-de jugador, recompensa, CTA, tarjetas y etiquetas heredan una misma familia
-redondeada y pesada; no deben resolver cada uno a una fuente distinta. La
-jerarquía se comprueba con estilos computados: `Jugar` es el texto mayor y de
-peso 900 o superior, el título de recompensa supera al cuerpo y los títulos de
-tarjeta mantienen al menos peso 800. Los números de economía y puntuación usan
-variantes tabulares para que no cambie el ancho al actualizarse.
+de jugador, recompensa, título y tarjetas heredan una misma familia redondeada
+y pesada; no deben resolver cada uno a una fuente distinta. El nombre del modo
+es la etiqueta principal dentro de cada card y conserva peso 900 o superior.
+Los números de economía y puntuación usan variantes tabulares para que no
+cambie el ancho al actualizarse.
 
-El contrato del CTA `#btn-play` combina seis capas, todas necesarias:
-
-1. superficie azul `linear-gradient` de claro a profundo;
-2. borde cian ancho y segundo aro violeta mediante `box-shadow`;
-3. labio inferior azul oscuro que comunica profundidad;
-4. brillo interior superior en `::after`;
-5. triángulo blanco con sombra fría;
-6. texto blanco extrapesado con sombra/relieve, sin sustituirlo por una imagen.
-
-En el lienzo 854×1280 su caja de referencia es 560×190 px, radio 40 px y marco
-principal de 6–7 px. En tamaños menores sus proporciones escalan, pero el texto nunca puede
-salirse ni el botón perder el doble contorno.
+El contrato del cilindro combina perspectiva en `.home-mode-viewport`,
+`transform-style:preserve-3d` en el track y una cara por modo con
+`rotateY(var(--card-angle)) translateZ(var(--home-mode-radius))`. El giro se
+expresa como un contador entero sin límites: normalizar solo resuelve qué cara
+está activa, pero no reinicia la rotación, de modo que el gesto puede continuar
+indefinidamente. Seleccionar una card no altera `Storage.lastMode`; esa clave se
+escribe solo cuando `Game.start()` inicia una partida real. Al volver o recargar,
+Inicio enfoca ese modo; si no existe uno válido, enfoca Clásico.
 
 El destino activo `Inicio` conserva el icono existente, pero su superficie es
 un círculo real: ancho y alto idénticos, `border-radius:50%`, aro cian, fondo
@@ -189,6 +182,8 @@ La cabecera aplica estas invariantes responsive:
 - avatar con `width:clamp(...)`, `aspect-ratio:1` y badge proporcional; ningún
   breakpoint puede declarar pares no cuadrados como 74×69;
 - economía dimensionada por sus cajas reales, no mediante `transform:scale()`;
+- monedas y gemas comparten de forma fluida el ancho disponible con una altura
+  acotada; al ocultarse la racha en móvil, ambas cápsulas se alargan;
 - monedas, gemas y racha permanecen dentro del viewport y no se solapan con el
   perfil aun con nombre o saldos extremos;
 - los `+` de monedas y gemas son discos verdes completos —degradado, borde,
@@ -198,10 +193,10 @@ Las dimensiones visuales objetivo de economía son:
 
 | Ancho | Monedas | Gemas | Racha | Gap |
 | --- | ---: | ---: | ---: | ---: |
-| 390 px | ~72×32 | ~64×32 | ~42×32 | 3–4 px |
-| 720 px | ~123×44 | ~114×44 | ~74×44 | 6 px |
-| 854 px | 146×52 | 131×52 | 88×52 | 8 px |
-| 1024 px | escala fluida hasta el máximo de escritorio | escala fluida | escala fluida | 10–12 px |
+| 390 px | ~91×33 | ~84×33 | oculta | 4 px |
+| 720 px | ~126×36 | ~115×36 | ~77×36 | 5 px |
+| 854 px | ~136×36 | ~124×36 | ~83×36 | 6 px |
+| 1024 px | máximo fluido de escritorio | máximo fluido | máximo fluido | 6–7 px |
 
 La recompensa diaria tiene tres estados visuales, sin cambiar nunca la caja
 reservada en el flujo:
@@ -214,20 +209,20 @@ reservada en el flujo:
 
 El paso final se sincroniza con `animationend` y dispone de timeout de
 seguridad. Con movimiento reducido se omite el efecto, pero se conserva el
-mismo estado, semántica y rectángulo. La regresión compara recompensa, CTA y
-tarjetas antes/después con una tolerancia máxima de 1 px.
+mismo estado, semántica y rectángulo. La regresión compara recompensa, carrusel
+y contexto antes/después con una tolerancia máxima de 1 px.
 
 Las ilustraciones protagonistas de Inicio son PNG originales con alfa bajo
 `img/ui-generated/home/`. Comparten render 3D casual, materiales brillantes,
 volúmenes redondeados y luz de borde cian/violeta. El conjunto incluye avatar,
-recompensa, cohete, tarjetas de modo y los diez destinos de las dos bandas de
-navegación. El pack compacto `img/ui-v2/home/` queda reservado a microiconos de
+recompensa, tarjetas de modo y los destinos de las bandas contextual y global.
+El pack compacto `img/ui-v2/home/` queda reservado a microiconos de
 economía y estado. La captura de referencia nunca se usa como sprite ni como
 fuente de recortes en producción.
 - **`.world-map`** (grid de nodos `.lvl-node`, estilo pill 3D, estado `.locked`/`.current` con pulso) / **`.world-rail`** (lista vertical de mundos).
 - **`.shop-list`/`.shop-item`** — fila con swatch de previsualización, nombre, botón comprar/equipar; `.board-grid`/`.board-card` variante enriquecida con preview real del skin (reutiliza las custom properties del tablero).
 - **`.chests-body`** — icono grande de cofre con `chestWobble` cuando hay cofres listos, `chestOpen` one-shot al abrir y tarjeta persistente `.chest-reveal` para mostrar la recompensa. `.chest-reveal.rarity-common|jackpot|cosmetic` cambia tinte/borde; cosméticos muestran acción `Equipar`. Con `body.reduced-fx`, se quitan wobble/open/pop, pero la tarjeta queda igual porque es información.
-- **`.mode-hero`/`.mode-card`** — tarjetas de selección de modo, glow radial por `--mode-accent`, check en `[aria-checked="true"]`, estado `.mode-disabled`.
+- **`.home-mode-card`/`.home-mode-art`** — cuerpo vertical estrecho con arte, copy y características. El cuerpo conserva `overflow:visible` y el arte usa `--home-mode-overhang` negativo para romper el borde superior sin recorte; Clásico, Aventura, Contrarreloj, Supervivencia, Zen y Multijugador ajustan individualmente escala, posición, halo y textura. Mantiene `backface-visibility:hidden`, estado `.is-selected` en su slot y foco roving.
 - Otros: `.switch` (toggle accesible), `.field input`, `.avatar-pick`/`.avatar-dot`, `.lang-pick`/`.lang-btn`, `.medal`, `.lb-row` (leaderboard), `.multi-vs`, `.adv-node`, `.stat`/`.stats`.
 
 ## 6. Animaciones (`@keyframes`)
@@ -247,6 +242,8 @@ El archivo define **~50 animaciones**. Las agrupamos por propósito (nombres exa
 Todas las animaciones "ambientales"/decorativas (drift de fondo, pulsos idle, spin del logo) se desactivan cuando el usuario activa el ajuste propio `reduced-fx` (ver §10) — es un mecanismo más granular que el `prefers-reduced-motion` del SO.
 
 El feedback de convergencia es un contrato visual de juego: con `reduced-fx` desactivado, `FX.converge` y `FX.scoreToHud` no se degradan por el gobernador de rendimiento ni por el `FX.cap` móvil; usan un backstop absoluto común (`FX.ABS_MAX`) para mantener paridad móvil/PC. `reduced-fx` sí puede ocultar partículas/vuelos por ser una elección explícita de accesibilidad o heredada del sistema, en cuyo caso la app muestra un aviso una sola vez.
+
+La coreografía magnética vive en `.converge-layer` y reutiliza tres grupos preasignados; cada grupo contiene hasta cinco `.converge-tile`, cinco `.converge-trail`, doce `.converge-particle` y una `.converge-wave`. El viaje dura 165 ms y se lee como un disparo: micro-anticipación de un frame, aceleración inmediata, estiramiento longitudinal y colapso común. Cada estela crece detrás de su ficha hasta el punto de convergencia y permanece 140 ms tras el impacto para hacer legible el recorrido sin ralentizar la jugada. Estelas y fichas animan solo `transform`/`opacity`; gradientes, trazos y glow son pinturas estáticas de una animación one-shot inferior a 700 ms. No crear nodos durante una jugada ni hacer depender estas capas de `FX.cap`.
 
 Las partículas, vuelos de glyph y popups creados con WAAPI se cancelan al terminar después de fijar `opacity:0`; no deben quedar animaciones con `fill:forwards/both` retenidas en `document.getAnimations()`, porque mantienen capas de compositor vivas sin aportar feedback visual.
 

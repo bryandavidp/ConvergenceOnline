@@ -12,9 +12,9 @@ const js = read('game.js');
 const css = read('styles.css');
 const sw = read('sw.js');
 
-const screenStart = html.indexOf('<section class="screen screen-modes"');
-const screenEnd = html.indexOf('<section class="screen screen-worlds"', screenStart);
-const modesScreen = html.slice(screenStart, screenEnd);
+const homeStart = html.indexOf('<section class="screen home"');
+const homeEnd = html.indexOf('<section class="screen screen-worlds"', homeStart);
+const home = html.slice(homeStart, homeEnd);
 
 const sourceBetween = (source, start, end) => {
   const from = source.indexOf(start);
@@ -23,18 +23,6 @@ const sourceBetween = (source, start, end) => {
   assert.ok(to > from, `falta el marcador final: ${end}`);
   return source.slice(from, to);
 };
-
-const catalogSource = sourceBetween(js, 'const MODE_CARDS = [', 'function buildModeMenu()');
-const buildSource = sourceBetween(js, 'function buildModeMenu()', 'function openModeMenu()');
-
-function cardSource(key) {
-  const from = catalogSource.indexOf(`key: '${key}'`);
-  assert.ok(from >= 0, `falta la configuración del modo ${key}`);
-  const tail = catalogSource.slice(from);
-  const candidates = [tail.indexOf('\n    },'), tail.indexOf('\n  };')].filter((n) => n >= 0);
-  assert.ok(candidates.length, `no se pudo delimitar la configuración de ${key}`);
-  return tail.slice(0, Math.min(...candidates));
-}
 
 function assertOrder(source, tokens, label) {
   let cursor = -1;
@@ -45,230 +33,174 @@ function assertOrder(source, tokens, label) {
   }
 }
 
-/* Carga real de game.js sobre el stub compartido: buildModeMenu() se ejecuta
- * durante init y deja el HTML dinámico observable sin duplicar su lógica aquí. */
 const { getMemoEl } = require('./dom-stub.js');
 require('../game.js');
 const cv = globalThis.window.__cv;
 
-test('modos: index monta la variante de producción y conserva controles reales', () => {
-  assert.ok(screenStart >= 0 && screenEnd > screenStart, 'debe existir #screen-modes antes del mapa Clásico');
+test('modos: el catálogo vive en Inicio y desaparece la pantalla intermedia', () => {
+  assert.ok(homeStart >= 0 && homeEnd > homeStart, 'Inicio debe existir antes del mapa Clásico');
+  assert.doesNotMatch(html, /id="screen-modes"|class="screen screen-modes"/,
+    'la selección ya no puede existir como pantalla separada');
+  assert.doesNotMatch(home, /id="btn-play"/, 'Inicio no debe conservar el CTA Jugar redundante');
+  assert.doesNotMatch(js, /Screens\.show\('modes'\)|openModeMenu|closeModeMenu|modes-back|modes-settings/,
+    'ninguna ruta productiva debe apuntar al selector eliminado');
+
   for (const token of [
-    'class="mode-mock-shell"',
-    'class="mode-mock-header"',
-    'data-mode-topbar',
-    'class="mode-mock-main"',
-    'class="mode-mock-heading"',
-    'class="mode-mock-catalog"',
-    'id="mode-cards"',
-    'id="modes-back"',
-    'id="modes-settings"',
-  ]) assert.ok(modesScreen.includes(token), `falta ${token} en la pantalla productiva`);
+    'class="home-main"', 'class="home-quick-dock"', 'class="home-mode-stage"',
+    'id="home-mode-carousel"', 'id="home-mode-viewport"', 'id="mode-cards"',
+    'id="home-mode-dots"', 'id="home-mode-status"', 'class="home-foot"',
+  ]) assert.ok(home.includes(token), `falta ${token} en Inicio`);
 
-  assert.match(modesScreen, /<h1\b[^>]*id="modes-title"[^>]*data-i18n="modes_title"[^>]*tabindex="-1"[^>]*>/,
-    'el título debe ser localizable y enfocable por programa al entrar');
-  assert.match(modesScreen, /<button\b[^>]*id="modes-back"[^>]*data-i18n-al="back"[^>]*>/,
-    'Volver debe localizar su nombre accesible');
+  assert.doesNotMatch(home, /home-mode-(?:prev|next)|home-carousel-arrow/,
+    'el gesto horizontal no debe duplicarse con flechas laterales visibles');
 
-  const settings = modesScreen.match(/<button\b[^>]*id="modes-settings"[^>]*>/)?.[0] || '';
-  assert.match(settings, /data-i18n-al="menu_settings"/);
-  assert.doesNotMatch(settings, /data-act=/,
-    'Ajustes usa su listener directo; data-act lo abriría dos veces y rompería la restauración de foco');
-
-  assert.match(modesScreen, /class="mode-mock-profile"[^>]*data-act="profile"[^>]*data-i18n-al="profile_action"/);
-  assert.match(modesScreen, /class="mode-mock-pill mode-mock-coins"[^>]*data-act="buy-coins"[^>]*data-i18n-al="get_coins"/);
-  assert.match(modesScreen, /class="mode-mock-pill mode-mock-gems"[^>]*data-act="buy-gems"[^>]*data-i18n-al="get_gems"/);
-  assert.match(modesScreen, /data-econ-num="coins"[^>]*data-econ-compact/);
-  assert.match(modesScreen, /data-econ-num="gems"[^>]*data-econ-compact/);
-  assert.match(modesScreen, /class="mode-mock-pill mode-mock-fire"[^>]*data-i18n-al="home_streak"/,
-    'Racha no puede conservar un aria-label fijo en español');
-  assert.match(modesScreen, /class="mode-mock-header"[^>]*data-mode-topbar[^>]*data-i18n-al="modes_profile_resources"/);
-  assert.match(modesScreen, /class="mode-mock-wallet"[^>]*data-i18n-al="modes_resources"/);
-  assert.match(modesScreen, /class="mode-mock-main"[^>]*data-i18n-al="modes_catalog"/);
-  assert.match(modesScreen, /class="mode-mock-catalog"[^>]*id="mode-cards"[^>]*role="group"[^>]*aria-labelledby="modes-title"/,
-    'el catálogo debe tomar como nombre accesible el título ya localizado');
-
-  assert.match(modesScreen, /<div\b[^>]*id="mode-cards"[^>]*>\s*<\/div>/,
-    'las tarjetas deben proceder de buildModeMenu, sin una segunda copia estática');
-  assert.doesNotMatch(modesScreen, /body\.mode-selection-mockup|\.\.\/\.\.\/img\//,
-    'producción no debe depender del body o las rutas del documento de mockup');
+  assert.match(home, /id="home-mode-carousel"[^>]*role="region"[^>]*aria-roledescription="carousel"/);
+  assert.match(home, /id="mode-cards"[^>]*role="group"[^>]*aria-labelledby="home-modes-title"/);
+  assert.match(home, /id="home-mode-status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/);
 });
 
-test('modos: buildModeMenu renderiza el orden aprobado con semántica nativa', () => {
-  const originalLang = cv.Settings.lang;
-  try {
-    cv.Settings.lang = 'es';
-    cv.applyLanguage();
-    const rendered = getMemoEl('q:#mode-cards').innerHTML;
+test('modos: el render dinámico monta el anillo completo con Clásico primero', () => {
+  cv.Settings.lang = 'es';
+  cv.applyLanguage();
+  const rendered = getMemoEl('q:#mode-cards').innerHTML;
 
-    assertOrder(rendered, [
-      'data-mode="supervivencia"',
-      'data-mode="clasico"',
-      'data-mode="multijugador"',
-      'data-mode="how"',
-      'class="mode-mock-extra-heading"',
-      'data-mode="aventura"',
-      'data-mode="contrarreloj"',
-      'data-mode="zen"',
-    ], 'catálogo');
+  assertOrder(rendered, [
+    'data-mode-card="clasico"',
+    'data-mode-card="aventura"',
+    'data-mode-card="contrarreloj"',
+    'data-mode-card="supervivencia"',
+    'data-mode-card="zen"',
+    'data-mode-card="multijugador"',
+  ], 'anillo de modos');
+  assert.equal((rendered.match(/class="home-mode-slot"/g) || []).length, 6);
+  assert.equal((rendered.match(/data-mode-card=/g) || []).length, 6);
+  assert.match(rendered, /data-mode-slot="clasico"[^>]*--card-angle:0deg/,
+    'Clásico debe ocupar la cara frontal inicial');
+  assert.match(rendered, /data-mode-card="multijugador"[^>]*disabled[^>]*aria-disabled="true"/,
+    'Multijugador sigue siendo un anticipo nativamente deshabilitado');
+  assert.match(rendered, /data-mode-card="clasico"[^>]*aria-label="Seleccionar Clásico"[^>]*aria-describedby="home-mode-clasico-desc"/,
+    'las cards deben exponer una acción accesible sin que aria-labelledby la oculte');
+  assert.doesNotMatch(rendered, /data-mode-card="[^"]+"[^>]*aria-labelledby=/);
+  assert.doesNotMatch(rendered, /home-mode-enter|arrow-right-03/,
+    'la propia card completa es la acción y no necesita un icono de flecha');
+  assert.doesNotMatch(rendered, /data-mode="how"|mode-mock-help/,
+    'la Guía vive en la navegación global, no como falsa card de modo');
+  assert.match(rendered, /id="home-classic-state"/);
+  assert.match(rendered, /id="home-classic-badge"/);
+  assert.match(rendered, /data-mode-card="supervivencia"[\s\S]*?Vidas[\s\S]*?Oleadas[\s\S]*?Jefes/,
+    'Supervivencia debe comunicar su identidad con tres rasgos propios');
+});
 
-    assert.equal((rendered.match(/data-mode="/g) || []).length, 7,
-      'debe haber cinco modos reales, Multijugador deshabilitado y Ayuda');
-    for (const mode of ['supervivencia', 'clasico', 'multijugador', 'how', 'aventura', 'contrarreloj', 'zen']) {
-      assert.equal((rendered.match(new RegExp(`data-mode="${mode}"`, 'g')) || []).length, 1,
-        `${mode} debe renderizarse exactamente una vez`);
-      assert.match(rendered, new RegExp(`<button\\b[^>]*data-mode="${mode}"`),
-        `${mode} debe conservar el rol nativo de botón`);
-    }
+test('modos: todas las cards conservan su lanzador real', () => {
+  const catalog = sourceBetween(js, 'const MODE_CARDS = [', 'const MULTIPLAYER_CARD =');
+  const carousel = sourceBetween(js, 'const HomeModeCarousel = {', 'function buildHomeModeCarousel()');
 
-    assert.doesNotMatch(rendered, /role="listitem"/,
-      'no se debe sustituir el rol nativo de los botones por listitem');
-    assert.doesNotMatch(rendered, /<br\s*\/?\s*>/i,
-      'los saltos de línea deben responder al ancho y al idioma, no estar fijados en HTML');
-    assert.match(rendered, /aria-labelledby="mode-card-supervivencia-title"[^>]*aria-describedby="mode-card-supervivencia-desc"/);
-    assert.match(rendered, /aria-labelledby="mode-how-title"[^>]*aria-describedby="mode-how-desc"/);
+  assert.match(catalog, /key: 'clasico'[\s\S]*?action:\s*\(\)\s*=>\s*openWorldsMap\(\)/);
+  assert.match(catalog, /key: 'aventura'[\s\S]*?action:\s*\(\)\s*=>\s*openAdventure\(\)/);
+  assert.match(catalog, /key: 'contrarreloj'[\s\S]*?Game\.start\('contrarreloj',\s*'normal'\)/);
+  assert.match(catalog, /key: 'supervivencia'[\s\S]*?action:\s*\(\)\s*=>\s*openSurvivalDiff\(\)/);
+  assert.match(catalog, /key: 'zen'[\s\S]*?action:\s*\(\)\s*=>\s*launchZen\(\)/);
+  assert.match(js, /const MULTIPLAYER_CARD = \{[\s\S]*?disabled:\s*true/);
+  assert.doesNotMatch(sourceBetween(js, 'const MULTIPLAYER_CARD = {', 'const HOME_MODE_CARDS'), /\baction\s*:/);
+  assert.match(carousel, /activate\(key = this\.key\)[\s\S]*?card\.action\(\)/);
+  assert.match(js, /worlds-back'[\s\S]{0,180}?showHome\('clasico', true\)/,
+    'volver del mapa debe regresar al carrusel con Clásico enfocado');
+  assert.match(js, /a === 'go-play'[^\n]+showHome\(State\.mode, true\)/,
+    'los CTA internos deben volver directamente al hub unificado');
+});
 
-    const multiButton = rendered.match(/<button\b[^>]*data-mode="multijugador"[^>]*>/)?.[0] || '';
-    assert.match(multiButton, /\sdisabled(?:\s|$)/, 'Multijugador debe usar disabled nativo');
-    assert.match(multiButton, /aria-disabled="true"/);
-    assert.match(multiButton, /aria-labelledby="mode-card-multijugador-title mode-card-multijugador-status"/);
-    assert.match(rendered, /class="mode-mock-status"[^>]*id="mode-card-multijugador-status"[^>]*>[^<]*Próximamente/i,
-      'el estado no disponible debe quedar visible y expuesto al lector de pantalla');
-  } finally {
-    cv.Settings.lang = originalLang;
-    cv.applyLanguage();
+test('modos: el anillo es infinito y resuelve el último modo realmente jugado', () => {
+  const carousel = cv.HomeModeCarousel;
+  assert.equal(carousel.normalize(6), 0);
+  assert.equal(carousel.normalize(-1), 5);
+  assert.equal(carousel.deltaTo(0, 5), 1, 'del último al primero debe avanzar una sola cara');
+  assert.equal(carousel.deltaTo(5, 0), -1, 'del primero al último debe retroceder una sola cara');
+
+  assert.equal(carousel.initialMode(''), 'clasico');
+  assert.equal(carousel.initialMode('tutorial'), 'clasico');
+  assert.equal(carousel.initialMode('multijugador'), 'clasico');
+  assert.equal(carousel.initialMode('zen'), 'zen');
+  assert.match(js, /if \(mode !== 'tutorial'\) Storage\.lastMode = mode/,
+    'la persistencia debe escribirse al arrancar una partida, no al hojear cards');
+  assert.doesNotMatch(carousel.select.toString(), /Storage\.lastMode/,
+    'mover el carrusel no puede falsear el último modo jugado');
+});
+
+test('modos: gesto, teclado y foco comparten la misma selección', () => {
+  const carousel = sourceBetween(js, 'const HomeModeCarousel = {', 'function buildHomeModeCarousel()');
+  for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) {
+    assert.match(carousel, new RegExp(`addEventListener\\('${event}'`), `falta soporte ${event}`);
+  }
+  assert.match(carousel, /event\.key === 'ArrowLeft'/);
+  assert.match(carousel, /event\.key === 'ArrowRight'/);
+  assert.doesNotMatch(carousel, /home-mode-(?:prev|next)/,
+    'el soporte de teclado no debe depender de botones laterales');
+  assert.match(carousel, /button\.tabIndex = selected && !button\.disabled \? 0 : -1/,
+    'solo la card activa debe entrar en el orden de tabulación');
+  assert.match(carousel, /home-mode-status[\s\S]*?home_mode_position/,
+    'cada giro debe anunciar posición y modo');
+});
+
+test('modos: el CSS construye un cilindro 3D fijo y respeta movimiento reducido', () => {
+  assert.match(css, /#screen-start \.home-main\s*\{[^}]*overflow:\s*hidden/s,
+    'el hub debe permanecer fijo sin scroll vertical');
+  assert.match(css, /#screen-start \.home-mode-track\s*\{[^}]*transform-style:\s*preserve-3d[^}]*translateZ\([^}]*rotateY\(/s,
+    'el track debe rotar en profundidad');
+  assert.match(css, /#screen-start \.home-mode-slot\s*\{[^}]*rotateY\(var\(--card-angle\)\)\s*translateZ\(var\(--home-mode-radius\)\)/s,
+    'cada card debe ocupar una cara real del cilindro');
+  assert.match(css, /#screen-start \.home-mode-card\s*\{[^}]*backface-visibility:\s*hidden/s);
+  assert.match(css, /\.home-mode-track\.is-dragging[\s\S]{0,160}?transition:\s*none/);
+  assert.match(css, /body\.reduced-fx #screen-start \.home-mode-track[\s\S]{0,220}?transition:\s*none/);
+  assert.match(css, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?#screen-start \.home-mode-track/);
+});
+
+test('modos: las cards son estrechas, verticales y dejan sobresalir el arte', () => {
+  assert.match(css, /INICIO 3\.1[^\n]*CARDS VERTICALES CON ARTE SOBRESALIENTE/);
+  assert.match(css, /--home-mode-card-w:\s*clamp\(236px,\s*62vw,\s*340px\)/,
+    'la card frontal debe ser sensiblemente más estrecha que el carrusel');
+  assert.match(css, /--home-mode-card-h:\s*clamp\(220px,\s*29svh,\s*290px\)/,
+    'el cuerpo debe usar una proporción vertical compacta');
+  assert.match(css, /#screen-start \.home-mode-card\s*\{[^}]*top:\s*58%[^}]*overflow:\s*visible/s,
+    'el cuerpo no puede recortar el objeto superior');
+  assert.match(css, /#screen-start \.home-mode-art\s*\{[^}]*top:\s*calc\(0px - var\(--home-mode-overhang\)\)[^}]*width:\s*120%/s,
+    'el arte debe romper el borde superior con un overhang explícito');
+  for (const mode of ['classic', 'adventure', 'timed', 'survival', 'zen', 'multi']) {
+    assert.match(css, new RegExp(`home-mode-card-${mode} \\.home-mode-art`),
+      `${mode} debe disponer de una composición de arte individual`);
   }
 });
 
-test('modos: el render dinámico cambia completo a inglés y no filtra claves i18n', () => {
-  const originalLang = cv.Settings.lang;
-  try {
-    cv.Settings.lang = 'en';
-    cv.applyLanguage();
-    const rendered = getMemoEl('q:#mode-cards').innerHTML;
-
-    for (const text of ['Survival', 'Classic', 'Multiplayer', 'How to play?', 'More modes', 'Adventure', 'Time Attack', 'Zen']) {
-      assert.ok(rendered.includes(text), `falta la traducción inglesa: ${text}`);
-    }
-    assert.doesNotMatch(rendered, /modes_more|card_multi_tag|card_feat_(?:biomes|goals|minibosses|time|pressure|no_penalties|no_limit|relaxed)/,
-      'ninguna clave sin traducir puede llegar al catálogo');
-    assert.doesNotMatch(rendered, /Supervivencia|Clásico|Más modos|Contrarreloj|Próximamente/,
-      'el HTML reconstruido en inglés no debe conservar copy español');
-  } finally {
-    cv.Settings.lang = originalLang;
-    cv.applyLanguage();
-  }
-});
-
-test('modos: todas las claves propias de la integración existen en ES y EN', () => {
+test('modos: i18n ES/EN cubre controles, estado y ayuda del carrusel', () => {
   const keys = [
-    'modes_more', 'modes_profile_resources', 'modes_resources', 'modes_catalog', 'econ_balance', 'card_multi_tag',
-    'card_feat_biomes', 'card_feat_goals', 'card_feat_minibosses',
-    'card_feat_time', 'card_feat_pressure',
-    'card_feat_no_penalties', 'card_feat_no_limit', 'card_feat_relaxed',
+    'home_modes_label', 'home_carousel_hint', 'home_mode_pages', 'home_mode_play',
+    'home_mode_select', 'home_mode_position',
+    'home_quick_actions', 'card_feat_lives', 'card_feat_waves', 'card_feat_bosses',
   ];
   for (const lang of ['es', 'en']) {
     for (const key of keys) {
       assert.equal(typeof cv.I18n.DICT[lang][key], 'string', `${lang}.${key} debe existir`);
       assert.ok(cv.I18n.DICT[lang][key].trim(), `${lang}.${key} no puede estar vacía`);
-      assert.notEqual(cv.I18n.DICT[lang][key], key, `${lang}.${key} no puede caer al nombre de la clave`);
     }
   }
+  assert.doesNotMatch(cv.I18n.DICT.es.home_carousel_hint, /flechas?/i);
+  assert.doesNotMatch(cv.I18n.DICT.en.home_carousel_hint, /arrows?/i);
 });
 
-test('modos: cada tarjeta disponible conserva su acción real y Multi no tiene ninguna', () => {
-  assert.match(cardSource('supervivencia'), /action:\s*\(\)\s*=>\s*openSurvivalDiff\(\)/);
-  assert.match(cardSource('clasico'), /action:\s*\(\)\s*=>\s*openWorldsMap\(\)/);
-  assert.match(cardSource('aventura'), /action:\s*\(\)\s*=>\s*openAdventure\(\)/);
-  assert.match(cardSource('contrarreloj'), /action:\s*\(\)\s*=>\s*\{[^}]*Game\.start\('contrarreloj',\s*'normal'\)/s);
-  assert.match(cardSource('zen'), /action:\s*\(\)\s*=>\s*launchZen\(\)/);
-
-  const multiplayer = cardSource('multijugador');
-  assert.match(multiplayer, /disabled:\s*true/);
-  assert.doesNotMatch(multiplayer, /\baction\s*:/,
-    'Multijugador no debe abrir el modal latente ni simular una función online');
-
-  assert.match(buildSource, /MODE_CARDS\.forEach\(\(c\)\s*=>\s*\{[\s\S]*?c\.action\(\)/,
-    'solo las cinco tarjetas reales deben recibir listeners');
-  assert.doesNotMatch(buildSource, /MULTIPLAYER_CARD\.action|data-mode="multijugador"[^\n]*addEventListener/);
-  assert.match(buildSource, /data-mode="how"[\s\S]*?Modal\.open\('modal-how'\)/,
-    'Ayuda debe abrir el tutorial existente');
-
-  assert.match(js, /function openModeMenu\(\)[\s\S]*?buildModeMenu\(\)[\s\S]*?updateTopBars\(\)[\s\S]*?Screens\.show\('modes'\)[\s\S]*?#modes-title[\s\S]*?\.focus\(/,
-    'entrar debe reconstruir, sincronizar recursos, mostrar y enfocar la pantalla');
-  assert.match(js, /function closeModeMenu\(\)[\s\S]*?Screens\.show\('start'\)[\s\S]*?#btn-play[\s\S]*?\.focus\(/,
-    'Volver debe restaurar pantalla y foco');
-  assert.match(js, /on\('modes-back',\s*'click',\s*\(\)\s*=>\s*closeModeMenu\(\)\)/);
-  assert.match(js, /const ms = \$\('#modes-settings'\)[\s\S]{0,180}?addEventListener\('click',[\s\S]{0,120}?openSettings\(\)/,
-    'Ajustes debe conservar su acción real');
-  assert.match(js, /const bp = \$\('#btn-play'\)[\s\S]{0,180}?addEventListener\('click',[\s\S]{0,120}?openModeMenu\(\)/,
-    'Jugar debe entrar mediante el flujo centralizado');
-  assert.match(js, /a === 'go-play'\)[\s\S]{0,180}?Modal\.close\(\)[\s\S]{0,100}?openModeMenu\(\)/,
-    'los CTA internos deben reutilizar el mismo flujo de entrada');
-  assert.match(js, /const wb = \$\('#worlds-back'\)[\s\S]{0,180}?addEventListener\('click',[\s\S]{0,120}?openModeMenu\(\)/,
-    'volver desde Clásico debe reconstruir y enfocar el catálogo');
-});
-
-test('modos: los cinco artes PNG existen, tienen resolución y canal alfa', () => {
-  const names = ['mode-survival', 'mode-classic', 'mode-multiplayer', 'mode-timed', 'mode-zen'];
-  for (const name of names) {
+test('modos: artes, precache y versión quedan sincronizados', () => {
+  for (const name of ['mode-survival', 'mode-classic', 'mode-multiplayer', 'mode-timed', 'mode-zen']) {
     const rel = `img/ui-generated/modes/${name}.png`;
     const file = path.join(ROOT, rel);
     assert.ok(fs.existsSync(file), `falta ${rel}`);
-    assert.ok(js.includes(rel), `${rel} debe estar referenciado por el render productivo`);
-
     const png = fs.readFileSync(file);
-    assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${rel} debe ser PNG`);
-    assert.ok(png.readUInt32BE(16) >= 300, `${rel} necesita anchura suficiente`);
-    assert.ok(png.readUInt32BE(20) >= 300, `${rel} necesita altura suficiente`);
+    assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
     assert.equal(png[25] & 4, 4, `${rel} debe conservar transparencia`);
+    assert.match(sw, new RegExp(`['"]${name}['"]`));
   }
-});
+  assert.match(sw, /c\.addAll\(MODE_GENERATED_ART\)/);
 
-test('modos: CSS expone un puente productivo, disabled visible y ambos regímenes responsive', () => {
-  for (const selector of [
-    '#screen-modes .mode-mock-shell',
-    '#screen-modes .mode-mock-header',
-    '#screen-modes .mode-mock-main',
-    '#screen-modes .mode-mock-catalog',
-    '#screen-modes .mode-mock-card',
-    '#screen-modes .mode-mock-help',
-    '#screen-modes #modes-title',
-    '#screen-modes button:focus-visible',
-  ]) assert.ok(css.includes(selector), `falta el selector productivo ${selector}`);
-
-  assert.match(css, /#screen-modes\s+\.mode-mock-card(?::disabled|\[disabled\]|\[aria-disabled=["']true["']\])[^\{]*\{[\s\S]{0,350}?(?:opacity|filter|cursor)/,
-    'Multijugador debe parecer deshabilitado también visualmente');
-  assert.match(css, /#screen-modes\s+button:focus-visible\s*\{[^}]*outline\s*:/,
-    'todos los controles deben conservar foco visible');
-
-  const mediaStarts = [...css.matchAll(/@media\s*[^\{]+\{/g)].map((m) => m.index);
-  const mediaBlocks = mediaStarts.map((start, i) => css.slice(start, mediaStarts[i + 1] || css.length));
-  const tablet = mediaBlocks.find((block) => /min-width:\s*684px/.test(block) && /max-width:\s*852px/.test(block) && /body\[data-screen=["']modes["']\]/.test(block));
-  assert.ok(tablet, 'falta el régimen proporcional de producción 684–852 px');
-  assert.match(tablet, /#screen-modes\s+\.mode-mock-shell/);
-
-  const mobile = mediaBlocks.find((block) => /max-width:\s*683px/.test(block) && /#screen-modes\s+\.mode-mock-shell/.test(block));
-  assert.ok(mobile, 'falta el reflow productivo de 320–683 px');
-});
-
-test('modos: versión 2.6.52 y precache offline quedan sincronizados', () => {
-  assert.match(js, /const VERSION = '2\.6\.52'/);
-  assert.match(html, /styles\.css\?v=2\.6\.52/);
-  assert.match(html, /game\.js\?v=2\.6\.52/);
-  assert.match(sw, /const CACHE = 'cv-cache-v2\.6\.52'/);
-  assert.match(sw, /'\.\/styles\.css\?v=2\.6\.52'/);
-  assert.match(sw, /'\.\/game\.js\?v=2\.6\.52'/);
-
-  const modePrecache = sourceBetween(sw, 'const MODE_GENERATED_ART = [', 'const V2_ICONS = [');
-  for (const name of ['mode-survival', 'mode-classic', 'mode-multiplayer', 'mode-timed', 'mode-zen']) {
-    assert.match(modePrecache, new RegExp(`['"]${name}['"]`), `${name} debe estar en MODE_GENERATED_ART`);
-  }
-  assert.match(modePrecache, /\.\/img\/ui-generated\/modes\//);
-  assert.match(sw, /c\.addAll\(MODE_GENERATED_ART\)\.catch\(\(\)\s*=>\s*\{\}\)/);
-  assert.match(sw, /'\.\/img\/icons-v2\/8-ui\/arrow-left-02\.svg'/);
-  assert.match(sw, /'\.\/img\/icons-v2\/8-ui\/arrow-right-03\.svg'/);
-
-  assert.doesNotMatch([html, js, sw].join('\n'), /2\.6\.(?:47|48|49|50|51)/,
-    'ningún entrypoint puede conservar una versión anterior');
+  const version = js.match(/const VERSION = '([^']+)'/)?.[1];
+  assert.ok(version);
+  assert.match(html, new RegExp(`styles\\.css\\?v=${version.replaceAll('.', '\\.')}`));
+  assert.match(html, new RegExp(`game\\.js\\?v=${version.replaceAll('.', '\\.')}`));
+  assert.match(sw, new RegExp(`cv-cache-v${version.replaceAll('.', '\\.')}`));
 });

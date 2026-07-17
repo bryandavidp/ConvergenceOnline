@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.52';
+  const VERSION = '2.6.61';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -317,6 +317,10 @@
         menu_settings: 'Ajustes', how: '¿Cómo se juega?', install: 'Instalar app', sound: 'Sonido', best: 'Mejor puntuación:',
         tab_log: 'Logros', tab_shop: 'Tienda', tab_home: 'Inicio', tab_guide: 'Guía', tab_set: 'Ajustes', missions_title: '🎯 Misiones',
         modes_title: 'Elige tu modo', modes_sub: 'Cada modo, una forma diferente de jugar', modes_more: 'Más modos',
+        home_modes_label: 'Modos de juego', home_carousel_hint: 'Desliza horizontalmente · toca la tarjeta para entrar',
+        home_mode_prev: 'Modo anterior', home_mode_next: 'Modo siguiente', home_mode_pages: 'Seleccionar modo',
+        home_mode_play: 'Entrar en {mode}', home_mode_select: 'Seleccionar {mode}', home_mode_position: '{mode}. {n} de {total}',
+        home_quick_actions: 'Eventos y accesos rápidos',
         modes_profile_resources: 'Perfil y recursos', modes_resources: 'Recursos', modes_catalog: 'Catálogo de modos', econ_balance: 'Saldo: {n}',
         group_mode: 'Modo', group_diff: 'Dificultad',
         card_surv: 'Supervivencia', card_surv_badge: 'OLEADAS INFINITAS', card_surv_desc: 'Enfréntate a oleadas crecientes de enemigos. Cada vez son más fuertes. ¿Cuánto tiempo podrás sobrevivir?',
@@ -329,6 +333,7 @@
         card_feat_biomes: 'Biomas', card_feat_goals: 'Objetivos', card_feat_minibosses: 'Mini-jefes',
         card_feat_time: 'Gana tiempo', card_feat_pressure: 'Presión creciente',
         card_feat_no_penalties: 'Sin penalizaciones', card_feat_no_limit: 'Sin límite', card_feat_relaxed: 'Ritmo relajado',
+        card_feat_lives: 'Vidas', card_feat_waves: 'Oleadas', card_feat_bosses: 'Jefes',
         how_card_desc: 'Repasa las reglas, consejos y todo lo que necesitas saber para dominar el juego.', how_card_cta: 'Ver información', multi_soon: 'Multijugador en línea: ¡muy pronto!',
         classic_title: 'Modo Clásico', world_news: 'Novedades de este mundo', worlds_label: 'Mundos', all_rewards: '🎁 Ver recompensas',
         to_map: 'Volver al mapa', classic_lvl_sub: 'Nivel {n} · {w}', classic_next: 'Siguiente nivel →',
@@ -596,6 +601,10 @@
         menu_settings: 'Settings', how: 'How to play?', install: 'Install app', sound: 'Sound', best: 'Best score:',
         tab_log: 'Trophies', tab_shop: 'Shop', tab_home: 'Home', tab_guide: 'Guide', tab_set: 'Settings', missions_title: '🎯 Missions',
         modes_title: 'Choose your mode', modes_sub: 'Each mode, a different way to play', modes_more: 'More modes',
+        home_modes_label: 'Game modes', home_carousel_hint: 'Swipe horizontally · tap the card to enter',
+        home_mode_prev: 'Previous mode', home_mode_next: 'Next mode', home_mode_pages: 'Choose a mode',
+        home_mode_play: 'Enter {mode}', home_mode_select: 'Select {mode}', home_mode_position: '{mode}. {n} of {total}',
+        home_quick_actions: 'Events and shortcuts',
         modes_profile_resources: 'Profile and resources', modes_resources: 'Resources', modes_catalog: 'Mode catalog', econ_balance: 'Balance: {n}',
         group_mode: 'Mode', group_diff: 'Difficulty',
         card_surv: 'Survival', card_surv_badge: 'ENDLESS WAVES', card_surv_desc: 'Face growing waves of enemies. They get stronger every time. How long can you survive?',
@@ -608,6 +617,7 @@
         card_feat_biomes: 'Biomes', card_feat_goals: 'Goals', card_feat_minibosses: 'Mini-bosses',
         card_feat_time: 'Gain time', card_feat_pressure: 'Rising pressure',
         card_feat_no_penalties: 'No penalties', card_feat_no_limit: 'No limit', card_feat_relaxed: 'Relaxed pace',
+        card_feat_lives: 'Lives', card_feat_waves: 'Waves', card_feat_bosses: 'Bosses',
         how_card_desc: 'Review the rules, tips and everything you need to master the game.', how_card_cta: 'See info', multi_soon: 'Online multiplayer: coming soon!',
         classic_title: 'Classic Mode', world_news: "This world's news", worlds_label: 'Worlds', all_rewards: '🎁 See rewards',
         to_map: 'Back to map', classic_lvl_sub: 'Level {n} · {w}', classic_next: 'Next level →',
@@ -2134,9 +2144,10 @@
     CONVERGE_GROUPS: 3,       // tres coreografías completas pueden convivir sin reciclar nodos
     MAX_CONVERGE_ICONS: 5,    // cuatro direcciones + una casilla extra de Imán
     BURST_PARTICLES: 12,
-    CONVERGE_TRAVEL_MS: 260,
-    CONVERGE_IMPACT_DELAY: 260,
-    CONVERGE_WAVE_MS: 280,
+    CONVERGE_TRAVEL_MS: 165,
+    CONVERGE_TRAIL_FADE_MS: 140,
+    CONVERGE_IMPACT_DELAY: 165, // siempre igual al viaje: burst/onda nacen en el impacto
+    CONVERGE_WAVE_MS: 260,
     BURST_THRESHOLDS: [3, 6, 10, 15, 20, 30],
     BURST_ACCENTS: ['#ffffff', '#34e29b', '#00d0ff', '#b46cff', '#ff5cf0', '#ffd84d', '#ff9838'],
     // Estrella REDONDEADA (5 puntas con esquinas suaves) como máscara SVG: escala
@@ -2183,7 +2194,13 @@
       this.convergeGroupIdx = 0;
       const frag = document.createDocumentFragment();
       for (let g = 0; g < this.CONVERGE_GROUPS; g++) {
-        const group = { tiles: [], particles: [], wave: null };
+        const group = { tiles: [], trails: [], particles: [], wave: null };
+        for (let i = 0; i < this.MAX_CONVERGE_ICONS; i++) {
+          const trail = document.createElement('span');
+          trail.className = 'converge-trail';
+          group.trails.push({ el: trail, anim: null });
+          frag.appendChild(trail);
+        }
         for (let i = 0; i < this.MAX_CONVERGE_ICONS; i++) {
           const tile = document.createElement('span');
           tile.className = 'cell has-icon converge-tile';
@@ -2208,7 +2225,7 @@
     },
     _cancelConvergeGroup(group) {
       if (!group) return;
-      [...group.tiles, ...group.particles].forEach((slot) => {
+      [...(group.tiles || []), ...(group.trails || []), ...(group.particles || [])].forEach((slot) => {
         const anim = slot.anim;
         if (anim) {
           try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) { }
@@ -2401,9 +2418,50 @@
       };
       anim.onfinish = done; anim.oncancel = done;
     },
-    // Copia la ficha COMPLETA: cuerpo cuadrado, borde, estados de tile y glifo. La
-    // trayectoria usa avance no lineal (4%→36%→78%→100%) para simular la aceleración
-    // de un imán y que todas las fichas, cercanas o lejanas, impacten simultáneamente.
+    // Dibuja el recorrido como una descarga que crece DETRÁS de la ficha y permanece
+    // un instante tras el impacto. Solo anima transform/opacity y usa nodos del grupo:
+    // el feedback es visible incluso con el pool global saturado y no crea DOM por tap.
+    _tracePath(slot, from, to, cellPx, color) {
+      if (!slot || !slot.el) return false;
+      const el = slot.el;
+      const dx = to.x - from.x, dy = to.y - from.y;
+      const distance = Math.hypot(dx, dy);
+      if (distance < 1) return false;
+      const height = clamp(cellPx * 0.105, 3, 7);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      const duration = this.CONVERGE_TRAVEL_MS + this.CONVERGE_TRAIL_FADE_MS;
+      const impact = this.CONVERGE_TRAVEL_MS / duration;
+      const atTravel = (offset) => +(impact * offset).toFixed(4);
+      const afterImpact = impact + (1 - impact) * 0.38;
+      const tr = (scaleX) => 'translate3d(' + from.x.toFixed(1) + 'px,' + (from.y - height / 2).toFixed(1) + 'px,0) rotate(' + angle.toFixed(2) + 'deg) scaleX(' + scaleX + ')';
+      el.style.width = distance.toFixed(1) + 'px';
+      el.style.height = height.toFixed(1) + 'px';
+      el.style.color = color || '#ffffff';
+      let anim;
+      try {
+        anim = el.animate([
+          { transform: tr(0.015), opacity: 0, offset: 0 },
+          { transform: tr(0.02), opacity: 0.34, offset: atTravel(0.10) },
+          { transform: tr(0.22), opacity: 0.76, offset: atTravel(0.32) },
+          { transform: tr(0.65), opacity: 0.90, offset: atTravel(0.62) },
+          { transform: tr(0.92), opacity: 1, offset: atTravel(0.84) },
+          { transform: tr(1), opacity: 0.94, offset: impact },
+          { transform: tr(1), opacity: 0.58, offset: afterImpact },
+          { transform: tr(1), opacity: 0, offset: 1 },
+        ], { duration, easing: 'linear', fill: 'both' });
+      } catch (_) { el.style.opacity = '0'; return false; }
+      slot.anim = anim;
+      const done = () => {
+        if (slot.anim !== anim) return;
+        slot.anim = null; el.style.opacity = '0';
+        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) { }
+      };
+      anim.onfinish = done; anim.oncancel = done;
+      return true;
+    },
+    // Copia la ficha COMPLETA: cuerpo cuadrado, borde, estados de tile y glifo. Hay
+    // una breve anticipación hacia atrás y después un tirón cada vez más rápido; el
+    // estiramiento longitudinal remarca la velocidad sin desacoplar icono y casilla.
     _flyTile(slot, id, source, from, to, cellW, cellH) {
       if (!slot || !id) return false;
       const el = slot.el, glyph = slot.glyph;
@@ -2419,17 +2477,26 @@
       el.dataset.tileGlyph = (source && source.dataset && source.dataset.tileGlyph) || '';
       glyph.innerHTML = Icons.svg(id);
       el.style.width = cellW.toFixed(1) + 'px'; el.style.height = cellH.toFixed(1) + 'px';
-      const tr = (x, y, scale) => 'translate3d(' + (x - cellW / 2).toFixed(1) + 'px,' + (y - cellH / 2).toFixed(1) + 'px,0) scale(' + scale + ')';
+      const dx = to.x - from.x, dy = to.y - from.y;
+      const horizontal = Math.abs(dx) >= Math.abs(dy);
+      const spin = (dx > 0 || (dx === 0 && dy > 0)) ? 1 : -1;
+      const tr = (x, y, scale, stretch = 1, rotation = 0) => {
+        const squash = Math.max(0.9, 1 - (stretch - 1) * 0.18);
+        const sx = scale * (horizontal ? stretch : squash);
+        const sy = scale * (horizontal ? squash : stretch);
+        return 'translate3d(' + (x - cellW / 2).toFixed(1) + 'px,' + (y - cellH / 2).toFixed(1) + 'px,0) rotate(' + rotation + 'deg) scale3d(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ',1)';
+      };
       const at = (t) => ({ x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t });
-      const p1 = at(0.04), p2 = at(0.36), p3 = at(0.78);
+      const recoil = at(-0.012), p1 = at(0.22), p2 = at(0.65), p3 = at(0.92);
       let anim;
       try {
         anim = el.animate([
           { transform: tr(from.x, from.y, 1), opacity: 1, offset: 0 },
-          { transform: tr(p1.x, p1.y, 1.03), opacity: 1, offset: 0.18 },
-          { transform: tr(p2.x, p2.y, 0.90), opacity: 1, offset: 0.58 },
-          { transform: tr(p3.x, p3.y, 0.55), opacity: 0.96, offset: 0.82 },
-          { transform: tr(to.x, to.y, 0.06), opacity: 0, offset: 1 },
+          { transform: tr(recoil.x, recoil.y, 1.05, 1, -spin), opacity: 1, offset: 0.10 },
+          { transform: tr(p1.x, p1.y, 1.02, 1.12, spin), opacity: 1, offset: 0.32 },
+          { transform: tr(p2.x, p2.y, 0.75, 1.28, 2 * spin), opacity: 1, offset: 0.62 },
+          { transform: tr(p3.x, p3.y, 0.34, 1.50, 4 * spin), opacity: 0.94, offset: 0.84 },
+          { transform: tr(to.x, to.y, 0.03, 1.70, 6 * spin), opacity: 0, offset: 1 },
         ], { duration: this.CONVERGE_TRAVEL_MS, easing: 'linear', fill: 'both' });
       } catch (_) { glyph.innerHTML = ''; return false; }
       slot.anim = anim;
@@ -2550,15 +2617,18 @@
       const center = grid.xy(centerIdx);
       const activeCells = cells.slice(0, this.MAX_CONVERGE_ICONS);
       const iconColors = [];
-      let flights = 0;
+      let flights = 0, trails = 0;
       activeCells.forEach((idx, k) => {
         const id = (Render._cellId && Render._cellId[idx]) || State.board[idx];
-        iconColors.push(Icons.colorOf(id));
-        if (this._flyTile(group.tiles[k], id, Render.cells[idx], grid.xy(idx), center, grid.cellW, grid.cellH)) flights++;
+        const iconColor = Icons.colorOf(id);
+        const from = grid.xy(idx);
+        iconColors.push(iconColor);
+        if (this._tracePath(group.trails[k], from, center, grid.cellPx, iconColor || color)) trails++;
+        if (this._flyTile(group.tiles[k], id, Render.cells[idx], from, center, grid.cellW, grid.cellH)) flights++;
       });
       const particles = this._iconBurst(group.particles, center, iconColors, color, grid.cellPx);
       const wave = this._convergeWave(group.wave, center, grid.cellPx, color);
-      return { flights, particles, wave: !!wave };
+      return { flights, trails, particles, wave: !!wave };
     },
     // Conservado por compatibilidad con el bucle; las partículas son autónomas (WAAPI).
     step() { return false; },
@@ -3090,11 +3160,6 @@
         // Inicio mantiene la economía en una línea incluso con saldos grandes;
         // el resto del producto conserva el valor completo con separadores.
         el.textContent = (el.closest('#screen-start') || el.hasAttribute('data-econ-compact')) ? fmtCompact(value) : fmtNum(value);
-        const modePill = el.closest('#screen-modes .mode-mock-pill');
-        if (modePill && (el.dataset.econNum === 'coins' || el.dataset.econNum === 'gems')) {
-          const actionKey = el.dataset.econNum === 'coins' ? 'get_coins' : 'get_gems';
-          modePill.setAttribute('aria-label', `${I18n.t(actionKey)}. ${I18n.t('econ_balance').replace('{n}', fmtNum(value))}`);
-        }
       });
       const runCoins = $('#hud-run-coins');
       const runWrap = $('#hud-run-coins-wrap');
@@ -6279,7 +6344,7 @@
       { const pl = $('#coach-play'); if (pl) pl.hidden = true; }
       { const sk = $('#coach-skip'); if (sk) sk.textContent = I18n.t('coach_skip'); }
       State.status = 'idle'; Game.ended = true; Storage.tutorialDone = true;
-      refreshStart(); Screens.show('start');
+      showHome(Storage.lastMode || 'clasico');
     },
   };
 
@@ -6626,7 +6691,7 @@
       if (typeof Survival !== 'undefined') Survival.cleanup();
       // Clásico: salir devuelve al mapa de mundos (su hub natural).
       if (State.mode === 'clasico') { Worlds.open(); return; }
-      refreshStart(); Screens.show('start');
+      showHome(State.mode, true);
     },
 
     pause() {
@@ -7724,30 +7789,22 @@
       onPick: (d) => { Storage.zenDiff = d; Game.start('zen', d); },
     });
   }
-  // Catálogo completo de la pantalla "Elige tu modo". El Tutorial vive en el
-  // modal de ayuda y Multijugador se muestra únicamente como anticipo deshabilitado.
+  // Catálogo completo del carrusel de Inicio. El Tutorial vive en la Guía y
+  // Multijugador se mantiene como anticipo deshabilitado.
   const MODE_CARDS = [
     {
-      key: 'supervivencia', accent: '#f05b5d', cardClass: 'mode-mock-card-survival',
-      art: 'img/ui-generated/modes/mode-survival.png', i18n: 'card_surv', badge: 'card_surv_badge', desc: 'card_surv_desc',
-      action: () => openSurvivalDiff()
-    },
-    {
-      key: 'clasico', accent: '#18a9ec', cardClass: 'mode-mock-card-classic mode-mock-card-tall',
+      key: 'clasico', mode: 'clasico', accent: '#18a9ec', cardClass: 'home-mode-card-classic',
       art: 'img/ui-generated/modes/mode-classic.png', i18n: 'card_classic', badge: 'card_classic_badge', desc: 'card_classic_desc',
-      featuresClass: 'mode-mock-features-four',
       features: [
         ['img/ui/lock.png', 'card_feat_locks'],
         ['img/ui-v2/home/target.png', 'card_feat_objects'],
         ['img/ui-v2/home/bolt.png', 'card_feat_events'],
-        [null, 'card_feat_more', 'mode-mock-more'],
       ],
       action: () => openWorldsMap()
     },
     {
-      key: 'aventura', accent: '#8b62ff', cardClass: 'mode-mock-card-adventure mode-mock-card-extra', extra: true,
+      key: 'aventura', accent: '#8b62ff', cardClass: 'home-mode-card-adventure',
       art: 'img/ui-generated/home/hero-rocket.png', mode: 'aventura', badge: 'card_adv_badge',
-      featuresClass: 'mode-mock-features-three',
       features: [
         ['img/ui/planet.png', 'card_feat_biomes'],
         ['img/ui-v2/home/target.png', 'card_feat_goals'],
@@ -7756,9 +7813,8 @@
       action: () => openAdventure()
     },
     {
-      key: 'contrarreloj', accent: '#ff6cb0', cardClass: 'mode-mock-card-timed mode-mock-card-extra', extra: true,
+      key: 'contrarreloj', accent: '#ff6cb0', cardClass: 'home-mode-card-timed',
       art: 'img/ui-generated/modes/mode-timed.png', mode: 'contrarreloj', badge: 'card_contra_badge',
-      featuresClass: 'mode-mock-features-three',
       features: [
         ['img/ui-v2/home/clock.png', 'card_feat_time'],
         ['img/ui-v2/home/bolt.png', 'card_feat_pressure'],
@@ -7767,9 +7823,18 @@
       action: () => { Modal.close(); Game.start('contrarreloj', 'normal'); }
     },
     {
-      key: 'zen', accent: '#9be15d', cardClass: 'mode-mock-card-zen mode-mock-card-extra', extra: true,
+      key: 'supervivencia', mode: 'supervivencia', accent: '#f05b5d', cardClass: 'home-mode-card-survival',
+      art: 'img/ui-generated/modes/mode-survival.png', i18n: 'card_surv', badge: 'card_surv_badge', desc: 'card_surv_desc',
+      features: [
+        ['img/ui/heart.png', 'card_feat_lives'],
+        ['img/ui-v2/home/bolt.png', 'card_feat_waves'],
+        ['img/ui/skull.png', 'card_feat_bosses'],
+      ],
+      action: () => openSurvivalDiff()
+    },
+    {
+      key: 'zen', accent: '#9be15d', cardClass: 'home-mode-card-zen',
       art: 'img/ui-generated/modes/mode-zen.png', mode: 'zen', badge: 'card_zen_badge',
-      featuresClass: 'mode-mock-features-three',
       features: [
         ['img/ui/leaf.png', 'card_feat_no_penalties'],
         ['img/icons-v2/8-ui/rest.svg', 'card_feat_no_limit'],
@@ -7779,67 +7844,224 @@
     },
   ];
   const MULTIPLAYER_CARD = {
-    key: 'multijugador', accent: '#8a4be5', cardClass: 'mode-mock-card-multi mode-mock-card-tall',
+    key: 'multijugador', accent: '#8a4be5', cardClass: 'home-mode-card-multi',
     art: 'img/ui-generated/modes/mode-multiplayer.png', i18n: 'card_multi', badge: 'card_multi_tag', desc: 'card_multi_desc',
-    featuresClass: 'mode-mock-features-three', disabled: true,
+    disabled: true,
     features: [
       ['img/ui-v2/home/trophy.png', 'card_feat_first'],
       ['img/ui-v2/home/medal.png', 'card_feat_best'],
       ['img/icons-v2/9-media/wi-fi.svg', 'card_feat_online'],
     ],
   };
-  function buildModeMenu() {
-    const cont = $('#mode-cards'); if (!cont) return;
-    const cardTitle = (c) => c.i18n ? I18n.t(c.i18n) : I18n.modeT(c.mode, 'name');
-    const cardDesc = (c) => c.desc ? I18n.t(c.desc) : I18n.modeT(c.mode, 'desc');
-    const featuresHTML = (c) => c.features && c.features.length
-      ? `<span class="mode-mock-features ${c.featuresClass || ''}">${c.features.map(([src, label, className]) => `<span${className ? ` class="${className}"` : ''}>${src ? `<img src="${src}" alt="">` : ''}<small>${esc(I18n.t(label))}</small></span>`).join('')}</span>`
-      : '';
-    const cardHTML = (c) => {
-      const titleId = `mode-card-${c.key}-title`;
-      const descId = `mode-card-${c.key}-desc`;
-      const statusId = `mode-card-${c.key}-status`;
-      const labelledBy = c.disabled ? `${titleId} ${statusId}` : titleId;
-      return `<button type="button" class="mode-mock-card ${c.cardClass}" data-mode="${c.key}" style="--mode-mock-accent:${c.accent}" aria-labelledby="${labelledBy}" aria-describedby="${descId}"${c.disabled ? ' disabled aria-disabled="true"' : ''}>
-        <span class="mode-mock-art" aria-hidden="true"><img src="${c.art}" alt=""></span>
-        <span class="mode-mock-copy">
-          <span class="mode-mock-title-row"><b class="mode-mock-card-title" id="${titleId}">${esc(cardTitle(c))}</b><span class="mode-mock-tag">${esc(I18n.t(c.badge))}</span></span>
-          <span class="mode-mock-description" id="${descId}">${esc(cardDesc(c))}</span>
-          ${c.disabled ? `<span class="mode-mock-status" id="${statusId}">${esc(I18n.t('coming_soon'))}</span>` : ''}
-        </span>
-        <span class="mode-mock-go" aria-hidden="true"><img src="img/icons-v2/8-ui/arrow-right-03.svg" alt=""></span>
-        ${featuresHTML(c)}
-      </button>`;
-    };
-    const howHTML = `<button type="button" class="mode-mock-help" data-mode="how" aria-labelledby="mode-how-title" aria-describedby="mode-how-desc">
-        <span class="mode-mock-help-art" aria-hidden="true"><img src="img/ui-generated/home/nav-guide.png" alt=""></span>
-        <span class="mode-mock-help-copy"><b id="mode-how-title">${esc(I18n.t('how_title'))}</b><span id="mode-how-desc">${esc(I18n.t('how_card_desc'))}</span></span>
-        <span class="mode-mock-help-cta">${esc(I18n.t('how_card_cta'))}<img src="img/icons-v2/8-ui/arrow-right-03.svg" alt=""></span>
-      </button>`;
-    const primary = MODE_CARDS.filter((c) => !c.extra);
-    const extras = MODE_CARDS.filter((c) => c.extra);
-    cont.innerHTML = primary.map(cardHTML).join('') + cardHTML(MULTIPLAYER_CARD) + howHTML +
-      `<div class="mode-mock-extra-heading"><span>${esc(I18n.t('modes_more'))}</span></div>` +
-      extras.map(cardHTML).join('');
-    MODE_CARDS.forEach((c) => {
-      const el = cont.querySelector(`[data-mode="${c.key}"]`);
-      if (el) el.addEventListener('click', () => { Sound.ui(); c.action(); });
-    });
-    const hb = cont.querySelector('[data-mode="how"]');
-    if (hb) hb.addEventListener('click', () => { Sound.ui(); Modal.open('modal-how'); });
-    Econ.refresh(cont);
+  const HOME_MODE_CARDS = MODE_CARDS.concat(MULTIPLAYER_CARD);
+  const modeCardTitle = (c) => c.i18n ? I18n.t(c.i18n) : I18n.modeT(c.mode, 'name');
+  const modeCardDesc = (c) => c.desc ? I18n.t(c.desc) : I18n.modeT(c.mode, 'desc');
+
+  const HomeModeCarousel = {
+    turn: 0,
+    key: '',
+    bound: false,
+    drag: null,
+    ignoreClickUntil: 0,
+
+    normalize(n, length = HOME_MODE_CARDS.length) {
+      return ((n % length) + length) % length;
+    },
+
+    deltaTo(target, current, length = HOME_MODE_CARDS.length) {
+      let delta = target - current;
+      if (delta > length / 2) delta -= length;
+      if (delta < -length / 2) delta += length;
+      return delta;
+    },
+
+    initialMode(lastMode = Storage.lastMode) {
+      return MODE_CARDS.some((c) => c.key === lastMode) ? lastMode : 'clasico';
+    },
+
+    currentIndex() { return this.normalize(this.turn); },
+
+    currentCard() { return HOME_MODE_CARDS[this.currentIndex()] || HOME_MODE_CARDS[0]; },
+
+    build() {
+      const cont = $('#mode-cards'); if (!cont) return;
+      const preserved = HOME_MODE_CARDS.some((c) => c.key === this.key) ? this.key : this.initialMode();
+      const featureHTML = (c) => c.features && c.features.length
+        ? `<span class="home-mode-features">${c.features.map(([src, label, className]) => `<span${className ? ` class="${className}"` : ''}>${src ? `<img src="${src}" alt="">` : ''}<small>${esc(I18n.t(label))}</small></span>`).join('')}</span>`
+        : '';
+      const cardHTML = (c, index) => {
+        const title = modeCardTitle(c), desc = modeCardDesc(c);
+        const titleId = `home-mode-${c.key}-title`, descId = `home-mode-${c.key}-desc`;
+        const statusId = `home-mode-${c.key}-status`;
+        const classicProgress = c.key === 'clasico'
+          ? `<span class="home-mode-progress"><span id="home-classic-state">${esc(I18n.t('home_classic_sub'))}</span><b id="home-classic-badge">0/150</b></span>`
+          : '';
+        return `<div class="home-mode-slot" data-mode-slot="${c.key}" style="--card-angle:${index * (360 / HOME_MODE_CARDS.length)}deg;--mode-accent:${c.accent}" aria-hidden="true">
+          <button type="button" class="home-mode-card ${c.cardClass}${c.features && c.features.length ? ' has-features' : ''}" data-mode-card="${c.key}" aria-label="${esc(c.disabled ? `${title}. ${I18n.t('coming_soon')}` : I18n.t('home_mode_select').replace('{mode}', title))}" aria-describedby="${descId}"${c.disabled ? ' disabled aria-disabled="true"' : ''}>
+            <span class="home-mode-art" aria-hidden="true"><img src="${c.art}" alt=""></span>
+            <span class="home-mode-copy">
+              <span class="home-mode-title-row"><b id="${titleId}">${esc(title)}</b><span class="home-mode-tag">${esc(I18n.t(c.badge))}</span></span>
+              <span class="home-mode-description" id="${descId}">${esc(desc)}</span>
+              ${classicProgress}
+              ${c.disabled ? `<span class="home-mode-disabled" id="${statusId}">${esc(I18n.t('coming_soon'))}</span>` : ''}
+            </span>
+            ${featureHTML(c)}
+          </button>
+        </div>`;
+      };
+      cont.innerHTML = HOME_MODE_CARDS.map(cardHTML).join('');
+
+      const dots = $('#home-mode-dots');
+      if (dots) dots.innerHTML = HOME_MODE_CARDS.map((c) => {
+        const title = modeCardTitle(c);
+        return `<button type="button" class="home-mode-dot" data-mode-dot="${c.key}" aria-label="${esc(I18n.t('home_mode_select').replace('{mode}', title))}"></button>`;
+      }).join('');
+
+      this.turn = Math.max(0, HOME_MODE_CARDS.findIndex((c) => c.key === preserved));
+      this.key = preserved;
+      this.bind();
+      this.update({ instant: true, announce: false });
+    },
+
+    bind() {
+      if (this.bound) return;
+      const root = $('#home-mode-carousel'), track = $('#mode-cards');
+      const viewport = $('#home-mode-viewport'), dots = $('#home-mode-dots');
+      if (!root || !track || !viewport) return;
+      this.bound = true;
+
+      track.addEventListener('click', (event) => {
+        if (performance.now() < this.ignoreClickUntil) return;
+        const button = event.target.closest('[data-mode-card]'); if (!button) return;
+        const key = button.dataset.modeCard;
+        if (key !== this.key) { Sound.ui(); this.select(key, { focus: true }); return; }
+        this.activate(key);
+      });
+      if (dots) dots.addEventListener('click', (event) => {
+        const dot = event.target.closest('[data-mode-dot]'); if (!dot) return;
+        Sound.ui(); this.select(dot.dataset.modeDot, { focus: true });
+      });
+
+      root.addEventListener('keydown', (event) => {
+        if (event.altKey || event.ctrlKey || event.metaKey) return;
+        if (event.key === 'ArrowLeft') { event.preventDefault(); Sound.ui(); this.move(-1, { focus: true }); }
+        else if (event.key === 'ArrowRight') { event.preventDefault(); Sound.ui(); this.move(1, { focus: true }); }
+        else if (event.key === 'Home') { event.preventDefault(); Sound.ui(); this.select(MODE_CARDS[0].key, { focus: true }); }
+        else if (event.key === 'End') { event.preventDefault(); Sound.ui(); this.select(MODE_CARDS[MODE_CARDS.length - 1].key, { focus: true }); }
+      });
+
+      const finishDrag = (event, cancelled) => {
+        if (!this.drag || (event.pointerId != null && event.pointerId !== this.drag.id)) return;
+        const drag = this.drag; this.drag = null;
+        track.classList.remove('is-dragging');
+        track.style.setProperty('--carousel-drag', '0deg');
+        if (viewport.releasePointerCapture && event.pointerId != null) {
+          try { viewport.releasePointerCapture(event.pointerId); } catch (_) { }
+        }
+        const threshold = Math.min(72, Math.max(32, viewport.clientWidth * .11));
+        if (!cancelled && Math.abs(drag.dx) >= threshold) {
+          this.ignoreClickUntil = performance.now() + 320;
+          Sound.ui(); this.move(drag.dx < 0 ? 1 : -1);
+        } else {
+          if (drag.moved) this.ignoreClickUntil = performance.now() + 220;
+          this.update({ announce: false });
+        }
+      };
+      viewport.addEventListener('pointerdown', (event) => {
+        if (event.isPrimary === false || (event.button != null && event.button !== 0)) return;
+        this.drag = { id: event.pointerId, x: event.clientX, dx: 0, moved: false };
+        track.classList.add('is-dragging');
+        if (viewport.setPointerCapture && event.pointerId != null) {
+          try { viewport.setPointerCapture(event.pointerId); } catch (_) { }
+        }
+      });
+      viewport.addEventListener('pointermove', (event) => {
+        if (!this.drag || event.pointerId !== this.drag.id) return;
+        const dx = event.clientX - this.drag.x;
+        this.drag.dx = dx; this.drag.moved = this.drag.moved || Math.abs(dx) > 6;
+        const degrees = Math.max(-72, Math.min(72, dx / Math.max(1, viewport.clientWidth) * 82));
+        track.style.setProperty('--carousel-drag', `${degrees}deg`);
+      });
+      viewport.addEventListener('pointerup', (event) => finishDrag(event, false));
+      viewport.addEventListener('pointercancel', (event) => finishDrag(event, true));
+      viewport.addEventListener('lostpointercapture', (event) => finishDrag(event, true));
+    },
+
+    update({ instant = false, focus = false, announce = true } = {}) {
+      const track = $('#mode-cards'), root = $('#home-mode-carousel'); if (!track || !root) return;
+      const current = this.currentIndex(), active = HOME_MODE_CARDS[current];
+      this.key = active.key;
+      if (instant) track.classList.add('is-instant');
+      track.style.setProperty('--carousel-rotation', `${this.turn * (-360 / HOME_MODE_CARDS.length)}deg`);
+      track.style.setProperty('--carousel-drag', '0deg');
+      root.style.setProperty('--active-mode-accent', active.accent);
+      root.dataset.mode = active.key;
+
+      track.querySelectorAll('[data-mode-slot]').forEach((slot, index) => {
+        const selected = index === current;
+        const relative = this.deltaTo(index, current);
+        const distance = Math.abs(relative);
+        slot.classList.toggle('is-selected', selected);
+        slot.classList.toggle('is-near', distance <= 1);
+        slot.dataset.distance = String(distance);
+        slot.dataset.side = relative < 0 ? 'previous' : (relative > 0 ? 'next' : 'current');
+        slot.setAttribute('aria-hidden', String(!selected));
+        const button = slot.querySelector('[data-mode-card]');
+        if (button) {
+          button.tabIndex = selected && !button.disabled ? 0 : -1;
+          const title = modeCardTitle(HOME_MODE_CARDS[index]);
+          button.setAttribute('aria-label', HOME_MODE_CARDS[index].disabled
+            ? `${title}. ${I18n.t('coming_soon')}`
+            : I18n.t(selected ? 'home_mode_play' : 'home_mode_select').replace('{mode}', title));
+        }
+      });
+      const dots = $('#home-mode-dots');
+      if (dots) dots.querySelectorAll('[data-mode-dot]').forEach((dot, index) => {
+        const selected = index === current;
+        dot.classList.toggle('is-selected', selected);
+        if (selected) dot.setAttribute('aria-current', 'true'); else dot.removeAttribute('aria-current');
+      });
+      const status = $('#home-mode-status');
+      if (status && announce) status.textContent = I18n.t('home_mode_position')
+        .replace('{mode}', modeCardTitle(active)).replace('{n}', current + 1).replace('{total}', HOME_MODE_CARDS.length);
+      if (focus) {
+        const button = track.querySelector(`[data-mode-card="${active.key}"]`);
+        if (button && !button.disabled) requestAnimationFrame(() => button.focus({ preventScroll: true }));
+      }
+      if (instant) requestAnimationFrame(() => track.classList.remove('is-instant'));
+    },
+
+    select(key, options = {}) {
+      const target = HOME_MODE_CARDS.findIndex((c) => c.key === key); if (target < 0) return false;
+      this.turn += this.deltaTo(target, this.currentIndex());
+      this.update(options);
+      return true;
+    },
+
+    move(step, options = {}) {
+      this.turn += step < 0 ? -1 : 1;
+      this.update(options);
+    },
+
+    activate(key = this.key) {
+      const card = HOME_MODE_CARDS.find((c) => c.key === key); if (!card) return;
+      if (card.disabled || !card.action) { Sound.miss(); Toasts.show(I18n.t('multi_soon'), 'info', 1500); return; }
+      Sound.ensure(); Sound.ui(); card.action();
+    },
+  };
+
+  function buildHomeModeCarousel() {
+    HomeModeCarousel.build();
   }
-  function openModeMenu() {
-    buildModeMenu();
-    updateTopBars();
-    Screens.show('modes');
-    const shell = $('#screen-modes .mode-mock-shell'); if (shell) shell.scrollTop = 0;
-    requestAnimationFrame(() => { const title = $('#modes-title'); if (title) title.focus({ preventScroll: true }); });
-  }
-  function closeModeMenu() {
+
+  function showHome(mode, focusMode = false) {
+    const key = HOME_MODE_CARDS.some((c) => c.key === mode) ? mode : HomeModeCarousel.initialMode();
+    HomeModeCarousel.select(key, { instant: true, announce: false });
+    refreshStart();
     Screens.show('start');
-    requestAnimationFrame(() => { const play = $('#btn-play'); if (play) play.focus({ preventScroll: true }); });
+    if (focusMode) requestAnimationFrame(() => HomeModeCarousel.update({ focus: true, announce: false }));
   }
+
   // Aventura → mapa de capítulos (modal-adventure); su botón "Continuar" lanza la partida.
   function openAdventure() { buildAdventureMap(); Modal.open('modal-adventure'); }
   // Estado vacío reutilizable: icono (opcional) + título + subtítulo + CTA (data-act delegado).
@@ -7998,7 +8220,7 @@
   function updateTopBars() {
     const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
     const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
-    document.querySelectorAll('[data-topbar], [data-mode-topbar]').forEach((bar) => {
+    document.querySelectorAll('[data-topbar]').forEach((bar) => {
       const n = bar.querySelector('.appbar-name'); if (n) n.textContent = prof.name;
       const l = bar.querySelector('.appbar-lvl-txt'); if (l) l.textContent = I18n.t('lvl') + ' ' + lvl;
       const xf = bar.querySelector('.appbar-xp-fill'); if (xf) xf.style.width = Math.min(100, have / need * 100).toFixed(0) + '%';
@@ -8008,8 +8230,6 @@
       if (streak) {
         const value = Meta.streak();
         streak.textContent = value;
-        const modeFire = streak.closest('#screen-modes .mode-mock-fire');
-        if (modeFire) modeFire.setAttribute('aria-label', `${I18n.t('home_streak')}: ${value}`);
       }
     });
     Econ.refresh();
@@ -8053,15 +8273,15 @@
     clearDailyRewardPopWatch();
     if (!banner) return;
 
-    // No ocultamos un ancestro que todavía conserva el foco. El CTA principal es
-    // el siguiente destino lógico; si Inicio ya no está visible, soltamos el foco.
+    // No ocultamos un ancestro que todavía conserva el foco. La tarjeta de modo
+    // seleccionada es el siguiente destino lógico.
     const active = document.activeElement;
-    const play = $('#btn-play');
+    const modeButton = document.querySelector('#mode-cards .home-mode-slot.is-selected [data-mode-card]');
     const focusStillOwnedByClaim = !active || active === document.body || banner.contains(active);
     if (focusStillOwnedByClaim) {
-      if (play && !play.disabled && !play.closest('[hidden]')) {
-        try { play.focus({ preventScroll: true }); }
-        catch (_) { play.focus(); }
+      if (modeButton && !modeButton.disabled && !modeButton.closest('[hidden]')) {
+        try { modeButton.focus({ preventScroll: true }); }
+        catch (_) { modeButton.focus(); }
       } else if (active && banner.contains(active) && typeof active.blur === 'function') active.blur();
     }
 
@@ -8158,7 +8378,7 @@
         const medalName = medal === 'none' ? I18n.t('home_status_done') : ModeSignals.dailyMedalLabel(medal);
         const stateText = played ? `${medalName} · ${fmtNum(run.best || 0)}` : `${mutName} · ${I18n.t('home_status_pending')}`;
         const badgeText = played ? medalName : I18n.t('home_status_pending');
-        state.textContent = I18n.t('home_tournaments_sub'); state.removeAttribute('data-i18n');
+        state.textContent = stateText; state.removeAttribute('data-i18n');
         badge.textContent = badgeText; badge.removeAttribute('data-i18n');
         card.classList.toggle('done', played);
         card.classList.remove('medal-bronze', 'medal-silver', 'medal-gold');
@@ -8174,21 +8394,19 @@
       const level = Meta.worldMaxLevel(world.id), stars = Meta.worldStars(world.id);
       const stateText = I18n.t('home_classic_state').replace('{world}', worldName(world)).replace('{n}', level);
       const badgeText = I18n.t('home_classic_stars').replace('{n}', stars);
-      text('home-classic-state', I18n.t('home_classic_sub'))?.removeAttribute('data-i18n');
+      text('home-classic-state', stateText)?.removeAttribute('data-i18n');
       text('home-classic-badge', badgeText);
-      const card = $('#home-classic-card'); if (card) card.setAttribute('aria-label', `${I18n.t('home_classic_title')}. ${stateText}. ${badgeText}`);
+      const card = document.querySelector('[data-mode-card="clasico"]');
+      if (card && HomeModeCarousel.key === 'clasico') card.setAttribute('aria-label', `${I18n.t('home_mode_play').replace('{mode}', I18n.t('home_classic_title'))}. ${stateText}. ${badgeText}`);
     }
 
-    // Banda contextual: misión, Reto diario, cofres y racha/ligas.
+    // Dock contextual: misión, Reto diario, cofres y racha.
     {
       const dm = Meta.dailyMission();
       const value = (m) => m.done ? I18n.t('home_complete') : `${Math.min(m.progress || 0, m.target || 1)} / ${m.target || 1}`;
       const dailyValue = value(dm);
-      const run = Meta.dailyRunInfo();
-      const dailyRunValue = (run.plays || 0) > 0 ? fmtNum(run.best || 0) : I18n.t('home_status_pending');
-      text('home-daily-progress', dailyValue); text('home-weekly-progress', dailyRunValue);
+      text('home-daily-progress', dailyValue);
       const dailyItem = setReady('home-today-daily', dm.done); if (dailyItem) dailyItem.setAttribute('aria-label', `${I18n.t('home_daily_mission')}. ${dailyValue}`);
-      const weeklyItem = setReady('home-today-weekly', (run.plays || 0) > 0); if (weeklyItem) weeklyItem.setAttribute('aria-label', `${I18n.t('daily_challenge')}. ${dailyRunValue}`);
 
       syncHomeChests();
 
@@ -8196,7 +8414,6 @@
       document.querySelectorAll('[data-home-streak]').forEach((el) => { el.textContent = streak; });
     }
 
-    const play = $('#btn-play'); if (play) play.setAttribute('aria-label', `${I18n.t('play_word')}. ${I18n.t('home_play_hint')}`);
     Econ.refresh();
   }
 
@@ -8218,7 +8435,7 @@
   // Aplica el idioma: re-traduce el HTML estático y reconstruye lo dinámico.
   function applyLanguage() {
     I18n.apply();
-    buildModeMenu(); refreshStart(); buildSettings();
+    buildHomeModeCarousel(); refreshStart(); buildSettings();
     renderSurvivalDiff();
     if (State.status === 'playing' || State.status === 'paused') Game.showGoalBanner();
   }
@@ -8582,7 +8799,7 @@
     Cosmetics.apply();
     Boards.apply();
     Input.init();
-    buildModeMenu();
+    buildHomeModeCarousel();
     PWA.init();
     maybeNoticeSystemReducedFx();
     const vEl = $('#app-version'); if (vEl) vEl.textContent = VERSION;
@@ -8612,11 +8829,12 @@
       const color = sel ? sel.dataset.color : AV_COLORS[0];
       Storage.profile = { name: name || 'Jugador', color };
       Storage.user = name || 'Jugador';
-      Sound.ensure(); refreshStart();
-      if (!Storage.tutorialDone) Coach.start(); else Screens.show('start');
+      Sound.ensure();
+      if (!Storage.tutorialDone) { refreshStart(); Coach.start(); }
+      else showHome();
     }
-    if (Storage.user) Screens.show('start'); else Screens.show('login');
-    refreshStart();
+    if (Storage.user) showHome();
+    else { Screens.show('login'); refreshStart(); }
     { const ni = $('#player-name'), pr = Storage.profile; if (ni && pr && pr.name && pr.name !== 'Invitado') ni.value = pr.name; }
     { const lf = $('#login-form'); if (lf) lf.addEventListener('submit', (e) => { e.preventDefault(); const ni = $('#player-name'); enterApp(ni ? ni.value.trim() : ''); }); }
     { const g = $('#btn-guest'); if (g) g.addEventListener('click', () => enterApp('Invitado')); }
@@ -8639,13 +8857,10 @@
       else if (a === 'buy-coins') { Sound.ensure(); openShop(); }
       else if (a === 'buy-gems') { Sound.ensure(); openShop(); }
       else if (a === 'bell') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
-      else if (a === 'play') { Sound.ensure(); openModeMenu(); }
-      else if (a === 'home-classic') { Sound.ui(); Worlds.open(); }
-      else if (a === 'home-surv') { Sound.ensure(); openSurvivalDiff(); }
       else if (a === 'home-daily') { Sound.ensure(); openDailyInfo(); }
       else if (a === 'open-guide') { Sound.ui(); Modal.open('modal-how'); }
       else if (a === 'go-surv') { Sound.ensure(); Modal.close(); openSurvivalDiff(); }
-      else if (a === 'go-play') { Sound.ensure(); Modal.close(); openModeMenu(); }
+      else if (a === 'go-play') { Sound.ensure(); Modal.close(); showHome(State.mode, true); }
       else if (a === 'go-daily') { Sound.ensure(); Modal.close(); openDailyInfo(); }
       else if (a === 'go-classic') { Sound.ensure(); Modal.close(); Worlds.open(); }
       else if (a === 'go-adventure') { Sound.ensure(); Modal.close(); openAdventure(); }
@@ -8661,15 +8876,12 @@
 
     // Inicio (el grueso del cableado vive en el handler delegado data-act de arriba).
     const on = (id, ev, fn, opts) => { const el = $('#' + id); if (el) el.addEventListener(ev, fn, opts); };
-    { const bp = $('#btn-play'); if (bp) bp.addEventListener('click', () => { Sound.ensure(); openModeMenu(); }); }
     { const rr = $('#btn-resume-run'); if (rr) rr.addEventListener('click', () => { Sound.ensure(); if (!Game.resumeSaved()) { rr.hidden = true; Sound.miss(); } }); }
     { const bi = $('#btn-install'); if (bi) bi.addEventListener('click', () => PWA.promptInstall()); }
     // Al cerrar la tienda, revertir cualquier previsualización al tema equipado.
     { const sc = $('#shop-close'); if (sc) sc.addEventListener('click', () => Cosmetics.apply()); }
 
-    // Modos
-    on('modes-back', 'click', () => closeModeMenu());
-    { const ms = $('#modes-settings'); if (ms) ms.addEventListener('click', () => { Sound.ui(); openSettings(); }); }
+    // Lanzadores de modos que necesitan una configuración intermedia.
     { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { Modal.close(); Game.start('aventura', 'normal'); }); }
     document.querySelectorAll('[data-surv-diff]').forEach((b) => b.addEventListener('click', () => {
       survDiff = b.dataset.survDiff || 'normal';
@@ -8680,7 +8892,7 @@
     { const ss = $('#btn-surv-start'); if (ss) ss.addEventListener('click', () => { Sound.ensure(); startSurvivalSelected(); }); }
 
     // Modo Clásico (mapa de mundos)
-    { const wb = $('#worlds-back'); if (wb) wb.addEventListener('click', () => openModeMenu()); }
+    { const wb = $('#worlds-back'); if (wb) wb.addEventListener('click', () => showHome('clasico', true)); }
     { const ws = $('#worlds-settings'); if (ws) ws.addEventListener('click', () => { Sound.ui(); openSettings(); }); }
     { const wr = $('#world-rewards'); if (wr) wr.addEventListener('click', () => Worlds.claimReward()); }
     { const b = $('#wt-shop'); if (b) b.addEventListener('click', () => { Sound.ui(); openShop(); }); }
@@ -8757,5 +8969,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, Modal, Perf, ModeSignals, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, Modal, Perf, ModeSignals, HomeModeCarousel, buildHomeModeCarousel, showHome, refreshStart, applyLanguage };
 })();
