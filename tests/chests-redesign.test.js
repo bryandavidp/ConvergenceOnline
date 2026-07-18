@@ -8,8 +8,9 @@ const path = require('node:path');
 require('./dom-stub.js');
 require('../game.js');
 
-const { Meta, CHEST_TYPES, CHEST_TYPE_ORDER } = globalThis.window.__cv;
+const { Meta, CHEST_TYPES, CHEST_TYPE_ORDER, chestOdds, I18n } = globalThis.window.__cv;
 const styles = fs.readFileSync(path.join(__dirname, '..', 'styles.css'), 'utf8');
+const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
 function snapshot() {
   const m = Meta.state;
@@ -121,6 +122,42 @@ test('cofres: el layout móvil prioriza cofre y acciones desde iPhone SE', () =>
   assert.match(styles, /min-height:\s*220px;\s*\n\s*height:\s*220px/);
   assert.match(styles, /#screen-start \.chest-main-button \{\s*\n\s*min-height:\s*58px/);
   assert.match(styles, /#screen-start \.chest-catalog-card button \{ min-height: 44px/);
+});
+
+test('cofres CH-1: la banda de recompensas solo promete lo que las tablas contienen', () => {
+  const band = indexHtml.split('chest-rewards-grid')[1].split('</section>')[0];
+  assert.ok(band.includes('coin.png') && band.includes('gem.png') && band.includes('ticket.png'), 'monedas/gemas/tickets presentes');
+  assert.ok(band.includes('planet.png') && band.includes('crystal.png'), 'tableros/temas presentes');
+  assert.ok(!band.includes('bolt.png') && !band.includes('potion.png'), 'sin potenciadores/objetos fantasma');
+  assert.ok(!band.includes('chest_reward_surprise'), 'sin "y más…" vago');
+});
+
+test('cofres CH-1: chestOdds expone rangos y porcentajes reales por tipo', () => {
+  const wood = chestOdds('wood');
+  assert.deepEqual(wood.coins, { min: 60, max: 199, pct: 60 });
+  assert.equal(wood.gems.pct, 30);
+  assert.equal(wood.tickets.pct, 8);
+  assert.equal(wood.cosmetic.pct, 2);
+  const divine = chestOdds('divine');
+  assert.deepEqual(divine.coins, { min: 1000, max: 2400, pct: 20 });
+  assert.equal(divine.gems.pct, 12);
+  assert.equal(divine.tickets.pct, 8);
+  assert.equal(divine.cosmetic.pct, 60);
+  // Un tipo desconocido cae a madera, igual que el resto del sistema.
+  assert.deepEqual(chestOdds('nope'), chestOdds('wood'));
+  // La suma por tipo debe cubrir el 100% (±1 por redondeo).
+  for (const id of CHEST_TYPE_ORDER) {
+    const o = chestOdds(id);
+    const total = o.coins.pct + o.gems.pct + o.tickets.pct + o.cosmetic.pct;
+    assert.ok(Math.abs(total - 100) <= 1, `${id}: ${total}%`);
+  }
+});
+
+test('cofres CH-1: i18n de transparencia presente en ambos idiomas', () => {
+  for (const key of ['chest_odds_title', 'chest_odds_cosmetic', 'home_chest_opening']) {
+    assert.ok(I18n.DICT.es[key], `es.${key}`);
+    assert.ok(I18n.DICT.en[key], `en.${key}`);
+  }
 });
 
 test('cofres: carruseles y tablet conservan jerarquía, snap y objetivos táctiles', () => {

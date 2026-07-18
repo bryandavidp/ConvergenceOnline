@@ -218,8 +218,10 @@ test('home: recompensa, misión, reto diario y cofres viven exclusivamente en Ev
   for (const action of ['claim-daily', 'open-missions', 'home-daily', 'open-chests']) {
     assert.match(events, new RegExp(`data-act="${action}"`), `Eventos debe exponer la acción ${action}`);
   }
-  assert.match(js, /function refreshEvents\(\)[\s\S]*?events-reward-state[\s\S]*?events-mission-progress[\s\S]*?events-daily-status[\s\S]*?events-chests-status/,
-    'Eventos debe proyectar el estado real de sus cuatro apartados');
+  assert.match(js, /function refreshEvents\(\)[\s\S]*?events-reward-state[\s\S]*?events-mission-progress[\s\S]*?events-daily-status[\s\S]*?syncHomeChests\(\)/,
+    'Eventos debe proyectar el estado real de sus cuatro apartados (cofres delegados en syncHomeChests)');
+  assert.match(js, /function syncHomeChests\(\)[\s\S]*?events-chests-status/,
+    'syncHomeChests debe proyectar la tarjeta de cofres de Eventos (contador, cuenta atrás o listo)');
   assert.match(js, /function claimDailyReward\(\)[\s\S]*?Meta\.claimReward\(\)[\s\S]*?refreshStart\(\)/,
     'la recompensa debe seguir siendo funcional desde Eventos');
 });

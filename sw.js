@@ -1,8 +1,8 @@
 /* Convergencia — Service Worker (offline-first).
  * Sube CACHE al publicar una versión nueva para invalidar la caché anterior. */
-const CACHE = 'cv-cache-v2.6.86';
+const CACHE = 'cv-cache-v2.6.87';
 const ASSETS = [
-  './', './index.html', './styles.css?v=2.6.86', './game.js?v=2.6.86', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=2.6.87', './game.js?v=2.6.87', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
   './fonts/NunitoSans-Variable.ttf',
   './img/ui-generated/chests/chest-open.png',

@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.86';
+  const VERSION = '2.6.87';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -371,6 +371,7 @@
         chest_desc_gold: 'Recompensas épicas, más monedas y tickets.', chest_desc_magic: 'Contiene recompensas épicas garantizadas.', chest_desc_royal: 'Premios legendarios y alta probabilidad de cosméticos.',
         chest_desc_supreme: 'Recompensas de alto nivel y muchos recursos.', chest_desc_champion: 'Recompensas míticas y máximas probabilidades especiales.', chest_desc_divine: 'El cofre más poderoso, con recompensas máximas.', chest_desc_event: 'Recompensas únicas de eventos y temporadas.',
         chest_rarity_rare: 'Raro', chest_rarity_epic: 'Épico', chest_rarity_legendary: 'Legendario', chest_rarity_mythic: 'Mítico', chest_rarity_special: 'Especial',
+        chest_odds_title: 'Probabilidades', chest_odds_cosmetic: 'Cosmético', home_chest_opening: 'Abriendo · {t}',
         soon_badge: 'Próximamente', notify_me: 'Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
         edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
         home_classic: 'Partida clásica', home_classic_prefix: 'Partida', home_classic_name: 'Clásica', home_classic_sub: 'Juega en el tablero contra amigos o bots', home_surv_sub: 'Sobrevive a oleadas infinitas',
@@ -685,6 +686,7 @@
         chest_desc_gold: 'Epic rewards, more coins and tickets.', chest_desc_magic: 'Contains guaranteed epic rewards.', chest_desc_royal: 'Legendary prizes and a high cosmetic chance.',
         chest_desc_supreme: 'High-level rewards and plenty of resources.', chest_desc_champion: 'Mythic rewards with the best special odds.', chest_desc_divine: 'The most powerful chest, with maximum rewards.', chest_desc_event: 'Unique event and seasonal rewards.',
         chest_rarity_rare: 'Rare', chest_rarity_epic: 'Epic', chest_rarity_legendary: 'Legendary', chest_rarity_mythic: 'Mythic', chest_rarity_special: 'Special',
+        chest_odds_title: 'Odds', chest_odds_cosmetic: 'Cosmetic', home_chest_opening: 'Opening · {t}',
         soon_badge: 'Coming soon', notify_me: 'Notify me', notify_ok: "We'll let you know when it's ready!",
         edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
         home_classic: 'Classic game', home_classic_prefix: 'Classic', home_classic_name: 'Game', home_classic_sub: 'Play on the board against friends or bots', home_surv_sub: 'Survive endless waves',
@@ -2867,6 +2869,20 @@
       reward: { coins: [180, 520], gems: [8, 22], tickets: [2, 4], coinCut: .38, gemCut: .63, ticketCut: .78, rarity: 'special' },
     },
   });
+
+  /* Rangos y probabilidades REALES de un tipo de cofre, para mostrarlos tal cual
+   * en la UI (CH-1: transparencia; ver docs/CHEST_SYSTEM_MASTER_PLAN.md §4-U2/E3).
+   * El redondeo por categoría puede no sumar 100 exacto y es aceptable. */
+  function chestOdds(type) {
+    const r = (CHEST_TYPES[type] || CHEST_TYPES.wood).reward;
+    const pct = (v) => Math.round(v * 100);
+    return {
+      coins: { min: r.coins[0], max: r.coins[1], pct: pct(r.coinCut) },
+      gems: { min: r.gems[0], max: r.gems[1], pct: pct(r.gemCut - r.coinCut) },
+      tickets: { min: r.tickets[0], max: r.tickets[1], pct: pct(r.ticketCut - r.gemCut) },
+      cosmetic: { pct: Math.max(1, pct(1 - r.ticketCut)) },
+    };
+  }
 
   /* ===================== Meta (progresión persistente) ===================== */
   const Meta = (() => {
@@ -8861,9 +8877,14 @@
 
   function syncHomeChests() {
     const chests = Meta.chests();
-    const chestState = chests > 0
-      ? I18n.t(chests === 1 ? 'home_ready_one' : 'home_ready_many').replace('{n}', chests)
-      : I18n.t('home_none_ready');
+    // CH-1: el chip de Inicio refleja el temporizador real — "¡Listo!" pesa más
+    // que el contador, y un desbloqueo en curso muestra su cuenta atrás.
+    const unlock = Meta.chestUnlock();
+    let chestState;
+    if (unlock && unlock.ready) chestState = I18n.t('chest_slot_ready');
+    else if (unlock) chestState = I18n.t('home_chest_opening').replace('{t}', chestDuration(unlock.remainingMs, true));
+    else if (chests > 0) chestState = I18n.t(chests === 1 ? 'home_ready_one' : 'home_ready_many').replace('{n}', chests);
+    else chestState = I18n.t('home_none_ready');
     const state = $('#home-chests-state');
     if (state) { state.textContent = chestState; state.removeAttribute('data-i18n'); }
     const badge = $('#home-chests-badge');
@@ -8873,6 +8894,15 @@
       item.classList.toggle('is-ready', chests > 0);
       item.classList.toggle('is-done', chests > 0);
       item.setAttribute('aria-label', `${I18n.t('home_chests')}. ${chestState}`);
+    }
+    // Tarjeta de cofres en Eventos: es la proyección visible hoy (el chip antiguo
+    // de Inicio ya no existe en el DOM); comparte el mismo texto de estado.
+    const chestStatus = $('#events-chests-status');
+    if (chestStatus) chestStatus.textContent = chestState;
+    const chestCard = $('#events-chests-card');
+    if (chestCard) {
+      chestCard.classList.toggle('is-ready', chests > 0);
+      chestCard.classList.toggle('is-opening', !!(unlock && !unlock.ready));
     }
   }
 
@@ -9066,14 +9096,9 @@
     const dailyStatus = $('#events-daily-status');
     if (dailyStatus) dailyStatus.textContent = dailyValue;
 
-    const chests = Meta.chests();
-    const chestValue = chests > 0
-      ? I18n.t(chests === 1 ? 'home_ready_one' : 'home_ready_many').replace('{n}', chests)
-      : I18n.t('home_none_ready');
-    const chestStatus = $('#events-chests-status');
-    if (chestStatus) chestStatus.textContent = chestValue;
-    const chestCard = $('#events-chests-card');
-    if (chestCard) chestCard.classList.toggle('is-ready', chests > 0);
+    // CH-1: el estado de cofres (contador, cuenta atrás o "¡Listo!") se calcula
+    // en un único sitio para no divergir.
+    syncHomeChests();
   }
 
   function buildCollections() {
@@ -9495,10 +9520,14 @@
     const inventory = Meta.chestInventory();
     grid.innerHTML = CHEST_TYPE_ORDER.map((id) => {
       const defn = chestDef(id), owned = inventory.filter((entry) => entry.type === id);
+      const odds = chestOdds(id);
       return `<article class="chest-catalog-card" style="--catalog-accent:${defn.accent}"${owned.length ? ` data-catalog-owned="${owned.length}"` : ''}>
         <div class="chest-catalog-name">${esc(I18n.t(defn.nameKey))}</div>
         ${chestSprite(id, 'closed', 'chest-catalog-art')}
-        <dl><div><dt>${esc(I18n.t('chest_size_label'))}</dt><dd>${esc(I18n.t(defn.sizeKey))}</dd></div><div><dt>${esc(I18n.t('chest_type_label'))}</dt><dd>${esc(I18n.t(defn.rarityKey))}</dd></div></dl>
+        <dl aria-label="${esc(I18n.t('chest_odds_title'))}"><div><dt>${esc(I18n.t('chest_size_label'))}</dt><dd>${esc(I18n.t(defn.sizeKey))}</dd></div><div><dt>${esc(I18n.t('chest_type_label'))}</dt><dd>${esc(I18n.t(defn.rarityKey))}</dd></div>
+          <div><dt>${esc(I18n.t('chest_contents_coins'))}</dt><dd>${odds.coins.min}–${odds.coins.max} · ${odds.coins.pct}%</dd></div>
+          <div><dt>${esc(I18n.t('chest_contents_gems'))}</dt><dd>${odds.gems.min}–${odds.gems.max} · ${odds.gems.pct}%</dd></div>
+          <div><dt>${esc(I18n.t('chest_odds_cosmetic'))}</dt><dd>${odds.cosmetic.pct}%</dd></div></dl>
         <p>${esc(I18n.t(defn.descKey))}</p>
         ${owned.length ? `<button type="button" data-chest-catalog-select="${owned[0].uid}">${esc(I18n.t('chests_available'))} · ${owned.length}</button>` : ''}
       </article>`;
@@ -9543,6 +9572,18 @@
       <span class="chest-tier-pill">${esc(I18n.t(defn.rarityKey))}</span>
       <dl><div><dt>${esc(I18n.t('chest_size_label'))}</dt><dd>${esc(I18n.t(defn.sizeKey))}</dd></div><div><dt>${esc(I18n.t('chest_duration'))}</dt><dd>${chestDuration(defn.durationMs)}</dd></div></dl>
       <p>${esc(I18n.t(defn.descKey))}</p>`; }
+    // CH-1: la ficha "Contiene" deja de ser genérica — rangos y % REALES del tipo
+    // seleccionado, directos de CHEST_TYPES (en móvil colapsa a iconos, como antes).
+    const contents = $('#chest-contents-list');
+    if (contents) {
+      const odds = chestOdds(defn.id);
+      const range = (o) => o.min === o.max ? String(o.min) : `${o.min}–${o.max}`;
+      contents.innerHTML = `
+        <li><img src="img/ui/coin.png" alt="" aria-hidden="true"><span>${esc(I18n.t('chest_contents_coins'))} ${range(odds.coins)} · ${odds.coins.pct}%</span></li>
+        <li><img src="img/ui/gem.png" alt="" aria-hidden="true"><span>${esc(I18n.t('chest_contents_gems'))} ${range(odds.gems)} · ${odds.gems.pct}%</span></li>
+        <li><img src="img/ui/ticket.png" alt="" aria-hidden="true"><span>${esc(I18n.t('chest_contents_tickets'))} x${range(odds.tickets)} · ${odds.tickets.pct}%</span></li>
+        <li><img src="img/ui/gift.png" alt="" aria-hidden="true"><span>${esc(I18n.t('chest_odds_cosmetic'))} · ${odds.cosmetic.pct}%</span></li>`;
+    }
     el.innerHTML = `<div class="chest-hero${n > 0 ? ' ready' : ' empty'}" style="--chest-accent:${defn.accent}">
       <div class="chest-stage" aria-hidden="true"><span class="chest-stage-ring"></span><span class="chest-spark chest-spark-one"></span><span class="chest-spark chest-spark-two"></span><span class="chest-spark chest-spark-three"></span>${chestSprite(defn.id, 'closed', 'chest-hero-sprite')}</div>
       <p class="chest-count">${esc(I18n.t('chests_have').replace('{n}', n))}</p><p class="chest-hint">${esc(n > 0 ? I18n.t('chests_hint') : I18n.t('empty_chests_sub'))}</p>
@@ -9688,6 +9729,9 @@
     Perf.init();
     applyLargeText();
     HubViews.init();
+    // CH-1: la cuenta atrás del chip de cofres en Inicio se refresca sola; 30 s
+    // basta (el detalle por segundo vive en la vista de cofres con su ticker).
+    setInterval(syncHomeChests, 30000);
     mountTopBars();
     fillArt();
     I18n.apply();
@@ -9867,5 +9911,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, CHEST_TYPES, CHEST_TYPE_ORDER, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, Modal, HubViews, Perf, ModeSignals, HomeModeCarousel, buildHomeModeCarousel, showHome, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, CHEST_TYPES, CHEST_TYPE_ORDER, chestOdds, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, Modal, HubViews, Perf, ModeSignals, HomeModeCarousel, buildHomeModeCarousel, showHome, refreshStart, applyLanguage };
 })();

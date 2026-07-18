@@ -257,3 +257,12 @@ La economía meta usa `Math.random` a propósito (un cofre seedeable sería expl
 ## §6 · Bitácora
 
 - 2026-07-18 — Documento creado: auditoría del sistema v2.6.85, benchmark CR (jul 2026) con fuentes, plan CH-1…CH-5. Sin código tocado.
+- 2026-07-18 — **CH-1 completado (v2.6.87).** (1) Banda "Posibles recompensas" honesta: fuera potenciadores/objetos/"y más" fantasma,
+  dentro tickets; (2) ficha "Contiene" rellena por `buildChests()` con rangos y % reales vía nuevo helper `chestOdds(type)`
+  (expuesto en `__cv`); (3) catálogo con filas de probabilidades (monedas/gemas/cosmético) por tipo; (4) la tarjeta de cofres de
+  Eventos muestra cuenta atrás del desbloqueo activo o "¡Listo!" — la lógica se unificó en `syncHomeChests()` (el chip antiguo de
+  Inicio ya no existía en el DOM: era un no-op silencioso) y `refreshEvents()` delega en ella; refresco de 30 s en `init()`.
+  Claves i18n nuevas ES/EN: `chest_odds_title`, `chest_odds_cosmetic`, `home_chest_opening`. Tests: +3 en `chests-redesign`
+  (banda honesta, chestOdds exactos y suma ≈100%, paridad i18n) y ajuste del test de Eventos en `home-redesign`. Suite 179/181
+  (los 2 fallos son de board-themes, preexistentes). QA en navegador: estados Abriendo/Listo/contador verificados en Eventos y
+  ficha con datos reales en la vista. Ojo QA local: el SW cache-first sirve copias viejas bajo el mismo `?v=`; purgar SW al probar.

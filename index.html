@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.86" />
+  <link rel="stylesheet" href="styles.css?v=2.6.87" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -576,7 +576,8 @@
           <div class="chests-body" id="chests-body" aria-live="polite"></div>
           <aside class="chest-contents-card">
             <div class="chest-mini-heading"><span data-i18n="chest_contains">Contiene</span><img src="img/ui/info.png" alt="" aria-hidden="true"></div>
-            <ul>
+            <!-- CH-1: buildChests() rellena esta lista con los rangos y % reales del cofre seleccionado. -->
+            <ul id="chest-contents-list">
               <li><img src="img/ui/coin.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_coins">Monedas</span></li>
               <li><img src="img/ui/gem.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_gems">Gemas</span></li>
               <li><img src="img/ui/ticket.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_tickets">Tickets</span></li>
@@ -604,14 +605,14 @@
 
         <section class="chest-rewards-section" aria-labelledby="chest-rewards-title">
           <div class="chest-section-heading"><span></span><h3 id="chest-rewards-title" data-i18n="chest_possible_rewards">Posibles recompensas</h3><span></span></div>
+          <!-- CH-1: la banda solo promete lo que las tablas de recompensa contienen de verdad
+               (monedas, gemas, tickets, tableros, temas). Nada de categorías fantasma. -->
           <div class="chest-rewards-grid">
             <div class="chest-reward-tile"><img src="img/ui/coin.png" alt=""><b data-i18n="chest_contents_coins">Monedas</b><small>60 – 2400</small></div>
-            <div class="chest-reward-tile"><img src="img/ui/bolt.png" alt=""><b data-i18n="chest_reward_boosters">Potenciadores</b><small>x1 – x5</small></div>
-            <div class="chest-reward-tile"><img src="img/ui/potion.png" alt=""><b data-i18n="chest_reward_objects">Objetos</b><small>x1 – x5</small></div>
             <div class="chest-reward-tile"><img src="img/ui/gem.png" alt=""><b data-i18n="chest_contents_gems">Gemas</b><small>3 – 70</small></div>
+            <div class="chest-reward-tile"><img src="img/ui/ticket.png" alt=""><b data-i18n="chest_contents_tickets">Tickets</b><small>x1 – x10</small></div>
             <div class="chest-reward-tile"><img src="img/ui/planet.png" alt=""><b data-i18n="chest_reward_boards">Tableros</b><small data-i18n="chest_rarity_cosmetic">Especial</small></div>
             <div class="chest-reward-tile"><img src="img/ui/crystal.png" alt=""><b data-i18n="chest_reward_themes">Temas</b><small data-i18n="chest_rarity_cosmetic">Especial</small></div>
-            <div class="chest-reward-tile"><img src="img/ui/gift.png" alt=""><b data-i18n="chest_reward_surprise">Y más…</b><small>¡Sorpresas!</small></div>
           </div>
         </section>
 
@@ -710,6 +711,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.6.86" defer></script>
+  <script src="game.js?v=2.6.87" defer></script>
 </body>
 </html>
