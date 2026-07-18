@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.87" />
+  <link rel="stylesheet" href="styles.css?v=2.6.88" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -619,15 +619,17 @@
         <section class="chest-progress-card" aria-labelledby="chest-progress-title">
           <div class="chest-progress-copy">
             <span class="chest-section-label" id="chest-progress-title" data-i18n="chests_progress_title">Tu progreso</span>
-            <p data-i18n="chests_progress_rule">Gana 1 cofre cada 10 oleadas en Supervivencia.</p>
+            <p data-i18n="chests_progress_rule">Cumple objetivos en cualquier modo: cada 3 cae el siguiente cofre del ciclo.</p>
           </div>
           <div class="chest-progress-row">
             <span class="chest-progress-icon" aria-hidden="true"><img src="img/ui-generated/home/nav-chest.png" alt=""></span>
             <div class="chest-progress-track-wrap">
-              <div class="chest-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" id="chest-progress-track"><span id="chest-progress-fill"></span></div>
-              <span class="chest-progress-value" id="chest-progress-value">0 / 10</span>
+              <div class="chest-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="3" aria-valuenow="0" id="chest-progress-track"><span id="chest-progress-fill"></span></div>
+              <span class="chest-progress-value" id="chest-progress-value">0 / 3</span>
             </div>
           </div>
+          <!-- CH-2: pity visible — qué cofre viene y a cuánto queda el mítico garantizado. -->
+          <p class="chest-pity" id="chest-pity"></p>
           <button class="chest-survival-cta" type="button" data-act="go-surv">
             <span class="chest-survival-icon" aria-hidden="true"><img src="img/ui/target.png" alt=""></span>
             <span><b data-i18n="chests_play_survival">Jugar Supervivencia</b><small id="chest-next-wave" data-i18n="chests_next_wave">Próximo cofre en 10 oleadas</small></span>
@@ -711,6 +713,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.6.87" defer></script>
+  <script src="game.js?v=2.6.88" defer></script>
 </body>
 </html>

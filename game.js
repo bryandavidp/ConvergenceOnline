@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.87';
+  const VERSION = '2.6.88';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -350,9 +350,9 @@
         powerup_empty: 'No te quedan de este power-up',
         equipped: 'Equipado', equip: 'Equipar', free: 'Gratis', no_coins: 'Monedas insuficientes',
         shop_boards: 'Tableros visuales', shop_themes: 'Temas de color', shop_hint2: 'Los tableros son solo cambios visuales: no dan ventajas ni desventajas. Equipa tu estilo favorito para jugar.', board_unlocked: '¡Tablero desbloqueado!',
-        chests_title: 'Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre contiene monedas, gemas, tickets o un cosmético raro.', chests_none: 'No tienes cofres · gana uno en Supervivencia, mundos, rachas o el Jardín Zen', chest_reward: '¡Recompensa! {r}', open_chest: 'Abrir cofre',
-        chests_kicker: 'Recompensas', chests_subtitle: 'Juega, consigue cofres y descubre premios increíbles.', chests_progress_title: 'Tu progreso', chests_progress_rule: 'Gana 1 cofre cada 10 oleadas en Supervivencia.',
-        chests_play_survival: 'Jugar Supervivencia', chests_next_wave: 'Próximo cofre en {n} oleadas', chests_open_now: 'O abrir ahora', chests_open_saved: 'Abrir cofre guardado', chests_available: 'Disponibles',
+        chests_title: 'Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre contiene monedas, gemas, tickets o un cosmético raro.', chests_none: 'No tienes cofres · cumple objetivos en cualquier modo para ganar el siguiente', chest_reward: '¡Recompensa! {r}', open_chest: 'Abrir cofre',
+        chests_kicker: 'Recompensas', chests_subtitle: 'Juega, consigue cofres y descubre premios increíbles.', chests_progress_title: 'Tu progreso', chests_progress_rule: 'Cumple objetivos en cualquier modo: cada {t} cae el siguiente cofre del ciclo.',
+        chests_play_survival: 'Jugar Supervivencia', chests_next_wave: 'Cofre extra en {n} oleadas', chests_open_now: 'O abrir ahora', chests_open_saved: 'Abrir cofre guardado', chests_available: 'Disponibles',
         chests_contents_note: 'Los cofres contienen monedas, gemas, tickets y cosméticos.', chest_opening: 'El cofre se está abriendo…',
         chest_reveal_title: 'Contenido del cofre', chest_cosmetic_title: '¡COSMÉTICO!', chest_rarity_common: 'Recompensa', chest_rarity_jackpot: 'Jackpot', chest_rarity_cosmetic: 'Especial', chest_continue: 'Seguir', chest_equip: 'Equipar',
         chest_reward_coins: '+{n} monedas', chest_reward_gems: '+{n} gemas', chest_reward_ticket: '+{n} ticket(s)', chest_reward_board: 'Tablero: {n}', chest_reward_theme: 'Tema: {n}',
@@ -372,6 +372,8 @@
         chest_desc_supreme: 'Recompensas de alto nivel y muchos recursos.', chest_desc_champion: 'Recompensas míticas y máximas probabilidades especiales.', chest_desc_divine: 'El cofre más poderoso, con recompensas máximas.', chest_desc_event: 'Recompensas únicas de eventos y temporadas.',
         chest_rarity_rare: 'Raro', chest_rarity_epic: 'Épico', chest_rarity_legendary: 'Legendario', chest_rarity_mythic: 'Mítico', chest_rarity_special: 'Especial',
         chest_odds_title: 'Probabilidades', chest_odds_cosmetic: 'Cosmético', home_chest_opening: 'Abriendo · {t}',
+        chest_pipeline_won: '¡Cofre del ciclo! +1 {c}', chest_daily_won: 'Primera victoria del día · +1 cofre', chest_weekly_won: 'Reto semanal · +1 cofre de evento',
+        chest_next_in_cycle: 'Siguiente del ciclo: {c}', chest_pity: 'Mítico o mejor en ≤ {n} cofres',
         soon_badge: 'Próximamente', notify_me: 'Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
         edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
         home_classic: 'Partida clásica', home_classic_prefix: 'Partida', home_classic_name: 'Clásica', home_classic_sub: 'Juega en el tablero contra amigos o bots', home_surv_sub: 'Sobrevive a oleadas infinitas',
@@ -451,7 +453,7 @@
         over_peak_title: 'Mejor momento', over_peak_sub: 'Pico de la run', over_peak_points: 'Puntos', over_peak_combo: 'Combo',
         over_peak_chain: 'Cadena perfecta', over_peak_note_surv: 'Combo ×{c} en la oleada {w}: el tramo donde más puntos generaste de una sola cadena.',
         over_peak_note_level: 'Combo ×{c}: el tramo donde más puntos generaste de una sola cadena.',
-        empty_chests_title: 'Aún no tienes cofres', empty_chests_sub: 'Gana un cofre cada 10 oleadas en Supervivencia', empty_cta_surv: 'Jugar Supervivencia',
+        empty_chests_title: 'Aún no tienes cofres', empty_chests_sub: 'Cumple objetivos en cualquier modo · cada 3 cae un cofre del ciclo', empty_cta_surv: 'Jugar Supervivencia',
         empty_medals_title: 'Tu primera medalla te espera', empty_medals_sub: 'Juega una partida para empezar a desbloquear logros',
         empty_lb_title: 'Sin marcas todavía', empty_lb_sub: 'Juega cualquier modo para registrar tu primera marca', empty_cta_play: 'Elegir modo',
         err_fatal: 'Algo ha fallado.', err_reload: 'Recargar', browser_old: 'Tu navegador es demasiado antiguo para jugar. Actualízalo, por favor.',
@@ -665,9 +667,9 @@
         powerup_empty: 'No more of this power-up',
         equipped: 'Equipped', equip: 'Equip', free: 'Free', no_coins: 'Not enough coins',
         shop_boards: 'Visual boards', shop_themes: 'Color themes', shop_hint2: 'Boards are visual-only cosmetics: no advantages or disadvantages. Equip your favorite style before playing.', board_unlocked: 'Board unlocked!',
-        chests_title: 'Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest contains coins, gems, tickets or a rare cosmetic.', chests_none: 'No chests · earn them in Survival, worlds, streaks or the Zen Garden', chest_reward: 'Reward! {r}', open_chest: 'Open chest',
-        chests_kicker: 'Rewards', chests_subtitle: 'Play, earn chests and discover incredible prizes.', chests_progress_title: 'Your progress', chests_progress_rule: 'Earn 1 chest every 10 waves in Survival.',
-        chests_play_survival: 'Play Survival', chests_next_wave: 'Next chest in {n} waves', chests_open_now: 'Or open now', chests_open_saved: 'Open saved chest', chests_available: 'Available',
+        chests_title: 'Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest contains coins, gems, tickets or a rare cosmetic.', chests_none: 'No chests · complete goals in any mode to earn the next one', chest_reward: 'Reward! {r}', open_chest: 'Open chest',
+        chests_kicker: 'Rewards', chests_subtitle: 'Play, earn chests and discover incredible prizes.', chests_progress_title: 'Your progress', chests_progress_rule: 'Complete goals in any mode: every {t}, the next cycle chest drops.',
+        chests_play_survival: 'Play Survival', chests_next_wave: 'Bonus chest in {n} waves', chests_open_now: 'Or open now', chests_open_saved: 'Open saved chest', chests_available: 'Available',
         chests_contents_note: 'Chests contain coins, gems, tickets and cosmetics.', chest_opening: 'The chest is opening…',
         chest_reveal_title: 'Chest contents', chest_cosmetic_title: 'COSMETIC!', chest_rarity_common: 'Reward', chest_rarity_jackpot: 'Jackpot', chest_rarity_cosmetic: 'Special', chest_continue: 'Continue', chest_equip: 'Equip',
         chest_reward_coins: '+{n} coins', chest_reward_gems: '+{n} gems', chest_reward_ticket: '+{n} ticket(s)', chest_reward_board: 'Board: {n}', chest_reward_theme: 'Theme: {n}',
@@ -687,6 +689,8 @@
         chest_desc_supreme: 'High-level rewards and plenty of resources.', chest_desc_champion: 'Mythic rewards with the best special odds.', chest_desc_divine: 'The most powerful chest, with maximum rewards.', chest_desc_event: 'Unique event and seasonal rewards.',
         chest_rarity_rare: 'Rare', chest_rarity_epic: 'Epic', chest_rarity_legendary: 'Legendary', chest_rarity_mythic: 'Mythic', chest_rarity_special: 'Special',
         chest_odds_title: 'Odds', chest_odds_cosmetic: 'Cosmetic', home_chest_opening: 'Opening · {t}',
+        chest_pipeline_won: 'Cycle chest! +1 {c}', chest_daily_won: 'First win of the day · +1 chest', chest_weekly_won: 'Weekly challenge · +1 event chest',
+        chest_next_in_cycle: 'Next in cycle: {c}', chest_pity: 'Mythic or better in ≤ {n} chests',
         soon_badge: 'Coming soon', notify_me: 'Notify me', notify_ok: "We'll let you know when it's ready!",
         edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
         home_classic: 'Classic game', home_classic_prefix: 'Classic', home_classic_name: 'Game', home_classic_sub: 'Play on the board against friends or bots', home_surv_sub: 'Survive endless waves',
@@ -766,7 +770,7 @@
         over_peak_title: 'Best moment', over_peak_sub: 'Run peak', over_peak_points: 'Points', over_peak_combo: 'Combo',
         over_peak_chain: 'Perfect chain', over_peak_note_surv: '×{c} combo on wave {w}: the stretch where one chain generated your most points.',
         over_peak_note_level: '×{c} combo: the stretch where one chain generated your most points.',
-        empty_chests_title: 'No chests yet', empty_chests_sub: 'Earn a chest every 10 waves in Survival', empty_cta_surv: 'Play Survival',
+        empty_chests_title: 'No chests yet', empty_chests_sub: 'Complete goals in any mode · every 3, a cycle chest drops', empty_cta_surv: 'Play Survival',
         empty_medals_title: 'Your first medal awaits', empty_medals_sub: 'Play a game to start unlocking achievements',
         empty_lb_title: 'No scores yet', empty_lb_sub: 'Play any mode to set your first score', empty_cta_play: 'Choose a mode',
         err_fatal: 'Something went wrong.', err_reload: 'Reload', browser_old: 'Your browser is too old to play. Please update it.',
@@ -2887,9 +2891,12 @@
   /* ===================== Meta (progresión persistente) ===================== */
   const Meta = (() => {
     const KEY = 'cv_meta';
-    const SCHEMA = 4;
+    const SCHEMA = 5;
     const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, gems: 0, tickets: 0, chests: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, worlds: {}, boards: { owned: { classic: 1 }, equipped: 'classic' }, survBest: 0, survBestWave: 0, stats: { totalScore: 0, bestCombo: 0, totalTime: 0 }, modes: {}, weekly: { week: '', id: '', progress: 0, done: false }, mastery: { classicPerfect: 0, bestClassicPerfect: 0 }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
     Object.assign(def, { chestInventory: [], chestUnlock: null, chestSlots: 3, chestSeq: 0 });
+    // Esquema 5 (CH-2): pipeline universal de cofres — objetivos de CUALQUIER modo
+    // avanzan un ciclo determinista de cofres; cofre diario de primera victoria.
+    Object.assign(def, { chestPipeline: { wins: 0, cycle: 0 }, dailyChest: { date: '' } });
     let m;
     try { m = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); }
     catch (_) { m = JSON.parse(JSON.stringify(def)); }
@@ -2932,6 +2939,11 @@
     if (!Number.isFinite(m.chestSlots)) m.chestSlots = 3;
     m.chestSlots = clamp(m.chestSlots | 0, 3, 4);
     if (!Number.isFinite(m.chestSeq)) m.chestSeq = 0;
+    // Esquema 5 (CH-2): partidas guardadas anteriores empiezan el ciclo desde cero.
+    if (!m.chestPipeline || typeof m.chestPipeline !== 'object') m.chestPipeline = { wins: 0, cycle: 0 };
+    if (!Number.isFinite(m.chestPipeline.wins)) m.chestPipeline.wins = 0;
+    if (!Number.isFinite(m.chestPipeline.cycle)) m.chestPipeline.cycle = 0;
+    if (!m.dailyChest || typeof m.dailyChest !== 'object') m.dailyChest = { date: '' };
     if (!m.worlds || typeof m.worlds !== 'object') m.worlds = {};
     if (!m.boards || typeof m.boards !== 'object') m.boards = { owned: { classic: 1 }, equipped: 'classic' };
     if (!m.boards.owned) m.boards.owned = { classic: 1 };
@@ -3117,6 +3129,50 @@
         save();
         return m.chests;
       },
+      // ---- Pipeline universal (CH-2): cada objetivo cumplido en CUALQUIER modo
+      // suma; a cada TARGET objetivos cae el siguiente cofre del ciclo determinista
+      // CHEST_DROP_SEQUENCE (cadencia garantizada de tiers altos, estilo chest cycle
+      // de CR). La escalera de Supervivencia sigue aparte como bonus de hito. ----
+      CHEST_PIPELINE_TARGET: 3,
+      chestPipelineInfo() {
+        if (!m.chestPipeline || typeof m.chestPipeline !== 'object') m.chestPipeline = { wins: 0, cycle: 0 };
+        const p = m.chestPipeline, len = CHEST_DROP_SEQUENCE.length;
+        const at = Math.max(0, p.cycle | 0);
+        let chestsToMythic = len;
+        for (let i = 0; i < len; i++) {
+          const t = CHEST_DROP_SEQUENCE[(at + i) % len];
+          if (CHEST_TYPES[t].rarityKey === 'chest_tier_mythic') { chestsToMythic = i + 1; break; }
+        }
+        return {
+          wins: Math.max(0, p.wins | 0),
+          target: this.CHEST_PIPELINE_TARGET,
+          nextType: CHEST_DROP_SEQUENCE[at % len],
+          chestsToMythic,
+        };
+      },
+      recordChestProgress(source) {
+        if (!m.chestPipeline || typeof m.chestPipeline !== 'object') m.chestPipeline = { wins: 0, cycle: 0 };
+        if (!m.dailyChest || typeof m.dailyChest !== 'object') m.dailyChest = { date: '' };
+        const p = m.chestPipeline;
+        p.wins = Math.max(0, p.wins | 0) + 1;
+        let chest = null, daily = null;
+        if (p.wins >= this.CHEST_PIPELINE_TARGET) {
+          p.wins -= this.CHEST_PIPELINE_TARGET;
+          const type = CHEST_DROP_SEQUENCE[Math.max(0, p.cycle | 0) % CHEST_DROP_SEQUENCE.length];
+          p.cycle = Math.max(0, p.cycle | 0) + 1;
+          this.addChest(1, type, 'pipeline:' + (source || 'win'));
+          chest = type;
+        }
+        // Cofre diario: el PRIMER objetivo cumplido de cada día regala uno pequeño.
+        const d = today();
+        if (m.dailyChest.date !== d) {
+          m.dailyChest.date = d;
+          this.addChest(1, 'bronze', 'daily-win');
+          daily = 'bronze';
+        }
+        save();
+        return { chest, daily, wins: p.wins, target: this.CHEST_PIPELINE_TARGET, source: source || 'win' };
+      },
       openChest(uid) {
         const list = ensureChestInventory();
         if (!list.length || (m.chests || 0) <= 0) return null;
@@ -3203,8 +3259,14 @@
           this.addChest(1, 'event', 'daily-streak');
           streakChest = true;
         }
+        // Pipeline (CH-2): la primera medalla del día en el Reto cuenta como objetivo.
+        let pipeline = null;
+        if (this.dailyMedal(score) !== 'none' && m.dailyRun.chestPoint !== d) {
+          m.dailyRun.chestPoint = d;
+          pipeline = this.recordChestProgress('reto');
+        }
         save();
-        return { firstToday: fresh, newBest, best: m.dailyRun.best, medal: this.dailyMedal(score), bestMedal: this.dailyMedal(m.dailyRun.best), streak, streakChest };
+        return { firstToday: fresh, newBest, best: m.dailyRun.best, medal: this.dailyMedal(score), bestMedal: this.dailyMedal(m.dailyRun.best), streak, streakChest, pipeline };
       },
       // Racha de medallas del reto (GM-14): días consecutivos con medalla ≥ bronce.
       // ÉTICA: 1 "congelación" de regalo + 1 extra por cada 7 días de racha — un día
@@ -3404,7 +3466,10 @@
         m.surv.totalBosses = (m.surv.totalBosses || 0) + Math.max(0, ctx.bosses | 0);
         save();
         const after = this.survRank();
-        return { rankUp: before !== after.id, rank: after };
+        // Pipeline (CH-2): una run digna (oleada ≥5) cuenta como objetivo; la
+        // escalera de cofres por oleada 10/20/… sigue intacta como bonus aparte.
+        const pipeline = (ctx.wave | 0) >= 5 ? this.recordChestProgress('supervivencia') : null;
+        return { rankUp: before !== after.id, rank: after, pipeline };
       },
       claimReward() {
         if (m.reward.date === today()) return 0;
@@ -3433,7 +3498,12 @@
           const inc = wk.kind === 'games' ? 1 : wk.kind === 'remove' ? ctx.removed : wk.kind === 'score' ? ctx.score : 0;
           if (wk.kind === 'combo') m.weekly.progress = Math.max(m.weekly.progress || 0, ctx.maxCombo);
           else m.weekly.progress = (m.weekly.progress || 0) + inc;
-          if (m.weekly.progress >= wk.target) { m.weekly.done = true; weeklyDone = true; }
+          if (m.weekly.progress >= wk.target) {
+            m.weekly.done = true; weeklyDone = true;
+            // CH-2: el reto semanal deja de pagar solo XP — suelta el cofre de evento
+            // (su fuente natural; antes el tipo 'event' era casi huérfano).
+            this.addChest(1, 'event', 'weekly');
+          }
         }
         // Estadísticas de por vida + mejor por modo (leaderboard local)
         m.stats.totalScore = (m.stats.totalScore || 0) + ctx.score;
@@ -3442,6 +3512,10 @@
         const md = m.modes[ctx.mode] || (m.modes[ctx.mode] = { best: 0, plays: 0 });
         md.plays = (md.plays || 0) + 1;
         if (ctx.score > (md.best || 0)) md.best = ctx.score;
+        // Pipeline (CH-2): en Contrarreloj libre el objetivo es puntuar ≥1000 en la
+        // run (el Reto diario puntúa por medalla en recordDailyRun, no aquí).
+        const pipeline = (ctx.mode === 'contrarreloj' && !ctx.daily && ctx.score >= 1000)
+          ? this.recordChestProgress('contrarreloj') : null;
         let xpGained = Math.round(ctx.score / 10 + ctx.maxCombo * 5 + ctx.level * 20 + (ctx.perfect ? 100 : 0));
         if (missionDone) xpGained += 150;
         if (weeklyDone) xpGained += 400;
@@ -3455,7 +3529,7 @@
         const newAch = [];
         ACH.forEach(a => { if (!m.achievements[a.id] && a.t(cctx)) { m.achievements[a.id] = d; newAch.push(a); } });
         save();
-        return { xpGained, coinsGained, leveledUp, newAch, missionDone, weeklyDone };
+        return { xpGained, coinsGained, leveledUp, newAch, missionDone, weeklyDone, weeklyChest: weeklyDone, pipeline };
       },
     };
   })();
@@ -7595,6 +7669,9 @@
         // Jardín zen (GM-23): cada tablero limpio hace crecer una flor (para siempre).
         const fl = Meta.addZenFlower();
         extra.push('🌸 ' + fl);
+        // CH-2: un tablero limpio en Zen es un objetivo del pipeline (sin fallo posible,
+        // pero limpiar el tablero entero es esfuerzo honesto).
+        chestProgressToast(Meta.recordChestProgress('zen'));
         if (fl === 10) { Meta.addChest(1, 'magic', 'zen'); Toasts.show(I18n.t('garden_10'), 'good', 2800, 'chest'); Econ.refresh(); }
         if (fl === 50 && Meta.grantBoard('jardin')) { Toasts.show(I18n.t('garden_50'), 'good', 3400, '🌸'); Sound.record(); FX.confetti(90); }
         Render._hudDirty = true;
@@ -7642,6 +7719,9 @@
       const m = Config.MODES[State.mode];
       if (m.single) { this.win(perfect ? '¡Tutorial completado con tablero perfecto!' : '¡Tutorial completado!'); return; }
       Sound.level(); Haptics.level(); FX.confetti(perfect ? 90 : 60);
+      // CH-2: superar un nivel de Aventura cuenta como objetivo del pipeline
+      // (Contrarreloj puntúa al FINAL de la run por score, en recordGame).
+      if (State.mode === 'aventura') chestProgressToast(Meta.recordChestProgress('aventura'));
       // Modo Clásico: nivel del mapa. Calcula estrellas, guarda progreso y ofrece
       // "Siguiente nivel" / "Volver al mapa" (el mapa es el hub, no se auto-encadena).
       if (State.mode === 'clasico') { this._classicComplete(); return; }
@@ -7686,6 +7766,8 @@
       // Racha de victorias (GM-05): +10% de monedas por nivel de racha desde la 2ª
       // victoria seguida, tope +50% — recompensa el "una más" sin castigar el fallo.
       const winStreak = Meta.recordClassicWin(true);
+      // CH-2: cada nivel de Clásico superado alimenta el pipeline de cofres.
+      chestProgressToast(Meta.recordChestProgress('clasico'));
       const streakPct = Math.min(5, Math.max(0, winStreak - 1)) * 10;
       const coins = Math.round((20 + stars * 10 + Math.round(State.score / 60)) * (1 + streakPct / 100));
       Meta.addCoins(coins);
@@ -7820,6 +7902,7 @@
         // Hoja de Servicio (SV-30/32): acumula lo vitalicio + récord semanal ligado
         // al mutador. Y la hazaña 'fenix' (batir récord habiendo revivido).
         const rankRes = Meta.recordSurvivalRun({ wave: Survival.wave, bosses: Survival._bossesSurvived || 0 });
+        chestProgressToast(rankRes.pipeline);
         const weekRes = Meta.survWeekRecord(Survival._weekKey(), Survival.wave, Survival.mut.id);
         if (weekRes.distinctMuts >= 3) Survival._feat('semana_completa');
         if (this._survWaveNew && Survival.revives > 0) Survival._feat('fenix');
@@ -7833,6 +7916,7 @@
         else if (r.newBest) Toasts.show(I18n.t('daily_new_best').replace('{n}', r.best), 'good', 2200, '🎯');
         if (r.medal !== 'none') Toasts.show(I18n.t('daily_medal_result').replace('{m}', ModeSignals.dailyMedalLabel(r.medal)), 'good', 2200, 'medal');
         if (r.streakChest) { Toasts.show(I18n.t('daily_streak_chest').replace('{n}', r.streak), 'good', 2800, 'chest'); Sound.record(); FX.confetti(70); }
+        chestProgressToast(r.pipeline);
         // Ghost del día (GM-12): si es la mejor marca de hoy, guarda su línea de tiempo.
         if (r.newBest) { State.ghostSamples.push(State.score); Meta.setDailyGhost(State.ghostSamples); }
       } else if (Config.MODES[State.mode].scoreAttack && State.score > Meta.modeBest(State.mode)) {
@@ -7863,8 +7947,11 @@
       this.metaResult = Meta.recordGame({
         score: State.score, level: State.level, maxCombo: State.maxCombo,
         removed: State.removedTotal, elapsed: State.elapsed, mode: State.mode,
-        perfect: State.perfectEver, fever: State.feverEver,
+        perfect: State.perfectEver, fever: State.feverEver, daily: !!State.isDaily,
       });
+      // CH-2: feedback inmediato de cofres ganados al cerrar la partida.
+      chestProgressToast(this.metaResult.pipeline);
+      if (this.metaResult.weeklyChest) Toasts.show(I18n.t('chest_weekly_won'), 'good', 2600, 'chest');
     },
 
     fillStats() {
@@ -8875,6 +8962,18 @@
     if (name) { const p = Storage.profile || { color: '#00d0ff' }; p.name = name; Storage.profile = p; Storage.user = name; updateTopBars(); refreshStart(); }
   }
 
+  // CH-2: feedback unificado del pipeline de cofres (cofre diario + cofre del ciclo).
+  // Acepta null para que los llamadores no tengan que comprobar antes.
+  function chestProgressToast(res) {
+    if (!res) return;
+    if (res.daily) Toasts.show(I18n.t('chest_daily_won'), 'good', 2400, 'chest');
+    if (res.chest) {
+      Toasts.show(I18n.t('chest_pipeline_won').replace('{c}', I18n.t(CHEST_TYPES[res.chest].nameKey)), 'good', 2800, 'chest');
+      Sound.record();
+    }
+    if (res.daily || res.chest) { Econ.refresh(); syncHomeChests(); }
+  }
+
   function syncHomeChests() {
     const chests = Meta.chests();
     // CH-1: el chip de Inicio refleja el temporizador real — "¡Listo!" pesa más
@@ -9561,11 +9660,19 @@
     const inventory = Meta.chestInventory(), n = Meta.chests(), unlock = Meta.chestUnlock();
     const selected = currentSelectedChest(), defn = chestDef(selected ? selected.type : 'wood');
     syncHomeChests();
-    const bestWave = Math.max(0, Meta.survBestWave() | 0), waveProgress = bestWave % 10, wavesLeft = 10 - waveProgress;
+    // CH-2: la tarjeta de progreso refleja el pipeline universal (objetivos → ciclo)
+    // con pity visible; la línea de Supervivencia queda como bonus secundario.
+    const pipe = Meta.chestPipelineInfo();
     const track = $('#chest-progress-track'), fill = $('#chest-progress-fill'), value = $('#chest-progress-value'), next = $('#chest-next-wave');
-    if (track) track.setAttribute('aria-valuenow', String(waveProgress));
-    if (fill) fill.style.width = (waveProgress * 10) + '%';
-    if (value) value.textContent = waveProgress + ' / 10';
+    if (track) { track.setAttribute('aria-valuemax', String(pipe.target)); track.setAttribute('aria-valuenow', String(pipe.wins)); }
+    if (fill) fill.style.width = Math.round(pipe.wins / pipe.target * 100) + '%';
+    if (value) value.textContent = pipe.wins + ' / ' + pipe.target;
+    const rule = $('#view-chests [data-i18n="chests_progress_rule"], #view-chests .chest-progress-copy p');
+    if (rule) { rule.removeAttribute('data-i18n'); rule.textContent = I18n.t('chests_progress_rule').replace('{t}', pipe.target); }
+    const pity = $('#chest-pity');
+    if (pity) pity.textContent = I18n.t('chest_next_in_cycle').replace('{c}', I18n.t(chestDef(pipe.nextType).nameKey))
+      + ' · ' + I18n.t('chest_pity').replace('{n}', pipe.chestsToMythic);
+    const bestWave = Math.max(0, Meta.survBestWave() | 0), wavesLeft = 10 - (bestWave % 10);
     if (next) next.textContent = I18n.t('chests_next_wave').replace('{n}', wavesLeft);
     const info = $('#chest-selected-card');
     if (info) { info.style.setProperty('--chest-accent', defn.accent); info.innerHTML = `<div class="chest-selected-name">${chestSprite(defn.id, 'closed', 'chest-selected-thumb')}<strong>${esc(I18n.t(defn.nameKey))}</strong></div>

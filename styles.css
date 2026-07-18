@@ -8119,6 +8119,8 @@ body.reduced-fx #screen-start .home-mode-carousel.is-turning .home-mode-card::af
   text-transform: uppercase;
 }
 #screen-start .chest-progress-copy p { color: #d4d9fa; font-size: clamp(.62rem, 1.5vw, .8rem); line-height: 1.22; }
+/* CH-2: pity visible del ciclo (siguiente cofre + mítico garantizado). */
+#screen-start .chest-pity { grid-column: 1 / -1; margin-top: 2px; color: #9fb0e8; font-size: clamp(.58rem, 1.35vw, .72rem); font-weight: 750; }
 #screen-start .chest-progress-row { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr clamp(72px, 13vw, 112px); align-items: center; gap: 14px; }
 #screen-start .chest-progress-icon {
   grid-column: 2;

@@ -266,3 +266,14 @@ La economía meta usa `Math.random` a propósito (un cofre seedeable sería expl
   (banda honesta, chestOdds exactos y suma ≈100%, paridad i18n) y ajuste del test de Eventos en `home-redesign`. Suite 179/181
   (los 2 fallos son de board-themes, preexistentes). QA en navegador: estados Abriendo/Listo/contador verificados en Eventos y
   ficha con datos reales en la vista. Ojo QA local: el SW cache-first sirve copias viejas bajo el mismo `?v=`; purgar SW al probar.
+- 2026-07-18 — **CH-2 completado (v2.6.88).** Schema `cv_meta` 4→5 (aditivo): `chestPipeline{wins,cycle}` + `dailyChest{date}`.
+  `Meta.recordChestProgress(source)`: cada objetivo suma; cada 3 cae el siguiente cofre de `CHEST_DROP_SEQUENCE` (el ciclo por fin
+  se usa; garantiza 1 champion + 1 divine por vuelta de 32). Objetivos cableados: nivel de Clásico (`_classicComplete`), nivel de
+  Aventura (`levelComplete`), tablero limpio en Zen, Contrarreloj libre con score ≥1000 (en `recordGame`, excluye Reto), primera
+  medalla del día del Reto (`recordDailyRun`, 1/día), run de Supervivencia con oleada ≥5 (`recordSurvivalRun`; su escalera 10/20/…
+  sigue intacta como bonus). Cofre diario: primer objetivo del día → +1 bronce. Reto semanal → +1 cofre de evento (antes solo XP).
+  UI: tarjeta de progreso = pipeline (n/3) + línea de pity ("Siguiente del ciclo: X · Mítico o mejor en ≤ N cofres");
+  `chestProgressToast()` unifica el feedback. Strings ES/EN actualizadas (regla, vacíos) + 5 claves nuevas. Tests: nuevo
+  `tests/chest-pipeline.test.js` (8 tests: ciclo determinista, diario 1/día, pity, semanal→event, contrarreloj/reto/supervivencia,
+  escalera intacta). Suite 187/189; balance-sim sin cambios en partida (el pipeline es meta-economía; guardarraíl de medallas OK).
+  QA navegador: 3 objetivos → cofre de madera, pity avanza a "bronce · ≤23".
