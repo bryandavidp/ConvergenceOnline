@@ -420,3 +420,8 @@ La economía meta usa `Math.random` a propósito (un cofre seedeable sería expl
   entrega el tipo comprado vía `Meta.addChest(1, id, 'shop')`, que entra al inventario y se abre por el flujo normal
   (ranura/instantáneo). Tarjetas con fotograma `closed` del atlas y color de acento por cofre; contrato en
   `tests/store-chests.test.js`. Sin cambios de balance (nuevo sumidero de gemas opcional; los bots de simulación no compran).
+- 2026-07-18 — **Cabecera de Inicio a dos filas con acceso directo a Cofres (v2.7.3).** El header pasa de una fila a dos:
+  arriba, tres cápsulas de recursos (monedas · gemas · **energía** = booster de XP, con su tiempo restante como batería
+  que se agota y `+` que recarga en la sección XP de la tienda) más el engranaje; abajo, la tarjeta de perfil junto a un
+  nuevo **acceso directo a Cofres** que muestra el contador de apertura del cofre en curso ("Abriendo · {t}"), "¡Listo!"
+  o el recuento, reutilizando `syncHomeChests()`. Contrato visual y de cableado en `tests/home-redesign.test.js`.
