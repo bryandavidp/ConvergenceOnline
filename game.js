@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.7.2';
+  const VERSION = '2.7.3';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -363,6 +363,7 @@
         xp_boost_added: 'XP ×4 activo · +{t}', xp_pack_6h: '6 h', xp_pack_3d: '3 días', xp_pack_7d: '7 días', xp_result_breakdown: '{base} XP base ×{mult} · +{bonus} por booster',
         mock_purchase_done: 'Compra de prueba completada · +{n} {r}', resource_purchase_failed: 'No se pudo completar la compra. Inténtalo de nuevo.', store_game_blocked: 'La tienda de recursos está disponible desde Inicio. Tu partida sigue activa.',
         resource_shop_chests: 'COFRES', chest_shop_title: 'Cofres', chest_shop_desc: 'Compra cofres al instante con gemas y ábrelos cuando quieras. El cofre de evento solo se gana jugando.', chest_shop_buy: 'Comprar cofre', chest_shop_add: 'Comprar', chest_shop_bought: '¡{c} añadido a tus cofres!',
+        home_chest_cta: 'Cofre', energy_label: 'Energía', energy_off: 'OFF', get_energy: 'Conseguir energía',
         chests_title: 'Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre revela de 2 a 4 premios: monedas, recursos, boosters o un cosmético raro.', chests_none: 'No tienes cofres · cumple objetivos en cualquier modo para ganar el siguiente', chest_reward: '¡Recompensa! {r}', open_chest: 'Abrir cofre',
         chests_kicker: 'Recompensas', chests_subtitle: 'Juega, consigue cofres y descubre premios increíbles.', chests_progress_title: 'Tu progreso', chests_progress_rule: 'Cumple objetivos en cualquier modo: cada {t} cae el siguiente cofre del ciclo.',
         chests_play_survival: 'Jugar Supervivencia', chests_next_wave: 'Cofre extra en {n} oleadas', chests_open_now: 'O abrir ahora', chests_open_saved: 'Abrir cofre guardado', chests_available: 'Disponibles',
@@ -708,6 +709,7 @@
         xp_boost_added: 'XP ×4 active · +{t}', xp_pack_6h: '6 h', xp_pack_3d: '3 days', xp_pack_7d: '7 days', xp_result_breakdown: '{base} base XP ×{mult} · +{bonus} from booster',
         mock_purchase_done: 'Test purchase completed · +{n} {r}', resource_purchase_failed: 'The purchase could not be completed. Please try again.', store_game_blocked: 'The resource shop is available from Home. Your match is still active.',
         resource_shop_chests: 'CHESTS', chest_shop_title: 'Chests', chest_shop_desc: 'Buy chests instantly with gems and open them whenever you like. The event chest is only earned by playing.', chest_shop_buy: 'Buy chest', chest_shop_add: 'Buy', chest_shop_bought: '{c} added to your chests!',
+        home_chest_cta: 'Chest', energy_label: 'Energy', energy_off: 'OFF', get_energy: 'Get energy',
         chests_title: 'Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest reveals 2 to 4 rewards: coins, resources, boosters or a rare cosmetic.', chests_none: 'No chests · complete goals in any mode to earn the next one', chest_reward: 'Reward! {r}', open_chest: 'Open chest',
         chests_kicker: 'Rewards', chests_subtitle: 'Play, earn chests and discover incredible prizes.', chests_progress_title: 'Your progress', chests_progress_rule: 'Complete goals in any mode: every {t}, the next cycle chest drops.',
         chests_play_survival: 'Play Survival', chests_next_wave: 'Bonus chest in {n} waves', chests_open_now: 'Or open now', chests_open_saved: 'Open saved chest', chests_available: 'Available',
@@ -4272,6 +4274,16 @@
     return `${Math.max(1, mins)}m`;
   }
 
+  // Token compacto de un solo trozo para el pill de energía de la cabecera
+  // (batería del booster de XP): 3d · 6h · 45m. Sin espacios para caber en la cápsula.
+  function compactBoostTime(ms) {
+    const totalMin = Math.max(0, Math.ceil((Number(ms) || 0) / 60000));
+    const days = Math.floor(totalMin / 1440);
+    if (days > 0) return `${days}d`;
+    const hours = Math.floor(totalMin / 60);
+    if (hours > 0) return `${hours}h`;
+    return `${Math.max(1, totalMin)}m`;
+  }
   function refreshXpBoostIndicators() {
     const boost = Meta.xpBoost();
     const status = $('#xp-boost-status');
@@ -4284,6 +4296,16 @@
     document.querySelectorAll('[data-xp-boost-remaining]').forEach((el) => {
       el.hidden = !boost.active;
       if (boost.active) el.textContent = I18n.t('xp_boost_active').replace('{t}', formatBoostTime(boost.remainingMs));
+    });
+    // Pill "Energía" de la cabecera: la energía ES el booster de XP. Muestra el
+    // tiempo restante como una batería que se agota; el + de la cápsula recarga.
+    document.querySelectorAll('[data-energy-value]').forEach((el) => {
+      el.textContent = boost.active ? compactBoostTime(boost.remainingMs) : I18n.t('energy_off');
+      const wallet = el.closest('.hub-header-wallet');
+      if (wallet) {
+        wallet.classList.toggle('is-charged', boost.active);
+        wallet.setAttribute('aria-label', `${I18n.t('energy_label')}: ${boost.active ? I18n.t('xp_boost_active').replace('{t}', formatBoostTime(boost.remainingMs)) : I18n.t('xp_boost_inactive')}`);
+      }
     });
     const hud = $('#hud-xp-boost');
     if (hud) hud.hidden = !(State.status !== 'idle' && State.xpMultiplier === XP_BOOST_MULTIPLIER);
@@ -9934,24 +9956,35 @@
 
   /* ===================== Top bar reutilizable (sistema base) ===================== */
   const TOPBAR_HTML = `
-    <div class="hub-header-profile">
-      <button class="hub-header-profile-button" type="button" data-act="profile" data-i18n-al="profile_action" aria-label="Abrir perfil">
-        <span class="hub-header-avatar"><span class="hub-header-avatar-art"><img src="img/ui-generated/home/avatar-robot.png" alt=""></span><span class="hub-header-level-badge">1</span></span>
-        <span class="hub-header-identity">
-          <b class="hub-header-name">Jugador</b>
-          <span class="hub-header-level-row">
-            <span class="hub-header-level-star" aria-hidden="true"><img src="img/ui-v2/home/star.png" alt=""></span><span class="hub-header-level-text">Nivel 1</span>
+    <div class="hub-header-top">
+      <div class="hub-header-wallets" aria-label="Recursos">
+        <span class="hub-header-wallet hub-header-wallet-coins"><img class="hub-header-currency" src="img/ui-generated/home/header-coin-star.png?v=2.6.79" alt=""><b data-econ-num="coins">0</b><button class="hub-header-plus" type="button" data-act="buy-coins" data-i18n-al="get_coins" aria-label="Conseguir monedas"><img src="img/ui-generated/home/header-plus.png?v=2.6.79" alt=""></button></span>
+        <span class="hub-header-wallet hub-header-wallet-gems"><img class="hub-header-currency" src="img/ui-v2/home/gem.png" alt=""><b data-econ-num="gems">0</b><button class="hub-header-plus" type="button" data-act="buy-gems" data-i18n-al="get_gems" aria-label="Conseguir gemas"><img src="img/ui-generated/home/header-plus.png?v=2.6.79" alt=""></button></span>
+        <span class="hub-header-wallet hub-header-wallet-energy"><img class="hub-header-currency" src="img/ui-v2/home/bolt.png" alt=""><b class="hub-header-energy-value" data-energy-value>—</b><button class="hub-header-plus" type="button" data-act="buy-energy" data-i18n-al="get_energy" aria-label="Conseguir energía"><img src="img/ui-generated/home/header-plus.png?v=2.6.79" alt=""></button></span>
+      </div>
+      <button class="hub-header-settings" type="button" data-act="settings" data-i18n-al="tab_set" aria-label="Ajustes"><img src="img/ui-generated/home/nav-settings.png" alt=""></button>
+    </div>
+    <div class="hub-header-cards">
+      <div class="hub-header-profile">
+        <button class="hub-header-profile-button" type="button" data-act="profile" data-i18n-al="profile_action" aria-label="Abrir perfil">
+          <span class="hub-header-avatar"><span class="hub-header-avatar-art"><img src="img/ui-generated/home/avatar-robot.png" alt=""></span><span class="hub-header-level-badge">1</span></span>
+          <span class="hub-header-identity">
+            <b class="hub-header-name">Jugador</b>
+            <span class="hub-header-level-row">
+              <span class="hub-header-level-star" aria-hidden="true"><img src="img/ui-v2/home/star.png" alt=""></span><span class="hub-header-level-text">Nivel 1</span>
+            </span>
+            <span class="hub-header-xp" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="hub-header-xp-fill"></span></span>
           </span>
-          <span class="hub-header-xp" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="hub-header-xp-fill"></span></span>
-          <span class="hub-header-xp-boost" data-xp-boost-remaining hidden></span>
+        </button>
+      </div>
+      <button class="hub-header-chest" type="button" data-act="open-chests" data-i18n-al="home_chests" aria-label="Cofres">
+        <span class="hub-header-chest-art" aria-hidden="true"><img src="img/ui-generated/home/nav-chest.png" alt=""></span>
+        <span class="hub-header-chest-copy">
+          <b class="hub-header-chest-label" data-i18n="home_chest_cta">Cofre</b>
+          <span class="hub-header-chest-state" id="home-chest-shortcut-state" data-i18n="home_none_ready">Ninguno</span>
         </span>
       </button>
-    </div>
-    <div class="hub-header-wallets" aria-label="Recursos">
-      <span class="hub-header-wallet hub-header-wallet-coins"><img class="hub-header-currency" src="img/ui-generated/home/header-coin-star.png?v=2.6.79" alt=""><b data-econ-num="coins">0</b><button class="hub-header-plus" type="button" data-act="buy-coins" data-i18n-al="get_coins" aria-label="Conseguir monedas"><img src="img/ui-generated/home/header-plus.png?v=2.6.79" alt=""></button></span>
-      <span class="hub-header-wallet hub-header-wallet-gems"><img class="hub-header-currency" src="img/ui-v2/home/gem.png" alt=""><b data-econ-num="gems">0</b><button class="hub-header-plus" type="button" data-act="buy-gems" data-i18n-al="get_gems" aria-label="Conseguir gemas"><img src="img/ui-generated/home/header-plus.png?v=2.6.79" alt=""></button></span>
-    </div>
-    <button class="hub-header-settings" type="button" data-act="settings" data-i18n-al="tab_set" aria-label="Ajustes"><img src="img/ui-generated/home/nav-settings.png" alt=""></button>`;
+    </div>`;
   function mountTopBars() { document.querySelectorAll('[data-topbar]').forEach((el) => { el.innerHTML = TOPBAR_HTML; }); }
   // Rellena los placeholders <span data-art="nombre"> con el SVG de Art (una sola vez).
   function fillArt(root) {
@@ -10094,6 +10127,18 @@
       navState.classList.toggle('is-ready', readyCount > 0);
       const eventsNav = navState.closest('[data-act="nav-events"]');
       if (eventsNav) eventsNav.setAttribute('aria-label', `${I18n.t('tab_events')}. ${I18n.t('home_chests')}: ${chestState}`);
+    }
+    // Acceso directo a Cofres en la cabecera de Inicio: contador de cuánto falta
+    // para que se abra el cofre en curso (o "¡Listo!" / recuento / "Ninguno").
+    const shortcutState = $('#home-chest-shortcut-state');
+    if (shortcutState) {
+      shortcutState.textContent = chestState;
+      shortcutState.removeAttribute('data-i18n');
+      const chestShortcut = shortcutState.closest('.hub-header-chest');
+      if (chestShortcut) {
+        chestShortcut.classList.toggle('is-ready', readyCount > 0);
+        chestShortcut.setAttribute('aria-label', `${I18n.t('home_chests')}: ${chestState}`);
+      }
     }
     // Tarjeta de cofres en Eventos: es la proyección visible hoy (el chip antiguo
     // de Inicio ya no existe en el DOM); comparte el mismo texto de estado.
@@ -10675,7 +10720,10 @@
     buildResourceShop();
     const opened = HubViews.open('resource-shop', { nav: 'nav-shop' });
     if (opened && focusKind) requestAnimationFrame(() => {
-      const target = focusKind === 'coins' ? $('#resource-coins-title') : $('#resource-gems-title');
+      const focusId = focusKind === 'coins' ? '#resource-coins-title'
+        : focusKind === 'xp' ? '#resource-xp-title'
+          : '#resource-gems-title';
+      const target = $(focusId);
       if (target && target.scrollIntoView) target.scrollIntoView({ block: 'start', behavior: motionOff() ? 'auto' : 'smooth' });
     });
     return opened;
@@ -11643,6 +11691,7 @@
       else if (a === 'edit-name') { e.preventDefault(); e.stopPropagation(); Sound.ui(); renameProfile(); }
       else if (a === 'buy-coins') { Sound.ensure(); openResourceShop('coins'); }
       else if (a === 'buy-gems') { Sound.ensure(); openResourceShop('gems'); }
+      else if (a === 'buy-energy') { Sound.ensure(); openResourceShop('xp'); }
       else if (a === 'bell') { Sound.ui(); Toasts.show(I18n.t('coming_soon'), 'info', 1400); }
       else if (a === 'home-play-now') {
         Sound.ensure();

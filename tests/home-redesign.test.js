@@ -130,6 +130,15 @@ test('home: los estados dinámicos incluyen i18n y etiquetas accesibles', () => 
   assert.match(js, /home-mode-status[\s\S]*?home_mode_position/,
     'los cambios del carrusel deben anunciarse en su live region');
   assert.match(topbar, /<button class="hub-header-plus"[^>]+data-i18n-al="get_coins"/);
+  // Cabecera de dos filas: fila de recursos (con energía) + fila con perfil y acceso a cofres.
+  assert.match(topbar, /class="hub-header-top"/, 'la fila superior de recursos debe existir');
+  assert.match(topbar, /class="hub-header-cards"/, 'la fila inferior de perfil + cofres debe existir');
+  assert.match(topbar, /hub-header-wallet-energy[\s\S]*data-energy-value/, 'la tercera cápsula debe ser la energía (booster de XP)');
+  assert.match(topbar, /img\/ui-v2\/home\/bolt\.png/, 'la energía debe usar el rayo de la familia V2');
+  assert.match(topbar, /data-act="buy-energy"/, 'el + de energía debe llevar a recargar el booster de XP');
+  assert.match(topbar, /class="hub-header-chest"[^>]+data-act="open-chests"/, 'la cabecera debe incluir el acceso directo a cofres');
+  assert.match(topbar, /id="home-chest-shortcut-state"/, 'el acceso a cofres debe mostrar el contador de apertura');
+  assert.match(topbar, /img\/ui-generated\/home\/nav-chest\.png/, 'el acceso a cofres debe usar el icono de cofre generado');
   assert.match(js, /world_bosque: 'Green Forest'/, 'los nombres de mundo deben localizarse en inglés');
   assert.match(topbar, /img\/ui-generated\/home\/avatar-robot\.png/, 'la cabecera debe usar el avatar generado');
   assert.match(topbar, /img\/ui-generated\/home\/header-coin-star\.png/, 'la moneda de cabecera debe llevar la estrella de la referencia');
@@ -151,6 +160,12 @@ test('home: sincroniza el contador de cofres y separa Perfil de Logros', () => {
   assert.match(js, /function syncHomeChests\(\)/, 'debe existir una proyección única del contador de cofres');
   assert.match(js, /function buildChests\(\)[\s\S]*?syncHomeChests\(\)/, 'abrir Cofres debe refrescar Inicio');
   assert.match(js, /function doOpenChest\(\)[\s\S]*?Meta\.openChest\(\)[\s\S]*?syncHomeChests\(\)/, 'cada cofre abierto debe actualizar Inicio al instante');
+  // Acceso directo a cofres de la cabecera: contador de apertura alimentado por syncHomeChests.
+  assert.match(js, /function syncHomeChests\(\)[\s\S]*?home-chest-shortcut-state/, 'syncHomeChests debe proyectar el contador del acceso directo a cofres de la cabecera');
+  // Energía = booster de XP: el pill se actualiza con el estado del boost y el + recarga.
+  assert.match(js, /function refreshXpBoostIndicators\(\)[\s\S]*?\[data-energy-value\]/, 'el pill de energía debe reflejar el estado del booster de XP');
+  assert.match(js, /a === 'buy-energy'[^\n]+openResourceShop\('xp'\)/, 'el + de energía debe abrir la sección XP de la tienda de recursos');
+  assert.match(js, /focusKind === 'xp'[^\n]*resource-xp-title/, 'la tienda de recursos debe poder enfocar la sección XP');
   assert.match(js, /a === 'nav-achievements'\)[^\n]+openMedals\('achievements'\)/, 'Logros debe abrir su vista específica');
   assert.match(js, /function openMedals\(view = 'profile'\)/, 'Perfil debe conservar su vista completa');
   assert.doesNotMatch(js, /'home-multi'|'home-friends'/, 'las funciones no disponibles no deben conservar handlers engañosos');
@@ -173,14 +188,20 @@ test('home: fija el contrato visual del hub, cilindro, avatar y economía', () =
   assert.match(css, /\.bnav-center \.bn-ic\s*\{[^}]*border-radius:\s*50%/s,
     'el icono de Inicio debe vivir en un botón realmente circular');
 
-  assert.match(proportional, /#screen-start \.appbar\s*\{[^}]*width:\s*min\(470\.5px,\s*100%,\s*110svh\)[^}]*height:\s*auto[^}]*aspect-ratio:\s*941\s*\/\s*161/s,
-    'la cabecera debe escalar como el lienzo 941×161 sin un alto mínimo fijo');
-  assert.match(proportional, /#screen-start \.hub-header-avatar\s*\{[^}]*width:\s*44\.7%[^}]*aspect-ratio:\s*1/s,
-    'el avatar debe conservar su tamaño relativo y su proporción circular');
-  assert.match(proportional, /#screen-start \.hub-header-wallets\s*\{[^}]*left:\s*44\.2%[^}]*top:\s*28%[^}]*width:\s*43\.5%[^}]*height:\s*44\.7%/s,
-    'las dos carteras deben ocupar las coordenadas medidas de la referencia');
-  assert.match(proportional, /#screen-start \.hub-header-settings\s*\{[^}]*left:\s*90\.3%[^}]*width:\s*7\.45%[^}]*height:\s*7\.45cqw/s,
-    'Ajustes debe conservar un disco cuadrado al final de la cabecera');
+  assert.match(proportional, /#screen-start \.appbar\s*\{[^}]*display:\s*flex[^}]*flex-direction:\s*column[^}]*container-type:\s*inline-size[^}]*width:\s*min\(470\.5px,\s*100%,\s*96svh\)/s,
+    'la cabecera debe apilar sus dos filas y escalar en cqw por su ancho');
+  assert.match(proportional, /#screen-start \.hub-header-top\s*\{[^}]*display:\s*flex/s,
+    'la fila superior debe alinear los recursos con el engranaje');
+  assert.match(proportional, /#screen-start \.hub-header-wallets\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s,
+    'las tres cápsulas de recursos deben repartirse en una rejilla de tres columnas');
+  assert.match(proportional, /#screen-start \.hub-header-settings\s*\{[^}]*position:\s*relative[^}]*border-radius:\s*50%/s,
+    'Ajustes debe ser un disco al final de la fila superior, ya no posicionado en absoluto');
+  assert.match(proportional, /#screen-start \.hub-header-cards\s*\{[^}]*display:\s*flex/s,
+    'la fila inferior debe colocar el perfil junto al acceso de cofres');
+  assert.match(proportional, /#screen-start \.hub-header-avatar\s*\{[^}]*aspect-ratio:\s*1/s,
+    'el avatar debe conservar su proporción circular');
+  assert.match(proportional, /#screen-start \.hub-header-chest\s*\{[^}]*cursor:\s*pointer/s,
+    'el acceso directo a cofres debe existir como tarjeta accionable en la cabecera');
   assert.match(proportional, /#screen-start \.hub-header-wallet\s*\{[^}]*border-radius:\s*999px[^}]*background:\s*linear-gradient[^}]*box-shadow/s,
     'monedas y gemas deben usar una sola cápsula oscura con relieve');
   assert.match(proportional, /#screen-start \.hub-header-wallet\s*\{[^}]*overflow:\s*hidden/s,
