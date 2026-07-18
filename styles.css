@@ -10541,6 +10541,37 @@ body.reduced-fx #modal-mode-launch { animation: none; }
 #screen-start .resource-offer.is-purchased { animation: resourcePurchased .55s cubic-bezier(.18, .88, .25, 1.2); }
 #screen-start .resource-offer.is-poor .resource-buy-gems { border-color: rgba(193, 210, 255, .45); background: linear-gradient(180deg, #58669d, #33416f); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 4px 0 #202b55; }
 
+/* Sección de compra de cofres (sink de gemas). Reutiliza .resource-offer; cada
+   tarjeta toma su color de identidad del accent del cofre vía --offer-a inline. */
+#screen-start .resource-section-chests { --section-glow: #ffc861; }
+#screen-start .resource-offer-chest { --offer-b: #2a1c5e; }
+#screen-start .resource-offer-chest .resource-offer-amount { justify-content: flex-start; gap: 5px; padding-top: 2px; }
+#screen-start .resource-offer-chest .resource-offer-amount strong {
+  font-size: clamp(.74rem, 2vw, 1.02rem);
+  line-height: 1.08;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+#screen-start .resource-chest-tier {
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, .5);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(8, 6, 40, .42);
+  font-size: clamp(.5rem, 1.35vw, .68rem);
+  font-weight: 950;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+#screen-start .resource-chest-sprite {
+  width: 100%;
+  max-width: clamp(96px, 21vw, 148px);
+  margin-inline: auto;
+  transform: translateY(2px);
+  filter: drop-shadow(0 8px 6px rgba(12, 3, 45, .52)) drop-shadow(0 0 14px color-mix(in srgb, var(--chest-accent, #ffc44d) 26%, transparent));
+}
+
 @keyframes resourceCheckout { to { transform: translateY(-1px) scale(1.04); filter: drop-shadow(0 10px 8px rgba(12, 3, 45, .45)) brightness(1.12); } }
 @keyframes resourcePurchased { 42% { transform: translateY(-5px) scale(1.025); filter: brightness(1.2); } }
 

@@ -54,6 +54,7 @@ Clash Royale **a día de hoy (julio 2026)**, que ha cambiado mucho desde el mode
 | Mundo de Clásico completado (50 niveles) | una vez por mundo | `royal` + 20 💎 | ≈6096 |
 | Racha del Reto diario | cada 7 días con medalla | `event` | ≈3185 |
 | Jardín Zen | hito de 10 flores (una vez) | `magic` | ≈7582 |
+| Tienda de recursos · sección Cofres | a demanda | compra directa con 💎 de cualquier tipo salvo `event` (wood 30 · bronze 50 · silver 90 · gold 140 · magic 210 · royal 300 · supreme 450 · champion 650 · divine 900) → `Meta.addChest(1, type, 'shop')` | `Storefront.CHEST_OFFERS` / `buyChest` |
 
 - **`CHEST_DROP_SEQUENCE`** (≈2928): ciclo determinista de 32 cofres al estilo del chest cycle de CR… que hoy es
   **código muerto en la práctica**: todas las fuentes pasan tipo explícito y `nextChestType(preferred)` solo consulta
@@ -412,3 +413,10 @@ La economía meta usa `Math.random` a propósito (un cofre seedeable sería expl
   (~3 en Difícil), mientras `pack` conserva su papel de premio raro y exclusivo de la run. A/B con 40 runs/config:
   +12,9%…+19,8% monedas/run, dentro del guardarraíl de +20%. El stock persistente es inaccesible y no robable durante
   la run; el Cerrajero devuelve exactamente lo enjaulado.
+- 2026-07-18 — **Compra directa de cofres en la tienda (v2.7.2).** Nueva sección "Cofres" en la Tienda de recursos:
+  `Storefront.CHEST_OFFERS` vende con gemas cualquier tipo salvo `event` (wood 30 · bronze 50 · silver 90 · gold 140 ·
+  magic 210 · royal 300 · supreme 450 · champion 650 · divine 900 💎), precios pensados para ser caros pero asequibles.
+  `Storefront.buyChest(id)` valida saldo con `Meta.spendGems`, blinda el cofre de evento (fuera de la lista + guard) y
+  entrega el tipo comprado vía `Meta.addChest(1, id, 'shop')`, que entra al inventario y se abre por el flujo normal
+  (ranura/instantáneo). Tarjetas con fotograma `closed` del atlas y color de acento por cofre; contrato en
+  `tests/store-chests.test.js`. Sin cambios de balance (nuevo sumidero de gemas opcional; los bots de simulación no compran).

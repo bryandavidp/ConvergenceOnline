@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.7.1';
+  const VERSION = '2.7.2';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -362,6 +362,7 @@
         xp_boost_inactive: 'Sin booster activo', xp_boost_active: 'XP ×4 · {t}', xp_boost_extend: 'Extiende {t}', xp_boost_buy: 'Activar', xp_boost_no_gems: 'No tienes gemas suficientes para este booster.',
         xp_boost_added: 'XP ×4 activo · +{t}', xp_pack_6h: '6 h', xp_pack_3d: '3 días', xp_pack_7d: '7 días', xp_result_breakdown: '{base} XP base ×{mult} · +{bonus} por booster',
         mock_purchase_done: 'Compra de prueba completada · +{n} {r}', resource_purchase_failed: 'No se pudo completar la compra. Inténtalo de nuevo.', store_game_blocked: 'La tienda de recursos está disponible desde Inicio. Tu partida sigue activa.',
+        resource_shop_chests: 'COFRES', chest_shop_title: 'Cofres', chest_shop_desc: 'Compra cofres al instante con gemas y ábrelos cuando quieras. El cofre de evento solo se gana jugando.', chest_shop_buy: 'Comprar cofre', chest_shop_add: 'Comprar', chest_shop_bought: '¡{c} añadido a tus cofres!',
         chests_title: 'Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre revela de 2 a 4 premios: monedas, recursos, boosters o un cosmético raro.', chests_none: 'No tienes cofres · cumple objetivos en cualquier modo para ganar el siguiente', chest_reward: '¡Recompensa! {r}', open_chest: 'Abrir cofre',
         chests_kicker: 'Recompensas', chests_subtitle: 'Juega, consigue cofres y descubre premios increíbles.', chests_progress_title: 'Tu progreso', chests_progress_rule: 'Cumple objetivos en cualquier modo: cada {t} cae el siguiente cofre del ciclo.',
         chests_play_survival: 'Jugar Supervivencia', chests_next_wave: 'Cofre extra en {n} oleadas', chests_open_now: 'O abrir ahora', chests_open_saved: 'Abrir cofre guardado', chests_available: 'Disponibles',
@@ -706,6 +707,7 @@
         xp_boost_inactive: 'No active booster', xp_boost_active: 'XP ×4 · {t}', xp_boost_extend: 'Adds {t}', xp_boost_buy: 'Activate', xp_boost_no_gems: 'You do not have enough gems for this booster.',
         xp_boost_added: 'XP ×4 active · +{t}', xp_pack_6h: '6 h', xp_pack_3d: '3 days', xp_pack_7d: '7 days', xp_result_breakdown: '{base} base XP ×{mult} · +{bonus} from booster',
         mock_purchase_done: 'Test purchase completed · +{n} {r}', resource_purchase_failed: 'The purchase could not be completed. Please try again.', store_game_blocked: 'The resource shop is available from Home. Your match is still active.',
+        resource_shop_chests: 'CHESTS', chest_shop_title: 'Chests', chest_shop_desc: 'Buy chests instantly with gems and open them whenever you like. The event chest is only earned by playing.', chest_shop_buy: 'Buy chest', chest_shop_add: 'Buy', chest_shop_bought: '{c} added to your chests!',
         chests_title: 'Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest reveals 2 to 4 rewards: coins, resources, boosters or a rare cosmetic.', chests_none: 'No chests · complete goals in any mode to earn the next one', chest_reward: 'Reward! {r}', open_chest: 'Open chest',
         chests_kicker: 'Rewards', chests_subtitle: 'Play, earn chests and discover incredible prizes.', chests_progress_title: 'Your progress', chests_progress_rule: 'Complete goals in any mode: every {t}, the next cycle chest drops.',
         chests_play_survival: 'Play Survival', chests_next_wave: 'Bonus chest in {n} waves', chests_open_now: 'Or open now', chests_open_saved: 'Open saved chest', chests_available: 'Available',
@@ -4215,7 +4217,22 @@
     XP_BOOST_OFFERS: Object.freeze([
       Object.freeze({ id: 'xp-6h', durationMs: 6 * 60 * 60 * 1000, multiplier: XP_BOOST_MULTIPLIER, gemCost: 25, labelKey: 'xp_pack_6h', asset: 'img/ui-generated/shop/xp-6h.png' }),
       Object.freeze({ id: 'xp-3d', durationMs: 3 * 24 * 60 * 60 * 1000, multiplier: XP_BOOST_MULTIPLIER, gemCost: 80, labelKey: 'xp_pack_3d', best: true, asset: 'img/ui-generated/shop/xp-3d.png' }),
-      Object.freeze({ id: 'xp-7d', durationMs: 7 * 24 * 60 * 60 * 1000, multiplier: XP_BOOST_MULTIPLIER, gemCost: 160, labelKey: 'xp_pack_7d', asset: 'img/ui-generated/shop/xp-7d.png' }),
+      Object.freeze({ id: 'xp-7d', durationMs: 7 * 24 * 60 * 60 * 1000, multiplier: XP_BOOST_MULTIPLIER, gemCost: 160, labelKey: 'xp_pack_7d', best: true, asset: 'img/ui-generated/shop/xp-7d.png' }),
+    ]),
+    /* Compra directa de cofres con gemas (sink de la divisa premium). Sigue el
+     * orden de rareza de CHEST_TYPE_ORDER sin el cofre de evento (ese solo se
+     * gana jugando). Precios pensados para ser caros pero asequibles: el cofre
+     * comprado entra al inventario y se abre por el flujo normal (ranura/instantáneo). */
+    CHEST_OFFERS: Object.freeze([
+      Object.freeze({ id: 'wood', gemCost: 30 }),
+      Object.freeze({ id: 'bronze', gemCost: 50 }),
+      Object.freeze({ id: 'silver', gemCost: 90 }),
+      Object.freeze({ id: 'gold', gemCost: 140 }),
+      Object.freeze({ id: 'magic', gemCost: 210 }),
+      Object.freeze({ id: 'royal', gemCost: 300 }),
+      Object.freeze({ id: 'supreme', gemCost: 450 }),
+      Object.freeze({ id: 'champion', gemCost: 650 }),
+      Object.freeze({ id: 'divine', gemCost: 900 }),
     ]),
     checkoutCurrency(id) {
       const offer = this.CURRENCY_OFFERS.find((item) => item.id === id);
@@ -4234,6 +4251,14 @@
       if (!Meta.spendGems(offer.gemCost)) return { status: 'declined', reason: 'insufficient-gems', offerId: id };
       const boost = Meta.activateXpBoost(offer.durationMs, now);
       return { status: 'paid', paymentMode: 'gems', offerId: id, gemCost: offer.gemCost, boost };
+    },
+    buyChest(id) {
+      const offer = this.CHEST_OFFERS.find((item) => item.id === id);
+      // El cofre de evento no se vende: no está en CHEST_OFFERS y este guard lo blinda.
+      if (!offer || id === 'event' || !CHEST_TYPES[id]) return null;
+      if (!Meta.spendGems(offer.gemCost)) return { status: 'declined', reason: 'insufficient-gems', offerId: id };
+      Meta.addChest(1, id, 'shop');
+      return { status: 'paid', paymentMode: 'gems', offerId: id, gemCost: offer.gemCost, chestType: id };
     },
   };
 
@@ -10568,12 +10593,28 @@
     </article>`;
   }
 
+  function chestOfferCard(offer) {
+    const defn = CHEST_TYPES[offer.id] || CHEST_TYPES.wood;
+    const name = I18n.t(defn.nameKey), tier = I18n.t(defn.rarityKey);
+    const poor = Meta.gems() < offer.gemCost;
+    return `<article class="resource-offer resource-offer-chest${offer.best ? ' is-best' : ''}${poor ? ' is-poor' : ''}" data-offer-card="chest-${offer.id}" style="--offer-a:${defn.accent}">
+      ${offer.best ? `<span class="resource-best">${esc(I18n.t('best_value'))}</span>` : ''}
+      <div class="resource-offer-amount"><strong>${esc(name)}</strong><span class="resource-chest-tier">${esc(tier)}</span></div>
+      <div class="resource-offer-art">${chestSprite(defn.id, 'closed', 'resource-chest-sprite')}</div>
+      <button class="resource-buy resource-buy-gems" type="button" data-chest-offer="${offer.id}" aria-label="${esc(I18n.t('chest_shop_buy'))}: ${esc(name)}, ${offer.gemCost} ${esc(I18n.t('gems'))}">
+        ${iconInline('gem')} <strong>${offer.gemCost}</strong><small>${esc(I18n.t('chest_shop_add'))}</small>
+      </button>
+    </article>`;
+  }
+
   function buildResourceShop() {
     const gems = $('#gem-offers'), coins = $('#coin-offers'), xp = $('#xp-boost-offers');
     if (!gems || !coins || !xp) return;
     gems.innerHTML = Storefront.CURRENCY_OFFERS.filter((offer) => offer.kind === 'gems').map(resourceOfferCard).join('');
     coins.innerHTML = Storefront.CURRENCY_OFFERS.filter((offer) => offer.kind === 'coins').map(resourceOfferCard).join('');
     xp.innerHTML = Storefront.XP_BOOST_OFFERS.map(xpOfferCard).join('');
+    const chestOffers = $('#chest-offers');
+    if (chestOffers) chestOffers.innerHTML = Storefront.CHEST_OFFERS.map(chestOfferCard).join('');
 
     document.querySelectorAll('[data-currency-offer]').forEach((button) => button.addEventListener('click', async () => {
       if (button.disabled) return;
@@ -10586,6 +10627,10 @@
         Storefront.XP_BOOST_OFFERS.forEach((offer) => {
           const xpCard = document.querySelector(`[data-offer-card="${offer.id}"]`);
           if (xpCard) xpCard.classList.toggle('is-poor', Meta.gems() < offer.gemCost);
+        });
+        Storefront.CHEST_OFFERS.forEach((offer) => {
+          const chestCard = document.querySelector(`[data-offer-card="chest-${offer.id}"]`);
+          if (chestCard) chestCard.classList.toggle('is-poor', Meta.gems() < offer.gemCost);
         });
         const label = I18n.t(tx.kind);
         Toasts.show(I18n.t('mock_purchase_done').replace('{n}', fmtNum(tx.amount)).replace('{r}', label), 'good', 2200, tx.kind === 'gems' ? 'gem' : 'coin');
@@ -10608,6 +10653,17 @@
       const offer = Storefront.XP_BOOST_OFFERS.find((item) => item.id === id);
       Sound.success(); Haptics.level(); FX.confetti(34); Econ.refresh(); updateTopBars(); buildResourceShop();
       Toasts.show(I18n.t('xp_boost_added').replace('{t}', I18n.t(offer.labelKey)), 'good', 2400, 'potion');
+    }));
+
+    document.querySelectorAll('[data-chest-offer]').forEach((button) => button.addEventListener('click', () => {
+      const id = button.dataset.chestOffer;
+      const result = Storefront.buyChest(id);
+      if (!result || result.status !== 'paid') {
+        Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 2400, 'gem'); return;
+      }
+      const defn = CHEST_TYPES[id] || CHEST_TYPES.wood;
+      Sound.success(); Haptics.level(); FX.confetti(30); Econ.refresh(); updateTopBars(); syncHomeChests(); buildResourceShop();
+      Toasts.show(I18n.t('chest_shop_bought').replace('{c}', I18n.t(defn.nameKey)), 'good', 2400, 'chest');
     }));
     Econ.refresh();
   }
