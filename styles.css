@@ -9481,8 +9481,10 @@ body.hub-view-open #screen-start .hub-header-cards { display: none; }
 #screen-start .hub-header-chest:focus-visible,
 #screen-start .hub-header-profile-button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 
-/* Pie: conserva la escala de la referencia, pero el dock se ancla al borde
-   inferior real de la pantalla sin margen exterior ni safe-area intermedia. */
+/* Pie: el dock se ancla al borde inferior real de la pantalla. El botón central
+   "Inicio" solo sobresale ~1cqw sobre la barra, así que el contenedor reserva
+   apenas ese margen: se recorta el "headroom" muerto que dejaba una franja negra
+   entre el contenido de las hub views y la barra de navegación. */
 #screen-start .home-foot {
   position: relative;
   z-index: 54;
@@ -9491,7 +9493,7 @@ body.hub-view-open #screen-start .hub-header-cards { display: none; }
   container-type: inline-size;
   width: min(425.5px, 100%, 83svh);
   height: auto;
-  aspect-ratio: 851 / 256;
+  aspect-ratio: 851 / 214;
   margin: 0 auto;
   padding: 0;
   overflow: visible;
@@ -11016,7 +11018,7 @@ body.reduced-fx #screen-start .resource-offer.is-processing .resource-offer-art 
   --chest-panel: rgba(8, 20, 74, .93);
   --chest-line: rgba(53, 121, 255, .76);
   position: relative;
-  padding: 0 clamp(5px, 1vw, 12px) clamp(8px, 1.2svh, 14px);
+  padding: 0 clamp(5px, 1vw, 12px) clamp(2px, .4svh, 4px);
   background:
     radial-gradient(circle at 12% 14%, rgba(139, 58, 255, .18), transparent 25%),
     radial-gradient(circle at 86% 38%, rgba(33, 118, 255, .14), transparent 26%);
@@ -11076,7 +11078,7 @@ body.reduced-fx #screen-start .resource-offer.is-processing .resource-offer-art 
   position: relative;
   width: min(1040px, 100%);
   gap: clamp(10px, 1.35svh, 16px);
-  padding: 0 clamp(4px, 1vw, 12px) 14px;
+  padding: 0 clamp(4px, 1vw, 12px) 5px;
   scrollbar-color: rgba(112,77,231,.72) transparent;
 }
 #screen-start .view-chests > .chests-scroll > * {

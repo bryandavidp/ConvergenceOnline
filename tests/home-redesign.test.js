@@ -216,8 +216,8 @@ test('home: fija el contrato visual del hub, cilindro, avatar y economía', () =
     'perfil y acceso a cofres solo deben verse en Inicio, no en las demás hub views');
   assert.match(proportional, /#screen-start \.hub-header-plus img\s*\{[^}]*filter:\s*none/s,
     'el asset + no debe volver a recolorearse ni perder su acabado 3D');
-  assert.match(proportional, /#screen-start \.home-foot\s*\{[^}]*width:\s*min\(425\.5px,\s*100%,\s*83svh\)[^}]*aspect-ratio:\s*851\s*\/\s*256[^}]*margin:\s*0 auto;/s,
-    'el pie debe conservar su escala sin añadir margen bajo el dock');
+  assert.match(proportional, /#screen-start \.home-foot\s*\{[^}]*width:\s*min\(425\.5px,\s*100%,\s*83svh\)[^}]*aspect-ratio:\s*851\s*\/\s*214[^}]*margin:\s*0 auto;/s,
+    'el pie recorta el headroom muerto (aspect-ratio reducido) para que el contenido llegue a la barra');
   assert.match(proportional, /#screen-start \.bottom-nav\s*\{[^}]*left:\s*2\.35%[^}]*top:\s*auto;[^}]*bottom:\s*0;[^}]*width:\s*95\.18%[^}]*aspect-ratio:\s*810\s*\/\s*202/s,
     'el dock debe quedar anclado al borde inferior en cualquier altura');
   assert.match(proportional, /body\.has-update-banner\[data-screen="start"\] #screen-start \.home-foot\s*\{[^}]*padding-bottom:\s*0/s,
