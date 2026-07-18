@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.7.1" />
+  <link rel="stylesheet" href="styles.css?v=2.7.2" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -596,6 +596,15 @@
           <p class="resource-section-copy" data-i18n="xp_booster_desc">Multiplica ×4 todo el XP ganado en las partidas que empieces mientras esté activo.</p>
           <div class="resource-offers xp-offers" id="xp-boost-offers"></div>
         </section>
+
+        <section class="resource-section resource-section-chests" aria-labelledby="resource-chests-title">
+          <div class="resource-section-head">
+            <span class="resource-section-icon"><img src="img/ui/chest.png" alt="" aria-hidden="true"></span>
+            <div><p data-i18n="resource_shop_chests">COFRES</p><h3 id="resource-chests-title" data-i18n="chest_shop_title">Cofres</h3></div>
+          </div>
+          <p class="resource-section-copy" data-i18n="chest_shop_desc">Compra cofres al instante con gemas y ábrelos cuando quieras. El cofre de evento solo se gana jugando.</p>
+          <div class="resource-offers chest-offers" id="chest-offers"></div>
+        </section>
       </div>
       <div class="modal-actions view-actions resource-shop-actions">
         <button class="btn btn-ghost" type="button" data-act="open-style-shop" data-i18n="style_shop_short">Tableros y temas</button>
@@ -781,6 +790,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.7.1" defer></script>
+  <script src="game.js?v=2.7.2" defer></script>
 </body>
 </html>
