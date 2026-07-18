@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.88';
+  const VERSION = '2.6.90';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -374,6 +374,7 @@
         chest_odds_title: 'Probabilidades', chest_odds_cosmetic: 'Cosmético', home_chest_opening: 'Abriendo · {t}',
         chest_pipeline_won: '¡Cofre del ciclo! +1 {c}', chest_daily_won: 'Primera victoria del día · +1 cofre', chest_weekly_won: 'Reto semanal · +1 cofre de evento',
         chest_next_in_cycle: 'Siguiente del ciclo: {c}', chest_pity: 'Mítico o mejor en ≤ {n} cofres',
+        chest_auto_note: 'Al terminar un cofre, el siguiente más corto empieza solo',
         soon_badge: 'Próximamente', notify_me: 'Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
         edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
         home_classic: 'Partida clásica', home_classic_prefix: 'Partida', home_classic_name: 'Clásica', home_classic_sub: 'Juega en el tablero contra amigos o bots', home_surv_sub: 'Sobrevive a oleadas infinitas',
@@ -592,7 +593,7 @@
         surv_week_label: 'Esta semana', survmut_none: 'Semana clásica · sin modificador',
         surv_diff_facil_d: '4 vidas · ritmo suave · monedas ×0.85', surv_diff_normal_d: '3 vidas · estándar · monedas ×1', surv_diff_dificil_d: '3 vidas · ritmo alto · monedas ×1.3',
         surv_launch_record: 'Récord: oleada {w}', surv_launch_norecord: 'Récord: —',
-        mode_launch_close: 'Cerrar', mode_launch_progress: 'Tu progreso', mode_launch_how: 'Cómo funciona', mode_launch_record: 'Récord', mode_launch_no_record: '—', mode_launch_plays: 'Partidas', mode_launch_level: 'Nivel', mode_launch_chapter: 'Capítulo', mode_launch_best: 'Mejor marca', mode_launch_worlds: 'Mundos', mode_launch_stars: 'Estrellas', mode_launch_next_boss: 'Próximo jefe', mode_launch_start_time: 'Tiempo inicial', mode_launch_time_cap: 'Tope de reloj', mode_launch_each_match: 'Cada convergencia', mode_launch_flowers: 'Flores', mode_launch_goal: 'Objetivo', mode_launch_pace: 'Ritmo',
+        mode_launch_close: 'Cerrar', mode_launch_back: 'Volver', mode_launch_details: 'Ver detalles', mode_launch_progress: 'Tu progreso', mode_launch_how: 'Cómo funciona', mode_launch_record: 'Récord', mode_launch_no_record: '—', mode_launch_plays: 'Partidas', mode_launch_level: 'Nivel', mode_launch_chapter: 'Capítulo', mode_launch_best: 'Mejor marca', mode_launch_worlds: 'Mundos', mode_launch_stars: 'Estrellas', mode_launch_next_boss: 'Próximo jefe', mode_launch_start_time: 'Tiempo inicial', mode_launch_time_cap: 'Tope de reloj', mode_launch_each_match: 'Cada convergencia', mode_launch_flowers: 'Flores', mode_launch_goal: 'Objetivo', mode_launch_pace: 'Ritmo',
         ml_surv_tag: 'Oleadas infinitas ∞', ml_surv_weekly: 'Progreso semanal', ml_surv_choose: 'Elige dificultad', ml_surv_feats: 'Esta semana', ml_surv_how3: 'Pierdes una vida si el tablero se desborda.', ml_surv_week_none_title: 'Semana clásica', ml_surv_week_none_sub: 'Sin modificador', ml_surv_week_ice_title: 'Semana del hielo', ml_surv_week_ice_sub: 'Trampas heladas · monedas ×1.15', ml_surv_week_chaos_title: 'Semana del caos', ml_surv_week_chaos_sub: 'El terremoto ha vuelto', ml_surv_week_frenzy_title: 'Semana de la furia', ml_surv_week_frenzy_sub: 'Frenesí +30%',
         ml_classic_tag: 'Por niveles', ml_classic_world: 'Mundo actual', ml_classic_route: 'Tu partida', ml_classic_cta: 'Abrir mapa clásico', ml_classic_how1: 'Supera niveles y desbloquea mundos nuevos.', ml_classic_how2: 'Gana hasta 3 estrellas según tus errores.', ml_classic_how3: 'Cada mundo añade obstáculos y reglas propias.',
         ml_adv_tag: 'Viaje infinito', ml_adv_biome: 'Bioma actual', ml_adv_route: 'Tu expedición', ml_adv_cta: 'Continuar aventura', ml_adv_how1: 'Avanza por capítulos de cinco niveles.', ml_adv_how2: 'Cada bioma cambia objetivos y obstáculos.', ml_adv_how3: 'El último nivel de cada capítulo tiene mini-jefe.',
@@ -691,6 +692,7 @@
         chest_odds_title: 'Odds', chest_odds_cosmetic: 'Cosmetic', home_chest_opening: 'Opening · {t}',
         chest_pipeline_won: 'Cycle chest! +1 {c}', chest_daily_won: 'First win of the day · +1 chest', chest_weekly_won: 'Weekly challenge · +1 event chest',
         chest_next_in_cycle: 'Next in cycle: {c}', chest_pity: 'Mythic or better in ≤ {n} chests',
+        chest_auto_note: 'When a chest finishes, the next shortest starts on its own',
         soon_badge: 'Coming soon', notify_me: 'Notify me', notify_ok: "We'll let you know when it's ready!",
         edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
         home_classic: 'Classic game', home_classic_prefix: 'Classic', home_classic_name: 'Game', home_classic_sub: 'Play on the board against friends or bots', home_surv_sub: 'Survive endless waves',
@@ -909,7 +911,7 @@
         surv_week_label: 'This week', survmut_none: 'Classic week · no modifier',
         surv_diff_facil_d: '4 lives · gentle pace · coins ×0.85', surv_diff_normal_d: '3 lives · standard · coins ×1', surv_diff_dificil_d: '3 lives · fast pace · coins ×1.3',
         surv_launch_record: 'Record: wave {w}', surv_launch_norecord: 'Record: —',
-        mode_launch_close: 'Close', mode_launch_progress: 'Your progress', mode_launch_how: 'How it works', mode_launch_record: 'Record', mode_launch_no_record: '—', mode_launch_plays: 'Runs', mode_launch_level: 'Level', mode_launch_chapter: 'Chapter', mode_launch_best: 'Best score', mode_launch_worlds: 'Worlds', mode_launch_stars: 'Stars', mode_launch_next_boss: 'Next boss', mode_launch_start_time: 'Starting time', mode_launch_time_cap: 'Clock cap', mode_launch_each_match: 'Each convergence', mode_launch_flowers: 'Flowers', mode_launch_goal: 'Goal', mode_launch_pace: 'Pace',
+        mode_launch_close: 'Close', mode_launch_back: 'Back', mode_launch_details: 'View details', mode_launch_progress: 'Your progress', mode_launch_how: 'How it works', mode_launch_record: 'Record', mode_launch_no_record: '—', mode_launch_plays: 'Runs', mode_launch_level: 'Level', mode_launch_chapter: 'Chapter', mode_launch_best: 'Best score', mode_launch_worlds: 'Worlds', mode_launch_stars: 'Stars', mode_launch_next_boss: 'Next boss', mode_launch_start_time: 'Starting time', mode_launch_time_cap: 'Clock cap', mode_launch_each_match: 'Each convergence', mode_launch_flowers: 'Flowers', mode_launch_goal: 'Goal', mode_launch_pace: 'Pace',
         ml_surv_tag: 'Infinite waves ∞', ml_surv_weekly: 'Weekly progress', ml_surv_choose: 'Choose difficulty', ml_surv_feats: 'This week', ml_surv_how3: 'You lose one life if the board overflows.', ml_surv_week_none_title: 'Classic week', ml_surv_week_none_sub: 'No modifier', ml_surv_week_ice_title: 'Ice week', ml_surv_week_ice_sub: 'Frozen traps · coins ×1.15', ml_surv_week_chaos_title: 'Chaos week', ml_surv_week_chaos_sub: 'The quake is back', ml_surv_week_frenzy_title: 'Fury week', ml_surv_week_frenzy_sub: 'Frenzy +30%',
         ml_classic_tag: 'Level based', ml_classic_world: 'Current world', ml_classic_route: 'Your game', ml_classic_cta: 'Open classic map', ml_classic_how1: 'Clear levels and unlock new worlds.', ml_classic_how2: 'Earn up to 3 stars based on your mistakes.', ml_classic_how3: 'Each world adds its own obstacles and rules.',
         ml_adv_tag: 'Endless journey', ml_adv_biome: 'Current biome', ml_adv_route: 'Your expedition', ml_adv_cta: 'Continue adventure', ml_adv_how1: 'Advance through five-level chapters.', ml_adv_how2: 'Each biome changes goals and obstacles.', ml_adv_how3: 'Every chapter ends with a mini-boss.',
@@ -2824,17 +2826,17 @@
   const CHEST_TYPES = Object.freeze({
     wood: {
       id: 'wood', nameKey: 'chest_type_wood', sizeKey: 'chest_size_small', rarityKey: 'chest_tier_basic', descKey: 'chest_desc_wood',
-      asset: 'img/ui-generated/chests/atlas/wood.png', accent: '#8fd6ff', durationMs: 3 * 60 * 60 * 1000, instantCost: 10,
+      asset: 'img/ui-generated/chests/atlas/wood.png', accent: '#8fd6ff', durationMs: 3 * 60 * 60 * 1000, instantCost: 9,
       reward: { coins: [60, 199], gems: [3, 10], tickets: [1, 1], coinCut: .60, gemCut: .90, ticketCut: .98, rarity: 'common' },
     },
     bronze: {
       id: 'bronze', nameKey: 'chest_type_bronze', sizeKey: 'chest_size_small', rarityKey: 'chest_tier_common', descKey: 'chest_desc_bronze',
-      asset: 'img/ui-generated/chests/atlas/bronze.png', accent: '#ff9a52', durationMs: 4 * 60 * 60 * 1000, instantCost: 12,
+      asset: 'img/ui-generated/chests/atlas/bronze.png', accent: '#ff9a52', durationMs: 3 * 60 * 60 * 1000, instantCost: 9,
       reward: { coins: [90, 260], gems: [4, 12], tickets: [1, 1], coinCut: .56, gemCut: .86, ticketCut: .96, rarity: 'common' },
     },
     silver: {
       id: 'silver', nameKey: 'chest_type_silver', sizeKey: 'chest_size_medium', rarityKey: 'chest_tier_rare', descKey: 'chest_desc_silver',
-      asset: 'img/ui-generated/chests/atlas/silver.png', accent: '#75c9ff', durationMs: 6 * 60 * 60 * 1000, instantCost: 18,
+      asset: 'img/ui-generated/chests/atlas/silver.png', accent: '#75c9ff', durationMs: 8 * 60 * 60 * 1000, instantCost: 24,
       reward: { coins: [140, 360], gems: [5, 15], tickets: [1, 2], coinCut: .50, gemCut: .78, ticketCut: .92, rarity: 'rare' },
     },
     gold: {
@@ -2844,32 +2846,32 @@
     },
     magic: {
       id: 'magic', nameKey: 'chest_type_magic', sizeKey: 'chest_size_large', rarityKey: 'chest_tier_epic', descKey: 'chest_desc_magic',
-      asset: 'img/ui-generated/chests/atlas/magic.png', accent: '#d45cff', durationMs: 12 * 60 * 60 * 1000, instantCost: 30,
+      asset: 'img/ui-generated/chests/atlas/magic.png', accent: '#d45cff', durationMs: 12 * 60 * 60 * 1000, instantCost: 36,
       reward: { coins: [280, 700], gems: [10, 24], tickets: [2, 4], coinCut: .40, gemCut: .64, ticketCut: .78, rarity: 'epic' },
     },
     royal: {
       id: 'royal', nameKey: 'chest_type_royal', sizeKey: 'chest_size_large', rarityKey: 'chest_tier_legendary', descKey: 'chest_desc_royal',
-      asset: 'img/ui-generated/chests/atlas/royal.png', accent: '#4fa2ff', durationMs: 16 * 60 * 60 * 1000, instantCost: 40,
+      asset: 'img/ui-generated/chests/atlas/royal.png', accent: '#4fa2ff', durationMs: 12 * 60 * 60 * 1000, instantCost: 36,
       reward: { coins: [400, 950], gems: [14, 30], tickets: [3, 5], coinCut: .36, gemCut: .55, ticketCut: .68, rarity: 'legendary' },
     },
     supreme: {
       id: 'supreme', nameKey: 'chest_type_supreme', sizeKey: 'chest_size_xlarge', rarityKey: 'chest_tier_legendary', descKey: 'chest_desc_supreme',
-      asset: 'img/ui-generated/chests/atlas/supreme.png', accent: '#ff4f9a', durationMs: 20 * 60 * 60 * 1000, instantCost: 50,
+      asset: 'img/ui-generated/chests/atlas/supreme.png', accent: '#ff4f9a', durationMs: 24 * 60 * 60 * 1000, instantCost: 72,
       reward: { coins: [550, 1250], gems: [18, 38], tickets: [4, 6], coinCut: .30, gemCut: .46, ticketCut: .58, rarity: 'legendary' },
     },
     champion: {
       id: 'champion', nameKey: 'chest_type_champion', sizeKey: 'chest_size_xlarge', rarityKey: 'chest_tier_mythic', descKey: 'chest_desc_champion',
-      asset: 'img/ui-generated/chests/atlas/champion.png', accent: '#9c6cff', durationMs: 24 * 60 * 60 * 1000, instantCost: 60,
+      asset: 'img/ui-generated/chests/atlas/champion.png', accent: '#9c6cff', durationMs: 24 * 60 * 60 * 1000, instantCost: 72,
       reward: { coins: [750, 1600], gems: [24, 48], tickets: [5, 8], coinCut: .25, gemCut: .40, ticketCut: .50, rarity: 'mythic' },
     },
     divine: {
       id: 'divine', nameKey: 'chest_type_divine', sizeKey: 'chest_size_huge', rarityKey: 'chest_tier_mythic', descKey: 'chest_desc_divine',
-      asset: 'img/ui-generated/chests/atlas/divine.png', accent: '#77edff', durationMs: 36 * 60 * 60 * 1000, instantCost: 75,
+      asset: 'img/ui-generated/chests/atlas/divine.png', accent: '#77edff', durationMs: 36 * 60 * 60 * 1000, instantCost: 108,
       reward: { coins: [1000, 2400], gems: [35, 70], tickets: [7, 10], coinCut: .20, gemCut: .32, ticketCut: .40, rarity: 'mythic' },
     },
     event: {
       id: 'event', nameKey: 'chest_type_event', sizeKey: 'chest_size_variable', rarityKey: 'chest_tier_special', descKey: 'chest_desc_event',
-      asset: 'img/ui-generated/chests/atlas/event.png', accent: '#5ee07a', durationMs: 6 * 60 * 60 * 1000, instantCost: 20,
+      asset: 'img/ui-generated/chests/atlas/event.png', accent: '#5ee07a', durationMs: 8 * 60 * 60 * 1000, instantCost: 24,
       reward: { coins: [180, 520], gems: [8, 22], tickets: [2, 4], coinCut: .38, gemCut: .63, ticketCut: .78, rarity: 'special' },
     },
   });
@@ -2896,7 +2898,7 @@
     Object.assign(def, { chestInventory: [], chestUnlock: null, chestSlots: 3, chestSeq: 0 });
     // Esquema 5 (CH-2): pipeline universal de cofres — objetivos de CUALQUIER modo
     // avanzan un ciclo determinista de cofres; cofre diario de primera victoria.
-    Object.assign(def, { chestPipeline: { wins: 0, cycle: 0 }, dailyChest: { date: '' } });
+    Object.assign(def, { chestPipeline: { wins: 0, cycle: 0 }, dailyChest: { date: '' }, chestReady: [] });
     let m;
     try { m = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); }
     catch (_) { m = JSON.parse(JSON.stringify(def)); }
@@ -2944,6 +2946,8 @@
     if (!Number.isFinite(m.chestPipeline.wins)) m.chestPipeline.wins = 0;
     if (!Number.isFinite(m.chestPipeline.cycle)) m.chestPipeline.cycle = 0;
     if (!m.dailyChest || typeof m.dailyChest !== 'object') m.dailyChest = { date: '' };
+    // CH-3: cofres terminados y sin recoger (no bloquean el siguiente temporizador).
+    if (!Array.isArray(m.chestReady)) m.chestReady = [];
     if (!m.worlds || typeof m.worlds !== 'object') m.worlds = {};
     if (!m.boards || typeof m.boards !== 'object') m.boards = { owned: { classic: 1 }, equipped: 'classic' };
     if (!m.boards.owned) m.boards.owned = { classic: 1 };
@@ -2993,6 +2997,10 @@
       while (list.length < wanted) { list.push(makeChest('wood', 'legacy')); changed = true; }
       m.chestInventory = list;
       if (m.chestUnlock && !list.some((entry) => entry.uid === m.chestUnlock.uid)) { m.chestUnlock = null; changed = true; }
+      if (Array.isArray(m.chestReady)) {
+        const pruned = m.chestReady.filter((uid) => list.some((entry) => entry.uid === uid));
+        if (pruned.length !== m.chestReady.length) { m.chestReady = pruned; changed = true; }
+      }
       if (changed) save();
       return list;
     }
@@ -3086,7 +3094,48 @@
         if (!this.spendGems(this.CHEST_SLOT_GEMS)) return false;
         m.chestSlots = 4; save(); return true;
       },
+      // ---- Temporizadores (CH-3): un solo cofre EN CURSO a la vez; los terminados
+      // pasan a "listos" (no bloquean) y el siguiente más corto en espera se
+      // auto-encadena arrancando en el INSTANTE exacto de la finalización anterior,
+      // también con la app cerrada. Mejora deliberada sobre el modelo de CR. ----
+      advanceChestTimers() {
+        const list = ensureChestInventory();
+        if (!Array.isArray(m.chestReady)) m.chestReady = [];
+        let changed = false, guard = 0;
+        while (m.chestUnlock && (Number(m.chestUnlock.endsAt) || 0) <= Date.now() && guard++ < 12) {
+          const doneUid = m.chestUnlock.uid;
+          const anchor = Number(m.chestUnlock.endsAt) || Date.now();
+          if (list.some((entry) => entry.uid === doneUid) && !m.chestReady.includes(doneUid)) m.chestReady.push(doneUid);
+          m.chestUnlock = null; changed = true;
+          const next = this._shortestWaitingChest();
+          if (next) {
+            const durationMs = CHEST_TYPES[next.type].durationMs;
+            m.chestUnlock = { uid: next.uid, startedAt: anchor, endsAt: anchor + durationMs, durationMs, auto: true };
+          }
+        }
+        if (changed) save();
+      },
+      _shortestWaitingChest() {
+        const list = ensureChestInventory();
+        const ready = Array.isArray(m.chestReady) ? m.chestReady : [];
+        const running = m.chestUnlock && m.chestUnlock.uid;
+        let best = null;
+        for (const entry of list) {
+          if (entry.uid === running || ready.includes(entry.uid)) continue;
+          if (!best || CHEST_TYPES[entry.type].durationMs < CHEST_TYPES[best.type].durationMs) best = entry;
+        }
+        return best;
+      },
+      chestReadyUids() { this.advanceChestTimers(); return (m.chestReady || []).slice(); },
+      chestTimerState(uid) {
+        this.advanceChestTimers();
+        if ((m.chestReady || []).includes(uid)) return 'ready';
+        if (m.chestUnlock && m.chestUnlock.uid === uid) return 'running';
+        return 'waiting';
+      },
+      // Vista del desbloqueo EN CURSO (los listos se consultan con chestReadyUids).
       chestUnlock() {
+        this.advanceChestTimers();
         const list = ensureChestInventory();
         if (!m.chestUnlock) return null;
         const chest = list.find((entry) => entry.uid === m.chestUnlock.uid);
@@ -3095,30 +3144,31 @@
         const endsAt = Number(m.chestUnlock.endsAt) || now;
         const durationMs = Number(m.chestUnlock.durationMs) || CHEST_TYPES[chest.type].durationMs;
         return Object.assign({}, m.chestUnlock, chest, {
-          endsAt, durationMs, remainingMs: Math.max(0, endsAt - now), ready: endsAt <= now,
+          endsAt, durationMs, remainingMs: Math.max(0, endsAt - now), ready: false,
         });
       },
       startChestUnlock(uid) {
+        this.advanceChestTimers();
         const list = ensureChestInventory();
         const chest = list.find((entry) => entry.uid === uid);
-        if (!chest) return null;
-        const current = this.chestUnlock();
-        if (current && current.uid !== uid) return null;
-        if (!current) {
-          const durationMs = CHEST_TYPES[chest.type].durationMs;
-          m.chestUnlock = { uid, startedAt: Date.now(), endsAt: Date.now() + durationMs, durationMs };
-          save();
-        }
+        if (!chest || (m.chestReady || []).includes(uid)) return null;
+        if (m.chestUnlock) return m.chestUnlock.uid === uid ? this.chestUnlock() : null;
+        const durationMs = CHEST_TYPES[chest.type].durationMs;
+        m.chestUnlock = { uid, startedAt: Date.now(), endsAt: Date.now() + durationMs, durationMs };
+        save();
         return this.chestUnlock();
       },
       chestInstantCost(uid) {
+        this.advanceChestTimers();
         const chest = ensureChestInventory().find((entry) => entry.uid === uid);
         if (!chest) return 0;
+        if ((m.chestReady || []).includes(uid)) return 0;
         const defn = CHEST_TYPES[chest.type];
-        const current = this.chestUnlock();
+        const current = m.chestUnlock;
         if (!current || current.uid !== uid) return defn.instantCost;
-        if (current.ready) return 0;
-        return Math.max(1, Math.ceil(defn.instantCost * current.remainingMs / Math.max(1, current.durationMs)));
+        const durationMs = Number(current.durationMs) || defn.durationMs;
+        const remainingMs = Math.max(0, (Number(current.endsAt) || 0) - Date.now());
+        return Math.max(1, Math.ceil(defn.instantCost * remainingMs / Math.max(1, durationMs)));
       },
       addChest(n, type, source) {
         const list = ensureChestInventory();
@@ -3196,6 +3246,16 @@
         m.chestInventory = list;
         m.chests = Math.max(0, (m.chests || 0) - 1);
         if (m.chestUnlock && m.chestUnlock.uid === chest.uid) m.chestUnlock = null;
+        if (Array.isArray(m.chestReady)) m.chestReady = m.chestReady.filter((uid) => uid !== chest.uid);
+        // CH-3: al recoger, si no queda temporizador en curso el siguiente cofre
+        // más corto arranca solo — la cola nunca se queda muerta.
+        if (!m.chestUnlock) {
+          const next = this._shortestWaitingChest();
+          if (next) {
+            const durationMs = CHEST_TYPES[next.type].durationMs;
+            m.chestUnlock = { uid: next.uid, startedAt: Date.now(), endsAt: Date.now() + durationMs, durationMs, auto: true };
+          }
+        }
         this._applyChestReward(reward);
         save();
         return reward;
@@ -8229,20 +8289,89 @@
       return `<img${cls ? ` class="${cls}"` : ''} src="${src}" alt="">`;
     },
 
-    infoButton() {
-      return `<span class="mode-launch-info" aria-hidden="true">${this.img('img/ui-generated/mode-launch/info.png')}</span>`;
+    infoButton(kind = 'progress') {
+      const label = kind === 'how' ? I18n.t('mode_launch_how') : I18n.t('mode_launch_details');
+      return `<button class="mode-launch-info" type="button" data-mode-detail="${kind}" aria-label="${esc(label)}">${this.img('img/ui-generated/mode-launch/info.png')}</button>`;
     },
 
     howItem(src, text, special = '') {
       const visual = special === 'ring'
         ? `<span class="mode-launch-how-icon">${this.img('img/ui-generated/mode-launch/frenzy-ring.png')}</span>`
         : `<span class="mode-launch-how-icon">${this.img(src)}</span>`;
-      const copy = Array.isArray(text) ? text.map((line) => esc(line)).join('<br>') : esc(text);
+      const lines = Array.isArray(text) ? text : [text];
+      const copy = lines.map((line) => `<span>${esc(line)}</span>`).join(' ');
       return `<div class="mode-launch-how-item">${visual}<p>${copy}</p></div>`;
     },
 
     metric(src, value, label) {
       return `<div class="mode-launch-metric"><span>${this.img(src)}</span><b>${esc(value)}</b><small>${esc(label)}</small></div>`;
+    },
+
+    closeDetail({ restoreFocus = true } = {}) {
+      const panel = $('#mode-launch-detail');
+      if (panel) panel.hidden = true;
+      const modal = $('#modal-mode-launch');
+      if (modal) modal.classList.remove('is-detail-open');
+      if (restoreFocus && this.detailTrigger && this.detailTrigger.isConnected) {
+        try { this.detailTrigger.focus({ preventScroll: true }); } catch (_) { this.detailTrigger.focus(); }
+      }
+      this.detailTrigger = null;
+    },
+
+    openDetail(kind, trigger) {
+      const panel = $('#mode-launch-detail');
+      const content = $('#mode-launch-detail-content');
+      if (!panel || !content) return;
+      const selectors = {
+        progress: '.mode-launch-progress-card',
+        context: '.mode-launch-context-card',
+        how: '.mode-launch-how-card',
+      };
+      const source = selectors[kind] ? document.querySelector(`#mode-launch-body ${selectors[kind]}`) : null;
+      if (!source) return;
+
+      let icon = source.querySelector('img');
+      let kicker = I18n.t('mode_launch_details');
+      let title = '';
+      let summary = '';
+      let extra = '';
+      if (kind === 'how') {
+        title = (source.querySelector('h3') || {}).textContent || I18n.t('mode_launch_how');
+        kicker = ($('#mode-launch-title') || {}).textContent || I18n.t('mode_launch_details');
+        const items = Array.from(source.querySelectorAll('.mode-launch-how-item')).map((item) => {
+          const itemIcon = item.querySelector('img');
+          const text = (item.querySelector('p') || {}).textContent || '';
+          return `<div class="mode-launch-detail-item">${itemIcon ? this.img(itemIcon.getAttribute('src') || '') : ''}<p>${esc(text.trim())}</p></div>`;
+        }).join('');
+        summary = I18n.t('mode_launch_details');
+        extra = `<div class="mode-launch-detail-list">${items}</div>`;
+      } else if (kind === 'context') {
+        kicker = (source.querySelector('.mode-launch-context-copy small') || {}).textContent || I18n.t('mode_launch_details');
+        title = (source.querySelector('.mode-launch-context-copy b') || {}).textContent || kicker;
+        summary = (source.querySelector('.mode-launch-context-copy span') || {}).textContent || '';
+      } else {
+        kicker = (source.querySelector('h3') || {}).textContent || I18n.t('mode_launch_progress');
+        title = (source.querySelector('.mode-launch-rank-line b') || {}).textContent || kicker;
+        const value = (source.querySelector('.mode-launch-rank-line strong') || {}).textContent || '';
+        const next = (source.querySelector('.mode-launch-rank-copy > small') || {}).textContent || '';
+        const feat = (source.querySelector('.mode-launch-feats b') || {}).textContent || '';
+        const featLabel = (source.querySelector('.mode-launch-feats small') || {}).textContent || '';
+        summary = [value, next, [feat, featLabel].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
+      }
+
+      const src = icon ? icon.getAttribute('src') || '' : 'img/ui-generated/mode-launch/info.png';
+      content.innerHTML = `<div class="mode-launch-detail-hero"><span>${this.img(src)}</span><div><small>${esc(kicker.trim())}</small><h3 id="mode-launch-detail-title">${esc(title.trim())}</h3><p>${esc(summary.trim())}</p></div></div>${extra}`;
+      this.detailTrigger = trigger || null;
+      panel.dataset.kind = kind;
+      panel.hidden = false;
+      const modal = $('#modal-mode-launch');
+      if (modal) modal.classList.add('is-detail-open');
+      const close = $('#btn-mode-launch-detail-close');
+      if (close) {
+        close.setAttribute('aria-label', I18n.t('mode_launch_back'));
+        requestAnimationFrame(() => close.focus({ preventScroll: true }));
+      }
+      Sound.ui();
     },
 
     open(mode) {
@@ -8284,6 +8413,7 @@
     renderBody() {
       const body = $('#mode-launch-body');
       if (!body) return;
+      this.closeDetail({ restoreFocus: false });
       const builders = {
         clasico: () => this.classicHtml(),
         aventura: () => this.adventureHtml(),
@@ -8372,11 +8502,11 @@
             <div class="mode-launch-feats">${this.img('img/ui-generated/mode-launch/medal.png')}<b>${feats}/${Survival.FEATS.length}</b><small>${esc(I18n.t('ml_surv_feats'))}</small></div>
           </div>
         </section>
-        <section class="mode-launch-card mode-launch-context-card">
+        <button class="mode-launch-card mode-launch-context-card" type="button" data-mode-detail="context" aria-label="${esc(`${I18n.t('mode_launch_details')}: ${I18n.t('ml_surv_week_' + mutId + '_title')}`)}">
           <span class="mode-launch-calendar" aria-hidden="true">${this.img('img/ui-generated/mode-launch/calendar.png')}<b>${esc(day)}</b></span>
-          <div><small>${esc(I18n.t('surv_week_label'))}</small><b>${esc(I18n.t('ml_surv_week_' + mutId + '_title'))}</b><span>${esc(I18n.t('ml_surv_week_' + mutId + '_sub'))}</span></div>
+          <span class="mode-launch-context-copy"><small>${esc(I18n.t('surv_week_label'))}</small><b>${esc(I18n.t('ml_surv_week_' + mutId + '_title'))}</b><span>${esc(I18n.t('ml_surv_week_' + mutId + '_sub'))}</span></span>
           <span class="mode-launch-chevron" aria-hidden="true"></span>
-        </section>
+        </button>
         <section class="mode-launch-choice-block">
           <h3>${esc(I18n.t('ml_surv_choose'))}</h3>
           <div class="mode-launch-choice-grid" role="radiogroup" aria-label="${esc(I18n.t('ml_surv_choose'))}">${diffs}</div>
@@ -8387,7 +8517,7 @@
           ${this.metric('img/ui-generated/mode-launch/coin.png', traits[2] || '', '')}
         </div>
         <section class="mode-launch-card mode-launch-how-card">
-          <h3>${esc(I18n.t('mode_launch_how'))}</h3>${this.infoButton()}
+          <h3>${esc(I18n.t('mode_launch_how'))}</h3>${this.infoButton('how')}
           <div class="mode-launch-how-grid">
             ${this.howItem('img/ui-generated/mode-launch/bolt.png', howLines[0])}
             ${this.howItem('', howLines[1], 'ring')}
@@ -8504,14 +8634,14 @@
             <div class="mode-launch-feats">${this.img('img/ui-generated/mode-launch/medal.png')}<b>${Meta.modePlays('zen')}</b><small>${esc(I18n.t('mode_launch_plays'))}</small></div>
           </div>
         </section>
-        <section class="mode-launch-card mode-launch-context-card"><span class="mode-launch-context-icon">${this.img('img/ui-generated/mode-launch/leaf.png')}</span><div><small>${esc(I18n.t('ml_zen_garden'))}</small><b>${esc(I18n.t('ml_zen_space'))}</b><span>${flowers} ${esc(I18n.t('mode_launch_flowers').toLowerCase())}</span></div><span class="mode-launch-chevron" aria-hidden="true"></span></section>
+        <button class="mode-launch-card mode-launch-context-card" type="button" data-mode-detail="context" aria-label="${esc(`${I18n.t('mode_launch_details')}: ${I18n.t('ml_zen_space')}`)}"><span class="mode-launch-context-icon">${this.img('img/ui-generated/mode-launch/leaf.png')}</span><span class="mode-launch-context-copy"><small>${esc(I18n.t('ml_zen_garden'))}</small><b>${esc(I18n.t('ml_zen_space'))}</b><span>${flowers} ${esc(I18n.t('mode_launch_flowers').toLowerCase())}</span></span><span class="mode-launch-chevron" aria-hidden="true"></span></button>
         <section class="mode-launch-choice-block"><h3>${esc(I18n.t('ml_zen_choose'))}</h3><div class="mode-launch-choice-grid mode-launch-choice-grid-two" role="radiogroup" aria-label="${esc(I18n.t('ml_zen_choose'))}">${options}</div></section>
         <div class="mode-launch-traits">
           ${this.metric('img/ui-generated/mode-launch/leaf.png', I18n.t('zen_pace_' + (this.zenDiff === 'facil' ? 'slow' : 'normal')), I18n.t('mode_launch_pace'))}
           ${this.metric('img/ui-generated/mode-launch/heart.png', '∞', I18n.t('mode_launch_goal'))}
           ${this.metric('img/ui-generated/mode-launch/medal.png', String(flowers), I18n.t('mode_launch_flowers'))}
         </div>
-        <section class="mode-launch-card mode-launch-how-card"><h3>${esc(I18n.t('mode_launch_how'))}</h3>${this.infoButton()}<div class="mode-launch-how-grid">
+        <section class="mode-launch-card mode-launch-how-card"><h3>${esc(I18n.t('mode_launch_how'))}</h3>${this.infoButton('how')}<div class="mode-launch-how-grid">
           ${this.howItem('img/ui-generated/mode-launch/leaf.png', I18n.t('ml_zen_how1'))}
           ${this.howItem('', I18n.t('ml_zen_how2'), 'ring')}
           ${this.howItem('img/ui-generated/mode-launch/heart.png', I18n.t('ml_zen_how3'))}
@@ -8531,10 +8661,10 @@
             <div class="mode-launch-feats">${this.img(data.sideIcon)}<b>${esc(data.sideValue)}</b><small>${esc(data.sideLabel)}</small></div>
           </div>
         </section>
-        <section class="mode-launch-card mode-launch-context-card"><span class="mode-launch-context-icon">${this.img(data.contextIcon)}</span><div><small>${esc(data.contextKicker)}</small><b>${esc(data.contextTitle)}</b><span>${esc(data.contextSub)}</span></div><span class="mode-launch-chevron" aria-hidden="true"></span></section>
+        <button class="mode-launch-card mode-launch-context-card" type="button" data-mode-detail="context" aria-label="${esc(`${I18n.t('mode_launch_details')}: ${data.contextTitle}`)}"><span class="mode-launch-context-icon">${this.img(data.contextIcon)}</span><span class="mode-launch-context-copy"><small>${esc(data.contextKicker)}</small><b>${esc(data.contextTitle)}</b><span>${esc(data.contextSub)}</span></span><span class="mode-launch-chevron" aria-hidden="true"></span></button>
         <section class="mode-launch-choice-block"><h3>${esc(data.choiceTitle)}</h3><div class="mode-launch-stats-grid">${metrics}</div></section>
         <div class="mode-launch-traits mode-launch-traits-summary">${traits}</div>
-        <section class="mode-launch-card mode-launch-how-card"><h3>${esc(I18n.t('mode_launch_how'))}</h3>${this.infoButton()}<div class="mode-launch-how-grid">${how}</div></section>`;
+        <section class="mode-launch-card mode-launch-how-card"><h3>${esc(I18n.t('mode_launch_how'))}</h3>${this.infoButton('how')}<div class="mode-launch-how-grid">${how}</div></section>`;
     },
   };
 
@@ -8976,14 +9106,21 @@
 
   function syncHomeChests() {
     const chests = Meta.chests();
-    // CH-1: el chip de Inicio refleja el temporizador real — "¡Listo!" pesa más
-    // que el contador, y un desbloqueo en curso muestra su cuenta atrás.
+    // CH-1/CH-3: "¡Listo!" (cofres terminados) pesa más que el contador; un
+    // desbloqueo en curso muestra su cuenta atrás. El badge de PWA marca los listos.
+    const readyCount = Meta.chestReadyUids().length;
     const unlock = Meta.chestUnlock();
     let chestState;
-    if (unlock && unlock.ready) chestState = I18n.t('chest_slot_ready');
+    if (readyCount > 0) chestState = I18n.t('chest_slot_ready');
     else if (unlock) chestState = I18n.t('home_chest_opening').replace('{t}', chestDuration(unlock.remainingMs, true));
     else if (chests > 0) chestState = I18n.t(chests === 1 ? 'home_ready_one' : 'home_ready_many').replace('{n}', chests);
     else chestState = I18n.t('home_none_ready');
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.setAppBadge === 'function') {
+        if (readyCount > 0) navigator.setAppBadge(readyCount);
+        else if (typeof navigator.clearAppBadge === 'function') navigator.clearAppBadge();
+      }
+    } catch (_) { /* Badging API opcional: sin permiso o sin soporte, silencio. */ }
     const state = $('#home-chests-state');
     if (state) { state.textContent = chestState; state.removeAttribute('data-i18n'); }
     const badge = $('#home-chests-badge');
@@ -9441,6 +9578,7 @@
   let selectedChestUid = '';
   let chestTimerHandle = 0;
   let chestSlotArmUntil = 0;
+  let chestRunningUid = ''; // CH-3: detecta el cambio de cofre en curso para reconstruir
   const LEGACY_CHEST_OPEN_ASSET = 'img/ui-generated/chests/chest-open.png';
   function chestDef(type) { return CHEST_TYPES[type] || CHEST_TYPES.wood; }
   function chestDuration(ms, countdown) {
@@ -9459,7 +9597,14 @@
     const inventory = Meta.chestInventory();
     const unlock = Meta.chestUnlock();
     let chest = inventory.find((entry) => entry.uid === selectedChestUid);
-    if (!chest) chest = (unlock && inventory.find((entry) => entry.uid === unlock.uid)) || inventory[0] || null;
+    // CH-3: sin selección previa, el cofre LISTO manda (recoger es la acción natural);
+    // después el que está en curso, y por último el primero del inventario.
+    if (!chest) {
+      const ready = Meta.chestReadyUids();
+      chest = inventory.find((entry) => ready.includes(entry.uid))
+        || (unlock && inventory.find((entry) => entry.uid === unlock.uid))
+        || inventory[0] || null;
+    }
     selectedChestUid = chest ? chest.uid : '';
     return chest;
   }
@@ -9484,26 +9629,28 @@
       if (instantCost) instantCost.textContent = '—';
       return;
     }
+    // CH-3: estados por cofre — ready (recoger gratis), running (en curso) o
+    // waiting; un waiting con otro en curso se puede abrir al instante igualmente.
     const defn = chestDef(chest.type), unlock = Meta.chestUnlock();
-    const active = unlock && unlock.uid === chest.uid;
-    const blocked = unlock && unlock.uid !== chest.uid;
+    const state = Meta.chestTimerState(chest.uid);
+    const blocked = state === 'waiting' && !!unlock;
     const cost = Meta.chestInstantCost(chest.uid);
-    if (instantLabel) instantLabel.textContent = active && unlock.ready ? I18n.t('chest_collect') : I18n.t('chest_open_now_action');
+    if (instantLabel) instantLabel.textContent = state === 'ready' ? I18n.t('chest_collect') : I18n.t('chest_open_now_action');
     if (instantCost) instantCost.textContent = cost > 0 ? String(cost) : '✓';
-    instant.disabled = !!blocked;
+    instant.disabled = false;
     instant.classList.toggle('is-poor', cost > Meta.gems());
     instant.setAttribute('aria-label', `${I18n.t('chest_open_now_action')}: ${cost}`);
-    if (blocked) {
-      if (timedLabel) timedLabel.textContent = I18n.t('chest_slot_blocked');
-      if (timedValue) timedValue.textContent = chestDuration(defn.durationMs);
-      timed.disabled = true;
-    } else if (active && unlock.ready) {
+    if (state === 'ready') {
       if (timedLabel) timedLabel.textContent = I18n.t('chest_collect');
       if (timedValue) timedValue.textContent = '✓';
       timed.disabled = false;
-    } else if (active) {
+    } else if (state === 'running') {
       if (timedLabel) timedLabel.textContent = I18n.t('chest_unlocking_action');
-      if (timedValue) timedValue.textContent = chestDuration(unlock.remainingMs, true);
+      if (timedValue) timedValue.textContent = chestDuration(unlock ? unlock.remainingMs : 0, true);
+      timed.disabled = true;
+    } else if (blocked) {
+      if (timedLabel) timedLabel.textContent = I18n.t('chest_slot_blocked');
+      if (timedValue) timedValue.textContent = chestDuration(defn.durationMs);
       timed.disabled = true;
     } else {
       if (timedLabel) timedLabel.textContent = I18n.t('chest_start_unlock');
@@ -9576,11 +9723,12 @@
         html += `<div class="chest-slot chest-slot-empty"><span class="chest-slot-state">${esc(I18n.t('chest_slot_empty'))}</span><span class="chest-slot-plus">+</span><small>${i + 1}</small></div>`;
         continue;
       }
-      const defn = chestDef(chest.type), active = unlock && unlock.uid === chest.uid;
-      const blocked = unlock && unlock.uid !== chest.uid;
-      const state = active ? (unlock.ready ? 'ready' : 'opening') : (blocked ? 'blocked' : 'waiting');
-      const stateLabel = active ? (unlock.ready ? I18n.t('chest_slot_ready') : I18n.t('chest_slot_opening')) : (blocked ? I18n.t('chest_slot_blocked') : I18n.t('chest_slot_waiting'));
-      const time = active ? (unlock.ready ? I18n.t('chest_collect') : chestDuration(unlock.remainingMs, true)) : chestDuration(defn.durationMs);
+      const defn = chestDef(chest.type);
+      // CH-3: estado real por cofre; los "listos" conviven con un temporizador en curso.
+      const timer = Meta.chestTimerState(chest.uid);
+      const state = timer === 'ready' ? 'ready' : (timer === 'running' ? 'opening' : 'waiting');
+      const stateLabel = timer === 'ready' ? I18n.t('chest_slot_ready') : (timer === 'running' ? I18n.t('chest_slot_opening') : I18n.t('chest_slot_waiting'));
+      const time = timer === 'ready' ? I18n.t('chest_collect') : (timer === 'running' && unlock ? chestDuration(unlock.remainingMs, true) : chestDuration(defn.durationMs));
       html += `<button class="chest-slot chest-slot-${state}${selected && selected.uid === chest.uid ? ' is-selected' : ''}" type="button" data-chest-slot="${chest.uid}" style="--slot-accent:${defn.accent}">
         <span class="chest-slot-state">${esc(stateLabel)}</span>
         ${chestSprite(chest.type, 'closed', 'chest-slot-art')}
@@ -9612,7 +9760,14 @@
       Sound.success(); Toasts.show(I18n.t('chest_slot_unlocked'), 'good', 1800, 'chest'); buildChests();
     });
     const reserve = $('#chest-reserve-count'), extra = Math.max(0, inventory.length - limit);
-    if (reserve) { reserve.hidden = extra <= 0; reserve.textContent = I18n.t('chest_more_waiting').replace('{n}', extra); }
+    if (reserve) {
+      // CH-3: la reserva alimenta el auto-encadenado — se explica siempre.
+      const parts = [];
+      if (extra > 0) parts.push(I18n.t('chest_more_waiting').replace('{n}', extra));
+      parts.push(I18n.t('chest_auto_note'));
+      reserve.hidden = false;
+      reserve.textContent = parts.join(' · ');
+    }
   }
   function buildChestCatalog() {
     const grid = $('#chest-catalog-grid'); if (!grid) return;
@@ -9643,16 +9798,23 @@
     if (show) { buildChestCatalog(); const scroller = catalog.closest('.chests-scroll'); if (scroller && scroller.scrollTo) scroller.scrollTo({ top: 0, behavior: 'smooth' }); }
   }
   function refreshChestCountdowns() {
+    // CH-3: chestUnlock() ya auto-encadena; si el cofre en curso cambió (terminó y
+    // arrancó el siguiente) o ya no hay ninguno, se reconstruye la vista entera.
     const unlock = Meta.chestUnlock();
-    if (!unlock) { if (chestTimerHandle) clearInterval(chestTimerHandle); chestTimerHandle = 0; return; }
-    if (unlock.ready) { if (chestTimerHandle) clearInterval(chestTimerHandle); chestTimerHandle = 0; buildChests(); return; }
+    if (!unlock || unlock.uid !== chestRunningUid) {
+      if (chestTimerHandle) clearInterval(chestTimerHandle);
+      chestTimerHandle = 0;
+      buildChests();
+      return;
+    }
     document.querySelectorAll(`[data-chest-countdown="${unlock.uid}"]`).forEach((node) => { node.textContent = chestDuration(unlock.remainingMs, true); });
     if (selectedChestUid === unlock.uid) { const node = $('#chest-timer-value'); if (node) node.textContent = chestDuration(unlock.remainingMs, true); }
   }
   function startChestTicker() {
     if (chestTimerHandle) clearInterval(chestTimerHandle);
     const unlock = Meta.chestUnlock();
-    if (unlock && !unlock.ready) chestTimerHandle = setInterval(refreshChestCountdowns, 1000);
+    chestRunningUid = unlock ? unlock.uid : '';
+    if (unlock) chestTimerHandle = setInterval(refreshChestCountdowns, 1000);
   }
   function buildChests() {
     const el = $('#chests-body'); if (!el) return;
@@ -9708,11 +9870,12 @@
     revealChestReward(r, false, chest.type);
   }
   function doChestTimerAction() {
-    const chest = currentSelectedChest(), unlock = Meta.chestUnlock();
+    const chest = currentSelectedChest();
     if (!chest) { Sound.miss(); Toasts.show(I18n.t('chests_none'), 'warn', 2400, 'chest'); return; }
-    if (unlock && unlock.uid !== chest.uid) { Sound.miss(); Toasts.show(I18n.t('chest_only_one'), 'warn', 2400, 'clock'); return; }
-    if (unlock && unlock.uid === chest.uid && unlock.ready) { openSelectedChest(chest, false); return; }
-    if (unlock) return;
+    const state = Meta.chestTimerState(chest.uid);
+    if (state === 'ready') { openSelectedChest(chest, false); return; }
+    if (state === 'running') return;
+    if (Meta.chestUnlock()) { Sound.miss(); Toasts.show(I18n.t('chest_only_one'), 'warn', 2400, 'clock'); return; }
     Meta.startChestUnlock(chest.uid); Sound.success(); Toasts.show(I18n.t('chest_timer_started'), 'good', 1800, 'clock'); buildChests();
   }
   function doChestInstantAction() { openSelectedChest(currentSelectedChest(), true); }
@@ -9895,6 +10058,8 @@
 
     // Acciones del sistema base (top bar reutilizable + atajos): delegación por data-act.
     document.addEventListener('click', (e) => {
+      const detail = e.target.closest('[data-mode-detail]');
+      if (detail) { ModeLaunch.openDetail(detail.dataset.modeDetail, detail); return; }
       const option = e.target.closest('[data-mode-option]');
       if (option) { ModeLaunch.select(option.dataset.modeOption); return; }
       const el = e.target.closest('[data-act]'); if (!el) return;
@@ -9934,6 +10099,7 @@
     // Lanzadores de modos que necesitan una configuración intermedia.
     { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { HubViews.home({ focus: false }); Game.start('aventura', 'normal'); }); }
     { const ml = $('#btn-mode-launch-start'); if (ml) ml.addEventListener('click', () => ModeLaunch.start()); }
+    { const detailClose = $('#btn-mode-launch-detail-close'); if (detailClose) detailClose.addEventListener('click', () => ModeLaunch.closeDetail()); }
 
     // Modo Clásico (mapa de mundos)
     { const wb = $('#worlds-back'); if (wb) wb.addEventListener('click', () => showHome('clasico', true)); }
@@ -9985,7 +10151,9 @@
     // Teclas globales
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        if (document.body.dataset.screen === 'start' && HubViews.current !== 'home') HubViews.home();
+        if (Modal._id === 'modal-mode-launch' && !$('#mode-launch-detail').hidden) ModeLaunch.closeDetail();
+        else if (Modal._id === 'modal-mode-launch') Modal.close();
+        else if (document.body.dataset.screen === 'start' && HubViews.current !== 'home') HubViews.home();
         else if (State.status === 'playing') Game.pause();
         else if (State.status === 'paused') Game.resume();
       } else if (e.key.toLowerCase() === 'p' && (State.status === 'playing' || State.status === 'paused')) {

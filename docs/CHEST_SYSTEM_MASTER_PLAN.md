@@ -277,3 +277,16 @@ La economía meta usa `Math.random` a propósito (un cofre seedeable sería expl
   `tests/chest-pipeline.test.js` (8 tests: ciclo determinista, diario 1/día, pity, semanal→event, contrarreloj/reto/supervivencia,
   escalera intacta). Suite 187/189; balance-sim sin cambios en partida (el pipeline es meta-economía; guardarraíl de medallas OK).
   QA navegador: 3 objetivos → cofre de madera, pity avanza a "bronce · ≤23".
+- 2026-07-18 — **CH-3 completado (v2.6.89).** (1) Duraciones consolidadas a 4 valores legibles — wood/bronze 3 h,
+  silver/gold/event 8 h, magic/royal 12 h, supreme/champion 24 h, divine 36 h — y **tarifa plana de salto: 3 💎/h exactos**
+  (9/24/36/72/108; el salto total del divine sube 75→108, pero la regla es aprendible y el prorrateo hace barato el caso real de
+  "afeitar las últimas horas"). (2) Modelo de temporizadores nuevo: los cofres terminados pasan a `chestReady[]` (recogida gratis,
+  NO bloquean) y **el siguiente cofre más corto se auto-encadena anclado al instante exacto de la finalización anterior, también
+  offline** (cadena multi-cofre con la app cerrada) — mejora deliberada sobre CR; recoger también auto-arranca el siguiente.
+  API: `advanceChestTimers()`, `chestTimerState(uid)`, `chestReadyUids()`; `chestUnlock()` queda como vista del EN CURSO;
+  `m.chestUnlock` legacy migra solo vía advance. (3) Badging API: el icono PWA marca el nº de cofres listos (best-effort,
+  sin push server — documentado como no-objetivo). (4) La selección por defecto prioriza el cofre LISTO; la reserva explica el
+  auto-encadenado; "abrir ahora" ya no se bloquea con otro en curso (tarifa completa). Tests: `tests/chest-timers.test.js`
+  (4: tarifa plana, cadena offline, auto-arranque al recoger, costes por estado) y actualización del test de desbloqueo a la
+  semántica nueva. Suite 191/193. QA navegador: cadena plata→madera→oro con reloj simulado, recogida gratis con recompensa
+  y auto-arranque verificados; chip de Eventos "¡Listo!".

@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.88" />
+  <link rel="stylesheet" href="styles.css?v=2.6.90" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -348,6 +348,12 @@
         <button class="mode-launch-close" type="button" data-close data-i18n-al="mode_launch_close" aria-label="Cerrar"><span aria-hidden="true"></span></button>
       </header>
       <div class="modal-body mode-launch-body" id="mode-launch-body"></div>
+      <section class="mode-launch-detail" id="mode-launch-detail" aria-labelledby="mode-launch-detail-title" hidden>
+        <button class="mode-launch-detail-close" type="button" id="btn-mode-launch-detail-close" aria-label="Volver">
+          <span aria-hidden="true"></span>
+        </button>
+        <div class="mode-launch-detail-content" id="mode-launch-detail-content"></div>
+      </section>
       <div class="modal-actions mode-launch-actions">
         <button class="btn mode-launch-start" type="button" id="btn-mode-launch-start">
           <span class="mode-launch-start-icon" aria-hidden="true"><img id="mode-launch-start-icon" src="img/ui-generated/mode-launch/heart.png" alt=""></span>
@@ -713,6 +719,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.6.88" defer></script>
+  <script src="game.js?v=2.6.90" defer></script>
 </body>
 </html>

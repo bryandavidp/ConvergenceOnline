@@ -21,6 +21,7 @@ function snapshot() {
     chests: m.chests,
     chestInventory: m.chestInventory,
     chestUnlock: m.chestUnlock,
+    chestReady: m.chestReady,
     chestSlots: m.chestSlots,
     chestSeq: m.chestSeq,
     boards: m.boards,
@@ -71,7 +72,7 @@ test('cofres: migra el contador histórico a inventario de madera sin tiradas al
 test('cofres: un desbloqueo persiste, calcula omisión proporcional y queda listo', () => {
   const snap = snapshot(), m = Meta.state;
   try {
-    m.chests = 0; m.chestInventory = []; m.chestUnlock = null; m.chestSeq = 0;
+    m.chests = 0; m.chestInventory = []; m.chestUnlock = null; m.chestReady = []; m.chestSeq = 0;
     Meta.addChest(1, 'wood', 'test');
     const chest = Meta.chestInventory()[0];
     const started = Meta.startChestUnlock(chest.uid);
@@ -79,11 +80,14 @@ test('cofres: un desbloqueo persiste, calcula omisión proporcional y queda list
     assert.equal(started.ready, false);
     assert.equal(Meta.chestInstantCost(chest.uid), CHEST_TYPES.wood.instantCost);
 
+    // CH-3: al terminar, el cofre pasa a "listo" (no bloquea) y deja de haber
+    // desbloqueo en curso; recogerlo es gratis.
     m.chestUnlock.endsAt = Date.now() - 1;
-    const ready = Meta.chestUnlock();
-    assert.equal(ready.ready, true);
-    assert.equal(ready.remainingMs, 0);
+    assert.equal(Meta.chestUnlock(), null);
+    assert.deepEqual(Meta.chestReadyUids(), [chest.uid]);
+    assert.equal(Meta.chestTimerState(chest.uid), 'ready');
     assert.equal(Meta.chestInstantCost(chest.uid), 0);
+    assert.equal(Meta.startChestUnlock(chest.uid), null, 'un cofre listo no se re-inicia');
 
     const reward = withRandomSequence([0, 0], () => Meta.openChest(chest.uid));
     assert.equal(reward.kind, 'coins');
@@ -91,6 +95,7 @@ test('cofres: un desbloqueo persiste, calcula omisión proporcional y queda list
     assert.equal(reward.chestType, 'wood');
     assert.equal(Meta.chests(), 0);
     assert.equal(Meta.chestUnlock(), null);
+    assert.deepEqual(Meta.chestReadyUids(), []);
   } finally { restore(snap); }
 });
 
