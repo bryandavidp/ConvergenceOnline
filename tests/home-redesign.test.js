@@ -14,23 +14,24 @@ const HOME_ICONS = [
   'medal', 'cart', 'house', 'settings', 'bolt', 'clock', 'upgrade', 'robot',
 ];
 const HOME_GENERATED_ART = [
-  'avatar-robot', 'classic-board', 'daily-gift', 'hero-rocket',
+  'avatar-robot', 'classic-board', 'daily-gift', 'header-coin-star', 'header-plus', 'hero-rocket',
   'multiplayer-versus', 'tournament-trophy', 'nav-achievements', 'nav-chest',
-  'nav-daily', 'nav-friends', 'nav-guide', 'nav-home', 'nav-league',
-  'nav-missions', 'nav-settings', 'nav-shop',
+  'nav-collections', 'nav-daily', 'nav-events', 'nav-friends', 'nav-guide',
+  'nav-home', 'nav-home-redesign', 'nav-league', 'nav-missions', 'nav-settings', 'nav-shop',
 ];
 
 test('home: concentra accesos, modos y navegación en un hub fijo', () => {
   const html = read('index.html');
   const main = html.indexOf('<div class="home-main">');
-  const quick = html.indexOf('class="home-quick-dock"');
   const modes = html.indexOf('class="home-mode-stage"');
   const context = html.indexOf('class="home-context"');
   const nav = html.indexOf('<nav class="bottom-nav"');
 
   assert.ok(main >= 0, 'debe existir el contenedor fijo de Inicio');
-  assert.ok(quick > main && modes > quick && context > modes && nav > context,
-    'accesos, carrusel, contexto y navegación deben respetar la jerarquía del hub');
+  assert.ok(modes > main && context > modes && nav > context,
+    'carrusel, contexto y navegación deben respetar la jerarquía del hub');
+  assert.doesNotMatch(html.slice(main, nav), /home-quick-dock|home-quick-item|id="btn-reward"/,
+    'los accesos diarios deben vivir en Eventos, no duplicarse sobre Inicio');
   assert.doesNotMatch(html, /class="home-scroll"|id="btn-play"|id="screen-modes"/,
     'no debe quedar scroll, CTA Jugar ni pantalla intermedia');
   assert.match(html, /id="mode-cards"[^>]*role="group"/,
@@ -40,23 +41,36 @@ test('home: concentra accesos, modos y navegación en un hub fijo', () => {
 test('home: refleja la arquitectura del mockup y conserva estados reales', () => {
   const html = read('index.html');
   const home = html.slice(html.indexOf('<section class="screen home"'), html.indexOf('<section class="screen screen-worlds"'));
+  const events = html.slice(html.indexOf('<section class="hub-view view-events"'), html.indexOf('<section class="hub-view view-missions"'));
   for (const id of [
-    'btn-resume-run', 'home-daily-state', 'home-daily-badge', 'home-daily-progress',
-    'home-chests-state', 'home-mode-carousel', 'home-mode-status', 'home-record-card',
+    'btn-resume-run', 'home-mode-carousel', 'home-mode-status',
   ]) assert.match(html, new RegExp(`id="${id}"`), `falta el estado ${id}`);
+  for (const id of ['events-reward-state', 'events-mission-progress', 'events-daily-status', 'events-chests-status']) {
+    assert.match(events, new RegExp(`id="${id}"`), `Eventos debe conservar el estado ${id}`);
+  }
 
-  for (const art of ['daily-gift', 'nav-achievements', 'nav-chest', 'nav-daily', 'nav-guide', 'nav-home', 'nav-missions', 'nav-settings', 'nav-shop']) {
+  for (const art of ['nav-events', 'nav-guide', 'nav-home-redesign', 'nav-collections', 'nav-shop']) {
     assert.match(home, new RegExp(`img/ui-generated/home/${art}\\.png`), `falta el arte generado ${art}`);
+  }
+  for (const art of ['daily-gift', 'nav-chest', 'nav-daily', 'nav-missions']) {
+    assert.match(events, new RegExp(`img/ui-generated/home/${art}\\.png`), `Eventos debe conservar el arte ${art}`);
   }
   for (const icon of ['clock', 'upgrade']) {
     assert.match(home, new RegExp(`img/ui-v2/home/${icon}\\.png`), `falta el asset de acción V2 ${icon}`);
   }
   assert.match(home, /data-act="open-guide"/, 'la navegación global debe exponer Guía');
-  assert.match(home, /data-act="nav-achievements"/, 'Logros debe tener una acción propia');
-  assert.equal((home.match(/data-act="settings"/g) || []).length, 1, 'Ajustes debe existir solo en la navegación inferior');
+  assert.match(home, /data-act="nav-events"/, 'Eventos debe tener una acción propia');
+  assert.match(home, /data-act="nav-collections"/, 'Colecciones debe tener una acción propia');
+  assert.equal((home.match(/data-act="settings"/g) || []).length, 0, 'Ajustes debe salir del menú inferior y vivir en la cabecera compartida');
   assert.doesNotMatch(home, /home-bell/, 'Misiones no debe duplicarse como botón flotante');
-  assert.doesNotMatch(home, /home-level-value|home-level-line/, 'el resumen central debe mostrar solo la mejor puntuación');
-  assert.match(home, /id="home-record-card"[^>]+aria-label="Mejor puntuación: 0"/, 'la puntuación debe tener semántica propia');
+  assert.doesNotMatch(home, /id="home-(?:today-daily|daily-card|today-chests)"|data-act="claim-daily"/,
+    'recompensa, misión, reto diario y cofres no deben duplicarse en Inicio');
+  assert.doesNotMatch(home, /home-mode-heading|home-mode-kicker|home-carousel-hint/,
+    'Inicio no debe mostrar el rótulo redundante de selección de modos');
+  assert.match(home, /<h2 class="sr-only" id="home-modes-title"/,
+    'el carrusel debe conservar un nombre accesible aunque el rótulo no sea visible');
+  assert.doesNotMatch(home, /home-record-card|id="start-best"|data-i18n="best_score"|Mejor puntuación/,
+    'Inicio no debe mostrar ni mantener el indicador de mejor puntuación');
   assert.doesNotMatch(home, /home-multi-card|home-today-league|home-today-friends|home-weekly-progress/,
     'el hub no debe conservar atajos duplicados del diseño anterior');
   assert.doesNotMatch(home, /img\/ui\//, 'Inicio no debe consumir iconos del pack anterior');
@@ -115,13 +129,18 @@ test('home: los estados dinámicos incluyen i18n y etiquetas accesibles', () => 
     'la card activa debe describir su acción');
   assert.match(js, /home-mode-status[\s\S]*?home_mode_position/,
     'los cambios del carrusel deben anunciarse en su live region');
-  assert.match(js, /<button class="econ-plus"[^>]+data-i18n-al="get_coins"/);
+  assert.match(topbar, /<button class="hub-header-plus"[^>]+data-i18n-al="get_coins"/);
   assert.match(js, /world_bosque: 'Green Forest'/, 'los nombres de mundo deben localizarse en inglés');
   assert.match(topbar, /img\/ui-generated\/home\/avatar-robot\.png/, 'la cabecera debe usar el avatar generado');
-  assert.doesNotMatch(topbar, /nav-settings|data-act="settings"/, 'la cabecera no debe duplicar Ajustes');
-  for (const icon of ['pencil', 'coin', 'gem', 'plus', 'fire']) {
+  assert.match(topbar, /img\/ui-generated\/home\/header-coin-star\.png/, 'la moneda de cabecera debe llevar la estrella de la referencia');
+  assert.match(topbar, /img\/ui-generated\/home\/header-plus\.png/, 'la compra debe usar el botón + 3D dedicado de la referencia');
+  assert.match(topbar, /img\/ui-generated\/home\/nav-settings\.png/, 'Ajustes debe vivir al final de la cabecera');
+  assert.equal((topbar.match(/data-act="settings"/g) || []).length, 1, 'Ajustes no puede duplicarse dentro de la cabecera');
+  for (const icon of ['star', 'gem']) {
     assert.match(topbar, new RegExp(`img/ui-v2/home/${icon}\\.png`), `la cabecera debe usar ${icon} de V2`);
   }
+  assert.doesNotMatch(topbar, /class="(?:econ-|appbar-profile|avatar)/,
+    'la cabecera aislada no debe heredar las clases antiguas que duplicaban y solapaban recursos');
   assert.doesNotMatch(topbar, /img\/ui\//, 'la cabecera no debe consumir iconos del pack anterior');
   assert.doesNotMatch(topbar, /img\/icons-v2\//, 'la cabecera no debe mezclar la familia SVG plana');
 });
@@ -139,6 +158,7 @@ test('home: sincroniza el contador de cofres y separa Perfil de Logros', () => {
 
 test('home: fija el contrato visual del hub, cilindro, avatar y economía', () => {
   const css = read('styles.css');
+  const proportional = css.slice(css.lastIndexOf('CABECERA + MENÚ 4.2'));
 
   assert.match(css, /#screen-start[^\{]*\{[^}]*font-family\s*:/s,
     'Inicio debe declarar una familia tipográfica propia y coherente');
@@ -153,46 +173,55 @@ test('home: fija el contrato visual del hub, cilindro, avatar y economía', () =
   assert.match(css, /\.bnav-center \.bn-ic\s*\{[^}]*border-radius:\s*50%/s,
     'el icono de Inicio debe vivir en un botón realmente circular');
 
-  const avatarRules = [...css.matchAll(/#screen-start \.avatar\s*\{([^}]*)\}/g)];
-  assert.ok(avatarRules.some(([, body]) => /width:\s*clamp\(/.test(body) && /aspect-ratio:\s*1(?:\D|$)/.test(body)),
-    'el avatar debe tener escala fluida continua y proporción cuadrada');
-  assert.doesNotMatch(css, /#screen-start \.avatar\s*\{[^}]*width:\s*74px[^}]*height:\s*69px/s,
-    'ningún breakpoint puede deformar el avatar circular');
-
-  assert.match(css, /#screen-start \.appbar \.econ-pill\s*\{[^}]*linear-gradient[^}]*border[^}]*box-shadow/s,
-    'monedas y gemas deben usar la cápsula oscura con relieve del mockup');
-  assert.match(css, /#screen-start \.appbar \.econ-plus\s*\{[^}]*border-radius:\s*50%[^}]*background/s,
-    'los botones + deben ser discos verdes completos, no cruces flotantes');
-  assert.doesNotMatch(css, /#screen-start \.appbar-econ\s*\{[^}]*transform:\s*scale/s,
-    'la economía debe dimensionarse de forma fluida sin escalado visual que altere su caja');
-  assert.match(css, /INICIO 3\.2[^\n]*ECONOMÍA ESBELTA Y FLUIDA/);
-  assert.match(css, /#screen-start \.appbar-econ\s*\{[^}]*--home-econ-height:\s*clamp\(29px,\s*3\.9svh,\s*36px\)[^}]*width:\s*clamp\(148px,\s*46vw,\s*360px\)/s,
-    'la economía debe ser baja, alargada y usar el ancho disponible');
-  assert.match(css, /#screen-start \.appbar \.econ-coins \.econ-ic\s*\{[^}]*box-shadow:\s*\n\s*0 1px 2px rgba\(0,0,0,\.38\)/s,
-    'la moneda debe conservar volumen sin un halo que tape su silueta');
+  assert.match(proportional, /#screen-start \.appbar\s*\{[^}]*width:\s*min\(470\.5px,\s*100%,\s*110svh\)[^}]*height:\s*auto[^}]*aspect-ratio:\s*941\s*\/\s*161/s,
+    'la cabecera debe escalar como el lienzo 941×161 sin un alto mínimo fijo');
+  assert.match(proportional, /#screen-start \.hub-header-avatar\s*\{[^}]*width:\s*44\.7%[^}]*aspect-ratio:\s*1/s,
+    'el avatar debe conservar su tamaño relativo y su proporción circular');
+  assert.match(proportional, /#screen-start \.hub-header-wallets\s*\{[^}]*left:\s*44\.2%[^}]*top:\s*28%[^}]*width:\s*43\.5%[^}]*height:\s*44\.7%/s,
+    'las dos carteras deben ocupar las coordenadas medidas de la referencia');
+  assert.match(proportional, /#screen-start \.hub-header-settings\s*\{[^}]*left:\s*90\.3%[^}]*width:\s*7\.45%[^}]*height:\s*7\.45cqw/s,
+    'Ajustes debe conservar un disco cuadrado al final de la cabecera');
+  assert.match(proportional, /#screen-start \.hub-header-wallet\s*\{[^}]*border-radius:\s*999px[^}]*background:\s*linear-gradient[^}]*box-shadow/s,
+    'monedas y gemas deben usar una sola cápsula oscura con relieve');
+  assert.match(proportional, /#screen-start \.hub-header-wallet\s*\{[^}]*overflow:\s*hidden/s,
+    'ningún icono de economía puede sobresalir de su cápsula');
+  assert.match(proportional, /#screen-start \.hub-header-currency\s*\{[^}]*left:\s*\.75cqw/s,
+    'moneda y gema deben conservar margen interior respecto al borde izquierdo');
+  assert.match(proportional, /#screen-start \.hub-header-plus\s*\{[^}]*border-radius:\s*50%[^}]*background:\s*transparent[^}]*box-shadow:\s*none/s,
+    'el relieve completo del botón + debe proceder de un único bitmap dedicado');
+  assert.match(proportional, /#screen-start \.hub-header-plus\s*\{[^}]*right:\s*\.75cqw/s,
+    'el botón + debe conservar margen interior respecto al borde derecho');
+  assert.match(proportional, /#screen-start \.hub-header-plus img\s*\{[^}]*filter:\s*none/s,
+    'el asset + no debe volver a recolorearse ni perder su acabado 3D');
+  assert.match(proportional, /#screen-start \.home-foot\s*\{[^}]*width:\s*min\(425\.5px,\s*100%,\s*83svh\)[^}]*aspect-ratio:\s*851\s*\/\s*256[^}]*margin:\s*0 auto;/s,
+    'el pie debe conservar su escala sin añadir margen bajo el dock');
+  assert.match(proportional, /#screen-start \.bottom-nav\s*\{[^}]*left:\s*2\.35%[^}]*top:\s*auto;[^}]*bottom:\s*0;[^}]*width:\s*95\.18%[^}]*aspect-ratio:\s*810\s*\/\s*202/s,
+    'el dock debe quedar anclado al borde inferior en cualquier altura');
+  assert.match(proportional, /body\.has-update-banner\[data-screen="start"\] #screen-start \.home-foot\s*\{[^}]*padding-bottom:\s*0/s,
+    'el aviso de actualización tampoco puede levantar el menú inferior');
+  assert.match(proportional, /#screen-start \.bnav-center \.bn-ic\s*\{[^}]*top:\s*-\.85cqw[^}]*width:\s*23\.3cqw[^}]*height:\s*23\.3cqw/s,
+    'Inicio no puede volver a ser más alto que el dock ni despegarse de su borde');
+  assert.match(proportional, /#screen-start \.bnav-center \.bn-ic img\s*\{[^}]*translateY\(-\.7cqw\)\s*scale\(\.9\)/s,
+    'la casa debe reservar espacio real para la etiqueta dentro del círculo');
+  assert.match(proportional, /#screen-start \.bnav-center small\s*\{[^}]*bottom:\s*5\.2cqw[^}]*font-size:\s*2\.65cqw/s,
+    'la etiqueta Inicio debe quedar contenida dentro del círculo activo');
 });
 
-test('home: la recompensa diaria hace pop y desaparece conservando su hueco', () => {
-  const css = read('styles.css');
+test('home: recompensa, misión, reto diario y cofres viven exclusivamente en Eventos', () => {
+  const html = read('index.html');
   const js = read('game.js');
+  const home = html.slice(html.indexOf('<section class="screen home"'), html.indexOf('<section class="screen screen-worlds"'));
+  const events = html.slice(html.indexOf('<section class="hub-view view-events"'), html.indexOf('<section class="hub-view view-missions"'));
 
-  assert.match(js, /classList\.add\('is-popping'\)/,
-    'la reclamación debe entrar en el estado transitorio is-popping');
-  assert.match(js, /classList\.add\('is-claimed'\)/,
-    'al terminar debe persistir el estado is-claimed');
-  assert.match(js, /animationName\s*===\s*'dailyRewardBubblePop'/,
-    'el cierre debe esperar a la animación principal y no a una partícula');
-  assert.match(css, /\.daily-banner\.is-popping[^\{]*\{[^}]*animation:\s*dailyRewardBubblePop/s,
-    'el banner debe explotar como burbuja al reclamar');
-  assert.match(css, /@keyframes\s+dailyRewardBubblePop/,
-    'debe existir una coreografía pop dedicada');
-
-  const claimed = css.match(/\.daily-banner\.is-claimed[^\{]*\{([^}]*)\}/s);
-  assert.ok(claimed, 'falta el estilo final de la recompensa reclamada');
-  assert.match(claimed[1], /visibility:\s*hidden/,
-    'el contenido reclamado debe desaparecer visualmente');
-  assert.doesNotMatch(claimed[1], /display:\s*none/,
-    'is-claimed no puede retirar la caja reservada del flujo');
+  assert.doesNotMatch(home, /home-quick-dock|home-quick-item|id="btn-reward"|id="home-(?:today-daily|daily-card|today-chests)"/,
+    'Inicio debe quedar libre de accesos diarios duplicados');
+  for (const action of ['claim-daily', 'open-missions', 'home-daily', 'open-chests']) {
+    assert.match(events, new RegExp(`data-act="${action}"`), `Eventos debe exponer la acción ${action}`);
+  }
+  assert.match(js, /function refreshEvents\(\)[\s\S]*?events-reward-state[\s\S]*?events-mission-progress[\s\S]*?events-daily-status[\s\S]*?events-chests-status/,
+    'Eventos debe proyectar el estado real de sus cuatro apartados');
+  assert.match(js, /function claimDailyReward\(\)[\s\S]*?Meta\.claimReward\(\)[\s\S]*?refreshStart\(\)/,
+    'la recompensa debe seguir siendo funcional desde Eventos');
 });
 
 test('home: la versión de aplicación, recursos y caché está sincronizada', () => {

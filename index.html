@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.66" />
+  <link rel="stylesheet" href="styles.css?v=2.6.86" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -72,47 +72,20 @@
         <span class="space-planet planet-orange"></span>
         <span class="space-planet planet-green"></span>
       </div>
-      <!-- Top bar reutilizable (perfil + economía). Misiones y Ajustes viven en sus menús. -->
+      <!-- Top bar reutilizable: perfil, economía y acceso único a Ajustes. -->
       <header class="appbar" data-topbar></header>
 
       <!-- Las vistas del hub se montan aquí al iniciar. Comparten cabecera y menú
            inferior; ya no bloquean la interfaz dentro de un modal. -->
       <div class="hub-views" id="hub-views"></div>
 
-      <!-- Hub fijo: accesos compactos + selector de modos cilíndrico. -->
+      <!-- Hub fijo: selector de modos cilíndrico. Recompensas, misiones,
+           reto diario y cofres viven exclusivamente en Eventos. -->
       <div class="home-main">
-        <nav class="home-quick-dock" data-i18n-al="home_quick_actions" aria-label="Eventos y accesos rápidos">
-          <div class="daily-banner home-quick-item" id="btn-reward">
-            <span class="db-gift" aria-hidden="true"><img src="img/ui-generated/home/daily-gift.png" alt=""></span>
-            <span class="db-tx"><b data-i18n="daily_banner_title">Recompensa diaria</b><small id="home-reward-sub" data-i18n="daily_banner_sub">¡Vuelve cada día y gana premios!</small></span>
-            <button class="db-claim" type="button" data-act="claim-daily"><span class="sr-only" data-i18n="claim">Reclamar</span><span class="db-badge">1</span></button>
-          </div>
-
-          <button class="home-quick-item" type="button" data-act="nav-missions" id="home-today-daily">
-            <span class="home-quick-icon"><img src="img/ui-generated/home/nav-missions.png" alt="" aria-hidden="true"></span>
-            <span class="home-quick-copy"><span data-i18n="tab_missions">Misiones</span><b id="home-daily-progress">0 / 1</b></span>
-          </button>
-
-          <button class="home-quick-item" type="button" data-act="home-daily" id="home-daily-card">
-            <span class="home-quick-icon"><img src="img/ui-generated/home/nav-daily.png" alt="" aria-hidden="true"></span>
-            <span class="home-quick-copy"><span data-i18n="daily_challenge">Reto del día</span><small id="home-daily-state" data-i18n="home_status_pending">Pendiente</small></span>
-            <b class="home-quick-badge" id="home-daily-badge" data-i18n="home_status_pending">Pendiente</b>
-          </button>
-
-          <button class="home-quick-item" type="button" data-act="open-chests" id="home-today-chests">
-            <span class="home-quick-icon"><img src="img/ui-generated/home/nav-chest.png" alt="" aria-hidden="true"><span class="today-badge" id="home-chests-badge" hidden>0</span></span>
-            <span class="home-quick-copy"><span data-i18n="home_chests">Cofres</span><b id="home-chests-state" data-i18n="home_none_ready">Ninguno</b></span>
-          </button>
-        </nav>
-
         <section class="home-mode-stage" aria-labelledby="home-modes-title">
-          <header class="home-mode-heading">
-            <span class="home-mode-kicker" data-i18n="home_modes_label">Modos de juego</span>
-            <h2 id="home-modes-title" data-i18n="modes_title">Elige tu modo</h2>
-            <p id="home-carousel-hint" data-i18n="home_carousel_hint">Desliza horizontalmente · toca la tarjeta para entrar</p>
-          </header>
+          <h2 class="sr-only" id="home-modes-title" data-i18n="modes_title">Elige tu modo</h2>
 
-          <div class="home-mode-carousel" id="home-mode-carousel" role="region" aria-roledescription="carousel" aria-labelledby="home-modes-title" aria-describedby="home-carousel-hint">
+          <div class="home-mode-carousel" id="home-mode-carousel" role="region" aria-roledescription="carousel" aria-labelledby="home-modes-title">
             <div class="home-mode-viewport" id="home-mode-viewport">
               <div class="home-mode-track" id="mode-cards" role="group" aria-labelledby="home-modes-title"></div>
             </div>
@@ -120,17 +93,13 @@
             <p class="sr-only" id="home-mode-status" aria-live="polite" aria-atomic="true"></p>
           </div>
 
-          <!-- Contexto: una partida recuperable sustituye al récord mientras exista. -->
-          <div class="home-context">
+          <!-- Solo aparece cuando existe una partida recuperable. -->
+          <div class="home-context" hidden>
             <button class="home-resume" id="btn-resume-run" hidden>
               <span class="home-resume-ic" aria-hidden="true"><img class="ic" src="img/ui-v2/home/clock.png" alt=""></span>
               <span class="home-resume-copy"><small data-i18n="home_saved_run">Partida guardada</small><b id="home-resume-state">Continuar partida</b></span>
               <span class="home-resume-cta" data-i18n="continue_word">Continuar</span>
             </button>
-            <div class="level-chip record-chip" id="home-record-card" aria-label="Mejor puntuación: 0">
-              <img class="home-score-art" src="img/ui-generated/home/nav-achievements.png" alt="" aria-hidden="true">
-              <span class="home-score-copy"><span data-i18n="best_score">Mejor puntuación</span><b id="start-best">0</b></span>
-            </div>
           </div>
         </section>
 
@@ -141,11 +110,11 @@
       <div class="home-foot">
         <!-- Bottom nav (anclado) -->
         <nav class="bottom-nav" aria-label="Navegación">
-          <button class="bnav" data-act="nav-achievements"><span class="bn-ic"><img src="img/ui-generated/home/nav-achievements.png" alt=""></span><small data-i18n="tab_log">Logros</small></button>
+          <button class="bnav" data-act="nav-events"><span class="bn-ic"><img src="img/ui-generated/home/nav-events.png" alt=""></span><small data-i18n="tab_events">Eventos</small></button>
           <button class="bnav" data-act="nav-shop"><span class="bn-ic"><img src="img/ui-generated/home/nav-shop.png" alt=""></span><small data-i18n="tab_shop">Tienda</small></button>
-          <button class="bnav bnav-center" data-act="nav-home" aria-current="page"><span class="bn-ic"><img src="img/ui-generated/home/nav-home.png" alt=""></span><small data-i18n="tab_home">Inicio</small></button>
+          <button class="bnav bnav-center" data-act="nav-home" aria-current="page"><span class="bn-ic"><img src="img/ui-generated/home/nav-home-redesign.png" alt=""></span><small data-i18n="tab_home">Inicio</small></button>
           <button class="bnav" data-act="open-guide"><span class="bn-ic"><img src="img/ui-generated/home/nav-guide.png" alt=""></span><small data-i18n="tab_guide">Guía</small></button>
-          <button class="bnav" data-act="settings"><span class="bn-ic"><img src="img/ui-generated/home/nav-settings.png" alt=""></span><small data-i18n="tab_set">Ajustes</small></button>
+          <button class="bnav" data-act="nav-collections"><span class="bn-ic"><img src="img/ui-generated/home/nav-collections.png" alt=""></span><small data-i18n="tab_collections">Colecciones</small></button>
         </nav>
       </div>
     </section>
@@ -367,8 +336,59 @@
 
   <!-- ============ CAPAS TRANSITORIAS + VISTAS DEL HUB ============ -->
   <div class="overlay" id="overlay" hidden>
+    <!-- Lanzador compartido de modos. Mantiene Inicio visible y atenuado,
+         siguiendo el panel de referencia de Supervivencia. -->
+    <div class="modal mode-launch-modal" id="modal-mode-launch" role="dialog" aria-modal="true" aria-labelledby="mode-launch-title" aria-describedby="mode-launch-tagline" hidden>
+      <header class="mode-launch-head">
+        <span class="mode-launch-emblem" aria-hidden="true"><img id="mode-launch-emblem" src="img/ui-generated/mode-launch/survival-emblem.png" alt=""></span>
+        <span class="mode-launch-heading">
+          <h2 id="mode-launch-title">Supervivencia</h2>
+          <span id="mode-launch-tagline">Oleadas infinitas ∞</span>
+        </span>
+        <button class="mode-launch-close" type="button" data-close data-i18n-al="mode_launch_close" aria-label="Cerrar"><span aria-hidden="true"></span></button>
+      </header>
+      <div class="modal-body mode-launch-body" id="mode-launch-body"></div>
+      <div class="modal-actions mode-launch-actions">
+        <button class="btn mode-launch-start" type="button" id="btn-mode-launch-start">
+          <span class="mode-launch-start-icon" aria-hidden="true"><img id="mode-launch-start-icon" src="img/ui-generated/mode-launch/heart.png" alt=""></span>
+          <span id="mode-launch-start-label">Empezar supervivencia</span>
+        </button>
+      </div>
+    </div>
     <!-- Estas vistas se trasladan a #hub-views en el arranque. Permanecen aquí
          en el HTML para mantener una única fuente de contenido sin duplicados. -->
+    <section class="hub-view view-events" id="view-events" data-hub-view="events" aria-labelledby="events-title" hidden>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui-generated/home/nav-events.png" alt=""></span><h2 id="events-title" data-i18n="events_title">Eventos</h2></div>
+      <p class="hub-view-intro" data-i18n="events_sub">Tus retos, recompensas y actividades de hoy, reunidos en un solo lugar.</p>
+      <div class="modal-body view-body events-board">
+        <div class="events-grid">
+          <article class="event-card event-card-reward" id="events-reward-card">
+            <span class="event-card-art" aria-hidden="true"><img src="img/ui-generated/home/daily-gift.png" alt=""></span>
+            <span class="event-card-copy"><small data-i18n="events_daily_label">Cada día</small><b data-i18n="daily_banner_title">Recompensa diaria</b><span id="events-reward-state">Lista para reclamar</span></span>
+            <button class="event-card-action" id="events-reward-claim" type="button" data-act="claim-daily" data-i18n="claim">Reclamar</button>
+          </article>
+
+          <article class="event-card">
+            <span class="event-card-art" aria-hidden="true"><img src="img/ui-generated/home/nav-missions.png" alt=""></span>
+            <span class="event-card-copy"><small data-i18n="events_progress_label">Progreso diario</small><b data-i18n="home_daily_mission">Misión diaria</b><span id="events-mission-progress">0 / 1</span></span>
+            <button class="event-card-action" type="button" data-act="open-missions" data-i18n="events_view">Ver</button>
+          </article>
+
+          <article class="event-card">
+            <span class="event-card-art" aria-hidden="true"><img src="img/ui-generated/home/nav-daily.png" alt=""></span>
+            <span class="event-card-copy"><small data-i18n="events_today_label">Solo hoy</small><b data-i18n="daily_challenge">Reto del día</b><span id="events-daily-status">Pendiente</span></span>
+            <button class="event-card-action" type="button" data-act="home-daily" data-i18n="events_play">Jugar</button>
+          </article>
+
+          <article class="event-card" id="events-chests-card">
+            <span class="event-card-art" aria-hidden="true"><img src="img/ui-generated/home/nav-chest.png" alt=""></span>
+            <span class="event-card-copy"><small data-i18n="events_rewards_label">Premios</small><b data-i18n="home_chests">Cofres</b><span id="events-chests-status">Ninguno disponible</span></span>
+            <button class="event-card-action" type="button" data-act="open-chests" data-i18n="events_open">Abrir</button>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section class="hub-view view-missions" id="view-missions" data-hub-view="missions" aria-labelledby="missions-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/target.png" alt=""></span><h2 id="missions-title" data-i18n="missions_title">Misiones</h2></div>
       <div class="modal-body view-body">
@@ -494,41 +514,6 @@
       </div>
     </div>
 
-    <!-- Dificultad de Supervivencia -->
-    <section class="hub-view view-surv-diff" id="view-surv-diff" data-hub-view="surv-diff" aria-labelledby="surv-diff-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/heart.png" alt=""></span><h2 id="surv-diff-title" data-i18n="surv_diff_title">Supervivencia</h2></div>
-      <div class="modal-body view-body">
-        <!-- Hoja de Servicio (SV-30/31/32): rango vitalicio + récord semanal + hazañas -->
-        <div class="surv-service" id="surv-service" hidden>
-          <div class="ss-top"><span class="ss-rank" id="surv-rank-name">Recluta</span><span class="ss-feats" id="surv-feats-line"></span></div>
-          <div class="ss-bar" aria-hidden="true"><span class="ss-bar-fill" id="surv-rank-fill"></span></div>
-          <div class="ss-sub"><span id="surv-rank-prog"></span><span id="surv-week-line"></span></div>
-        </div>
-        <!-- Tarjeta del mutador semanal (SV-12): la razón de revisita, visible antes de jugar -->
-        <div class="surv-week" id="surv-week" hidden>
-          <span class="sw-ic" id="surv-week-ic" aria-hidden="true">📅</span>
-          <div class="sw-tx"><small class="sw-label" data-i18n="surv_week_label">Esta semana</small><b class="sw-effect" id="surv-week-effect">—</b></div>
-        </div>
-        <p class="modal-sub" data-i18n="surv_diff_sub">Elige el ritmo de la partida</p>
-        <div class="surv-diff-pick" id="surv-diff-pick" role="radiogroup" aria-label="Dificultad de Supervivencia">
-          <button class="diff-chip" type="button" data-surv-diff="facil" role="radio"><span class="dc-name" data-i18n="diff_facil">Fácil</span><span class="dc-rec" data-surv-rec="facil"></span></button>
-          <button class="diff-chip" type="button" data-surv-diff="normal" role="radio"><span class="dc-name" data-i18n="diff_normal">Normal</span><span class="dc-rec" data-surv-rec="normal"></span></button>
-          <button class="diff-chip" type="button" data-surv-diff="dificil" role="radio"><span class="dc-name" data-i18n="diff_dificil">Difícil</span><span class="dc-rec" data-surv-rec="dificil"></span></button>
-        </div>
-        <p class="surv-diff-desc" id="surv-diff-desc" data-i18n="surv_diff_normal_d">3 vidas · estándar · monedas ×1</p>
-        <h3 class="group-title surv-sys-title" data-i18n="surv_sys_title">Cómo funciona</h3>
-        <ul class="surv-systems">
-          <li><span class="ss-ic" aria-hidden="true">⚡</span><span data-i18n="surv_sys_charge">Encadena convergencias para llenar el anillo interior y ganar un potenciador gratis.</span></li>
-          <li><span class="ss-ic" aria-hidden="true">🔥</span><span data-i18n="surv_sys_frenzy">Llena el anillo de frenesí para multiplicar tus puntos un rato.</span></li>
-          <li><span class="ss-ic" aria-hidden="true">❤️</span><span data-i18n="surv_sys_lives">Pierdes una vida si el tablero se desborda; revivir cuesta monedas y sube de precio con cada uso.</span></li>
-        </ul>
-      </div>
-      <div class="modal-actions view-actions modal-buttons">
-        <button class="btn btn-primary btn-icon" id="btn-surv-start"><span class="btn-ic"><img class="ic" src="img/ui/heart.png" alt=""></span><span data-i18n="surv_start">Empezar supervivencia</span></button>
-        <button class="btn btn-ghost" data-view-back data-i18n="back">Volver</button>
-      </div>
-    </section>
-
     <!-- Reto del día -->
     <section class="hub-view view-daily" id="view-daily" data-hub-view="daily" aria-labelledby="daily-info-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/target.png" alt=""></span><h2 id="daily-info-title" data-i18n="daily_challenge">Reto del día</h2></div>
@@ -575,12 +560,60 @@
     <section class="hub-view view-chests" id="view-chests" data-hub-view="chests" aria-labelledby="chests-title" hidden>
       <header class="chests-heading">
         <p class="chests-kicker" data-i18n="chests_kicker">Recompensas</p>
-        <h2 id="chests-title" data-i18n="chests_title">Cofres</h2>
+        <h2 id="chests-title"><img src="img/ui-generated/home/nav-chest.png" alt="" aria-hidden="true"><span data-i18n="chests_title">Cofres</span></h2>
         <p data-i18n="chests_subtitle">Juega, consigue cofres y descubre premios increíbles.</p>
+        <button class="chests-close" type="button" data-view-back aria-label="Volver">×</button>
       </header>
 
       <div class="modal-body view-body chests-scroll">
-        <div class="chests-body" id="chests-body" aria-live="polite"></div>
+        <div class="chest-topbar">
+          <p><span aria-hidden="true">✦</span> <span data-i18n="chest_selected">Cofre seleccionado</span></p>
+          <button class="chest-catalog-button" id="btn-chest-catalog" type="button"><img src="img/ui/chest.png" alt="" aria-hidden="true"><span data-i18n="chest_view_all">Ver todos</span></button>
+        </div>
+
+        <section class="chest-showcase-shell" aria-label="Cofre seleccionado">
+          <aside class="chest-selected-card" id="chest-selected-card"></aside>
+          <div class="chests-body" id="chests-body" aria-live="polite"></div>
+          <aside class="chest-contents-card">
+            <div class="chest-mini-heading"><span data-i18n="chest_contains">Contiene</span><img src="img/ui/info.png" alt="" aria-hidden="true"></div>
+            <ul>
+              <li><img src="img/ui/coin.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_coins">Monedas</span></li>
+              <li><img src="img/ui/gem.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_gems">Gemas</span></li>
+              <li><img src="img/ui/ticket.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_tickets">Tickets</span></li>
+              <li><img src="img/ui/gift.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_cosmetics">Cosméticos y más</span></li>
+            </ul>
+          </aside>
+        </section>
+
+        <div class="chest-open-options chest-main-actions">
+          <button class="chest-main-button chest-main-instant" id="btn-open-premium" type="button" disabled>
+            <span class="chest-main-label" id="chest-instant-label" data-i18n="chest_open_now_action">Abrir ahora</span>
+            <span class="chest-main-price"><img src="img/ui/gem.png" alt="" aria-hidden="true"><strong id="premium-chest-cost">10</strong></span>
+          </button>
+          <button class="chest-main-button chest-main-timer" id="btn-open-chest" type="button" disabled>
+            <span class="chest-main-label" id="chest-timer-label" data-i18n="chest_start_unlock">Abrir</span>
+            <span class="chest-main-price"><img src="img/ui/clock.png" alt="" aria-hidden="true"><strong id="chest-timer-value">3 h</strong></span>
+          </button>
+        </div>
+
+        <section class="chest-slots-section" aria-labelledby="chest-slots-title">
+          <div class="chest-section-heading"><span></span><h3 id="chest-slots-title" data-i18n="chest_slots_title">Ranuras de cofres</h3><span></span></div>
+          <div class="chest-slots-grid" id="chest-slots"></div>
+          <p class="chest-reserve-count" id="chest-reserve-count" hidden></p>
+        </section>
+
+        <section class="chest-rewards-section" aria-labelledby="chest-rewards-title">
+          <div class="chest-section-heading"><span></span><h3 id="chest-rewards-title" data-i18n="chest_possible_rewards">Posibles recompensas</h3><span></span></div>
+          <div class="chest-rewards-grid">
+            <div class="chest-reward-tile"><img src="img/ui/coin.png" alt=""><b data-i18n="chest_contents_coins">Monedas</b><small>60 – 2400</small></div>
+            <div class="chest-reward-tile"><img src="img/ui/bolt.png" alt=""><b data-i18n="chest_reward_boosters">Potenciadores</b><small>x1 – x5</small></div>
+            <div class="chest-reward-tile"><img src="img/ui/potion.png" alt=""><b data-i18n="chest_reward_objects">Objetos</b><small>x1 – x5</small></div>
+            <div class="chest-reward-tile"><img src="img/ui/gem.png" alt=""><b data-i18n="chest_contents_gems">Gemas</b><small>3 – 70</small></div>
+            <div class="chest-reward-tile"><img src="img/ui/planet.png" alt=""><b data-i18n="chest_reward_boards">Tableros</b><small data-i18n="chest_rarity_cosmetic">Especial</small></div>
+            <div class="chest-reward-tile"><img src="img/ui/crystal.png" alt=""><b data-i18n="chest_reward_themes">Temas</b><small data-i18n="chest_rarity_cosmetic">Especial</small></div>
+            <div class="chest-reward-tile"><img src="img/ui/gift.png" alt=""><b data-i18n="chest_reward_surprise">Y más…</b><small>¡Sorpresas!</small></div>
+          </div>
+        </section>
 
         <section class="chest-progress-card" aria-labelledby="chest-progress-title">
           <div class="chest-progress-copy">
@@ -601,23 +634,19 @@
           </button>
         </section>
 
-        <div class="chest-open-divider"><span data-i18n="chests_open_now">O abrir ahora</span></div>
-
-        <div class="chest-open-options">
-          <button class="chest-action-card chest-action-earned" id="btn-open-chest" type="button">
-            <span class="chest-action-art" aria-hidden="true"><img src="img/ui-generated/home/nav-chest.png" alt=""></span>
-            <span class="chest-action-copy"><b data-i18n="chests_open_saved">Abrir cofre guardado</b><small><span data-i18n="chests_available">Disponibles</span> · <strong id="saved-chest-count">0</strong></small></span>
-          </button>
-          <button class="chest-action-card chest-action-premium" id="btn-open-premium" type="button">
-            <span class="chest-action-art" aria-hidden="true"><img src="img/ui-generated/home/nav-chest.png" alt=""></span>
-            <span class="chest-action-copy"><b data-i18n="premium_chest">Cofre premium</b><small><img src="img/ui/gem.png" alt="" aria-hidden="true"> <strong id="premium-chest-cost">25</strong></small></span>
-          </button>
-        </div>
-
         <div class="chest-info-strip">
           <span class="chest-info-icon" aria-hidden="true"><img src="img/ui/info.png" alt=""></span>
           <p data-i18n="chests_contents_note">Los cofres contienen monedas, gemas, tickets y cosméticos.</p>
+          <button type="button" data-premium-open><span data-i18n="chest_premium_action">Abrir cofre premium</span><small><img src="img/ui/gem.png" alt="" aria-hidden="true"> 25</small></button>
         </div>
+
+        <section class="chest-catalog" id="chest-catalog" aria-labelledby="chest-catalog-title" hidden>
+          <div class="chest-catalog-head">
+            <div><p data-i18n="chests_kicker">Recompensas</p><h3 id="chest-catalog-title" data-i18n="chest_catalog_title">Tipos de cofres</h3><span data-i18n="chest_catalog_sub">Cuanto más raro sea el cofre, mejores serán sus recompensas.</span></div>
+            <button type="button" id="btn-chest-catalog-close" data-i18n="chest_catalog_close">Volver a mis cofres</button>
+          </div>
+          <div class="chest-catalog-grid" id="chest-catalog-grid"></div>
+        </section>
       </div>
     </section>
 
@@ -648,6 +677,7 @@
     <section class="hub-view view-profile" id="view-medals" data-hub-view="medals" aria-labelledby="medals-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/player.png" alt=""></span><h2 id="medals-title" data-i18n="profile_title">Perfil</h2></div>
       <div class="modal-body view-body">
+        <button class="profile-edit-name btn btn-ghost btn-sm" type="button" data-act="edit-name" data-i18n="edit_name_action">Editar nombre</button>
         <div class="stats profile-only" id="profile-stats"></div>
         <h3 class="group-title profile-only" data-i18n="best_by_mode">Mejores marcas por modo</h3>
         <div class="profile-lb profile-only" id="profile-lb"></div>
@@ -658,8 +688,28 @@
         <button class="btn btn-primary" data-view-back data-i18n="back">Volver</button>
       </div>
     </section>
+
+    <section class="hub-view view-collections" id="view-collections" data-hub-view="collections" aria-labelledby="collections-title" hidden>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui-generated/home/nav-collections.png" alt=""></span><h2 id="collections-title" data-i18n="collections_title">Colecciones</h2></div>
+      <p class="hub-view-intro" data-i18n="collections_sub">Reúne tableros, temas y logros mientras juegas.</p>
+      <div class="modal-body view-body collections-body">
+        <div class="collections-summary" id="collections-summary" aria-live="polite"></div>
+        <section class="collection-section" aria-labelledby="collection-boards-title">
+          <div class="collection-section-head"><h3 id="collection-boards-title" data-i18n="collections_boards">Tableros</h3><span id="collections-boards-count">0 / 0</span></div>
+          <div class="collection-grid" id="collections-boards"></div>
+        </section>
+        <section class="collection-section" aria-labelledby="collection-themes-title">
+          <div class="collection-section-head"><h3 id="collection-themes-title" data-i18n="collections_themes">Temas</h3><span id="collections-themes-count">0 / 0</span></div>
+          <div class="collection-grid collection-theme-grid" id="collections-themes"></div>
+        </section>
+      </div>
+      <div class="modal-actions view-actions collections-actions">
+        <button class="btn btn-primary" type="button" data-act="nav-shop" data-i18n="collections_explore_shop">Explorar tienda</button>
+        <button class="btn btn-ghost" type="button" data-act="nav-achievements" data-i18n="collections_view_achievements">Ver logros</button>
+      </div>
+    </section>
   </div>
 
-  <script src="game.js?v=2.6.66" defer></script>
+  <script src="game.js?v=2.6.86" defer></script>
 </body>
 </html>

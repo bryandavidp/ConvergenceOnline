@@ -8,7 +8,7 @@ const path = require('node:path');
 const ROOT = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(ROOT, file), 'utf8');
 
-const HUB_VIEWS = ['missions', 'how', 'settings', 'surv-diff', 'daily', 'adventure', 'shop', 'chests', 'multi', 'medals'];
+const HUB_VIEWS = ['events', 'missions', 'how', 'settings', 'daily', 'adventure', 'shop', 'chests', 'multi', 'medals', 'collections'];
 
 test('hub views: las secciones de metajuego ya no tienen semántica de modal', () => {
   const html = read('index.html');
@@ -24,8 +24,8 @@ test('hub views: las secciones de metajuego ya no tienen semántica de modal', (
   }
 
   const transient = [...html.matchAll(/<div class="[^"]*\bmodal\b[^"]*" id="([^"]+)" role="dialog"/g)].map((m) => m[1]).sort();
-  assert.deepEqual(transient, ['modal-level', 'modal-over', 'modal-pause', 'modal-revive'],
-    'solo pausa, reanimación y resultados pueden seguir siendo modales');
+  assert.deepEqual(transient, ['modal-level', 'modal-mode-launch', 'modal-over', 'modal-pause', 'modal-revive'],
+    'solo el lanzador de modos y los diálogos propios de partida pueden seguir siendo modales');
 });
 
 test('hub views: todos los lanzadores cambian de vista sin abrir overlays', () => {
@@ -35,35 +35,49 @@ test('hub views: todos los lanzadores cambian de vista sin abrir overlays', () =
   assert.match(js, /function openSettings\(\)[^\n]+HubViews\.open\('settings'/);
   assert.match(js, /function openShop\(\)[^\n]+HubViews\.open\('shop'/);
   assert.match(js, /function openChests\(\)[^\n]+HubViews\.open\('chests'/);
+  assert.match(js, /function openEvents\(\)[\s\S]{0,160}?HubViews\.open\('events', \{ nav: 'nav-events' \}\)/);
+  assert.match(js, /function openCollections\(\)[\s\S]{0,160}?HubViews\.open\('collections', \{ nav: 'nav-collections' \}\)/);
   assert.match(js, /a === 'open-guide'[^\n]+HubViews\.open\('how'/);
   assert.match(js, /a === 'nav-missions'[^\n]+HubViews\.open\('missions'/);
   assert.doesNotMatch(js, /Modal\.open\('modal-(?:missions|how|settings|surv-diff|daily|adventure|shop|chests|multi|medals)'\)/);
 });
 
-test('cofres: asset abierto con alfa, layout propio y secuencia apertura → premio', () => {
+test('cofres: diez atlas con alfa, ranuras y secuencia de cuatro estados', () => {
   const html = read('index.html');
   const css = read('styles.css');
   const js = read('game.js');
   const sw = read('sw.js');
-  const rel = 'img/ui-generated/chests/chest-open.png';
-  const asset = path.join(ROOT, rel);
-
-  assert.ok(fs.existsSync(asset), `falta ${rel}`);
-  const png = fs.readFileSync(asset);
-  assert.equal(png.toString('ascii', 1, 4), 'PNG');
-  assert.ok(png.readUInt32BE(16) >= 1000 && png.readUInt32BE(20) >= 1000, 'el hero necesita resolución suficiente');
-  assert.equal(png[25] & 4, 4, 'el cofre abierto debe conservar canal alfa');
-  assert.match(sw, /img\/ui-generated\/chests\/chest-open\.png/);
+  const ids = ['wood', 'bronze', 'silver', 'gold', 'magic', 'royal', 'supreme', 'champion', 'divine', 'event'];
+  for (const id of ids) {
+    const rel = `img/ui-generated/chests/atlas/${id}.png`;
+    const asset = path.join(ROOT, rel);
+    assert.ok(fs.existsSync(asset), `falta ${rel}`);
+    const png = fs.readFileSync(asset);
+    assert.equal(png.toString('ascii', 1, 4), 'PNG');
+    assert.ok(png.readUInt32BE(16) >= 1200 && png.readUInt32BE(20) >= 1200, `${id} necesita resolución suficiente para cuatro celdas`);
+    assert.equal(png.readUInt32BE(16), png.readUInt32BE(20), `${id} debe ser un atlas 2×2 cuadrado`);
+    assert.equal(png[25] & 4, 4, `${id} debe conservar canal alfa`);
+    assert.match(sw, new RegExp(`['\"]${id}['\"]`), `${id} debe entrar en el precache`);
+    assert.match(js, new RegExp(`atlas/${id}\\.png`), `${id} debe existir en CHEST_TYPES`);
+  }
 
   assert.match(html, /class="hub-view view-chests"/);
   assert.match(html, /class="chest-progress-card"/);
-  assert.match(html, /class="chest-open-options"/);
-  assert.match(js, /img\/ui-generated\/chests\/chest-open\.png/);
+  assert.match(html, /class="chest-open-options chest-main-actions"/);
+  assert.match(html, /id="chest-slots"/);
+  assert.match(html, /id="chest-catalog-grid"/);
+  assert.match(js, /const CHEST_TYPES = Object\.freeze/);
+  assert.match(js, /chestUnlock\(\)/);
+  assert.match(js, /startChestUnlock\(uid\)/);
+  assert.match(js, /chestInstantCost\(uid\)/);
 
-  assert.match(css, /@keyframes chestHeroRattle/);
-  assert.match(css, /@keyframes chestHeroOpen/);
+  assert.match(css, /@keyframes chestAtlasOpening/);
+  assert.match(css, /background-size: 200% 200%/);
+  assert.match(css, /chest-frame-unlocked[^}]+background-position: 100% 0/);
+  assert.match(css, /chest-frame-half[^}]+background-position: 0 100%/);
+  assert.match(css, /chest-frame-open[^}]+background-position: 100% 100%/);
   assert.match(css, /@keyframes chestPrizeRise/);
   assert.match(js, /classList\.add\('is-opening'\)[\s\S]*?classList\.add\('is-open'\)[\s\S]*?setTimeout\(finish, reduceMotion \? 0 : 1120\)/);
   assert.match(js, /matchMedia\('\(prefers-reduced-motion: reduce\)'\)/);
-  assert.match(js, /function showChestReward\(r\)[\s\S]*?class="chest-reward-stage/);
+  assert.match(js, /function showChestReward\(r, openedType\)[\s\S]*?class="chest-reward-stage/);
 });

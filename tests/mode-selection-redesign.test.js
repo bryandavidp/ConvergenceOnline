@@ -46,10 +46,14 @@ test('modos: el catálogo vive en Inicio y desaparece la pantalla intermedia', (
     'ninguna ruta productiva debe apuntar al selector eliminado');
 
   for (const token of [
-    'class="home-main"', 'class="home-quick-dock"', 'class="home-mode-stage"',
+    'class="home-main"', 'class="home-mode-stage"',
     'id="home-mode-carousel"', 'id="home-mode-viewport"', 'id="mode-cards"',
     'id="home-mode-dots"', 'id="home-mode-status"', 'class="home-foot"',
   ]) assert.ok(home.includes(token), `falta ${token} en Inicio`);
+  assert.doesNotMatch(home, /home-quick-dock|home-quick-item/,
+    'los accesos diarios deben quedar integrados en Eventos');
+  assert.doesNotMatch(home, /home-mode-heading|home-mode-kicker|home-carousel-hint/,
+    'el carrusel no debe repetir un título visible sobre las cards');
 
   assert.doesNotMatch(home, /home-mode-(?:prev|next)|home-carousel-arrow/,
     'el gesto horizontal no debe duplicarse con flechas laterales visibles');
@@ -95,11 +99,10 @@ test('modos: todas las cards conservan su lanzador real', () => {
   const catalog = sourceBetween(js, 'const MODE_CARDS = [', 'const MULTIPLAYER_CARD =');
   const carousel = sourceBetween(js, 'const HomeModeCarousel = {', 'function buildHomeModeCarousel()');
 
-  assert.match(catalog, /key: 'clasico'[\s\S]*?action:\s*\(\)\s*=>\s*openWorldsMap\(\)/);
-  assert.match(catalog, /key: 'aventura'[\s\S]*?action:\s*\(\)\s*=>\s*openAdventure\(\)/);
-  assert.match(catalog, /key: 'contrarreloj'[\s\S]*?Game\.start\('contrarreloj',\s*'normal'\)/);
-  assert.match(catalog, /key: 'supervivencia'[\s\S]*?action:\s*\(\)\s*=>\s*openSurvivalDiff\(\)/);
-  assert.match(catalog, /key: 'zen'[\s\S]*?action:\s*\(\)\s*=>\s*launchZen\(\)/);
+  for (const mode of ['clasico', 'aventura', 'contrarreloj', 'supervivencia', 'zen']) {
+    assert.match(catalog, new RegExp(`key: '${mode}'[\\s\\S]*?action:\\s*\\(\\)\\s*=>\\s*ModeLaunch\\.open\\('${mode}'\\)`),
+      `${mode} debe abrir el lanzador visual compartido`);
+  }
   assert.match(js, /const MULTIPLAYER_CARD = \{[\s\S]*?disabled:\s*true/);
   assert.doesNotMatch(sourceBetween(js, 'const MULTIPLAYER_CARD = {', 'const HOME_MODE_CARDS'), /\baction\s*:/);
   assert.match(carousel, /activate\(key = this\.key\)[\s\S]*?card\.action\(\)/);
@@ -162,6 +165,38 @@ test('modos: las cards laterales conservan profundidad con una inclinación más
     'la card siguiente debe aplicar la compensación simétrica');
   assert.match(css, /data-distance="1"\] \.home-mode-card\s*\{[^}]*rotateY\(var\(--home-side-upright\)\)[^}]*scale\(\.91\)/s,
     'la corrección debe ocurrir en la card, sin romper la geometría del anillo');
+});
+
+test('modos: el cambio de card mantiene el flotado del arte y anima el resto por capas', () => {
+  const carousel = sourceBetween(js, 'const HomeModeCarousel = {', 'function buildHomeModeCarousel()');
+  assert.match(css, /INICIO 3\.4[^\n]*TRANSICIÓN CINEMÁTICA DEL CARRUSEL/);
+  assert.match(css, /#screen-start \.home-mode-track\s*\{[^}]*transform \.76s cubic-bezier\(\.16,\.76,\.18,1\)/s,
+    'el giro debe frenar progresivamente en vez de cortar en seco');
+  assert.match(css, /#screen-start \.home-mode-card\s*\{[^}]*transform \.74s cubic-bezier\(\.16,\.9,\.2,1\.06\)/s,
+    'la card debe asentarse con un sobreimpulso sutil');
+  assert.match(css, /@keyframes homeModeDepthSettle/,
+    'la profundidad debe conservar su beat de asentamiento');
+  assert.match(css, /home-mode-slot\.is-selected \.home-mode-copy[\s\S]{0,260}?transition-delay:\s*\.11s/,
+    'el contenido debe entrar después del movimiento principal');
+  assert.match(carousel, /animateTurn\(root\)[\s\S]*?root\.classList\.add\('is-turning'\)/,
+    'el efecto debe poder reiniciarse al encadenar gestos');
+  assert.doesNotMatch(carousel, /animateTurn\(root\)[\s\S]{0,260}?offsetWidth/,
+    'reiniciar el beat no debe insertar un fotograma de layout entre estados');
+  assert.match(css, /home-mode-slot\.is-selected \.home-mode-art\s*\{[^}]*animation:\s*homeModeArtFloat 3\.2s ease-in-out infinite/,
+    'el icono seleccionado debe conservar exactamente su flotado continuo');
+  assert.doesNotMatch(css, /homeModeArtArrive|home-art-entry-x|data-turn-direction/,
+    'el arte no debe recibir un salto o parallax adicional al cambiar de card');
+  assert.doesNotMatch(carousel, /turnDirection|direction\)/,
+    'el controlador ya no debe preparar una entrada direccional para el arte');
+  assert.match(css, /body\.reduced-fx #screen-start \.home-mode-track[\s\S]*?#screen-start \.home-mode-art[\s\S]*?animation:\s*none/,
+    'movimiento reducido debe desactivar los beats decorativos');
+  assert.match(css, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?#screen-start \.home-mode-track[\s\S]*?home-mode-slot\.is-selected \.home-mode-art[\s\S]*?animation:\s*none/,
+    'la preferencia del sistema debe ganar a las reglas cinemáticas posteriores');
+});
+
+test('modos: el escenario del carrusel recorta las cards en el borde físico de la pantalla', () => {
+  assert.match(css, /@media \(max-width:\s*960px\)\s*\{[\s\S]*?#screen-start \.home-mode-stage\s*\{[^}]*width:\s*100vw[^}]*margin-inline:\s*calc\(50% - 50vw\)/,
+    'el gutter del contenido no debe dejar una franja vacía a los lados del carrusel');
 });
 
 test('modos: las cards son estrechas, verticales y dejan sobresalir el arte', () => {

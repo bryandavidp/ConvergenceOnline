@@ -1,9 +1,10 @@
 /* Convergencia — Service Worker (offline-first).
  * Sube CACHE al publicar una versión nueva para invalidar la caché anterior. */
-const CACHE = 'cv-cache-v2.6.66';
+const CACHE = 'cv-cache-v2.6.86';
 const ASSETS = [
-  './', './index.html', './styles.css?v=2.6.66', './game.js?v=2.6.66', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=2.6.86', './game.js?v=2.6.86', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
+  './fonts/NunitoSans-Variable.ttf',
   './img/ui-generated/chests/chest-open.png',
 ];
 // Iconos de UI (pack en img/ui). Se precachean en best-effort: si alguno falla,
@@ -13,12 +14,21 @@ const UI_ICONS = ['aura','bolt','bomb','book','calendar','cart','check','chest',
 // preservan el arte y reducen el coste offline.
 const HOME_V2_ICONS = ['bolt','calendar','cart','chest','clock','coin','fire','gem','gift','heart','house','medal','pencil','player','plus','robot','rocket','settings','shield','star','target','trophy','upgrade'].map((n) => './img/ui-v2/home/' + n + '.png');
 const HOME_GENERATED_ART = [
-  'avatar-robot','classic-board','daily-gift','hero-rocket','multiplayer-versus','tournament-trophy',
-  'nav-achievements','nav-chest','nav-daily','nav-friends','nav-guide','nav-home','nav-league','nav-missions','nav-settings','nav-shop',
+  'avatar-robot','classic-board','daily-gift','header-coin-star','header-plus','hero-rocket','multiplayer-versus','tournament-trophy',
+  'nav-achievements','nav-chest','nav-collections','nav-daily','nav-events','nav-friends','nav-guide','nav-home','nav-home-redesign','nav-league','nav-missions','nav-settings','nav-shop',
 ].map((n) => './img/ui-generated/home/' + n + '.png');
 const MODE_GENERATED_ART = [
   'mode-classic','mode-multiplayer','mode-survival','mode-timed','mode-zen',
 ].map((n) => './img/ui-generated/modes/' + n + '.png');
+const MODE_LAUNCH_ART = [
+  'bolt','calendar','clock','coin','difficulty-easy','difficulty-hard','difficulty-normal',
+  'frenzy-ring','heart','info','leaf','lock','medal','mode-adventure','mode-classic',
+  'mode-timed','mode-zen','planet','rocket','skull','star','survival-emblem','survival-rank',
+  'target','trophy',
+].map((n) => './img/ui-generated/mode-launch/' + n + '.png');
+const CHEST_ATLASES = [
+  'wood','bronze','silver','gold','magic','royal','supreme','champion','divine','event',
+].map((n) => './img/ui-generated/chests/atlas/' + n + '.png');
 const V2_ICONS = [
   './img/icons-v2/1-game/double.svg',
   './img/icons-v2/2-items/map.svg',
@@ -63,6 +73,8 @@ self.addEventListener('install', (e) => {
         c.addAll(HOME_V2_ICONS).catch(() => {}),
         c.addAll(HOME_GENERATED_ART).catch(() => {}),
         c.addAll(MODE_GENERATED_ART).catch(() => {}),
+        c.addAll(MODE_LAUNCH_ART).catch(() => {}),
+        c.addAll(CHEST_ATLASES).catch(() => {}),
         c.addAll(V2_ICONS).catch(() => {}),
       ])))
       .then(() => self.skipWaiting())

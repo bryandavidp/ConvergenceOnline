@@ -74,8 +74,11 @@ Uso extensivo de `color-mix(in srgb, ...)` como mecanismo de "tinte en runtime" 
 
 ## 3. Tipografía
 
-- Stack: `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif` — **sin webfonts propias, sin `@font-face`**, 100% fuentes del sistema.
+- Fuente de producto: **Nunito Sans variable**, empaquetada en `fonts/NunitoSans-Variable.ttf` y declarada como `"Nunito Sans Game"` mediante `@font-face`. No depende de una descarga externa.
+- `--app-font` es el único stack de interfaz y se aplica globalmente en `body`; Inicio, el selector de modos y el lanzador reutilizan el mismo token para evitar cambios de familia entre pantallas. Los fallbacks son `"Arial Rounded MT Bold"`, `"Trebuchet MS"`, `system-ui`, `sans-serif`.
 - Sin `font-size` base explícito en `html`/`body` (16px por defecto del navegador).
+- El lanzador de modos se compone sobre una base proporcional de `696 × 1076`; tamaños, interlineados y espaciados internos usan unidades de contenedor para conservar la jerarquía del mockup a cualquier viewport.
+- Los iconos del lanzador nunca son glifos tipográficos ni emojis: todo el arte funcional se sirve como PNG transparente desde `img/ui-generated/mode-launch/`.
 - Escala tipográfica (selección representativa, usa `clamp()` fluido en casi todos los casos):
   - Logo: `clamp(2rem, 8vw, 3rem)` / home hero `clamp(2.2rem, 11vw, 3.4rem)`, peso 800.
   - Títulos de sección (`#modes-title`, `.worlds-title`): `clamp(1.3-1.4rem, 5.3-5.5vw, 1.75-1.9rem)`, peso 800.
@@ -177,6 +180,19 @@ Las caras adyacentes permanecen en sus posiciones geométricas de ±60°, pero s
 propia superficie compensa 18° hacia la cámara. Esta corrección solo afecta a
 `data-distance="1"`: hace las cards laterales más legibles sin aplanar el anillo
 ni alterar la continuidad del giro.
+
+El cambio de modo sigue una transición por capas de unos 760–880 ms: primero
+gira y desacelera el anillo; la nueva card corrige orientación y escala con un
+asentamiento corto; después aparecen textos y rasgos con 110 ms de desfase. El
+halo adopta el acento del modo y respira una sola vez. Gestos encadenados
+reinician este beat desde el estado visual actual, mientras `reduced-fx` y
+`prefers-reduced-motion` eliminan transiciones y keyframes. El arte seleccionado
+mantiene exclusivamente su flotado continuo de 3,2 s: no recibe un keyframe de
+entrada, parallax ni rebote que compita por `transform`.
+
+En viewports de hasta 960 px el escenario del carrusel es `full-bleed`: su
+recorte lateral coincide con los bordes físicos de la pantalla aunque cabecera,
+accesos y contexto conserven su gutter interior.
 
 El destino activo `Inicio` conserva el icono existente, pero su superficie es
 un círculo real: ancho y alto idénticos, `border-radius:50%`, aro cian, fondo

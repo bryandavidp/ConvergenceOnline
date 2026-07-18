@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.6.66';
+  const VERSION = '2.6.86';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -315,7 +315,13 @@
         begin: '¡Empezar!', guest: 'Jugar como invitado', start_sub: '¿List@ para conquistar el tablero?',
         play: 'Jugar', reward: 'Recompensa diaria', menu_profile: 'Logros', menu_shop: 'Tienda',
         menu_settings: 'Ajustes', how: '¿Cómo se juega?', install: 'Instalar app', sound: 'Sonido', best: 'Mejor puntuación:',
-        tab_log: 'Logros', tab_shop: 'Tienda', tab_home: 'Inicio', tab_guide: 'Guía', tab_set: 'Ajustes', missions_title: '🎯 Misiones',
+        tab_log: 'Logros', tab_events: 'Eventos', tab_shop: 'Tienda', tab_home: 'Inicio', tab_guide: 'Guía', tab_collections: 'Colecciones', tab_set: 'Ajustes', missions_title: '🎯 Misiones',
+        events_title: 'Eventos', events_sub: 'Tus retos, recompensas y actividades de hoy, reunidos en un solo lugar.',
+        events_daily_label: 'Cada día', events_progress_label: 'Progreso diario', events_today_label: 'Solo hoy', events_rewards_label: 'Premios',
+        events_view: 'Ver', events_play: 'Jugar', events_open: 'Abrir', events_reward_ready: 'Lista para reclamar', events_reward_claimed: 'Reclamada hoy',
+        collections_title: 'Colecciones', collections_sub: 'Reúne tableros, temas y logros mientras juegas.',
+        collections_boards: 'Tableros', collections_themes: 'Temas', collections_achievements: 'Logros', collections_unlocked: '{n} de {total}', collections_owned: 'Desbloqueado',
+        collections_locked: 'Por descubrir', collections_explore_shop: 'Explorar tienda', collections_view_achievements: 'Ver logros',
         modes_title: 'Elige tu modo', modes_sub: 'Cada modo, una forma diferente de jugar', modes_more: 'Más modos',
         home_modes_label: 'Modos de juego', home_carousel_hint: 'Desliza horizontalmente · toca la tarjeta para entrar',
         home_mode_prev: 'Modo anterior', home_mode_next: 'Modo siguiente', home_mode_pages: 'Seleccionar modo',
@@ -350,6 +356,21 @@
         chests_contents_note: 'Los cofres contienen monedas, gemas, tickets y cosméticos.', chest_opening: 'El cofre se está abriendo…',
         chest_reveal_title: 'Contenido del cofre', chest_cosmetic_title: '¡COSMÉTICO!', chest_rarity_common: 'Recompensa', chest_rarity_jackpot: 'Jackpot', chest_rarity_cosmetic: 'Especial', chest_continue: 'Seguir', chest_equip: 'Equipar',
         chest_reward_coins: '+{n} monedas', chest_reward_gems: '+{n} gemas', chest_reward_ticket: '+{n} ticket(s)', chest_reward_board: 'Tablero: {n}', chest_reward_theme: 'Tema: {n}',
+        chest_view_all: 'Ver todos', chest_selected: 'Cofre seleccionado', chest_catalog_title: 'Tipos de cofres', chest_catalog_sub: 'Cuanto más raro sea el cofre, mejores serán sus recompensas.', chest_catalog_close: 'Volver a mis cofres',
+        chest_contains: 'Contiene', chest_contents_coins: 'Monedas', chest_contents_gems: 'Gemas', chest_contents_tickets: 'Tickets', chest_contents_cosmetics: 'Cosméticos y más',
+        chest_slots_title: 'Ranuras de cofres', chest_possible_rewards: 'Posibles recompensas', chest_slot_opening: 'Abriendo', chest_slot_ready: '¡Listo!', chest_slot_blocked: 'Bloqueado', chest_slot_waiting: 'En espera', chest_slot_empty: 'Ranura vacía',
+        chest_unlock_slot: 'Desbloquea otra ranura', chest_unlock_slot_cost: 'Toca otra vez para desbloquearla por {n} gemas', chest_slot_unlocked: '¡Nueva ranura desbloqueada!', chest_more_waiting: '+{n} cofre(s) en reserva',
+        chest_start_unlock: 'Abrir', chest_open_now_action: 'Abrir ahora', chest_collect: 'Recoger', chest_unlocking_action: 'En progreso', chest_only_one: 'Solo puedes desbloquear un cofre a la vez.', chest_timer_started: '¡El cofre ha empezado a abrirse!',
+        chest_premium_action: 'Abrir cofre premium', chest_premium_note: 'Premio instantáneo con mejores probabilidades', chest_duration: 'Duración', chest_size_label: 'Tamaño', chest_type_label: 'Tipo',
+        chest_reward_boosters: 'Potenciadores', chest_reward_objects: 'Objetos', chest_reward_boards: 'Tableros', chest_reward_themes: 'Temas', chest_reward_surprise: 'Y más…',
+        chest_size_small: 'Pequeño', chest_size_medium: 'Mediano', chest_size_large: 'Grande', chest_size_xlarge: 'Muy grande', chest_size_huge: 'Enorme', chest_size_variable: 'Variable',
+        chest_tier_basic: 'Básico', chest_tier_common: 'Común', chest_tier_rare: 'Raro', chest_tier_epic: 'Épico', chest_tier_legendary: 'Legendario', chest_tier_mythic: 'Mítico', chest_tier_special: 'Especial',
+        chest_type_wood: 'Cofre de madera', chest_type_bronze: 'Cofre de bronce', chest_type_silver: 'Cofre de plata', chest_type_gold: 'Cofre de oro', chest_type_magic: 'Cofre mágico',
+        chest_type_royal: 'Cofre real', chest_type_supreme: 'Cofre supremo', chest_type_champion: 'Cofre de campeones', chest_type_divine: 'Cofre divino', chest_type_event: 'Cofre de evento',
+        chest_desc_wood: 'Recompensas comunes. Ideal para empezar.', chest_desc_bronze: 'Recursos comunes y alguna sorpresa poco rara.', chest_desc_silver: 'Mejores premios y más opciones de cosméticos.',
+        chest_desc_gold: 'Recompensas épicas, más monedas y tickets.', chest_desc_magic: 'Contiene recompensas épicas garantizadas.', chest_desc_royal: 'Premios legendarios y alta probabilidad de cosméticos.',
+        chest_desc_supreme: 'Recompensas de alto nivel y muchos recursos.', chest_desc_champion: 'Recompensas míticas y máximas probabilidades especiales.', chest_desc_divine: 'El cofre más poderoso, con recompensas máximas.', chest_desc_event: 'Recompensas únicas de eventos y temporadas.',
+        chest_rarity_rare: 'Raro', chest_rarity_epic: 'Épico', chest_rarity_legendary: 'Legendario', chest_rarity_mythic: 'Mítico', chest_rarity_special: 'Especial',
         soon_badge: 'Próximamente', notify_me: 'Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
         edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
         home_classic: 'Partida clásica', home_classic_prefix: 'Partida', home_classic_name: 'Clásica', home_classic_sub: 'Juega en el tablero contra amigos o bots', home_surv_sub: 'Sobrevive a oleadas infinitas',
@@ -567,7 +588,13 @@
         surv_diff_title: 'Supervivencia', surv_diff_sub: 'Elige el ritmo de la partida', surv_start: 'Empezar supervivencia',
         surv_week_label: 'Esta semana', survmut_none: 'Semana clásica · sin modificador',
         surv_diff_facil_d: '4 vidas · ritmo suave · monedas ×0.85', surv_diff_normal_d: '3 vidas · estándar · monedas ×1', surv_diff_dificil_d: '3 vidas · ritmo alto · monedas ×1.3',
-        surv_launch_record: 'Récord: oleada {w}', surv_launch_norecord: 'Aún sin récord',
+        surv_launch_record: 'Récord: oleada {w}', surv_launch_norecord: 'Récord: —',
+        mode_launch_close: 'Cerrar', mode_launch_progress: 'Tu progreso', mode_launch_how: 'Cómo funciona', mode_launch_record: 'Récord', mode_launch_no_record: '—', mode_launch_plays: 'Partidas', mode_launch_level: 'Nivel', mode_launch_chapter: 'Capítulo', mode_launch_best: 'Mejor marca', mode_launch_worlds: 'Mundos', mode_launch_stars: 'Estrellas', mode_launch_next_boss: 'Próximo jefe', mode_launch_start_time: 'Tiempo inicial', mode_launch_time_cap: 'Tope de reloj', mode_launch_each_match: 'Cada convergencia', mode_launch_flowers: 'Flores', mode_launch_goal: 'Objetivo', mode_launch_pace: 'Ritmo',
+        ml_surv_tag: 'Oleadas infinitas ∞', ml_surv_weekly: 'Progreso semanal', ml_surv_choose: 'Elige dificultad', ml_surv_feats: 'Esta semana', ml_surv_how3: 'Pierdes una vida si el tablero se desborda.', ml_surv_week_none_title: 'Semana clásica', ml_surv_week_none_sub: 'Sin modificador', ml_surv_week_ice_title: 'Semana del hielo', ml_surv_week_ice_sub: 'Trampas heladas · monedas ×1.15', ml_surv_week_chaos_title: 'Semana del caos', ml_surv_week_chaos_sub: 'El terremoto ha vuelto', ml_surv_week_frenzy_title: 'Semana de la furia', ml_surv_week_frenzy_sub: 'Frenesí +30%',
+        ml_classic_tag: 'Por niveles', ml_classic_world: 'Mundo actual', ml_classic_route: 'Tu partida', ml_classic_cta: 'Abrir mapa clásico', ml_classic_how1: 'Supera niveles y desbloquea mundos nuevos.', ml_classic_how2: 'Gana hasta 3 estrellas según tus errores.', ml_classic_how3: 'Cada mundo añade obstáculos y reglas propias.',
+        ml_adv_tag: 'Viaje infinito', ml_adv_biome: 'Bioma actual', ml_adv_route: 'Tu expedición', ml_adv_cta: 'Continuar aventura', ml_adv_how1: 'Avanza por capítulos de cinco niveles.', ml_adv_how2: 'Cada bioma cambia objetivos y obstáculos.', ml_adv_how3: 'El último nivel de cada capítulo tiene mini-jefe.',
+        ml_timed_tag: 'Contrarreloj', ml_timed_score: 'Tu marca', ml_timed_rules: 'Reglas de la partida', ml_timed_cta: 'Empezar contrarreloj', ml_timed_how1: 'Empiezas con 60 segundos en un único tablero.', ml_timed_how2: 'Cada convergencia recupera tiempo, con un tope de 90.', ml_timed_how3: 'Los combos mantienen el reloj y multiplican puntos.',
+        ml_zen_tag: 'Relax', ml_zen_garden: 'Tu jardín', ml_zen_space: 'Jardín zen', ml_zen_choose: 'Elige ritmo', ml_zen_cta: 'Entrar en zen', ml_zen_how1: 'No hay penalizaciones ni final de partida.', ml_zen_how2: 'Si el tablero se llena, se despeja parcialmente.', ml_zen_how3: 'Cada tablero limpio hace crecer una flor.',
         surv_boss_cleared: '¡JEFE SUPERADO!', surv_boss_cleared_clean: '¡Jefe superado sin potenciadores! ✦',
         surv_frenzy_max: '¡FURIA MÁXIMA!', surv_wave_record_live: 'Récord: oleada {w} ¡y subiendo!',
         surv_over_wave_new: '🏆 ¡Nuevo récord de oleada!', surv_over_wave_near: 'A {k} de tu récord (oleada {best})', surv_over_record: 'Tu récord: oleada {best}',
@@ -602,7 +629,13 @@
         begin: 'Start!', guest: 'Play as guest', start_sub: 'Ready to conquer the board?',
         play: 'Play', reward: 'Daily reward', menu_profile: 'Profile', menu_shop: 'Shop',
         menu_settings: 'Settings', how: 'How to play?', install: 'Install app', sound: 'Sound', best: 'Best score:',
-        tab_log: 'Trophies', tab_shop: 'Shop', tab_home: 'Home', tab_guide: 'Guide', tab_set: 'Settings', missions_title: '🎯 Missions',
+        tab_log: 'Trophies', tab_events: 'Events', tab_shop: 'Shop', tab_home: 'Home', tab_guide: 'Guide', tab_collections: 'Collections', tab_set: 'Settings', missions_title: '🎯 Missions',
+        events_title: 'Events', events_sub: "Today's challenges, rewards and activities, all in one place.",
+        events_daily_label: 'Every day', events_progress_label: 'Daily progress', events_today_label: 'Today only', events_rewards_label: 'Rewards',
+        events_view: 'View', events_play: 'Play', events_open: 'Open', events_reward_ready: 'Ready to claim', events_reward_claimed: 'Claimed today',
+        collections_title: 'Collections', collections_sub: 'Collect boards, themes and achievements as you play.',
+        collections_boards: 'Boards', collections_themes: 'Themes', collections_achievements: 'Achievements', collections_unlocked: '{n} of {total}', collections_owned: 'Unlocked',
+        collections_locked: 'Undiscovered', collections_explore_shop: 'Explore shop', collections_view_achievements: 'View achievements',
         modes_title: 'Choose your mode', modes_sub: 'Each mode, a different way to play', modes_more: 'More modes',
         home_modes_label: 'Game modes', home_carousel_hint: 'Swipe horizontally · tap the card to enter',
         home_mode_prev: 'Previous mode', home_mode_next: 'Next mode', home_mode_pages: 'Choose a mode',
@@ -637,6 +670,21 @@
         chests_contents_note: 'Chests contain coins, gems, tickets and cosmetics.', chest_opening: 'The chest is opening…',
         chest_reveal_title: 'Chest contents', chest_cosmetic_title: 'COSMETIC!', chest_rarity_common: 'Reward', chest_rarity_jackpot: 'Jackpot', chest_rarity_cosmetic: 'Special', chest_continue: 'Continue', chest_equip: 'Equip',
         chest_reward_coins: '+{n} coins', chest_reward_gems: '+{n} gems', chest_reward_ticket: '+{n} ticket(s)', chest_reward_board: 'Board: {n}', chest_reward_theme: 'Theme: {n}',
+        chest_view_all: 'View all', chest_selected: 'Selected chest', chest_catalog_title: 'Chest types', chest_catalog_sub: 'The rarer the chest, the better its rewards.', chest_catalog_close: 'Back to my chests',
+        chest_contains: 'Contains', chest_contents_coins: 'Coins', chest_contents_gems: 'Gems', chest_contents_tickets: 'Tickets', chest_contents_cosmetics: 'Cosmetics and more',
+        chest_slots_title: 'Chest slots', chest_possible_rewards: 'Possible rewards', chest_slot_opening: 'Opening', chest_slot_ready: 'Ready!', chest_slot_blocked: 'Locked', chest_slot_waiting: 'Waiting', chest_slot_empty: 'Empty slot',
+        chest_unlock_slot: 'Unlock another slot', chest_unlock_slot_cost: 'Tap again to unlock it for {n} gems', chest_slot_unlocked: 'New slot unlocked!', chest_more_waiting: '+{n} chest(s) in reserve',
+        chest_start_unlock: 'Open', chest_open_now_action: 'Open now', chest_collect: 'Collect', chest_unlocking_action: 'In progress', chest_only_one: 'You can only unlock one chest at a time.', chest_timer_started: 'The chest has started opening!',
+        chest_premium_action: 'Open premium chest', chest_premium_note: 'Instant reward with better odds', chest_duration: 'Duration', chest_size_label: 'Size', chest_type_label: 'Type',
+        chest_reward_boosters: 'Boosters', chest_reward_objects: 'Items', chest_reward_boards: 'Boards', chest_reward_themes: 'Themes', chest_reward_surprise: 'And more…',
+        chest_size_small: 'Small', chest_size_medium: 'Medium', chest_size_large: 'Large', chest_size_xlarge: 'Very large', chest_size_huge: 'Huge', chest_size_variable: 'Variable',
+        chest_tier_basic: 'Basic', chest_tier_common: 'Common', chest_tier_rare: 'Rare', chest_tier_epic: 'Epic', chest_tier_legendary: 'Legendary', chest_tier_mythic: 'Mythic', chest_tier_special: 'Special',
+        chest_type_wood: 'Wood chest', chest_type_bronze: 'Bronze chest', chest_type_silver: 'Silver chest', chest_type_gold: 'Gold chest', chest_type_magic: 'Magic chest',
+        chest_type_royal: 'Royal chest', chest_type_supreme: 'Supreme chest', chest_type_champion: 'Champions chest', chest_type_divine: 'Divine chest', chest_type_event: 'Event chest',
+        chest_desc_wood: 'Common rewards. Ideal for getting started.', chest_desc_bronze: 'Common resources with a few uncommon surprises.', chest_desc_silver: 'Better prizes and more chances for cosmetics.',
+        chest_desc_gold: 'Epic rewards, more coins and tickets.', chest_desc_magic: 'Contains guaranteed epic rewards.', chest_desc_royal: 'Legendary prizes and a high cosmetic chance.',
+        chest_desc_supreme: 'High-level rewards and plenty of resources.', chest_desc_champion: 'Mythic rewards with the best special odds.', chest_desc_divine: 'The most powerful chest, with maximum rewards.', chest_desc_event: 'Unique event and seasonal rewards.',
+        chest_rarity_rare: 'Rare', chest_rarity_epic: 'Epic', chest_rarity_legendary: 'Legendary', chest_rarity_mythic: 'Mythic', chest_rarity_special: 'Special',
         soon_badge: 'Coming soon', notify_me: 'Notify me', notify_ok: "We'll let you know when it's ready!",
         edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
         home_classic: 'Classic game', home_classic_prefix: 'Classic', home_classic_name: 'Game', home_classic_sub: 'Play on the board against friends or bots', home_surv_sub: 'Survive endless waves',
@@ -854,7 +902,13 @@
         surv_diff_title: 'Survival', surv_diff_sub: 'Choose the run pace', surv_start: 'Start survival',
         surv_week_label: 'This week', survmut_none: 'Classic week · no modifier',
         surv_diff_facil_d: '4 lives · gentle pace · coins ×0.85', surv_diff_normal_d: '3 lives · standard · coins ×1', surv_diff_dificil_d: '3 lives · fast pace · coins ×1.3',
-        surv_launch_record: 'Record: wave {w}', surv_launch_norecord: 'No record yet',
+        surv_launch_record: 'Record: wave {w}', surv_launch_norecord: 'Record: —',
+        mode_launch_close: 'Close', mode_launch_progress: 'Your progress', mode_launch_how: 'How it works', mode_launch_record: 'Record', mode_launch_no_record: '—', mode_launch_plays: 'Runs', mode_launch_level: 'Level', mode_launch_chapter: 'Chapter', mode_launch_best: 'Best score', mode_launch_worlds: 'Worlds', mode_launch_stars: 'Stars', mode_launch_next_boss: 'Next boss', mode_launch_start_time: 'Starting time', mode_launch_time_cap: 'Clock cap', mode_launch_each_match: 'Each convergence', mode_launch_flowers: 'Flowers', mode_launch_goal: 'Goal', mode_launch_pace: 'Pace',
+        ml_surv_tag: 'Infinite waves ∞', ml_surv_weekly: 'Weekly progress', ml_surv_choose: 'Choose difficulty', ml_surv_feats: 'This week', ml_surv_how3: 'You lose one life if the board overflows.', ml_surv_week_none_title: 'Classic week', ml_surv_week_none_sub: 'No modifier', ml_surv_week_ice_title: 'Ice week', ml_surv_week_ice_sub: 'Frozen traps · coins ×1.15', ml_surv_week_chaos_title: 'Chaos week', ml_surv_week_chaos_sub: 'The quake is back', ml_surv_week_frenzy_title: 'Fury week', ml_surv_week_frenzy_sub: 'Frenzy +30%',
+        ml_classic_tag: 'Level based', ml_classic_world: 'Current world', ml_classic_route: 'Your game', ml_classic_cta: 'Open classic map', ml_classic_how1: 'Clear levels and unlock new worlds.', ml_classic_how2: 'Earn up to 3 stars based on your mistakes.', ml_classic_how3: 'Each world adds its own obstacles and rules.',
+        ml_adv_tag: 'Endless journey', ml_adv_biome: 'Current biome', ml_adv_route: 'Your expedition', ml_adv_cta: 'Continue adventure', ml_adv_how1: 'Advance through five-level chapters.', ml_adv_how2: 'Each biome changes goals and obstacles.', ml_adv_how3: 'Every chapter ends with a mini-boss.',
+        ml_timed_tag: 'Time attack', ml_timed_score: 'Your score', ml_timed_rules: 'Run rules', ml_timed_cta: 'Start time attack', ml_timed_how1: 'Start with 60 seconds on one board.', ml_timed_how2: 'Each convergence restores time, capped at 90.', ml_timed_how3: 'Combos sustain the clock and multiply points.',
+        ml_zen_tag: 'Relax', ml_zen_garden: 'Your garden', ml_zen_space: 'Zen garden', ml_zen_choose: 'Choose pace', ml_zen_cta: 'Enter zen', ml_zen_how1: 'There are no penalties or game over.', ml_zen_how2: 'A full board is partially cleared.', ml_zen_how3: 'Every cleared board grows one flower.',
         surv_boss_cleared: 'BOSS CLEARED!', surv_boss_cleared_clean: 'Boss cleared with no power-ups! ✦',
         surv_frenzy_max: 'MAX FURY!', surv_wave_record_live: 'Record: wave {w} and climbing!',
         surv_over_wave_new: '🏆 New wave record!', surv_over_wave_near: '{k} short of your record (wave {best})', surv_over_record: 'Your record: wave {best}',
@@ -2208,7 +2262,7 @@
       this._id = null;
       const exitEndedGame = closedId && closedId !== 'modal-over' &&
         State.status === 'over' && document.body.dataset.screen === 'game';
-      document.body.classList.remove('modal-open');
+      document.body.classList.remove('modal-open', 'mode-launch-open');
       $('#overlay').hidden = true; document.querySelectorAll('.modal').forEach(m => m.hidden = true);
       // Accesibilidad: devolver el foco al elemento que abrió el modal.
       if (this._last && this._last.focus) { try { this._last.focus(); } catch (_) { } }
@@ -2759,11 +2813,67 @@
     },
   };
 
+  /* ===================== Cofres (catálogo + economía tipada) ===================== */
+  const CHEST_TYPE_ORDER = ['wood', 'bronze', 'silver', 'gold', 'magic', 'royal', 'supreme', 'champion', 'divine', 'event'];
+  const CHEST_TYPES = Object.freeze({
+    wood: {
+      id: 'wood', nameKey: 'chest_type_wood', sizeKey: 'chest_size_small', rarityKey: 'chest_tier_basic', descKey: 'chest_desc_wood',
+      asset: 'img/ui-generated/chests/atlas/wood.png', accent: '#8fd6ff', durationMs: 3 * 60 * 60 * 1000, instantCost: 10,
+      reward: { coins: [60, 199], gems: [3, 10], tickets: [1, 1], coinCut: .60, gemCut: .90, ticketCut: .98, rarity: 'common' },
+    },
+    bronze: {
+      id: 'bronze', nameKey: 'chest_type_bronze', sizeKey: 'chest_size_small', rarityKey: 'chest_tier_common', descKey: 'chest_desc_bronze',
+      asset: 'img/ui-generated/chests/atlas/bronze.png', accent: '#ff9a52', durationMs: 4 * 60 * 60 * 1000, instantCost: 12,
+      reward: { coins: [90, 260], gems: [4, 12], tickets: [1, 1], coinCut: .56, gemCut: .86, ticketCut: .96, rarity: 'common' },
+    },
+    silver: {
+      id: 'silver', nameKey: 'chest_type_silver', sizeKey: 'chest_size_medium', rarityKey: 'chest_tier_rare', descKey: 'chest_desc_silver',
+      asset: 'img/ui-generated/chests/atlas/silver.png', accent: '#75c9ff', durationMs: 6 * 60 * 60 * 1000, instantCost: 18,
+      reward: { coins: [140, 360], gems: [5, 15], tickets: [1, 2], coinCut: .50, gemCut: .78, ticketCut: .92, rarity: 'rare' },
+    },
+    gold: {
+      id: 'gold', nameKey: 'chest_type_gold', sizeKey: 'chest_size_medium', rarityKey: 'chest_tier_epic', descKey: 'chest_desc_gold',
+      asset: 'img/ui-generated/chests/atlas/gold.png', accent: '#ffc52f', durationMs: 8 * 60 * 60 * 1000, instantCost: 24,
+      reward: { coins: [200, 500], gems: [7, 18], tickets: [2, 3], coinCut: .46, gemCut: .72, ticketCut: .87, rarity: 'epic' },
+    },
+    magic: {
+      id: 'magic', nameKey: 'chest_type_magic', sizeKey: 'chest_size_large', rarityKey: 'chest_tier_epic', descKey: 'chest_desc_magic',
+      asset: 'img/ui-generated/chests/atlas/magic.png', accent: '#d45cff', durationMs: 12 * 60 * 60 * 1000, instantCost: 30,
+      reward: { coins: [280, 700], gems: [10, 24], tickets: [2, 4], coinCut: .40, gemCut: .64, ticketCut: .78, rarity: 'epic' },
+    },
+    royal: {
+      id: 'royal', nameKey: 'chest_type_royal', sizeKey: 'chest_size_large', rarityKey: 'chest_tier_legendary', descKey: 'chest_desc_royal',
+      asset: 'img/ui-generated/chests/atlas/royal.png', accent: '#4fa2ff', durationMs: 16 * 60 * 60 * 1000, instantCost: 40,
+      reward: { coins: [400, 950], gems: [14, 30], tickets: [3, 5], coinCut: .36, gemCut: .55, ticketCut: .68, rarity: 'legendary' },
+    },
+    supreme: {
+      id: 'supreme', nameKey: 'chest_type_supreme', sizeKey: 'chest_size_xlarge', rarityKey: 'chest_tier_legendary', descKey: 'chest_desc_supreme',
+      asset: 'img/ui-generated/chests/atlas/supreme.png', accent: '#ff4f9a', durationMs: 20 * 60 * 60 * 1000, instantCost: 50,
+      reward: { coins: [550, 1250], gems: [18, 38], tickets: [4, 6], coinCut: .30, gemCut: .46, ticketCut: .58, rarity: 'legendary' },
+    },
+    champion: {
+      id: 'champion', nameKey: 'chest_type_champion', sizeKey: 'chest_size_xlarge', rarityKey: 'chest_tier_mythic', descKey: 'chest_desc_champion',
+      asset: 'img/ui-generated/chests/atlas/champion.png', accent: '#9c6cff', durationMs: 24 * 60 * 60 * 1000, instantCost: 60,
+      reward: { coins: [750, 1600], gems: [24, 48], tickets: [5, 8], coinCut: .25, gemCut: .40, ticketCut: .50, rarity: 'mythic' },
+    },
+    divine: {
+      id: 'divine', nameKey: 'chest_type_divine', sizeKey: 'chest_size_huge', rarityKey: 'chest_tier_mythic', descKey: 'chest_desc_divine',
+      asset: 'img/ui-generated/chests/atlas/divine.png', accent: '#77edff', durationMs: 36 * 60 * 60 * 1000, instantCost: 75,
+      reward: { coins: [1000, 2400], gems: [35, 70], tickets: [7, 10], coinCut: .20, gemCut: .32, ticketCut: .40, rarity: 'mythic' },
+    },
+    event: {
+      id: 'event', nameKey: 'chest_type_event', sizeKey: 'chest_size_variable', rarityKey: 'chest_tier_special', descKey: 'chest_desc_event',
+      asset: 'img/ui-generated/chests/atlas/event.png', accent: '#5ee07a', durationMs: 6 * 60 * 60 * 1000, instantCost: 20,
+      reward: { coins: [180, 520], gems: [8, 22], tickets: [2, 4], coinCut: .38, gemCut: .63, ticketCut: .78, rarity: 'special' },
+    },
+  });
+
   /* ===================== Meta (progresión persistente) ===================== */
   const Meta = (() => {
     const KEY = 'cv_meta';
-    const SCHEMA = 3;
+    const SCHEMA = 4;
     const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, gems: 0, tickets: 0, chests: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, worlds: {}, boards: { owned: { classic: 1 }, equipped: 'classic' }, survBest: 0, survBestWave: 0, stats: { totalScore: 0, bestCombo: 0, totalTime: 0 }, modes: {}, weekly: { week: '', id: '', progress: 0, done: false }, mastery: { classicPerfect: 0, bestClassicPerfect: 0 }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
+    Object.assign(def, { chestInventory: [], chestUnlock: null, chestSlots: 3, chestSeq: 0 });
     let m;
     try { m = Object.assign({}, def, JSON.parse(localStorage.getItem(KEY) || '{}')); }
     catch (_) { m = JSON.parse(JSON.stringify(def)); }
@@ -2801,6 +2911,11 @@
     if (typeof m.gems !== 'number') m.gems = 0;
     if (typeof m.tickets !== 'number') m.tickets = 0;
     if (typeof m.chests !== 'number') m.chests = 0;
+    if (!Array.isArray(m.chestInventory)) m.chestInventory = [];
+    if (!m.chestUnlock || typeof m.chestUnlock !== 'object') m.chestUnlock = null;
+    if (!Number.isFinite(m.chestSlots)) m.chestSlots = 3;
+    m.chestSlots = clamp(m.chestSlots | 0, 3, 4);
+    if (!Number.isFinite(m.chestSeq)) m.chestSeq = 0;
     if (!m.worlds || typeof m.worlds !== 'object') m.worlds = {};
     if (!m.boards || typeof m.boards !== 'object') m.boards = { owned: { classic: 1 }, equipped: 'classic' };
     if (!m.boards.owned) m.boards.owned = { classic: 1 };
@@ -2810,6 +2925,49 @@
     const save = () => { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch (_) { } };
     const today = () => new Date().toISOString().slice(0, 10);
     const hashStr = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
+    const CHEST_DROP_SEQUENCE = [
+      'wood', 'bronze', 'wood', 'silver', 'bronze', 'wood', 'gold', 'bronze',
+      'silver', 'magic', 'wood', 'bronze', 'royal', 'wood', 'silver', 'bronze',
+      'supreme', 'gold', 'wood', 'event', 'bronze', 'silver', 'wood', 'champion',
+      'gold', 'bronze', 'magic', 'wood', 'silver', 'royal', 'bronze', 'divine',
+    ];
+    const validChestType = (id) => CHEST_TYPES[id] ? id : 'wood';
+    function nextChestType(preferred) {
+      if (preferred && CHEST_TYPES[preferred]) return preferred;
+      const id = CHEST_DROP_SEQUENCE[Math.abs(m.chestSeq | 0) % CHEST_DROP_SEQUENCE.length];
+      return validChestType(id);
+    }
+    function makeChest(type, source) {
+      m.chestSeq = Math.max(0, m.chestSeq | 0) + 1;
+      return {
+        uid: `ch-${Date.now().toString(36)}-${m.chestSeq.toString(36)}`,
+        type: validChestType(type),
+        source: source || 'reward',
+        earnedAt: Date.now(),
+      };
+    }
+    function ensureChestInventory() {
+      const wanted = Math.max(0, m.chests | 0);
+      const seen = new Set();
+      let changed = false;
+      let list = (Array.isArray(m.chestInventory) ? m.chestInventory : []).map((entry) => {
+        if (typeof entry === 'string') { changed = true; return makeChest(entry, 'legacy'); }
+        return entry;
+      }).filter((entry) => {
+        if (!entry || typeof entry.uid !== 'string' || seen.has(entry.uid)) { changed = true; return false; }
+        seen.add(entry.uid);
+        if (!CHEST_TYPES[entry.type]) { entry.type = 'wood'; changed = true; }
+        return true;
+      });
+      if (list.length > wanted) { list = list.slice(0, wanted); changed = true; }
+      // Los contadores de partidas antiguas no tenían tipo. Se migran a madera de
+      // forma determinista para no consumir Math.random ni alterar tiradas existentes.
+      while (list.length < wanted) { list.push(makeChest('wood', 'legacy')); changed = true; }
+      m.chestInventory = list;
+      if (m.chestUnlock && !list.some((entry) => entry.uid === m.chestUnlock.uid)) { m.chestUnlock = null; changed = true; }
+      if (changed) save();
+      return list;
+    }
     const xpForLevel = (lvl) => 300 + (lvl - 1) * 250;
     const RANKS = ['Novato', 'Aprendiz', 'Hábil', 'Experto', 'Maestro', 'Leyenda', 'Mítico'];
     const ACH = [
@@ -2889,19 +3047,83 @@
       tickets: () => m.tickets || 0,
       addTickets(n) { m.tickets = (m.tickets || 0) + Math.max(0, n | 0); save(); return m.tickets; },
       spendTicket(n) { n = (n | 0) || 1; if ((m.tickets || 0) < n) return false; m.tickets -= n; save(); return true; },
-      // ---- Cofres (se acumulan sin abrir; openChest entrega recompensa) ----
-      chests: () => m.chests || 0,
-      addChest(n) { m.chests = (m.chests || 0) + Math.max(1, n | 0); save(); return m.chests; },
-      openChest() {
-        if ((m.chests || 0) <= 0) return null;
-        m.chests--;
+      // ---- Cofres tipados + ranuras. `m.chests` sigue siendo el contador canónico
+      // para mantener compatibilidad con partidas y pruebas anteriores. ----
+      chests() { ensureChestInventory(); return m.chests || 0; },
+      chestInventory() { return ensureChestInventory().map((entry) => Object.assign({}, entry)); },
+      chestSlotLimit: () => clamp(m.chestSlots | 0, 3, 4),
+      CHEST_SLOT_GEMS: 150,
+      unlockChestSlot() {
+        if ((m.chestSlots | 0) >= 4) return true;
+        if (!this.spendGems(this.CHEST_SLOT_GEMS)) return false;
+        m.chestSlots = 4; save(); return true;
+      },
+      chestUnlock() {
+        const list = ensureChestInventory();
+        if (!m.chestUnlock) return null;
+        const chest = list.find((entry) => entry.uid === m.chestUnlock.uid);
+        if (!chest) { m.chestUnlock = null; save(); return null; }
+        const now = Date.now();
+        const endsAt = Number(m.chestUnlock.endsAt) || now;
+        const durationMs = Number(m.chestUnlock.durationMs) || CHEST_TYPES[chest.type].durationMs;
+        return Object.assign({}, m.chestUnlock, chest, {
+          endsAt, durationMs, remainingMs: Math.max(0, endsAt - now), ready: endsAt <= now,
+        });
+      },
+      startChestUnlock(uid) {
+        const list = ensureChestInventory();
+        const chest = list.find((entry) => entry.uid === uid);
+        if (!chest) return null;
+        const current = this.chestUnlock();
+        if (current && current.uid !== uid) return null;
+        if (!current) {
+          const durationMs = CHEST_TYPES[chest.type].durationMs;
+          m.chestUnlock = { uid, startedAt: Date.now(), endsAt: Date.now() + durationMs, durationMs };
+          save();
+        }
+        return this.chestUnlock();
+      },
+      chestInstantCost(uid) {
+        const chest = ensureChestInventory().find((entry) => entry.uid === uid);
+        if (!chest) return 0;
+        const defn = CHEST_TYPES[chest.type];
+        const current = this.chestUnlock();
+        if (!current || current.uid !== uid) return defn.instantCost;
+        if (current.ready) return 0;
+        return Math.max(1, Math.ceil(defn.instantCost * current.remainingMs / Math.max(1, current.durationMs)));
+      },
+      addChest(n, type, source) {
+        const list = ensureChestInventory();
+        const count = Math.max(1, n | 0);
+        for (let i = 0; i < count; i++) list.push(makeChest(nextChestType(type), source));
+        m.chests = (m.chests || 0) + count;
+        m.chestInventory = list;
+        save();
+        return m.chests;
+      },
+      openChest(uid) {
+        const list = ensureChestInventory();
+        if (!list.length || (m.chests || 0) <= 0) return null;
+        const index = uid ? list.findIndex((entry) => entry.uid === uid) : 0;
+        if (index < 0) return null;
+        const chest = list[index];
+        const defn = CHEST_TYPES[chest.type] || CHEST_TYPES.wood;
+        const profile = defn.reward;
+        const ranged = ([min, max]) => min === max ? min : min + Math.floor(Math.random() * (max - min + 1));
         const roll = Math.random();
         let reward;
-        if (roll < 0.60) reward = { kind: 'coins', amount: 60 + Math.floor(Math.random() * 140), rarity: 'common' };
-        else if (roll < 0.90) reward = { kind: 'gems', amount: 3 + Math.floor(Math.random() * 8), rarity: 'common' };
-        else if (roll < 0.98) reward = { kind: 'ticket', amount: 1, rarity: 'common' };
+        if (roll < profile.coinCut) reward = { kind: 'coins', amount: ranged(profile.coins), rarity: profile.rarity };
+        else if (roll < profile.gemCut) reward = { kind: 'gems', amount: ranged(profile.gems), rarity: profile.rarity };
+        else if (roll < profile.ticketCut) reward = { kind: 'ticket', amount: ranged(profile.tickets), rarity: profile.rarity };
         else reward = this._rollCosmetic();
-        if (!reward) reward = { kind: 'gems', amount: 8 + Math.floor(Math.random() * 8), rarity: 'common', fallback: 'cosmetic' };
+        if (!reward) reward = chest.type === 'wood'
+          ? { kind: 'gems', amount: 8 + Math.floor(Math.random() * 8), rarity: 'common', fallback: 'cosmetic' }
+          : { kind: 'coins', amount: Math.round(profile.coins[1] * 1.35), rarity: 'jackpot', fallback: 'cosmetic' };
+        reward.chestType = chest.type;
+        list.splice(index, 1);
+        m.chestInventory = list;
+        m.chests = Math.max(0, (m.chests || 0) - 1);
+        if (m.chestUnlock && m.chestUnlock.uid === chest.uid) m.chestUnlock = null;
         this._applyChestReward(reward);
         save();
         return reward;
@@ -2962,7 +3184,7 @@
         if (streak < (m.dailyRun.streakRewarded || 0)) m.dailyRun.streakRewarded = 0; // racha nueva: re-armar hitos
         if (streak > 0 && streak % 7 === 0 && (m.dailyRun.streakRewarded || 0) < streak) {
           m.dailyRun.streakRewarded = streak;
-          m.chests = (m.chests || 0) + 1;
+          this.addChest(1, 'event', 'daily-streak');
           streakChest = true;
         }
         save();
@@ -4117,7 +4339,11 @@
       const coinTxt = I18n.t('surv_wave_reward').replace('{w}', clearedWave).replace('{c}', coins);
       if (clearedWave % 5 === 0) {
         let txt, ic;
-        if (clearedWave % 10 === 0) { Meta.addChest(1); this.runChests++; txt = '+1 ' + I18n.t('tab_chests'); ic = 'chest'; }
+        if (clearedWave % 10 === 0) {
+          const ladder = ['wood', 'bronze', 'silver', 'gold', 'magic', 'royal', 'supreme', 'champion', 'divine'];
+          Meta.addChest(1, ladder[Math.min(ladder.length - 1, Math.max(0, clearedWave / 10 - 1))], 'survival');
+          this.runChests++; txt = '+1 ' + I18n.t('tab_chests'); ic = 'chest';
+        }
         else { const gems = 2 + Math.floor(clearedWave / 5); Meta.addGems(gems); this.runGems += gems; txt = '+' + gems + ' 💎'; ic = 'gem'; }
         if (quietForBoss) { Econ.refresh(); return; }
         Toasts.event(I18n.t('surv_milestone').replace('{w}', clearedWave) + ' · +' + coins + ' ' + I18n.t('coins') + ' · ' + txt, 'good', 2600, ic);
@@ -5867,7 +6093,7 @@
       if (!cleared) { Toasts.show(I18n.t('reward_locked'), 'warn', 1600); return; }
       if (this.rewardClaimed(this.sel)) { Toasts.show(I18n.t('reward_claimed'), 'info', 1400); return; }
       Meta.worldData(this.sel).reward = today2();
-      Meta.addChest(1); Meta.addGems(20);
+      Meta.addChest(1, 'royal', 'world'); Meta.addGems(20);
       Toasts.show(I18n.t('reward_got'), 'good', 2200, '👑');
       Sound.milestone(); FX.confetti(80); Econ.refresh(); this.render();
     },
@@ -7353,7 +7579,7 @@
         // Jardín zen (GM-23): cada tablero limpio hace crecer una flor (para siempre).
         const fl = Meta.addZenFlower();
         extra.push('🌸 ' + fl);
-        if (fl === 10) { Meta.addChest(1); Toasts.show(I18n.t('garden_10'), 'good', 2800, 'chest'); Econ.refresh(); }
+        if (fl === 10) { Meta.addChest(1, 'magic', 'zen'); Toasts.show(I18n.t('garden_10'), 'good', 2800, 'chest'); Econ.refresh(); }
         if (fl === 50 && Meta.grantBoard('jardin')) { Toasts.show(I18n.t('garden_50'), 'good', 3400, '🌸'); Sound.record(); FX.confetti(90); }
         Render._hudDirty = true;
       }
@@ -7863,23 +8089,353 @@
   };
 
   /* ===================== Construcción de menús ===================== */
-  // Lanzador de Zen (GM-24): elegir ritmo (sereno = tabla fácil, más lento; normal).
-  // Es el único punto del juego donde elegir ritmo encaja sin romper comparabilidad.
-  function launchZen() {
-    Modal.close();
-    const last = Storage.zenDiff;
-    const opts = [
-      { id: 'facil', icon: '🍃', name: I18n.t('zen_pace_slow'), desc: I18n.t('zen_pace_slow_d') },
-      { id: 'normal', icon: '☯️', name: I18n.t('zen_pace_normal'), desc: I18n.t('zen_pace_normal_d') },
-    ];
-    if (last === 'normal') opts.reverse(); // el último ritmo elegido, primero
-    Picker.open({
-      title: I18n.t('zen_pace_title'), accent: '#9be15d',
-      options: opts,
-      cancelLabel: I18n.t('pick_back'), // B-05: tocar Zen por error no debe atrapar
-      onPick: (d) => { Storage.zenDiff = d; Game.start('zen', d); },
-    });
-  }
+  /* ===================== Lanzadores de modos =====================
+   * Los cinco modos comparten el panel de la referencia de Supervivencia. El
+   * chasis, el orden de lectura y el CTA permanecen estables; solo cambia la
+   * información real de cada modo. Así se evita volver a una colección de
+   * diálogos inconexos y cada tarjeta conserva un único punto de entrada.
+   */
+  const MODE_LAUNCH_META = {
+    clasico: {
+      tag: 'ml_classic_tag', cta: 'ml_classic_cta',
+      emblem: 'img/ui-generated/mode-launch/mode-classic.png', startIcon: 'img/ui-generated/mode-launch/target.png',
+    },
+    aventura: {
+      tag: 'ml_adv_tag', cta: 'ml_adv_cta',
+      emblem: 'img/ui-generated/mode-launch/mode-adventure.png', startIcon: 'img/ui-generated/mode-launch/rocket.png',
+    },
+    contrarreloj: {
+      tag: 'ml_timed_tag', cta: 'ml_timed_cta',
+      emblem: 'img/ui-generated/mode-launch/mode-timed.png', startIcon: 'img/ui-generated/mode-launch/clock.png',
+    },
+    supervivencia: {
+      tag: 'ml_surv_tag', cta: 'surv_start',
+      emblem: 'img/ui-generated/mode-launch/survival-emblem.png', startIcon: 'img/ui-generated/mode-launch/heart.png',
+    },
+    zen: {
+      tag: 'ml_zen_tag', cta: 'ml_zen_cta',
+      emblem: 'img/ui-generated/mode-launch/mode-zen.png', startIcon: 'img/ui-generated/mode-launch/leaf.png',
+    },
+  };
+
+  const ModeLaunch = {
+    current: 'supervivencia',
+    zenDiff: Config.DIFF_ORDER.includes(Storage.zenDiff) ? Storage.zenDiff : 'normal',
+
+    img(src, cls = '') {
+      return `<img${cls ? ` class="${cls}"` : ''} src="${src}" alt="">`;
+    },
+
+    infoButton() {
+      return `<span class="mode-launch-info" aria-hidden="true">${this.img('img/ui-generated/mode-launch/info.png')}</span>`;
+    },
+
+    howItem(src, text, special = '') {
+      const visual = special === 'ring'
+        ? `<span class="mode-launch-how-icon">${this.img('img/ui-generated/mode-launch/frenzy-ring.png')}</span>`
+        : `<span class="mode-launch-how-icon">${this.img(src)}</span>`;
+      const copy = Array.isArray(text) ? text.map((line) => esc(line)).join('<br>') : esc(text);
+      return `<div class="mode-launch-how-item">${visual}<p>${copy}</p></div>`;
+    },
+
+    metric(src, value, label) {
+      return `<div class="mode-launch-metric"><span>${this.img(src)}</span><b>${esc(value)}</b><small>${esc(label)}</small></div>`;
+    },
+
+    open(mode) {
+      if (!MODE_LAUNCH_META[mode]) return;
+      if (Modal._id && Modal._id !== 'modal-mode-launch') Modal.close();
+      HubViews.home({ focus: false });
+      Screens.show('start');
+      refreshStart();
+      this.current = mode;
+      if (mode === 'supervivencia') {
+        survDiff = Config.DIFF_ORDER.includes(Storage.survDiff) ? Storage.survDiff : 'normal';
+      }
+      if (mode === 'zen') {
+        this.zenDiff = ['facil', 'normal'].includes(Storage.zenDiff) ? Storage.zenDiff : 'normal';
+      }
+      this.render();
+      document.body.classList.add('mode-launch-open');
+      Modal.open('modal-mode-launch');
+    },
+
+    render() {
+      const meta = MODE_LAUNCH_META[this.current];
+      const modal = $('#modal-mode-launch');
+      if (!meta || !modal) return;
+      modal.dataset.mode = this.current;
+      const title = $('#mode-launch-title');
+      const tagline = $('#mode-launch-tagline');
+      const emblem = $('#mode-launch-emblem');
+      const startIcon = $('#mode-launch-start-icon');
+      const startLabel = $('#mode-launch-start-label');
+      if (title) title.textContent = I18n.modeT(this.current, 'name');
+      if (tagline) tagline.textContent = I18n.t(meta.tag);
+      if (emblem) emblem.src = meta.emblem;
+      if (startIcon) startIcon.src = meta.startIcon;
+      if (startLabel) startLabel.textContent = I18n.t(meta.cta);
+      this.renderBody();
+    },
+
+    renderBody() {
+      const body = $('#mode-launch-body');
+      if (!body) return;
+      const builders = {
+        clasico: () => this.classicHtml(),
+        aventura: () => this.adventureHtml(),
+        contrarreloj: () => this.timedHtml(),
+        supervivencia: () => this.survivalHtml(),
+        zen: () => this.zenHtml(),
+      };
+      body.innerHTML = builders[this.current]();
+    },
+
+    select(value) {
+      if (this.current === 'supervivencia' && Config.DIFF_ORDER.includes(value)) {
+        survDiff = value;
+        Storage.survDiff = value;
+      } else if (this.current === 'zen' && ['facil', 'normal'].includes(value)) {
+        this.zenDiff = value;
+        Storage.zenDiff = value;
+      } else return;
+      Sound.ui();
+      this.renderBody();
+      requestAnimationFrame(() => {
+        const selected = document.querySelector(`[data-mode-option="${value}"]`);
+        if (selected) selected.focus({ preventScroll: true });
+      });
+    },
+
+    start() {
+      const mode = this.current;
+      Sound.ensure();
+      Modal.close();
+      if (mode === 'clasico') { openWorldsMap(); return; }
+      if (mode === 'aventura') { HubViews.home({ focus: false }); Game.start('aventura', 'normal'); return; }
+      if (mode === 'contrarreloj') { Game.start('contrarreloj', 'normal'); return; }
+      if (mode === 'supervivencia') { startSurvivalSelected(); return; }
+      if (mode === 'zen') { Storage.zenDiff = this.zenDiff; Game.start('zen', this.zenDiff); }
+    },
+
+    survivalHtml() {
+      const rank = Meta.survRank();
+      const target = rank.nextAt || rank.total || 1;
+      const span = rank.nextAt ? rank.nextAt - rank.at : 1;
+      const done = rank.nextAt ? rank.total - rank.at : 1;
+      const pct = rank.nextAt ? clamp(done / span * 100, 0, 100) : 100;
+      const rankProgress = rank.nextAt
+        ? `${rank.total}/${target} ${I18n.t('card_feat_waves').toLowerCase()}`
+        : I18n.t('surv_rank_max');
+      const nextRank = rank.next ? I18n.t('srank_' + rank.next) : I18n.t('surv_rank_max');
+      const feats = Meta.survFeatCount();
+      const mut = Survival.weeklyMut();
+      const mutId = ['none', 'ice', 'chaos', 'frenzy'].includes(mut.id) ? mut.id : 'none';
+      const day = String(new Date().getDate());
+      const diffIcon = {
+        facil: 'img/ui-generated/mode-launch/difficulty-easy.png',
+        normal: 'img/ui-generated/mode-launch/difficulty-normal.png',
+        dificil: 'img/ui-generated/mode-launch/difficulty-hard.png',
+      };
+      const diffs = Config.DIFF_ORDER.map((diff) => {
+        const selected = diff === survDiff;
+        const record = Meta.survBestWaveFor(diff);
+        return `<button class="mode-launch-choice mode-launch-choice-${diff}${selected ? ' is-selected' : ''}" type="button" role="radio" aria-checked="${selected}" data-mode-option="${diff}">
+          <span class="mode-launch-face" aria-hidden="true">${this.img(diffIcon[diff])}</span>
+          <b>${esc(I18n.t('diff_' + diff))}</b>
+          <small>${record > 0 ? esc(I18n.t('surv_launch_record').replace('{w}', record)) : esc(I18n.t('surv_launch_norecord'))}</small>
+        </button>`;
+      }).join('');
+      const traits = I18n.t('surv_diff_' + survDiff + '_d').split(' · ');
+      const howLines = Settings.lang === 'en' ? [
+        ['Chain matches to fill', 'the inner ring and earn', 'a free power-up.'],
+        ['Fill the frenzy ring', 'to multiply your', 'score for a while.'],
+        ['You lose one life', 'if the board', 'overflows.'],
+      ] : [
+        ['Encadena', 'convergencias para', 'llenar el anillo interior', 'y ganar un', 'potenciador gratis.'],
+        ['Llena el anillo de', 'frenesí para', 'multiplicar tus', 'puntos un rato.'],
+        ['Pierdes', 'una vida', 'si el tablero', 'se desborda.'],
+      ];
+      return `
+        <section class="mode-launch-card mode-launch-progress-card">
+          <h3>${esc(I18n.t('ml_surv_weekly'))}</h3>${this.infoButton()}
+          <div class="mode-launch-rank-layout">
+            <span class="mode-launch-rank-badge">${this.img('img/ui-generated/mode-launch/survival-rank.png')}</span>
+            <div class="mode-launch-rank-copy">
+              <div class="mode-launch-rank-line"><b>${esc(I18n.t('srank_' + rank.id))}</b><strong>${esc(rankProgress)}</strong></div>
+              <span class="mode-launch-progress-track"><i style="width:${pct.toFixed(1)}%"></i></span>
+              <small>${esc(nextRank)}</small>
+            </div>
+            <div class="mode-launch-feats">${this.img('img/ui-generated/mode-launch/medal.png')}<b>${feats}/${Survival.FEATS.length}</b><small>${esc(I18n.t('ml_surv_feats'))}</small></div>
+          </div>
+        </section>
+        <section class="mode-launch-card mode-launch-context-card">
+          <span class="mode-launch-calendar" aria-hidden="true">${this.img('img/ui-generated/mode-launch/calendar.png')}<b>${esc(day)}</b></span>
+          <div><small>${esc(I18n.t('surv_week_label'))}</small><b>${esc(I18n.t('ml_surv_week_' + mutId + '_title'))}</b><span>${esc(I18n.t('ml_surv_week_' + mutId + '_sub'))}</span></div>
+          <span class="mode-launch-chevron" aria-hidden="true"></span>
+        </section>
+        <section class="mode-launch-choice-block">
+          <h3>${esc(I18n.t('ml_surv_choose'))}</h3>
+          <div class="mode-launch-choice-grid" role="radiogroup" aria-label="${esc(I18n.t('ml_surv_choose'))}">${diffs}</div>
+        </section>
+        <div class="mode-launch-traits">
+          ${this.metric('img/ui-generated/mode-launch/heart.png', traits[0] || '', '')}
+          ${this.metric('img/ui-generated/mode-launch/bolt.png', traits[1] || '', '')}
+          ${this.metric('img/ui-generated/mode-launch/coin.png', traits[2] || '', '')}
+        </div>
+        <section class="mode-launch-card mode-launch-how-card">
+          <h3>${esc(I18n.t('mode_launch_how'))}</h3>${this.infoButton()}
+          <div class="mode-launch-how-grid">
+            ${this.howItem('img/ui-generated/mode-launch/bolt.png', howLines[0])}
+            ${this.howItem('', howLines[1], 'ring')}
+            ${this.howItem('img/ui-generated/mode-launch/heart.png', howLines[2])}
+          </div>
+        </section>`;
+    },
+
+    classicHtml() {
+      const unlocked = Worlds.LIST.filter((world) => Worlds.unlocked(world.id));
+      const world = unlocked.find((item) => Meta.worldCleared(item.id) < Worlds.PER_WORLD) || unlocked[unlocked.length - 1] || Worlds.LIST[0];
+      const cleared = Meta.worldCleared(world.id);
+      const level = Meta.worldMaxLevel(world.id);
+      const stars = Meta.worldStars(world.id);
+      const pct = clamp(cleared / Worlds.PER_WORLD * 100, 0, 100);
+      return this.standardHtml({
+        progressTitle: I18n.t('mode_launch_progress'), badge: 'img/ui-generated/mode-launch/trophy.png',
+        progressName: I18n.t('world_' + world.id), progressValue: `${cleared}/${Worlds.PER_WORLD}`,
+        progressSub: `${I18n.t('mode_launch_level')} ${level}`, progressPct: pct,
+        sideIcon: 'img/ui-generated/mode-launch/star.png', sideValue: String(stars), sideLabel: I18n.t('mode_launch_stars'),
+        contextKicker: I18n.t('ml_classic_world'), contextTitle: I18n.t('world_' + world.id), contextSub: `${I18n.t('mode_launch_level')} ${level} · ${stars}/150 ${I18n.t('mode_launch_stars').toLowerCase()}`, contextIcon: 'img/ui-generated/mode-launch/planet.png',
+        choiceTitle: I18n.t('ml_classic_route'),
+        metrics: [
+          ['img/ui-generated/mode-launch/planet.png', String(unlocked.length), I18n.t('mode_launch_worlds')],
+          ['img/ui-generated/mode-launch/target.png', String(level), I18n.t('mode_launch_level')],
+          ['img/ui-generated/mode-launch/star.png', String(stars), I18n.t('mode_launch_stars')],
+        ],
+        traits: [
+          ['img/ui-generated/mode-launch/lock.png', `${cleared}/${Worlds.PER_WORLD}`, I18n.t('mode_launch_progress')],
+          ['img/ui-generated/mode-launch/medal.png', String(Meta.modePlays('clasico')), I18n.t('mode_launch_plays')],
+          ['img/ui-generated/mode-launch/trophy.png', fmtNum(Meta.modeBest('clasico')), I18n.t('mode_launch_best')],
+        ],
+        how: [
+          ['img/ui-generated/mode-launch/lock.png', I18n.t('ml_classic_how1')],
+          ['img/ui-generated/mode-launch/star.png', I18n.t('ml_classic_how2')],
+          ['img/ui-generated/mode-launch/planet.png', I18n.t('ml_classic_how3')],
+        ],
+      });
+    },
+
+    adventureHtml() {
+      const level = Meta.advMax();
+      const chapter = Adventure.chapterOf(level) + 1;
+      const chapterStep = Adventure.licOf(level) + 1;
+      const biome = Adventure.biomeOf(level);
+      return this.standardHtml({
+        progressTitle: I18n.t('mode_launch_progress'), badge: 'img/ui-generated/mode-launch/rocket.png',
+        progressName: `${I18n.t('mode_launch_chapter')} ${chapter}`, progressValue: `${chapterStep}/${Adventure.perChapter}`,
+        progressSub: `${I18n.t('mode_launch_level')} ${level}`, progressPct: chapterStep / Adventure.perChapter * 100,
+        sideIcon: 'img/ui-generated/mode-launch/trophy.png', sideValue: fmtNum(Meta.modeBest('aventura')), sideLabel: I18n.t('mode_launch_best'),
+        contextKicker: I18n.t('ml_adv_biome'), contextTitle: Adventure.biomeName(biome), contextSub: `${I18n.t('mode_launch_chapter')} ${chapter} · ${I18n.t('mode_launch_next_boss')} ${Adventure.perChapter - chapterStep + 1}`, contextIcon: 'img/ui-generated/mode-launch/planet.png',
+        choiceTitle: I18n.t('ml_adv_route'),
+        metrics: [
+          ['img/ui-generated/mode-launch/rocket.png', String(level), I18n.t('mode_launch_level')],
+          ['img/ui-generated/mode-launch/planet.png', String(chapter), I18n.t('mode_launch_chapter')],
+          ['img/ui-generated/mode-launch/trophy.png', fmtNum(Meta.modeBest('aventura')), I18n.t('mode_launch_best')],
+        ],
+        traits: [
+          ['img/ui-generated/mode-launch/target.png', `${chapterStep}/${Adventure.perChapter}`, I18n.t('mode_launch_progress')],
+          ['img/ui-generated/mode-launch/medal.png', String(Meta.modePlays('aventura')), I18n.t('mode_launch_plays')],
+          ['img/ui-generated/mode-launch/skull.png', String(Adventure.perChapter - chapterStep + 1), I18n.t('mode_launch_next_boss')],
+        ],
+        how: [
+          ['img/ui-generated/mode-launch/rocket.png', I18n.t('ml_adv_how1')],
+          ['img/ui-generated/mode-launch/planet.png', I18n.t('ml_adv_how2')],
+          ['img/ui-generated/mode-launch/skull.png', I18n.t('ml_adv_how3')],
+        ],
+      });
+    },
+
+    timedHtml() {
+      const best = Meta.modeBest('contrarreloj');
+      const plays = Meta.modePlays('contrarreloj');
+      const pct = best > 0 ? clamp(Math.log10(best + 1) / 5 * 100, 8, 100) : 0;
+      return this.standardHtml({
+        progressTitle: I18n.t('ml_timed_score'), badge: 'img/ui-generated/mode-launch/clock.png',
+        progressName: I18n.t('mode_launch_best'), progressValue: fmtNum(best),
+        progressSub: `${I18n.t('mode_launch_plays')}: ${plays}`, progressPct: pct,
+        sideIcon: 'img/ui-generated/mode-launch/medal.png', sideValue: String(plays), sideLabel: I18n.t('mode_launch_plays'),
+        contextKicker: I18n.t('ml_timed_rules'), contextTitle: `${Config.TIMED_START} s`, contextSub: `${I18n.t('mode_launch_start_time')} · ${I18n.t('mode_launch_time_cap')} ${Config.TIMED_CAP} s`, contextIcon: 'img/ui-generated/mode-launch/clock.png',
+        choiceTitle: I18n.t('ml_timed_rules'),
+        metrics: [
+          ['img/ui-generated/mode-launch/clock.png', `${Config.TIMED_START} s`, I18n.t('mode_launch_start_time')],
+          ['img/ui-generated/mode-launch/bolt.png', '+3 s', I18n.t('mode_launch_each_match')],
+          ['img/ui-generated/mode-launch/trophy.png', `${Config.TIMED_CAP} s`, I18n.t('mode_launch_time_cap')],
+        ],
+        traits: [
+          ['img/ui-generated/mode-launch/trophy.png', fmtNum(best), I18n.t('mode_launch_best')],
+          ['img/ui-generated/mode-launch/medal.png', String(plays), I18n.t('mode_launch_plays')],
+          ['img/ui-generated/mode-launch/bolt.png', '+3 s', I18n.t('mode_launch_each_match')],
+        ],
+        how: [
+          ['img/ui-generated/mode-launch/clock.png', I18n.t('ml_timed_how1')],
+          ['img/ui-generated/mode-launch/bolt.png', I18n.t('ml_timed_how2')],
+          ['img/ui-generated/mode-launch/trophy.png', I18n.t('ml_timed_how3')],
+        ],
+      });
+    },
+
+    zenHtml() {
+      const flowers = Meta.zenFlowers();
+      const goal = flowers < 10 ? 10 : (flowers < 50 ? 50 : Math.ceil((flowers + 1) / 50) * 50);
+      const pct = clamp(flowers / goal * 100, 0, 100);
+      const options = [
+        ['facil', 'img/ui-generated/mode-launch/leaf.png', I18n.t('zen_pace_slow'), I18n.t('zen_pace_slow_d')],
+        ['normal', 'img/ui-generated/mode-launch/frenzy-ring.png', I18n.t('zen_pace_normal'), I18n.t('zen_pace_normal_d')],
+      ].map(([id, icon, title, desc]) => `<button class="mode-launch-choice mode-launch-choice-zen${this.zenDiff === id ? ' is-selected' : ''}" type="button" role="radio" aria-checked="${this.zenDiff === id}" data-mode-option="${id}"><span class="mode-launch-face" aria-hidden="true">${this.img(icon)}</span><b>${esc(title)}</b><small>${esc(desc)}</small></button>`).join('');
+      return `
+        <section class="mode-launch-card mode-launch-progress-card">
+          <h3>${esc(I18n.t('ml_zen_garden'))}</h3>${this.infoButton()}
+          <div class="mode-launch-rank-layout">
+            <span class="mode-launch-rank-badge mode-launch-rank-badge-zen">${this.img('img/ui-generated/mode-launch/leaf.png')}</span>
+            <div class="mode-launch-rank-copy"><div class="mode-launch-rank-line"><b>${esc(I18n.t('ml_zen_space'))}</b><strong>${flowers}/${goal}</strong></div><span class="mode-launch-progress-track"><i style="width:${pct.toFixed(1)}%"></i></span><small>${esc(I18n.t('mode_launch_goal'))}: ${goal} ${esc(I18n.t('mode_launch_flowers').toLowerCase())}</small></div>
+            <div class="mode-launch-feats">${this.img('img/ui-generated/mode-launch/medal.png')}<b>${Meta.modePlays('zen')}</b><small>${esc(I18n.t('mode_launch_plays'))}</small></div>
+          </div>
+        </section>
+        <section class="mode-launch-card mode-launch-context-card"><span class="mode-launch-context-icon">${this.img('img/ui-generated/mode-launch/leaf.png')}</span><div><small>${esc(I18n.t('ml_zen_garden'))}</small><b>${esc(I18n.t('ml_zen_space'))}</b><span>${flowers} ${esc(I18n.t('mode_launch_flowers').toLowerCase())}</span></div><span class="mode-launch-chevron" aria-hidden="true"></span></section>
+        <section class="mode-launch-choice-block"><h3>${esc(I18n.t('ml_zen_choose'))}</h3><div class="mode-launch-choice-grid mode-launch-choice-grid-two" role="radiogroup" aria-label="${esc(I18n.t('ml_zen_choose'))}">${options}</div></section>
+        <div class="mode-launch-traits">
+          ${this.metric('img/ui-generated/mode-launch/leaf.png', I18n.t('zen_pace_' + (this.zenDiff === 'facil' ? 'slow' : 'normal')), I18n.t('mode_launch_pace'))}
+          ${this.metric('img/ui-generated/mode-launch/heart.png', '∞', I18n.t('mode_launch_goal'))}
+          ${this.metric('img/ui-generated/mode-launch/medal.png', String(flowers), I18n.t('mode_launch_flowers'))}
+        </div>
+        <section class="mode-launch-card mode-launch-how-card"><h3>${esc(I18n.t('mode_launch_how'))}</h3>${this.infoButton()}<div class="mode-launch-how-grid">
+          ${this.howItem('img/ui-generated/mode-launch/leaf.png', I18n.t('ml_zen_how1'))}
+          ${this.howItem('', I18n.t('ml_zen_how2'), 'ring')}
+          ${this.howItem('img/ui-generated/mode-launch/heart.png', I18n.t('ml_zen_how3'))}
+        </div></section>`;
+    },
+
+    standardHtml(data) {
+      const metrics = data.metrics.map(([src, value, label]) => this.metric(src, value, label)).join('');
+      const traits = (data.traits || data.metrics).map(([src, value, label]) => this.metric(src, value, label)).join('');
+      const how = data.how.map(([src, text]) => this.howItem(src, text)).join('');
+      return `
+        <section class="mode-launch-card mode-launch-progress-card">
+          <h3>${esc(data.progressTitle)}</h3>${this.infoButton()}
+          <div class="mode-launch-rank-layout">
+            <span class="mode-launch-rank-badge mode-launch-rank-badge-standard">${this.img(data.badge)}</span>
+            <div class="mode-launch-rank-copy"><div class="mode-launch-rank-line"><b>${esc(data.progressName)}</b><strong>${esc(data.progressValue)}</strong></div><span class="mode-launch-progress-track"><i style="width:${clamp(data.progressPct, 0, 100).toFixed(1)}%"></i></span><small>${esc(data.progressSub)}</small></div>
+            <div class="mode-launch-feats">${this.img(data.sideIcon)}<b>${esc(data.sideValue)}</b><small>${esc(data.sideLabel)}</small></div>
+          </div>
+        </section>
+        <section class="mode-launch-card mode-launch-context-card"><span class="mode-launch-context-icon">${this.img(data.contextIcon)}</span><div><small>${esc(data.contextKicker)}</small><b>${esc(data.contextTitle)}</b><span>${esc(data.contextSub)}</span></div><span class="mode-launch-chevron" aria-hidden="true"></span></section>
+        <section class="mode-launch-choice-block"><h3>${esc(data.choiceTitle)}</h3><div class="mode-launch-stats-grid">${metrics}</div></section>
+        <div class="mode-launch-traits mode-launch-traits-summary">${traits}</div>
+        <section class="mode-launch-card mode-launch-how-card"><h3>${esc(I18n.t('mode_launch_how'))}</h3>${this.infoButton()}<div class="mode-launch-how-grid">${how}</div></section>`;
+    },
+  };
+
+  function launchZen() { ModeLaunch.open('zen'); }
   // Catálogo completo del carrusel de Inicio. El Tutorial vive en la Guía y
   // Multijugador se mantiene como anticipo deshabilitado.
   const MODE_CARDS = [
@@ -7891,7 +8447,7 @@
         ['img/ui-v2/home/target.png', 'card_feat_objects'],
         ['img/ui-v2/home/bolt.png', 'card_feat_events'],
       ],
-      action: () => openWorldsMap()
+      action: () => ModeLaunch.open('clasico')
     },
     {
       key: 'aventura', accent: '#8b62ff', cardClass: 'home-mode-card-adventure',
@@ -7901,7 +8457,7 @@
         ['img/ui-v2/home/target.png', 'card_feat_goals'],
         ['img/ui/skull.png', 'card_feat_minibosses'],
       ],
-      action: () => openAdventure()
+      action: () => ModeLaunch.open('aventura')
     },
     {
       key: 'contrarreloj', accent: '#ff6cb0', cardClass: 'home-mode-card-timed',
@@ -7911,7 +8467,7 @@
         ['img/ui-v2/home/bolt.png', 'card_feat_pressure'],
         ['img/ui-v2/home/trophy.png', 'card_feat_best'],
       ],
-      action: () => { Modal.close(); Game.start('contrarreloj', 'normal'); }
+      action: () => ModeLaunch.open('contrarreloj')
     },
     {
       key: 'supervivencia', mode: 'supervivencia', accent: '#f05b5d', cardClass: 'home-mode-card-survival',
@@ -7921,7 +8477,7 @@
         ['img/ui-v2/home/bolt.png', 'card_feat_waves'],
         ['img/ui/skull.png', 'card_feat_bosses'],
       ],
-      action: () => openSurvivalDiff()
+      action: () => ModeLaunch.open('supervivencia')
     },
     {
       key: 'zen', accent: '#9be15d', cardClass: 'home-mode-card-zen',
@@ -7931,7 +8487,7 @@
         ['img/icons-v2/8-ui/rest.svg', 'card_feat_no_limit'],
         ['img/ui/heart.png', 'card_feat_relaxed'],
       ],
-      action: () => launchZen()
+      action: () => ModeLaunch.open('zen')
     },
   ];
   const MULTIPLAYER_CARD = {
@@ -7950,10 +8506,12 @@
 
   const HomeModeCarousel = {
     turn: 0,
+    renderedTurn: null,
     key: '',
     bound: false,
     drag: null,
     ignoreClickUntil: 0,
+    motionTimer: 0,
 
     normalize(n, length = HOME_MODE_CARDS.length) {
       return ((n % length) + length) % length;
@@ -8009,6 +8567,7 @@
       }).join('');
 
       this.turn = Math.max(0, HOME_MODE_CARDS.findIndex((c) => c.key === preserved));
+      this.renderedTurn = null;
       this.key = preserved;
       this.bind();
       this.update({ instant: true, announce: false });
@@ -8078,11 +8637,30 @@
       viewport.addEventListener('lostpointercapture', (event) => finishDrag(event, true));
     },
 
+    animateTurn(root) {
+      clearTimeout(this.motionTimer);
+      // Si se encadenan gestos, la nueva card seleccionada inicia su propio
+      // asentamiento sin insertar un fotograma intermedio de reinicio.
+      root.classList.add('is-turning');
+      this.motionTimer = setTimeout(() => {
+        root.classList.remove('is-turning');
+        this.motionTimer = 0;
+      }, 880);
+    },
+
     update({ instant = false, focus = false, announce = true } = {}) {
       const track = $('#mode-cards'), root = $('#home-mode-carousel'); if (!track || !root) return;
+      const previousTurn = this.renderedTurn;
+      const changed = Number.isFinite(previousTurn) && previousTurn !== this.turn;
+      this.renderedTurn = this.turn;
       const current = this.currentIndex(), active = HOME_MODE_CARDS[current];
       this.key = active.key;
-      if (instant) track.classList.add('is-instant');
+      if (instant) {
+        clearTimeout(this.motionTimer);
+        this.motionTimer = 0;
+        root.classList.remove('is-turning');
+        track.classList.add('is-instant');
+      }
       track.style.setProperty('--carousel-rotation', `${this.turn * (-360 / HOME_MODE_CARDS.length)}deg`);
       track.style.setProperty('--carousel-drag', '0deg');
       root.style.setProperty('--active-mode-accent', active.accent);
@@ -8115,6 +8693,7 @@
       const status = $('#home-mode-status');
       if (status && announce) status.textContent = I18n.t('home_mode_position')
         .replace('{mode}', modeCardTitle(active)).replace('{n}', current + 1).replace('{total}', HOME_MODE_CARDS.length);
+      if (changed && !instant) this.animateTurn(root);
       if (focus) {
         const button = track.querySelector(`[data-mode-card="${active.key}"]`);
         if (button && !button.disabled) requestAnimationFrame(() => button.focus({ preventScroll: true }));
@@ -8172,64 +8751,14 @@
   // queda latente en el HTML pero ninguna superficie de V1 la abre.
   let survDiff = Config.DIFF_ORDER.indexOf(Storage.survDiff) >= 0 ? Storage.survDiff : 'normal';
   function renderSurvivalDiff() {
-    document.querySelectorAll('[data-surv-diff]').forEach((btn) => {
-      const on = btn.dataset.survDiff === survDiff;
-      btn.classList.toggle('on', on);
-      btn.setAttribute('aria-checked', String(on));
-    });
-    // Récord por dificultad bajo cada chip (SV-12): la marca a batir, visible al elegir.
-    document.querySelectorAll('[data-surv-rec]').forEach((el) => {
-      const w = Meta.survBestWaveFor(el.dataset.survRec);
-      el.textContent = w > 0 ? I18n.t('surv_launch_record').replace('{w}', w) : I18n.t('surv_launch_norecord');
-    });
-    // Descriptor concreto de la dificultad elegida (vidas · ritmo · monedas).
-    const desc = $('#surv-diff-desc');
-    if (desc) { const key = 'surv_diff_' + survDiff + '_d'; desc.textContent = I18n.t(key); desc.setAttribute('data-i18n', key); }
-    const start = $('#btn-surv-start');
-    if (start) start.dataset.diff = survDiff;
+    if (ModeLaunch.current === 'supervivencia' && Modal._id === 'modal-mode-launch') ModeLaunch.renderBody();
   }
   function fillSurvivalService() {
-    const box = $('#surv-service'); if (!box) return;
-    box.hidden = false;
-    const rank = Meta.survRank();
-    $('#surv-rank-name').textContent = I18n.t('srank_' + rank.id);
-    // Progreso al siguiente rango (barra + texto). En rango máximo, barra llena.
-    const fill = $('#surv-rank-fill'), prog = $('#surv-rank-prog');
-    if (rank.nextAt) {
-      const span = rank.nextAt - rank.at, done = rank.total - rank.at;
-      if (fill) fill.style.width = Math.max(4, Math.min(100, done / span * 100)).toFixed(0) + '%';
-      if (prog) prog.textContent = I18n.t('surv_rank_progress').replace('{c}', rank.total).replace('{n}', rank.nextAt).replace('{next}', I18n.t('srank_' + rank.next));
-    } else {
-      if (fill) fill.style.width = '100%';
-      if (prog) prog.textContent = I18n.t('surv_rank_max');
-    }
-    // Récord semanal ligado al mutador (SV-32): solo si es de la semana en curso.
-    const wb = Meta.survWeekBest(), wk = Survival._weekKey();
-    const wl = $('#surv-week-line');
-    if (wl) wl.textContent = (wb && wb.week === wk && wb.wave > 0) ? I18n.t('surv_week_best').replace('{w}', wb.wave) : I18n.t('surv_week_best_none');
-    // Medallero de hazañas (SV-31) + vitrina compacta del bestiario (JF-ε):
-    // kills totales y Rondas maestras vitalicias.
-    const fl = $('#surv-feats-line');
-    if (fl) {
-      const kills = Meta.survBossKillsTotal(), mr = Meta.survMasterRounds();
-      fl.textContent = '🏅 ' + Meta.survFeatCount() + '/' + Survival.FEATS.length
-        + (kills ? ' · ⚔️ ' + kills : '') + (mr ? ' · ✦ ' + mr : '');
-    }
+    renderSurvivalDiff();
   }
   function openSurvivalDiff() {
     survDiff = Config.DIFF_ORDER.indexOf(Storage.survDiff) >= 0 ? Storage.survDiff : 'normal';
-    fillSurvivalService();
-    // Tarjeta del mutador semanal (SV-12): mismo tema determinista que la partida.
-    const mut = Survival.weeklyMut();
-    const wk = $('#surv-week');
-    if (wk) {
-      const ic = { none: '📅', ice: '❄️', chaos: '🌀', frenzy: '🔥' }[mut.id] || '📅';
-      $('#surv-week-ic').textContent = ic;
-      $('#surv-week-effect').textContent = I18n.t('survmut_' + mut.id);
-      wk.hidden = false;
-    }
-    renderSurvivalDiff();
-    HubViews.open('surv-diff');
+    ModeLaunch.open('supervivencia');
   }
   function startSurvivalSelected() {
     Storage.survDiff = survDiff;
@@ -8277,30 +8806,28 @@
   }
   function openDailyInfo() {
     buildDailyInfo();
-    HubViews.open('daily');
+    HubViews.open('daily', { nav: 'nav-events' });
   }
 
   /* ===================== Top bar reutilizable (sistema base) ===================== */
   const TOPBAR_HTML = `
-    <div class="appbar-profile">
-      <button class="appbar-profile-main" type="button" data-act="profile" data-i18n-al="profile_action" aria-label="Abrir perfil">
-        <span class="avatar"><span class="avatar-art"><img class="ic" src="img/ui-generated/home/avatar-robot.png" alt=""></span><span class="avatar-badge">1</span></span>
-        <span class="appbar-id">
-          <span class="appbar-name-row"><b class="appbar-name">Jugador</b></span>
-          <span class="appbar-lvl">
-            <span class="appbar-lvl-star">⭐</span><span class="appbar-lvl-txt">Nivel 1</span>
-            <span class="appbar-xp"><span class="appbar-xp-fill"></span></span>
-            <span class="appbar-xp-num">0 / 0</span>
+    <div class="hub-header-profile">
+      <button class="hub-header-profile-button" type="button" data-act="profile" data-i18n-al="profile_action" aria-label="Abrir perfil">
+        <span class="hub-header-avatar"><span class="hub-header-avatar-art"><img src="img/ui-generated/home/avatar-robot.png" alt=""></span><span class="hub-header-level-badge">1</span></span>
+        <span class="hub-header-identity">
+          <b class="hub-header-name">Jugador</b>
+          <span class="hub-header-level-row">
+            <span class="hub-header-level-star" aria-hidden="true"><img src="img/ui-v2/home/star.png" alt=""></span><span class="hub-header-level-text">Nivel 1</span>
           </span>
+          <span class="hub-header-xp" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="hub-header-xp-fill"></span></span>
         </span>
       </button>
-      <button class="appbar-edit" type="button" data-act="edit-name" data-i18n-al="edit_name_action" aria-label="Editar nombre"><img class="ic" src="img/ui-v2/home/pencil.png" alt=""></button>
     </div>
-    <div class="appbar-econ">
-      <span class="econ-pill econ-coins"><span class="econ-ic"><img class="ic" src="img/ui-v2/home/coin.png" alt=""></span><b data-econ-num="coins">0</b><button class="econ-plus" type="button" data-act="buy-coins" data-i18n-al="get_coins" aria-label="Conseguir monedas"><img class="ic" src="img/ui-v2/home/plus.png" alt=""></button></span>
-      <span class="econ-pill econ-gems"><span class="econ-ic"><img class="ic" src="img/ui-v2/home/gem.png" alt=""></span><b data-econ-num="gems">0</b><button class="econ-plus" type="button" data-act="buy-gems" data-i18n-al="get_gems" aria-label="Conseguir gemas"><img class="ic" src="img/ui-v2/home/plus.png" alt=""></button></span>
-      <span class="econ-pill econ-fire" aria-label="Racha"><span class="econ-ic"><img class="ic" src="img/ui-v2/home/fire.png" alt=""></span><b data-home-streak>0</b></span>
-    </div>`;
+    <div class="hub-header-wallets" aria-label="Recursos">
+      <span class="hub-header-wallet hub-header-wallet-coins"><img class="hub-header-currency" src="img/ui-generated/home/header-coin-star.png?v=2.6.79" alt=""><b data-econ-num="coins">0</b><button class="hub-header-plus" type="button" data-act="buy-coins" data-i18n-al="get_coins" aria-label="Conseguir monedas"><img src="img/ui-generated/home/header-plus.png?v=2.6.79" alt=""></button></span>
+      <span class="hub-header-wallet hub-header-wallet-gems"><img class="hub-header-currency" src="img/ui-v2/home/gem.png" alt=""><b data-econ-num="gems">0</b><button class="hub-header-plus" type="button" data-act="buy-gems" data-i18n-al="get_gems" aria-label="Conseguir gemas"><img src="img/ui-generated/home/header-plus.png?v=2.6.79" alt=""></button></span>
+    </div>
+    <button class="hub-header-settings" type="button" data-act="settings" data-i18n-al="tab_set" aria-label="Ajustes"><img src="img/ui-generated/home/nav-settings.png" alt=""></button>`;
   function mountTopBars() { document.querySelectorAll('[data-topbar]').forEach((el) => { el.innerHTML = TOPBAR_HTML; }); }
   // Rellena los placeholders <span data-art="nombre"> con el SVG de Art (una sola vez).
   function fillArt(root) {
@@ -8313,16 +8840,16 @@
     const prof = Storage.profile || { name: 'Jugador', color: '#00d0ff' };
     const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
     document.querySelectorAll('[data-topbar]').forEach((bar) => {
-      const n = bar.querySelector('.appbar-name'); if (n) n.textContent = prof.name;
-      const l = bar.querySelector('.appbar-lvl-txt'); if (l) l.textContent = I18n.t('lvl') + ' ' + lvl;
-      const xf = bar.querySelector('.appbar-xp-fill'); if (xf) xf.style.width = Math.min(100, have / need * 100).toFixed(0) + '%';
-      const xn = bar.querySelector('.appbar-xp-num'); if (xn) xn.textContent = have + ' / ' + need;
-      const bd = bar.querySelector('.avatar-badge'); if (bd) bd.textContent = lvl;
-      const streak = bar.querySelector('[data-home-streak]');
-      if (streak) {
-        const value = Meta.streak();
-        streak.textContent = value;
+      const n = bar.querySelector('.hub-header-name'); if (n) n.textContent = prof.name;
+      const l = bar.querySelector('.hub-header-level-text'); if (l) l.textContent = I18n.t('lvl') + ' ' + lvl;
+      const progress = Math.min(100, have / need * 100);
+      const xf = bar.querySelector('.hub-header-xp-fill'); if (xf) xf.style.width = progress.toFixed(0) + '%';
+      const xp = bar.querySelector('.hub-header-xp');
+      if (xp) {
+        xp.setAttribute('aria-valuenow', progress.toFixed(0));
+        xp.setAttribute('aria-label', `${I18n.t('lvl')} ${lvl}: ${have} / ${need}`);
       }
+      const bd = bar.querySelector('.hub-header-level-badge'); if (bd) bd.textContent = lvl;
     });
     Econ.refresh();
   }
@@ -8434,16 +8961,14 @@
       if (sub) sub.setAttribute('data-i18n', 'daily_banner_sub');
     }
 
-    // Contexto: una partida reanudable sustituye temporalmente al récord.
+    // Contexto: Inicio solo reserva este espacio cuando hay una partida reanudable.
     {
-      const best = fmtNum(Storage.best || 0);
-      text('start-best', best);
       const snapshot = RunSave.load();
-      const resume = $('#btn-resume-run'), record = $('#home-record-card');
-      if (resume) resume.hidden = !snapshot;
-      if (record) {
-        record.hidden = !!snapshot;
-        record.setAttribute('aria-label', `${I18n.t('best_score')}: ${best}`);
+      const resume = $('#btn-resume-run');
+      if (resume) {
+        resume.hidden = !snapshot;
+        const context = resume.closest('.home-context');
+        if (context) context.hidden = !snapshot;
       }
       if (snapshot && resume) {
         let summary;
@@ -8506,7 +9031,100 @@
       document.querySelectorAll('[data-home-streak]').forEach((el) => { el.textContent = streak; });
     }
 
+    refreshEvents();
+    buildCollections();
     Econ.refresh();
+  }
+
+  function refreshEvents() {
+    const rewardReady = Meta.rewardReady();
+    const rewardCard = $('#events-reward-card');
+    const rewardState = $('#events-reward-state');
+    const rewardClaim = $('#events-reward-claim');
+    if (rewardCard) rewardCard.classList.toggle('is-complete', !rewardReady);
+    if (rewardState) rewardState.textContent = I18n.t(rewardReady ? 'events_reward_ready' : 'events_reward_claimed');
+    if (rewardClaim) {
+      rewardClaim.disabled = !rewardReady;
+      rewardClaim.textContent = I18n.t(rewardReady ? 'claim' : 'events_reward_claimed');
+    }
+
+    const mission = Meta.dailyMission();
+    const missionValue = mission.done
+      ? I18n.t('home_complete')
+      : `${Math.min(mission.progress || 0, mission.target || 1)} / ${mission.target || 1}`;
+    const missionProgress = $('#events-mission-progress');
+    if (missionProgress) missionProgress.textContent = missionValue;
+
+    const run = Meta.dailyRunInfo();
+    const played = (run.plays || 0) > 0;
+    const medal = Meta.dailyMedal(run.best || 0);
+    const mutator = DailyMut.pick(new Date().toISOString().slice(0, 10));
+    const medalName = medal === 'none' ? I18n.t('home_status_done') : ModeSignals.dailyMedalLabel(medal);
+    const dailyValue = played
+      ? `${medalName} · ${fmtNum(run.best || 0)}`
+      : `${I18n.t('dmut_' + mutator + '_n')} · ${I18n.t('home_status_pending')}`;
+    const dailyStatus = $('#events-daily-status');
+    if (dailyStatus) dailyStatus.textContent = dailyValue;
+
+    const chests = Meta.chests();
+    const chestValue = chests > 0
+      ? I18n.t(chests === 1 ? 'home_ready_one' : 'home_ready_many').replace('{n}', chests)
+      : I18n.t('home_none_ready');
+    const chestStatus = $('#events-chests-status');
+    if (chestStatus) chestStatus.textContent = chestValue;
+    const chestCard = $('#events-chests-card');
+    if (chestCard) chestCard.classList.toggle('is-ready', chests > 0);
+  }
+
+  function buildCollections() {
+    const boardsRoot = $('#collections-boards');
+    const themesRoot = $('#collections-themes');
+    const summary = $('#collections-summary');
+    if (!boardsRoot || !themesRoot || !summary) return;
+
+    const equippedBoard = Meta.equippedBoard();
+    const boardOwned = Boards.order.filter((id) => Meta.ownsBoard(id));
+    boardsRoot.innerHTML = Boards.order.map((id) => {
+      const board = Boards.DEFS[id];
+      const owned = Meta.ownsBoard(id);
+      const equipped = equippedBoard === id;
+      const state = equipped ? I18n.t('equipped') : (owned ? I18n.t('collections_owned') : I18n.t('collections_locked'));
+      return `<article class="collection-item collection-board${owned ? ' is-owned' : ' is-locked'}${equipped ? ' is-equipped' : ''}">
+        <span class="collection-item-art board-thumb" data-board="${id}" aria-hidden="true"></span>
+        <span class="collection-item-copy"><b>${esc(board.name)}</b><small>${esc(state)}</small></span>
+        ${owned ? '<span class="collection-check" aria-hidden="true">✓</span>' : '<span class="collection-lock" aria-hidden="true">🔒</span>'}
+      </article>`;
+    }).join('');
+
+    const currentTheme = Meta.cosmetics().theme;
+    const themeOwned = Themes.order.filter((id) => Meta.owns(id));
+    themesRoot.innerHTML = Themes.order.map((id) => {
+      const theme = Themes.DEFS[id];
+      const owned = Meta.owns(id);
+      const equipped = currentTheme === id;
+      const state = equipped ? I18n.t('equipped') : (owned ? I18n.t('collections_owned') : I18n.t('collections_locked'));
+      return `<article class="collection-item collection-theme${owned ? ' is-owned' : ' is-locked'}${equipped ? ' is-equipped' : ''}">
+        <span class="collection-item-art collection-theme-swatch" style="background:${Themes.swatch(id)}" aria-hidden="true"></span>
+        <span class="collection-item-copy"><b>${esc(theme.name)}</b><small>${esc(state)}</small></span>
+        ${owned ? '<span class="collection-check" aria-hidden="true">✓</span>' : '<span class="collection-lock" aria-hidden="true">🔒</span>'}
+      </article>`;
+    }).join('');
+
+    const achievements = Meta.achievements();
+    const achievementOwned = achievements.filter((item) => item.unlocked).length;
+    const counts = [
+      ['img/ui-generated/home/nav-collections.png', I18n.t('collections_boards'), boardOwned.length, Boards.order.length],
+      ['img/ui-v2/home/star.png', I18n.t('collections_themes'), themeOwned.length, Themes.order.length],
+      ['img/ui-generated/home/nav-achievements.png', I18n.t('collections_achievements'), achievementOwned, achievements.length],
+    ];
+    summary.innerHTML = counts.map(([src, label, value, total]) => `<div class="collection-summary-card">
+      <img src="${src}" alt="" aria-hidden="true"><span><small>${esc(label)}</small><b>${value} / ${total}</b></span>
+    </div>`).join('');
+
+    const boardCount = $('#collections-boards-count');
+    if (boardCount) boardCount.textContent = I18n.t('collections_unlocked').replace('{n}', boardOwned.length).replace('{total}', Boards.order.length);
+    const themeCount = $('#collections-themes-count');
+    if (themeCount) themeCount.textContent = I18n.t('collections_unlocked').replace('{n}', themeOwned.length).replace('{total}', Themes.order.length);
   }
 
   function applyReducedFx() {
@@ -8562,7 +9180,17 @@
       if (Settings.lang === btn.dataset.lang) return; Settings.lang = btn.dataset.lang; Sound.ui(); applyLanguage();
     }));
   }
-  function openSettings() { buildSettings(); HubViews.open('settings', { nav: 'settings' }); }
+  function openSettings() { buildSettings(); HubViews.open('settings'); }
+
+  function openEvents() {
+    refreshStart();
+    HubViews.open('events', { nav: 'nav-events' });
+  }
+
+  function openCollections() {
+    buildCollections();
+    HubViews.open('collections', { nav: 'nav-collections' });
+  }
 
   function openMedals(view = 'profile') {
     const achievementsOnly = view === 'achievements';
@@ -8612,7 +9240,7 @@
         `<div class="medal ${a.unlocked ? 'on' : ''}"><span class="medal-ic">${a.unlocked ? iconInline('medal') : iconInline('lock')}</span><span class="medal-tx"><strong>${a.name}</strong><small>${a.desc}</small></span></div>`
       ).join('');
     }
-    HubViews.open('medals', { nav: achievementsOnly ? 'nav-achievements' : null });
+    HubViews.open('medals', { nav: achievementsOnly ? 'nav-collections' : null });
   }
 
   // Tienda de temas (compra/equipa con monedas; previsualización en vivo)
@@ -8685,57 +9313,100 @@
   }
   function openShop() { buildShop(); HubViews.open('shop', { nav: 'nav-shop' }); }
 
-  // --- Cofres: abrir y entregar recompensa aleatoria ---
+  // --- Cofres: inventario tipado, ranuras, temporizador y apertura por atlas ---
+  let selectedChestUid = '';
+  let chestTimerHandle = 0;
+  let chestSlotArmUntil = 0;
+  const LEGACY_CHEST_OPEN_ASSET = 'img/ui-generated/chests/chest-open.png';
+  function chestDef(type) { return CHEST_TYPES[type] || CHEST_TYPES.wood; }
+  function chestDuration(ms, countdown) {
+    ms = Math.max(0, Number(ms) || 0);
+    const total = Math.ceil(ms / 1000), h = Math.floor(total / 3600), min = Math.floor((total % 3600) / 60), sec = total % 60;
+    if (!countdown && h > 0 && min === 0) return h + 'h';
+    if (h > 0) return h + 'h ' + String(min).padStart(2, '0') + 'm';
+    if (min > 0) return min + 'm ' + String(sec).padStart(2, '0') + 's';
+    return sec + 's';
+  }
+  function chestSprite(type, frame, extra) {
+    const defn = chestDef(type);
+    return `<span class="chest-sprite chest-frame-${frame || 'closed'} ${extra || ''}" style="--chest-atlas:url('${defn.asset}');--chest-accent:${defn.accent}" aria-hidden="true"></span>`;
+  }
+  function currentSelectedChest() {
+    const inventory = Meta.chestInventory();
+    const unlock = Meta.chestUnlock();
+    let chest = inventory.find((entry) => entry.uid === selectedChestUid);
+    if (!chest) chest = (unlock && inventory.find((entry) => entry.uid === unlock.uid)) || inventory[0] || null;
+    selectedChestUid = chest ? chest.uid : '';
+    return chest;
+  }
   function setChestButtonsBusy(on) {
     ['#btn-open-chest', '#btn-open-premium'].forEach((sel) => {
-      const b = $(sel);
-      if (!b) return;
+      const b = $(sel); if (!b) return;
       b.disabled = !!on;
       b.classList.toggle('is-busy', !!on);
     });
+    const view = $('#view-chests'); if (view) view.classList.toggle('chest-busy', !!on);
   }
   function syncChestButtons() {
-    const n = Meta.chests();
-    const ob = $('#btn-open-chest');
-    if (ob) {
-      ob.disabled = false;
-      ob.classList.toggle('is-poor', n <= 0);
-      ob.setAttribute('aria-label', I18n.t('chests_open_saved') + ': ' + n);
-      ob.removeAttribute('aria-disabled');
+    const chest = currentSelectedChest();
+    const timed = $('#btn-open-chest'), instant = $('#btn-open-premium');
+    const timedLabel = $('#chest-timer-label'), timedValue = $('#chest-timer-value');
+    const instantLabel = $('#chest-instant-label'), instantCost = $('#premium-chest-cost');
+    if (!timed || !instant) return;
+    timed.classList.remove('is-poor'); instant.classList.remove('is-poor');
+    if (!chest) {
+      timed.disabled = instant.disabled = true;
+      if (timedValue) timedValue.textContent = '—';
+      if (instantCost) instantCost.textContent = '—';
+      return;
     }
-    const saved = $('#saved-chest-count'); if (saved) saved.textContent = n;
-    const pb = $('#btn-open-premium');
-    if (pb) {
-      const poor = Meta.gems() < Meta.PREMIUM_CHEST_GEMS;
-      pb.disabled = false;
-      pb.classList.toggle('is-poor', poor);
-      pb.setAttribute('aria-label', `${I18n.t('premium_chest')}: ${Meta.PREMIUM_CHEST_GEMS}`);
-      pb.removeAttribute('aria-disabled');
+    const defn = chestDef(chest.type), unlock = Meta.chestUnlock();
+    const active = unlock && unlock.uid === chest.uid;
+    const blocked = unlock && unlock.uid !== chest.uid;
+    const cost = Meta.chestInstantCost(chest.uid);
+    if (instantLabel) instantLabel.textContent = active && unlock.ready ? I18n.t('chest_collect') : I18n.t('chest_open_now_action');
+    if (instantCost) instantCost.textContent = cost > 0 ? String(cost) : '✓';
+    instant.disabled = !!blocked;
+    instant.classList.toggle('is-poor', cost > Meta.gems());
+    instant.setAttribute('aria-label', `${I18n.t('chest_open_now_action')}: ${cost}`);
+    if (blocked) {
+      if (timedLabel) timedLabel.textContent = I18n.t('chest_slot_blocked');
+      if (timedValue) timedValue.textContent = chestDuration(defn.durationMs);
+      timed.disabled = true;
+    } else if (active && unlock.ready) {
+      if (timedLabel) timedLabel.textContent = I18n.t('chest_collect');
+      if (timedValue) timedValue.textContent = '✓';
+      timed.disabled = false;
+    } else if (active) {
+      if (timedLabel) timedLabel.textContent = I18n.t('chest_unlocking_action');
+      if (timedValue) timedValue.textContent = chestDuration(unlock.remainingMs, true);
+      timed.disabled = true;
+    } else {
+      if (timedLabel) timedLabel.textContent = I18n.t('chest_start_unlock');
+      if (timedValue) timedValue.textContent = chestDuration(defn.durationMs);
+      timed.disabled = false;
     }
-    const premiumCost = $('#premium-chest-cost'); if (premiumCost) premiumCost.textContent = Meta.PREMIUM_CHEST_GEMS;
   }
   function chestRewardInfo(r) {
     if (!r) return null;
     if (r.kind === 'coins') return { icon: '🪙', asset: 'img/ui/coin.png', rarity: r.rarity || 'common', label: I18n.t('chest_reward_coins').replace('{n}', r.amount) };
-    if (r.kind === 'gems') return { icon: '💎', asset: 'img/ui/gem.png', rarity: 'common', label: I18n.t('chest_reward_gems').replace('{n}', r.amount) };
-    if (r.kind === 'ticket') return { icon: '🎟️', asset: 'img/ui/ticket.png', rarity: 'common', label: I18n.t('chest_reward_ticket').replace('{n}', r.amount) };
+    if (r.kind === 'gems') return { icon: '💎', asset: 'img/ui/gem.png', rarity: r.rarity || 'common', label: I18n.t('chest_reward_gems').replace('{n}', r.amount) };
+    if (r.kind === 'ticket') return { icon: '🎟️', asset: 'img/ui/ticket.png', rarity: r.rarity || 'common', label: I18n.t('chest_reward_ticket').replace('{n}', r.amount) };
     const key = r.cosmeticKind === 'theme' ? 'chest_reward_theme' : 'chest_reward_board';
     return { icon: '✨', asset: 'img/ui/gift.png', rarity: 'cosmetic', label: I18n.t(key).replace('{n}', r.name || r.id) };
   }
-  function showChestReward(r) {
+  function showChestReward(r, openedType) {
     const el = $('#chests-body'); if (!el) return;
-    const info = chestRewardInfo(r);
-    const cosmetic = r.kind === 'cosmetic';
+    const info = chestRewardInfo(r), cosmetic = r.kind === 'cosmetic';
     const title = cosmetic ? I18n.t('chest_cosmetic_title') : I18n.t('chest_reveal_title');
     const rarity = I18n.t('chest_rarity_' + info.rarity);
     const equip = cosmetic ? `<button class="btn btn-primary btn-sm" data-chest-equip>${esc(I18n.t('chest_equip'))}</button>` : '';
     el.innerHTML = `<div class="chest-reward-stage rarity-${info.rarity}">
-      <img class="chest-reward-open" src="img/ui-generated/chests/chest-open.png" alt="" aria-hidden="true">
+      ${chestSprite(openedType || r.chestType || 'wood', 'open', 'chest-reward-open')}
       <div class="chest-reveal rarity-${info.rarity}">
         <span class="cr-rarity">${esc(rarity)}</span>
         <span class="cr-icon"><img src="${info.asset}" alt="" aria-hidden="true"></span>
-        <b>${esc(title)}</b>
-        <strong>${esc(info.label)}</strong>
+        <b>${esc(title)}</b><strong>${esc(info.label)}</strong>
         <div class="cr-actions">${equip}<button class="btn btn-ghost btn-sm" data-chest-next>${esc(I18n.t('chest_continue'))}</button></div>
       </div>
     </div>`;
@@ -8745,16 +9416,16 @@
     if (eq) eq.addEventListener('click', () => {
       if (r.cosmeticKind === 'board') { Meta.equipBoard(r.id); Boards.apply(); }
       else { Meta.equip('theme', r.id); Cosmetics.apply(); }
-      Sound.success(); Econ.refresh(); refreshStart(); buildShop(); buildChests();
+      Sound.success(); Econ.refresh(); refreshStart(); buildShop(); setChestButtonsBusy(false); buildChests();
       Toasts.show(I18n.t('equipped'), 'good', 1500, info.icon);
     });
     announce(I18n.t('chest_reward').replace('{r}', info.label));
   }
-  function revealChestReward(r, premium) {
-    const el = $('#chests-body');
-    const hero = el && el.querySelector('.chest-hero');
+  function revealChestReward(r, premium, openedType) {
+    const el = $('#chests-body'), hero = el && el.querySelector('.chest-hero');
     const info = chestRewardInfo(r);
     const reduceMotion = Settings.reducedFx || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if (chestTimerHandle) { clearInterval(chestTimerHandle); chestTimerHandle = 0; }
     setChestButtonsBusy(true);
     if (el) el.setAttribute('aria-busy', 'true');
     if (hero && !reduceMotion) {
@@ -8764,63 +9435,153 @@
     }
     announce(I18n.t('chest_opening'));
     const finish = () => {
-      if (!reduceMotion) FX.confetti(info.rarity === 'cosmetic' ? 160 : (premium ? 120 : 80));
-      showChestReward(r);
+      if (!reduceMotion) FX.confetti(info.rarity === 'cosmetic' ? 160 : (premium ? 120 : 90));
+      showChestReward(r, openedType);
       Toasts.show(I18n.t('chest_reward').replace('{r}', info.label), 'good', info.rarity === 'common' ? 2200 : 2800, info.icon);
-      Econ.refresh();
-      syncChestButtons();
-      // La recompensa conserva el foco de la secuencia: no se puede abrir otro
-      // cofre hasta pulsar Seguir (o Equipar).
-      setChestButtonsBusy(true);
+      Econ.refresh(); syncHomeChests(); setChestButtonsBusy(true);
     };
     setTimeout(finish, reduceMotion ? 0 : 1120);
   }
+  function renderChestSlots(inventory, selected, unlock) {
+    const wrap = $('#chest-slots'); if (!wrap) return;
+    const limit = Meta.chestSlotLimit(), visible = inventory.slice(0, limit);
+    let html = '';
+    for (let i = 0; i < limit; i++) {
+      const chest = visible[i];
+      if (!chest) {
+        html += `<div class="chest-slot chest-slot-empty"><span class="chest-slot-state">${esc(I18n.t('chest_slot_empty'))}</span><span class="chest-slot-plus">+</span><small>${i + 1}</small></div>`;
+        continue;
+      }
+      const defn = chestDef(chest.type), active = unlock && unlock.uid === chest.uid;
+      const blocked = unlock && unlock.uid !== chest.uid;
+      const state = active ? (unlock.ready ? 'ready' : 'opening') : (blocked ? 'blocked' : 'waiting');
+      const stateLabel = active ? (unlock.ready ? I18n.t('chest_slot_ready') : I18n.t('chest_slot_opening')) : (blocked ? I18n.t('chest_slot_blocked') : I18n.t('chest_slot_waiting'));
+      const time = active ? (unlock.ready ? I18n.t('chest_collect') : chestDuration(unlock.remainingMs, true)) : chestDuration(defn.durationMs);
+      html += `<button class="chest-slot chest-slot-${state}${selected && selected.uid === chest.uid ? ' is-selected' : ''}" type="button" data-chest-slot="${chest.uid}" style="--slot-accent:${defn.accent}">
+        <span class="chest-slot-state">${esc(stateLabel)}</span>
+        ${chestSprite(chest.type, 'closed', 'chest-slot-art')}
+        <b>${esc(I18n.t(defn.nameKey))}</b>
+        <span class="chest-slot-time"><img src="img/ui/clock.png" alt="" aria-hidden="true"><span data-chest-countdown="${chest.uid}">${esc(time)}</span></span>
+      </button>`;
+    }
+    if (limit < 4) {
+      html += `<button class="chest-slot chest-slot-locked" type="button" data-chest-unlock-slot>
+        <span class="chest-slot-state">${esc(I18n.t('chest_slot_blocked'))}</span><span class="chest-slot-lock">＋</span>
+        <b>${esc(I18n.t('chest_unlock_slot'))}</b><small><img src="img/ui/gem.png" alt="" aria-hidden="true"> ${Meta.CHEST_SLOT_GEMS}</small>
+      </button>`;
+    }
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('[data-chest-slot]').forEach((button) => button.addEventListener('click', () => {
+      selectedChestUid = button.dataset.chestSlot; Sound.ui(); buildChests();
+    }));
+    const unlockButton = wrap.querySelector('[data-chest-unlock-slot]');
+    if (unlockButton) unlockButton.addEventListener('click', () => {
+      const now = Date.now();
+      if (now > chestSlotArmUntil) {
+        chestSlotArmUntil = now + 3000; unlockButton.classList.add('is-armed');
+        const note = unlockButton.querySelector('b');
+        if (note) note.textContent = I18n.t('chest_unlock_slot_cost').replace('{n}', Meta.CHEST_SLOT_GEMS);
+        Sound.ui(); return;
+      }
+      chestSlotArmUntil = 0;
+      if (!Meta.unlockChestSlot()) { Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 2400, 'gem'); return; }
+      Sound.success(); Toasts.show(I18n.t('chest_slot_unlocked'), 'good', 1800, 'chest'); buildChests();
+    });
+    const reserve = $('#chest-reserve-count'), extra = Math.max(0, inventory.length - limit);
+    if (reserve) { reserve.hidden = extra <= 0; reserve.textContent = I18n.t('chest_more_waiting').replace('{n}', extra); }
+  }
+  function buildChestCatalog() {
+    const grid = $('#chest-catalog-grid'); if (!grid) return;
+    const inventory = Meta.chestInventory();
+    grid.innerHTML = CHEST_TYPE_ORDER.map((id) => {
+      const defn = chestDef(id), owned = inventory.filter((entry) => entry.type === id);
+      return `<article class="chest-catalog-card" style="--catalog-accent:${defn.accent}"${owned.length ? ` data-catalog-owned="${owned.length}"` : ''}>
+        <div class="chest-catalog-name">${esc(I18n.t(defn.nameKey))}</div>
+        ${chestSprite(id, 'closed', 'chest-catalog-art')}
+        <dl><div><dt>${esc(I18n.t('chest_size_label'))}</dt><dd>${esc(I18n.t(defn.sizeKey))}</dd></div><div><dt>${esc(I18n.t('chest_type_label'))}</dt><dd>${esc(I18n.t(defn.rarityKey))}</dd></div></dl>
+        <p>${esc(I18n.t(defn.descKey))}</p>
+        ${owned.length ? `<button type="button" data-chest-catalog-select="${owned[0].uid}">${esc(I18n.t('chests_available'))} · ${owned.length}</button>` : ''}
+      </article>`;
+    }).join('');
+    grid.querySelectorAll('[data-chest-catalog-select]').forEach((button) => button.addEventListener('click', () => {
+      selectedChestUid = button.dataset.chestCatalogSelect;
+      toggleChestCatalog(false); Sound.ui(); buildChests();
+    }));
+  }
+  function toggleChestCatalog(show) {
+    const catalog = $('#chest-catalog'); if (!catalog) return;
+    catalog.hidden = !show;
+    const view = $('#view-chests'); if (view) view.classList.toggle('is-catalog-open', !!show);
+    if (show) { buildChestCatalog(); const scroller = catalog.closest('.chests-scroll'); if (scroller && scroller.scrollTo) scroller.scrollTo({ top: 0, behavior: 'smooth' }); }
+  }
+  function refreshChestCountdowns() {
+    const unlock = Meta.chestUnlock();
+    if (!unlock) { if (chestTimerHandle) clearInterval(chestTimerHandle); chestTimerHandle = 0; return; }
+    if (unlock.ready) { if (chestTimerHandle) clearInterval(chestTimerHandle); chestTimerHandle = 0; buildChests(); return; }
+    document.querySelectorAll(`[data-chest-countdown="${unlock.uid}"]`).forEach((node) => { node.textContent = chestDuration(unlock.remainingMs, true); });
+    if (selectedChestUid === unlock.uid) { const node = $('#chest-timer-value'); if (node) node.textContent = chestDuration(unlock.remainingMs, true); }
+  }
+  function startChestTicker() {
+    if (chestTimerHandle) clearInterval(chestTimerHandle);
+    const unlock = Meta.chestUnlock();
+    if (unlock && !unlock.ready) chestTimerHandle = setInterval(refreshChestCountdowns, 1000);
+  }
   function buildChests() {
     const el = $('#chests-body'); if (!el) return;
-    el.removeAttribute('aria-busy');
-    Econ.refresh();
-    const n = Meta.chests();
+    el.removeAttribute('aria-busy'); setChestButtonsBusy(false); Econ.refresh();
+    const inventory = Meta.chestInventory(), n = Meta.chests(), unlock = Meta.chestUnlock();
+    const selected = currentSelectedChest(), defn = chestDef(selected ? selected.type : 'wood');
     syncHomeChests();
-    const bestWave = Math.max(0, Meta.survBestWave() | 0);
-    const waveProgress = bestWave % 10;
-    const wavesLeft = 10 - waveProgress;
-    const track = $('#chest-progress-track');
-    const fill = $('#chest-progress-fill');
-    const value = $('#chest-progress-value');
-    const next = $('#chest-next-wave');
+    const bestWave = Math.max(0, Meta.survBestWave() | 0), waveProgress = bestWave % 10, wavesLeft = 10 - waveProgress;
+    const track = $('#chest-progress-track'), fill = $('#chest-progress-fill'), value = $('#chest-progress-value'), next = $('#chest-next-wave');
     if (track) track.setAttribute('aria-valuenow', String(waveProgress));
     if (fill) fill.style.width = (waveProgress * 10) + '%';
     if (value) value.textContent = waveProgress + ' / 10';
     if (next) next.textContent = I18n.t('chests_next_wave').replace('{n}', wavesLeft);
-    el.innerHTML = `<div class="chest-hero${n > 0 ? ' ready' : ' empty'}">
-      <div class="chest-stage" aria-hidden="true">
-        <span class="chest-stage-ring"></span>
-        <span class="chest-spark chest-spark-one"></span><span class="chest-spark chest-spark-two"></span><span class="chest-spark chest-spark-three"></span>
-        <img class="chest-closed" src="img/ui-generated/home/nav-chest.png" alt="">
-        <img class="chest-open" src="img/ui-generated/chests/chest-open.png" alt="">
-      </div>
-      <p class="chest-count">${esc(I18n.t('chests_have').replace('{n}', n))}</p>
-      <p class="chest-hint">${esc(n > 0 ? I18n.t('chests_hint') : I18n.t('empty_chests_sub'))}</p>
+    const info = $('#chest-selected-card');
+    if (info) { info.style.setProperty('--chest-accent', defn.accent); info.innerHTML = `<div class="chest-selected-name">${chestSprite(defn.id, 'closed', 'chest-selected-thumb')}<strong>${esc(I18n.t(defn.nameKey))}</strong></div>
+      <span class="chest-tier-pill">${esc(I18n.t(defn.rarityKey))}</span>
+      <dl><div><dt>${esc(I18n.t('chest_size_label'))}</dt><dd>${esc(I18n.t(defn.sizeKey))}</dd></div><div><dt>${esc(I18n.t('chest_duration'))}</dt><dd>${chestDuration(defn.durationMs)}</dd></div></dl>
+      <p>${esc(I18n.t(defn.descKey))}</p>`; }
+    el.innerHTML = `<div class="chest-hero${n > 0 ? ' ready' : ' empty'}" style="--chest-accent:${defn.accent}">
+      <div class="chest-stage" aria-hidden="true"><span class="chest-stage-ring"></span><span class="chest-spark chest-spark-one"></span><span class="chest-spark chest-spark-two"></span><span class="chest-spark chest-spark-three"></span>${chestSprite(defn.id, 'closed', 'chest-hero-sprite')}</div>
+      <p class="chest-count">${esc(I18n.t('chests_have').replace('{n}', n))}</p><p class="chest-hint">${esc(n > 0 ? I18n.t('chests_hint') : I18n.t('empty_chests_sub'))}</p>
     </div>`;
-    syncChestButtons();
+    renderChestSlots(inventory, selected, unlock); syncChestButtons(); startChestTicker();
   }
+  function openSelectedChest(chest, paidInstant) {
+    if (!chest) { Sound.miss(); Toasts.show(I18n.t('chests_none'), 'warn', 2400, 'chest'); return; }
+    const cost = paidInstant ? Meta.chestInstantCost(chest.uid) : 0;
+    if (cost > 0 && !Meta.spendGems(cost)) { Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 2800, 'gem'); syncChestButtons(); return; }
+    const r = Meta.openChest(chest.uid);
+    if (!r) { Sound.miss(); buildChests(); return; }
+    syncHomeChests(); Sound.success();
+    if (r.rarity !== 'common') setTimeout(() => Sound.record(), 120);
+    revealChestReward(r, false, chest.type);
+  }
+  function doChestTimerAction() {
+    const chest = currentSelectedChest(), unlock = Meta.chestUnlock();
+    if (!chest) { Sound.miss(); Toasts.show(I18n.t('chests_none'), 'warn', 2400, 'chest'); return; }
+    if (unlock && unlock.uid !== chest.uid) { Sound.miss(); Toasts.show(I18n.t('chest_only_one'), 'warn', 2400, 'clock'); return; }
+    if (unlock && unlock.uid === chest.uid && unlock.ready) { openSelectedChest(chest, false); return; }
+    if (unlock) return;
+    Meta.startChestUnlock(chest.uid); Sound.success(); Toasts.show(I18n.t('chest_timer_started'), 'good', 1800, 'clock'); buildChests();
+  }
+  function doChestInstantAction() { openSelectedChest(currentSelectedChest(), true); }
   function doOpenPremiumChest() {
     const r = Meta.openPremiumChest();
     if (!r) { Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 2800, 'gem'); buildChests(); return; }
-    Sound.success();
-    if (r.rarity === 'jackpot' || r.rarity === 'cosmetic') setTimeout(() => Sound.record(), 120);
-    revealChestReward(r, true);
+    Sound.success(); if (r.rarity === 'jackpot' || r.rarity === 'cosmetic') setTimeout(() => Sound.record(), 120);
+    revealChestReward(r, true, 'magic');
   }
-  function openChests() { buildChests(); HubViews.open('chests'); }
+  function openChests() { buildChests(); HubViews.open('chests', { nav: 'nav-events' }); }
+  // Compatibilidad con llamadas históricas: abre el primer cofre sin pasar por
+  // la UI de ranuras. La interfaz nueva usa doChestTimerAction/InstantAction.
   function doOpenChest() {
     const r = Meta.openChest();
     if (!r) { Sound.miss(); Toasts.show(I18n.t('chests_none'), 'warn', 2800, 'chest'); buildChests(); return; }
-    // La vista y la banda de Inicio comparten el mismo estado; proyectarlo en
-    // el mismo tick evita que el badge conserve el valor anterior al cerrar.
-    syncHomeChests();
-    Sound.success();
-    if (r.rarity === 'cosmetic') setTimeout(() => Sound.record(), 120);
-    revealChestReward(r, false);
+    syncHomeChests(); Sound.success(); if (r.rarity === 'cosmetic') setTimeout(() => Sound.record(), 120);
+    revealChestReward(r, false, r.chestType);
   }
 
   // Mapa de capítulos de Aventura (nodos hasta el capítulo alcanzado + el siguiente)
@@ -8892,6 +9653,15 @@
     if (!(window.CSS && window.CSS.supports && window.CSS.supports('color', 'color-mix(in srgb, red 50%, blue)'))) {
       showBrowserWarn();
       return;
+    }
+    // Fixture explícita de QA visual. Solo se activa con ?dev&qaChests=1 y nunca
+    // afecta a una sesión normal ni sustituye los métodos públicos del sistema.
+    const qaParams = new URLSearchParams(location.search);
+    if (qaParams.get('qaChests') === '1' && location.search.indexOf('dev') !== -1) {
+      const qaTypes = ['wood', 'silver', 'supreme'];
+      const ownedTypes = new Set(Meta.chestInventory().map((entry) => entry.type));
+      qaTypes.forEach((type) => { if (!ownedTypes.has(type)) Meta.addChest(1, type, 'qa'); });
+      if (Meta.gems() < 500) Meta.addGems(500 - Meta.gems());
     }
     // Inmersión: bloquear zoom por gestos (iOS Safari ignora user-scalable=no a veces).
     document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
@@ -8974,6 +9744,8 @@
 
     // Acciones del sistema base (top bar reutilizable + atajos): delegación por data-act.
     document.addEventListener('click', (e) => {
+      const option = e.target.closest('[data-mode-option]');
+      if (option) { ModeLaunch.select(option.dataset.modeOption); return; }
       const el = e.target.closest('[data-act]'); if (!el) return;
       const a = el.dataset.act;
       if (a === 'settings') { Sound.ensure(); openSettings(); }
@@ -8987,15 +9759,17 @@
       else if (a === 'go-surv') { Sound.ensure(); Modal.close(); openSurvivalDiff(); }
       else if (a === 'go-play') { Sound.ensure(); Modal.close(); showHome(State.mode, true); }
       else if (a === 'go-daily') { Sound.ensure(); Modal.close(); openDailyInfo(); }
-      else if (a === 'go-classic') { Sound.ensure(); Modal.close(); Worlds.open(); }
-      else if (a === 'go-adventure') { Sound.ensure(); Modal.close(); openAdventure(); }
+      else if (a === 'go-classic') { Sound.ensure(); Modal.close(); ModeLaunch.open('clasico'); }
+      else if (a === 'go-adventure') { Sound.ensure(); Modal.close(); ModeLaunch.open('aventura'); }
       else if (a === 'open-chests') { Sound.ensure(); Modal.close(); openChests(); }
       else if (a === 'open-shop') { Sound.ensure(); Modal.close(); openShop(); }
-      else if (a === 'open-missions') { Sound.ui(); refreshStart(); Modal.close(); HubViews.open('missions'); }
+      else if (a === 'open-missions') { Sound.ui(); refreshStart(); Modal.close(); HubViews.open('missions', { nav: 'nav-events' }); }
       else if (a === 'claim-daily') claimDailyReward();
       else if (a === 'nav-achievements') { Sound.ensure(); openMedals('achievements'); }
+      else if (a === 'nav-events') { Sound.ensure(); openEvents(); }
       else if (a === 'nav-shop') { Sound.ensure(); openShop(); }
-      else if (a === 'nav-missions') { Sound.ui(); HubViews.open('missions'); }
+      else if (a === 'nav-missions') { Sound.ui(); HubViews.open('missions', { nav: 'nav-events' }); }
+      else if (a === 'nav-collections') { Sound.ensure(); openCollections(); }
       else if (a === 'nav-home') { Sound.ui(); HubViews.home(); refreshStart(); }
     });
 
@@ -9008,13 +9782,7 @@
 
     // Lanzadores de modos que necesitan una configuración intermedia.
     { const ac = $('#adventure-continue'); if (ac) ac.addEventListener('click', () => { HubViews.home({ focus: false }); Game.start('aventura', 'normal'); }); }
-    document.querySelectorAll('[data-surv-diff]').forEach((b) => b.addEventListener('click', () => {
-      survDiff = b.dataset.survDiff || 'normal';
-      Storage.survDiff = survDiff;
-      Sound.ui();
-      renderSurvivalDiff();
-    }));
-    { const ss = $('#btn-surv-start'); if (ss) ss.addEventListener('click', () => { Sound.ensure(); startSurvivalSelected(); }); }
+    { const ml = $('#btn-mode-launch-start'); if (ml) ml.addEventListener('click', () => ModeLaunch.start()); }
 
     // Modo Clásico (mapa de mundos)
     { const wb = $('#worlds-back'); if (wb) wb.addEventListener('click', () => showHome('clasico', true)); }
@@ -9024,8 +9792,11 @@
     { const b = $('#wt-missions'); if (b) b.addEventListener('click', () => { Sound.ui(); HubViews.open('missions'); }); }
     { const b = $('#wt-play'); if (b) b.addEventListener('click', () => Sound.ui()); }
     { const b = $('#wt-chests'); if (b) b.addEventListener('click', () => { Sound.ui(); openChests(); }); }
-    { const oc = $('#btn-open-chest'); if (oc) oc.addEventListener('click', doOpenChest); }
-    { const op = $('#btn-open-premium'); if (op) op.addEventListener('click', doOpenPremiumChest); }
+    { const oc = $('#btn-open-chest'); if (oc) oc.addEventListener('click', doChestTimerAction); }
+    { const op = $('#btn-open-premium'); if (op) op.addEventListener('click', doChestInstantAction); }
+    { const all = $('#btn-chest-catalog'); if (all) all.addEventListener('click', () => { Sound.ui(); toggleChestCatalog(true); }); }
+    { const close = $('#btn-chest-catalog-close'); if (close) close.addEventListener('click', () => { Sound.ui(); toggleChestCatalog(false); }); }
+    document.querySelectorAll('[data-premium-open]').forEach((button) => button.addEventListener('click', doOpenPremiumChest));
     { const b = $('#wt-rank'); if (b) b.addEventListener('click', () => { Sound.ui(); openMedals(); }); }
     { const lm = $('#btn-level-map'); if (lm) lm.addEventListener('click', () => Game.toWorldsMap()); }
     { const mn = $('#btn-multi-notify'); if (mn) mn.addEventListener('click', () => { Sound.success(); Toasts.show(I18n.t('notify_ok'), 'good', 1800); HubViews.home(); }); }
@@ -9096,5 +9867,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, Modal, HubViews, Perf, ModeSignals, HomeModeCarousel, buildHomeModeCarousel, showHome, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, CHEST_TYPES, CHEST_TYPE_ORDER, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, Modal, HubViews, Perf, ModeSignals, HomeModeCarousel, buildHomeModeCarousel, showHome, refreshStart, applyLanguage };
 })();
