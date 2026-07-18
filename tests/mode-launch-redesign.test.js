@@ -44,6 +44,8 @@ test('lanzador de modos: existe un único modal compartido sin duplicar la naveg
   assert.match(modal, /id="mode-launch-title"/);
   assert.match(modal, /id="mode-launch-tagline"/);
   assert.match(modal, /id="mode-launch-body"/);
+  assert.match(modal, /id="mode-launch-detail"[^>]*aria-labelledby="mode-launch-detail-title"/);
+  assert.match(modal, /id="btn-mode-launch-detail-close"/);
   assert.match(modal, /id="btn-mode-launch-start"/);
   assert.equal((html.match(/<nav class="bottom-nav"/g) || []).length, 1,
     'el modal no debe copiar ni modificar el menú inferior');
@@ -78,6 +80,20 @@ test('Supervivencia reproduce la jerarquía de la referencia con datos reales', 
   assert.match(survival, /Meta\.survBestWaveFor\(diff\)/);
   assert.match(survival, /Config\.DIFF_ORDER\.map/);
   assert.match(js, /data-mode-option[\s\S]*?ModeLaunch\.select/);
+});
+
+test('paneles del lanzador: progreso, contexto y guía son controles funcionales', () => {
+  const launcher = between(js, 'const ModeLaunch = {', 'function launchZen()');
+  const survival = between(js, 'survivalHtml() {', 'classicHtml() {');
+  assert.match(launcher, /infoButton\(kind = 'progress'\)[\s\S]*?<button class="mode-launch-info"[^>]*data-mode-detail="\$\{kind\}"/);
+  assert.match(survival, /<button class="mode-launch-card mode-launch-context-card"[^>]*data-mode-detail="context"/);
+  assert.match(launcher, /openDetail\(kind, trigger\)[\s\S]*?panel\.hidden = false/);
+  assert.match(launcher, /closeDetail\(\{ restoreFocus = true \} = \{\}\)/);
+  assert.match(js, /closest\('\[data-mode-detail\]'\)[\s\S]*?ModeLaunch\.openDetail/);
+  assert.match(js, /btn-mode-launch-detail-close[\s\S]*?ModeLaunch\.closeDetail/);
+  assert.match(launcher, /lines\.map\(\(line\) => `<span>/,
+    'las líneas deben poder fluir en móvil sin saltos rígidos');
+  assert.doesNotMatch(between(launcher, 'howItem(src, text', 'metric(src, value'), /<br>/);
 });
 
 test('assets generados: todos los iconos son PNG transparentes, nítidos y precacheados', () => {
@@ -124,18 +140,24 @@ test('tipografía de producto: Nunito Sans está empaquetada y aplicada globalme
 });
 
 test('lanzador de modos: el CSS conserva chasis, selección, CTA y responsive', () => {
-  assert.match(css, /#modal-mode-launch\s*\{[\s\S]*?width:\s*min\(696px,[\s\S]*?border:\s*2px solid #d13dff/);
-  assert.match(css, /\.mode-launch-emblem\s*\{[\s\S]*?border-radius:\s*50%/);
-  assert.match(css, /\.mode-launch-close\s*\{[\s\S]*?clip-path:/);
-  assert.match(css, /\.mode-launch-choice\.is-selected\s*\{[\s\S]*?border-color:\s*#ffb52b/);
-  assert.match(css, /#modal-mode-launch \.mode-launch-start\s*\{[\s\S]*?linear-gradient\(180deg, #ffc420/);
-  assert.match(css, /@media \(max-width: 520px\)/);
-  assert.match(css, /body\.reduced-fx #modal-mode-launch\s*\{\s*animation:\s*none/);
+  const launcherCss = css.slice(css.lastIndexOf('/* Lanzador de modos 2.0'));
+  assert.match(launcherCss, /#modal-mode-launch\s*\{[\s\S]*?width:\s*min\(696px,[\s\S]*?border:\s*2px solid #d13dff/);
+  assert.match(launcherCss, /\.mode-launch-emblem\s*\{[\s\S]*?border-radius:\s*50%/);
+  assert.match(launcherCss, /\.mode-launch-close\s*\{[\s\S]*?clip-path:/);
+  assert.match(launcherCss, /\.mode-launch-choice\.is-selected\s*\{[\s\S]*?border-color:\s*#ffb52b/);
+  assert.match(launcherCss, /#modal-mode-launch \.mode-launch-start\s*\{[\s\S]*?linear-gradient\(180deg, #ffc420/);
+  assert.match(launcherCss, /\.mode-launch-face img\s*\{[\s\S]*?width:\s*9\.37cqw;[\s\S]*?height:\s*9\.37cqw;/);
+  assert.match(launcherCss, /\.mode-launch-start-icon img\s*\{[\s\S]*?width:\s*11\.83cqw;[\s\S]*?height:\s*11\.83cqw;/);
+  assert.match(launcherCss, /@media \(max-width: 520px\) and \(orientation: portrait\)[\s\S]*?height:\s*min\(780px, calc\(100dvh - 12px\)\)/);
+  assert.match(launcherCss, /@media \(max-width: 520px\)[\s\S]*?\.mode-launch-how-grid\s*\{[\s\S]*?grid-template-columns:\s*1fr/);
+  assert.match(launcherCss, /\.mode-launch-how-item p > span\s*\{\s*display:\s*inline/);
+  assert.match(launcherCss, /#modal-mode-launch > \.mode-launch-detail\s*\{[\s\S]*?overflow-y:\s*auto/);
+  assert.match(launcherCss, /body\.reduced-fx #modal-mode-launch\s*\{\s*animation:\s*none/);
 });
 
 test('lanzador de modos: textos ES/EN cubren el contrato visual', () => {
   const required = [
-    'mode_launch_close', 'mode_launch_progress', 'mode_launch_how',
+    'mode_launch_close', 'mode_launch_back', 'mode_launch_details', 'mode_launch_progress', 'mode_launch_how',
     'ml_surv_tag', 'ml_surv_weekly', 'ml_surv_choose',
     'ml_classic_tag', 'ml_adv_tag', 'ml_timed_tag', 'ml_zen_tag',
   ];

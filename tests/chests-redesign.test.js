@@ -9,8 +9,13 @@ require('./dom-stub.js');
 require('../game.js');
 
 const { Meta, CHEST_TYPES, CHEST_TYPE_ORDER, chestOdds, I18n } = globalThis.window.__cv;
+const gameJs = fs.readFileSync(path.join(__dirname, '..', 'game.js'), 'utf8');
 const styles = fs.readFileSync(path.join(__dirname, '..', 'styles.css'), 'utf8');
 const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+function gameSourceBetween(start, end) {
+  return gameJs.slice(gameJs.indexOf(start), gameJs.indexOf(end, gameJs.indexOf(start)));
+}
 
 function snapshot() {
   const m = Meta.state;
@@ -89,7 +94,9 @@ test('cofres: un desbloqueo persiste, calcula omisión proporcional y queda list
     assert.equal(Meta.chestInstantCost(chest.uid), 0);
     assert.equal(Meta.startChestUnlock(chest.uid), null, 'un cofre listo no se re-inicia');
 
-    const reward = withRandomSequence([0, 0], () => Meta.openChest(chest.uid));
+    // CH-4 añade una tirada previa de mejora de tier; .5 evita el ascenso y 0
+    // mantiene determinista la recompensa principal de monedas.
+    const reward = withRandomSequence([.5, 0, 0, 0], () => Meta.openChest(chest.uid));
     assert.equal(reward.kind, 'coins');
     assert.equal(reward.amount, 60);
     assert.equal(reward.chestType, 'wood');
@@ -163,6 +170,25 @@ test('cofres CH-1: i18n de transparencia presente en ambos idiomas', () => {
     assert.ok(I18n.DICT.es[key], `es.${key}`);
     assert.ok(I18n.DICT.en[key], `en.${key}`);
   }
+});
+
+test('cofres CH-3: Home proyecta el estado y la reserva es una cola visible y seleccionable', () => {
+  assert.match(indexHtml, /id="home-chests-nav-state"[^>]*hidden/,
+    'Inicio debe mostrar Abriendo/¡Listo! sin duplicar la tarjeta de Eventos');
+  assert.match(indexHtml, /class="chest-reserve" id="chest-reserve"/);
+  assert.match(styles, /\.chest-reserve-queue\s*\{[^}]*grid-auto-flow:\s*column[^}]*overflow-x:\s*auto/s);
+  assert.match(styles, /\.chest-reserve-item\s*\{/);
+
+  const render = gameSourceBetween('function renderChestSlots(', 'function buildChestCatalog()');
+  assert.match(render, /Meta\.chestAutoQueue\(\)/);
+  assert.match(render, /data-chest-reserve-slot/);
+  assert.match(render, /queueRank/);
+});
+
+test('cofres CH-3: badge y notificación local son best-effort sin rechazos sin manejar', () => {
+  assert.match(gameJs, /const ChestNotices = \{[\s\S]*?Notification\.requestPermission[\s\S]*?chestNotifiedReady/);
+  assert.match(gameJs, /badgeResult[\s\S]*?badgeResult\.catch\(\(\) => \{ \}\)/);
+  assert.match(gameJs, /visibilitychange[\s\S]*?syncHomeChests\(\)/);
 });
 
 test('cofres: carruseles y tablet conservan jerarquía, snap y objetivos táctiles', () => {

@@ -1,8 +1,8 @@
 /* Convergencia — Service Worker (offline-first).
  * Sube CACHE al publicar una versión nueva para invalidar la caché anterior. */
-const CACHE = 'cv-cache-v2.6.90';
+const CACHE = 'cv-cache-v2.6.92';
 const ASSETS = [
-  './', './index.html', './styles.css?v=2.6.90', './game.js?v=2.6.90', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=2.6.92', './game.js?v=2.6.92', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
   './fonts/NunitoSans-Variable.ttf',
   './img/ui-generated/chests/chest-open.png',
@@ -90,6 +90,18 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('message', (e) => { if (e.data === 'skipWaiting') self.skipWaiting(); });
+
+// CH-3: una notificación local solo se crea al volver a ejecutar la app; este
+// handler hace que tocarla reutilice la ventana instalada/abierta cuando exista.
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+      const current = windows.find((client) => 'focus' in client);
+      return current ? current.focus() : self.clients.openWindow('./');
+    })
+  );
+});
 
 self.addEventListener('fetch', (e) => {
   const req = e.request;

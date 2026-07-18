@@ -77,8 +77,9 @@ Uso extensivo de `color-mix(in srgb, ...)` como mecanismo de "tinte en runtime" 
 - Fuente de producto: **Nunito Sans variable**, empaquetada en `fonts/NunitoSans-Variable.ttf` y declarada como `"Nunito Sans Game"` mediante `@font-face`. No depende de una descarga externa.
 - `--app-font` es el único stack de interfaz y se aplica globalmente en `body`; Inicio, el selector de modos y el lanzador reutilizan el mismo token para evitar cambios de familia entre pantallas. Los fallbacks son `"Arial Rounded MT Bold"`, `"Trebuchet MS"`, `system-ui`, `sans-serif`.
 - Sin `font-size` base explícito en `html`/`body` (16px por defecto del navegador).
-- El lanzador de modos se compone sobre una base proporcional de `696 × 1076`; tamaños, interlineados y espaciados internos usan unidades de contenedor para conservar la jerarquía del mockup a cualquier viewport.
+- El lanzador de modos conserva la base proporcional de referencia de `696 × 1076` en tablet y escritorio. En teléfonos verticales (`≤520px`) adopta una altura fluida de hasta `780px`, mantiene cabecera y CTA visibles y desplaza únicamente el cuerpo cuando la altura disponible es compacta; tamaños, interlineados y espaciados internos combinan unidades de contenedor con `clamp()` para conservar la jerarquía del mockup sin sacrificar legibilidad.
 - Los iconos del lanzador nunca son glifos tipográficos ni emojis: todo el arte funcional se sirve como PNG transparente desde `img/ui-generated/mode-launch/`.
+- Las tarjetas con chevron y los botones de información del lanzador son controles reales: abren un panel de detalle interno, admiten teclado y devuelven el foco al control de origen al cerrarse.
 - Escala tipográfica (selección representativa, usa `clamp()` fluido en casi todos los casos):
   - Logo: `clamp(2rem, 8vw, 3rem)` / home hero `clamp(2.2rem, 11vw, 3.4rem)`, peso 800.
   - Títulos de sección (`#modes-title`, `.worlds-title`): `clamp(1.3-1.4rem, 5.3-5.5vw, 1.75-1.9rem)`, peso 800.

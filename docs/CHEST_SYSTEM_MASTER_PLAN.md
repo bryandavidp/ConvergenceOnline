@@ -225,7 +225,7 @@ La economía meta usa `Math.random` a propósito (un cofre seedeable sería expl
 4. Supervivencia conserva su escalera como bonus de hito.
 - *Pruebas:* unitarias del ciclo (determinismo, distribución por 32), guardarraíl en balance-sim (cofres/hora por bot).
 
-### CH-3 · Tiempos, auto-inicio y avisos (P1 · esfuerzo medio)
+### CH-3 · Tiempos, auto-inicio y avisos (P1 · esfuerzo medio) — ✅ cerrada tras auditoría (v2.6.92)
 
 1. Consolidar duraciones y tarifa plana de salto (U7, E1) — cuidado: cofres ya en inventario conservan su `durationMs`.
 2. Auto-inicio del siguiente cofre más corto al completarse el activo (F5).
@@ -277,7 +277,7 @@ La economía meta usa `Math.random` a propósito (un cofre seedeable sería expl
   `tests/chest-pipeline.test.js` (8 tests: ciclo determinista, diario 1/día, pity, semanal→event, contrarreloj/reto/supervivencia,
   escalera intacta). Suite 187/189; balance-sim sin cambios en partida (el pipeline es meta-economía; guardarraíl de medallas OK).
   QA navegador: 3 objetivos → cofre de madera, pity avanza a "bronce · ≤23".
-- 2026-07-18 — **CH-3 completado (v2.6.89).** (1) Duraciones consolidadas a 4 valores legibles — wood/bronze 3 h,
+- 2026-07-18 — **CH-3, entrega inicial (el commit dejó v2.6.90; cierre auditado en v2.6.92).** (1) Duraciones consolidadas a 5 valores legibles — wood/bronze 3 h,
   silver/gold/event 8 h, magic/royal 12 h, supreme/champion 24 h, divine 36 h — y **tarifa plana de salto: 3 💎/h exactos**
   (9/24/36/72/108; el salto total del divine sube 75→108, pero la regla es aprendible y el prorrateo hace barato el caso real de
   "afeitar las últimas horas"). (2) Modelo de temporizadores nuevo: los cofres terminados pasan a `chestReady[]` (recogida gratis,
@@ -290,3 +290,20 @@ La economía meta usa `Math.random` a propósito (un cofre seedeable sería expl
   (4: tarifa plana, cadena offline, auto-arranque al recoger, costes por estado) y actualización del test de desbloqueo a la
   semántica nueva. Suite 191/193. QA navegador: cadena plata→madera→oro con reloj simulado, recogida gratis con recompensa
   y auto-arranque verificados; chip de Eventos "¡Listo!".
+- 2026-07-18 — **CH-3 cerrada tras auditoría contra código (v2.6.92, schema 6).** La revisión del commit anterior encontró
+  cuatro incumplimientos que la etiqueta «completado» ocultaba: (1) `chestInventory` no persistía `durationMs`, así que un cofre
+  ya ganado cambiaba de duración con el catálogo; ahora cada entrada captura su duración y la migración asigna el mapa pre-CH-3
+  (3/4/6/8/12/16/20/24/36/6 h), sin tocar `startedAt`/`endsAt` del `chestUnlock` activo; el salto se calcula directamente como
+  `ceil(3 × horas restantes)`, también para timers legacy. (2) El catch-up offline tenía un tope fijo de 12 transiciones pese a
+  que la reserva es ilimitada; el límite seguro ahora deriva de `inventory.length`. (3) La reserva era solo «+n»: ahora muestra
+  una cola horizontal ordenada por la misma prioridad real del motor (duración guardada → `earnedAt` → orden estable), permite
+  seleccionar cofres fuera de las ranuras y mantiene visible un timer auto-iniciado desde la reserva. (4) Se añadió permiso
+  explícito y notificación local best-effort una vez por UID listo (Service Worker con fallback `Notification`), reentrada por
+  `visibilitychange`, gestión de clic y `.catch()` para rechazos de Badging; no se promete push con la app cerrada. El Home
+  proyecta «Abriendo/¡Listo!» en un chip compacto sobre Eventos, sin duplicar la tarjeta que la arquitectura reserva a esa vista.
+  Cobertura nueva en `tests/chest-timers.test.js` y `tests/chests-redesign.test.js`: duración nueva/legacy, compat del unlock
+  activo, tarifa plana, >12 cofres offline, orden por snapshot, auto-inicio desde fuera de ranuras, aviso idempotente, cola UI,
+  Home y APIs best-effort. Verificación final: suite focalizada 30/30; suite global 200/202 (los 2 fallos restantes de
+  `board-themes-redesign` son preexistentes y ajenos a cofres); sintaxis y ESLint sin errores; `balance-sim` exit 0. QA real
+  390×844: cola +2 sin overflow, selección de Oro en reserva, timer de 8 h visible fuera de ranuras y chip `8h 00m` en Eventos;
+  consola limpia.

@@ -529,7 +529,9 @@ test('FB-7: el drop cosmético concede no poseídos y grantTheme es idempotente'
     m.boards = { owned: { classic: 1 }, equipped: 'classic' };
     m.cosmetics = { owned: {}, theme: 'default', skin: 'default', fx: 'default' };
 
-    const r = withRandomSequence([0.99, 0], () => Meta.openChest());
+    // CH-4: .5 evita tier-up; .99 fuerza cosmético; 0 elige el primero y .9
+    // deja la tirada menor en ticket sin alterar monedas/gemas de esta aserción.
+    const r = withRandomSequence([.5, .99, 0, .9], () => Meta.openChest());
     assert.equal(r.kind, 'cosmetic');
     assert.equal(r.cosmeticKind, 'board');
     assert.equal(Meta.ownsBoard(r.id), true);
@@ -554,7 +556,7 @@ test('FB-7: pool cosmético vacío cae a gemas normales o jackpot premium', () =
     m.cosmetics = { owned: {}, theme: 'default', skin: 'default', fx: 'default' };
     Themes.order.forEach((id) => { if (id !== 'default') m.cosmetics.owned[id] = '2026-01-01'; });
 
-    const normal = withRandomSequence([0.99, 0], () => Meta.openChest());
+    const normal = withRandomSequence([.5, .99, 0, .9], () => Meta.openChest());
     assert.deepEqual({ kind: normal.kind, amount: normal.amount, fallback: normal.fallback }, { kind: 'gems', amount: 8, fallback: 'cosmetic' });
     assert.equal(m.gems, Meta.PREMIUM_CHEST_GEMS + 8);
 
