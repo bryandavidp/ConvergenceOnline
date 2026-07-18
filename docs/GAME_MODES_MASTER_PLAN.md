@@ -38,7 +38,7 @@ Se leyó la documentación completa (`docs/` + `CLAUDE.md`) y se verificó contr
 | Aventura | Capítulos infinitos de 5 niveles, 6 biomas | 4 objetivos (clear/score/survive/boss), mods de bioma, intro de capítulo | Tablero lleno = derrota dura |
 | Contrarreloj | 60s→tope 90s, reposición decreciente | Aceleración exponencial de spawn, presión visual <20s/<10s | Reloj a 0 |
 | Reto del día | Contrarreloj seedeado por fecha | Medallas 750/1500/2500, +5💎 primer intento, mejor marca diaria | Reloj a 0 |
-| Supervivencia | Oleadas + vidas + revivir | 5 boosters, barra de carga, frenesí (3 tiers), 3 eventos jefe, trampas, 3 dificultades, récord de oleada | Sin vidas y sin revivir |
+| Supervivencia | Oleadas + vidas + revivir | Loadout opcional de hasta 3 boosters, anillo de suministro económico, frenesí (3 tiers), encuentros de jefe, trampas, 3 dificultades, récord de oleada | Sin vidas y sin revivir |
 | Zen | Sin derrota, ritmo 1.25× más lento | softClear(45%) al llenarse, +1 pista por tablero limpio | Solo salir |
 
 **Hallazgos de estado no documentados en ningún doc previo:**
@@ -168,7 +168,7 @@ Formato: **Fortalezas → Debilidades → Psicología en juego → Referente del
 
 **Debilidades.**
 1. **Sobrecarga cognitiva sin jerarquía** (hallazgo §1.4): 4 medidores + 3 multiplicadores apilados + trampas + pickups. El modo más profundo es también el más opaco — y la explicación pre-partida (V1-14) no sustituye a la legibilidad en juego (D1).
-2. **Carga y frenesí son gemelos redundantes**: se llenan al mismo ritmo con la misma acción. El jugador no distingue funcionalmente "barra que da booster" de "barra que da modo furia" hasta que ambas explotan solas. Ninguna se *gestiona*: ambas son relojes pasivos de convergencias.
+2. **Carga y frenesí eran gemelos redundantes (resuelto en v2.7.1)**: ambos se siguen llenando con juego activo, pero ahora prometen resultados distintos y legibles —el anillo interior financia la siguiente preparación y el exterior activa poder dentro de la run—.
 3. **Cero decisiones estratégicas entre oleadas**: la única decisión del modo es cuándo gastar boosters. Comparado con su referente natural (arcade wave-survival), falta el respiro-decisión que marca el ritmo tenso→alivio→tenso.
 4. **Jefes sin anticipación ni recompensa**: `bossEvent()` dispara 1 de 3 eventos al azar dentro de la oleada N sin aviso previo, y superarlo no da nada distinto de una oleada normal. El "jefe" es hoy una molestia aleatoria, no un clímax.
 5. **Revivir plano trivializa la muerte tardía** (hallazgo §1.5).
@@ -183,7 +183,7 @@ Formato: **Fortalezas → Debilidades → Psicología en juego → Referente del
 - **GM-18 · Telegrafiar al jefe** (🟢): si `(wave+1) % bossEvery === 0`, la barra de oleada se tinta y muestra «⚠ JEFE» durante toda la oleada previa; 3s antes del evento, aviso específico del tipo («☄ Se acerca una lluvia…»). *Justificación: anticipación = tensión gratis (D8); además hace estratégico guardar un freeze para el jefe.*
 - **GM-19 · Revivir con precio creciente** (🟢, balance): coste = `120 × 2^(revividosEstaRun)`, tope 480, máximo 3 por run, mostrado antes de pagar. *Justificación: primera muerte sigue accesible (no se castiga al nuevo), pero la inmortalidad por monedas desaparece (restaura el peso de la muerte); el tope evita el "me estafaron". Riesgo bajo; validar con §10 el efecto en duración media de run.*
 - **GM-20 · Sustituir `quake` por `surge`** (🟢): el terremoto (barajar) se reemplaza por «Marea»: 2 filas exteriores se llenan de iconos en 2s (aviso previo con las celdas marcadas). *Justificación: amenaza legible con counterplay (despeja esas zonas antes), sin el azar bidireccional del quake. El quake puede quedar como mutador semanal (GM-22), donde el caos sí es tema.*
-- **GM-21 · Fusión visual carga+frenesí** (🟡, UX sin cambio de reglas): un solo widget de dos anillos concéntricos (interior = carga → booster; exterior = frenesí → furia) en lugar de dos barras paralelas, con jerarquía clara sobre la barra de oleada. *Justificación: mata la redundancia percibida (2) sin tocar balance; reduce el HUD de 4 medidores a 3 bloques.*
+- **GM-21 · Fusión visual carga+frenesí** (🟡): un solo widget de dos anillos concéntricos (interior = suministro → monedas futuras; exterior = frenesí → furia) en lugar de dos barras paralelas, con jerarquía clara sobre la barra de oleada. *La capa visual nació en v2.1.0 y la promesa económica del anillo interior se actualizó en v2.7.1.*
 - **GM-22 · Mutador semanal («Semana de…»)** (🟢, tras GM-15): `hashStr(weekId) % tabla` aplica 1 mutador temático a Supervivencia toda la semana, mostrado en la tarjeta del modo («Semana del hielo: +escarcha, +15% monedas»). *Justificación: variedad determinista sin servidor; da razón de volver al modo cada semana; comparte tabla de mutadores con GM-15.*
 
 ## 3.6 Zen — correcto como válvula, vacío como destino
@@ -289,8 +289,8 @@ Los umbrales 750/1500/2500 dependen de la fórmula de score con dificultad `norm
 
 | Pieza | Hoy | Destino |
 |---|---|---|
-| bomb/freeze/clearLine/wild/x2 | Solo Supervivencia: inventario inicial + barra de carga (aleatorio) | Se mantienen como núcleo de Supervivencia; bomb/freeze/clearLine además comprables pre-nivel en Clásico (GM-03) con los costes originales (80/60/90) |
-| Barra de carga | Relleno pasivo, premio aleatorio uniforme | Se mantiene; GM-17 permite elegir booster como bendición (compensa la aleatoriedad con agencia periódica) |
+| bomb/freeze/clearLine/wild/x2 | Arsenal persistente procedente de cofres/eventos | Se equipa voluntariamente antes del intento: hasta 2 tipos en Clásico y 3 en Supervivencia; stock primero y compra con monedas para faltantes |
+| Anillo de suministro | Se llena con juego hábil | Paga pocas monedas para financiar futuras preparaciones; no genera boosters aleatorios ni toca el arsenal persistente |
 | x2 | Duplica 11s, se apila con frenesí y fiebre (×53 teórico §1.2) | Se mantiene el efecto; GM-16 lo hace legible. Si la simulación muestra abuso, tope de `tempMult ≤ 3` documentado |
 | Tiles trigger (bonus/portal/magicbox/bomba/slowdown) | Repartidos por modos | Sin cambios; cápsulas de tiempo (GM-13) se suman a la familia en Contrarreloj |
 | Reliquias (nuevo) | — | Solo Aventura (GM-07): pasivas de run, nunca compradas |
@@ -457,3 +457,17 @@ Orden pensado para: valor visible temprano, dependencias respetadas, y cero camb
 - **Guardarraíl recalibrado**: 60649 → 52964 (la cápsula desplaza el stream RNG y añade tiempo); la banda ±40% lo absorbió sin fallar — funcionó exactamente como se diseñó.
 - **Simulador**: batería v2.4.0 — Clásico y Zen idénticos bit a bit (control ✅); Contrarreloj +2–11% (cápsula, esperado); limitación documentada: los efectos diferidos por `setTimeout` de los eventos jefe (marea/quake) no se ejecutan dentro del bucle síncrono del sim.
 - i18n nuevas (ES+EN): marea (2), mutador semanal (3), mutador diario (14), racha/calendario (2), cápsula (1), jefe de Aventura (7), expedición (1), jardín (2), `board_excl`.
+
+### 2026-07-18 — Flujo de sesión y economía de boosters implementados (v2.7.1)
+
+- **Economía de boosters:** se eliminan las 10 unidades gratuitas de cada intento de Supervivencia. El lanzador permite
+  elegir hasta 3 tipos y cotiza stock/monedas antes de una confirmación atómica. El stock persistente nunca aparece ni
+  se consume durante la run; reintentar vuelve a preparación. Daily no admite loadout.
+- **Suministro:** el anillo interior paga 2 monedas por ciclo en Normal (~3 en Difícil) y no crea boosters. La bendición
+  `pack` sigue siendo un premio raro, ganado y exclusivo del intento. A/B de 40 runs/config: +12,9%…+19,8% monedas/run,
+  dentro del límite incremental de +20%.
+- **Orientación:** Misiones vuelve a mostrar diaria/semanal, progreso, recompensa automática, reroll con ticket y CTA al
+  modo recomendado. Inicio expone un único CTA contextual con prioridad reanudar → Daily → misión cercana → Clásico.
+- **Flujo común:** los cinco lanzadores declaran duración, guardado, objetivo y entrada/recompensa; el Reto diario explica
+  la habilidad transferible y ofrece práctica en un modo estable después del resultado.
+- **Navegación:** las vistas del hub conservan una pila de retorno, incluido el regreso al mapa de mundos.

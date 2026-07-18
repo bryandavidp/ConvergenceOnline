@@ -3,6 +3,10 @@
 > **Propósito de este documento:** ser la única fuente de verdad necesaria para reimplementar Convergence, con paridad de funcionalidad al 100%, en **cualquier lenguaje o stack** (nativo, otro framework web, motor de juego, etc.) sin necesidad de leer `game.js`. Contiene reglas, fórmulas exactas, constantes verbatim, estructuras de datos y algoritmos extraídos por ingeniería inversa del código fuente (`game.js` v1.7.1, 3969 líneas). Para dónde vive cada cosa en el repo original ver [`ARCHITECTURE.md`](./ARCHITECTURE.md); para el sistema visual ver [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md); para el checklist de requisitos ver [`REQUIREMENTS.md`](./REQUIREMENTS.md).
 >
 > Convención: los nombres de campos/funciones se mantienen en su forma original (inglés/español mixto, tal como en el código fuente) porque son identificadores técnicos, no prosa.
+>
+> **Actualización incremental 2026-07-18:** §3.4, §4 y §7 incorporan el sistema de cofres y las tiendas vigentes hasta
+> **`cv_meta._v = 9`** (CH-1…CH-5 + tienda de recursos/XP Booster). Las descripciones históricas de otros subsistemas no se reinterpretan en esta
+> actualización; `CHEST_SYSTEM_MASTER_PLAN.md` conserva expresamente el baseline 2.6.85 que originó el trabajo.
 
 ## Índice
 1. [Mecánica core](#1-mecánica-core)
@@ -145,7 +149,7 @@ Antes de empezar, el jugador elige dificultad (fácil/normal/difícil), persisti
 | normal | 28000 | 3 | 0.975 | 1400 | 0.010 | 0.07 | 6 | 6 | 1.0 |
 | dificil | 22000 | 3 | 0.960 | 900 | 0.016 | 0.10 | 5 | 5 | 1.3 |
 
-Constantes clave: `WAVE_MS` base 22000, `MAX_LIVES` base 3, `CHARGE_PER = 9` (carga de booster por convergencia), `BOOSTERS = ['bomb','freeze','clearLine','wild','x2']`, `SLOWDOWN_CAP=1`. **Topes por dificultad (v2.6.2):** `SPECIAL_CAP` 6/7/8 (fácil/normal/difícil, especiales totales), `BLOCK_CAP` 4/5/6 (bloqueos rock/locked), `BOMB_CAP` 2/2/3 (pickups bomba). Los bloqueos (`rock`/`locked`, colocados como trampas con prob. 0.55 salvo semana del hielo) tienen 1 hit antes de la oleada 9/7/5 (fácil/normal/difícil) y 2 después.
+Constantes clave: `WAVE_MS` base 22000, `MAX_LIVES` base 3, `CHARGE_PER = 9` (carga de suministro por convergencia), `BOOSTERS = ['bomb','freeze','clearLine','wild','x2']`, `SLOWDOWN_CAP=1`. **Topes por dificultad (v2.6.2):** `SPECIAL_CAP` 6/7/8 (fácil/normal/difícil, especiales totales), `BLOCK_CAP` 4/5/6 (bloqueos rock/locked), `BOMB_CAP` 2/2/3 (pickups bomba). Los bloqueos (`rock`/`locked`, colocados como trampas con prob. 0.55 salvo semana del hielo) tienen 1 hit antes de la oleada 9/7/5 (fácil/normal/difícil) y 2 después.
 
 **Oleadas:** `newWave()` se dispara cuando `waveAcc >= WAVE_MS`. En cada oleada: recompensa de oleada (monedas: `max(3, round((4 + oleada×1.45) × coinMult × mutCoinMult))`, **más el kicker tardío v2.6.4: `+round((oleada−14)^1.5 × 2)` desde la oleada 15**; gemas cada 5 oleadas: `2 + floor(wave/5)`; cofre cada 10 oleadas), `spawnRate = max(spawnFloor, round(spawnRate*spawnDecay))`, se recalcula `dlevel() = 1 + floor((wave-1)/tune.varEvery)` (nivel efectivo de dificultad de iconos) refrescando el pool, se añaden trampas y pickups de bomba, ocasionalmente un pickup de ralentización, y cada `bossEvery` oleadas se dispara un `bossEvent()` — uno de 3 eventos aleatorios. Desde v2.1.0 (GM-18) el tipo de evento se **pre-decide al empezar la oleada anterior** (`_planBoss()`): la oleada previa muestra una bandera «⚠ Jefe» y ~3s antes del evento llega un aviso específico del tipo; `bossEvent()` consume ese pre-roll. Los 3 eventos:
 - `meteorRain()` — 8 spawns forzados + bloqueo de 900ms.
@@ -162,7 +166,7 @@ Constantes clave: `WAVE_MS` base 22000, `MAX_LIVES` base 3, `CHARGE_PER = 9` (ca
 | id | rareza | peso | efecto |
 |---|---|---|---|
 | `life` | común | 45 | +1 vida (tope MAX+1) |
-| `charge` | común | 45 | +50 de carga (≥100 ⇒ otorga booster con remanente) |
+| `charge` | común | 45 | +50 de carga de suministro (≥100 ⇒ paga monedas con remanente) |
 | `slow` | común | 45 | intervalo de spawn ×1.25 durante 3 oleadas (factor en el bucle) |
 | `pack` | infrecuente | 35 | +1 bomba y +1 rayo |
 | `frenzy` | infrecuente | 35 | frenesí instantáneo |
@@ -176,7 +180,7 @@ Constantes clave: `WAVE_MS` base 22000, `MAX_LIVES` base 3, `CHARGE_PER = 9` (ca
 
 **Medidor de frenesí (0-100):** `addFrenzy(n)` se incrementa por convergencia (`4 + min(22, removed*2 + min(combo,10))`), por inicio de oleada (`8 + tier*3`), por uso de booster, y por bono de tablero vacío. Al llegar a 100 → `activateFrenzy()`: duración `7200 + frenzyTier()*900` ms, spawnea `2+frenzyTier()` iconos extra, multiplica score por `frenzyMult() = 1.55 + tier*0.1`. `frenzyTier() = clamp(floor((wave-1)/4)+1, 1, 3)`.
 
-**Barra de carga de boosters:** se llena `CHARGE_PER(9) + min(combo,6)` por convergencia (+4 si ya está en frenesí); al llegar a 100 → `grantRandom()` otorga 1 booster aleatorio y resetea (con remanente).
+**Anillo de suministro:** se llena `CHARGE_PER(9) + min(combo,6)` por convergencia (+4 si ya está en frenesí); al llegar a 100 conserva el remanente y paga `round(2 × coinMultDificultad × coinMultMutador)` monedas. No crea boosters ni modifica `boosterStock`.
 
 **Rocas rompibles:** `_crackRock` reduce `hits` en 1 por cada convergencia adyacente (vecinos ortogonales de la celda tocada + cada celda eliminada); se destruyen al llegar a 0 hits.
 
@@ -230,33 +234,95 @@ type ErrLogEntry = { t: number; v: string; kind: string; msg: string /* máx 300
 // array con tope de 20 entradas (FIFO)
 ```
 
-### 3.4 Perfil de progresión (`cv_meta`, versión de esquema `_v: 3`)
+### 3.4 Perfil de progresión (`cv_meta`, versión de esquema `_v: 9`)
+
 ```ts
+type ChestType = 'wood' | 'bronze' | 'silver' | 'gold' | 'magic' |
+  'royal' | 'supreme' | 'champion' | 'divine' | 'event';
+type BoosterId = 'bomb' | 'freeze' | 'clearLine' | 'wild' | 'x2';
+
+interface ChoiceOption {
+  id: 'coins' | 'gems' | 'tickets' | 'booster';
+  kind: 'coins' | 'gems' | 'ticket' | 'booster';
+  amount: number;                       // entero seguro, 1..1.000.000
+  rarity: 'common' | 'rare' | 'epic' | 'legendary' | 'mythic' | 'special';
+  boosterId?: BoosterId;                // obligatorio si booster; amount limitado a 1..10
+}
+interface ChoiceSnapshot {
+  id: `daily:${string}`; date: string;  // fecha UTC YYYY-MM-DD
+  tier: 'bronze' | 'silver';
+  catchUp: boolean;                     // true implica tier === 'silver'
+  options: [ChoiceOption, ChoiceOption, ChoiceOption];
+}
+interface EventSnapshot {
+  id: `weekly:${string}:w_${'games'|'remove'|'score'|'combo'}`;
+  week: string;                         // YYYY-MM-DD devuelto por weekId(), capturado al ganar
+  challengeId: `w_${'games'|'remove'|'score'|'combo'}`;
+  featuredBooster: BoosterId;
+  source: string;                       // [a-z0-9-], 1..32
+}
+interface ChestEntry {
+  uid: string; type: ChestType; source: string; earnedAt: number;
+  durationMs: number;                   // snapshot de duración de la instancia
+  choice?: ChoiceSnapshot;              // solo Choice diario válido
+  event?: EventSnapshot;                // solo type === 'event'
+}
+interface ChestUnlock {
+  uid: string; startedAt: number; endsAt: number; durationMs: number; auto?: boolean;
+}
+
 interface MetaData {
-  _v: 3;
+  _v: 9;
   xp: number; level: number;
+  xpBoostUntil: number;                 // timestamp Unix ms; 0 = inactivo
   games: number;
   totalRemoved: number;                 // iconos eliminados de por vida
   coins: number; gems: number; tickets: number; chests: number;
   achievements: Record<string /*achId*/, string /*fecha ISO desbloqueo*/>;
   daily: { date: string; id?: string; progress?: number; done?: boolean };
-  streak: { count: number; date: string };          // racha de días jugados consecutivos
-  reward: { date: string; day: number };             // racha de recompensa diaria
+  streak: { count: number; date: string };
+  reward: { date: string; day: number };
   adventure: { maxLevel: number };
-  worlds: Record<string /*worldId*/, {
-    levels: Record<string /*nivel*/, number /*estrellas 0-3*/>;
-    reward?: string /*fecha ISO reclamo de recompensa de mundo*/;
-  }>;
-  boards: { owned: Record<string /*boardId*/, number>; equipped: string };
-  survBest: number;       // mejor tiempo de supervivencia (segundos)
-  survBestWave: number;   // mejor oleada alcanzada
+  worlds: Record<string, { levels: Record<string, number>; reward?: string }>;
+  boards: { owned: Record<string, number>; equipped: string };
+  survBest: number;
+  survBestWave: number;
   stats: { totalScore: number; bestCombo: number; totalTime: number };
-  modes: Record<string /*modeId*/, { best: number; plays: number }>;
-  weekly: { week: string /*id ISO semana*/; id: string; progress: number; done: boolean };
-  cosmetics: { owned: Record<string, string /*fecha ISO*/>; theme: string; skin: string; fx: string };
+  modes: Record<string, { best: number; plays: number }>;
+  weekly: { week: string; id: string; progress: number; done: boolean };
+  cosmetics: { owned: Record<string, string>; theme: string; skin: string; fx: string };
+
+  chestInventory: ChestEntry[];
+  chestUnlock: ChestUnlock | null;       // como máximo uno en curso
+  chestSlots: number;                   // clamp entero 3..4
+  chestSeq: number;
+  chestPipeline: { wins: number; cycle: number };
+  dailyChest: { date: string };          // último Choice concedido, no el último reclamado
+  chestReady: string[];                 // UIDs terminados/listos o Choice inmediato
+  chestNotifiedReady: string[];         // deduplicación de aviso local
+  boosterStock: Record<BoosterId, number>;
 }
 ```
-Al cargar, cualquier campo faltante se rellena con su valor por defecto (migración tolerante a esquema) y se fuerza `boards.owned.classic = 1` (el tablero Clásico siempre es gratuito).
+
+**Historial aditivo del submodelo de cofres:** schema 4 introdujo inventario tipado/ranuras; schema 5 añadió
+`chestPipeline` y `dailyChest`; schema 6 fijó `durationMs` por instancia y separó `chestReady`/avisos; schema 7 añadió
+`boosterStock`; schema 8 versionó los snapshots `choice` y `event`; schema 9 añadió `xpBoostUntil`. No se necesita una
+migración destructiva entre ellos: al cargar se rellenan campos ausentes, se validan y al final se escribe `_v = 9`.
+
+**Invariantes de migración/corrupción:**
+
+- `m.chests` sigue siendo el contador canónico y debe coincidir con `chestInventory.length`. Contadores legacy sin
+  entrada se materializan como cofres `wood` de forma determinista, sin consumir `Math.random`.
+- UID ausente, inválido o duplicado se repara sin perder el cofre; las referencias de timer/listo se podan o remapean.
+  Un `durationMs` ausente recibe el mapa pre-CH-3 de su tipo, preservando `startedAt`/`endsAt` del timer ya activo.
+- Solo se copian los payloads conocidos `choice` y `event`; ningún snapshot puede sobreescribir UID, tipo, fuente o
+  duración. Un Choice inválido/manipulado pierde `choice` pero conserva el cofre normal del mismo tier y no aplica
+  economía. Un `event` válido solo puede vivir en un cofre `event`; uno legacy recibe una foto del evento vigente una
+  única vez.
+- Cada `boosterStock[id]` debe ser entero seguro y queda limitado a 0..1.000.000; claves desconocidas no se conceden
+  ni se gastan. Se fuerza además `boards.owned.classic = 1` como antes.
+- `xpBoostUntil` se normaliza a `0` si no es un número finito no negativo. El tiempo usa reloj de pared, por lo que
+  sigue transcurriendo con la app cerrada y no se mezcla con `boosterStock` (el arsenal táctico).
 
 **Helpers derivados:**
 - `xpForLevel(lvl) = 300 + (lvl-1)*250` (curva lineal de XP).
@@ -264,27 +330,66 @@ Al cargar, cualquier campo faltante se rellena con su valor por defecto (migraci
 - `hashStr(s)` — hash polinomial simple (`h = h*31 + charCode`, coaccionado a 32 bits) usado para elegir determinísticamente la misión/desafío del día/semana a partir de la fecha, sin necesidad de servidor.
 - `today() = new Date().toISOString().slice(0,10)`; `weekId(dt)` normaliza al lunes de la semana ISO.
 
+**Snapshot del XP Booster:** `Meta.xpBoost(now)` devuelve `{active,multiplier,endsAt,remainingMs}`; el multiplicador
+solo puede ser `1` o `4`. `activateXpBoost(durationMs, now)` extiende desde `max(now, xpBoostUntil)`. `Game.start()`
+captura ese valor en `State.xpMultiplier`; `RunSave` lo guarda y al reanudar restaura exactamente `4` o `1`, sin
+promover una partida antigua porque el booster se haya activado después. Cada nivel encadenado de Clásico se liquida
+como partida y vuelve a capturar el multiplicador al comenzar el siguiente nivel.
+
 ---
 
 ## 4. Economía
 
 Tres monedas + cofres, todo dentro de `Meta`.
 
-- **Monedas (coins):** se ganan al final de cada partida (`recordGame()`, fórmula en §6.5), al completar niveles de Clásico, en recompensas de oleada de Supervivencia, en bonos de tablero vacío de Zen, en la recompensa diaria, y al abrir cofres. Se gastan en: skins de tablero (0-3000), temas de color (0-300), revivir en Supervivencia (escalante 120→240→480, máx. 3/run), potenciadores pre-nivel de Clásico (60-90).
-- **Gemas (gems):** se ganan en hitos de oleada de Supervivencia (`2 + floor(wave/5)` cada 5 oleadas), en recompensa de mundo completado (+20), en cofres (3-10) y en el primer intento diario del Reto (+5). Sumideros: cofre premium (25💎, v1.8) y **continuar partida** en Clásico/Aventura (15💎, v2.3.0, GM-02).
-- **Tickets:** se ganan raramente en cofres (1 normal, 2 premium). Se gastan en rerollear la misión diaria (1 ticket).
-- **Cofres:** se acumulan (no se abren automáticamente). Al abrir un cofre (`openChest()`), tabla de probabilidad (v2.6.0, FB-7):
-  - `roll < 0.60` → monedas: `60 + floor(random()*140)` (60-199)
-  - `0.60 ≤ roll < 0.90` → gemas: `3 + floor(random()*8)` (3-10)
-  - `0.90 ≤ roll < 0.98` → 1 ticket
-  - `roll ≥ 0.98` → cosmético raro (tablero no poseído no exclusivo o tema no poseído); si el pool está vacío, fallback a gemas `8 + floor(random()*8)` (8-15).
-- **Cofre premium:** cuesta `Meta.PREMIUM_CHEST_GEMS = 25` gemas y no devuelve gemas (evita circularidad):
-  - `roll < 0.52` → monedas: `200 + floor(random()*300)` (200-499)
-  - `0.52 ≤ roll < 0.82` → 2 tickets
-  - `0.82 ≤ roll < 0.92` → jackpot monedas: `600 + floor(random()*400)` (600-999)
-  - `roll ≥ 0.92` → cosmético raro; si el pool está vacío, fallback al jackpot.
+- **Monedas (coins):** se ganan al final de cada partida (`recordGame()`, fórmula en §6.5), al completar niveles de Clásico, en recompensas de oleada de Supervivencia, en bonos de tablero vacío de Zen, en la recompensa diaria, y al abrir cofres. Se gastan en: skins de tablero (0-3000), temas de color (0-300), revivir en Supervivencia (escalante 120→240→480, máx. 3/run) y potenciadores pre-nivel de Clásico (60-90 cuando no hay unidad en el arsenal).
+- **Gemas (gems):** se ganan en hitos de oleada de Supervivencia (`2 + floor(wave/5)` cada 5 oleadas), en recompensa de mundo completado (+20), en cofres según tipo/nivel y en el primer intento diario del Reto (+5). Sumideros: cofre premium (25💎), continuar partida en Clásico/Aventura (15💎), cuarta ranura (150💎) y saltos de cofre a `ceil(3 × horasRestantes)`.
+- **Tickets:** se ganan en cofres según tipo y en tiradas bonus. Se gastan en rerollear la misión diaria (1 ticket).
 
-Los drops cosméticos usan `Math.random` de la economía meta, no el PRNG seedeado del tablero. Tableros se conceden con `Meta.grantBoard(id)` (`boards.owned[id] = 1`) y temas con `Meta.grantTheme(id)` (`cosmetics.owned[id] = fecha ISO`); ambos son idempotentes. No hay pity timer en esta iteración.
+### 4.1 Cofres tipados y ceremonia (CH-1…CH-5)
+
+`CHEST_TYPES` contiene diez tipos y su tabla principal; `CHEST_DROP_SEQUENCE` es un ciclo de 32 sin `event`, con
+`champion` y `divine` garantizados por vuelta. Cada tres objetivos de cualquier modo se concede el siguiente tipo. Los
+eventos se conceden por su fuente semanal mediante `addEventChest`, nunca como sustituto sin contexto del ciclo.
+
+Al abrir un cofre normal, el orden económico es exacto:
+
+1. **Tier:** `Math.random() < 0.10` sube un escalón por `CHEST_UPGRADE_PATH`
+   (`wood→bronze→silver→gold→magic→royal→supreme→champion→divine`; `event→royal`). `divine` no tira mejora. Rangos,
+   rareza y número de premios pasan a ser los del tipo destino; el resultado conserva `baseChestType` y expone
+   `upgradeRoll`/`tierUp`.
+2. **Escala:** `scale = min(2.5, 1 + 0.05 × (max(1, level) − 1))`. Se aplica a monedas y gemas de todas las tiradas;
+   tickets y unidades de booster no escalan.
+3. **Premio garantizado:** una tirada uniforme del rango de monedas del tipo × `scale × 0.25`, redondeada y con mínimo 1.
+4. **Tirada principal:** usa los cortes `coinCut`, `gemCut`, `ticketCut` de `CHEST_TYPES[type].reward`; la cola es
+   cosmético no poseído y, con el pool agotado, fallback de recursos.
+5. **Tiradas menores:** hasta completar 2 premios (small), 3 (medium/large/variable) o 4 (xlarge/huge). Cada extra usa
+   52% monedas, 23% gemas, 13% ticket ×1 y 12% booster ×1 uniforme entre los cinco IDs. En un cofre `event`, el último
+   extra se reemplaza por el `featuredBooster` garantizado de su snapshot.
+6. Todos los elementos de `reward.items` se aplican exactamente una vez; el payload es JSON-serializable y después se
+   elimina UID/listo/aviso del inventario. Si no hay otro timer, la cola auto-inicia el cofre pendiente más corto.
+
+Los drops cosméticos usan `Math.random` de la economía meta, no el PRNG seedeado del tablero. Tableros se conceden con
+`Meta.grantBoard(id)` y temas con `Meta.grantTheme(id)`; ambos son idempotentes. El «pity» visible no altera este RNG:
+`chestPipelineInfo().chestsToMythic` cuenta la distancia determinista al siguiente `champion`/`divine` del ciclo.
+
+**Choice diario (schema 8):** el primer objetivo del día UTC fija tres opciones (monedas, gemas y, al 50%, ticket o
+booster), crea Bronce y llama inmediatamente a `makeChestChoiceReady`; no hay espera ni coste de salto y no se aplica
+economía antes de elegir. Si `dailyChest.date` válida queda dos o más días atrás, solo el nuevo Choice sube a Plata
+(`catchUp=true`); usuario nuevo o fecha del día anterior recibe Bronce. `openChest` rechaza un Choice y únicamente
+`claimChestChoice(uid, optionId)` aplica una de las tres opciones; opción inválida y segundo claim son no-op.
+
+**Evento semanal (schema 8):** `addEventChest(source)` captura `EventSnapshot` al conceder. El booster se elige de forma
+determinista con el hash de `week:challengeId`; cambiar de semana no modifica cofres poseídos. Un evento legacy sin
+snapshot recibe el vigente una vez al cargar y garantiza después la unidad capturada.
+
+**Cofre premium:** cuesta `Meta.PREMIUM_CHEST_GEMS = 25`, no tira mejora y entrega tres elementos: monedas garantizadas
+`80..160 × scale`, la tabla principal histórica (52% monedas 200..499, 30% tickets ×2, 10% jackpot 600..999, 8%
+cosmético/fallback) y una tirada menor 52/23/13/12. La tabla principal no devuelve gemas, aunque el extra sí puede hacerlo.
+
+**Guardarraíl reproducible:** `runChestEconomy({runs, seed, types, levels})` usa `Meta.addChest`/`addEventChest` y
+`Meta.openChest`, informa EV de monedas/gemas/tickets/boosters, premios y tier-ups por tipo/nivel y restaura
+`Meta.state`, `localStorage.cv_meta` y `Math.random` en `finally`. CLI: `node tools/balance-sim.js --chests --runs 200`.
 
 **Recompensa diaria de inicio de sesión:** disponible si `reward.date !== today()`. Al reclamar: si el último reclamo fue exactamente ayer, `day++` (la racha continúa); si no, `day = 1`. `amount = 20 + 10*min(day, 7)` monedas (día 1 = 30 … día 7+ = 90, tope 90).
 
@@ -302,6 +407,32 @@ Puramente cosméticos, sin efecto en el gameplay (explícito en el código fuent
 default 0 (Cosmos) · neon 150 · sunset 200 · forest 200 · aurora 300 · mono 250 (Eclipse)
 ```
 Cada tema sobreescribe variables CSS: `--bg-0`, `--bg-1`, `--bg-2`, `--panel`, `--panel-2`, `--accent`, `--accent-2`, `--level`, `--score`.
+
+### 4.2 Tienda de recursos y checkout de pruebas
+
+`Storefront` es un catálogo allowlist separado de la tienda cosmética. La UI transporta solo el `id` de oferta; la
+cantidad acreditada y el coste se resuelven desde el catálogo. `checkoutCurrency(id)` usa por ahora
+`PAYMENT_MODE = 'mock-auto'`: acredita localmente y de inmediato, devuelve una transacción `status:'paid'` y la vista
+muestra de forma permanente que no existe cobro real. Una pasarela de producción, validación de recibos y concesión
+idempotente en servidor quedan fuera de este adaptador ficticio.
+
+| id | recurso | cantidad | referencia | precio mostrado |
+|---|---:|---:|---:|---:|
+| `gems-spark` | gemas | 100 | — | 1,09 EUR |
+| `gems-cache` | gemas | 330 | 300 | 3,39 EUR |
+| `gems-vault` | gemas | 1.200 | 1.000 | 11,99 EUR |
+| `coins-pouch` | monedas | 1.000 | — | 1,09 EUR |
+| `coins-crate` | monedas | 6.000 | 5.000 | 3,39 EUR |
+| `coins-vault` | monedas | 18.000 | 15.000 | 5,99 EUR |
+
+Los tres packs temporales se pagan con gemas y multiplican por `4` todo el XP base de una partida, incluidos los
+bonos de misión diaria/semanal. Comprar mientras está activo acumula duración desde el vencimiento actual.
+
+| id | duración | multiplicador | coste |
+|---|---:|---:|---:|
+| `xp-6h` | 6 horas | ×4 | 25 gemas |
+| `xp-3d` | 3 días | ×4 | 80 gemas |
+| `xp-7d` | 7 días | ×4 | 160 gemas |
 
 **Coste de revivir (Supervivencia):** `min(480, 120 × 2^usosEnLaRun)`, máximo 3 revividas por run (v2.2.0, GM-19; antes: 120 plano ilimitado).
 
@@ -436,16 +567,19 @@ raw    = EMPTY_BOARD_BONUS(500) + chain*90 + combo*28 + (Supervivencia ? wave*45
 points = max(250, round(raw * diff.scoreMult * mode.mult * feverBoost() * tempMult * sprintMult()))
 coins  = clamp(round(points/220), 3, 16)
 ```
-Además: en Supervivencia +25% de carga de booster y +24 de frenesí; en Zen +1 pista (tope 9) y +1 flor del jardín. En modos no-endless, el bono de "tablero perfecto" es más simple: flat `EMPTY_BOARD_BONUS = 500`.
+Además: en Supervivencia +25% de carga de suministro y +24 de frenesí; en Zen +1 pista (tope 9) y +1 flor del jardín. En modos no-endless, el bono de "tablero perfecto" es más simple: flat `EMPTY_BOARD_BONUS = 500`.
 
 **Refill de tablero vacío (v2.6.1, `Engine.refillAfterEmpty`):** tras cobrar el bono en los modos sin fin (Contrarreloj/Supervivencia/Zen), el tablero se repuebla al instante con `EMPTY_BOARD_REFILL = { min:10, baseFactor:0.55, maxFactor:1.1, hardCap:26, maxPairs:6, perClear: {facil:2, normal:3, dificil:4} }`: hasta `maxPairs` patrones de 2-4 figuras IGUALES colocadas como primer-icono-visible en direcciones libres desde un centro vacío (cada patrón garantiza una convergencia jugable). El objetivo crece con `chain` (vaciados consecutivos). Elimina el dead-air post-limpieza (D2) a costa de sostener el combo: **inflación medida de score en Supervivencia p50 +19% / p90 +35% (bisección SV-01, `BALANCE_BASELINE.md`)** — cambio de época documentado, la oleada alcanzada no varía.
 
 ### 6.9 XP y monedas ganadas por partida (`recordGame`)
 ```
-xpGained   = round(score/10 + maxCombo*5 + level*20 + (perfect ? 100 : 0))
+xpBase     = round(score/10 + maxCombo*5 + level*20 + (perfect ? 100 : 0))
+xpGained   = xpBase * (xpMultiplier === 4 ? 4 : 1)
 coinsGained= round(score/40 + maxCombo*2 + level*5  + (perfect ? 40  : 0))
 ```
-(más los bonos de misión/desafío semanal descritos en §5.1/§5.2 cuando se completan en esa partida).
+Los bonos descritos en §5.1/§5.2 se suman a `xpBase` antes de multiplicar. El resultado expone `xpBase`,
+`xpMultiplier`, `xpBoostBonus = xpGained - xpBase` y `xpGained` para que el modal pueda desglosarlo. Las monedas no
+se multiplican; en Clásico se conserva su premio específico y no se duplica la recompensa base de `recordGame`.
 
 ---
 
@@ -453,15 +587,27 @@ coinsGained= round(score/40 + maxCombo*2 + level*5  + (perfect ? 40  : 0))
 
 Catálogo (`Boosters.DEFS`, orden `['bomb','freeze','x2','clearLine','wild']`):
 
-| id | nombre | glyph | cantidad inicial | efecto |
+| id | nombre | glyph | unidad por selección | efecto |
 |---|---|---|---|---|
-| bomb | Bomba | 💣 | 2 | Limpia un área de 3×3 |
-| freeze | Congelación | ❄️ | 2 | Pausa el spawn de iconos por 7s |
-| clearLine | Rayo | ⚡ | 3 | Limpia toda la fila y columna tocadas |
-| wild | Escoba | 🧹 | 2 | Limpia el grupo de icono más numeroso del tablero |
+| bomb | Bomba | 💣 | 1 | Limpia un área de 3×3 |
+| freeze | Congelación | ❄️ | 1 | Pausa el spawn de iconos por 7s |
+| clearLine | Rayo | ⚡ | 1 | Limpia toda la fila y columna tocadas |
+| wild | Escoba | 🧹 | 1 | Limpia el grupo de icono más numeroso del tablero |
 | x2 | Comodín | 🃏 | 1 | Duplica los puntos por 11s |
 
-> Nota: existe un campo `cost` en `Boosters.DEFS` (bomb 80, freeze 60, clearLine 90, wild 100, x2 70) pero **no se gasta en ningún lugar del código analizado** — los boosters se obtienen gratis al inicio de la partida (cantidad inicial) y vía la barra de carga/frenesí, no comprados con monedas.
+> Los costes históricos ya tienen una vía real: desde el segundo mundo, el pre-nivel de Clásico permite seleccionar
+> como máximo dos entre `bomb` 80, `freeze` 60 y `clearLine` 90 (`Config.PRELEVEL_BOOSTERS`). Si existe stock
+> persistente del ID, consume una unidad y su coste es 0; si no, gasta monedas. `wild` y `x2` no aparecen en ese selector.
+> El lanzador de Supervivencia ofrece los cinco IDs y permite confirmar hasta tres (`SURVIVAL_LOADOUT_MAX = 3`) con
+> la misma política stock-antes-que-monedas.
+
+**Arsenal persistente de cofres (schema 7):** `Meta.boosterStock` guarda los cinco IDs. `addBooster`/`spendBooster`
+validan ID, impiden saldo negativo y limitan cada cantidad a 1.000.000. `quoteBoosterLoadout(ids,max)` calcula qué
+unidades salen del stock y cuáles cuestan monedas; `commitBoosterLoadout` valida y aplica ambas partes de forma
+atómica. Ni Clásico ni Supervivencia suman la reserva completa durante una partida:
+`boosterAvailable(id) = max(0, Survival.inv[id])` y `_spendBooster` solo descuenta ese inventario de run. PreLevel o
+el lanzador de Supervivencia consumen/pagan al confirmar y copian una unidad por ID elegido; un reinicio técnico no
+reconfirma, no vuelve a cobrar y tampoco regala consumibles.
 
 **Categorías de uso:**
 - `SPATIAL = ['bomb','clearLine','wild']` — requieren que el jugador apunte una celda destino ("modo puntería", `body.classList.add('aiming')`, con previsualización de celdas afectadas).
@@ -474,7 +620,7 @@ Catálogo (`Boosters.DEFS`, orden `['bomb','freeze','x2','clearLine','wild']`):
 - `freeze` (global): `freezeUntil = ahora + 7000ms` — mientras dure, `blockSpawn()` devuelve `true`.
 - `x2` (global): `x2Until = ahora + 11000ms` — duplica `tempMult`.
 
-**Barra de carga:** se llena `CHARGE_PER(9) + min(combo,6)` por convergencia (+4 si ya en frenesí); al llegar a 100 otorga +1 booster aleatorio (uniforme entre los 5 tipos) y resetea con remanente. **Desde v2.2.0 (B6):** cada toque a una casilla rompible (hielo) en Supervivencia suma además **+2 de carga** — el esfuerzo de liberar bloqueos alimenta el build.
+**Anillo de suministro:** se llena `CHARGE_PER(9) + min(combo,6)` por convergencia (+4 si ya hay frenesí); al llegar a 100 paga una cantidad acotada de monedas (`SUPPLY_COIN_BASE=2`, `PER_WAVE=0`, `CAP=2`) ajustada por dificultad/mutador y conserva el remanente. **Desde v2.2.0 (B6):** cada toque a una casilla rompible suma además **+2 de suministro**. La bendición `pack` es la única fuente regular de boosters nuevos durante la run y sus unidades son solo de ese intento.
 
 **Otros pickups de tablero (tiles con `trigger`, no son "boosters" del jugador sino elementos del tablero):**
 | tile | efecto |
@@ -560,16 +706,18 @@ Ver también [`ARCHITECTURE.md` §7](./ARCHITECTURE.md#7-máquina-de-estados-pan
 
 | id | Contenido |
 |---|---|
+| `view-events` | Resumen de eventos, recompensa diaria, cofres y primera victoria |
 | `view-missions` | Lista de misiones diarias + desafío semanal |
 | `view-how` | Reglas del juego + botón de tutorial interactivo |
 | `view-settings` | Toggles de ajustes + selector de idioma |
-| `view-surv-diff` | Selección de dificultad de Supervivencia + botón empezar |
 | `view-daily` | Ficha previa del reto diario: mutador, medallas, mejor marca, ghost, racha y primer intento |
 | `view-adventure` | Overview del mapa de capítulos de Aventura |
-| `view-shop` | Tienda (skins de tablero + temas) |
+| `view-resource-shop` | Tienda de recursos: packs de monedas/gemas con checkout ficticio + XP Booster |
+| `view-shop` | Tienda de personalización: skins de tablero + temas |
 | `view-chests` | Pantalla propia de cofres: progreso, aperturas, animación y revelado de premio |
 | `view-multi` | Placeholder "Multijugador — Próximamente" |
 | `view-medals` | Perfil: stats de por vida, mejores marcas por modo, logros |
+| `view-collections` | Inventario de tableros/temas y acceso a personalización/logros |
 
 **Modales transitorios de partida** (overlay, uno activo a la vez, foco capturado/restaurado):
 
@@ -705,12 +853,14 @@ Usar esta lista para verificar que una reimplementación cubre el 100% de lo exi
 - [ ] Sistema de tiles especiales (14 tipos) con comportamiento sólido/rompible/trigger y detonación en cadena.
 - [ ] Modo Clásico: 5 mundos × 50 niveles, sistema de estrellas, desbloqueo secuencial, densidades de obstáculos por nivel.
 - [ ] Modo Aventura: progresión infinita por capítulos/biomas, 4 tipos de objetivo, niveles jefe.
-- [ ] Modo Supervivencia: oleadas, vidas, revivir, 3 eventos de jefe, medidor de frenesí, barra de carga de 5 boosters, 3 tuning por dificultad.
+- [ ] Modo Supervivencia: oleadas, vidas, revivir, eventos de jefe, medidor de frenesí, anillo de suministro económico, loadout confirmado de hasta 3 boosters y 3 tuning por dificultad; el arsenal persistente nunca se usa implícitamente durante la run.
 - [ ] Modo Contrarreloj: reloj con reposición decreciente y tope, aceleración exponencial de spawn.
 - [ ] Modo Zen: despeje parcial en vez de derrota.
-- [ ] Economía: 3 monedas, cofres con tabla de probabilidad, recompensa diaria con racha.
+- [ ] Persistencia `cv_meta` schema 9: inventario/timer/listos de cofres, snapshots de duración/Choice/Event, pipeline diario, `boosterStock` y `xpBoostUntil`, con saneamiento legacy no destructivo.
+- [ ] Economía: 3 monedas, ciclo de 32, cofres tipados multi-tirada con tier-up/escala, Choice diario inmediato con catch-up Plata, evento con booster garantizado, premium y recompensa diaria con racha.
+- [ ] Guardarraíl de cofres determinista: EV por tipo/nivel mediante APIs reales y restauración exacta de estado, storage y RNG.
 - [ ] Progresión: XP/nivel/rangos, misiones diarias determinísticas, desafío semanal determinístico, 10 logros.
-- [ ] Tienda: 10 skins de tablero + 6 temas de color, cosméticos puros.
+- [ ] Tiendas separadas: recursos (6 packs con checkout `mock-auto` + 3 packs XP ×4) y personalización (10 skins + 6 temas), sin mezclar sus rutas.
 - [ ] Sistema de iconos: 16 formas × 12 colores, ventana deslizante de variedad por nivel, invariante anti-confusión.
 - [ ] Sesgo anti-frustración de spawn cuando quedan pocos iconos.
 - [ ] Sistema de pistas limitado + cooldown.

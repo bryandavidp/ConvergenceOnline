@@ -130,7 +130,7 @@ test('openPremiumChest: sin gemas suficientes → null y sin cambios', () => {
   assert.equal(Meta.tickets(), tickets0);
 });
 
-test('openPremiumChest: cobra las gemas y entrega monedas o tickets', () => {
+test('openPremiumChest: cobra las gemas y aplica su ceremonia completa', () => {
   const prevRandom = Math.random;
   let randIdx = 0;
   const seq = [0.10, 0];
@@ -140,13 +140,16 @@ test('openPremiumChest: cobra las gemas y entrega monedas o tickets', () => {
   const r = Meta.openPremiumChest();
   assert.ok(r, 'con gemas debe entregar recompensa');
   assert.equal(Meta.gems(), gems0 - Meta.PREMIUM_CHEST_GEMS);
-  assert.ok(['coins', 'ticket'].includes(r.kind), 'el cofre premium nunca devuelve gemas (sería circular)');
+  assert.ok(['coins', 'ticket'].includes(r.kind), 'la tirada principal premium nunca devuelve gemas');
+  assert.equal(r.items.length, 3);
   if (r.kind === 'coins') {
     assert.ok(r.amount >= 200 && r.amount <= 999, `monedas fuera de rango: ${r.amount}`);
-    assert.equal(Meta.coins(), coins0 + r.amount);
+    const totalCoins = r.items.filter((item) => item.kind === 'coins').reduce((sum, item) => sum + item.amount, 0);
+    assert.equal(Meta.coins(), coins0 + totalCoins);
   } else {
     assert.equal(r.amount, 2);
-    assert.equal(Meta.tickets(), tickets0 + 2);
+    const totalTickets = r.items.filter((item) => item.kind === 'ticket').reduce((sum, item) => sum + item.amount, 0);
+    assert.equal(Meta.tickets(), tickets0 + totalTickets);
   }
   Math.random = prevRandom;
 });

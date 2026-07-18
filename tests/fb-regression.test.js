@@ -529,9 +529,9 @@ test('FB-7: el drop cosmético concede no poseídos y grantTheme es idempotente'
     m.boards = { owned: { classic: 1 }, equipped: 'classic' };
     m.cosmetics = { owned: {}, theme: 'default', skin: 'default', fx: 'default' };
 
-    // CH-4: .5 evita tier-up; .99 fuerza cosmético; 0 elige el primero y .9
-    // deja la tirada menor en ticket sin alterar monedas/gemas de esta aserción.
-    const r = withRandomSequence([.5, .99, 0, .9], () => Meta.openChest());
+    // CH-4: .5 evita tier-up; 0 fija el lote de monedas garantizado; .99 fuerza
+    // cosmético en la tirada principal y 0 elige el primero del pool.
+    const r = withRandomSequence([.5, 0, .99, 0], () => Meta.openChest());
     assert.equal(r.kind, 'cosmetic');
     assert.equal(r.cosmeticKind, 'board');
     assert.equal(Meta.ownsBoard(r.id), true);
@@ -556,14 +556,15 @@ test('FB-7: pool cosmético vacío cae a gemas normales o jackpot premium', () =
     m.cosmetics = { owned: {}, theme: 'default', skin: 'default', fx: 'default' };
     Themes.order.forEach((id) => { if (id !== 'default') m.cosmetics.owned[id] = '2026-01-01'; });
 
-    const normal = withRandomSequence([.5, .99, 0, .9], () => Meta.openChest());
+    const normal = withRandomSequence([.5, 0, .99, 0], () => Meta.openChest());
     assert.deepEqual({ kind: normal.kind, amount: normal.amount, fallback: normal.fallback }, { kind: 'gems', amount: 8, fallback: 'cosmetic' });
     assert.equal(m.gems, Meta.PREMIUM_CHEST_GEMS + 8);
 
     const premium = withRandomSequence([0.99, 0], () => Meta.openPremiumChest());
     assert.deepEqual({ kind: premium.kind, amount: premium.amount, rarity: premium.rarity, fallback: premium.fallback }, { kind: 'coins', amount: 600, rarity: 'jackpot', fallback: 'cosmetic' });
     assert.equal(m.gems, 8);
-    assert.equal(m.coins, 600);
+    const allCoins = normal.items.concat(premium.items).filter((item) => item.kind === 'coins').reduce((sum, item) => sum + item.amount, 0);
+    assert.equal(m.coins, allCoins, 'cada premio de la ceremonia se aplica exactamente una vez');
   } finally {
     restoreEconomy(snap);
   }
@@ -576,10 +577,11 @@ test('FB-7: UI de cofres conserva feedback clicable y revelado persistente', () 
   assert.doesNotMatch(js, /ob\.disabled = n <= 0/);
   assert.doesNotMatch(js, /pb\.disabled = Meta\.gems\(\) < Meta\.PREMIUM_CHEST_GEMS/);
   assert.match(js, /classList\.toggle\('is-poor'/);
-  assert.match(css, /\.chest-hero\.is-opening/);
-  assert.match(css, /\.chest-hero\.is-open/);
+  assert.match(css, /\.chest-opening-stage\.is-playing \.chest-opening-motion/);
+  assert.match(css, /\.chest-opening-stage\.is-playing \.chest-opening-sprite/);
   assert.match(css, /\.chest-reveal/);
-  assert.match(js, /setTimeout\(finish, reduceMotion \? 0 : 1120\)/);
+  assert.match(js, /afterChestAnimation\(motion,\s*'chestOpenMotion'/);
+  assert.doesNotMatch(js, /setTimeout\(finish, reduceMotion \? 0 : 1120\)/);
   try {
     for (const lang of ['es', 'en']) {
       Settings.lang = lang;

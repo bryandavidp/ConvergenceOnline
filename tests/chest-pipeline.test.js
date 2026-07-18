@@ -44,14 +44,16 @@ test('pipeline: cada 3 objetivos cae el siguiente cofre del ciclo, determinista'
   } finally { restore(snap); }
 });
 
-test('pipeline: el primer objetivo del día regala un cofre de bronce, solo una vez', () => {
+test('pipeline: el primer objetivo del día crea un Choice Chest de bronce, solo una vez', () => {
   const snap = fullSnapshot(), m = Meta.state;
   try {
     resetPipeline(m);
     m.dailyChest = { date: '' };
     const first = Meta.recordChestProgress('clasico');
     assert.equal(first.daily, 'bronze');
-    assert.equal(Meta.chestInventory().some((c) => c.source === 'daily-win'), true);
+    const daily = Meta.chestInventory().find((c) => c.source === 'daily-choice');
+    assert.ok(daily && daily.choice);
+    assert.equal(daily.choice.options.length, 3);
     const second = Meta.recordChestProgress('clasico');
     assert.equal(second.daily, null);
   } finally { restore(snap); }
@@ -84,7 +86,9 @@ test('pipeline: completar el reto semanal suelta el cofre de evento', () => {
     const r = Meta.recordGame({ score: 0, level: 1, maxCombo: 0, removed: 0, elapsed: 0, mode: 'clasico', perfect: false, daily: false });
     assert.equal(r.weeklyDone, true);
     assert.equal(r.weeklyChest, true);
-    assert.equal(Meta.chestInventory().some((c) => c.type === 'event' && c.source === 'weekly'), true);
+    const event = Meta.chestInventory().find((c) => c.type === 'event' && /^event:weekly:/.test(c.source));
+    assert.ok(event && event.event);
+    assert.equal(event.event.challengeId, 'w_games');
   } finally { restore(snap); }
 });
 

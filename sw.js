@@ -1,8 +1,8 @@
 /* Convergencia — Service Worker (offline-first).
  * Sube CACHE al publicar una versión nueva para invalidar la caché anterior. */
-const CACHE = 'cv-cache-v2.6.92';
+const CACHE = 'cv-cache-v2.7.1';
 const ASSETS = [
-  './', './index.html', './styles.css?v=2.6.92', './game.js?v=2.6.92', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=2.7.1', './game.js?v=2.7.1', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
   './fonts/NunitoSans-Variable.ttf',
   './img/ui-generated/chests/chest-open.png',
@@ -26,6 +26,14 @@ const MODE_LAUNCH_ART = [
   'mode-timed','mode-zen','planet','rocket','skull','star','survival-emblem','survival-rank',
   'target','trophy',
 ].map((n) => './img/ui-generated/mode-launch/' + n + '.png');
+const SHOP_GENERATED_ART = [
+  'gems-spark','gems-cache','gems-vault',
+  'coins-pouch','coins-crate','coins-vault',
+  'xp-6h','xp-3d','xp-7d',
+].map((n) => './img/ui-generated/shop/' + n + '.png');
+const BOARD_THEME_PREVIEWS = [
+  'classic','jardin','madera','hielo','lava','cristal','magico','futurista','dorado','bosque','cosmico',
+].map((n) => './img/board-themes/v2/' + n + '/preview.jpg');
 const CHEST_ATLASES = [
   'wood','bronze','silver','gold','magic','royal','supreme','champion','divine','event',
 ].map((n) => './img/ui-generated/chests/atlas/' + n + '.png');
@@ -74,6 +82,8 @@ self.addEventListener('install', (e) => {
         c.addAll(HOME_GENERATED_ART).catch(() => {}),
         c.addAll(MODE_GENERATED_ART).catch(() => {}),
         c.addAll(MODE_LAUNCH_ART).catch(() => {}),
+        c.addAll(SHOP_GENERATED_ART).catch(() => {}),
+        c.addAll(BOARD_THEME_PREVIEWS).catch(() => {}),
         c.addAll(CHEST_ATLASES).catch(() => {}),
         c.addAll(V2_ICONS).catch(() => {}),
       ])))

@@ -1,7 +1,7 @@
 # 🎮 Inventario del Modo Supervivencia — Convergence
 
-> **Última actualización**: 11 julio 2026  
-> **Versión del juego**: v2.6.7  
+> **Última actualización**: 18 julio 2026  
+> **Versión del juego**: v2.7.1  
 > **Código fuente**: [game.js](file:///c:/Users/bryandavidp/Desktop/ConvergenceOnline/game.js) módulo `Survival`  
 > **Estado general**: Funcional con todas las tareas GM completadas. Rebalance de bendiciones **validado por simulación** en SV-01 (fase α del [`SURVIVAL_MASTER_PLAN.md`](./SURVIVAL_MASTER_PLAN.md)); batería y bisección en [`BALANCE_BASELINE.md`](./BALANCE_BASELINE.md).
 
@@ -145,7 +145,7 @@ Semana del caos: se añade `'quake'`
 | ID | Icono | Rareza | Peso | Nombre ES/EN | Efecto (post-nerf SV-01) | Durabilidad |
 |---|---|---|---|---|---|---|
 | `life` | ❤️ | común | 45 | Vida extra / Extra life | +1 vida (tope MAX+1) | Hasta perderla |
-| `charge` | ⚡ | común | 45 | Sobrecarga / Overcharge | +50 carga (≥100 ⇒ booster + remanente) | Instantáneo |
+| `charge` | ⚡ | común | 45 | Sobrecarga / Overcharge | +50 de suministro (≥100 ⇒ monedas + remanente) | Instantáneo |
 | `slow` | 🐌 | común | 45 | Calma / Calm | Spawn ×1.25 más lento | 3 oleadas |
 | `pack` | 💣 | infrecuente | 35 | Arsenal / Arsenal | +1 bomba y +1 rayo | Hasta usarlos |
 | `frenzy` | 🔥 | infrecuente | 35 | Furia / Fury | Frenesí instantáneo | ~8-10s |
@@ -159,24 +159,28 @@ Semana del caos: se añade `'quake'`
 
 ## 6. Boosters (Potenciadores)
 
-### Inventario inicial por run ([línea 2821](file:///c:/Users/bryandavidp/Desktop/ConvergenceOnline/game.js#L2821))
+### Preparación e inventario por intento
 
-| ID | Nombre | Icono | Cantidad inicial | Tipo | Efecto |
-|---|---|---|---|---|---|
-| `bomb` | Bomba | 💣 | 2 | Espacial | Limpia área 3×3 |
-| `freeze` | Congelación | ❄️ | 2 | Global | Bloquea spawns 7s |
-| `clearLine` | Rayo | ⚡ | 3 | Global→Espacial | Limpia fila + columna del objetivo |
-| `wild` | Escoba | 🧹 | 2 | Espacial | Limpia grupo más repetido (max 8) |
-| `x2` | Comodín | 🃏 | 1 | Global | Doble `tempMult` durante 11s |
+| ID | Nombre | Icono | Sin seleccionar | Coste si no hay stock | Tipo | Efecto |
+|---|---|---|---|---|---|---|
+| `bomb` | Bomba | 💣 | 0 | 80 monedas | Espacial | Limpia área 3×3 |
+| `freeze` | Congelación | ❄️ | 0 | 60 monedas | Global | Bloquea spawns 7s |
+| `clearLine` | Rayo | ⚡ | 0 | 90 monedas | Global→Espacial | Limpia fila + columna del objetivo |
+| `wild` | Escoba | 🧹 | 0 | 100 monedas | Espacial | Limpia grupo más repetido (max 8) |
+| `x2` | Comodín | 🃏 | 0 | 70 monedas | Global | Doble `tempMult` durante 11s |
 
-**Total inicial**: 10 boosters (2+2+3+2+1)
+- El lanzador permite hasta **3 tipos únicos**. La cotización usa primero `Meta.boosterStock` y compra con monedas los
+  faltantes; solo `commitBoosterLoadout` muta ambos saldos.
+- Cerrar el lanzador no gasta. Reintentar vuelve a preparación y nunca recompra automáticamente.
+- Las unidades confirmadas son consumibles **por intento**: el stock persistente no aparece como reserva durante la run
+  y las unidades no usadas no regresan al finalizar.
 
-### Obtención durante la run
-- **Barra de carga**: llena con `CHARGE_PER(9) + min(combo, 6)` por convergencia (+4 si frenesí activo, +2 por romper hielo)
-- Al llegar a 100 → `grantRandom()`: 1 booster aleatorio, carga se resetea con remainder
-- **Bendición `charge`**: +50 carga directa
-- **Bendición `pack`**: +1 bomba, +1 rayo
-- **Tablero vacío**: +25 carga
+### Obtención y suministro durante la run
+- **Anillo de suministro**: llena con `CHARGE_PER(9) + min(combo, 6)` por convergencia (+4 si frenesí activo, +2 por romper hielo)
+- Al llegar a 100 paga 2 monedas en Normal (~3 en Difícil), conserva el remanente y nunca modifica `boosterStock`
+- **Bendición `charge`**: +50 de suministro
+- **Bendición `pack`**: +1 bomba y +1 rayo, ganados y exclusivos del intento
+- **Tablero vacío**: +25 de suministro
 
 ---
 
@@ -250,7 +254,7 @@ raw = 500 + chain×90 + combo×28 + wave×45
 points = max(250, round(raw × scoreMult × 1.5 × feverBoost × tempMult))
 coins = clamp(round(points/220), 3, 16)
 ```
-+ Supervivencia: +25 carga, +24 frenesí
++ Supervivencia: +25 de suministro, +24 frenesí
 
 ---
 

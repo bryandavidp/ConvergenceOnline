@@ -325,7 +325,7 @@ test('JF-γ: fase 2 del Cerrajero — la Jaula roba un potenciador y devolverlo 
     e.phase = 2;
     Survival.inv = { bomb: 1, freeze: 0, clearLine: 0, wild: 0, x2: 0 };
     const stole = Bosses._cageSteal(Survival._emptyIdx().slice(0, 3));
-    assert.equal(stole, true, 'con stock, roba');
+    assert.equal(stole, true, 'con inventario de run, roba');
     assert.equal(Survival.inv.bomb, 0, 'el potenciador robado sale del inventario');
     const cageIdx = State.tiles.findIndex((t) => t && t.type === 'cage');
     assert.ok(cageIdx >= 0, 'jaula plantada en el tablero');
@@ -334,13 +334,13 @@ test('JF-γ: fase 2 del Cerrajero — la Jaula roba un potenciador y devolverlo 
     Bosses.crackAt(cageIdx);
     assert.equal(State.tiles[cageIdx], null);
     assert.equal(Survival.inv.bomb, 1, 'jaula rota devuelve el botín');
-    // Sin stock: no roba (cae al cierre normal).
+    // Sin inventario de run: no roba (cae al cierre normal).
     Survival.inv = { bomb: 0, freeze: 0, clearLine: 0, wild: 0, x2: 0 };
     assert.equal(Bosses._cageSteal(Survival._emptyIdx().slice(0, 3)), false);
   } finally { cleanup(); }
 });
 
-test('JF-γ: efectos de derrota — deshielo de Boreal y jaulas del Cerrajero ×2', () => {
+test('JF-γ: efectos de derrota — deshielo de Boreal y devolución exacta del Cerrajero', () => {
   freshRun(6);
   try {
     Bosses.ENCOUNTERS = true;
@@ -350,13 +350,13 @@ test('JF-γ: efectos de derrota — deshielo de Boreal y jaulas del Cerrajero ×
     Survival.charge = 10;
     Bosses._defeatEffect({ id: 'frost', lvl: 1 });
     assert.equal(State.tiles[30], null); assert.equal(State.tiles[31], null);
-    assert.equal(Survival.charge, 35, 'deshielo + 25 de carga');
-    // Cerrajero: jaula pendiente → derrota devuelve ×2.
+    assert.equal(Survival.charge, 35, 'deshielo + 25 de suministro');
+    // Cerrajero: jaula pendiente → derrota devuelve exactamente lo robado.
     const cg = Tiles.make('cage'); cg.hits = 1; cg.loot = 'freeze'; State.tiles[40] = cg;
     Survival.inv.freeze = 0;
     Bosses._defeatEffect({ id: 'lockdown', lvl: 1 });
     assert.equal(State.tiles[40], null, 'la jaula se abre al caer el jefe');
-    assert.equal(Survival.inv.freeze, 2, 'devuelve lo enjaulado ×2');
+    assert.equal(Survival.inv.freeze, 1, 'devuelve exactamente lo enjaulado');
     // La Corriente: derrota vacía las filas exteriores.
     fillIcons(64);
     const before = State.board.filter((v) => v !== null).length;

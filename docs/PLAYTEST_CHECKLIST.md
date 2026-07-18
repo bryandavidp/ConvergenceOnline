@@ -51,7 +51,8 @@
 
 ## Supervivencia (15 min: 1 run en normal hasta morir, 1 run corta en difícil)
 
-- [ ] ⭐ ¿Distingues sin pensar los dos anillos (interior = potenciador, exterior = frenesí)? ¿El 🔥 se enciende solo en frenesí?
+- [ ] ⭐ ¿Distingues sin pensar los dos anillos (interior = monedas de suministro para la próxima preparación, exterior = frenesí)? ¿El 🔥 se enciende solo en frenesí?
+- [ ] ⭐ Abre y cierra el lanzador con 0/1/3 boosters: ¿la cotización usa stock antes que monedas, solo cobra al confirmar y empezar sin boosters mantiene el inventario de run vacío?
 - [ ] ⭐ Oleada previa a jefe: ¿ves la bandera «⚠ Jefe» en la barra Y llega el aviso específico (~3s antes) del tipo correcto (el evento que cae coincide con el aviso)?
 - [ ] ⭐ Entrada de jefe: ¿puedes decir quién es el jefe y leer su nivel antes de que empiece el primer aviso de ataque?
 - [ ] ⭐ Durante el jefe: ¿la píldora del banner deja claro qué ataque viene y cuántos segundos faltan?
@@ -59,7 +60,7 @@
 - [ ] ⭐ Resolución: ¿distingues si el jefe fue derrotado o se retiró antes de que aparezca la bendición?
 - [ ] ⭐ Recompensa de jefe: ¿entiendes qué botín/beneficio recibiste por matarlo antes de elegir bendición?
 - [ ] ¿El aviso de oleada entrante (78%) te hace mirar el tablero?
-- [ ] Usa cada booster una vez: ¿el modo apuntar (previsualización) deja claro qué celdas afecta?
+- [ ] Usa cada booster equipado una vez: ¿el modo apuntar (previsualización) deja claro qué celdas afecta y el arsenal persistente permanece inaccesible durante la run?
 - [ ] Pierde una vida: ¿el alivio (despeje) se lee como "segunda oportunidad" y no como bug?
 - [ ] Muere del todo: ¿el modal de revivir muestra el precio y rechazar es igual de fácil que aceptar?
 - [ ] ¿El resumen final (oleada, mejor oleada, botín de la run, momento destacado) cuenta la historia de la run?

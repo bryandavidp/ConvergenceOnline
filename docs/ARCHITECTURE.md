@@ -1,6 +1,6 @@
 # Arquitectura — Convergence
 
-> Última revisión: análisis exhaustivo sobre `v1.7.1` (VERSION en `game.js`). Este documento responde a "¿dónde está cada cosa?". Para la especificación completa de reglas de juego, fórmulas y modelos de datos ver [`MIGRATION_SPEC.md`](./MIGRATION_SPEC.md). Para el sistema visual ver [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md).
+> Última revisión base: análisis exhaustivo sobre `v1.7.1`; actualización incremental de tiendas/XP Booster sobre `v2.7.0` (2026-07-18). Este documento responde a "¿dónde está cada cosa?". Para la especificación completa de reglas de juego, fórmulas y modelos de datos ver [`MIGRATION_SPEC.md`](./MIGRATION_SPEC.md). Para el sistema visual ver [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md).
 
 ## 1. Qué es este proyecto
 
@@ -27,7 +27,7 @@ Mecánica base: el tablero es una grilla 8×8; el jugador toca una celda **vací
 
 ```
 /
-├── index.html              # DOM estático: 4 screens + 10 hub views + 4 modales de partida
+├── index.html              # DOM estático: 4 screens + 12 hub views + modales transitorios de partida
 ├── styles.css              # Todo el CSS de la app (2258 líneas) — ver DESIGN_SYSTEM.md
 ├── game.js                 # Toda la lógica de la app, un solo IIFE (3969 líneas) — ver MIGRATION_SPEC.md
 ├── sw.js                   # Service Worker: precache + estrategia de fetch offline-first
@@ -75,6 +75,7 @@ Todo vive dentro de un único `(() => { 'use strict'; ... })()`. Está organizad
 | 16 | `Music` | 1241 | Música de fondo generativa (osciladores) |
 | 17 | `Meta` | 1275 | Perfil de progresión/economía persistente (`cv_meta`) |
 | 18 | `Econ` | 1477 | Refresco de los "pills" de economía en el HUD |
+| 18b | `Storefront` | buscar `Storefront (recursos + XP)` | Catálogos allowlist, checkout ficticio de monedas/gemas y packs temporales XP ×4 |
 | 19 | Helpers de iconos PNG/SVG | 1500–1595 | `ICONS_DIR`, `icon`, `iconInline`, `V2_ICONS`, `iconV2` |
 | 20 | `Art` | 1563 | Helper de ilustraciones SVG/PNG |
 | 21 | `Tiles` | 1597 | Registro de celdas especiales (roca, hielo, cadenas, cristal, portal, bomba…) |
@@ -120,7 +121,7 @@ No hay virtual DOM ni diffing genérico. `Render` (módulo 12) mutua el DOM real
 
 ## 7. Máquina de estados: pantallas, vistas del hub y modales
 
-`Screens.show(name)` fija `document.body.dataset.screen` y alterna `hidden` en cada `.screen` para que coincida con `#screen-{name}`. **No hay historial** — solo el estado actual.
+`Screens.show(name)` fija `document.body.dataset.screen` y alterna `hidden` en cada `.screen` para que coincida con `#screen-{name}`. No existe router de URL/historial del navegador; `HubViews` mantiene una pila corta en memoria para volver al origen entre vistas (por ejemplo, recursos ↔ personalización o mapa de mundos → tienda).
 
 Pantallas (`<section class="screen" id="screen-X">` en `index.html`):
 
@@ -131,7 +132,9 @@ Pantallas (`<section class="screen" id="screen-X">` en `index.html`):
 | `worlds` | Mapa de mundos del modo Clásico (nodos de nivel + panel lateral + tabs) |
 | `game` | Pantalla de juego (tablero + HUD) |
 
-`HubViews.open(name)`/`home()` cambia únicamente el contenido central de Inicio y mantiene montadas la appbar y la navegación inferior. Sus 10 vistas son Misiones, Guía, Ajustes, dificultad de Supervivencia, Diario, Aventura, Tienda, Cofres, Multijugador y Logros/Perfil. Escape y los botones `data-view-back` regresan a Inicio; abrir Tienda, Guía, Ajustes o Logros desde la barra inferior cambia directamente de vista.
+`HubViews.open(name)`/`back()`/`home()` cambia únicamente el contenido central de Inicio y mantiene montadas la appbar y la navegación inferior. Sus 12 vistas son Eventos, Misiones, Guía, Ajustes, Diario, Aventura, Tienda de recursos (`resource-shop`), Tienda de personalización (`shop`), Cofres, Multijugador, Logros/Perfil y Colecciones. Escape y `data-view-back` usan la pila en memoria; Inicio la limpia. Salir de la tienda de personalización restaura siempre el tema equipado tras cualquier previsualización.
+
+Las tiendas son flujos separados y enlazables: la navegación global y los botones `+` de monedas/gemas abren recursos (con foco en su sección), mientras los accesos de cosméticos abren tableros/temas. `Storefront.CURRENCY_OFFERS` resuelve IDs a cantidades y el checkout actual `mock-auto` acredita localmente sin cobro; `XP_BOOST_OFFERS` vende 6 h/3 d/7 d ×4 por gemas. `Meta` persiste `xpBoostUntil` en schema 9 y `Game` captura `State.xpMultiplier` al inicio; `RunSave` conserva ese snapshot para que caducar o comprar después no cambie una partida ya iniciada.
 
 `Modal.open(id)`/`close()` queda reservado a estados transitorios de una partida y gestiona un overlay con **un solo diálogo activo a la vez**, capturando y restaurando foco. Los únicos cuatro modales son pausa, nivel completado, fin de partida y revivir.
 
@@ -139,9 +142,9 @@ Picker y PreLevel están dentro de `<main>`, no son hijos de una pantalla concre
 
 ## 8. PWA / Service Worker
 
-- `sw.js` define `CACHE = 'cv-cache-v2.6.66'` — **debe subirse manualmente en cada release** (no hay automatización de versión).
-- Precachea: assets core (`index.html`, `styles.css`, `game.js`, manifest, iconos PWA), más 3 listas *best-effort* (`.catch(()=>{})` cada una): `UI_ICONS` (PNG legacy), `V2_ICONS` (SVG v2, subset), `UI_SYSTEM` (sprites de botones/ventanas).
-- **Hallazgo:** `UI_SYSTEM` referencia `img/ui-system/*.png` (botones, checkboxes, ventanas, scrollbar) que **no existe en el repo**. No rompe nada (está en un `.catch()`), pero es un cabo suelto: o bien un pack cosmético planeado y nunca añadido, o un remanente de un sistema de UI con sprites que fue reemplazado por los componentes CSS actuales (botones/modales hechos con gradientes y box-shadows). Confirmado por grep: `styles.css` no referencia `ui-system` en absoluto.
+- `sw.js` define `CACHE = 'cv-cache-v2.7.1'` — **debe subirse manualmente en cada release** junto con `VERSION` y los dos `?v=` de `index.html`.
+- Precachea los assets core y listas *best-effort* independientes para iconos UI/V2, arte de Inicio/modos/lanzador, atlas de cofres, los nueve PNG de `SHOP_GENERATED_ART` y los once `preview.jpg` de `BOARD_THEME_PREVIEWS`.
+- El arte de la tienda de recursos vive en `img/ui-generated/shop/`; las miniaturas de personalización reutilizan `img/board-themes/v2/{id}/preview.jpg`. Ambos grupos quedan disponibles en la primera instalación offline aunque el usuario no haya abierto antes ninguna tienda.
 - Estrategia de fetch: navegación → *network-first* con fallback a caché (y fallback final a `index.html` cacheado si no hay red); resto de peticiones GET del mismo origen → *cache-first* con relleno de red en background.
 - `manifest.webmanifest`: `display: standalone`, `orientation: portrait`, `id: "/convergence/"`, iconos 192/512 + maskable.
 - Cliente (`PWA` módulo, game.js línea ~2486): maneja `beforeinstallprompt`, detecta modo standalone, muestra instrucciones manuales de instalación en iOS (UA sniffing) cuando no hay prompt nativo disponible, y avisa por toast cuando hay una versión nueva instalada (sin auto-reload).

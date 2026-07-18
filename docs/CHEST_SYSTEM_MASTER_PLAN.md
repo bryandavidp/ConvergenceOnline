@@ -7,9 +7,16 @@ analiza el **sistema** (economía, funcionalidad, pacing, UX) y lo compara con e
 Clash Royale **a día de hoy (julio 2026)**, que ha cambiado mucho desde el modelo clásico de 2016: Lucky Drops
 (2024) → Lucky Chests con estrellas (oct 2025) → Choice Chests y catch-up rewards (2026).
 
+> **Nota de lectura / baseline histórico.** Las secciones §1–§4 quedan congeladas como auditoría verificable de
+> Convergence **2.6.85**: describen qué existía y qué brechas motivaron el plan, no el estado posterior. Los cierres
+> contra el código vigente se registran en §5–§6 y el contrato de persistencia actual en `MIGRATION_SPEC.md`.
+> **Estado actual:** CH-1…CH-5 están cerradas y la corrección UX posterior está verificada en Convergence
+> **2.7.0**. CH-5 cerró el submodelo de cofres en schema **8**; el perfil vigente es schema **9** por el
+> `xpBoostUntil` añadido después, sin cambios adicionales al formato de los cofres.
+
 ---
 
-## §1 · Sistema actual de Convergence (verificado contra el código)
+## §1 · Sistema de Convergence en el baseline 2.6.85 (verificado contra el código de esa entrega)
 
 ### 1.1 Catálogo de tipos (`game.js` ≈2817–2869, `CHEST_TYPES`)
 
@@ -126,6 +133,9 @@ La economía meta usa `Math.random` a propósito (un cofre seedeable sería expl
 
 ## §3 · Comparativa dimensión a dimensión
 
+> Comparativa histórica congelada en 2.6.85. Los «No existe» y las brechas de esta tabla son el punto de partida;
+> no se reescriben después de implementar una fase porque perderían valor como evidencia del cambio.
+
 | Dimensión | Clash Royale 2026 | Convergence 2.6.85 | Veredicto |
 |---|---|---|---|
 | Conexión con el bucle central | Cada victoria alimenta el pipeline | Solo Supervivencia c/10 oleadas + 3 fuentes puntuales | ❌ **Brecha crítica** |
@@ -150,7 +160,7 @@ La economía meta usa `Math.random` a propósito (un cofre seedeable sería expl
 
 ---
 
-## §4 · Puntos de mejora
+## §4 · Puntos de mejora detectados en el baseline
 
 ### Funcionales
 
@@ -206,7 +216,9 @@ La economía meta usa `Math.random` a propósito (un cofre seedeable sería expl
 
 > Regla general: cada fase termina con `node --test`, `node tools/balance-sim.js` comparado contra
 > `docs/BALANCE_BASELINE.md`, lint, y triple bump de versión (game.js/index.html/sw.js). Cambios de `cv_meta`
-> → schema 5 con migración retrocompatible (patrón `MetaData._v`, MIGRATION_SPEC §3.4).
+> usan migración retrocompatible (patrón `MetaData._v`, MIGRATION_SPEC §3.4). Historial del plan: schema 5 en
+> CH-2, schema 6 en CH-3, schema 7 en CH-4 y **schema 8** al cerrar CH-5. El perfil global vigente es schema 9
+> por `xpBoostUntil`; la corrección visual 2.7.0 no añade ni migra datos.
 
 ### CH-1 · Honestidad y transparencia (P0 · esfuerzo bajo · sin riesgo de balance)
 
@@ -233,19 +245,67 @@ La economía meta usa `Math.random` a propósito (un cofre seedeable sería expl
 4. Reserva como cola visible que alimenta el auto-inicio (E2).
 - *Pruebas:* transición de temporizadores con reloj simulado; compat de `chestUnlock` previo.
 
-### CH-4 · Ceremonia de apertura (P1 · esfuerzo medio-alto)
+### CH-4 · Ceremonia de apertura (P1 · esfuerzo medio-alto) — ✅ cerrada (schema 7; auditada sobre schema 8; UX endurecida en v2.7.0)
 
-1. Multi-tirada por tamaño con reveals encadenados por toque (U3) — reduced-motion: revelado inmediato en lista.
-2. Ruleta de mejora de tier con odds visibles (U4).
-3. Drops de potenciadores/objetos reales con inventario (F8; desbloquea ROADMAP 3.2).
-4. Escalado de rangos con nivel meta (F7) — pasar balance-sim antes/después.
-- *Pruebas:* distribución de multi-tirada, inventario de boosters, guardarraíl de medallas.
+1. **Multi-tirada real por tamaño.** El tier final determina 2 premios (pequeño), 3
+   (mediano/grande/variable) o 4 (extragrande/enorme). Siempre hay monedas garantizadas (25% de una tirada del
+   rango), después la tirada principal histórica y, si corresponde, extras con tabla publicada
+   52% monedas / 23% gemas / 13% ticket / 12% booster. `reward.items` es serializable y no se autorreferencia.
+2. **Ascenso sorpresa, solo cuando ocurre.** Cada cofre salvo `divine` publica un 10% de convertirse en el siguiente
+   tier de `CHEST_UPGRADE_PATH` (`event→royal` incluido). El 90% sin ascenso pasa directamente a revelar premios:
+   no muestra una pantalla de «comprobación» ni una falsa mejora. Solo el resultado positivo interpone una transición
+   breve con origen, destino y efecto; la pantalla de premios conserva además esa explicación. `reducedFx` y
+   `prefers-reduced-motion` eliminan la espera sin perder la información.
+3. **Arsenal persistente.** Schema 7 añadió `boosterStock` para `bomb`, `freeze`, `clearLine`, `wild` y `x2`, con
+   APIs acotadas `boosterInventory/boosterCount/addBooster/spendBooster`. Los drops entran en ese stock, pero una
+   partida nunca lo mezcla ni lo drena implícitamente: `quoteBoosterLoadout`/`commitBoosterLoadout` transfieren solo
+   el loadout confirmado. En Clásico lo hace PreLevel (máximo 2) y en Supervivencia su lanzador (máximo 3); una
+   unidad poseída sustituye el pago en monedas y el runtime consume después únicamente `Survival.inv`.
+4. **Escalado con progresión.** Monedas y gemas —incluidos garantizado y extras— usan
+   `min(2.5, 1 + 0.05·(nivel−1))`: nivel 1 conserva el baseline y nivel 31+ queda limitado a ×2,5. Los tickets no
+   escalan. `chestOdds(type, Meta.level())` proyecta los rangos efectivos en ficha y catálogo.
+5. **Guardarraíl de economía aislado.** `runChestEconomy(options)` en `tools/balance-sim.js` abre cofres mediante
+   `Meta.addChest`/`Meta.openChest`, usa streams deterministas por tipo/nivel y restaura `Meta.state`, `cv_meta` y
+   `Math.random` incluso ante error. `--chests` resume EV de monedas/gemas/tickets/boosters, premios y tier-ups.
+6. **Flujo visual exclusivo y animación fluida.** La muestra cerrada (`chest-preview`) y la ceremonia
+   (`chest-ceremony`) son regiones hermanas y mutuamente excluyentes mediante `hidden`/`inert`; al abrir se ocultan
+   ficha, acciones, ranuras, banda y catálogo. «Tipo de cofre» y «Qué puede contener» viven en flujo normal, en dos
+   columnas o una según ancho, sin capas absolutas. La apertura separa los cuatro frames discretos del atlas
+   (`chestAtlasFrames`) del movimiento continuo (`chestOpenMotion`, 720 ms), limitado a `transform`/`opacity`, y
+   predecodifica el atlas de origen/destino antes de animarlo. El foco vuelve al CTA tras «Seguir».
+- *Pruebas focales:* `tests/chest-ceremony.test.js` + `tests/balance-guardrail.test.js`.
 
-### CH-5 · Agencia y eventos (P2 · esfuerzo medio)
+### CH-5 · Agencia y eventos (P2 · esfuerzo medio) — ✅ cerrada (v2.6.98; schema 8)
 
-1. Choice Chest diario: 3 recompensas visibles, elige 1 (U5).
-2. Catch-up del cofre diario (E4).
-3. Cofre `event` ligado a eventos/temporadas reales cuando exista el sistema de eventos (dep.: ROADMAP).
+1. **Choice Chest diario inmediato.** El primer objetivo UTC del día fija y persiste tres opciones visibles
+   (monedas, gemas y ticket o booster), crea un cofre Bronce y lo deja `ready` en el mismo acto: coste de salto 0,
+   no ocupa el temporizador ni bloquea la cola. `openChest()` no puede consumirlo; solo
+   `claimChestChoice(uid, optionId)` concede una opción y elimina el cofre. Copias defensivas, opción inválida y
+   doble claim protegen la economía; elecciones pendientes de días distintos pueden coexistir.
+2. **Catch-up acotado y bondadoso.** Usuario nuevo o que jugó ayer recibe Bronce; si la última fecha registrada
+   queda dos o más días atrás, el nuevo Choice sube **exactamente a Plata**, sin acumular más tiers ni añadir
+   espera. El payload persiste `date`, `tier`, `catchUp` y las tres opciones.
+3. **Evento semanal offline con snapshot.** `addEventChest(source)` captura al ganar el cofre
+   `{id, week, challengeId, featuredBooster, source}`; el booster destacado se deriva de semana+reto y no cambia
+   aunque rote la semana. La última tirada menor garantiza ese booster en el arsenal. Cofres `event` legacy sin
+   snapshot válido se completan una vez al migrar; el ciclo genérico de 32 ya no fabrica eventos sin contexto.
+4. **Agencia visible.** Eventos mantiene una tarjeta del Choice pendiente y abre un `Picker` de tres caras; la
+   ficha de cofre muestra opciones/evento literalmente, con estados listo/en apertura y paridad i18n ES/EN.
+- *Pruebas focales:* `tests/chest-agency.test.js` + `tests/balance-guardrail.test.js`.
+
+#### Criterios de aceptación de cierre CH-4/CH-5
+
+| ID | Criterio verificable | Evidencia automatizada | Estado |
+|---|---|---|---|
+| AC-4.1 | Cada tipo entrega 2–4 `items`, monedas garantizadas y un payload JSON sin ciclos. | `chest-ceremony`: tamaños/payload | ✅ |
+| AC-4.2 | Tier-up estricto `<0.10`, ruta correcta, odds visibles y escala nivel 1→31 limitada a ×2,5. | `chest-ceremony`: tier + escala | ✅ |
+| AC-4.3 | Bonus 52/23/13/12; booster válido entra y sale del arsenal sin saldo negativo. | `chest-ceremony`: 25.000 tiradas + stock | ✅ |
+| AC-4.4 | Reveal secuencial y alternativa reduced-motion; medallas 750/1500/2500 no derivan. | `chest-ceremony` + `balance-guardrail` | ✅ |
+| AC-4.5 | Preview y ceremonia son exclusivas; ficha/contenido no se superponen; el ascenso solo interrumpe si ocurre y atlas/movimiento usan animaciones separadas. | `chest-ceremony` + `chests-redesign` + `hub-views-redesign`/`fb-regression` | ✅ |
+| AC-5.1 | Choice nace listo, no concede nada al generarse y aplica solo una opción una sola vez. | `chest-agency`: persistencia/claim/idempotencia | ✅ |
+| AC-5.2 | Catch-up concede Plata solo con hueco ≥2 días y conserva Choices pendientes previos. | `chest-agency`: matriz de fechas | ✅ |
+| AC-5.3 | Event conserva snapshot al rotar semana, garantiza su booster y no aparece en el ciclo genérico. | `chest-agency`: snapshot/ciclo | ✅ |
+| AC-X.1 | Sim de cofres es determinista, usa APIs reales y no deja mutado estado, storage ni RNG. | `balance-guardrail` + CLI `--chests` | ✅ |
 
 ### Fuera de alcance deliberado
 
@@ -307,3 +367,48 @@ La economía meta usa `Math.random` a propósito (un cofre seedeable sería expl
   `board-themes-redesign` son preexistentes y ajenos a cofres); sintaxis y ESLint sin errores; `balance-sim` exit 0. QA real
   390×844: cola +2 sin overflow, selección de Oro en reserva, timer de 8 h visible fuera de ranuras y chip `8h 00m` en Eventos;
   consola limpia.
+- 2026-07-18 — **CH-4 cerrada contra código (schema 7, sin reescribir el baseline §1–§4).** `openChest()` pasó de una
+  recompensa a ceremonia de 2–4 `items`: monedas garantizadas, tirada principal y extras 52/23/13/12; tier-up visible
+  del 10% antes de revelar; monedas/gemas escalan +5% por nivel con tope ×2,5. `boosterStock` persiste cinco boosters,
+  recibe drops y sustituye el coste en monedas únicamente cuando el jugador confirma ese booster en una preparación.
+  `tests/chest-ceremony.test.js` certifica número/serialización, límites del tier, escala, distribución de 25.000 bonus,
+  stock, reduced-motion y medallas sin deriva.
+- 2026-07-18 — **CH-5 cerrada contra código (schema 8).** El primer objetivo del día crea un Choice Bronce de tres
+  opciones ya persistidas y **listo inmediatamente**; un hueco de ≥2 días eleva solo el nuevo cofre a Plata. La ruta
+  aleatoria no puede abrirlo y el claim válido es único/idempotente. El cofre de evento captura semana, reto y booster
+  destacado al ganarse; rotar semana no altera el snapshot y la apertura garantiza ese booster. La migración conserva
+  cofres pero degrada Choices manipulados a su cofre normal y completa eventos legacy. `tests/chest-agency.test.js`
+  cubre opciones defensivas, economía antes/después, cola, catch-up, pendientes simultáneos, snapshot y ciclo sin `event`.
+- 2026-07-18 — **Guardarraíl CH-4/CH-5 documentado y ejecutable.** `tools/balance-sim.js --chests` y la API exportada
+  `runChestEconomy({runs, seed, types, levels})` recorren las APIs reales sobre un perfil canónico, informan EV por
+  tipo/nivel y restauran estado/storage/RNG. Los comandos y resultados de la verificación focal quedan en los criterios
+  de aceptación de §5.
+- 2026-07-18 — **Plan CH-1…CH-5 concluido y verificado en v2.6.98 (schema 8).** Verificación focal CH-4/CH-5 y
+  regresiones relacionadas: **63/63**. Suite global: **224/226**; los únicos dos fallos son los ya existentes y ajenos a
+  cofres en `tests/board-themes-redesign.test.js` (aislamiento de `.board-wrap::before` y contrato de versión de tema
+  `4` frente a `4.1`). Sintaxis y `git diff --check`, correctos; ESLint: 0 errores y 5 avisos preexistentes por símbolos
+  sin uso. `balance-sim` estándar (40 runs/config) y `balance-sim --chests` (200 aperturas/tipo-nivel) terminan con exit 0;
+  el primero conserva su `TimeoutNaNWarning` preexistente; el evento mantiene EV de booster 1,00 y `divine` tier-up 0%.
+  QA real en navegador: escritorio y 390×844, partida de Clásico hasta generar un Choice real, elección y reveal
+  verificados, CTA único, confinamiento/restauración de foco, sin overflow horizontal y consola limpia. La ruta
+  reduced-motion queda cubierta por la suite focal. Versión sincronizada en `game.js`, `index.html` y `sw.js`.
+- 2026-07-18 — **Corrección UX post-cierre de CH-4 (v2.7.0; schema global 9, sin cambio de datos de cofres).** Una QA
+  de estrés posterior detectó que la ceremonia se renderizaba dentro del contenedor de muestra cerrada y que las
+  tarjetas «Tipo de cofre»/«Qué puede contener» seguían como overlays, recortando y solapando estados en móvil.
+  Preview y ceremonia pasan a secciones hermanas exclusivas; cofre, acciones e información quedan en flujo normal y
+  la ceremonia obtiene su propio escenario. «Mejora de cofre» se reformula como posibilidad de ascenso del 10%, el
+  90% negativo deja de interrumpir y el éxito persiste explicado en la pantalla de premios, también con movimiento
+  reducido. La apertura separa frames discretos del atlas y desplazamiento continuo de 720 ms, elimina filtros del
+  tramo animado y predecodifica el atlas antes de empezar. Selección, catálogo y ceremonia conservan/recuperan foco.
+  Fixture local aislada: 24 cofres y 100.000 gemas, con snapshot restaurado al salir. QA real: **21 aperturas**
+  consecutivas —incluido ascenso Evento→Real— en 390×844 y 1280×800; 0 solapes medidos, 0 overflow horizontal y
+  consola sin warnings/errores. Verificación focal de cofres: **82/82**. Suite global: **253/255**; solo permanecen
+  los dos fallos preexistentes de `board-themes-redesign` ya documentados. Versión sincronizada en
+  `game.js`, `index.html` y `sw.js`.
+- 2026-07-18 — **El arsenal se conecta a la economía (v2.7.1).** Supervivencia elimina las 10 unidades gratuitas
+  iniciales y ofrece un loadout opcional de hasta 3 tipos: stock primero y compra con monedas para faltantes, todo en
+  un único commit. Cerrar el lanzador no gasta; reintentar vuelve a preparación; las unidades no usadas son por intento;
+  Daily permanece neutral. El anillo interior ya no imprime boosters: cada 100 de suministro paga 2 monedas en Normal
+  (~3 en Difícil), mientras `pack` conserva su papel de premio raro y exclusivo de la run. A/B con 40 runs/config:
+  +12,9%…+19,8% monedas/run, dentro del guardarraíl de +20%. El stock persistente es inaccesible y no robable durante
+  la run; el Cerrajero devuelve exactamente lo enjaulado.

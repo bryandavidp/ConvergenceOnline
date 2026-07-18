@@ -80,7 +80,7 @@ Regla general: cada celda se prueba en ES y EN, con `reduced-fx` on/off donde ha
 - ⭐ Marea: aviso específico a −3s coincide con el evento; marcas 1.2s; llena solo huecos de las filas exteriores; puede provocar overflow→vida como cualquier presión.
 - Mutador semanal: forzar los 4 con `Survival._mutOverride`; caos mete quake en el pool; hielo cambia trampas y monedas; furia alarga el frenesí.
 - Revivir 120→240→480→sin oferta; el modal refleja el precio vivo; rechazar termina con el resumen correcto.
-- Anillos: valores extremos (carga 99→grant, frenesí activo=100%), y jamás visibles fuera de Supervivencia/Clásico-con-stock.
+- Anillos: valores extremos (suministro 99→pago acotado con remanente, frenesí activo=100%), sin mutar `boosterStock`; barra de boosters jamás visible fuera de Supervivencia/Clásico-con-loadout.
 
 **Zen**
 - Sin fiebre jamás (combo 30+); combo/chip invisibles; flor por cada tablero limpio (persistente); hitos 10 (cofre, una vez) y 50 (skin, equipable, no comprable, visible como "Exclusivo" en tienda); ritmo recordado entre sesiones.

@@ -46,3 +46,17 @@ test('deriva de fórmula: bot estándar en Contrarreloj dentro de banda ±40%', 
     'la fórmula de score o el pacing de Contrarreloj han derivado; si el cambio es deliberado, recalibra BASELINE_P50 y revisa los umbrales de medalla',
   );
 });
+
+test('CH-4/5: el simulador de cofres restaura estado y modela el booster garantizado de evento', () => {
+  const stateBefore = JSON.stringify(sim.cv.Meta.state);
+  const storedBefore = localStorage.getItem('cv_meta');
+  const randomBefore = Math.random;
+  const report = sim.runChestEconomy({ runs: 40, seed: 20260718, types: ['event'], levels: [1] });
+
+  assert.equal(report.rows.length, 1);
+  assert.equal(report.rows[0].avgPrizes, 3);
+  assert.equal(report.rows[0].ev.boosters, 1, 'cada cofre de evento real incluye su booster del snapshot');
+  assert.equal(JSON.stringify(sim.cv.Meta.state), stateBefore);
+  assert.equal(localStorage.getItem('cv_meta'), storedBefore);
+  assert.equal(Math.random, randomBefore);
+});

@@ -71,13 +71,16 @@ test('cofres: diez atlas con alfa, ranuras y secuencia de cuatro estados', () =>
   assert.match(js, /startChestUnlock\(uid\)/);
   assert.match(js, /chestInstantCost\(uid\)/);
 
-  assert.match(css, /@keyframes chestAtlasOpening/);
+  assert.match(html, /id="chest-preview"[\s\S]*?id="chest-ceremony"[^>]*hidden inert/);
+  assert.match(css, /@keyframes chestAtlasFrames/);
+  assert.match(css, /@keyframes chestOpenMotion/);
   assert.match(css, /background-size: 200% 200%/);
   assert.match(css, /chest-frame-unlocked[^}]+background-position: 100% 0/);
   assert.match(css, /chest-frame-half[^}]+background-position: 0 100%/);
   assert.match(css, /chest-frame-open[^}]+background-position: 100% 100%/);
   assert.match(css, /@keyframes chestPrizeRise/);
-  assert.match(js, /classList\.add\('is-opening'\)[\s\S]*?classList\.add\('is-open'\)[\s\S]*?setTimeout\(finish, reduceMotion \? 0 : 1120\)/);
-  assert.match(js, /matchMedia\('\(prefers-reduced-motion: reduce\)'\)/);
+  assert.match(js, /afterChestAnimation\(motion,\s*'chestOpenMotion',\s*900,\s*run,\s*finish\)/);
+  assert.match(js, /requestAnimationFrame\(\(\) => \{[\s\S]*?stage\.classList\.add\('is-playing'\)/);
+  assert.match(js, /const reduceMotion\s*=\s*motionOff\(\)/);
   assert.match(js, /function showChestReward\(r, openedType\)[\s\S]*?class="chest-reward-stage/);
 });

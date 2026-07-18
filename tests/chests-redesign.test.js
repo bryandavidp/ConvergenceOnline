@@ -126,35 +126,70 @@ test('cofres: las tablas de alto nivel escalan premio y la cuarta ranura cuesta 
   } finally { restore(snap); }
 });
 
-test('cofres: el layout móvil prioriza cofre y acciones desde iPhone SE', () => {
+test('cofres: preview y ceremonia son regiones exclusivas sin overlays móviles', () => {
   assert.match(styles, /COFRES 3\.1 · responsive móvil orientado a tarea/);
   assert.match(styles, /@media \(max-width: 599px\)/);
-  assert.match(styles, /min-height:\s*clamp\(250px,\s*32svh,\s*288px\)/);
+  const previewStart = indexHtml.indexOf('id="chest-preview"');
+  const previewEnd = indexHtml.indexOf('</section>', previewStart);
+  const ceremonyStart = indexHtml.indexOf('id="chest-ceremony"');
+  assert.ok(previewStart >= 0 && previewEnd > previewStart && ceremonyStart > previewEnd,
+    'preview y ceremonia deben ser secciones hermanas');
+  const preview = indexHtml.slice(previewStart, previewEnd);
+  assert.match(preview, /id="chest-preview-body"/);
+  assert.match(preview, /class="chest-preview-details"/);
+  assert.match(preview, /class="chest-open-options chest-main-actions"/);
+  assert.match(indexHtml.slice(ceremonyStart), /hidden inert[\s\S]*?id="chests-body"/);
+  assert.match(styles, /\.view-chests\.is-ceremony-open \.chest-topbar[\s\S]*?\.chest-catalog \{ display: none; \}/);
+  const phoneFlow = styles.slice(styles.indexOf('/* Teléfonos: escenario e información'), styles.indexOf('/* iPhone SE y teléfonos bajos'));
+  assert.match(phoneFlow, /\.chest-showcase-shell[\s\S]*?height:\s*auto/);
+  assert.match(phoneFlow, /\.chest-selected-card,[\s\S]*?position:\s*relative/);
+  assert.doesNotMatch(phoneFlow, /\.chests-body\s*\{\s*position:\s*absolute/);
+  assert.doesNotMatch(phoneFlow, /\.chest-selected-card,[\s\S]{0,240}position:\s*absolute/);
   assert.match(styles, /@media \(max-width: 359px\), \(max-width: 480px\) and \(max-height: 700px\)/);
-  assert.match(styles, /min-height:\s*220px;\s*\n\s*height:\s*220px/);
+  assert.doesNotMatch(styles, /min-height:\s*220px;\s*\n\s*height:\s*220px/);
   assert.match(styles, /#screen-start \.chest-main-button \{\s*\n\s*min-height:\s*58px/);
   assert.match(styles, /#screen-start \.chest-catalog-card button \{ min-height: 44px/);
 });
 
-test('cofres CH-1: la banda de recompensas solo promete lo que las tablas contienen', () => {
+test('cofres CH-1/4: la banda solo promete categorías con tabla e inventario reales', () => {
   const band = indexHtml.split('chest-rewards-grid')[1].split('</section>')[0];
   assert.ok(band.includes('coin.png') && band.includes('gem.png') && band.includes('ticket.png'), 'monedas/gemas/tickets presentes');
+  assert.ok(band.includes('bolt.png') && band.includes('chest_reward_boosters'), 'boosters presentes tras implementar su stock');
   assert.ok(band.includes('planet.png') && band.includes('crystal.png'), 'tableros/temas presentes');
-  assert.ok(!band.includes('bolt.png') && !band.includes('potion.png'), 'sin potenciadores/objetos fantasma');
+  assert.equal((band.match(/data-i18n="chest_level_scaled"/g) || []).length, 2, 'monedas y gemas declaran el escalado por nivel');
+  assert.ok(!band.includes('60 – 2400') && !band.includes('3 – 70'), 'sin rangos globales obsoletos que omitan el escalado');
+  assert.ok(!band.includes('potion.png') && !band.includes('chest_reward_objects'), 'sin objetos fantasma');
   assert.ok(!band.includes('chest_reward_surprise'), 'sin "y más…" vago');
 });
 
-test('cofres CH-1: chestOdds expone rangos y porcentajes reales por tipo', () => {
+test('cofres CH-1/4: chestOdds expone tiradas, escalado, bonus y mejora reales por tipo', () => {
   const wood = chestOdds('wood');
   assert.deepEqual(wood.coins, { min: 60, max: 199, pct: 60 });
   assert.equal(wood.gems.pct, 30);
   assert.equal(wood.tickets.pct, 8);
   assert.equal(wood.cosmetic.pct, 2);
+  assert.deepEqual(wood.guaranteedCoins, { min: 15, max: 50 });
+  assert.equal(wood.rolls, 2);
+  assert.deepEqual(wood.upgrade, { to: 'bronze', pct: 10 });
+  assert.deepEqual(wood.bonus, {
+    count: 0,
+    coinsPct: 52, gemsPct: 23, ticketsPct: 13, boosterPct: 12,
+    coins: { min: 10, max: 33 }, gems: { min: 1, max: 2 },
+  });
   const divine = chestOdds('divine');
   assert.deepEqual(divine.coins, { min: 1000, max: 2400, pct: 20 });
   assert.equal(divine.gems.pct, 12);
   assert.equal(divine.tickets.pct, 8);
   assert.equal(divine.cosmetic.pct, 60);
+  assert.equal(divine.rolls, 4);
+  assert.equal(divine.bonus.count, 2);
+  assert.deepEqual(divine.upgrade, { to: null, pct: 0 });
+  const divineLate = chestOdds('divine', 31);
+  assert.deepEqual(divineLate.coins, { min: 2500, max: 6000, pct: 20 });
+  assert.deepEqual(divineLate.gems, { min: 88, max: 175, pct: 12 });
+  assert.deepEqual(divineLate.guaranteedCoins, { min: 625, max: 1500 });
+  assert.deepEqual(divineLate.bonus.coins, { min: 25, max: 743 });
+  assert.deepEqual(divineLate.bonus.gems, { min: 3, max: 35 });
   // Un tipo desconocido cae a madera, igual que el resto del sistema.
   assert.deepEqual(chestOdds('nope'), chestOdds('wood'));
   // La suma por tipo debe cubrir el 100% (±1 por redondeo).
@@ -166,7 +201,14 @@ test('cofres CH-1: chestOdds expone rangos y porcentajes reales por tipo', () =>
 });
 
 test('cofres CH-1: i18n de transparencia presente en ambos idiomas', () => {
-  for (const key of ['chest_odds_title', 'chest_odds_cosmetic', 'home_chest_opening']) {
+  for (const key of [
+    'chest_odds_title', 'chest_odds_cosmetic', 'home_chest_opening',
+    'chest_guaranteed_coins', 'chest_primary_roll', 'chest_bonus_rolls',
+    'chest_bonus_odds', 'chest_upgrade_label', 'chest_upgrade_detail',
+    'chest_level_scaled', 'chest_reward_boosters', 'booster_stock',
+    'chest_type_panel', 'chest_ceremony_title', 'chest_tier_success_detail',
+    'chest_tier_reward_note', 'chest_open_now_cost', 'chest_selected_announcement',
+  ]) {
     assert.ok(I18n.DICT.es[key], `es.${key}`);
     assert.ok(I18n.DICT.en[key], `en.${key}`);
   }
@@ -182,7 +224,16 @@ test('cofres CH-3: Home proyecta el estado y la reserva es una cola visible y se
   const render = gameSourceBetween('function renderChestSlots(', 'function buildChestCatalog()');
   assert.match(render, /Meta\.chestAutoQueue\(\)/);
   assert.match(render, /data-chest-reserve-slot/);
+  assert.match(render, /aria-pressed=/);
+  assert.match(render, /focusChestSelection\(selectedChestUid\)/);
   assert.match(render, /queueRank/);
+});
+
+test('cofres QA: la fixture de volumen solo opera en local y restaura el perfil', () => {
+  assert.match(gameJs, /const qaHost\s*=\s*location\.hostname\s*===\s*'localhost'[\s\S]*?qaParams\.has\('dev'\)/);
+  assert.match(gameJs, /const qaMetaSnapshot\s*=\s*localStorage\.getItem\('cv_meta'\)/);
+  assert.match(gameJs, /pagehide[\s\S]*?localStorage\.removeItem\('cv_meta'\)[\s\S]*?localStorage\.setItem\('cv_meta',\s*qaMetaSnapshot\)/);
+  assert.match(gameJs, /while\s*\(qaCount\s*<\s*24[\s\S]*?Meta\.addGems\(100000\s*-\s*Meta\.gems\(\)\)/);
 });
 
 test('cofres CH-3: badge y notificación local son best-effort sin rechazos sin manejar', () => {
@@ -196,6 +247,6 @@ test('cofres: carruseles y tablet conservan jerarquía, snap y objetivos táctil
   assert.match(styles, /grid-auto-columns:\s*clamp\(150px,\s*48vw,\s*176px\)/);
   assert.match(styles, /grid-auto-columns:\s*clamp\(104px,\s*31vw,\s*124px\)/);
   assert.match(styles, /@media \(min-width: 600px\) and \(max-width: 760px\)/);
-  assert.match(styles, /grid-template-columns:\s*minmax\(128px,\s*158px\) minmax\(240px,\s*1fr\) minmax\(128px,\s*154px\)/);
+  assert.match(styles, /\.chest-preview-details \{ grid-template-columns:\s*minmax\(180px,\s*\.85fr\) minmax\(0,\s*1\.5fr\)/);
   assert.match(styles, /@media \(max-width: 350px\)[\s\S]*?\.chest-catalog-grid \{ grid-template-columns: 1fr; \}/);
 });

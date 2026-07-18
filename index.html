@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.6.92" />
+  <link rel="stylesheet" href="styles.css?v=2.7.1" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -100,6 +100,11 @@
               <span class="home-resume-copy"><small data-i18n="home_saved_run">Partida guardada</small><b id="home-resume-state">Continuar partida</b></span>
               <span class="home-resume-cta" data-i18n="continue_word">Continuar</span>
             </button>
+            <button class="home-resume home-play-now" id="home-play-now" type="button" data-act="home-play-now" hidden>
+              <span class="home-resume-ic" aria-hidden="true"><img class="ic" id="home-play-now-icon" src="img/ui-v2/home/target.png" alt=""></span>
+              <span class="home-resume-copy"><small id="home-play-now-kicker">Recomendado ahora</small><b id="home-play-now-label">Jugar ahora</b><span id="home-play-now-sub"></span></span>
+              <span class="home-resume-cta" data-i18n="play">Jugar</span>
+            </button>
           </div>
         </section>
 
@@ -159,7 +164,7 @@
 
       <!-- Barra de navegación inferior (estilo Supercell) -->
       <nav class="worlds-tabs" aria-label="Navegación">
-        <button class="tab" id="wt-shop"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/cart.png" alt=""></span><small data-i18n="tab_shop">Tienda</small></button>
+        <button class="tab" id="wt-shop"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/cart.png" alt=""></span><small data-i18n="style_shop_nav">Estilos</small></button>
         <button class="tab" id="wt-missions"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/target.png" alt=""></span><small data-i18n="tab_missions">Misiones</small></button>
         <button class="tab tab-home" id="wt-play" aria-current="page"><span class="tab-ic">🎮</span><small data-i18n="tab_play">Jugar</small></button>
         <button class="tab" id="wt-chests"><span class="tab-ic"><img class="ic ic-inline" src="img/ui/chest.png" alt=""></span><span class="q-dot q-dot-gold" id="chests-dot" hidden></span><small data-i18n="tab_chests">Cofres</small></button>
@@ -183,6 +188,11 @@
               <b id="hud-gems" data-econ-num="gems">0</b>
               <span class="wallet-plus" aria-hidden="true"></span>
             </button>
+            <span class="wallet-pill wallet-xp-boost" id="hud-xp-boost" hidden>
+              <img class="ic ic-inline" src="img/ui/potion.png" alt="">
+              <b>XP ×4</b>
+              <small data-i18n="xp_boost_this_match">Esta partida</small>
+            </span>
             <span class="wallet-pill wallet-run" id="hud-run-coins-wrap" hidden><span>Run</span> <b id="hud-run-coins">+0</b></span>
           </div>
           <div class="controls">
@@ -386,6 +396,12 @@
             <button class="event-card-action" type="button" data-act="home-daily" data-i18n="events_play">Jugar</button>
           </article>
 
+          <article class="event-card event-card-choice" id="events-choice-card" hidden>
+            <span class="event-card-art" aria-hidden="true"><img src="img/ui-generated/home/nav-chest.png" alt=""></span>
+            <span class="event-card-copy"><small data-i18n="daily_choice_event_label">Primera victoria</small><b data-i18n="daily_choice_title">Cofre de elección</b><span id="events-choice-status">Elige 1 de 3 premios</span></span>
+            <button class="event-card-action" id="events-choice-open" type="button" data-act="open-daily-choice" data-i18n="daily_choice_open">Elegir</button>
+          </article>
+
           <article class="event-card" id="events-chests-card">
             <span class="event-card-art" aria-hidden="true"><img src="img/ui-generated/home/nav-chest.png" alt=""></span>
             <span class="event-card-copy"><small data-i18n="events_rewards_label">Premios</small><b data-i18n="home_chests">Cofres</b><span id="events-chests-status">Ninguno disponible</span></span>
@@ -545,19 +561,57 @@
       </div>
     </section>
 
-    <!-- Tienda: tableros + temas -->
-    <section class="hub-view view-shop" id="view-shop" data-hub-view="shop" aria-labelledby="shop-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/cart.png" alt=""></span><h2 id="shop-title" data-i18n="shop_title">Tienda</h2></div>
-      <div class="shop-econ">
-        <span class="econ-pill econ-coins" data-econ="coins">🪙 0</span>
-        <span class="econ-pill econ-gems" data-econ="gems">💎 0</span>
-        <span class="econ-pill econ-tickets" data-econ="tickets">🎟️ 0</span>
+    <!-- Tienda de recursos: monedas, gemas y XP booster. Flujo independiente
+         de la personalización para sustituir el checkout simulado sin tocar
+         tableros ni temas. -->
+    <section class="hub-view view-resource-shop" id="view-resource-shop" data-hub-view="resource-shop" aria-labelledby="resource-shop-title" hidden>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/cart.png" alt=""></span><h2 id="resource-shop-title" data-i18n="resource_shop_title">Tienda de recursos</h2></div>
+      <div class="resource-shop-test" role="note">
+        <span class="resource-shop-test-dot" aria-hidden="true"></span>
+        <span><b data-i18n="test_payment_title">Modo de pruebas</b> · <span data-i18n="test_payment_note">Las compras de monedas y gemas se acreditan automáticamente. No se realiza ningún cobro.</span></span>
       </div>
+      <div class="modal-body view-body resource-shop-scroll">
+        <section class="resource-section resource-section-gems" aria-labelledby="resource-gems-title">
+          <div class="resource-section-head">
+            <span class="resource-section-icon"><img src="img/ui-v2/home/gem.png" alt="" aria-hidden="true"></span>
+            <div><p data-i18n="resource_shop_premium">RECURSO PREMIUM</p><h3 id="resource-gems-title" data-i18n="gems">Gemas</h3></div>
+          </div>
+          <div class="resource-offers" id="gem-offers"></div>
+        </section>
+
+        <section class="resource-section resource-section-coins" aria-labelledby="resource-coins-title">
+          <div class="resource-section-head">
+            <span class="resource-section-icon"><img src="img/ui-generated/home/header-coin-star.png" alt="" aria-hidden="true"></span>
+            <div><p data-i18n="resource_shop_game_currency">DIVISA DEL JUEGO</p><h3 id="resource-coins-title" data-i18n="coins">Monedas</h3></div>
+          </div>
+          <div class="resource-offers" id="coin-offers"></div>
+        </section>
+
+        <section class="resource-section resource-section-xp" aria-labelledby="resource-xp-title">
+          <div class="resource-section-head">
+            <span class="resource-section-icon"><img src="img/ui/potion.png" alt="" aria-hidden="true"></span>
+            <div><p data-i18n="resource_shop_progress">PROGRESIÓN</p><h3 id="resource-xp-title" data-i18n="xp_booster_title">XP Booster</h3></div>
+            <span class="xp-boost-status" id="xp-boost-status"></span>
+          </div>
+          <p class="resource-section-copy" data-i18n="xp_booster_desc">Multiplica ×4 todo el XP ganado en las partidas que empieces mientras esté activo.</p>
+          <div class="resource-offers xp-offers" id="xp-boost-offers"></div>
+        </section>
+      </div>
+      <div class="modal-actions view-actions resource-shop-actions">
+        <button class="btn btn-ghost" type="button" data-act="open-style-shop" data-i18n="style_shop_short">Tableros y temas</button>
+        <button class="btn btn-primary" id="resource-shop-close" type="button" data-view-back data-i18n="back">Volver</button>
+      </div>
+    </section>
+
+    <!-- Tienda de personalización: tableros + temas. -->
+    <section class="hub-view view-shop" id="view-shop" data-hub-view="shop" aria-labelledby="shop-title" hidden>
+      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/cart.png" alt=""></span><h2 id="shop-title" data-i18n="style_shop_title">Tableros y temas</h2></div>
       <p class="shop-hint" data-i18n="shop_hint2">Los tableros son solo cambios visuales: no dan ventajas ni desventajas.</p>
       <div class="modal-body view-body">
         <div class="shop-list" id="shop-list"></div>
       </div>
       <div class="modal-actions view-actions">
+        <button class="btn btn-ghost" type="button" data-act="open-resource-shop" data-i18n="resource_shop_short">Monedas, gemas y XP</button>
         <button class="btn btn-primary" id="shop-close" data-view-back data-i18n="back">Volver</button>
       </div>
     </section>
@@ -577,31 +631,38 @@
           <button class="chest-catalog-button" id="btn-chest-catalog" type="button"><img src="img/ui/chest.png" alt="" aria-hidden="true"><span data-i18n="chest_view_all">Ver todos</span></button>
         </div>
 
-        <section class="chest-showcase-shell" aria-label="Cofre seleccionado">
-          <aside class="chest-selected-card" id="chest-selected-card"></aside>
-          <div class="chests-body" id="chests-body" aria-live="polite"></div>
-          <aside class="chest-contents-card">
-            <div class="chest-mini-heading"><span data-i18n="chest_contains">Contiene</span><img src="img/ui/info.png" alt="" aria-hidden="true"></div>
-            <!-- CH-1: buildChests() rellena esta lista con los rangos y % reales del cofre seleccionado. -->
-            <ul id="chest-contents-list">
-              <li><img src="img/ui/coin.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_coins">Monedas</span></li>
-              <li><img src="img/ui/gem.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_gems">Gemas</span></li>
-              <li><img src="img/ui/ticket.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_tickets">Tickets</span></li>
-              <li><img src="img/ui/gift.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_cosmetics">Cosméticos y más</span></li>
-            </ul>
-          </aside>
+        <section class="chest-showcase-shell" id="chest-preview" data-i18n-al="chest_selected" aria-label="Cofre seleccionado">
+          <div class="chest-preview-body" id="chest-preview-body" aria-live="polite"></div>
+          <div class="chest-open-options chest-main-actions">
+            <button class="chest-main-button chest-main-instant" id="btn-open-premium" type="button" disabled>
+              <span class="chest-main-label" id="chest-instant-label" data-i18n="chest_open_now_action">Abrir ahora</span>
+              <span class="chest-main-price"><img src="img/ui/gem.png" alt="" aria-hidden="true"><strong id="premium-chest-cost">10</strong></span>
+            </button>
+            <button class="chest-main-button chest-main-timer" id="btn-open-chest" type="button" disabled>
+              <span class="chest-main-label" id="chest-timer-label" data-i18n="chest_start_unlock">Abrir</span>
+              <span class="chest-main-price"><img src="img/ui/clock.png" alt="" aria-hidden="true"><strong id="chest-timer-value">3 h</strong></span>
+            </button>
+          </div>
+          <div class="chest-preview-details">
+            <aside class="chest-selected-card" id="chest-selected-card"></aside>
+            <aside class="chest-contents-card">
+              <div class="chest-mini-heading"><span data-i18n="chest_contains">Qué puede contener</span><img src="img/ui/info.png" alt="" aria-hidden="true"></div>
+              <!-- CH-1: buildChests() rellena esta lista con los rangos y % reales del cofre seleccionado. -->
+              <ul id="chest-contents-list">
+                <li><img src="img/ui/coin.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_coins">Monedas</span></li>
+                <li><img src="img/ui/gem.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_gems">Gemas</span></li>
+                <li><img src="img/ui/ticket.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_tickets">Tickets</span></li>
+                <li><img src="img/ui/gift.png" alt="" aria-hidden="true"><span data-i18n="chest_contents_cosmetics">Cosméticos y más</span></li>
+              </ul>
+            </aside>
+          </div>
         </section>
 
-        <div class="chest-open-options chest-main-actions">
-          <button class="chest-main-button chest-main-instant" id="btn-open-premium" type="button" disabled>
-            <span class="chest-main-label" id="chest-instant-label" data-i18n="chest_open_now_action">Abrir ahora</span>
-            <span class="chest-main-price"><img src="img/ui/gem.png" alt="" aria-hidden="true"><strong id="premium-chest-cost">10</strong></span>
-          </button>
-          <button class="chest-main-button chest-main-timer" id="btn-open-chest" type="button" disabled>
-            <span class="chest-main-label" id="chest-timer-label" data-i18n="chest_start_unlock">Abrir</span>
-            <span class="chest-main-price"><img src="img/ui/clock.png" alt="" aria-hidden="true"><strong id="chest-timer-value">3 h</strong></span>
-          </button>
-        </div>
+        <!-- La ceremonia es una pantalla hermana, nunca una capa dentro del cofre cerrado. -->
+        <section class="chest-ceremony-shell" id="chest-ceremony" aria-labelledby="chest-ceremony-title" hidden inert>
+          <h3 class="sr-only" id="chest-ceremony-title" data-i18n="chest_ceremony_title">Apertura del cofre</h3>
+          <div class="chests-body" id="chests-body" aria-live="polite"></div>
+        </section>
 
         <section class="chest-slots-section" aria-labelledby="chest-slots-title">
           <div class="chest-section-heading"><span></span><h3 id="chest-slots-title" data-i18n="chest_slots_title">Ranuras de cofres</h3><span></span></div>
@@ -611,12 +672,13 @@
 
         <section class="chest-rewards-section" aria-labelledby="chest-rewards-title">
           <div class="chest-section-heading"><span></span><h3 id="chest-rewards-title" data-i18n="chest_possible_rewards">Posibles recompensas</h3><span></span></div>
-          <!-- CH-1: la banda solo promete lo que las tablas de recompensa contienen de verdad
-               (monedas, gemas, tickets, tableros, temas). Nada de categorías fantasma. -->
+          <!-- CH-4: boosters vuelve a la banda porque ya es una recompensa real con
+               inventario persistente; no se anuncian categorías sin implementación. -->
           <div class="chest-rewards-grid">
-            <div class="chest-reward-tile"><img src="img/ui/coin.png" alt=""><b data-i18n="chest_contents_coins">Monedas</b><small>60 – 2400</small></div>
-            <div class="chest-reward-tile"><img src="img/ui/gem.png" alt=""><b data-i18n="chest_contents_gems">Gemas</b><small>3 – 70</small></div>
+            <div class="chest-reward-tile"><img src="img/ui/coin.png" alt=""><b data-i18n="chest_contents_coins">Monedas</b><small data-i18n="chest_level_scaled">Escala con tu nivel</small></div>
+            <div class="chest-reward-tile"><img src="img/ui/gem.png" alt=""><b data-i18n="chest_contents_gems">Gemas</b><small data-i18n="chest_level_scaled">Escala con tu nivel</small></div>
             <div class="chest-reward-tile"><img src="img/ui/ticket.png" alt=""><b data-i18n="chest_contents_tickets">Tickets</b><small>x1 – x10</small></div>
+            <div class="chest-reward-tile"><img src="img/ui/bolt.png" alt=""><b data-i18n="chest_reward_boosters">Potenciadores</b><small>x1</small></div>
             <div class="chest-reward-tile"><img src="img/ui/planet.png" alt=""><b data-i18n="chest_reward_boards">Tableros</b><small data-i18n="chest_rarity_cosmetic">Especial</small></div>
             <div class="chest-reward-tile"><img src="img/ui/crystal.png" alt=""><b data-i18n="chest_reward_themes">Temas</b><small data-i18n="chest_rarity_cosmetic">Especial</small></div>
           </div>
@@ -645,7 +707,7 @@
 
         <div class="chest-info-strip">
           <span class="chest-info-icon" aria-hidden="true"><img src="img/ui/info.png" alt=""></span>
-          <p data-i18n="chests_contents_note">Los cofres contienen monedas, gemas, tickets y cosméticos.</p>
+          <p data-i18n="chests_contents_note">Los cofres contienen monedas, gemas, tickets, potenciadores y cosméticos.</p>
           <button type="button" data-premium-open><span data-i18n="chest_premium_action">Abrir cofre premium</span><small><img src="img/ui/gem.png" alt="" aria-hidden="true"> 25</small></button>
         </div>
 
@@ -713,12 +775,12 @@
         </section>
       </div>
       <div class="modal-actions view-actions collections-actions">
-        <button class="btn btn-primary" type="button" data-act="nav-shop" data-i18n="collections_explore_shop">Explorar tienda</button>
+        <button class="btn btn-primary" type="button" data-act="open-style-shop" data-i18n="collections_explore_shop">Ver tableros y temas</button>
         <button class="btn btn-ghost" type="button" data-act="nav-achievements" data-i18n="collections_view_achievements">Ver logros</button>
       </div>
     </section>
   </div>
 
-  <script src="game.js?v=2.6.92" defer></script>
+  <script src="game.js?v=2.7.1" defer></script>
 </body>
 </html>

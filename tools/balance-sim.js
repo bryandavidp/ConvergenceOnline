@@ -226,6 +226,168 @@ function runBatch(cfg, runs) {
   };
 }
 
+/* ---------- Economía de cofres (CH-4/CH-5, aislada de las partidas) ----------
+ * Usa las APIs reales de Meta para que tier-ups, multi-tiradas, fallbacks y futuros
+ * drops persistentes pasen por exactamente el mismo código que en producción.
+ * Cada muestra parte del mismo perfil canónico (sin cosméticos poseídos) y cada
+ * fila tipo/nivel recibe un stream RNG propio: cambiar el orden de las filas no
+ * cambia sus resultados. El estado Meta, localStorage y Math.random se restauran
+ * incluso si una apertura lanza una excepción. */
+function cloneJson(value) { return JSON.parse(JSON.stringify(value)); }
+
+function restoreMetaState(snapshot) {
+  const state = cv.Meta.state;
+  for (const key of Object.keys(state)) delete state[key];
+  Object.assign(state, cloneJson(snapshot));
+}
+
+function mixChestSeed(seed, type, level) {
+  let h = (seed >>> 0) ^ Math.imul(Math.max(1, level | 0), 0x9e3779b1);
+  for (let i = 0; i < type.length; i++) {
+    h ^= type.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+function sumNumericLeaves(value) {
+  if (Number.isFinite(value)) return Math.max(0, Number(value));
+  if (!value || typeof value !== 'object') return 0;
+  return Object.values(value).reduce((sum, child) => sum + sumNumericLeaves(child), 0);
+}
+
+function metaBoosterTotal(state) {
+  const candidates = [
+    state && state.boosterStock,
+    state && state.boosterInventory,
+    state && state.boosters,
+    state && state.inventory && state.inventory.boosters,
+  ];
+  return candidates.reduce((sum, candidate) => sum + sumNumericLeaves(candidate), 0);
+}
+
+function rewardItems(reward) {
+  return reward && Array.isArray(reward.items) && reward.items.length ? reward.items : (reward ? [reward] : []);
+}
+
+function rewardBoosterUnits(items) {
+  const defs = (cv.Boosters && cv.Boosters.DEFS) || {};
+  return items.reduce((sum, item) => {
+    if (!item || typeof item !== 'object') return sum;
+    const kind = String(item.kind || '').toLowerCase();
+    const id = item.id || item.boosterId;
+    const isBooster = kind === 'booster' || kind === 'boosters'
+      || item.category === 'booster' || (kind === 'item' && id && defs[id]);
+    if (!isBooster) return sum;
+    const units = Number(item.amount ?? item.count ?? item.quantity ?? 1);
+    return sum + (Number.isFinite(units) ? Math.max(0, units) : 1);
+  }, 0);
+}
+
+function resetChestSample(baseSnapshot, level) {
+  restoreMetaState(baseSnapshot);
+  const state = cv.Meta.state;
+  state.level = Math.max(1, level | 0);
+  state.coins = 0;
+  state.gems = 0;
+  state.tickets = 0;
+  state.chests = 0;
+  state.chestInventory = [];
+  state.chestUnlock = null;
+  state.chestReady = [];
+  state.chestNotifiedReady = [];
+  state.chestSeq = 0;
+  // Perfil canónico: evita que el EV dependa del localStorage de quien ejecuta
+  // el sim y mantiene disponible el mismo pool cosmético en cada apertura.
+  state.cosmetics = { owned: {}, theme: 'default', skin: 'default', fx: 'default' };
+  state.boards = { owned: { classic: 1 }, equipped: 'classic' };
+  if (state.boosterStock && typeof state.boosterStock === 'object') {
+    state.boosterStock = Object.fromEntries(Object.keys(state.boosterStock).map((id) => [id, 0]));
+  }
+  if (Object.prototype.hasOwnProperty.call(state, 'boosterInventory')) state.boosterInventory = {};
+  if (Object.prototype.hasOwnProperty.call(state, 'boosters')) state.boosters = {};
+  if (state.inventory && typeof state.inventory === 'object' && Object.prototype.hasOwnProperty.call(state.inventory, 'boosters')) {
+    state.inventory = Object.assign({}, state.inventory, { boosters: {} });
+  }
+}
+
+function normalizeList(value, fallback) {
+  if (Array.isArray(value)) return value.slice();
+  if (typeof value === 'string') return value.split(',').map((part) => part.trim()).filter(Boolean);
+  return fallback.slice();
+}
+
+function runChestEconomy(options = {}) {
+  const runs = Math.max(1, Number(options.runs) | 0 || 40);
+  const seed = Number.isFinite(Number(options.seed)) ? Number(options.seed) >>> 0 : 0xc0ffee;
+  const types = normalizeList(options.types, cv.CHEST_TYPE_ORDER)
+    .filter((type, index, all) => cv.CHEST_TYPES[type] && all.indexOf(type) === index);
+  const levels = normalizeList(options.levels, [1, 10, 20, 31])
+    .map((level) => Math.max(1, Number(level) | 0))
+    .filter((level, index, all) => Number.isFinite(level) && all.indexOf(level) === index);
+  if (!types.length) throw new Error('runChestEconomy: ningún tipo de cofre válido');
+  if (!levels.length) throw new Error('runChestEconomy: ningún nivel válido');
+
+  const originalRandom = Math.random;
+  const originalMeta = cloneJson(cv.Meta.state);
+  const storage = typeof localStorage !== 'undefined' ? localStorage : null;
+  const originalStoredMeta = storage ? storage.getItem('cv_meta') : null;
+  const rows = [];
+
+  try {
+    for (const type of types) {
+      for (const level of levels) {
+        Math.random = mulberry32(mixChestSeed(seed, type, level));
+        const total = { coins: 0, gems: 0, tickets: 0, boosters: 0, prizes: 0, tierUps: 0 };
+        for (let sample = 0; sample < runs; sample++) {
+          resetChestSample(originalMeta, level);
+          // En producción los cofres event siempre nacen de una fuente semanal
+          // real y llevan un snapshot con booster temático garantizado (CH-5).
+          if (type === 'event') cv.Meta.addEventChest('balance-sim');
+          else cv.Meta.addChest(1, type, 'balance-sim');
+          const chest = cv.Meta.chestInventory()[0];
+          const before = {
+            coins: cv.Meta.coins(), gems: cv.Meta.gems(), tickets: cv.Meta.tickets(),
+            boosters: metaBoosterTotal(cv.Meta.state),
+          };
+          const reward = cv.Meta.openChest(chest && chest.uid);
+          if (!reward) throw new Error(`runChestEconomy: openChest devolvió null para ${type} L${level}`);
+          const items = rewardItems(reward);
+          const afterBoosters = metaBoosterTotal(cv.Meta.state);
+          const appliedBoosters = Math.max(0, afterBoosters - before.boosters);
+          total.coins += Math.max(0, cv.Meta.coins() - before.coins);
+          total.gems += Math.max(0, cv.Meta.gems() - before.gems);
+          total.tickets += Math.max(0, cv.Meta.tickets() - before.tickets);
+          total.boosters += appliedBoosters || rewardBoosterUnits(items);
+          total.prizes += items.length;
+          total.tierUps += reward.tierUp ? 1 : 0;
+        }
+        rows.push({
+          type, level, samples: runs,
+          ev: {
+            coins: total.coins / runs,
+            gems: total.gems / runs,
+            tickets: total.tickets / runs,
+            boosters: total.boosters / runs,
+          },
+          avgPrizes: total.prizes / runs,
+          tierUps: total.tierUps,
+          tierUpRate: total.tierUps / runs,
+        });
+      }
+    }
+  } finally {
+    Math.random = originalRandom;
+    restoreMetaState(originalMeta);
+    if (storage) {
+      if (originalStoredMeta === null) storage.removeItem('cv_meta');
+      else storage.setItem('cv_meta', originalStoredMeta);
+    }
+  }
+
+  return { seed, runs, types, levels, rows };
+}
+
 const STANDARD = [];
 for (const profile of ['skilled', 'average', 'casual']) {
   STANDARD.push({ mode: 'clasico', diff: 'normal', profile, maxMinutes: 6 });
@@ -252,8 +414,26 @@ function fmtRow(r) {
   ].join('  ');
 }
 
+function fmtChestValue(value) {
+  if (Math.abs(value) >= 100) return value.toFixed(0);
+  if (Math.abs(value) >= 10) return value.toFixed(1);
+  return value.toFixed(2);
+}
+
+function printChestSummary(report) {
+  console.log(`chest-economy · ${report.runs} aperturas/tipo-nivel · seed ${report.seed}`);
+  console.log('C/G/T/B = EV monedas/gemas/tickets/boosters · P = premios/cofre · U = tier-ups');
+  for (const type of report.types) {
+    const cells = report.rows.filter((row) => row.type === type).map((row) => {
+      const ev = row.ev;
+      return `L${row.level} C${fmtChestValue(ev.coins)} G${fmtChestValue(ev.gems)} T${fmtChestValue(ev.tickets)} B${fmtChestValue(ev.boosters)} P${row.avgPrizes.toFixed(2)} U${(row.tierUpRate * 100).toFixed(1)}%`;
+    });
+    console.log(type.padEnd(9) + ' ' + cells.join(' | '));
+  }
+}
+
 /* Exportable para tests (guardarraíl de medallas del reto diario). */
-module.exports = { runOne, runBatch, PROFILES, cv, VCLOCK };
+module.exports = { runOne, runBatch, runChestEconomy, PROFILES, cv, VCLOCK };
 
 if (require.main === module) {
   const args = process.argv.slice(2);
@@ -261,18 +441,32 @@ if (require.main === module) {
   const runs = +opt('runs', 40);
   const modes = opt('modes', '').split(',').filter(Boolean);
   const jsonOut = opt('json', '');
+  const chestMode = args.includes('--chests');
 
-  const configs = STANDARD.filter((c) => !modes.length || modes.includes(c.mode));
-  const header = ['modo'.padEnd(13), 'diff'.padEnd(8), 'perfil'.padEnd(8), 'sc p50'.padStart(6), 'sc p90'.padStart(7), 'dur50'.padStart(6), 'combo'.padStart(5), 'progreso'.padStart(10), 'deadAir'.padStart(7), 'err'.padStart(5), 'coins'.padStart(5), 'cap'.padStart(5)].join('  ');
-  console.log(`balance-sim · ${runs} runs/config · versión ${(() => { try { return require('fs').readFileSync(__dirname + '/../game.js', 'utf8').match(/VERSION = '([^']+)'/)[1]; } catch (_) { return '?'; } })()}`);
-  console.log(header);
-  console.log('-'.repeat(header.length));
-  const results = [];
-  for (const cfg of configs) {
-    const r = runBatch(cfg, runs);
-    delete r.rows; // el volcado agregado basta
-    results.push(r);
-    console.log(fmtRow(r));
+  if (chestMode) {
+    const types = opt('chest-types', '').split(',').filter(Boolean);
+    const levels = opt('chest-levels', '').split(',').filter(Boolean);
+    const report = runChestEconomy({
+      runs,
+      seed: +opt('seed', 0xc0ffee),
+      types: types.length ? types : undefined,
+      levels: levels.length ? levels : undefined,
+    });
+    printChestSummary(report);
+    if (jsonOut) { require('fs').writeFileSync(jsonOut, JSON.stringify(report, null, 2)); console.log('\nJSON → ' + jsonOut); }
+  } else {
+    const configs = STANDARD.filter((c) => !modes.length || modes.includes(c.mode));
+    const header = ['modo'.padEnd(13), 'diff'.padEnd(8), 'perfil'.padEnd(8), 'sc p50'.padStart(6), 'sc p90'.padStart(7), 'dur50'.padStart(6), 'combo'.padStart(5), 'progreso'.padStart(10), 'deadAir'.padStart(7), 'err'.padStart(5), 'coins'.padStart(5), 'cap'.padStart(5)].join('  ');
+    console.log(`balance-sim · ${runs} runs/config · versión ${(() => { try { return require('fs').readFileSync(__dirname + '/../game.js', 'utf8').match(/VERSION = '([^']+)'/)[1]; } catch (_) { return '?'; } })()}`);
+    console.log(header);
+    console.log('-'.repeat(header.length));
+    const results = [];
+    for (const cfg of configs) {
+      const r = runBatch(cfg, runs);
+      delete r.rows; // el volcado agregado basta
+      results.push(r);
+      console.log(fmtRow(r));
+    }
+    if (jsonOut) { require('fs').writeFileSync(jsonOut, JSON.stringify(results, null, 2)); console.log('\nJSON → ' + jsonOut); }
   }
-  if (jsonOut) { require('fs').writeFileSync(jsonOut, JSON.stringify(results, null, 2)); console.log('\nJSON → ' + jsonOut); }
 }

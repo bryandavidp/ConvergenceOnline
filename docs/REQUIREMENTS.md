@@ -26,22 +26,24 @@ Convergence es un juego de puzzle casual, mobile-first, instalable como PWA, jug
 - RF-21: **Clásico** — progresión de niveles organizados en mundos temáticos (5 mundos × 50 niveles), objetivo por defecto "vaciar el tablero", puntuación en estrellas (0-3) según errores cometidos, obstáculos específicos por mundo, desbloqueo secuencial de niveles y de mundos.
 - RF-22: **Aventura** — progresión infinita por capítulos agrupados en biomas cíclicos (6 biomas), con objetivos variables por posición dentro del capítulo (vaciar / puntuación / supervivencia / jefe), dificultad creciente sin límite superior, siempre retomable desde el nivel más lejano alcanzado.
 - RF-23: **Contrarreloj** — partida continua a puntuación, con reloj que empieza en un valor fijo, se repone con cada convergencia (con rendimientos decrecientes) y tiene un tope máximo; termina al agotarse el tiempo.
-- RF-24: **Supervivencia** — modo infinito con vidas limitadas, oleadas que escalan en dificultad, eventos especiales periódicos (tipo jefe), un sistema de potenciadores acumulables mediante una barra de carga, un medidor de "frenesí" independiente, revivir pagando moneda al perder la última vida, y 3 niveles de dificultad seleccionables antes de empezar.
+- RF-24: **Supervivencia** — modo infinito con vidas limitadas, oleadas que escalan en dificultad, eventos especiales periódicos (tipo jefe), preparación opcional de hasta 3 potenciadores por intento usando primero el arsenal persistente y después monedas, un anillo de suministro que convierte juego hábil en una pequeña recompensa de monedas, un medidor de "frenesí" independiente, revivir pagando moneda al perder la última vida, y 3 niveles de dificultad seleccionables antes de empezar. El arsenal persistente nunca debe estar disponible ni consumirse implícitamente durante la partida.
 - RF-25: **Zen** — modo relajado sin penalizaciones ni derrota: si el tablero se llena, se despeja parcialmente en lugar de terminar la partida.
 - RF-26: **Multijugador** — actualmente solo un placeholder ("Próximamente") con opción de "avisarme"; no implementado funcionalmente.
 
 ### 2.3 Progresión y economía
 - RF-30: Debe existir un perfil de jugador persistente con experiencia (XP) y nivel, con una curva de progresión definida, y con "rangos" narrativos que cambian cada cierto número de niveles.
-- RF-31: Debe existir un sistema de misiones diarias (una por día, elegida determinísticamente para que sea la misma para todos los jugadores en la misma fecha, sin servidor) y un desafío semanal equivalente, cada uno con progreso, condición de éxito y recompensa en XP/monedas.
+- RF-31: Debe existir un sistema de misiones diarias (una por día, elegida determinísticamente para que sea la misma para todos los jugadores en la misma fecha, sin servidor) y un desafío semanal equivalente, cada uno con progreso, condición de éxito y recompensa automática en XP/monedas. Una misión diaria incompleta puede cambiarse gastando 1 ticket.
 - RF-32: Debe existir un sistema de logros/medallas con condiciones variadas (partidas jugadas, combos, puntuación, iconos eliminados, racha de días jugados, etc.), cada uno desbloqueable una única vez con fecha de desbloqueo persistida.
 - RF-33: Debe existir una recompensa diaria por inicio de sesión con racha (streak): la recompensa crece con los días consecutivos hasta un tope, y la racha se reinicia si se salta un día.
 - RF-34: Debe existir al menos 3 monedas/recursos (moneda principal, gema, ticket) con distintas fuentes de obtención (fin de partida, niveles, oleadas, cofres, recompensa diaria).
 - RF-35: Debe existir un sistema de cofres acumulables que, al abrirse, entregan una recompensa aleatoria de una tabla de probabilidades con al menos 3 tramos de rareza. La apertura debe visualizar primero la animación del cofre y después revelar el premio, respetando ambos modos de reducción de movimiento.
 - RF-36: Debe existir un leaderboard local (mejor puntuación por modo + mejor puntuación global histórica).
 - RF-37: Debe registrarse estadísticas agregadas de por vida (puntuación total, mejor combo, tiempo total jugado, partidas jugadas, iconos eliminados en total).
+- RF-38: Debe existir un XP Booster temporal ×4 en packs de 6 horas, 3 días y 7 días comprables con gemas. Su vencimiento usa reloj de pared, las compras activas acumulan tiempo y cada partida captura el multiplicador al comenzar; ese snapshot debe sobrevivir a `RunSave` y mostrarse en HUD/resultados.
+- RF-39: Monedas y gemas deben tener una tienda de recursos propia, separada de la personalización, con catálogo allowlist y checkout local automático de pruebas. La vista debe advertir de forma inequívoca que no existe cobro real.
 
 ### 2.4 Personalización (cosméticos)
-- RF-40: Debe existir una tienda con **skins de tablero** comprables con la moneda principal, puramente cosméticos (sin efecto en el gameplay), con un catálogo de al menos 8-10 opciones a precios crecientes, uno gratuito por defecto.
+- RF-40: Debe existir una tienda de personalización independiente con **skins de tablero** comprables con la moneda principal, puramente cosméticos (sin efecto en el gameplay), con un catálogo de al menos 8-10 opciones a precios crecientes, uno gratuito por defecto.
 - RF-41: Debe existir una selección de **temas de color** de interfaz, comprables igual que los skins, aplicados vía variables CSS globales.
 - RF-42: El estado de "comprado"/"equipado" de cosméticos debe persistir y aplicarse automáticamente al recargar la app.
 
@@ -49,7 +51,7 @@ Convergence es un juego de puzzle casual, mobile-first, instalable como PWA, jug
 - RF-50: Ajustes persistentes: efectos de sonido (on/off), música (on/off), vibración/háptica (on/off, si el dispositivo lo soporta), modo de "reducir efectos" (independiente del ajuste de accesibilidad del SO), texto grande, idioma.
 - RF-51: Cambiar el idioma debe re-renderizar inmediatamente toda la UI dinámica sin recargar la página.
 - RF-52: Debe poder editarse el nombre de jugador y elegirse un color de avatar en el alta inicial.
-- RF-53: Misiones, Guía, Ajustes, dificultad de Supervivencia, Diario, Aventura, Tienda, Cofres, Multijugador y Logros/Perfil deben navegar como vistas completas dentro de Inicio, conservando appbar y menú inferior. Los modales quedan reservados a interrupciones transitorias de la partida.
+- RF-53: Eventos, Misiones, Guía, Ajustes, Diario, Aventura, Tienda de recursos, Tienda de personalización, Cofres, Multijugador, Logros/Perfil y Colecciones deben navegar como vistas completas dentro de Inicio, conservando appbar y menú inferior. Los modales quedan reservados a interrupciones transitorias de la partida.
 
 ### 2.6 Internacionalización
 - RF-60: Toda la interfaz debe soportar como mínimo español e inglés mediante un diccionario clave→texto, con selección de idioma por defecto basada en el idioma del navegador y overridable manualmente.
@@ -88,9 +90,8 @@ Convergence es un juego de puzzle casual, mobile-first, instalable como PWA, jug
 Estos puntos existen como intención en el código (UI, campos de datos, comentarios) pero **no tienen lógica funcional completa** — cualquier migración debe decidir explícitamente si los implementa desde cero o los mantiene como placeholder:
 
 - Multijugador real (solo vista "Próximamente" + botón "Avísame").
-- Gasto de tickets: se generan y acumulan, pero todavía no tienen un sumidero confirmado. Las gemas sí se gastan al abrir el cofre premium.
+- Pasarela de pago real, validación de recibos y concesión server-side: las compras de monedas/gemas usan exclusivamente el checkout ficticio `mock-auto`, sin cobro.
 - Pack de assets `img/ui-system/` (sprites de botones/ventanas/checkboxes): referenciado por `sw.js` para precache pero **ausente físicamente del repo** y **no usado por `styles.css`** — parece un sistema de UI con sprites descartado en favor de componentes CSS puros.
-- Coste en monedas de los boosters de Supervivencia (`Boosters.DEFS[*].cost` existe como dato pero no se ve gastado en el código leído — los boosters se obtienen gratis al inicio de la partida y vía la barra de carga/frenesí, no comprados).
 - Tile `infected` (definido en `Tiles.DEFS` con descripción "se propaga si no la limpias") sin uso activo confirmado en las reglas leídas de Aventura/Clásico/Supervivencia.
 
 ## 5. Trazabilidad
