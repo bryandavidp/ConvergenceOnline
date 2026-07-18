@@ -6,4 +6,3 @@ assets_nuevos/*
 # (dos superaban el limite de 100 MB de GitHub y se purgaron del historial)
 *.zip
 assets_nuevos/**/*.zip
-docs
