@@ -206,16 +206,18 @@ test('home: fija el contrato visual del hub, cilindro, avatar y economía', () =
     'monedas y gemas deben usar una sola cápsula oscura con relieve');
   assert.match(proportional, /#screen-start \.hub-header-wallet\s*\{[^}]*overflow:\s*hidden/s,
     'ningún icono de economía puede sobresalir de su cápsula');
-  assert.match(proportional, /#screen-start \.hub-header-currency\s*\{[^}]*left:\s*\.75cqw/s,
+  assert.match(proportional, /#screen-start \.hub-header-currency\s*\{[^}]*left:\s*\.5cqw/s,
     'moneda y gema deben conservar margen interior respecto al borde izquierdo');
   assert.match(proportional, /#screen-start \.hub-header-plus\s*\{[^}]*border-radius:\s*50%[^}]*background:\s*transparent[^}]*box-shadow:\s*none/s,
     'el relieve completo del botón + debe proceder de un único bitmap dedicado');
-  assert.match(proportional, /#screen-start \.hub-header-plus\s*\{[^}]*right:\s*\.75cqw/s,
+  assert.match(proportional, /#screen-start \.hub-header-plus\s*\{[^}]*right:\s*\.5cqw/s,
     'el botón + debe conservar margen interior respecto al borde derecho');
+  assert.match(proportional, /body\.hub-view-open #screen-start \.hub-header-cards\s*\{[^}]*display:\s*none/s,
+    'perfil y acceso a cofres solo deben verse en Inicio, no en las demás hub views');
   assert.match(proportional, /#screen-start \.hub-header-plus img\s*\{[^}]*filter:\s*none/s,
     'el asset + no debe volver a recolorearse ni perder su acabado 3D');
-  assert.match(proportional, /#screen-start \.home-foot\s*\{[^}]*width:\s*min\(425\.5px,\s*100%,\s*83svh\)[^}]*aspect-ratio:\s*851\s*\/\s*256[^}]*margin:\s*0 auto;/s,
-    'el pie debe conservar su escala sin añadir margen bajo el dock');
+  assert.match(proportional, /#screen-start \.home-foot\s*\{[^}]*width:\s*min\(425\.5px,\s*100%,\s*83svh\)[^}]*aspect-ratio:\s*851\s*\/\s*214[^}]*margin:\s*0 auto;/s,
+    'el pie recorta el headroom muerto (aspect-ratio reducido) para que el contenido llegue a la barra');
   assert.match(proportional, /#screen-start \.bottom-nav\s*\{[^}]*left:\s*2\.35%[^}]*top:\s*auto;[^}]*bottom:\s*0;[^}]*width:\s*95\.18%[^}]*aspect-ratio:\s*810\s*\/\s*202/s,
     'el dock debe quedar anclado al borde inferior en cualquier altura');
   assert.match(proportional, /body\.has-update-banner\[data-screen="start"\] #screen-start \.home-foot\s*\{[^}]*padding-bottom:\s*0/s,

@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.7.3';
+  const VERSION = '2.7.5';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -10132,7 +10132,10 @@
     // para que se abra el cofre en curso (o "¡Listo!" / recuento / "Ninguno").
     const shortcutState = $('#home-chest-shortcut-state');
     if (shortcutState) {
-      shortcutState.textContent = chestState;
+      // La cápsula es estrecha: en apertura mostramos solo el tiempo (la etiqueta
+      // "Cofre" ya da contexto), evitando que "Abriendo · {t}" se trunque.
+      const shortcutText = (readyCount <= 0 && unlock) ? chestDuration(unlock.remainingMs, true) : chestState;
+      shortcutState.textContent = shortcutText;
       shortcutState.removeAttribute('data-i18n');
       const chestShortcut = shortcutState.closest('.hub-header-chest');
       if (chestShortcut) {

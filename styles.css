@@ -7820,7 +7820,10 @@ body.reduced-fx #screen-start .home-mode-carousel.is-turning .home-mode-card::af
   flex: 1 1 auto;
   min-height: 0;
   width: min(1040px, 100%);
-  margin: 0 auto;
+  /* La cabecera queda reducida a las cápsulas de recursos fuera de Inicio; este
+     respiro separa el título de cada sección de esa fila (sin efecto en Inicio,
+     donde el contenedor va oculto). */
+  margin: clamp(6px, 1.4svh, 14px) auto 0;
   overflow: hidden;
 }
 #screen-start .hub-view {
@@ -9147,31 +9150,31 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   max-height: none;
   margin: 0 auto;
   padding: 0;
-  gap: 3.1cqw;
+  gap: 2.4cqw;
   overflow: visible;
 }
 
-/* --- Fila 1: recursos (3 cápsulas) + engranaje --- */
+/* --- Fila 1: recursos (3 cápsulas esbeltas) + engranaje --- */
 #screen-start .hub-header-top {
   display: flex;
   align-items: center;
-  gap: 2.8cqw;
+  gap: 2.4cqw;
   width: 100%;
 }
 #screen-start .hub-header-wallets {
   position: relative;
   flex: 1 1 auto;
   width: auto;
-  height: 12.8cqw;
+  height: 9.6cqw;
   min-width: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
-  gap: 2.5cqw;
+  gap: 2cqw;
 }
 #screen-start .hub-header-wallet {
-  --hub-currency-size: 9.2cqw;
-  --hub-plus-size: 8.6cqw;
+  --hub-currency-size: 7cqw;
+  --hub-plus-size: 6.8cqw;
   position: relative;
   box-sizing: border-box;
   width: 100%;
@@ -9180,12 +9183,12 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: .3cqw 7.6cqw .3cqw 8.6cqw;
+  padding: .3cqw 6.9cqw .3cqw 7.6cqw;
   overflow: hidden;
-  border: clamp(1px, .22cqw, 1.5px) solid rgba(91,100,151,.55);
+  border: clamp(1px, .2cqw, 1.5px) solid rgba(91,100,151,.55);
   border-radius: 999px;
   background: linear-gradient(180deg, #151d48, #070d2c 75%, #050921);
-  box-shadow: 0 .55cqw 0 rgba(0,0,0,.42), inset 0 .22cqw 0 rgba(255,255,255,.09), inset 0 -.32cqw .65cqw rgba(0,0,0,.26);
+  box-shadow: 0 .45cqw 0 rgba(0,0,0,.42), inset 0 .22cqw 0 rgba(255,255,255,.09), inset 0 -.3cqw .6cqw rgba(0,0,0,.26);
 }
 #screen-start .hub-header-wallet-coins { border-color: rgba(175,127,38,.42); }
 #screen-start .hub-header-wallet-gems { border-color: rgba(46,105,171,.5); }
@@ -9197,7 +9200,7 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
 #screen-start .hub-header-currency {
   position: absolute;
   z-index: 2;
-  left: .75cqw;
+  left: .5cqw;
   top: 50%;
   width: var(--hub-currency-size);
   height: var(--hub-currency-size);
@@ -9210,7 +9213,7 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   min-width: 0;
   overflow: hidden;
   color: #f4f1fb;
-  font-size: 3.7cqw;
+  font-size: 3.2cqw;
   font-weight: 950;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -9219,11 +9222,11 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   text-shadow: 0 .22cqw 0 rgba(0,0,0,.7);
   white-space: nowrap;
 }
-#screen-start .hub-header-energy-value { font-size: 3.1cqw; letter-spacing: .01em; }
+#screen-start .hub-header-energy-value { font-size: 2.9cqw; letter-spacing: .01em; }
 #screen-start .hub-header-plus {
   position: absolute;
   z-index: 3;
-  right: .75cqw;
+  right: .5cqw;
   top: 50%;
   width: var(--hub-plus-size);
   height: var(--hub-plus-size);
@@ -9253,13 +9256,13 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   position: relative;
   box-sizing: border-box;
   flex: 0 0 auto;
-  width: 12.8cqw;
-  height: 12.8cqw;
-  padding: 2.2cqw;
-  border: clamp(1px, .24cqw, 1.5px) solid #5530a4;
+  width: 9.6cqw;
+  height: 9.6cqw;
+  padding: 1.7cqw;
+  border: clamp(1px, .22cqw, 1.5px) solid #5530a4;
   border-radius: 50%;
   background: radial-gradient(circle at 36% 28%, #7540bd, #381675 69%, #210d58);
-  box-shadow: 0 .5cqw 0 #190847, 0 0 1.4cqw rgba(113,52,230,.34), inset 0 .22cqw 0 rgba(255,255,255,.18);
+  box-shadow: 0 .45cqw 0 #190847, 0 0 1.4cqw rgba(113,52,230,.34), inset 0 .22cqw 0 rgba(255,255,255,.18);
 }
 #screen-start .hub-header-settings img { width: 100%; height: 100%; object-fit: contain; }
 #screen-start .hub-header-settings:active {
@@ -9267,11 +9270,15 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   box-shadow: 0 .12cqw 0 #190847, inset 0 .22cqw 0 rgba(255,255,255,.16);
 }
 
-/* --- Fila 2: tarjeta de perfil + acceso directo a Cofres --- */
+/* --- Fila 2: tarjeta de perfil + acceso directo a Cofres ---
+   Solo se muestra en la pantalla principal; en las demás hub views la cabecera
+   queda reducida a la fila de recursos (evita que perfil y cofre ocupen espacio
+   y colisionen con el título de cada sección). */
+body.hub-view-open #screen-start .hub-header-cards { display: none; }
 #screen-start .hub-header-cards {
   display: flex;
   align-items: stretch;
-  gap: 2.8cqw;
+  gap: 2.4cqw;
   width: 100%;
 }
 #screen-start .hub-header-profile {
@@ -9279,17 +9286,17 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   flex: 1 1 auto;
   width: auto;
   min-width: 0;
-  padding: 2.6cqw 3.2cqw;
+  padding: 2.2cqw 2.8cqw;
   border: clamp(1px, .22cqw, 1.5px) solid rgba(91,100,151,.5);
-  border-radius: 4.4cqw;
+  border-radius: 4cqw;
   background: linear-gradient(180deg, rgba(21,29,72,.72), rgba(7,13,44,.74));
-  box-shadow: inset 0 .22cqw 0 rgba(255,255,255,.08), 0 .55cqw 0 rgba(0,0,0,.32);
+  box-shadow: inset 0 .22cqw 0 rgba(255,255,255,.08), 0 .5cqw 0 rgba(0,0,0,.32);
 }
 #screen-start .hub-header-profile-button {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 3cqw;
+  gap: 2.6cqw;
   width: 100%;
   height: 100%;
   min-width: 0;
@@ -9302,8 +9309,8 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
 #screen-start .hub-header-avatar {
   position: relative;
   flex: 0 0 auto;
-  width: 19.5cqw;
-  height: 19.5cqw;
+  width: 16cqw;
+  height: 16cqw;
   aspect-ratio: 1;
   border: clamp(1.25px, .42cqw, 2px) solid #2fd4ff;
   border-radius: 50%;
@@ -9334,17 +9341,17 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   z-index: 3;
   left: -6%;
   bottom: -6%;
-  min-width: 8.6cqw;
-  height: 8.2cqw;
-  padding: 0 1.4cqw;
+  min-width: 7.2cqw;
+  height: 6.8cqw;
+  padding: 0 1.2cqw;
   display: grid;
   place-items: center;
   border: clamp(1px, .3cqw, 1.5px) solid #5e34ed;
-  border-radius: 2.4cqw;
+  border-radius: 2cqw;
   color: #fff;
   background: linear-gradient(180deg, #7048ff, #2634d2 76%, #192390);
-  box-shadow: 0 .55cqw 0 #151a72, 0 0 1.4cqw rgba(67,78,255,.58), inset 0 .2cqw 0 rgba(255,255,255,.24);
-  font-size: 4cqw;
+  box-shadow: 0 .45cqw 0 #151a72, 0 0 1.4cqw rgba(67,78,255,.58), inset 0 .2cqw 0 rgba(255,255,255,.24);
+  font-size: 3.4cqw;
   font-weight: 950;
   line-height: 1;
 }
@@ -9356,13 +9363,13 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 1.1cqw;
+  gap: .9cqw;
 }
 #screen-start .hub-header-name {
   max-width: 100%;
   overflow: hidden;
   color: #eeeaf5;
-  font-size: 4.1cqw;
+  font-size: 3.7cqw;
   font-weight: 900;
   line-height: 1;
   text-overflow: ellipsis;
@@ -9373,18 +9380,18 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 1.1cqw;
+  gap: 1cqw;
 }
 #screen-start .hub-header-level-star {
-  width: 4.6cqw;
-  height: 4.6cqw;
-  flex: 0 0 4.6cqw;
+  width: 4cqw;
+  height: 4cqw;
+  flex: 0 0 4cqw;
 }
 #screen-start .hub-header-level-text {
   min-width: 0;
   overflow: hidden;
   color: #d4cfdf;
-  font-size: 3.2cqw;
+  font-size: 2.9cqw;
   font-weight: 850;
   line-height: 1;
   text-overflow: ellipsis;
@@ -9393,8 +9400,8 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
 }
 #screen-start .hub-header-xp {
   width: 100%;
-  height: 2cqw;
-  margin-top: .6cqw;
+  height: 1.7cqw;
+  margin-top: .5cqw;
   overflow: hidden;
   border: clamp(1px, .2cqw, 1.5px) solid #38206f;
   border-radius: 999px;
@@ -9405,28 +9412,28 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   position: relative;
   box-sizing: border-box;
   flex: 0 0 auto;
-  width: 31.5cqw;
+  width: 27cqw;
   min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.2cqw;
-  padding: 2cqw 2.4cqw 2.4cqw;
+  gap: .8cqw;
+  padding: 1.5cqw 2cqw 1.7cqw;
   border: clamp(1px, .26cqw, 1.5px) solid #6b4bd6;
-  border-radius: 4.4cqw;
+  border-radius: 4cqw;
   color: #fff;
   background: linear-gradient(180deg, rgba(58,40,120,.72), rgba(20,14,60,.74));
-  box-shadow: inset 0 .22cqw 0 rgba(255,255,255,.12), 0 .55cqw 0 rgba(0,0,0,.32), 0 0 2.2cqw rgba(113,52,230,.28);
+  box-shadow: inset 0 .22cqw 0 rgba(255,255,255,.12), 0 .5cqw 0 rgba(0,0,0,.32), 0 0 2cqw rgba(113,52,230,.28);
   cursor: pointer;
 }
 #screen-start .hub-header-chest.is-ready {
   border-color: #ffcf4a;
-  box-shadow: inset 0 .22cqw 0 rgba(255,255,255,.16), 0 .55cqw 0 rgba(0,0,0,.32), 0 0 3cqw rgba(255,196,64,.55);
+  box-shadow: inset 0 .22cqw 0 rgba(255,255,255,.16), 0 .5cqw 0 rgba(0,0,0,.32), 0 0 3cqw rgba(255,196,64,.55);
 }
 #screen-start .hub-header-chest-art {
-  width: 15.5cqw;
-  height: 15.5cqw;
+  width: 12.5cqw;
+  height: 12.5cqw;
   display: grid;
   place-items: center;
 }
@@ -9434,7 +9441,7 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 .7cqw .55cqw rgba(0,0,0,.5));
+  filter: drop-shadow(0 .6cqw .5cqw rgba(0,0,0,.5));
 }
 #screen-start .hub-header-chest.is-ready .hub-header-chest-art img { animation: hubChestReady 1.9s ease-in-out infinite; }
 @keyframes hubChestReady { 50% { transform: translateY(-4%) scale(1.05); } }
@@ -9444,13 +9451,13 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .5cqw;
+  gap: .4cqw;
 }
 #screen-start .hub-header-chest-label {
   max-width: 100%;
   overflow: hidden;
   color: #fff;
-  font-size: 3.5cqw;
+  font-size: 3.1cqw;
   font-weight: 950;
   line-height: 1;
   text-overflow: ellipsis;
@@ -9461,7 +9468,7 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   max-width: 100%;
   overflow: hidden;
   color: #d7ccff;
-  font-size: 2.55cqw;
+  font-size: 2.35cqw;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -9474,8 +9481,10 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
 #screen-start .hub-header-chest:focus-visible,
 #screen-start .hub-header-profile-button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 
-/* Pie: conserva la escala de la referencia, pero el dock se ancla al borde
-   inferior real de la pantalla sin margen exterior ni safe-area intermedia. */
+/* Pie: el dock se ancla al borde inferior real de la pantalla. El botón central
+   "Inicio" solo sobresale ~1cqw sobre la barra, así que el contenedor reserva
+   apenas ese margen: se recorta el "headroom" muerto que dejaba una franja negra
+   entre el contenido de las hub views y la barra de navegación. */
 #screen-start .home-foot {
   position: relative;
   z-index: 54;
@@ -9484,7 +9493,7 @@ body.reduced-fx #screen-start .bn-ic { transition: none; }
   container-type: inline-size;
   width: min(425.5px, 100%, 83svh);
   height: auto;
-  aspect-ratio: 851 / 256;
+  aspect-ratio: 851 / 214;
   margin: 0 auto;
   padding: 0;
   overflow: visible;
@@ -11009,7 +11018,7 @@ body.reduced-fx #screen-start .resource-offer.is-processing .resource-offer-art 
   --chest-panel: rgba(8, 20, 74, .93);
   --chest-line: rgba(53, 121, 255, .76);
   position: relative;
-  padding: 0 clamp(5px, 1vw, 12px) clamp(8px, 1.2svh, 14px);
+  padding: 0 clamp(5px, 1vw, 12px) clamp(2px, .4svh, 4px);
   background:
     radial-gradient(circle at 12% 14%, rgba(139, 58, 255, .18), transparent 25%),
     radial-gradient(circle at 86% 38%, rgba(33, 118, 255, .14), transparent 26%);
@@ -11069,7 +11078,7 @@ body.reduced-fx #screen-start .resource-offer.is-processing .resource-offer-art 
   position: relative;
   width: min(1040px, 100%);
   gap: clamp(10px, 1.35svh, 16px);
-  padding: 0 clamp(4px, 1vw, 12px) 14px;
+  padding: 0 clamp(4px, 1vw, 12px) 5px;
   scrollbar-color: rgba(112,77,231,.72) transparent;
 }
 #screen-start .view-chests > .chests-scroll > * {
