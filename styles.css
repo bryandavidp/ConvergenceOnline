@@ -10738,10 +10738,26 @@ body.reduced-fx #modal-mode-launch { animation: none; }
 #screen-start .resource-offer.is-purchased { animation: resourcePurchased .55s cubic-bezier(.18, .88, .25, 1.2); }
 #screen-start .resource-offer.is-poor .resource-buy-gems { border-color: rgba(193, 210, 255, .45); background: linear-gradient(180deg, #58669d, #33416f); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 4px 0 #202b55; }
 
-/* Sección de compra de cofres (sink de gemas). Reutiliza .resource-offer; cada
-   tarjeta toma su color de identidad del accent del cofre vía --offer-a inline. */
+/* Sección de compra de cofres (sink de gemas). Reutiliza .resource-offer pero se
+   repinta por completo con el accent del cofre (--chest-accent inline): cards más
+   bajas, con más identidad de rareza y un contador "tienes N" en la esquina. */
 #screen-start .resource-section-chests { --section-glow: #ffc861; }
-#screen-start .resource-offer-chest { --offer-b: #2a1c5e; }
+#screen-start .resource-offer-chest {
+  --offer-b: #241a52;
+  min-height: clamp(176px, 30vw, 244px);
+  padding-top: clamp(8px, 1.5vw, 13px);
+  border-color: color-mix(in srgb, var(--chest-accent, #ffc44d) 52%, #ffffff 34%);
+  background:
+    radial-gradient(122% 60% at 50% -10%, color-mix(in srgb, var(--chest-accent, #ffc44d) 46%, transparent), transparent 58%),
+    radial-gradient(circle at 50% 120%, color-mix(in srgb, var(--chest-accent, #ffc44d) 30%, transparent), transparent 52%),
+    linear-gradient(162deg, color-mix(in srgb, var(--chest-accent, #ffc44d) 28%, #1b1348), var(--offer-b) 80%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .34),
+    inset 0 -14px 26px rgba(10, 4, 44, .32),
+    0 6px 0 rgba(18, 8, 60, .68),
+    0 10px 22px rgba(0, 0, 0, .36),
+    0 0 20px color-mix(in srgb, var(--chest-accent, #ffc44d) 32%, transparent);
+}
 #screen-start .resource-offer-chest .resource-offer-amount { justify-content: flex-start; gap: 5px; padding-top: 2px; }
 #screen-start .resource-offer-chest .resource-offer-amount strong {
   font-size: clamp(.74rem, 2vw, 1.02rem);
@@ -10750,27 +10766,106 @@ body.reduced-fx #modal-mode-launch { animation: none; }
   overflow: visible;
   text-overflow: clip;
 }
+#screen-start .resource-offer-chest .resource-offer-art { min-height: 82px; }
 #screen-start .resource-chest-tier {
-  padding: 2px 8px;
-  border: 1px solid rgba(255, 255, 255, .5);
+  padding: 2px 9px;
+  border: 1px solid color-mix(in srgb, var(--chest-accent, #ffc44d) 55%, rgba(255, 255, 255, .5));
   border-radius: 999px;
   color: #fff;
-  background: rgba(8, 6, 40, .42);
+  background: color-mix(in srgb, var(--chest-accent, #ffc44d) 22%, rgba(8, 6, 40, .5));
   font-size: clamp(.5rem, 1.35vw, .68rem);
   font-weight: 950;
   letter-spacing: .04em;
   text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
 }
 #screen-start .resource-chest-sprite {
   width: 100%;
-  max-width: clamp(96px, 21vw, 148px);
+  max-width: clamp(86px, 19vw, 132px);
   margin-inline: auto;
   transform: translateY(2px);
-  filter: drop-shadow(0 8px 6px rgba(12, 3, 45, .52)) drop-shadow(0 0 14px color-mix(in srgb, var(--chest-accent, #ffc44d) 26%, transparent));
+  filter: drop-shadow(0 8px 6px rgba(12, 3, 45, .52)) drop-shadow(0 0 14px color-mix(in srgb, var(--chest-accent, #ffc44d) 30%, transparent));
 }
+
+/* Contador "tienes N" anclado a la esquina superior del arte del cofre (no
+   colisiona con el nombre; se lee como el stock de ese cofre). */
+#screen-start .resource-offer-chest .resource-offer-art { position: relative; }
+#screen-start .resource-chest-owned {
+  position: absolute;
+  z-index: 4;
+  top: -2px;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px 2px 5px;
+  border: 1px solid color-mix(in srgb, var(--chest-accent, #ffc44d) 55%, rgba(255, 255, 255, .35));
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(180deg, rgba(12, 8, 42, .82), rgba(6, 3, 28, .9));
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .14);
+  line-height: 1;
+}
+#screen-start .resource-chest-owned .ic { width: 15px; height: 15px; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .5)); }
+#screen-start .resource-chest-owned b { font-size: clamp(.72rem, 1.9vw, .9rem); font-weight: 1000; text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+#screen-start .resource-offer-chest:not(.has-owned) .resource-chest-owned { opacity: .6; }
+#screen-start .resource-offer-chest.has-owned .resource-chest-owned {
+  border-color: color-mix(in srgb, var(--chest-accent, #ffc44d) 85%, #fff);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--chest-accent, #ffc44d) 42%, #140c3e), #0b0728);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .42), 0 0 12px color-mix(in srgb, var(--chest-accent, #ffc44d) 55%, transparent), inset 0 1px 0 rgba(255, 255, 255, .2);
+}
+#screen-start .resource-chest-owned.is-pop { animation: chestOwnedPop .6s cubic-bezier(.2, .8, .3, 1.5); }
+#screen-start .resource-offer-chest.is-rewarded { z-index: 6; animation: chestBuyPop .72s cubic-bezier(.18, .9, .28, 1.2); }
+#screen-start .resource-offer-chest.is-rewarded .resource-chest-sprite { animation: chestBuySpritePop .72s cubic-bezier(.18, .9, .28, 1.3); }
 
 @keyframes resourceCheckout { to { transform: translateY(-1px) scale(1.04); filter: drop-shadow(0 10px 8px rgba(12, 3, 45, .45)) brightness(1.12); } }
 @keyframes resourcePurchased { 42% { transform: translateY(-5px) scale(1.025); filter: brightness(1.2); } }
+@keyframes chestOwnedPop { 0% { transform: scale(1); } 35% { transform: scale(1.45); } 100% { transform: scale(1); } }
+@keyframes chestBuyPop { 0% { transform: translateY(0) scale(1); } 30% { transform: translateY(-6px) scale(1.05); filter: brightness(1.2); } 100% { transform: translateY(0) scale(1); } }
+@keyframes chestBuySpritePop { 0% { transform: translateY(2px) scale(1); } 32% { transform: translateY(-7px) scale(1.14); } 100% { transform: translateY(2px) scale(1); } }
+
+/* ============ Capa de celebraciones de la tienda (ShopFX) ============
+   Full-screen fija sobre todo #app (como .fx), inerte al puntero. Se puebla y
+   vacía por JS con Web Animations API. Se oculta con movimiento reducido. */
+.shop-fx { position: fixed; inset: 0; z-index: 82; pointer-events: none; overflow: hidden; contain: layout style; }
+.shop-fx > span { position: absolute; top: 0; left: 0; will-change: transform, opacity; }
+.shopfx-rays {
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--fx-a, #ffc44d) 90%, transparent) 0deg 4deg, transparent 4deg 20deg);
+  -webkit-mask: radial-gradient(circle, #000 10%, rgba(0, 0, 0, .5) 34%, transparent 68%);
+  mask: radial-gradient(circle, #000 10%, rgba(0, 0, 0, .5) 34%, transparent 68%);
+  mix-blend-mode: screen;
+  opacity: .85;
+}
+.shopfx-ring {
+  border-radius: 50%;
+  border: 3px solid color-mix(in srgb, var(--fx-a, #ffc44d) 85%, #fff);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--fx-a, #ffc44d) 60%, transparent), inset 0 0 12px color-mix(in srgb, var(--fx-a, #ffc44d) 45%, transparent);
+}
+.shopfx-star {
+  border-radius: 50%;
+  box-shadow: 0 0 9px 1px color-mix(in srgb, var(--fx-a, #fff) 70%, transparent), 0 0 3px #fff;
+}
+.shopfx-coin { width: clamp(24px, 6.5vw, 32px); height: clamp(24px, 6.5vw, 32px); }
+.shopfx-coin img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .5)); }
+.shopfx-amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 13px 5px 8px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 1000;
+  font-size: clamp(.92rem, 3.1vw, 1.18rem);
+  white-space: nowrap;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--fx-a, #ffca3a) 42%, #140c3e), #0b0728);
+  border: 1px solid color-mix(in srgb, var(--fx-a, #ffca3a) 78%, #fff);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .45), 0 0 18px color-mix(in srgb, var(--fx-a, #ffca3a) 48%, transparent);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .55);
+}
+.shopfx-amount img { width: clamp(18px, 5vw, 24px); height: clamp(18px, 5vw, 24px); object-fit: contain; }
+body.reduced-fx .shop-fx { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .shop-fx { display: none !important; } }
 
 #screen-start .resource-shop-actions { gap: 8px; }
 #screen-start .resource-shop-actions .btn-ghost,
@@ -10871,6 +10966,7 @@ body.reduced-fx #modal-mode-launch { animation: none; }
   #screen-start .resource-shop-scroll { padding: 9px 8px 13px; }
   #screen-start .resource-section-head { justify-content: flex-start; padding-inline: 5px; }
   #screen-start .resource-offer { min-height: clamp(205px, 58vw, 260px); }
+  #screen-start .resource-offer-chest { min-height: clamp(172px, 46vw, 214px); }
   #screen-start .resource-shop-actions,
   #screen-start #view-shop > .view-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   #screen-start .resource-shop-actions .btn,
@@ -10882,6 +10978,7 @@ body.reduced-fx #modal-mode-launch { animation: none; }
 @media (max-width: 420px) {
   #screen-start .resource-offers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #screen-start .resource-offer { min-height: 220px; }
+  #screen-start .resource-offer-chest { min-height: 190px; }
   #screen-start .resource-offer:last-child:nth-child(odd) { grid-column: 1 / -1; width: calc(50% - 4px); justify-self: center; }
   #screen-start .xp-boost-status { margin-left: auto; }
 }
