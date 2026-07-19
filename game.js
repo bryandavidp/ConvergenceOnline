@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.7.6';
+  const VERSION = '2.7.7';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -365,7 +365,7 @@
         xp_boost_inactive: 'Sin booster activo', xp_boost_active: 'XP ×4 · {t}', xp_boost_extend: 'Extiende {t}', xp_boost_buy: 'Activar', xp_boost_no_gems: 'No tienes gemas suficientes para este booster.',
         xp_boost_added: 'XP ×4 activo · +{t}', xp_pack_6h: '6 h', xp_pack_3d: '3 días', xp_pack_7d: '7 días', xp_result_breakdown: '{base} XP base ×{mult} · +{bonus} por booster',
         mock_purchase_done: 'Compra de prueba completada · +{n} {r}', resource_purchase_failed: 'No se pudo completar la compra. Inténtalo de nuevo.', store_game_blocked: 'La tienda de recursos está disponible desde Inicio. Tu partida sigue activa.',
-        resource_shop_chests: 'COFRES', chest_shop_title: 'Cofres', chest_shop_desc: 'Compra cofres al instante con gemas y ábrelos cuando quieras. El cofre de evento solo se gana jugando.', chest_shop_buy: 'Comprar cofre', chest_shop_add: 'Comprar', chest_shop_bought: '¡{c} añadido a tus cofres!',
+        resource_shop_chests: 'COFRES', chest_shop_title: 'Cofres', chest_shop_desc: 'Compra cofres al instante con gemas y ábrelos cuando quieras. El cofre de evento solo se gana jugando.', chest_shop_buy: 'Comprar cofre', chest_shop_add: 'Comprar', chest_shop_bought: '¡{c} añadido a tus cofres!', chest_shop_owned: 'Tienes {n}', chest_shop_owned_none: 'No tienes ninguno',
         home_chest_cta: 'Cofre', energy_label: 'Energía', energy_off: 'OFF', get_energy: 'Conseguir energía',
         chests_title: 'Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre revela de 2 a 4 premios: monedas, recursos, boosters o un cosmético raro.', chests_none: 'No tienes cofres · cumple objetivos en cualquier modo para ganar el siguiente', chest_reward: '¡Recompensa! {r}', open_chest: 'Abrir cofre',
         chests_kicker: 'Recompensas', chests_subtitle: 'Juega, consigue cofres y descubre premios increíbles.', chests_progress_title: 'Tu progreso', chests_progress_rule: 'Cumple objetivos en cualquier modo: cada {t} cae el siguiente cofre del ciclo.',
@@ -712,7 +712,7 @@
         xp_boost_inactive: 'No active booster', xp_boost_active: 'XP ×4 · {t}', xp_boost_extend: 'Adds {t}', xp_boost_buy: 'Activate', xp_boost_no_gems: 'You do not have enough gems for this booster.',
         xp_boost_added: 'XP ×4 active · +{t}', xp_pack_6h: '6 h', xp_pack_3d: '3 days', xp_pack_7d: '7 days', xp_result_breakdown: '{base} base XP ×{mult} · +{bonus} from booster',
         mock_purchase_done: 'Test purchase completed · +{n} {r}', resource_purchase_failed: 'The purchase could not be completed. Please try again.', store_game_blocked: 'The resource shop is available from Home. Your match is still active.',
-        resource_shop_chests: 'CHESTS', chest_shop_title: 'Chests', chest_shop_desc: 'Buy chests instantly with gems and open them whenever you like. The event chest is only earned by playing.', chest_shop_buy: 'Buy chest', chest_shop_add: 'Buy', chest_shop_bought: '{c} added to your chests!',
+        resource_shop_chests: 'CHESTS', chest_shop_title: 'Chests', chest_shop_desc: 'Buy chests instantly with gems and open them whenever you like. The event chest is only earned by playing.', chest_shop_buy: 'Buy chest', chest_shop_add: 'Buy', chest_shop_bought: '{c} added to your chests!', chest_shop_owned: 'You have {n}', chest_shop_owned_none: 'You have none',
         home_chest_cta: 'Chest', energy_label: 'Energy', energy_off: 'OFF', get_energy: 'Get energy',
         chests_title: 'Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest reveals 2 to 4 rewards: coins, resources, boosters or a rare cosmetic.', chests_none: 'No chests · complete goals in any mode to earn the next one', chest_reward: 'Reward! {r}', open_chest: 'Open chest',
         chests_kicker: 'Rewards', chests_subtitle: 'Play, earn chests and discover incredible prizes.', chests_progress_title: 'Your progress', chests_progress_rule: 'Complete goals in any mode: every {t}, the next cycle chest drops.',
@@ -10734,15 +10734,170 @@
     const defn = CHEST_TYPES[offer.id] || CHEST_TYPES.wood;
     const name = I18n.t(defn.nameKey), tier = I18n.t(defn.rarityKey);
     const poor = Meta.gems() < offer.gemCost;
-    return `<article class="resource-offer resource-offer-chest${offer.best ? ' is-best' : ''}${poor ? ' is-poor' : ''}" data-offer-card="chest-${offer.id}" style="--offer-a:${defn.accent}">
+    const owned = Meta.chestInventory().filter((entry) => entry.type === offer.id).length;
+    const ownedLabel = owned > 0 ? I18n.t('chest_shop_owned').replace('{n}', owned) : I18n.t('chest_shop_owned_none');
+    return `<article class="resource-offer resource-offer-chest${offer.best ? ' is-best' : ''}${poor ? ' is-poor' : ''}${owned > 0 ? ' has-owned' : ''}" data-offer-card="chest-${offer.id}" style="--offer-a:${defn.accent};--chest-accent:${defn.accent}">
       ${offer.best ? `<span class="resource-best">${esc(I18n.t('best_value'))}</span>` : ''}
       <div class="resource-offer-amount"><strong>${esc(name)}</strong><span class="resource-chest-tier">${esc(tier)}</span></div>
-      <div class="resource-offer-art">${chestSprite(defn.id, 'closed', 'resource-chest-sprite')}</div>
-      <button class="resource-buy resource-buy-gems" type="button" data-chest-offer="${offer.id}" aria-label="${esc(I18n.t('chest_shop_buy'))}: ${esc(name)}, ${offer.gemCost} ${esc(I18n.t('gems'))}">
+      <div class="resource-offer-art">
+        <span class="resource-chest-owned" data-chest-owned="${offer.id}" title="${esc(ownedLabel)}" aria-hidden="true">${iconInline('chest')}<b>${owned}</b></span>
+        ${chestSprite(defn.id, 'closed', 'resource-chest-sprite')}
+      </div>
+      <button class="resource-buy resource-buy-gems" type="button" data-chest-offer="${offer.id}" aria-label="${esc(I18n.t('chest_shop_buy'))}: ${esc(name)}, ${offer.gemCost} ${esc(I18n.t('gems'))}. ${esc(ownedLabel)}">
         ${iconInline('gem')} <strong>${offer.gemCost}</strong><small>${esc(I18n.t('chest_shop_add'))}</small>
       </button>
     </article>`;
   }
+
+  /* ============ Celebraciones de la tienda (gastar dinero = dopamina) ============
+   * Capa propia a pantalla completa; NO reutiliza el pool #fx del tablero. Dos
+   * lenguajes distintos: "recompensa" al comprar cofres (rayos + destellos) y
+   * "cobro" al comprar monedas/gemas (el recurso vuela al contador + count-up).
+   * Todo con Web Animations API y respetando movimiento reducido (motionOff). */
+  const ShopFX = {
+    layer: null,
+    ensureLayer() {
+      if (this.layer && this.layer.isConnected) return this.layer;
+      let el = document.getElementById('shop-fx');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'shop-fx'; el.className = 'shop-fx'; el.setAttribute('aria-hidden', 'true');
+        (document.body || document.documentElement).appendChild(el);
+      }
+      this.layer = el; return el;
+    },
+    centerOf(el) {
+      if (!el || !el.getBoundingClientRect) return null;
+      const r = el.getBoundingClientRect();
+      if (!r.width && !r.height) return null;
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height };
+    },
+    _spawn(cls, cx, cy) {
+      const el = document.createElement('span');
+      el.className = cls; el.style.left = cx + 'px'; el.style.top = cy + 'px';
+      this.ensureLayer().appendChild(el); return el;
+    },
+    _run(el, frames, opts) {
+      let anim;
+      try { anim = el.animate(frames, opts); }
+      catch (_) { el.remove(); return null; }
+      const done = () => { try { anim.cancel(); } catch (_) { } el.remove(); };
+      anim.onfinish = done; anim.oncancel = done; return anim;
+    },
+    // "Wow" de recompensa: rayos giratorios + anillo + estallido de destellos,
+    // centrados en el elemento (o rect) ancla. Se usa tal cual para cofres y como
+    // puff de color para monedas/gemas.
+    rewardWow(anchor, opts) {
+      if (motionOff()) return;
+      const accent = (opts && opts.accent) || '#ffc44d';
+      const scale = (opts && opts.scale) || 1;
+      const c = this.centerOf(anchor); if (!c) return;
+      const rays = this._spawn('shopfx-rays', c.x, c.y);
+      rays.style.setProperty('--fx-a', accent);
+      const raySize = Math.max(210, Math.min(c.w, c.h) * 3.2) * scale;
+      rays.style.width = rays.style.height = raySize + 'px';
+      this._run(rays, [
+        { transform: 'translate(-50%,-50%) rotate(-22deg) scale(.2)', opacity: 0 },
+        { transform: 'translate(-50%,-50%) rotate(4deg) scale(1)', opacity: .82, offset: .38 },
+        { transform: 'translate(-50%,-50%) rotate(24deg) scale(1.16)', opacity: 0 },
+      ], { duration: 880, easing: 'cubic-bezier(.2,.7,.3,1)' });
+      const ring = this._spawn('shopfx-ring', c.x, c.y);
+      ring.style.setProperty('--fx-a', accent);
+      ring.style.width = ring.style.height = (raySize * .5) + 'px';
+      this._run(ring, [
+        { transform: 'translate(-50%,-50%) scale(.25)', opacity: .9 },
+        { transform: 'translate(-50%,-50%) scale(1.6)', opacity: 0 },
+      ], { duration: 600, easing: 'cubic-bezier(.2,.8,.3,1)' });
+      const N = 14;
+      for (let i = 0; i < N; i++) {
+        const a = (Math.PI * 2 * i) / N + (Math.random() - .5) * .55;
+        const dist = raySize * (.26 + Math.random() * .2);
+        const star = this._spawn('shopfx-star', c.x, c.y);
+        star.style.background = i % 3 === 0 ? '#fff' : accent;
+        const s = (6 + Math.random() * 8) * scale;
+        star.style.width = star.style.height = s + 'px';
+        const dx = Math.cos(a) * dist, dy = Math.sin(a) * dist;
+        this._run(star, [
+          { transform: 'translate(-50%,-50%) scale(.3)', opacity: 1 },
+          { transform: `translate(calc(-50% + ${dx.toFixed(1)}px), calc(-50% + ${dy.toFixed(1)}px)) scale(1)`, opacity: 1, offset: .7 },
+          { transform: `translate(calc(-50% + ${(dx * 1.15).toFixed(1)}px), calc(-50% + ${(dy * 1.15).toFixed(1)}px)) scale(.2)`, opacity: 0 },
+        ], { duration: 680 + Math.random() * 240, delay: Math.random() * 90, easing: 'cubic-bezier(.15,.7,.3,1)' });
+      }
+    },
+    // Monedas/gemas reales volando de la card al contador de la cabecera, con
+    // rótulo "+cantidad", count-up del total y rebote del contador al llegar.
+    flyCurrency(kind, amount, fromEl) {
+      const target = document.querySelector(`#screen-start .hub-header-wallet-${kind} .hub-header-currency`)
+        || document.querySelector(`#screen-start [data-econ-num="${kind}"]`);
+      const from = this.centerOf(fromEl), to = this.centerOf(target);
+      const newTotal = kind === 'gems' ? Meta.gems() : Meta.coins();
+      const oldTotal = Math.max(0, newTotal - amount);
+      if (motionOff() || !from || !to) { this.bumpCounter(kind); return; }
+      const asset = kind === 'gems' ? 'img/ui-v2/home/gem.png' : 'img/ui-generated/home/header-coin-star.png';
+      const accent = kind === 'gems' ? '#57e0ff' : '#ffca3a';
+      // Puff de color en la card.
+      this.rewardWow(fromEl, { accent, scale: .82 });
+      // Rótulo "+cantidad" que asciende desde la card.
+      const chip = this._spawn('shopfx-amount', from.x, from.y - from.h * .22);
+      chip.style.setProperty('--fx-a', accent);
+      chip.innerHTML = `<img src="${asset}" alt=""><b>+${esc(fmtCompact(amount))}</b>`;
+      this._run(chip, [
+        { transform: 'translate(-50%,-50%) scale(.5)', opacity: 0 },
+        { transform: 'translate(-50%,-135%) scale(1)', opacity: 1, offset: .3 },
+        { transform: 'translate(-50%,-205%) scale(1)', opacity: 1, offset: .78 },
+        { transform: 'translate(-50%,-255%) scale(.7)', opacity: 0 },
+      ], { duration: 1050, easing: 'ease-out' });
+      // Enjambre de monedas/gemas en arco hacia el contador.
+      const N = 16;
+      const ctrlX = (from.x + to.x) / 2 + (Math.random() - .5) * 70;
+      const ctrlY = Math.min(from.y, to.y) - 100;
+      for (let i = 0; i < N; i++) {
+        const coin = this._spawn('shopfx-coin', 0, 0);
+        const img = document.createElement('img'); img.src = asset; img.alt = '';
+        coin.appendChild(img);
+        const sx = from.x + (Math.random() - .5) * from.w * .7;
+        const sy = from.y + (Math.random() - .5) * from.h * .5;
+        const M = 6, frames = [];
+        for (let k = 0; k <= M; k++) {
+          const t = k / M, mt = 1 - t;
+          const px = mt * mt * sx + 2 * mt * t * ctrlX + t * t * to.x;
+          const py = mt * mt * sy + 2 * mt * t * ctrlY + t * t * to.y;
+          frames.push({ transform: `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) translate(-50%,-50%) scale(${(1 - t * .5).toFixed(2)})`, opacity: k === M ? 0 : 1, offset: t });
+        }
+        this._run(coin, frames, { duration: 540 + Math.random() * 160, delay: 90 + i * 40 + Math.random() * 40, easing: 'cubic-bezier(.35,.1,.5,1)' });
+      }
+      // El grueso de monedas aterriza ~700 ms; sincroniza rebote y fin del count-up.
+      setTimeout(() => this.bumpCounter(kind), 700);
+      this.countUp(kind, oldTotal, newTotal, 760, 260);
+    },
+    bumpCounter(kind) {
+      if (motionOff()) return;
+      const wallet = document.querySelector(`#screen-start .hub-header-wallet-${kind}`);
+      if (!wallet) return;
+      try {
+        wallet.animate([
+          { transform: 'scale(1)' },
+          { transform: 'scale(1.24)', offset: .38 },
+          { transform: 'scale(.96)', offset: .66 },
+          { transform: 'scale(1)' },
+        ], { duration: 420, easing: 'cubic-bezier(.2,.8,.3,1.2)' });
+      } catch (_) { }
+    },
+    countUp(kind, from, to, ms, delay) {
+      const els = Array.from(document.querySelectorAll(`#screen-start [data-econ-num="${kind}"]`));
+      if (!els.length || from === to || typeof requestAnimationFrame !== 'function' || typeof performance === 'undefined') return;
+      const set = (v) => els.forEach((el) => { el.textContent = fmtCompact(v); });
+      const start = performance.now() + (delay || 0);
+      set(from);
+      const step = (now) => {
+        const t = Math.max(0, Math.min(1, (now - start) / ms));
+        const eased = 1 - Math.pow(1 - t, 3);
+        set(Math.round(from + (to - from) * eased));
+        if (t < 1) requestAnimationFrame(step); else set(to);
+      };
+      requestAnimationFrame(step);
+    },
+  };
 
   function buildResourceShop() {
     const gems = $('#gem-offers'), coins = $('#coin-offers'), xp = $('#xp-boost-offers');
@@ -10773,6 +10928,8 @@
         Toasts.show(I18n.t('mock_purchase_done').replace('{n}', fmtNum(tx.amount)).replace('{r}', label), 'good', 2200, tx.kind === 'gems' ? 'gem' : 'coin');
         const card = document.querySelector(`[data-offer-card="${tx.offerId}"]`);
         if (card) { card.classList.add('is-purchased'); setTimeout(() => card.classList.remove('is-purchased'), 850); }
+        // Animación "wow" de cobro: el recurso comprado vuela al contador total.
+        ShopFX.flyCurrency(tx.kind, tx.amount, card || activeCard);
       } catch (_) {
         Sound.miss(); Toasts.show(I18n.t('resource_purchase_failed'), 'warn', 2400, 'cart');
       } finally {
@@ -10799,7 +10956,17 @@
         Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 2400, 'gem'); return;
       }
       const defn = CHEST_TYPES[id] || CHEST_TYPES.wood;
-      Sound.success(); Haptics.level(); FX.confetti(30); Econ.refresh(); updateTopBars(); syncHomeChests(); buildResourceShop();
+      Sound.success(); Haptics.level(); FX.confetti(34); Econ.refresh(); updateTopBars(); syncHomeChests();
+      buildResourceShop(); // re-pinta con el contador "tienes N" ya incrementado
+      // Celebración "wow" de recompensa sobre la card recién repintada.
+      const card = document.querySelector(`[data-offer-card="chest-${id}"]`);
+      if (card) {
+        card.classList.add('is-rewarded');
+        setTimeout(() => card.classList.remove('is-rewarded'), 760);
+        const badge = card.querySelector('.resource-chest-owned');
+        if (badge) { badge.classList.add('is-pop'); setTimeout(() => badge.classList.remove('is-pop'), 640); }
+        ShopFX.rewardWow(card, { accent: defn.accent });
+      }
       Toasts.show(I18n.t('chest_shop_bought').replace('{c}', I18n.t(defn.nameKey)), 'good', 2400, 'chest');
     }));
     Econ.refresh();
