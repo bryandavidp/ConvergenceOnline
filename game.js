@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.9.2';
+  const VERSION = '2.9.3';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -482,7 +482,7 @@
         over_peak_title: 'Mejor momento', over_peak_sub: 'Pico de la run', over_peak_points: 'Puntos', over_peak_combo: 'Combo',
         over_peak_chain: 'Cadena perfecta', over_peak_note_surv: 'Combo ×{c} en la oleada {w}: el tramo donde más puntos generaste de una sola cadena.',
         over_peak_note_level: 'Combo ×{c}: el tramo donde más puntos generaste de una sola cadena.',
-        empty_chests_title: 'Aún no tienes cofres', empty_chests_sub: 'Cumple objetivos en cualquier modo · cada 3 cae un cofre del ciclo', empty_cta_surv: 'Jugar Supervivencia',
+        empty_chests_title: 'Aún no tienes cofres', empty_chests_sub: 'Cumple objetivos en cualquier modo · cada 3 cae un cofre del ciclo', empty_cta_surv: 'Jugar Supervivencia', chest_store_shortcut: 'Tienda de cofres', empty_chests_pitch: 'Abre premios hoy: compra un cofre al instante o juega para conseguir el siguiente gratis.', empty_chests_buy: 'Comprar cofres', empty_chests_play: 'Jugar y ganar',
         empty_medals_title: 'Tu primera medalla te espera', empty_medals_sub: 'Juega una partida para empezar a desbloquear logros',
         empty_lb_title: 'Sin marcas todavía', empty_lb_sub: 'Juega cualquier modo para registrar tu primera marca', empty_cta_play: 'Elegir modo',
         err_fatal: 'Algo ha fallado.', err_reload: 'Recargar', browser_old: 'Tu navegador es demasiado antiguo para jugar. Actualízalo, por favor.',
@@ -829,7 +829,7 @@
         over_peak_title: 'Best moment', over_peak_sub: 'Run peak', over_peak_points: 'Points', over_peak_combo: 'Combo',
         over_peak_chain: 'Perfect chain', over_peak_note_surv: '×{c} combo on wave {w}: the stretch where one chain generated your most points.',
         over_peak_note_level: '×{c} combo: the stretch where one chain generated your most points.',
-        empty_chests_title: 'No chests yet', empty_chests_sub: 'Complete goals in any mode · every 3, a cycle chest drops', empty_cta_surv: 'Play Survival',
+        empty_chests_title: 'No chests yet', empty_chests_sub: 'Complete goals in any mode · every 3, a cycle chest drops', empty_cta_surv: 'Play Survival', chest_store_shortcut: 'Chest shop', empty_chests_pitch: 'Open rewards today: buy a chest instantly or play to earn the next one for free.', empty_chests_buy: 'Buy chests', empty_chests_play: 'Play and earn',
         empty_medals_title: 'Your first medal awaits', empty_medals_sub: 'Play a game to start unlocking achievements',
         empty_lb_title: 'No scores yet', empty_lb_sub: 'Play any mode to set your first score', empty_cta_play: 'Choose a mode',
         err_fatal: 'Something went wrong.', err_reload: 'Reload', browser_old: 'Your browser is too old to play. Please update it.',
@@ -11157,7 +11157,8 @@
     if (opened && focusKind) requestAnimationFrame(() => {
       const focusId = focusKind === 'coins' ? '#resource-coins-title'
         : focusKind === 'xp' ? '#resource-xp-title'
-          : '#resource-gems-title';
+          : focusKind === 'chests' ? '#resource-chests-title'
+            : '#resource-gems-title';
       const target = $(focusId);
       if (target && target.scrollIntoView) target.scrollIntoView({ block: 'start', behavior: motionOff() ? 'auto' : 'smooth' });
     });
@@ -11813,6 +11814,9 @@
     const el = $('#chest-preview-body'); if (!el) return;
     resetChestCeremony(); setChestButtonsBusy(false); Econ.refresh();
     const inventory = Meta.chestInventory(), n = Meta.chests(), unlock = Meta.chestUnlock();
+    const chestView = $('#view-chests'), emptyActions = $('#chest-empty-actions');
+    if (chestView) chestView.classList.toggle('is-empty', n === 0);
+    if (emptyActions) emptyActions.hidden = n > 0;
     const selected = currentSelectedChest(), defn = chestDef(selected ? selected.type : 'wood');
     syncHomeChests();
     // CH-2: la tarjeta de progreso refleja el pipeline universal (objetivos → ciclo)
@@ -12134,6 +12138,8 @@
       else if (a === 'go-classic') { Sound.ensure(); Modal.close(); ModeLaunch.open('clasico'); }
       else if (a === 'go-adventure') { Sound.ensure(); Modal.close(); ModeLaunch.open('aventura'); }
       else if (a === 'open-chests') { Sound.ensure(); Modal.close(); openChests(); }
+      else if (a === 'open-chest-shop') { Sound.ensure(); Modal.close(); openResourceShop('chests'); }
+      else if (a === 'chest-play') { Sound.ensure(); Modal.close(); HubViews.home({ clearHistory: true }); refreshStart(); }
       else if (a === 'open-daily-choice') { Sound.ensure(); Modal.close(); openDailyChoiceFromEvents(); }
       else if (a === 'open-shop') { Sound.ensure(); Modal.close(); openShop(); }
       else if (a === 'open-resource-shop') { Sound.ensure(); Modal.close(); openResourceShop(); }

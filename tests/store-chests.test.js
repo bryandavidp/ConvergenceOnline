@@ -97,9 +97,23 @@ test('la vista de la tienda de recursos monta la sección de cofres y la renderi
   assert.match(js, /\[data-chest-offer\][\s\S]*Storefront\.buyChest/, 'el handler de compra de cofres debe invocar Storefront.buyChest');
 });
 
+test('la pantalla de cofres enlaza la tienda y ofrece comprar o jugar cuando está vacía', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const js = fs.readFileSync(path.join(root, 'game.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const chestView = html.slice(html.indexOf('id="view-chests"'), html.indexOf('id="view-multi"'));
+  assert.match(chestView, /class="chest-shop-shortcut"[^>]+data-act="open-chest-shop"/);
+  assert.match(chestView, /id="chest-empty-actions"[^>]+hidden/);
+  assert.match(chestView, /data-act="open-chest-shop"[\s\S]*data-act="chest-play"/);
+  assert.match(js, /openResourceShop\('chests'\)/);
+  assert.match(js, /focusKind === 'chests' \? '#resource-chests-title'/);
+  assert.match(js, /classList\.toggle\('is-empty', n === 0\)/);
+  assert.match(css, /\.view-chests\.is-empty \.chest-main-actions \{ display: none; \}/);
+});
+
 test('claves i18n de la tienda de cofres presentes en ES y EN', () => {
   const dict = cv.I18n.DICT;
-  ['resource_shop_chests', 'chest_shop_title', 'chest_shop_desc', 'chest_shop_buy', 'chest_shop_add', 'chest_shop_bought'].forEach((key) => {
+  ['resource_shop_chests', 'chest_shop_title', 'chest_shop_desc', 'chest_shop_buy', 'chest_shop_add', 'chest_shop_bought', 'chest_store_shortcut', 'empty_chests_pitch', 'empty_chests_buy', 'empty_chests_play'].forEach((key) => {
     assert.ok(dict.es[key], `falta la clave ${key} en ES`);
     assert.ok(dict.en[key], `falta la clave ${key} en EN`);
   });

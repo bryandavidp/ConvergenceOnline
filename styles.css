@@ -11500,6 +11500,8 @@ body.reduced-fx #screen-start .resource-offer.is-processing .resource-offer-art 
 #screen-start .chest-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 38px; padding: 0 5px; }
 #screen-start .chest-topbar p { color: #b8c8ff; font-size: clamp(.6rem, 1.3vw, .74rem); font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
 #screen-start .chest-topbar p span:first-child { color: #a85cff; text-shadow: 0 0 9px #ac4dff; }
+#screen-start .chest-topbar-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+#screen-start .chest-shop-shortcut,
 #screen-start .chest-catalog-button {
   min-height: 36px;
   display: inline-flex;
@@ -11514,6 +11516,8 @@ body.reduced-fx #screen-start .resource-offer.is-processing .resource-offer-art 
   font-size: clamp(.64rem, 1.5vw, .8rem);
   font-weight: 900;
 }
+#screen-start .chest-shop-shortcut { border-color: rgba(255,196,70,.76); background: linear-gradient(180deg, #a653ea, #6321bf); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 4px 10px rgba(0,0,0,.24), 0 0 15px rgba(255,176,58,.16); }
+#screen-start .chest-shop-shortcut img,
 #screen-start .chest-catalog-button img { width: 25px; height: 25px; object-fit: contain; }
 
 #screen-start .chest-showcase-shell {
@@ -11738,6 +11742,20 @@ body.reduced-fx #screen-start .resource-offer.is-processing .resource-offer-art 
 #screen-start .chest-main-label { font-size: clamp(.78rem, 1.9vw, 1.06rem); font-weight: 1000; text-transform: uppercase; }
 #screen-start .chest-main-price { min-height: 24px; display: inline-flex; align-items: center; gap: 6px; font-size: clamp(.88rem, 2vw, 1.08rem); font-weight: 1000; }
 #screen-start .chest-main-price img { width: 23px; height: 23px; object-fit: contain; }
+#screen-start .view-chests.is-empty .chest-main-actions { display: none; }
+#screen-start .chest-empty-actions[hidden] { display: none; }
+#screen-start .chest-empty-actions { position: relative; z-index: 6; width: min(660px, 96%); display: grid; grid-template-columns: minmax(0,1.35fr) minmax(260px,1fr); align-items: center; gap: 14px; margin: -3px auto 0; padding: 12px; border: 1px solid rgba(255,207,79,.48); border-radius: 19px; background: radial-gradient(circle at 8% 20%, rgba(255,202,62,.16), transparent 34%), linear-gradient(135deg, rgba(54,34,129,.96), rgba(13,33,105,.97)); box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 10px 24px rgba(0,0,0,.25), 0 0 22px rgba(134,70,255,.18); }
+#screen-start .chest-empty-message { min-width: 0; display: grid; grid-template-columns: 48px minmax(0,1fr); align-items: center; gap: 10px; text-align: left; }
+#screen-start .chest-empty-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 15px; background: linear-gradient(145deg, rgba(255,218,83,.24), rgba(119,66,234,.32)); box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
+#screen-start .chest-empty-icon img { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 5px 5px rgba(0,0,0,.3)); }
+#screen-start .chest-empty-message strong { display: block; color: #fff3a5; font-size: clamp(.78rem,1.6vw,.98rem); font-weight: 1000; text-transform: uppercase; }
+#screen-start .chest-empty-message small { display: block; margin-top: 3px; color: #d6ddff; font-size: clamp(.58rem,1.15vw,.7rem); font-weight: 760; line-height: 1.28; }
+#screen-start .chest-empty-buttons { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+#screen-start .chest-empty-buttons button { min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 9px; border: 1px solid rgba(255,255,255,.25); border-radius: 14px; color: #fff; box-shadow: 0 5px 0 var(--empty-shadow), inset 0 1px 0 rgba(255,255,255,.3); font-size: .68rem; font-weight: 1000; line-height: 1.05; text-transform: uppercase; }
+#screen-start .chest-empty-buttons button:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--empty-shadow), inset 0 1px 0 rgba(255,255,255,.25); }
+#screen-start .chest-empty-buttons img { width: 27px; height: 27px; object-fit: contain; }
+#screen-start .chest-empty-buy { --empty-shadow:#742564; background: linear-gradient(180deg,#ffb73d,#e56539 68%,#b53a43); }
+#screen-start .chest-empty-play { --empty-shadow:#074d9e; background: linear-gradient(180deg,#35ddff,#1678e7 68%,#174ab2); }
 
 #screen-start .chest-slots-section,
 #screen-start .chest-rewards-section { display: grid; gap: 9px; }
@@ -11946,6 +11964,7 @@ body.reduced-fx #screen-start .chest-tier-roll > b { opacity: 1; transform: none
   #screen-start .chest-slot,
   #screen-start .chest-reward-tile { scroll-snap-align: start; }
   #screen-start .chest-catalog-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  #screen-start .chest-empty-actions { grid-template-columns: 1fr; gap: 10px; }
 }
 
 @media (max-width: 480px) {
@@ -11956,6 +11975,9 @@ body.reduced-fx #screen-start .chest-tier-roll > b { opacity: 1; transform: none
   #screen-start .chests-close { right: 3px; top: 7px; width: 44px; height: 44px; border-width: 2px; font-size: 2rem; }
   #screen-start .chest-topbar p { display: none; }
   #screen-start .chest-topbar { justify-content: flex-end; min-height: 33px; }
+  #screen-start .chest-topbar-actions { width: 100%; }
+  #screen-start .chest-shop-shortcut,
+  #screen-start .chest-catalog-button { flex: 1; justify-content: center; padding-inline: 8px; }
   #screen-start .chest-catalog-button { min-height: 32px; }
   #screen-start .chest-showcase-shell { min-height: 0; grid-template-columns: minmax(0,1fr); padding: 8px; border-radius: 20px; }
   #screen-start .chest-preview-body { min-height: 218px; }
@@ -11974,6 +11996,11 @@ body.reduced-fx #screen-start .chest-tier-roll > b { opacity: 1; transform: none
   #screen-start .chest-main-actions { width: 100%; gap: 8px; }
   #screen-start .chest-main-button { min-height: 62px; padding-inline: 7px; }
   #screen-start .chest-main-label { font-size: .68rem; }
+  #screen-start .chest-empty-actions { width: 100%; padding: 10px; border-radius: 16px; }
+  #screen-start .chest-empty-message { grid-template-columns: 42px minmax(0,1fr); gap: 8px; }
+  #screen-start .chest-empty-icon { width: 42px; height: 42px; }
+  #screen-start .chest-empty-icon img { width: 35px; height: 35px; }
+  #screen-start .chest-empty-buttons button { min-height: 48px; padding-inline: 6px; font-size: .61rem; }
   #screen-start .chest-progress-card { grid-template-columns: minmax(0,1fr) 66px; padding: 10px; }
   #screen-start .chest-progress-row { grid-template-columns: 1fr 66px; }
   #screen-start .chest-info-strip { align-items: stretch; flex-wrap: wrap; }

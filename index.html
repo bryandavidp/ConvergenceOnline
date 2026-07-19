@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.9.2" />
+  <link rel="stylesheet" href="styles.css?v=2.9.3" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -639,7 +639,10 @@
       <div class="modal-body view-body chests-scroll">
         <div class="chest-topbar">
           <p><span aria-hidden="true">✦</span> <span data-i18n="chest_selected">Cofre seleccionado</span></p>
-          <button class="chest-catalog-button" id="btn-chest-catalog" type="button"><img src="img/ui/chest.png" alt="" aria-hidden="true"><span data-i18n="chest_view_all">Ver todos</span></button>
+          <div class="chest-topbar-actions">
+            <button class="chest-shop-shortcut" type="button" data-act="open-chest-shop"><img src="img/ui/cart.png" alt="" aria-hidden="true"><span data-i18n="chest_store_shortcut">Tienda de cofres</span></button>
+            <button class="chest-catalog-button" id="btn-chest-catalog" type="button"><img src="img/ui/chest.png" alt="" aria-hidden="true"><span data-i18n="chest_view_all">Ver todos</span></button>
+          </div>
         </div>
 
         <section class="chest-showcase-shell" id="chest-preview" data-i18n-al="chest_selected" aria-label="Cofre seleccionado">
@@ -654,6 +657,16 @@
               <span class="chest-main-price"><img src="img/ui/clock.png" alt="" aria-hidden="true"><strong id="chest-timer-value">3 h</strong></span>
             </button>
           </div>
+          <aside class="chest-empty-actions" id="chest-empty-actions" hidden>
+            <div class="chest-empty-message">
+              <span class="chest-empty-icon" aria-hidden="true"><img src="img/ui-generated/home/nav-chest.png" alt=""></span>
+              <span><strong data-i18n="empty_chests_title">Aún no tienes cofres</strong><small data-i18n="empty_chests_pitch">Abre premios hoy: compra un cofre al instante o juega para conseguir el siguiente gratis.</small></span>
+            </div>
+            <div class="chest-empty-buttons">
+              <button class="chest-empty-buy" type="button" data-act="open-chest-shop"><img src="img/ui/cart.png" alt="" aria-hidden="true"><span data-i18n="empty_chests_buy">Comprar cofres</span></button>
+              <button class="chest-empty-play" type="button" data-act="chest-play"><img src="img/ui/rocket.png" alt="" aria-hidden="true"><span data-i18n="empty_chests_play">Jugar y ganar</span></button>
+            </div>
+          </aside>
           <div class="chest-preview-details">
             <aside class="chest-selected-card" id="chest-selected-card"></aside>
             <aside class="chest-contents-card">
@@ -802,6 +815,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.9.2" defer></script>
+  <script src="game.js?v=2.9.3" defer></script>
 </body>
 </html>
