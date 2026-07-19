@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.7.7';
+  const VERSION = '2.7.8';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -431,7 +431,7 @@
         how5: 'Los iconos aparecen solos: vacía el tablero antes de que se llene.',
         tutorial_btn: 'Tutorial interactivo', understood: 'Entendido',
         pause: 'Pausa', resume: 'Reanudar', restart: 'Reiniciar', menu: 'Menú', close: 'Cerrar', back: 'Volver', retry: 'Reintentar', share: 'Compartir',
-        settings_title: '⚙️ Ajustes', shop_title: '🛍️ Tienda', shop_hint: 'Temas del tablero. Pulsa para previsualizar.',
+        settings_title: '⚙️ Ajustes', settings_word: 'Ajustes', shop_title: '🛍️ Tienda', shop_hint: 'Temas del tablero. Pulsa para previsualizar.',
         profile_title: '📊 Perfil', achievements_title: '🏆 Logros', best_by_mode: 'Mejores marcas por modo', achievements: 'Logros',
         adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
         revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
@@ -778,7 +778,7 @@
         how5: 'Icons spawn on their own: clear the board before it fills up.',
         tutorial_btn: 'Interactive tutorial', understood: 'Got it',
         pause: 'Paused', resume: 'Resume', restart: 'Restart', menu: 'Menu', close: 'Close', back: 'Back', retry: 'Retry', share: 'Share',
-        settings_title: '⚙️ Settings', shop_title: '🛍️ Shop', shop_hint: 'Board themes. Tap to preview.',
+        settings_title: '⚙️ Settings', settings_word: 'Settings', shop_title: '🛍️ Shop', shop_hint: 'Board themes. Tap to preview.',
         profile_title: '📊 Profile', achievements_title: '🏆 Achievements', best_by_mode: 'Best by mode', achievements: 'Achievements',
         adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
         revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
@@ -10617,9 +10617,9 @@
     ];
     const list = $('#settings-list'); if (!list) return;
     let html = rows.filter(r => r.show !== false).map(r =>
-      `<div class="set-row"><span class="set-row-l"><span class="set-ic">${r.icon ? iconAny(r.icon) : (r.emoji || '')}</span><span>${r.label}</span></span><button class="switch" role="switch" data-set="${r.k}" aria-checked="${Settings[r.k]}" aria-label="${r.label}"><span class="switch-dot"></span></button></div>`
+      `<div class="set-row"><span class="set-row-l"><span class="set-badge">${r.icon ? iconAny(r.icon) : (r.emoji || '')}</span><span class="set-name">${r.label}</span></span><button class="switch" role="switch" data-set="${r.k}" aria-checked="${Settings[r.k]}" aria-label="${r.label}"><span class="switch-dot"></span></button></div>`
     ).join('');
-    html += `<div class="set-row"><span class="set-row-l"><span class="set-ic">${icon('planet')}</span><span>${I18n.t('set_lang')}</span></span><div class="lang-pick">` +
+    html += `<div class="set-row set-row-lang"><span class="set-row-l"><span class="set-badge">${icon('planet')}</span><span class="set-name">${I18n.t('set_lang')}</span></span><div class="lang-pick">` +
       `<button class="lang-btn${Settings.lang !== 'en' ? ' on' : ''}" data-lang="es">ES</button>` +
       `<button class="lang-btn${Settings.lang === 'en' ? ' on' : ''}" data-lang="en">EN</button></div></div>`;
     list.innerHTML = html;
@@ -10629,7 +10629,7 @@
       if (k === 'music') { Settings.music && State.status === 'playing' ? Music.start() : Music.stop(); }
       if (k === 'reducedFx') applyReducedFx();
       if (k === 'largeText') applyLargeText();
-      if (k === 'sfx' || k === 'music') { const si = btn.closest('.set-row').querySelector('.set-ic'); if (si) si.innerHTML = icon(k === 'sfx' ? (Settings.sfx ? 'sound-on' : 'sound-off') : (Settings.music ? 'music-on' : 'music-off')); }
+      if (k === 'sfx' || k === 'music') { const si = btn.closest('.set-row').querySelector('.set-badge'); if (si) si.innerHTML = icon(k === 'sfx' ? (Settings.sfx ? 'sound-on' : 'sound-off') : (Settings.music ? 'music-on' : 'music-off')); }
       const sw = $('#btn-sound'); if (sw) sw.setAttribute('aria-checked', String(Settings.sfx));
     }));
     list.querySelectorAll('[data-lang]').forEach(btn => btn.addEventListener('click', () => {
