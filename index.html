@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.7.7" />
+  <link rel="stylesheet" href="styles.css?v=2.7.9" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -507,14 +507,15 @@
       </div>
     </div>
 
-    <!-- Ajustes -->
+    <!-- Ajustes (skin "candy": tarjeta morada con marco dorado, banner y X). -->
     <section class="hub-view view-settings" id="view-settings" data-hub-view="settings" aria-labelledby="settings-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/settings.png" alt=""></span><h2 id="settings-title" data-i18n="settings_title">Ajustes</h2></div>
-      <div class="modal-body view-body">
+      <div class="set-card">
+        <button class="set-close" type="button" data-view-back aria-label="Cerrar" data-i18n-al="back"><span class="set-close-x" aria-hidden="true"></span></button>
+        <div class="set-banner">
+          <span class="set-banner-star" aria-hidden="true"><img class="ic" src="img/ui/star.png" alt=""></span>
+          <h2 id="settings-title" data-i18n="settings_word">Ajustes</h2>
+        </div>
         <div class="settings-list" id="settings-list"></div>
-      </div>
-      <div class="modal-actions view-actions">
-        <button class="btn btn-primary" data-view-back data-i18n="back">Volver</button>
       </div>
     </section>
 
@@ -787,6 +788,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.7.7" defer></script>
+  <script src="game.js?v=2.7.9" defer></script>
 </body>
 </html>

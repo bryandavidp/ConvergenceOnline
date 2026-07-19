@@ -4644,6 +4644,78 @@ body.reduced-fx #screen-start .daily-banner.is-popping::after { display: none; }
   font-size: clamp(1.45rem, 6vw, 1.9rem);
   color: var(--gold);
 }
+
+/* =========================================================================
+   FIN DE PARTIDA / NIVEL · SKIN "CANDY" (marco dorado + banner + botones)
+   Adopta el lenguaje visual del mockup de Ajustes pero tintado por el accent
+   del modo (--modal-accent), para que cada modo conserve su identidad y el
+   modal deje de ser incoherente. Solo #modal-over y #modal-level.
+   ========================================================================= */
+.modal.endgame-modal,
+.modal.modal-win {
+  border: clamp(3px, .9vw, 5px) solid #f4ad20;
+  border-radius: clamp(24px, 5vw, 34px);
+  background:
+    radial-gradient(125% 45% at 50% 0%, color-mix(in srgb, var(--modal-accent) 34%, transparent), transparent 54%),
+    linear-gradient(180deg, #3a1c63 0%, #26123f 58%, #180b2a 100%);
+  box-shadow:
+    0 0 0 2px #7a3a0d,
+    inset 0 0 0 2px rgba(255, 240, 190, .36),
+    inset 0 2px 0 rgba(255, 255, 255, .14),
+    0 26px 66px rgba(0, 0, 0, .62),
+    0 0 44px color-mix(in srgb, var(--modal-accent) 32%, transparent);
+}
+.modal.endgame-modal::before,
+.modal.modal-win::before { display: none; }
+.modal.endgame-modal .m-head,
+.modal.modal-win .m-head {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 7px;
+  margin: clamp(2px, 1.5vw, 8px) auto 14px;
+}
+.modal.endgame-modal .m-emblem,
+.modal.modal-win .m-emblem {
+  width: clamp(52px, 13vw, 64px);
+  height: clamp(52px, 13vw, 64px);
+  border-radius: 50%;
+  border: 3px solid #f4ad20;
+  background:
+    radial-gradient(circle at 36% 26%, rgba(255, 255, 255, .32), transparent 42%),
+    color-mix(in srgb, var(--modal-accent) 46%, #2a1246);
+  box-shadow: 0 0 0 2px #7a3a0d, 0 6px 14px rgba(0, 0, 0, .5), inset 0 2px 0 rgba(255, 255, 255, .25), 0 0 22px color-mix(in srgb, var(--modal-accent) 46%, transparent);
+}
+.modal.endgame-modal .m-emblem .ic,
+.modal.endgame-modal .m-emblem .icv2,
+.modal.modal-win .m-emblem .ic,
+.modal.modal-win .m-emblem .icv2 { width: 62%; height: 62%; }
+.modal.endgame-modal h2,
+.modal.modal-win h2 {
+  color: #fff7e6;
+  font-weight: 1000;
+  letter-spacing: .01em;
+  text-shadow: 0 3px 0 rgba(30, 4, 34, .7), 0 0 16px color-mix(in srgb, var(--modal-accent) 42%, transparent);
+}
+.modal.endgame-modal .modal-actions .btn-primary,
+.modal.modal-win .modal-actions .btn-primary {
+  border: 2px solid #ffe79a;
+  color: #4a2a02;
+  background: linear-gradient(180deg, #ffd551, #f2a41d 72%);
+  box-shadow: 0 4px 0 #a9670c, 0 8px 15px rgba(0, 0, 0, .4), inset 0 2px 0 rgba(255, 255, 255, .5);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .35);
+}
+.modal.endgame-modal .modal-actions .btn-ghost,
+.modal.modal-win .modal-actions .btn-ghost {
+  border: 2px solid rgba(255, 214, 120, .38);
+  color: #fbe7ff;
+  background: linear-gradient(180deg, rgba(150, 60, 170, .5), rgba(70, 25, 90, .6));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 4px 10px rgba(0, 0, 0, .3);
+}
+.modal.endgame-modal .modal-actions::before,
+.modal.modal-win .modal-actions::before { display: none; }
+.modal.endgame-modal .endgame-section { border-top-color: rgba(255, 220, 150, .16); }
 .endgame-body {
   display: flex;
   flex-direction: column;
@@ -7986,6 +8058,159 @@ body.reduced-fx #screen-start .home-mode-carousel.is-turning .home-mode-card::af
 #screen-start .hub-view > .view-actions .btn { min-height: 44px; }
 #screen-start .view-shop .shop-econ { flex: 0 0 auto; margin: -4px auto 0; }
 #screen-start .view-shop .shop-hint { flex: 0 0 auto; width: min(860px, 100%); margin: -3px auto 0; text-align: center; }
+
+/* =========================================================================
+   AJUSTES · SKIN "CANDY" (referencia morado/dorado)
+   Tarjeta central morada con marco dorado, banner de título, X naranja y filas
+   tipo píldora con badge circular + toggle turquesa. Solo #view-settings; el
+   resto de hub-views conserva su estilo. Conserva todas las funciones reales.
+   ========================================================================= */
+#screen-start .view-settings { align-items: center; justify-content: center; padding: clamp(24px, 5svh, 40px) clamp(8px, 3vw, 20px) clamp(8px, 2svh, 18px); overflow: visible; }
+#screen-start .view-settings .set-card {
+  position: relative;
+  width: min(432px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(38px, 8vw, 56px) clamp(15px, 3.6vw, 24px) clamp(18px, 3.4vw, 26px);
+  border-radius: clamp(26px, 5.5vw, 40px);
+  border: clamp(3px, .8vw, 5px) solid #f4ad20;
+  background:
+    radial-gradient(120% 52% at 50% 0%, rgba(255, 255, 255, .16), transparent 44%),
+    linear-gradient(180deg, #b32ba1 0%, #8f2088 52%, #6d1972 100%);
+  box-shadow:
+    0 0 0 2px #7a3a0d,
+    inset 0 0 0 2px rgba(255, 240, 190, .5),
+    inset 0 2px 0 rgba(255, 255, 255, .22),
+    inset 0 -22px 42px rgba(60, 6, 60, .4),
+    0 22px 46px rgba(0, 0, 0, .5),
+    0 0 40px rgba(190, 60, 220, .26);
+}
+/* Banner de título: placa dorada con estrella, sobresale por arriba. */
+#screen-start .view-settings .set-banner {
+  position: absolute;
+  top: clamp(-24px, -5vw, -32px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: min(70%, 300px);
+  padding: clamp(9px, 2vw, 14px) clamp(24px, 6vw, 44px);
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #a92f9c, #7d1c7c);
+  border: clamp(3px, .7vw, 4px) solid #f4ad20;
+  box-shadow: 0 0 0 2px #7a3a0d, inset 0 2px 0 rgba(255, 255, 255, .25), 0 8px 18px rgba(0, 0, 0, .45);
+}
+#screen-start .view-settings .set-banner h2 {
+  margin: 0;
+  color: #fff7e6;
+  font-size: clamp(1.5rem, 6vw, 2.3rem);
+  font-weight: 1000;
+  letter-spacing: .04em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 3px 0 rgba(90, 10, 70, .75), 0 0 14px rgba(255, 210, 120, .35);
+}
+#screen-start .view-settings .set-banner-star {
+  position: absolute;
+  top: clamp(-16px, -3.6vw, -22px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(30px, 7vw, 44px);
+  height: clamp(30px, 7vw, 44px);
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .45));
+}
+#screen-start .view-settings .set-banner-star .ic { width: 100%; height: 100%; }
+/* X de cierre (naranja). */
+#screen-start .view-settings .set-close {
+  position: absolute;
+  top: clamp(-14px, -3vw, -18px);
+  right: clamp(-6px, -1.2vw, -10px);
+  width: clamp(44px, 10.5vw, 56px);
+  height: clamp(44px, 10.5vw, 56px);
+  padding: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 30%, #ff8a4a, #f0562a 62%, #c8351a);
+  border: clamp(2px, .5vw, 3px) solid #ffd9a6;
+  box-shadow: 0 5px 0 #9c2a12, 0 8px 14px rgba(0, 0, 0, .4), inset 0 2px 0 rgba(255, 255, 255, .4);
+  cursor: pointer;
+  z-index: 3;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+#screen-start .view-settings .set-close:active { transform: translateY(4px); box-shadow: 0 1px 0 #9c2a12, 0 3px 7px rgba(0, 0, 0, .35), inset 0 2px 0 rgba(255, 255, 255, .4); }
+#screen-start .view-settings .set-close-x { position: relative; display: block; width: 44%; height: 44%; margin: auto; }
+#screen-start .view-settings .set-close-x::before,
+#screen-start .view-settings .set-close-x::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 16%;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 1px rgba(120, 20, 0, .5);
+}
+#screen-start .view-settings .set-close-x::before { transform: translate(-50%, -50%) rotate(45deg); }
+#screen-start .view-settings .set-close-x::after { transform: translate(-50%, -50%) rotate(-45deg); }
+
+/* Lista de filas. */
+#screen-start .view-settings .settings-list { margin: 0; gap: clamp(9px, 1.8vw, 13px); overflow-y: auto; padding: 2px; scrollbar-width: thin; }
+#screen-start .view-settings .set-row {
+  gap: 10px;
+  padding: clamp(9px, 1.8vw, 13px) clamp(11px, 2.2vw, 15px);
+  border-radius: clamp(14px, 2.8vw, 18px);
+  border: 1px solid rgba(255, 214, 120, .3);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(50, 4, 52, .36));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 3px 8px rgba(40, 4, 44, .3);
+}
+#screen-start .view-settings .set-row-l { gap: clamp(10px, 2.4vw, 15px); }
+#screen-start .view-settings .set-name { color: #fff; font-weight: 900; font-size: clamp(.95rem, 2.6vw, 1.18rem); text-shadow: 0 2px 2px rgba(60, 6, 50, .5); }
+/* Badge circular del icono (currentColor tinta los icv2; los PNG van a color). */
+#screen-start .view-settings .set-badge {
+  width: clamp(40px, 9.5vw, 52px);
+  height: clamp(40px, 9.5vw, 52px);
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: #ffe6a6;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 28%, #b657c8, #7a2597 66%, #591b78);
+  border: 2px solid rgba(255, 240, 200, .4);
+  box-shadow: inset 0 2px 3px rgba(255, 255, 255, .28), inset 0 -3px 6px rgba(40, 2, 44, .5), 0 3px 7px rgba(30, 2, 40, .4);
+}
+#screen-start .view-settings .set-badge .ic { width: 62%; height: 62%; }
+#screen-start .view-settings .set-badge .icv2 { width: 56%; height: 56%; }
+/* Toggle turquesa. */
+#screen-start .view-settings .switch {
+  width: 62px;
+  height: 34px;
+  flex: 0 0 auto;
+  border: 2px solid rgba(0, 0, 0, .22);
+  background: linear-gradient(180deg, #6a3a86, #4a2566);
+  box-shadow: inset 0 2px 5px rgba(20, 2, 30, .5);
+}
+#screen-start .view-settings .switch[aria-checked="true"] {
+  background: linear-gradient(180deg, #4fe3d0, #24b7c9);
+  border-color: rgba(255, 255, 255, .35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), 0 0 12px rgba(60, 220, 210, .4);
+}
+#screen-start .view-settings .switch-dot {
+  width: 28px;
+  height: 28px;
+  top: 3px;
+  left: 3px;
+  transform: none;
+  background: radial-gradient(circle at 36% 30%, #fff, #dfe7f2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .4);
+}
+#screen-start .view-settings .switch[aria-checked="true"] .switch-dot { transform: translateX(28px); }
+/* Idioma. */
+#screen-start .view-settings .set-row-lang .lang-pick { background: rgba(30, 2, 36, .5); border-color: rgba(255, 214, 120, .3); }
+#screen-start .view-settings .lang-btn { color: rgba(255, 255, 255, .72); font-weight: 900; }
+#screen-start .view-settings .lang-btn.on { color: #06202b; background: linear-gradient(180deg, #4fe3d0, #24b7c9); box-shadow: 0 2px 6px rgba(0, 0, 0, .35); }
 #screen-start #view-medals.achievements-only .profile-only,
 #screen-start #view-medals.achievements-only .achievements-heading { display: none; }
 

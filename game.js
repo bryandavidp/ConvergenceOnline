@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.7.7';
+  const VERSION = '2.7.9';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -431,7 +431,7 @@
         how5: 'Los iconos aparecen solos: vacía el tablero antes de que se llene.',
         tutorial_btn: 'Tutorial interactivo', understood: 'Entendido',
         pause: 'Pausa', resume: 'Reanudar', restart: 'Reiniciar', menu: 'Menú', close: 'Cerrar', back: 'Volver', retry: 'Reintentar', share: 'Compartir',
-        settings_title: '⚙️ Ajustes', shop_title: '🛍️ Tienda', shop_hint: 'Temas del tablero. Pulsa para previsualizar.',
+        settings_title: '⚙️ Ajustes', settings_word: 'Ajustes', shop_title: '🛍️ Tienda', shop_hint: 'Temas del tablero. Pulsa para previsualizar.',
         profile_title: '📊 Perfil', achievements_title: '🏆 Logros', best_by_mode: 'Mejores marcas por modo', achievements: 'Logros',
         adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
         revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
@@ -661,7 +661,7 @@
         biomemod_nebula: '', biomemod_asteroid: '🪨 Aparecen rocas que estorban', biomemod_ice: '🧊 Casillas heladas: tócalas para romperlas', biomemod_core: '🔥 Los iconos aparecen más rápido', biomemod_void: '🕳️ Menos pistas disponibles', biomemod_crystal: '💎 Cristales con puntos extra',
         sum_level: 'Nivel alcanzado {n}', sum_time: 'Tiempo {t}', sum_wave: 'Oleada {w} · {s}s sobrevividos', sum_chapter: 'Capítulo {c} · Nivel {n}',
         level_done: '¡Nivel completado!', perfect_done: '¡Tablero perfecto!', level_sub: 'Nivel {n} superado', perfect_sub: 'Tablero limpio · bonus +{b}', level_reason_score: 'Objetivo cumplido: {n} pts', level_reason_clear: 'Tablero vaciado', level_reason_boss: 'Cristales del jefe destruidos', level_reason_survive: 'Has resistido {n}s', boss_next: '¡Jefe a la vista!',
-        over_victory: '🏆 ¡Victoria!', over_surv: '🛡️ Fin de la supervivencia', over_fail: '¡Misión fallida!',
+        over_victory: '🏆 ¡Victoria!', over_surv: '🛡️ Fin de la supervivencia', over_fail: '¡Misión fallida!', over_time: 'Contrarreloj terminado',
         reason_time: '¡Se acabó el tiempo!', reason_nomoves: 'Sin movimientos posibles · {n}% del tablero ocupado.', reason_full: 'El tablero se ha llenado.', reason_end: 'Fin de la partida.', reason_surv: 'Sobreviviste {s}s', ach_unlocked: '🏅 Logro: {n}',
       },
       en: {
@@ -778,7 +778,7 @@
         how5: 'Icons spawn on their own: clear the board before it fills up.',
         tutorial_btn: 'Interactive tutorial', understood: 'Got it',
         pause: 'Paused', resume: 'Resume', restart: 'Restart', menu: 'Menu', close: 'Close', back: 'Back', retry: 'Retry', share: 'Share',
-        settings_title: '⚙️ Settings', shop_title: '🛍️ Shop', shop_hint: 'Board themes. Tap to preview.',
+        settings_title: '⚙️ Settings', settings_word: 'Settings', shop_title: '🛍️ Shop', shop_hint: 'Board themes. Tap to preview.',
         profile_title: '📊 Profile', achievements_title: '🏆 Achievements', best_by_mode: 'Best by mode', achievements: 'Achievements',
         adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
         revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
@@ -1009,7 +1009,7 @@
         biomemod_nebula: '', biomemod_asteroid: '🪨 Rocks block the board', biomemod_ice: '🧊 Frozen cells: tap to break', biomemod_core: '🔥 Icons spawn faster', biomemod_void: '🕳️ Fewer hints available', biomemod_crystal: '💎 Crystals worth extra points',
         sum_level: 'Reached level {n}', sum_time: 'Time {t}', sum_wave: 'Wave {w} · {s}s survived', sum_chapter: 'Chapter {c} · Level {n}',
         level_done: 'Level complete!', perfect_done: 'Perfect board!', level_sub: 'Level {n} cleared', perfect_sub: 'Clean board · bonus +{b}', level_reason_score: 'Goal reached: {n} pts', level_reason_clear: 'Board cleared', level_reason_boss: 'Boss crystals destroyed', level_reason_survive: 'You survived {n}s', boss_next: 'Boss ahead!',
-        over_victory: '🏆 Victory!', over_surv: '🛡️ Survival over', over_fail: 'Mission failed!',
+        over_victory: '🏆 Victory!', over_surv: '🛡️ Survival over', over_fail: 'Mission failed!', over_time: 'Time trial over',
         reason_time: "Time's up!", reason_nomoves: 'No moves left · {n}% of the board filled.', reason_full: 'The board filled up.', reason_end: 'Game over.', reason_surv: 'Survived {s}s', ach_unlocked: '🏅 Achievement: {n}',
         m_tutorial_n: 'Tutorial', m_tutorial_d: 'Learn the mechanic, no rush or penalties.', m_tutorial_g: 'Match two equal',
         m_clasico_n: 'Classic', m_clasico_d: 'Clear the board to pass the level. Careful: mistakes add icons.', m_clasico_g: 'Clear the board',
@@ -8781,9 +8781,16 @@
       this.endGame();
       Sound.over(); Haptics.error(); Render.boardShake();
       const m = Config.MODES[State.mode];
-      $('#over-title').textContent = (State.mode === 'supervivencia' ? I18n.t('over_surv') : I18n.t('over_fail')).replace(/^[^A-Za-z0-9¿¡]+/, '').trim();
-      this._overChrome(State.mode === 'supervivencia' ? 'shield' : MODE_IMG[State.mode], m.accent || '#ff5d73', m.emoji || '🏁');
+      // Título coherente por modo: Contrarreloj (score-attack) no es un "fallo",
+      // es una marca de puntos/tiempo; Supervivencia es "fin de la supervivencia";
+      // solo Clásico/Aventura pueden fallar una misión.
+      let overTitleKey = 'over_fail', overIcon = MODE_IMG[State.mode];
+      if (State.mode === 'supervivencia') { overTitleKey = 'over_surv'; overIcon = 'shield'; }
+      else if (m.scoreAttack) { overTitleKey = 'over_time'; overIcon = MODE_IMG[State.mode] || 'clock'; }
+      $('#over-title').textContent = I18n.t(overTitleKey).replace(/^[^A-Za-z0-9¿¡]+/, '').trim();
+      this._overChrome(overIcon, m.accent || '#ff5d73', m.emoji || '🏁');
       $('#over-reason').textContent = reason;
+      { const mo = $('#modal-over'); if (mo) mo.dataset.mode = State.mode; }
       this.fillStats(); Modal.open('modal-over');
       announce(reason + ' ' + I18n.t('sr_over').replace('{n}', State.score));
     },
@@ -10617,9 +10624,9 @@
     ];
     const list = $('#settings-list'); if (!list) return;
     let html = rows.filter(r => r.show !== false).map(r =>
-      `<div class="set-row"><span class="set-row-l"><span class="set-ic">${r.icon ? iconAny(r.icon) : (r.emoji || '')}</span><span>${r.label}</span></span><button class="switch" role="switch" data-set="${r.k}" aria-checked="${Settings[r.k]}" aria-label="${r.label}"><span class="switch-dot"></span></button></div>`
+      `<div class="set-row"><span class="set-row-l"><span class="set-badge">${r.icon ? iconAny(r.icon) : (r.emoji || '')}</span><span class="set-name">${r.label}</span></span><button class="switch" role="switch" data-set="${r.k}" aria-checked="${Settings[r.k]}" aria-label="${r.label}"><span class="switch-dot"></span></button></div>`
     ).join('');
-    html += `<div class="set-row"><span class="set-row-l"><span class="set-ic">${icon('planet')}</span><span>${I18n.t('set_lang')}</span></span><div class="lang-pick">` +
+    html += `<div class="set-row set-row-lang"><span class="set-row-l"><span class="set-badge">${icon('planet')}</span><span class="set-name">${I18n.t('set_lang')}</span></span><div class="lang-pick">` +
       `<button class="lang-btn${Settings.lang !== 'en' ? ' on' : ''}" data-lang="es">ES</button>` +
       `<button class="lang-btn${Settings.lang === 'en' ? ' on' : ''}" data-lang="en">EN</button></div></div>`;
     list.innerHTML = html;
@@ -10629,7 +10636,7 @@
       if (k === 'music') { Settings.music && State.status === 'playing' ? Music.start() : Music.stop(); }
       if (k === 'reducedFx') applyReducedFx();
       if (k === 'largeText') applyLargeText();
-      if (k === 'sfx' || k === 'music') { const si = btn.closest('.set-row').querySelector('.set-ic'); if (si) si.innerHTML = icon(k === 'sfx' ? (Settings.sfx ? 'sound-on' : 'sound-off') : (Settings.music ? 'music-on' : 'music-off')); }
+      if (k === 'sfx' || k === 'music') { const si = btn.closest('.set-row').querySelector('.set-badge'); if (si) si.innerHTML = icon(k === 'sfx' ? (Settings.sfx ? 'sound-on' : 'sound-off') : (Settings.music ? 'music-on' : 'music-off')); }
       const sw = $('#btn-sound'); if (sw) sw.setAttribute('aria-checked', String(Settings.sfx));
     }));
     list.querySelectorAll('[data-lang]').forEach(btn => btn.addEventListener('click', () => {
