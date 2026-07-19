@@ -1,8 +1,8 @@
 /* Convergencia — Service Worker (offline-first).
  * Sube CACHE al publicar una versión nueva para invalidar la caché anterior. */
-const CACHE = 'cv-cache-v2.7.9';
+const CACHE = 'cv-cache-v2.9.2';
 const ASSETS = [
-  './', './index.html', './styles.css?v=2.7.9', './game.js?v=2.7.9', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=2.9.2', './game.js?v=2.9.2', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
   './fonts/NunitoSans-Variable.ttf',
   './img/ui-generated/chests/chest-open.png',
@@ -37,6 +37,12 @@ const BOARD_THEME_PREVIEWS = [
 const CHEST_ATLASES = [
   'wood','bronze','silver','gold','magic','royal','supreme','champion','divine','event',
 ].map((n) => './img/ui-generated/chests/atlas/' + n + '.png');
+const PLAYER_ICON_ASSETS = [
+  'nova','comet','prism','sentinel','nebula','orbit','flare','crystal','void','pulse',
+].map((n) => './img/player-icons/' + n + '.png');
+const PLAYER_BORDER_ASSETS = [
+  'starlight','plasma','royal','aurora','comet','crystal','eclipse','circuit','bloom','mythic',
+].map((n) => './img/player-borders/' + n + '.png');
 const V2_ICONS = [
   './img/icons-v2/1-game/double.svg',
   './img/icons-v2/2-items/map.svg',
@@ -85,6 +91,8 @@ self.addEventListener('install', (e) => {
         c.addAll(SHOP_GENERATED_ART).catch(() => {}),
         c.addAll(BOARD_THEME_PREVIEWS).catch(() => {}),
         c.addAll(CHEST_ATLASES).catch(() => {}),
+        c.addAll(PLAYER_ICON_ASSETS).catch(() => {}),
+        c.addAll(PLAYER_BORDER_ASSETS).catch(() => {}),
         c.addAll(V2_ICONS).catch(() => {}),
       ])))
       .then(() => self.skipWaiting())

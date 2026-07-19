@@ -140,7 +140,8 @@ test('home: los estados dinámicos incluyen i18n y etiquetas accesibles', () => 
   assert.match(topbar, /id="home-chest-shortcut-state"/, 'el acceso a cofres debe mostrar el contador de apertura');
   assert.match(topbar, /img\/ui-generated\/home\/nav-chest\.png/, 'el acceso a cofres debe usar el icono de cofre generado');
   assert.match(js, /world_bosque: 'Green Forest'/, 'los nombres de mundo deben localizarse en inglés');
-  assert.match(topbar, /img\/ui-generated\/home\/avatar-robot\.png/, 'la cabecera debe usar el avatar generado');
+  assert.match(topbar, /PlayerIcons\.html\(PlayerIcons\.DEFAULT\)/, 'la cabecera debe usar el icono de jugador equipado');
+  assert.match(topbar, /PlayerBorders\.DEFS\[PlayerBorders\.DEFAULT\]\.asset/, 'la cabecera debe usar el borde de jugador equipado');
   assert.match(topbar, /img\/ui-generated\/home\/header-coin-star\.png/, 'la moneda de cabecera debe llevar la estrella de la referencia');
   assert.match(topbar, /img\/ui-generated\/home\/header-plus\.png/, 'la compra debe usar el botón + 3D dedicado de la referencia');
   assert.match(topbar, /img\/ui-generated\/home\/nav-settings\.png/, 'Ajustes debe vivir al final de la cabecera');

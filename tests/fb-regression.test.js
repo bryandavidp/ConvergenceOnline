@@ -9,7 +9,7 @@ const { makeEl, getMemoEl } = require('./dom-stub.js');
 require('../game.js');
 
 const cv = globalThis.window.__cv;
-const { FX, State, Render, Bosses, Config, I18n, Settings, Adventure, Meta, ModeSignals, Game, Toasts, Boards, Themes } = cv;
+const { FX, State, Render, Bosses, Config, I18n, Settings, Adventure, Meta, ModeSignals, Game, Toasts, Boards, Themes, PlayerIcons, PlayerBorders } = cv;
 const root = path.join(__dirname, '..');
 
 function withRandomSequence(seq, fn) {
@@ -553,8 +553,10 @@ test('FB-7: pool cosmético vacío cae a gemas normales o jackpot premium', () =
     m.coins = 0; m.gems = Meta.PREMIUM_CHEST_GEMS; m.tickets = 0; m.chests = 1;
     m.boards = { owned: { classic: 1 }, equipped: 'classic' };
     Boards.order.forEach((id) => { if (id !== 'classic' && !Boards.DEFS[id].exclusive) m.boards.owned[id] = 1; });
-    m.cosmetics = { owned: {}, theme: 'default', skin: 'default', fx: 'default' };
+    m.cosmetics = { owned: {}, theme: 'default', skin: 'default', fx: 'default', avatarIcon: PlayerIcons.DEFAULT, avatarBorder: PlayerBorders.DEFAULT, avatarIcons: {}, avatarBorders: {} };
     Themes.order.forEach((id) => { if (id !== 'default') m.cosmetics.owned[id] = '2026-01-01'; });
+    PlayerIcons.order.forEach((id) => { m.cosmetics.avatarIcons[id] = '2026-01-01'; });
+    PlayerBorders.order.forEach((id) => { m.cosmetics.avatarBorders[id] = '2026-01-01'; });
 
     const normal = withRandomSequence([.5, 0, .99, 0], () => Meta.openChest());
     assert.deepEqual({ kind: normal.kind, amount: normal.amount, fallback: normal.fallback }, { kind: 'gems', amount: 8, fallback: 'cosmetic' });

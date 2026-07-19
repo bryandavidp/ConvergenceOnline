@@ -13733,3 +13733,124 @@ body.reduced-fx #modal-mode-launch { animation: none; }
   filter: grayscale(.55) brightness(.68);
   transform: none;
 }
+
+
+/* ===================== Player identity 2.9 ===================== */
+.player-avatar-shell {
+  position: relative; isolation: isolate; display: inline-grid; place-items: center;
+  width: 72px; height: 72px; flex: 0 0 auto;
+}
+.player-avatar-md { width: 76px; height: 76px; }
+.player-avatar-lg { width: 112px; height: 112px; }
+.player-avatar-art { position: absolute; inset: 14%; z-index: 2; overflow: hidden; border-radius: 22%; background: #040a2d; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+.player-icon-png { display: block; width: 100%; height: 100%; object-fit: cover; user-select: none; pointer-events: none; }
+.player-avatar-frame { position: absolute; inset: -1%; z-index: 4; width: 102%; height: 102%; object-fit: contain; filter: drop-shadow(0 6px 9px rgba(4,7,33,.56)); pointer-events: none; user-select: none; }
+.player-avatar-aura { position: absolute; inset: 2%; z-index: 1; border-radius: 36%; background: rgba(83,222,255,.26); filter: blur(11px); opacity: .78; }
+/* Avatar compacto de la cabecera */
+#screen-start .hub-header-avatar { position: relative; isolation: isolate; overflow: visible; border: 0; background: transparent; box-shadow: none; }
+#screen-start .hub-header-avatar::before,
+#screen-start .hub-header-avatar::after { content: none; }
+#screen-start .hub-header-avatar-art { position: absolute; inset: 14%; z-index: 2; width: auto; height: auto; overflow: hidden; border-radius: 22%; }
+#screen-start .hub-header-avatar-art .player-icon-png { width: 100%; height: 100%; object-fit: cover; transform: none; transform-origin: center; }
+#screen-start .hub-header-avatar-frame { position: absolute; inset: -1%; z-index: 4; width: 102%; height: 102%; object-fit: contain; filter: drop-shadow(0 5px 7px rgba(4,7,33,.55)); pointer-events: none; }
+#screen-start .hub-header-level-badge { z-index: 7; }
+
+/* Tarjeta de jugador */
+.player-card { position:relative; display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:18px; width:100%; padding:20px; overflow:hidden; border:1px solid rgba(118,218,255,.38); border-radius:24px; background:linear-gradient(135deg,rgba(28,50,126,.96),rgba(70,35,132,.94)); box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 15px 35px rgba(4,8,35,.34); }
+.player-card::before { content:""; position:absolute; width:210px; height:210px; right:-70px; top:-110px; border-radius:50%; background:radial-gradient(circle,rgba(79,226,255,.32),transparent 68%); }
+.player-card-copy { position:relative; min-width:0; text-align:left; }
+.player-card-copy small { color:#8cecff; font-size:.7rem; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+.player-card-copy h3 { margin:4px 0 2px; color:#fff; font-size:clamp(1.35rem,4vw,2rem); line-height:1; text-shadow:0 3px 0 rgba(0,0,0,.18); }
+.player-card-copy p { margin:0 0 12px; color:#d8d6ff; font-weight:800; }
+.player-card-xp { height:9px; overflow:hidden; border-radius:99px; background:rgba(6,12,50,.62); box-shadow:inset 0 1px 3px rgba(0,0,0,.45); }
+.player-card-xp span { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#42e4ff,#8768ff,#ff73c9); box-shadow:0 0 12px #59e5ff; }
+.player-card-meta { display:flex; justify-content:space-between; gap:8px; margin-top:7px; color:#b9c4ef; font-size:.7rem; font-weight:800; }
+
+/* Perfil y trofeos */
+#screen-start #view-medals { --modal-accent:#54e6ff; }
+#screen-start #view-medals .view-body { padding-top:8px; }
+.profile-view-body { display:flex; flex-direction:column; gap:14px; }
+.profile-player-card { width:100%; }
+.profile-edit-name { align-self:flex-end; margin-top:-8px; }
+.profile-customizer { padding:16px; border:1px solid rgba(139,117,255,.28); border-radius:22px; background:linear-gradient(180deg,rgba(24,34,95,.82),rgba(13,19,62,.72)); }
+.profile-section-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:2px 0 10px; }
+.profile-section-head h3,.profile-section-head h4 { margin:0; color:#fff; }
+.profile-section-head h3 { font-size:1.05rem; }
+.profile-section-head h4 { font-size:.85rem; color:#81eaff; text-transform:uppercase; letter-spacing:.08em; }
+.profile-section-head span { color:#aab7df; font-size:.72rem; font-weight:800; }
+.profile-cosmetic-grid,.player-shop-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin-bottom:18px; }
+.profile-cosmetic-tile,.player-shop-item { min-width:0; border:1px solid rgba(126,151,225,.22); border-radius:18px; background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(0,0,0,.16)); }
+.profile-cosmetic-tile { display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px 6px; color:#fff; cursor:pointer; }
+.profile-cosmetic-tile > span:not(.player-avatar-shell) { width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.72rem; font-weight:900; }
+.profile-cosmetic-tile > small { color:#7eeaff; font-size:.62rem; font-weight:900; text-transform:uppercase; }
+.profile-cosmetic-tile.is-equipped,.player-shop-item.is-equipped { border-color:#52e7ff; box-shadow:0 0 0 2px rgba(82,231,255,.18),inset 0 0 22px rgba(75,112,255,.18); }
+.profile-cosmetic-tile.is-locked { filter:saturate(.25); opacity:.45; cursor:not-allowed; }
+.trophy-summary { display:grid; grid-template-columns:52px minmax(0,1fr); align-items:center; gap:14px; padding:14px 16px; border:1px solid rgba(255,218,72,.32); border-radius:18px; background:linear-gradient(135deg,rgba(89,57,12,.42),rgba(71,37,111,.45)); }
+.trophy-summary > span { display:grid; place-items:center; width:52px; height:52px; border-radius:16px; background:rgba(255,216,77,.14); }
+.trophy-summary > span img,.trophy-summary > span .icv2 { width:34px; height:34px; }
+.trophy-summary strong { display:block; margin-bottom:8px; color:#ffe477; }
+.trophy-progress { height:8px; border-radius:99px; overflow:hidden; background:rgba(0,0,0,.3); }
+.trophy-progress span { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#ffb43b,#ffe66c); box-shadow:0 0 12px #ffc94a; }
+#screen-start .medals-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+#screen-start .medal { min-height:78px; opacity:.55; border-radius:18px; background:linear-gradient(145deg,rgba(45,54,119,.78),rgba(19,24,70,.84)); }
+#screen-start .medal.on { opacity:1; border-color:#ffd950; box-shadow:inset 0 0 0 1px rgba(255,218,73,.45),0 8px 22px rgba(13,10,44,.24); }
+#screen-start #view-medals.achievements-only .trophy-summary { display:grid; }
+
+/* Tienda de personalización */
+.player-shop-hero { display:grid; gap:10px; margin-bottom:8px; }
+.player-shop-hero p { margin:0 4px; color:var(--muted); font-size:.82rem; }
+.player-shop-item { display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 8px; text-align:center; }
+.player-shop-item > b { width:100%; overflow:hidden; text-overflow:ellipsis; color:#fff; font-size:.78rem; white-space:nowrap; }
+.player-shop-item .btn { width:100%; min-height:34px; padding:6px; font-size:.7rem; }
+.player-card-shop { padding:16px 20px; }
+
+/* Pausa */
+#modal-pause.pause-modal { --modal-accent:#69e6ff; width:min(470px,100%); padding:0; overflow:hidden; border:1px solid rgba(105,230,255,.38); background:linear-gradient(160deg,#171d64 0%,#34206e 52%,#10194c 100%); box-shadow:0 30px 80px rgba(3,5,28,.65),inset 0 1px 0 rgba(255,255,255,.15); }
+#modal-pause .m-head { margin:0; padding:18px 22px 12px; background:linear-gradient(90deg,rgba(66,225,255,.12),rgba(139,86,255,.16)); }
+.pause-player-card { padding:4px 18px 12px; }
+.player-card-pause { padding:14px; border-radius:20px; grid-template-columns:auto minmax(0,1fr); }
+.player-card-pause .player-avatar-lg { width:82px; height:82px; }
+.player-card-pause .player-card-copy h3 { font-size:1.28rem; }
+.pause-run-summary { display:grid; grid-template-columns:1.4fr repeat(3,1fr); gap:8px; margin:0 18px 12px; }
+.pause-run-heading,.pause-run-stat { min-width:0; padding:11px; border:1px solid rgba(131,157,237,.24); border-radius:14px; background:rgba(7,13,54,.38); }
+.pause-run-heading small,.pause-run-stat span { display:block; color:#94a9df; font-size:.62rem; font-weight:900; text-transform:uppercase; }
+.pause-run-heading b { color:#fff; font-size:.82rem; }
+.pause-run-stat strong { display:block; margin-top:3px; color:#68e7ff; font-size:1rem; }
+#modal-pause .pause-note { margin:0 18px 10px; padding:9px 12px; border-radius:12px; background:rgba(255,184,55,.11); color:#ffd981; }
+#modal-pause .modal-actions { display:grid; grid-template-columns:1fr 1fr; gap:9px; padding:4px 18px 18px; }
+#modal-pause #btn-resume { grid-column:1/-1; min-height:50px; }
+
+/* Misiones */
+#screen-start #view-missions { --modal-accent:#ffd550; }
+.missions-view-body { display:grid; gap:14px; }
+.missions-hero { position:relative; display:flex; align-items:center; gap:15px; min-height:92px; padding:16px 20px; overflow:hidden; border:1px solid rgba(255,217,75,.3); border-radius:22px; background:linear-gradient(120deg,rgba(111,65,198,.88),rgba(27,92,170,.88)); box-shadow:inset 0 1px 0 rgba(255,255,255,.14); }
+.missions-hero::after { content:""; position:absolute; right:-30px; width:150px; height:150px; border-radius:50%; background:radial-gradient(circle,rgba(77,239,255,.35),transparent 68%); }
+.missions-hero > span { display:grid; place-items:center; width:54px; height:54px; border-radius:18px; color:#3d2b75; background:linear-gradient(145deg,#fff38a,#ffb83f); font-size:1.55rem; box-shadow:0 8px 18px rgba(39,18,92,.3); }
+.missions-hero div { display:flex; flex-direction:column; }
+.missions-hero b { color:#fff; font-size:1.05rem; letter-spacing:.08em; }
+.missions-hero small { color:#a9efff; font-weight:900; letter-spacing:.16em; }
+#screen-start .mission-card { padding:16px; border-radius:20px; border-color:rgba(111,145,235,.28); background:linear-gradient(145deg,rgba(39,48,119,.92),rgba(20,26,76,.92)); box-shadow:0 9px 24px rgba(4,8,35,.2),inset 0 1px 0 rgba(255,255,255,.08); }
+#screen-start .mission-card-icon { border-radius:15px; background:linear-gradient(145deg,rgba(255,226,95,.22),rgba(117,81,255,.2)); }
+#screen-start .mission-progress { height:11px; background:rgba(5,10,44,.62); }
+#screen-start .mission-progress > span { background:linear-gradient(90deg,#45dcff,#795dff,#ff71c4); box-shadow:0 0 12px rgba(84,219,255,.55); }
+#screen-start .mission-card-foot { padding-top:2px; }
+#screen-start .mission-reward { padding:7px 10px; border-radius:12px; background:rgba(255,216,77,.08); }
+
+/* Cofres: premios de identidad */
+#screen-start .cr-item-face > .reward-icon-preview { display:block; width:68px; height:68px; max-width:78%; border-radius:22%; object-fit:cover; filter:drop-shadow(0 8px 10px rgba(0,0,0,.28)); }
+#screen-start .cr-item-face > .reward-border-preview { display:block; width:72px; height:72px; max-width:78%; object-fit:contain; filter:drop-shadow(0 8px 10px rgba(0,0,0,.3)); }
+.chest-rewards-grid { grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); }
+
+@media (max-width:700px) {
+  .profile-cosmetic-grid,.player-shop-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  #screen-start .medals-list { grid-template-columns:1fr; }
+}
+@media (max-width:480px) {
+  .player-card { gap:12px; padding:14px; }
+  .player-avatar-lg { width:88px; height:88px; }
+  .profile-cosmetic-grid,.player-shop-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .pause-run-summary { grid-template-columns:repeat(3,1fr); }
+  .pause-run-heading { grid-column:1/-1; }
+  #modal-pause .modal-actions { grid-template-columns:1fr; }
+  #modal-pause #btn-resume { grid-column:auto; }
+}

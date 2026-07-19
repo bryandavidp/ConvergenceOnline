@@ -284,8 +284,8 @@ test('recordGame usa ×1 por defecto y sanea multiplicadores hostiles sin produc
   }
 }));
 
-test('Meta publica schema 9 y persiste el vencimiento xpBoostUntil', () => {
-  assert.equal(Meta.state._v, 9);
+test('Meta publica schema 10 y persiste el vencimiento xpBoostUntil', () => {
+  assert.equal(Meta.state._v, 10);
   assert.ok(Object.prototype.hasOwnProperty.call(Meta.state, 'xpBoostUntil'));
   assert.ok(Number.isFinite(Meta.state.xpBoostUntil) && Meta.state.xpBoostUntil >= 0);
 });

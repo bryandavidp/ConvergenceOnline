@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.7.9';
+  const VERSION = '2.9.2';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -322,7 +322,7 @@
         begin: '¡Empezar!', guest: 'Jugar como invitado', start_sub: '¿List@ para conquistar el tablero?',
         play: 'Jugar', reward: 'Recompensa diaria', menu_profile: 'Logros', menu_shop: 'Tienda',
         menu_settings: 'Ajustes', how: '¿Cómo se juega?', install: 'Instalar app', sound: 'Sonido', best: 'Mejor puntuación:',
-        tab_log: 'Logros', tab_events: 'Eventos', tab_shop: 'Tienda', tab_home: 'Inicio', tab_guide: 'Guía', tab_collections: 'Colecciones', tab_set: 'Ajustes', missions_title: '🎯 Misiones',
+        tab_log: 'Logros', tab_events: 'Eventos', tab_shop: 'Tienda', tab_home: 'Inicio', tab_guide: 'Guía', tab_collections: 'Colecciones', tab_set: 'Ajustes', missions_title: '🎯 Misiones', missions_sub: 'Completa objetivos diarios y semanales para acelerar tu progreso.',
         events_title: 'Eventos', events_sub: 'Tus retos, recompensas y actividades de hoy, reunidos en un solo lugar.',
         events_daily_label: 'Cada día', events_progress_label: 'Progreso diario', events_today_label: 'Solo hoy', events_rewards_label: 'Premios',
         events_view: 'Ver', events_play: 'Jugar', events_open: 'Abrir', events_reward_ready: 'Lista para reclamar', events_reward_claimed: 'Reclamada hoy',
@@ -358,7 +358,7 @@
         powerup_empty: 'No te quedan de este power-up',
         equipped: 'Equipado', equip: 'Equipar', free: 'Gratis', no_coins: 'Monedas insuficientes',
         shop_boards: 'Tableros visuales', shop_themes: 'Temas de color', shop_hint2: 'Los tableros son solo cambios visuales: no dan ventajas ni desventajas. Equipa tu estilo favorito para jugar.', board_unlocked: '¡Tablero desbloqueado!',
-        resource_shop_title: 'Tienda de recursos', style_shop_title: 'Tableros y temas', resource_shop_short: 'Monedas, gemas y XP', style_shop_short: 'Tableros y temas', style_shop_nav: 'Estilos', preview_theme: 'Vista previa de {name}',
+        resource_shop_title: 'Tienda de recursos', style_shop_title: 'Personalización', resource_shop_short: 'Monedas, gemas y XP', style_shop_short: 'Personalización', style_shop_nav: 'Estilos', preview_theme: 'Vista previa de {name}',
         test_payment_title: 'Modo de pruebas', test_payment_note: 'Las compras de monedas y gemas se acreditan automáticamente. No se realiza ningún cobro.', mock_payment_badge: 'PAGO DE PRUEBA',
         resource_shop_premium: 'RECURSO PREMIUM', resource_shop_game_currency: 'DIVISA DEL JUEGO', resource_shop_progress: 'PROGRESIÓN', best_value: 'MEJOR VALOR',
         xp_booster_title: 'XP Booster', xp_booster_desc: 'Multiplica ×4 todo el XP ganado en las partidas que empieces mientras esté activo.', xp_boost_this_match: 'Esta partida',
@@ -372,14 +372,14 @@
         chests_play_survival: 'Jugar Supervivencia', chests_next_wave: 'Cofre extra en {n} oleadas', chests_open_now: 'O abrir ahora', chests_open_saved: 'Abrir cofre guardado', chests_available: 'Disponibles',
         chests_contents_note: 'Los cofres contienen monedas, gemas, tickets, potenciadores y cosméticos.', chest_opening: 'El cofre se está abriendo…', chest_opening_named: 'Abriendo {c}…', chest_opening_hint: 'Preparando tus recompensas',
         chest_reveal_title: 'Contenido del cofre', chest_cosmetic_title: '¡COSMÉTICO!', chest_rarity_common: 'Recompensa', chest_rarity_jackpot: 'Jackpot', chest_rarity_cosmetic: 'Especial', chest_continue: 'Seguir', chest_equip: 'Equipar',
-        chest_reward_coins: '+{n} monedas', chest_reward_gems: '+{n} gemas', chest_reward_ticket: '+{n} ticket(s)', chest_reward_booster: '+{n} {b}', chest_reward_board: 'Tablero: {n}', chest_reward_theme: 'Tema: {n}',
+        chest_reward_coins: '+{n} monedas', chest_reward_gems: '+{n} gemas', chest_reward_ticket: '+{n} ticket(s)', chest_reward_booster: '+{n} {b}', chest_reward_board: 'Tablero: {n}', chest_reward_theme: 'Tema: {n}', chest_reward_avatar_icon: 'Icono: {n}', chest_reward_avatar_border: 'Borde: {n}',
         chest_view_all: 'Ver todos', chest_selected: 'Cofre seleccionado', chest_catalog_title: 'Tipos de cofres', chest_catalog_sub: 'Cuanto más raro sea el cofre, mejores serán sus recompensas.', chest_catalog_close: 'Volver a mis cofres',
         chest_contains: 'Qué puede contener', chest_type_panel: 'Tipo de cofre', chest_ceremony_title: 'Apertura del cofre', chest_contents_coins: 'Monedas', chest_contents_gems: 'Gemas', chest_contents_tickets: 'Tickets', chest_contents_cosmetics: 'Cosméticos y más',
         chest_slots_title: 'Ranuras de cofres', chest_possible_rewards: 'Posibles recompensas', chest_slot_opening: 'Abriendo', chest_slot_ready: '¡Listo!', chest_slot_blocked: 'Bloqueado', chest_slot_waiting: 'En espera', chest_slot_empty: 'Ranura vacía',
         chest_unlock_slot: 'Desbloquea otra ranura', chest_unlock_slot_cost: 'Toca otra vez para desbloquearla por {n} gemas', chest_slot_unlocked: '¡Nueva ranura desbloqueada!', chest_more_waiting: '+{n} cofre(s) en reserva',
         chest_start_unlock: 'Abrir', chest_open_now_action: 'Abrir ahora', chest_collect: 'Recoger', chest_unlocking_action: 'En progreso', chest_only_one: 'Solo puedes desbloquear un cofre a la vez.', chest_timer_started: '¡El cofre ha empezado a abrirse!',
         chest_premium_action: 'Abrir cofre premium', chest_premium_note: 'Premio instantáneo con mejores probabilidades', chest_duration: 'Duración', chest_size_label: 'Tamaño', chest_type_label: 'Tipo',
-        chest_reward_boosters: 'Potenciadores', chest_reward_objects: 'Objetos', chest_reward_boards: 'Tableros', chest_reward_themes: 'Temas', chest_reward_surprise: 'Y más…',
+        chest_reward_boosters: 'Potenciadores', chest_reward_objects: 'Objetos', chest_reward_boards: 'Tableros', chest_reward_themes: 'Temas', chest_reward_avatars: 'Iconos y bordes', chest_reward_surprise: 'Y más…',
         chest_size_small: 'Pequeño', chest_size_medium: 'Mediano', chest_size_large: 'Grande', chest_size_xlarge: 'Muy grande', chest_size_huge: 'Enorme', chest_size_variable: 'Variable',
         chest_tier_basic: 'Básico', chest_tier_common: 'Común', chest_tier_rare: 'Raro', chest_tier_epic: 'Épico', chest_tier_legendary: 'Legendario', chest_tier_mythic: 'Mítico', chest_tier_special: 'Especial',
         chest_type_wood: 'Cofre de madera', chest_type_bronze: 'Cofre de bronce', chest_type_silver: 'Cofre de plata', chest_type_gold: 'Cofre de oro', chest_type_magic: 'Cofre mágico',
@@ -432,7 +432,7 @@
         tutorial_btn: 'Tutorial interactivo', understood: 'Entendido',
         pause: 'Pausa', resume: 'Reanudar', restart: 'Reiniciar', menu: 'Menú', close: 'Cerrar', back: 'Volver', retry: 'Reintentar', share: 'Compartir',
         settings_title: '⚙️ Ajustes', settings_word: 'Ajustes', shop_title: '🛍️ Tienda', shop_hint: 'Temas del tablero. Pulsa para previsualizar.',
-        profile_title: '📊 Perfil', achievements_title: '🏆 Logros', best_by_mode: 'Mejores marcas por modo', achievements: 'Logros',
+        profile_title: '📊 Perfil', achievements_title: '🏆 Trofeos', profile_card_title: 'Tarjeta de jugador', profile_loadout_title: 'Tu estilo', profile_icons_title: 'Iconos', profile_borders_title: 'Bordes', profile_owned: '{n}/{total} desbloqueados', shop_player_hint: 'Personaliza tu tarjeta. También puedes conseguir iconos y bordes en los cofres.', shop_player_icons: 'Iconos de jugador', shop_player_borders: 'Bordes de icono', pause_run_title: 'Partida en curso', pause_score_label: 'Puntos', pause_combo_label: 'Combo', trophies_progress: '{n} de {total} trofeos', best_by_mode: 'Mejores marcas por modo', achievements: 'Logros',
         adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
         revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
         revive_gets: 'Recibes 1 vida y despeja el 60% del tablero', revive_count: 'Revivir {n}/{max}', revive_short: 'Te faltan {n} monedas',
@@ -669,7 +669,7 @@
         begin: 'Start!', guest: 'Play as guest', start_sub: 'Ready to conquer the board?',
         play: 'Play', reward: 'Daily reward', menu_profile: 'Profile', menu_shop: 'Shop',
         menu_settings: 'Settings', how: 'How to play?', install: 'Install app', sound: 'Sound', best: 'Best score:',
-        tab_log: 'Trophies', tab_events: 'Events', tab_shop: 'Shop', tab_home: 'Home', tab_guide: 'Guide', tab_collections: 'Collections', tab_set: 'Settings', missions_title: '🎯 Missions',
+        tab_log: 'Trophies', tab_events: 'Events', tab_shop: 'Shop', tab_home: 'Home', tab_guide: 'Guide', tab_collections: 'Collections', tab_set: 'Settings', missions_title: '🎯 Missions', missions_sub: 'Complete daily and weekly objectives to speed up your progress.',
         events_title: 'Events', events_sub: "Today's challenges, rewards and activities, all in one place.",
         events_daily_label: 'Every day', events_progress_label: 'Daily progress', events_today_label: 'Today only', events_rewards_label: 'Rewards',
         events_view: 'View', events_play: 'Play', events_open: 'Open', events_reward_ready: 'Ready to claim', events_reward_claimed: 'Claimed today',
@@ -705,7 +705,7 @@
         powerup_empty: 'No more of this power-up',
         equipped: 'Equipped', equip: 'Equip', free: 'Free', no_coins: 'Not enough coins',
         shop_boards: 'Visual boards', shop_themes: 'Color themes', shop_hint2: 'Boards are visual-only cosmetics: no advantages or disadvantages. Equip your favorite style before playing.', board_unlocked: 'Board unlocked!',
-        resource_shop_title: 'Resource shop', style_shop_title: 'Boards & themes', resource_shop_short: 'Coins, gems & XP', style_shop_short: 'Boards & themes', style_shop_nav: 'Styles', preview_theme: 'Preview {name}',
+        resource_shop_title: 'Resource shop', style_shop_title: 'Customization', resource_shop_short: 'Coins, gems & XP', style_shop_short: 'Customization', style_shop_nav: 'Styles', preview_theme: 'Preview {name}',
         test_payment_title: 'Test mode', test_payment_note: 'Coin and gem purchases are credited automatically. No payment is charged.', mock_payment_badge: 'TEST PAYMENT',
         resource_shop_premium: 'PREMIUM RESOURCE', resource_shop_game_currency: 'GAME CURRENCY', resource_shop_progress: 'PROGRESSION', best_value: 'BEST VALUE',
         xp_booster_title: 'XP Booster', xp_booster_desc: 'Multiplies by ×4 all XP earned in matches you start while it is active.', xp_boost_this_match: 'This match',
@@ -719,14 +719,14 @@
         chests_play_survival: 'Play Survival', chests_next_wave: 'Bonus chest in {n} waves', chests_open_now: 'Or open now', chests_open_saved: 'Open saved chest', chests_available: 'Available',
         chests_contents_note: 'Chests contain coins, gems, tickets, boosters and cosmetics.', chest_opening: 'The chest is opening…', chest_opening_named: 'Opening {c}…', chest_opening_hint: 'Preparing your rewards',
         chest_reveal_title: 'Chest contents', chest_cosmetic_title: 'COSMETIC!', chest_rarity_common: 'Reward', chest_rarity_jackpot: 'Jackpot', chest_rarity_cosmetic: 'Special', chest_continue: 'Continue', chest_equip: 'Equip',
-        chest_reward_coins: '+{n} coins', chest_reward_gems: '+{n} gems', chest_reward_ticket: '+{n} ticket(s)', chest_reward_booster: '+{n} {b}', chest_reward_board: 'Board: {n}', chest_reward_theme: 'Theme: {n}',
+        chest_reward_coins: '+{n} coins', chest_reward_gems: '+{n} gems', chest_reward_ticket: '+{n} ticket(s)', chest_reward_booster: '+{n} {b}', chest_reward_board: 'Board: {n}', chest_reward_theme: 'Theme: {n}', chest_reward_avatar_icon: 'Icon: {n}', chest_reward_avatar_border: 'Frame: {n}',
         chest_view_all: 'View all', chest_selected: 'Selected chest', chest_catalog_title: 'Chest types', chest_catalog_sub: 'The rarer the chest, the better its rewards.', chest_catalog_close: 'Back to my chests',
         chest_contains: 'What it can contain', chest_type_panel: 'Chest type', chest_ceremony_title: 'Chest opening', chest_contents_coins: 'Coins', chest_contents_gems: 'Gems', chest_contents_tickets: 'Tickets', chest_contents_cosmetics: 'Cosmetics and more',
         chest_slots_title: 'Chest slots', chest_possible_rewards: 'Possible rewards', chest_slot_opening: 'Opening', chest_slot_ready: 'Ready!', chest_slot_blocked: 'Locked', chest_slot_waiting: 'Waiting', chest_slot_empty: 'Empty slot',
         chest_unlock_slot: 'Unlock another slot', chest_unlock_slot_cost: 'Tap again to unlock it for {n} gems', chest_slot_unlocked: 'New slot unlocked!', chest_more_waiting: '+{n} chest(s) in reserve',
         chest_start_unlock: 'Open', chest_open_now_action: 'Open now', chest_collect: 'Collect', chest_unlocking_action: 'In progress', chest_only_one: 'You can only unlock one chest at a time.', chest_timer_started: 'The chest has started opening!',
         chest_premium_action: 'Open premium chest', chest_premium_note: 'Instant reward with better odds', chest_duration: 'Duration', chest_size_label: 'Size', chest_type_label: 'Type',
-        chest_reward_boosters: 'Boosters', chest_reward_objects: 'Items', chest_reward_boards: 'Boards', chest_reward_themes: 'Themes', chest_reward_surprise: 'And more…',
+        chest_reward_boosters: 'Boosters', chest_reward_objects: 'Items', chest_reward_boards: 'Boards', chest_reward_themes: 'Themes', chest_reward_avatars: 'Icons & frames', chest_reward_surprise: 'And more…',
         chest_size_small: 'Small', chest_size_medium: 'Medium', chest_size_large: 'Large', chest_size_xlarge: 'Very large', chest_size_huge: 'Huge', chest_size_variable: 'Variable',
         chest_tier_basic: 'Basic', chest_tier_common: 'Common', chest_tier_rare: 'Rare', chest_tier_epic: 'Epic', chest_tier_legendary: 'Legendary', chest_tier_mythic: 'Mythic', chest_tier_special: 'Special',
         chest_type_wood: 'Wood chest', chest_type_bronze: 'Bronze chest', chest_type_silver: 'Silver chest', chest_type_gold: 'Gold chest', chest_type_magic: 'Magic chest',
@@ -779,7 +779,7 @@
         tutorial_btn: 'Interactive tutorial', understood: 'Got it',
         pause: 'Paused', resume: 'Resume', restart: 'Restart', menu: 'Menu', close: 'Close', back: 'Back', retry: 'Retry', share: 'Share',
         settings_title: '⚙️ Settings', settings_word: 'Settings', shop_title: '🛍️ Shop', shop_hint: 'Board themes. Tap to preview.',
-        profile_title: '📊 Profile', achievements_title: '🏆 Achievements', best_by_mode: 'Best by mode', achievements: 'Achievements',
+        profile_title: '📊 Profile', achievements_title: '🏆 Trophies', profile_card_title: 'Player card', profile_loadout_title: 'Your style', profile_icons_title: 'Icons', profile_borders_title: 'Frames', profile_owned: '{n}/{total} unlocked', shop_player_hint: 'Customize your player card. Icons and frames can also drop from chests.', shop_player_icons: 'Player icons', shop_player_borders: 'Icon frames', pause_run_title: 'Current run', pause_score_label: 'Score', pause_combo_label: 'Combo', trophies_progress: '{n} of {total} trophies', best_by_mode: 'Best by mode', achievements: 'Achievements',
         adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
         revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
         revive_gets: 'Get 1 life and clear 60% of the board', revive_count: 'Revive {n}/{max}', revive_short: 'You need {n} more coins',
@@ -3069,11 +3069,63 @@
     };
   }
 
+  /* ===================== Iconos y bordes del jugador ===================== */
+  const PlayerIcons = {
+    DEFAULT: 'nova',
+    DEFS: {
+      nova: { name: 'Nova', cost: 0, asset: 'img/player-icons/nova.png' },
+      comet: { name: 'Cometa', cost: 260, asset: 'img/player-icons/comet.png' },
+      prism: { name: 'Prisma', cost: 320, asset: 'img/player-icons/prism.png' },
+      sentinel: { name: 'Centinela', cost: 420, asset: 'img/player-icons/sentinel.png' },
+      nebula: { name: 'Nébula', cost: 560, asset: 'img/player-icons/nebula.png' },
+      orbit: { name: 'Órbita', cost: 720, asset: 'img/player-icons/orbit.png' },
+      flare: { name: 'Llama', cost: 920, asset: 'img/player-icons/flare.png' },
+      crystal: { name: 'Cristal', cost: 1150, asset: 'img/player-icons/crystal.png' },
+      void: { name: 'Vacío', cost: 1450, asset: 'img/player-icons/void.png' },
+      pulse: { name: 'Pulso', cost: 1750, asset: 'img/player-icons/pulse.png' },
+    },
+    order: ['nova', 'comet', 'prism', 'sentinel', 'nebula', 'orbit', 'flare', 'crystal', 'void', 'pulse'],
+    html(id, cls) {
+      const d = this.DEFS[id] || this.DEFS[this.DEFAULT];
+      const klass = cls ? ` ${cls}` : '';
+      return `<img class="player-icon-png${klass}" src="${d.asset}" alt="${esc(d.name)}" draggable="false">`;
+    },
+  };
+
+  const PlayerBorders = {
+    DEFAULT: 'starlight',
+    DEFS: {
+      starlight: { name: 'Luz estelar', cost: 0, asset: 'img/player-borders/starlight.png' },
+      plasma: { name: 'Plasma', cost: 320, asset: 'img/player-borders/plasma.png' },
+      royal: { name: 'Real', cost: 420, asset: 'img/player-borders/royal.png' },
+      aurora: { name: 'Aurora', cost: 560, asset: 'img/player-borders/aurora.png' },
+      comet: { name: 'Cometa', cost: 700, asset: 'img/player-borders/comet.png' },
+      crystal: { name: 'Cristal', cost: 920, asset: 'img/player-borders/crystal.png' },
+      eclipse: { name: 'Eclipse', cost: 1150, asset: 'img/player-borders/eclipse.png' },
+      circuit: { name: 'Circuito', cost: 1380, asset: 'img/player-borders/circuit.png' },
+      bloom: { name: 'Bloom', cost: 1580, asset: 'img/player-borders/bloom.png' },
+      mythic: { name: 'Mítico', cost: 1900, asset: 'img/player-borders/mythic.png' },
+    },
+    order: ['starlight', 'plasma', 'royal', 'aurora', 'comet', 'crystal', 'eclipse', 'circuit', 'bloom', 'mythic'],
+    html(id, cls) {
+      const d = this.DEFS[id] || this.DEFS[this.DEFAULT];
+      const klass = cls ? ` ${cls}` : '';
+      return `<img class="player-border-png${klass}" src="${d.asset}" alt="" aria-hidden="true" draggable="false">`;
+    },
+  };
+
+  function playerAvatarHtml(iconId, borderId, cls) {
+    const icon = PlayerIcons.DEFS[iconId] ? iconId : PlayerIcons.DEFAULT;
+    const border = PlayerBorders.DEFS[borderId] ? borderId : PlayerBorders.DEFAULT;
+    return `<span class="player-avatar-shell ${cls || ''}" data-player-frame="${border}"><span class="player-avatar-aura" aria-hidden="true"></span><span class="player-avatar-art">${PlayerIcons.html(icon)}</span><img class="player-avatar-frame" src="${PlayerBorders.DEFS[border].asset}" alt="" aria-hidden="true" draggable="false"></span>`;
+  }
+
   /* ===================== Meta (progresión persistente) ===================== */
+
   const Meta = (() => {
     const KEY = 'cv_meta';
-    const SCHEMA = 9;
-    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, gems: 0, tickets: 0, chests: 0, xpBoostUntil: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, worlds: {}, boards: { owned: { classic: 1 }, equipped: 'classic' }, survBest: 0, survBestWave: 0, stats: { totalScore: 0, bestCombo: 0, totalTime: 0 }, modes: {}, weekly: { week: '', id: '', progress: 0, done: false }, mastery: { classicPerfect: 0, bestClassicPerfect: 0 }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default' } };
+    const SCHEMA = 10;
+    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, gems: 0, tickets: 0, chests: 0, xpBoostUntil: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, worlds: {}, boards: { owned: { classic: 1 }, equipped: 'classic' }, survBest: 0, survBestWave: 0, stats: { totalScore: 0, bestCombo: 0, totalTime: 0 }, modes: {}, weekly: { week: '', id: '', progress: 0, done: false }, mastery: { classicPerfect: 0, bestClassicPerfect: 0 }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default', avatarIcon: PlayerIcons.DEFAULT, avatarBorder: PlayerBorders.DEFAULT, avatarIcons: { nova: 1 }, avatarBorders: { starlight: 1 } } };
     Object.assign(def, { chestInventory: [], chestUnlock: null, chestSlots: 3, chestSeq: 0 });
     // Esquema 5 (CH-2): pipeline universal de cofres — objetivos de CUALQUIER modo
     // avanzan un ciclo determinista de cofres; cofre diario de primera victoria.
@@ -3086,6 +3138,13 @@
     catch (_) { m = JSON.parse(JSON.stringify(def)); }
     // Migración de esquema (rellena campos nuevos sin perder progreso previo).
     if (!m.cosmetics) m.cosmetics = JSON.parse(JSON.stringify(def.cosmetics));
+    if (!m.cosmetics.owned || typeof m.cosmetics.owned !== 'object') m.cosmetics.owned = {};
+    if (!m.cosmetics.avatarIcons || typeof m.cosmetics.avatarIcons !== 'object') m.cosmetics.avatarIcons = {};
+    if (!m.cosmetics.avatarBorders || typeof m.cosmetics.avatarBorders !== 'object') m.cosmetics.avatarBorders = {};
+    m.cosmetics.avatarIcons[PlayerIcons.DEFAULT] = m.cosmetics.avatarIcons[PlayerIcons.DEFAULT] || 1;
+    m.cosmetics.avatarBorders[PlayerBorders.DEFAULT] = m.cosmetics.avatarBorders[PlayerBorders.DEFAULT] || 1;
+    if (!PlayerIcons.DEFS[m.cosmetics.avatarIcon] || !m.cosmetics.avatarIcons[m.cosmetics.avatarIcon]) m.cosmetics.avatarIcon = PlayerIcons.DEFAULT;
+    if (!PlayerBorders.DEFS[m.cosmetics.avatarBorder] || !m.cosmetics.avatarBorders[m.cosmetics.avatarBorder]) m.cosmetics.avatarBorder = PlayerBorders.DEFAULT;
     if (!m.streak || typeof m.streak !== 'object') m.streak = { count: Number(m.streak) || 0, date: '' };
     if (typeof m.streak.count !== 'number') m.streak.count = 0;
     if (!m.reward) m.reward = { date: '', day: 0 };
@@ -3924,6 +3983,14 @@
           const t = Themes.DEFS[id];
           if (t && id !== 'default' && !this.owns(id)) pool.push({ cosmeticKind: 'theme', id, name: t.name });
         });
+        PlayerIcons.order.forEach((id) => {
+          const item = PlayerIcons.DEFS[id];
+          if (item && id !== PlayerIcons.DEFAULT && !this.ownsAvatarIcon(id)) pool.push({ cosmeticKind: 'avatarIcon', id, name: item.name });
+        });
+        PlayerBorders.order.forEach((id) => {
+          const item = PlayerBorders.DEFS[id];
+          if (item && id !== PlayerBorders.DEFAULT && !this.ownsAvatarBorder(id)) pool.push({ cosmeticKind: 'avatarBorder', id, name: item.name });
+        });
         return pool;
       },
       _rollCosmetic() {
@@ -3943,6 +4010,8 @@
         else if (reward.kind === 'cosmetic') {
           if (reward.cosmeticKind === 'board') this.grantBoard(reward.id);
           else if (reward.cosmeticKind === 'theme') this.grantTheme(reward.id);
+          else if (reward.cosmeticKind === 'avatarIcon') this.grantAvatarIcon(reward.id);
+          else if (reward.cosmeticKind === 'avatarBorder') this.grantAvatarBorder(reward.id);
         }
         return reward;
       },
@@ -3961,6 +4030,48 @@
       owns: (id) => id === 'default' || !!(m.cosmetics.owned && m.cosmetics.owned[id]),
       buy(id, cost) { if (this.owns(id)) return true; if (!this.spend(cost)) return false; m.cosmetics.owned[id] = today(); save(); return true; },
       equip(slot, id) { if (!this.owns(id)) return false; m.cosmetics[slot] = id; save(); return true; },
+      avatarIcon: () => PlayerIcons.DEFS[m.cosmetics.avatarIcon] ? m.cosmetics.avatarIcon : PlayerIcons.DEFAULT,
+      avatarBorder: () => PlayerBorders.DEFS[m.cosmetics.avatarBorder] ? m.cosmetics.avatarBorder : PlayerBorders.DEFAULT,
+      ownsAvatarIcon: (id) => id === PlayerIcons.DEFAULT || !!(m.cosmetics.avatarIcons && m.cosmetics.avatarIcons[id]),
+      ownsAvatarBorder: (id) => id === PlayerBorders.DEFAULT || !!(m.cosmetics.avatarBorders && m.cosmetics.avatarBorders[id]),
+      grantAvatarIcon(id) {
+        if (!PlayerIcons.DEFS[id]) return false;
+        m.cosmetics.avatarIcons = m.cosmetics.avatarIcons || { [PlayerIcons.DEFAULT]: 1 };
+        if (this.ownsAvatarIcon(id)) return false;
+        m.cosmetics.avatarIcons[id] = today(); save(); return true;
+      },
+      grantAvatarBorder(id) {
+        if (!PlayerBorders.DEFS[id]) return false;
+        m.cosmetics.avatarBorders = m.cosmetics.avatarBorders || { [PlayerBorders.DEFAULT]: 1 };
+        if (this.ownsAvatarBorder(id)) return false;
+        m.cosmetics.avatarBorders[id] = today(); save(); return true;
+      },
+      buyAvatarIcon(id) {
+        const item = PlayerIcons.DEFS[id];
+        if (!item) return false;
+        m.cosmetics.avatarIcons = m.cosmetics.avatarIcons || { [PlayerIcons.DEFAULT]: 1 };
+        if (this.ownsAvatarIcon(id)) return true;
+        if (!this.spend(item.cost || 0)) return false;
+        m.cosmetics.avatarIcons[id] = today(); save(); return true;
+      },
+      buyAvatarBorder(id) {
+        const item = PlayerBorders.DEFS[id];
+        if (!item) return false;
+        m.cosmetics.avatarBorders = m.cosmetics.avatarBorders || { [PlayerBorders.DEFAULT]: 1 };
+        if (this.ownsAvatarBorder(id)) return true;
+        if (!this.spend(item.cost || 0)) return false;
+        m.cosmetics.avatarBorders[id] = today(); save(); return true;
+      },
+      equipAvatarIcon(id) {
+        if (!PlayerIcons.DEFS[id] || !this.ownsAvatarIcon(id)) return false;
+        m.cosmetics.avatarIcon = id; save(); return true;
+      },
+      equipAvatarBorder(id) {
+        if (!PlayerBorders.DEFS[id] || !this.ownsAvatarBorder(id)) return false;
+        m.cosmetics.avatarBorder = id; save(); return true;
+      },
+      avatarIconOwnedCount: () => PlayerIcons.order.filter((id) => id === PlayerIcons.DEFAULT || !!(m.cosmetics.avatarIcons && m.cosmetics.avatarIcons[id])).length,
+      avatarBorderOwnedCount: () => PlayerBorders.order.filter((id) => id === PlayerBorders.DEFAULT || !!(m.cosmetics.avatarBorders && m.cosmetics.avatarBorders[id])).length,
       // ---- Tableros de la tienda (propiedad y equipado) ----
       boardsOwned: () => m.boards.owned,
       ownsBoard: (id) => id === 'classic' || !!(m.boards.owned && m.boards.owned[id]),
@@ -7945,6 +8056,7 @@
       // B-01: el aviso "no se guarda" aplica a TODO modo excluido de RunSave
       // (Supervivencia y Contrarreloj/Reto), no solo a Supervivencia.
       { const pn = $('#pause-note'); if (pn) pn.hidden = !RunSave.EXCLUDED[State.mode]; }
+      renderPauseSummary();
       State.status = 'paused'; Music.stop(true); Modal.open('modal-pause'); announce('Juego en pausa.');
     },
     resume() {
@@ -10063,7 +10175,7 @@
     <div class="hub-header-cards">
       <div class="hub-header-profile">
         <button class="hub-header-profile-button" type="button" data-act="profile" data-i18n-al="profile_action" aria-label="Abrir perfil">
-          <span class="hub-header-avatar"><span class="hub-header-avatar-art"><img src="img/ui-generated/home/avatar-robot.png" alt=""></span><span class="hub-header-level-badge">1</span></span>
+          <span class="hub-header-avatar"><span class="hub-header-avatar-art">${PlayerIcons.html(PlayerIcons.DEFAULT)}</span><img class="hub-header-avatar-frame" src="${PlayerBorders.DEFS[PlayerBorders.DEFAULT].asset}" alt="" aria-hidden="true"><span class="hub-header-level-badge">1</span></span>
           <span class="hub-header-identity">
             <b class="hub-header-name">Jugador</b>
             <span class="hub-header-level-row">
@@ -10094,6 +10206,14 @@
     const lvl = Meta.level(), need = Meta.xpForLevel(lvl), have = Meta.xp();
     document.querySelectorAll('[data-topbar]').forEach((bar) => {
       const n = bar.querySelector('.hub-header-name'); if (n) n.textContent = prof.name;
+      const avatar = bar.querySelector('.hub-header-avatar');
+      if (avatar) {
+        avatar.dataset.playerFrame = Meta.avatarBorder();
+      }
+      const avatarArt = bar.querySelector('.hub-header-avatar-art');
+      if (avatarArt) avatarArt.innerHTML = PlayerIcons.html(Meta.avatarIcon());
+      const avatarFrame = bar.querySelector('.hub-header-avatar-frame');
+      if (avatarFrame) avatarFrame.src = PlayerBorders.DEFS[Meta.avatarBorder()].asset;
       const l = bar.querySelector('.hub-header-level-text'); if (l) l.textContent = I18n.t('lvl') + ' ' + lvl;
       const progress = Math.min(100, have / need * 100);
       const xf = bar.querySelector('.hub-header-xp-fill'); if (xf) xf.style.width = progress.toFixed(0) + '%';
@@ -10655,6 +10775,51 @@
     HubViews.open('collections', { nav: 'nav-collections' });
   }
 
+  function playerCardHtml(extraClass = '') {
+    const name = (Storage.profile && Storage.profile.name) || Storage.user || (Settings.lang === 'es' ? 'Jugador' : 'Player');
+    const level = Meta.level(), need = Math.max(1, Meta.xpForLevel(level)), xp = Meta.xp();
+    const progress = clamp(xp / need * 100, 0, 100);
+    return `<article class="player-card ${extraClass}">
+      <div class="player-card-avatar">${playerAvatarHtml(Meta.avatarIcon(), Meta.avatarBorder(), 'player-avatar-lg')}</div>
+      <div class="player-card-copy"><small>${esc(I18n.t('profile_card_title'))}</small><h3>${esc(name)}</h3><p>${esc(Meta.rank())} · Lv. ${level}</p>
+        <div class="player-card-xp" role="progressbar" aria-valuemin="0" aria-valuemax="${need}" aria-valuenow="${xp}"><span style="width:${progress.toFixed(1)}%"></span></div>
+        <div class="player-card-meta"><span>${fmtNum(xp)} / ${fmtNum(need)} XP</span><span>${Meta.avatarIconOwnedCount() + Meta.avatarBorderOwnedCount()} / ${PlayerIcons.order.length + PlayerBorders.order.length}</span></div>
+      </div>
+    </article>`;
+  }
+
+  function profileCosmeticTile(kind, id) {
+    const iconKind = kind === 'icon', defs = iconKind ? PlayerIcons.DEFS : PlayerBorders.DEFS;
+    const owned = iconKind ? Meta.ownsAvatarIcon(id) : Meta.ownsAvatarBorder(id);
+    const equipped = iconKind ? Meta.avatarIcon() === id : Meta.avatarBorder() === id;
+    const previewIcon = iconKind ? id : Meta.avatarIcon();
+    const previewBorder = iconKind ? Meta.avatarBorder() : id;
+    const action = iconKind ? 'data-profile-icon-eq' : 'data-profile-border-eq';
+    return `<button type="button" class="profile-cosmetic-tile${equipped ? ' is-equipped' : ''}${owned ? '' : ' is-locked'}" ${action}="${id}"${owned ? '' : ' disabled'} aria-label="${esc(defs[id].name)}">
+      ${playerAvatarHtml(previewIcon, previewBorder, 'player-avatar-md')}<span>${esc(defs[id].name)}</span><small>${equipped ? esc(I18n.t('equipped')) : (owned ? esc(I18n.t('equip')) : iconInline('lock'))}</small>
+    </button>`;
+  }
+
+  function buildPlayerProfile() {
+    const card = $('#profile-player-card'); if (card) card.innerHTML = playerCardHtml('player-card-profile');
+    const icons = $('#profile-icon-grid'); if (icons) icons.innerHTML = PlayerIcons.order.map((id) => profileCosmeticTile('icon', id)).join('');
+    const borders = $('#profile-border-grid'); if (borders) borders.innerHTML = PlayerBorders.order.map((id) => profileCosmeticTile('border', id)).join('');
+    const iconCount = $('#profile-icons-count'); if (iconCount) iconCount.textContent = I18n.t('profile_owned').replace('{n}', Meta.avatarIconOwnedCount()).replace('{total}', PlayerIcons.order.length);
+    const borderCount = $('#profile-borders-count'); if (borderCount) borderCount.textContent = I18n.t('profile_owned').replace('{n}', Meta.avatarBorderOwnedCount()).replace('{total}', PlayerBorders.order.length);
+    if (icons) icons.querySelectorAll('[data-profile-icon-eq]').forEach((button) => button.addEventListener('click', () => { if (!Meta.equipAvatarIcon(button.dataset.profileIconEq)) return; Sound.ui(); updateTopBars(); buildPlayerProfile(); }));
+    if (borders) borders.querySelectorAll('[data-profile-border-eq]').forEach((button) => button.addEventListener('click', () => { if (!Meta.equipAvatarBorder(button.dataset.profileBorderEq)) return; Sound.ui(); updateTopBars(); buildPlayerProfile(); }));
+  }
+
+  function renderPauseSummary() {
+    const card = $('#pause-player-card'); if (card) card.innerHTML = playerCardHtml('player-card-pause');
+    const summary = $('#pause-run-summary'); if (!summary) return;
+    const modeName = Config.MODES[State.mode] ? I18n.modeT(State.mode, 'name') : I18n.t('pause_run_title');
+    summary.innerHTML = `<div class="pause-run-heading"><small>${esc(I18n.t('pause_run_title'))}</small><b>${esc(modeName)}</b></div>
+      <div class="pause-run-stat"><span>${esc(I18n.t('pause_score_label'))}</span><strong>${fmtNum(State.score || 0)}</strong></div>
+      <div class="pause-run-stat"><span>${esc(I18n.t('pause_combo_label'))}</span><strong>×${fmtNum(State.maxCombo || State.combo || 0)}</strong></div>
+      <div class="pause-run-stat"><span>${esc(I18n.t(State.mode === 'supervivencia' ? 'st_wave' : 'st_level'))}</span><strong>${fmtNum(State.mode === 'supervivencia' ? (Survival.wave || 1) : (State.level || 1))}</strong></div>`;
+  }
+
   function openMedals(view = 'profile') {
     const achievementsOnly = view === 'achievements';
     const viewRoot = $('#view-medals');
@@ -10699,10 +10864,14 @@
       const achs = Meta.achievements();
       const noneUnlocked = !achs.some(a => a.unlocked);
       const hint = noneUnlocked ? emptyState('medal', I18n.t('empty_medals_title'), I18n.t('empty_medals_sub'), I18n.t('empty_cta_play'), 'go-play') : '';
+      const unlocked = achs.filter((a) => a.unlocked).length;
+      const summary = $('#trophy-summary');
+      if (summary) summary.innerHTML = `<span>${iconInline('trophy')}</span><div><strong>${esc(I18n.t('trophies_progress').replace('{n}', unlocked).replace('{total}', achs.length))}</strong><div class="trophy-progress"><span style="width:${achs.length ? (unlocked / achs.length * 100).toFixed(1) : 0}%"></span></div></div>`;
       list.innerHTML = hint + achs.map(a =>
         `<div class="medal ${a.unlocked ? 'on' : ''}"><span class="medal-ic">${a.unlocked ? iconInline('medal') : iconInline('lock')}</span><span class="medal-tx"><strong>${a.name}</strong><small>${a.desc}</small></span></div>`
       ).join('');
     }
+    buildPlayerProfile();
     HubViews.open('medals', { nav: achievementsOnly ? 'nav-collections' : null });
   }
 
@@ -11000,24 +11169,30 @@
     const list = $('#shop-list'); if (!list) return;
     Econ.refresh();
     { const co = $('#shop-coins'); if (co) co.textContent = Meta.coins(); }
-    // --- Tableros (principal, mockup 5) ---
+    const iconCards = PlayerIcons.order.map((id) => {
+      const item = PlayerIcons.DEFS[id], owned = Meta.ownsAvatarIcon(id), equipped = Meta.avatarIcon() === id;
+      const button = equipped ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
+        : owned ? `<button class="btn btn-primary btn-sm" data-picon-eq="${id}">${esc(I18n.t('equip'))}</button>`
+          : `<button class="btn btn-primary btn-sm" data-picon-buy="${id}">${iconInline('coin')} ${item.cost}</button>`;
+      return `<article class="player-shop-item${equipped ? ' is-equipped' : ''}">${playerAvatarHtml(id, Meta.avatarBorder(), 'player-avatar-md')}<b>${esc(item.name)}</b>${button}</article>`;
+    }).join('');
+    const borderCards = PlayerBorders.order.map((id) => {
+      const item = PlayerBorders.DEFS[id], owned = Meta.ownsAvatarBorder(id), equipped = Meta.avatarBorder() === id;
+      const button = equipped ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
+        : owned ? `<button class="btn btn-primary btn-sm" data-pborder-eq="${id}">${esc(I18n.t('equip'))}</button>`
+          : `<button class="btn btn-primary btn-sm" data-pborder-buy="${id}">${iconInline('coin')} ${item.cost}</button>`;
+      return `<article class="player-shop-item${equipped ? ' is-equipped' : ''}">${playerAvatarHtml(Meta.avatarIcon(), id, 'player-avatar-md')}<b>${esc(item.name)}</b>${button}</article>`;
+    }).join('');
     const eqB = Meta.equippedBoard();
     const boardsHTML = Boards.order.map((id) => {
       const b = Boards.DEFS[id], owned = Meta.ownsBoard(id), eq = eqB === id;
-      // Skins exclusivos (GM-23): no comprables — se GANAN (p. ej. Jardín Zen, 50 flores).
       const btn = eq ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
         : owned ? `<button class="btn btn-primary btn-sm" data-beq="${id}">${esc(I18n.t('equip'))}</button>`
           : b.exclusive ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('board_excl'))}</button>`
             : (b.cost === 0 ? `<button class="btn btn-primary btn-sm" data-beq="${id}">${esc(I18n.t('free'))}</button>`
               : `<button class="btn btn-primary btn-sm" data-bbuy="${id}">${iconInline('coin')} ${b.cost}</button>`);
-      return `<div class="board-card${eq ? ' on' : ''}" data-board="${id}">
-        <span class="board-thumb" data-board="${id}" aria-hidden="true"><img src="img/board-themes/v2/${id}/preview.jpg" alt=""></span>
-        <span class="board-name">${esc(b.name)}</span>
-        <span class="board-chars">${b.chars.map((c) => `<span class="board-char">✦ ${esc(c)}</span>`).join('')}</span>
-        ${btn}
-      </div>`;
+      return `<div class="board-card${eq ? ' on' : ''}" data-board="${id}"><span class="board-thumb" data-board="${id}" aria-hidden="true"><img src="img/board-themes/v2/${id}/preview.jpg" alt=""></span><span class="board-name">${esc(b.name)}</span><span class="board-chars">${b.chars.map((c) => `<span class="board-char">✦ ${esc(c)}</span>`).join('')}</span>${btn}</div>`;
     }).join('');
-    // --- Temas de color (secundario, sistema previo) ---
     const curT = Meta.cosmetics().theme;
     const themesHTML = Themes.order.map((id) => {
       const t = Themes.DEFS[id], owned = Meta.owns(id), eq = curT === id;
@@ -11026,44 +11201,28 @@
           : `<button class="btn btn-primary btn-sm" data-buy="${id}">${iconInline('coin')} ${t.cost}</button>`;
       return `<div class="shop-item${eq ? ' on' : ''}" data-theme="${id}"><button class="shop-sw" type="button" data-theme-preview="${id}" style="background:${Themes.swatch(id)}" aria-label="${esc(I18n.t('preview_theme').replace('{name}', t.name))}"></button><span class="shop-name">${esc(t.name)}</span>${btn}</div>`;
     }).join('');
-    list.innerHTML =
-      `<h3 class="group-title">${esc(I18n.t('shop_boards'))}</h3><div class="board-grid">${boardsHTML}</div>` +
-      `<h3 class="group-title">${esc(I18n.t('shop_themes'))}</h3><div class="themes-grid">${themesHTML}</div>`;
-    // Compra en dos toques: el primero arma el botón (muestra confirmación con el precio
-    // visible), el segundo dentro de 3s compra de verdad. Evita gastos accidentales.
-    const armBuy = (b) => {
-      if (b.dataset.armed) return true;
-      b.dataset.armed = '1';
-      b.classList.add('confirming');
-      const prev = b.innerHTML;
-      b.innerHTML = `${esc(I18n.t('confirm_buy'))} ${prev}`;
-      setTimeout(() => { if (b.isConnected && b.dataset.armed) { delete b.dataset.armed; b.classList.remove('confirming'); b.innerHTML = prev; } }, 3000);
+    list.innerHTML = `<section class="player-shop-hero">${playerCardHtml('player-card-shop')}</section>
+      <h3 class="group-title">${esc(I18n.t('shop_player_icons'))}</h3><div class="player-shop-grid">${iconCards}</div>
+      <h3 class="group-title">${esc(I18n.t('shop_player_borders'))}</h3><div class="player-shop-grid">${borderCards}</div>
+      <h3 class="group-title">${esc(I18n.t('shop_boards'))}</h3><div class="board-grid">${boardsHTML}</div>
+      <h3 class="group-title">${esc(I18n.t('shop_themes'))}</h3><div class="themes-grid">${themesHTML}</div>`;
+    const armBuy = (button) => {
+      if (button.dataset.armed) return true;
+      button.dataset.armed = '1'; button.classList.add('confirming');
+      const previous = button.innerHTML; button.innerHTML = `${esc(I18n.t('confirm_buy'))} ${previous}`;
+      setTimeout(() => { if (button.isConnected && button.dataset.armed) { delete button.dataset.armed; button.classList.remove('confirming'); button.innerHTML = previous; } }, 3000);
       return false;
     };
-    // Tableros: comprar / equipar. Son cosmeticos puros.
-    list.querySelectorAll('[data-bbuy]').forEach((b) => b.addEventListener('click', () => {
-      if (!armBuy(b)) { Sound.ui(); return; }
-      const id = b.dataset.bbuy;
-      if (Meta.buyBoard(id, Boards.DEFS[id].cost)) { Sound.success(); Meta.equipBoard(id); Boards.apply(); buildShop(); Toasts.show(I18n.t('board_unlocked'), 'good', 1600); }
-      else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); }
-    }));
-    list.querySelectorAll('[data-beq]').forEach((b) => b.addEventListener('click', () => {
-      Meta.equipBoard(b.dataset.beq); Boards.apply(); Sound.ui(); buildShop();
-    }));
-    // Temas: preview / comprar / equipar
-    list.querySelectorAll('[data-theme-preview]').forEach((button) => button.addEventListener('click', () => {
-      Cosmetics.previewTheme(button.dataset.themePreview); Sound.ui();
-    }));
-    list.querySelectorAll('[data-buy]').forEach((b) => b.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!armBuy(b)) { Sound.ui(); return; }
-      const id = b.dataset.buy;
-      if (Meta.buy(id, Themes.DEFS[id].cost)) { Sound.success(); Meta.equip('theme', id); Cosmetics.apply(); refreshStart(); buildShop(); Toasts.show('¡Tema desbloqueado!', 'good', 1600); }
-      else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); }
-    }));
-    list.querySelectorAll('[data-equip]').forEach((b) => b.addEventListener('click', (e) => {
-      e.stopPropagation(); Meta.equip('theme', b.dataset.equip); Cosmetics.apply(); Sound.ui(); refreshStart(); buildShop();
-    }));
+    const refreshPlayerShop = () => { updateTopBars(); buildPlayerProfile(); buildShop(); };
+    list.querySelectorAll('[data-picon-buy]').forEach((button) => button.addEventListener('click', () => { if (!armBuy(button)) { Sound.ui(); return; } if (Meta.buyAvatarIcon(button.dataset.piconBuy)) { Meta.equipAvatarIcon(button.dataset.piconBuy); Sound.success(); refreshPlayerShop(); Toasts.show(I18n.t('equipped'), 'good', 1600, 'player'); } else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); } }));
+    list.querySelectorAll('[data-pborder-buy]').forEach((button) => button.addEventListener('click', () => { if (!armBuy(button)) { Sound.ui(); return; } if (Meta.buyAvatarBorder(button.dataset.pborderBuy)) { Meta.equipAvatarBorder(button.dataset.pborderBuy); Sound.success(); refreshPlayerShop(); Toasts.show(I18n.t('equipped'), 'good', 1600, 'player'); } else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); } }));
+    list.querySelectorAll('[data-picon-eq]').forEach((button) => button.addEventListener('click', () => { Meta.equipAvatarIcon(button.dataset.piconEq); Sound.ui(); refreshPlayerShop(); }));
+    list.querySelectorAll('[data-pborder-eq]').forEach((button) => button.addEventListener('click', () => { Meta.equipAvatarBorder(button.dataset.pborderEq); Sound.ui(); refreshPlayerShop(); }));
+    list.querySelectorAll('[data-bbuy]').forEach((button) => button.addEventListener('click', () => { if (!armBuy(button)) { Sound.ui(); return; } const id = button.dataset.bbuy; if (Meta.buyBoard(id, Boards.DEFS[id].cost)) { Sound.success(); Meta.equipBoard(id); Boards.apply(); buildShop(); Toasts.show(I18n.t('board_unlocked'), 'good', 1600); } else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); } }));
+    list.querySelectorAll('[data-beq]').forEach((button) => button.addEventListener('click', () => { Meta.equipBoard(button.dataset.beq); Boards.apply(); Sound.ui(); buildShop(); }));
+    list.querySelectorAll('[data-theme-preview]').forEach((button) => button.addEventListener('click', () => { Cosmetics.previewTheme(button.dataset.themePreview); Sound.ui(); }));
+    list.querySelectorAll('[data-buy]').forEach((button) => button.addEventListener('click', (event) => { event.stopPropagation(); if (!armBuy(button)) { Sound.ui(); return; } const id = button.dataset.buy; if (Meta.buy(id, Themes.DEFS[id].cost)) { Sound.success(); Meta.equip('theme', id); Cosmetics.apply(); refreshStart(); buildShop(); Toasts.show('¡Tema desbloqueado!', 'good', 1600); } else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); } }));
+    list.querySelectorAll('[data-equip]').forEach((button) => button.addEventListener('click', (event) => { event.stopPropagation(); Meta.equip('theme', button.dataset.equip); Cosmetics.apply(); Sound.ui(); refreshStart(); buildShop(); }));
   }
   function openShop() { buildShop(); HubViews.open('shop', { nav: 'nav-shop' }); }
 
@@ -11253,13 +11412,12 @@
     if (r.kind === 'gems') return { icon: '💎', asset: 'img/ui/gem.png', rarity: r.rarity || 'common', label: I18n.t('chest_reward_gems').replace('{n}', r.amount) };
     if (r.kind === 'ticket') return { icon: '🎟️', asset: 'img/ui/ticket.png', rarity: r.rarity || 'common', label: I18n.t('chest_reward_ticket').replace('{n}', r.amount) };
     if (r.kind === 'booster') {
-      const assets = {
-        bomb: 'img/ui/bomb.png', freeze: 'img/icons-v2/4-nature/snowflake.svg', clearLine: 'img/ui/bolt.png',
-        wild: 'img/icons-v2/10-editing/brush.svg', x2: 'img/icons-v2/1-game/double.svg',
-      };
+      const assets = { bomb: 'img/ui/bomb.png', freeze: 'img/icons-v2/4-nature/snowflake.svg', clearLine: 'img/ui/bolt.png', wild: 'img/icons-v2/10-editing/brush.svg', x2: 'img/icons-v2/1-game/double.svg' };
       const name = I18n.t('booster_name_' + r.boosterId);
       return { icon: '⚡', asset: assets[r.boosterId] || 'img/ui/bolt.png', rarity: r.rarity || 'rare', label: I18n.t('chest_reward_booster').replace('{n}', r.amount || 1).replace('{b}', name) };
     }
+    if (r.cosmeticKind === 'avatarIcon') return { icon: 'player', art: PlayerIcons.html(r.id, 'reward-icon-preview'), rarity: 'cosmetic', label: I18n.t('chest_reward_avatar_icon').replace('{n}', r.name || PlayerIcons.DEFS[r.id].name) };
+    if (r.cosmeticKind === 'avatarBorder') return { icon: 'player', art: PlayerBorders.html(r.id, 'reward-border-preview'), rarity: 'cosmetic', label: I18n.t('chest_reward_avatar_border').replace('{n}', r.name || PlayerBorders.DEFS[r.id].name) };
     const key = r.cosmeticKind === 'theme' ? 'chest_reward_theme' : 'chest_reward_board';
     return { icon: '✨', asset: 'img/ui/gift.png', rarity: 'cosmetic', label: I18n.t(key).replace('{n}', r.name || r.id) };
   }
@@ -11289,7 +11447,7 @@
       const next = hidden && i === 1;
       const kind = item.guaranteed ? I18n.t('chest_guaranteed_coins') : (i === 1 ? I18n.t('chest_primary_roll') : I18n.t('chest_bonus_rolls').replace('{n}', 1));
       return `<button type="button" class="cr-item rarity-${hidden ? 'hidden' : it.rarity}${hidden ? ' is-hidden' : ''}${next ? ' is-next' : ''}" data-cr-item="${i}"${hidden && !next || !hidden ? ' disabled' : ''} aria-label="${esc(hidden ? I18n.t('chest_tap_reveal') : it.label)}">
-        <span class="cr-item-face"><img src="${it.asset}" alt="" aria-hidden="true"><b>${esc(it.label)}</b></span>
+        <span class="cr-item-face">${it.art || `<img src="${it.asset}" alt="" aria-hidden="true">`}<b>${esc(it.label)}</b></span>
         <span class="cr-item-back" aria-hidden="true"><b>?</b><small>${esc(kind)}</small></span>
       </button>`;
     }).join('');
@@ -11348,8 +11506,10 @@
     const eq = el.querySelector('[data-chest-equip]');
     if (eq) eq.addEventListener('click', () => {
       if (r.cosmeticKind === 'board') { Meta.equipBoard(r.id); Boards.apply(); }
-      else { Meta.equip('theme', r.id); Cosmetics.apply(); }
-      Sound.success(); Econ.refresh(); refreshStart(); buildShop(); setChestButtonsBusy(false); finishChestCeremony();
+      else if (r.cosmeticKind === 'theme') { Meta.equip('theme', r.id); Cosmetics.apply(); }
+      else if (r.cosmeticKind === 'avatarIcon') Meta.equipAvatarIcon(r.id);
+      else if (r.cosmeticKind === 'avatarBorder') Meta.equipAvatarBorder(r.id);
+      Sound.success(); Econ.refresh(); updateTopBars(); refreshStart(); buildShop(); buildPlayerProfile(); setChestButtonsBusy(false); finishChestCeremony();
       Toasts.show(I18n.t('equipped'), 'good', 1500, info.icon);
     });
     if (!el.querySelector('.cr-item.is-hidden')) unlockNextAction(false);
@@ -12103,5 +12263,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
 })();

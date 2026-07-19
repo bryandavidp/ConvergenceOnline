@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.7.9" />
+  <link rel="stylesheet" href="styles.css?v=2.9.2" />
 </head>
 <body data-screen="login">
   <!-- Fondo de estrellas (decorativo) -->
@@ -410,7 +410,9 @@
 
     <section class="hub-view view-missions" id="view-missions" data-hub-view="missions" aria-labelledby="missions-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/target.png" alt=""></span><h2 id="missions-title" data-i18n="missions_title">Misiones</h2></div>
-      <div class="modal-body view-body">
+      <p class="hub-view-intro" data-i18n="missions_sub">Completa objetivos diarios y semanales para acelerar tu progreso.</p>
+      <div class="modal-body view-body missions-view-body">
+        <div class="missions-hero" aria-hidden="true"><span>✦</span><div><b>CONVERGENCE OPS</b><small>DAILY SIGNAL</small></div></div>
         <div class="start-missions" id="start-missions"></div>
       </div>
       <div class="modal-actions view-actions">
@@ -436,8 +438,10 @@
     </section>
 
     <!-- Pausa -->
-    <div class="modal" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+    <div class="modal pause-modal" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><span class="icv2" style="--icv2-url:url('img/icons-v2/9-media/pause.svg')"></span></span><h2 id="pause-title" data-i18n="pause">Pausa</h2></div>
+      <div class="pause-player-card" id="pause-player-card"></div>
+      <div class="pause-run-summary" id="pause-run-summary"></div>
       <p class="modal-sub pause-note" id="pause-note" data-i18n="pause_no_save" hidden>Este modo no guarda la partida al salir.</p>
       <div class="modal-actions modal-buttons">
         <button class="btn btn-primary btn-icon" id="btn-resume"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="resume">Reanudar</span></button>
@@ -613,7 +617,7 @@
     <!-- Tienda de personalización: tableros + temas. -->
     <section class="hub-view view-shop" id="view-shop" data-hub-view="shop" aria-labelledby="shop-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/cart.png" alt=""></span><h2 id="shop-title" data-i18n="style_shop_title">Tableros y temas</h2></div>
-      <p class="shop-hint" data-i18n="shop_hint2">Los tableros son solo cambios visuales: no dan ventajas ni desventajas.</p>
+      <p class="shop-hint" data-i18n="shop_player_hint">Personaliza tu tarjeta. También puedes conseguir iconos y bordes en los cofres.</p>
       <div class="modal-body view-body">
         <div class="shop-list" id="shop-list"></div>
       </div>
@@ -688,6 +692,7 @@
             <div class="chest-reward-tile"><img src="img/ui/bolt.png" alt=""><b data-i18n="chest_reward_boosters">Potenciadores</b><small>x1</small></div>
             <div class="chest-reward-tile"><img src="img/ui/planet.png" alt=""><b data-i18n="chest_reward_boards">Tableros</b><small data-i18n="chest_rarity_cosmetic">Especial</small></div>
             <div class="chest-reward-tile"><img src="img/ui/crystal.png" alt=""><b data-i18n="chest_reward_themes">Temas</b><small data-i18n="chest_rarity_cosmetic">Especial</small></div>
+            <div class="chest-reward-tile"><img src="img/ui/player.png" alt=""><b data-i18n="chest_reward_avatars">Iconos y bordes</b><small data-i18n="chest_rarity_cosmetic">Especial</small></div>
           </div>
         </section>
 
@@ -754,12 +759,21 @@
     <!-- Perfil: estadísticas + leaderboard + logros -->
     <section class="hub-view view-profile" id="view-medals" data-hub-view="medals" aria-labelledby="medals-title" hidden>
       <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui/player.png" alt=""></span><h2 id="medals-title" data-i18n="profile_title">Perfil</h2></div>
-      <div class="modal-body view-body">
-        <button class="profile-edit-name btn btn-ghost btn-sm" type="button" data-act="edit-name" data-i18n="edit_name_action">Editar nombre</button>
+      <div class="modal-body view-body profile-view-body">
+        <div class="profile-player-card profile-only" id="profile-player-card"></div>
+        <button class="profile-edit-name btn btn-ghost btn-sm profile-only" type="button" data-act="edit-name" data-i18n="edit_name_action">Editar nombre</button>
+        <section class="profile-customizer profile-only" aria-labelledby="profile-loadout-title">
+          <div class="profile-section-head"><h3 id="profile-loadout-title" data-i18n="profile_loadout_title">Tu estilo</h3></div>
+          <div class="profile-section-head"><h4 data-i18n="profile_icons_title">Iconos</h4><span id="profile-icons-count"></span></div>
+          <div class="profile-cosmetic-grid" id="profile-icon-grid"></div>
+          <div class="profile-section-head"><h4 data-i18n="profile_borders_title">Bordes</h4><span id="profile-borders-count"></span></div>
+          <div class="profile-cosmetic-grid" id="profile-border-grid"></div>
+        </section>
         <div class="stats profile-only" id="profile-stats"></div>
         <h3 class="group-title profile-only" data-i18n="best_by_mode">Mejores marcas por modo</h3>
         <div class="profile-lb profile-only" id="profile-lb"></div>
-        <h3 class="group-title achievements-heading" data-i18n="achievements">Logros</h3>
+        <h3 class="group-title achievements-heading" data-i18n="achievements">Trofeos</h3>
+        <div class="trophy-summary" id="trophy-summary"></div>
         <div class="medals-list" id="medals-list"></div>
       </div>
       <div class="modal-actions view-actions">
@@ -788,6 +802,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.7.9" defer></script>
+  <script src="game.js?v=2.9.2" defer></script>
 </body>
 </html>
