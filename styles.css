@@ -3425,16 +3425,10 @@ body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
 #screen-start .home-scroll,
 #screen-start .home-foot { position: relative; z-index: 2; }
 #screen-start .home-space-art { position: absolute; z-index: 1; inset: 0; overflow: hidden; pointer-events: none; }
-#screen-start .home-space-art::before {
-  content: ''; position: absolute; left: 9%; top: 33%; width: 4px; height: 4px; border-radius: 50%; background: #19d7ff;
-  box-shadow: 73vw -23vh 0 -1px #1cd8ff, 58vw -19vh 0 -1px #2478ff, 84vw 5vh 0 -1px #ff7e32, 20vw 28vh 0 -1px #1f68ff, 66vw 34vh 0 -1px #7928ff;
-}
+/* Único adorno de fondo que se conserva: un rombo azul tenue anclado arriba,
+   junto al cofre. Las esferas naranja/verde, la cruz morada y los puntos
+   dispersos se retiraron por interferir con el carrusel de modos. */
 #screen-start .space-diamond { position: absolute; left: 75%; top: 13%; width: 43px; height: 36px; border: 1px solid rgba(52,134,255,.46); border-radius: 7px; transform: rotate(30deg) skew(-6deg); background: linear-gradient(145deg, rgba(28,117,255,.62), rgba(22,39,151,.2)); box-shadow: inset 0 0 14px rgba(14,101,255,.3), 0 0 12px rgba(0,128,255,.22); }
-#screen-start .space-cross { position: absolute; right: 6%; top: 31%; width: 43px; height: 16px; border-radius: 8px; transform: rotate(43deg); background: linear-gradient(180deg, #a83cff, #5820b7); box-shadow: 0 0 16px rgba(147,38,255,.6); }
-#screen-start .space-cross::after { content: ''; position: absolute; left: 13px; top: -13px; width: 16px; height: 43px; border-radius: 8px; background: inherit; }
-#screen-start .space-planet { position: absolute; border-radius: 50%; }
-#screen-start .planet-orange { left: 6%; top: 38%; width: 34px; height: 34px; background: radial-gradient(circle at 32% 25%, #ffd467 0 10%, #f4992e 34%, #c94e20 72%, #70200f 100%); box-shadow: 0 0 13px rgba(255,116,31,.5); }
-#screen-start .planet-green { right: 4%; top: 42%; width: 24px; height: 24px; background: radial-gradient(circle at 31% 25%, #9bff65 0 10%, #39ba4b 38%, #14712d 76%, #08381c 100%); box-shadow: 0 0 12px rgba(70,226,87,.42); }
 .screen:not(.home) .econ-fire,
 .screen:not(.home) .econ-gems .econ-plus { display: none; }
 
@@ -7168,6 +7162,101 @@ html[lang="en"] body.large-text #screen-modes .mode-mock-spark-right { right: 13
   border-radius: 999px;
   background: var(--active-mode-accent);
   box-shadow: 0 0 12px color-mix(in srgb, var(--active-mode-accent) 72%, transparent);
+}
+
+/* =========================================================================
+   COACH DE GESTO (solo la primera vez)
+   Una mano que barre lateralmente sobre las cards para enseñar que el carrusel
+   se desliza. Oculto por defecto; se revela al añadir .is-hinting al carrusel
+   desde HomeModeCarousel.playSwipeHint(). Nunca captura el puntero.
+   ========================================================================= */
+#screen-start .home-swipe-coach {
+  --sweep: clamp(46px, 12vw, 60px);
+  position: absolute;
+  z-index: 16;
+  left: 0;
+  right: 0;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 3vw, 18px);
+  transform: translateY(-14%);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .4s ease, visibility 0s linear .4s;
+}
+#screen-start .home-mode-carousel.is-hinting .home-swipe-coach {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .45s ease;
+}
+#screen-start .home-swipe-coach-hand {
+  position: relative;
+  width: clamp(38px, 9vw, 46px);
+  height: clamp(38px, 9vw, 46px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #ffffff 0 18%, #dcecff 44%, #86b6ff 100%);
+  box-shadow:
+    0 8px 20px rgba(3,10,30,.55),
+    0 0 0 clamp(7px, 1.8vw, 10px) rgba(120,180,255,.16),
+    inset 0 2px 3px rgba(255,255,255,.75);
+}
+/* Anillo de "toque" que pulsa al inicio de cada barrido. */
+#screen-start .home-swipe-coach-hand::before {
+  content: "";
+  position: absolute;
+  inset: clamp(-13px, -3vw, -10px);
+  border-radius: 50%;
+  border: 2px solid rgba(150,200,255,.55);
+  opacity: 0;
+}
+#screen-start .home-mode-carousel.is-hinting .home-swipe-coach-hand {
+  animation: homeSwipeSweep 1.5s cubic-bezier(.5,.05,.28,1) 2;
+}
+#screen-start .home-mode-carousel.is-hinting .home-swipe-coach-hand::before {
+  animation: homeSwipeRipple 1.5s ease-out 2;
+}
+#screen-start .home-swipe-coach-label {
+  font: 800 clamp(.74rem, 2.1vw, .86rem)/1 var(--app-font);
+  color: #eaf2ff;
+  letter-spacing: .006em;
+  padding: 7px clamp(12px, 3vw, 16px);
+  border-radius: 999px;
+  background: rgba(10,22,54,.74);
+  border: 1px solid rgba(140,180,255,.3);
+  box-shadow: 0 8px 20px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.08);
+  white-space: nowrap;
+}
+
+/* La mano aparece a la derecha y arrastra hacia la izquierda (revela el
+   siguiente modo), dos veces. */
+@keyframes homeSwipeSweep {
+  0%   { transform: translateX(var(--sweep)) scale(.86); opacity: 0; }
+  16%  { transform: translateX(var(--sweep)) scale(1);   opacity: 1; }
+  70%  { transform: translateX(calc(var(--sweep) * -1)) scale(1); opacity: 1; }
+  100% { transform: translateX(calc(var(--sweep) * -1)) scale(.86); opacity: 0; }
+}
+@keyframes homeSwipeRipple {
+  0%, 12% { transform: scale(.55); opacity: 0; }
+  30%     { transform: scale(1);   opacity: .85; }
+  58%     { transform: scale(1.55); opacity: 0; }
+  100%    { opacity: 0; }
+}
+
+/* Movimiento reducido: el coach sigue mostrándose (con su rótulo), pero sin
+   barrido ni pulso; la mano queda estática y centrada. */
+body.reduced-fx #screen-start .home-mode-carousel.is-hinting .home-swipe-coach-hand,
+body.reduced-fx #screen-start .home-mode-carousel.is-hinting .home-swipe-coach-hand::before {
+  animation: none;
+}
+body.reduced-fx #screen-start .home-swipe-coach { transition: opacity .2s ease; }
+@media (prefers-reduced-motion: reduce) {
+  #screen-start .home-mode-carousel.is-hinting .home-swipe-coach-hand,
+  #screen-start .home-mode-carousel.is-hinting .home-swipe-coach-hand::before {
+    animation: none;
+  }
 }
 
 #screen-start .home-context {
