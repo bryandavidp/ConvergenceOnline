@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.7.5';
+  const VERSION = '2.7.6';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -284,6 +284,8 @@
     set preboostSeen(v) { localStorage.setItem('cv_preboost', v ? '1' : '0'); },
     get lastMode() { return localStorage.getItem('cv_last_mode') || ''; },
     set lastMode(v) { v ? localStorage.setItem('cv_last_mode', v) : localStorage.removeItem('cv_last_mode'); },
+    get swipeHintSeen() { return localStorage.getItem('cv_swipe_hint') === '1'; },
+    set swipeHintSeen(v) { localStorage.setItem('cv_swipe_hint', v ? '1' : '0'); },
   };
 
   /* ===================== Settings (persistentes) ===================== */
@@ -329,6 +331,7 @@
         collections_locked: 'Por descubrir', collections_explore_shop: 'Ver tableros y temas', collections_view_achievements: 'Ver logros',
         modes_title: 'Elige tu modo', modes_sub: 'Cada modo, una forma diferente de jugar', modes_more: 'Más modos',
         home_modes_label: 'Modos de juego', home_carousel_hint: 'Desliza horizontalmente · toca la tarjeta para entrar',
+        home_swipe_coach: 'Desliza para explorar los modos',
         home_mode_prev: 'Modo anterior', home_mode_next: 'Modo siguiente', home_mode_pages: 'Seleccionar modo',
         home_mode_play: 'Entrar en {mode}', home_mode_select: 'Seleccionar {mode}', home_mode_position: '{mode}. {n} de {total}',
         home_quick_actions: 'Eventos y accesos rápidos',
@@ -675,6 +678,7 @@
         collections_locked: 'Undiscovered', collections_explore_shop: 'View boards & themes', collections_view_achievements: 'View achievements',
         modes_title: 'Choose your mode', modes_sub: 'Each mode, a different way to play', modes_more: 'More modes',
         home_modes_label: 'Game modes', home_carousel_hint: 'Swipe horizontally · tap the card to enter',
+        home_swipe_coach: 'Swipe to explore the modes',
         home_mode_prev: 'Previous mode', home_mode_next: 'Next mode', home_mode_pages: 'Choose a mode',
         home_mode_play: 'Enter {mode}', home_mode_select: 'Select {mode}', home_mode_position: '{mode}. {n} of {total}',
         home_quick_actions: 'Events and shortcuts',
@@ -9652,6 +9656,9 @@
     drag: null,
     ignoreClickUntil: 0,
     motionTimer: 0,
+    hintTimers: [],
+    hintActive: false,
+    hintCancel: null,
 
     normalize(n, length = HOME_MODE_CARDS.length) {
       return ((n % length) + length) % length;
@@ -9706,11 +9713,31 @@
         return `<button type="button" class="home-mode-dot" data-mode-dot="${c.key}" aria-label="${esc(I18n.t('home_mode_select').replace('{mode}', title))}"></button>`;
       }).join('');
 
+      this.ensureSwipeCoach();
       this.turn = Math.max(0, HOME_MODE_CARDS.findIndex((c) => c.key === preserved));
       this.renderedTurn = null;
       this.key = preserved;
       this.bind();
       this.update({ instant: true, announce: false });
+    },
+
+    // Coach de gesto (solo la primera vez): una mano que barre lateralmente
+    // sobre las cards para comunicar que el carrusel se desliza. Se inyecta una
+    // sola vez; en reconstrucciones (p. ej. cambio de idioma) solo re-traduce.
+    ensureSwipeCoach() {
+      const root = $('#home-mode-carousel'); if (!root) return;
+      const existing = root.querySelector('.home-swipe-coach');
+      if (existing) {
+        const label = existing.querySelector('.home-swipe-coach-label');
+        if (label) label.textContent = I18n.t('home_swipe_coach');
+        return;
+      }
+      const coach = document.createElement('div');
+      coach.className = 'home-swipe-coach';
+      coach.setAttribute('aria-hidden', 'true');
+      coach.innerHTML = `<span class="home-swipe-coach-hand" aria-hidden="true"></span><span class="home-swipe-coach-label">${esc(I18n.t('home_swipe_coach'))}</span>`;
+      const dots = root.querySelector('#home-mode-dots');
+      root.insertBefore(coach, dots || null);
     },
 
     bind() {
@@ -9858,6 +9885,67 @@
       if (card.disabled || !card.action) { Sound.miss(); Toasts.show(I18n.t('multi_soon'), 'info', 1500); return; }
       Sound.ensure(); Sound.ui(); card.action();
     },
+
+    // Se dispara una sola vez en la vida del usuario, al ver Inicio por primera
+    // vez. Marca el flag antes de animar para no repetir aunque se interrumpa.
+    maybeHintSwipe() {
+      if (Storage.swipeHintSeen || HOME_MODE_CARDS.length < 2) return;
+      const root = $('#home-mode-carousel');
+      if (!root || root.offsetParent === null) return; // Inicio no visible aún.
+      Storage.swipeHintSeen = true;
+      this.clearHint();
+      this.hintTimers.push(setTimeout(() => this.playSwipeHint(), 620));
+    },
+
+    playSwipeHint() {
+      const root = $('#home-mode-carousel'), track = $('#mode-cards'), viewport = $('#home-mode-viewport');
+      if (!root || !track || root.offsetParent === null) return;
+      this.hintActive = true;
+      root.classList.add('is-hinting');
+
+      // Si el usuario ya empieza a tocar/arrastrar, el coach sobra: se retira.
+      if (viewport) {
+        const onGrab = () => this.clearHint();
+        viewport.addEventListener('pointerdown', onGrab, { once: true });
+        this.hintCancel = () => viewport.removeEventListener('pointerdown', onGrab);
+      }
+
+      const settle = () => {
+        root.classList.remove('is-hinting');
+        track.style.setProperty('--carousel-drag', '0deg');
+        this.hintActive = false;
+      };
+
+      const reduced = document.body.classList.contains('reduced-fx')
+        || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      if (reduced) {
+        // Sin movimiento del cilindro: solo el rótulo estático un instante.
+        this.hintTimers.push(setTimeout(settle, 2600));
+        return;
+      }
+
+      // "Peek" real del cilindro sincronizado con el barrido de la mano: gira un
+      // poco hacia el siguiente modo y regresa, dos veces, para evidenciar el
+      // gesto. Se conduce por --carousel-drag (misma variable que el arrastre).
+      const nudge = (ms, deg) => this.hintTimers.push(setTimeout(() => {
+        if (this.hintActive) track.style.setProperty('--carousel-drag', deg);
+      }, ms));
+      nudge(260, '-15deg');
+      nudge(1010, '7deg');
+      nudge(1760, '-15deg');
+      nudge(2500, '0deg');
+      this.hintTimers.push(setTimeout(settle, 3120));
+    },
+
+    clearHint() {
+      this.hintTimers.forEach(clearTimeout);
+      this.hintTimers = [];
+      if (this.hintCancel) { this.hintCancel(); this.hintCancel = null; }
+      const root = $('#home-mode-carousel'), track = $('#mode-cards');
+      if (root) root.classList.remove('is-hinting');
+      if (track) track.style.setProperty('--carousel-drag', '0deg');
+      this.hintActive = false;
+    },
   };
 
   function buildHomeModeCarousel() {
@@ -9871,6 +9959,7 @@
     HubViews.home({ focus: false });
     Screens.show('start');
     if (focusMode) requestAnimationFrame(() => HomeModeCarousel.update({ focus: true, announce: false }));
+    HomeModeCarousel.maybeHintSwipe();
   }
 
   // Aventura → vista de capítulos; su botón "Continuar" lanza la partida.
