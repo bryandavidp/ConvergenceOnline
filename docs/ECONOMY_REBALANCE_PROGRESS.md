@@ -18,7 +18,7 @@
 | ECO-4 Sumideros | ✅ HECHA | (ver git log: "ECO-4") | Tienda rotatoria de tintes · boosters/revives recalibrados · venta directa por gemas |
 | ECO-5 Tienda | ✅ HECHA | (ver git log: "ECO-5") | Packs 3600/7000 · premium 60💎 sin gemas · cofres por EV · tests de dominancia |
 | ECO-6 Cola de cofres | ✅ HECHA | (ver git log: "ECO-6") | Escalera 1/tier/día · pipeline ≤4/día (sin pérdida) · 4ª ranura +15% · métricas de cola |
-| ECO-7 Forecast 30/90/180 | ⬜ pendiente | — | |
+| ECO-7 Forecast 30/90/180 | ✅ HECHA | (ver git log: "ECO-7") | Matriz 6 perfiles · guardarraíles CI · docs/ECONOMY_BASELINE.md · tickets de cofres altos recortados |
 | ECO-8 UX y release | ⬜ pendiente | — | |
 
 ## Batería "ANTES" (v2.9.3, congelada 2026-07-20)
@@ -348,6 +348,27 @@ superv. difícil hábil   1114                  (≤1200) ✅
   procesa su flujo medio.
 - **Tests**: nuevo `tests/chest-queue.test.js` (6). Adaptado:
   `chest-agency.test.js` (ciclo de 32 en 8 días). Suite: 311 pass / 2 preexistentes.
+
+## ECO-7 — qué se hizo y cómo verificarlo (2026-07-20)
+
+- **Forecast ampliado**: `runEconomyForecast` soporta `daysPerWeek` (días de
+  descanso: sin ritual ni sesiones, los timers siguen) y compra con prioridad
+  realista (rotación diaria ANTES que catálogo permanente). CLI `--dayspw`.
+- **Matriz longitudinal** (6 perfiles del plan × 30/90/180): resultados completos
+  en **`docs/ECONOMY_BASELINE.md`** (versión, seed, tabla, puertas, desviaciones
+  †1–†4 y decisiones). Titulares: medio completa catálogo día 27, coleccionista
+  día 30 (rango de producto 30–45 ✅), intensivo 18,8 gemas/día ✅, gemas en
+  circulación ~95%, reservas del jugador medio estables (0–2 cofres).
+- **Ajuste medido**: tickets de cofres altos recortados (divine 7-10→5-8, etc.)
+  — sin él, el strategic acumulaba tickets sin freno a 90 días.
+- **Guardarraíles de CI**: `tests/economy-guardrail.test.js` (3 tests, ~40 s,
+  forecasts reales seedeados): catálogo ≥25 días, ≤21 gemas/día (proxy),
+  tickets/reserva/45% de gasto bajo strategic. Dominancia y fallback ya
+  cubiertos por `economy-dominance` y `chest-rarity`. Los guardarraíles de
+  horizonte largo (crecimiento post-90d) quedan documentados como verificación
+  manual con la matriz (comandos en ECONOMY_BASELINE.md).
+- Extra ECO-80 adelantado: el lanzador de Supervivencia muestra el cupo diario
+  de gemas restante (`mode_note_surv_gems[_done]` ES/EN).
 
 ## Registro de decisiones tomadas
 

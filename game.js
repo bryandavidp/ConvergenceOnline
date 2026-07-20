@@ -191,13 +191,13 @@
         wood: { coins: [30, 100], gems: [1, 3], tickets: [1, 1], coinCut: .60, gemCut: .90, ticketCut: .98, rarity: 'common' },
         bronze: { coins: [45, 130], gems: [1, 4], tickets: [1, 1], coinCut: .56, gemCut: .86, ticketCut: .96, rarity: 'common' },
         silver: { coins: [70, 180], gems: [2, 5], tickets: [1, 2], coinCut: .50, gemCut: .78, ticketCut: .92, rarity: 'rare' },
-        gold: { coins: [100, 250], gems: [2, 6], tickets: [2, 3], coinCut: .46, gemCut: .72, ticketCut: .87, rarity: 'epic' },
-        magic: { coins: [140, 350], gems: [3, 8], tickets: [2, 4], coinCut: .40, gemCut: .64, ticketCut: .78, rarity: 'epic' },
-        royal: { coins: [200, 475], gems: [5, 11], tickets: [3, 5], coinCut: .36, gemCut: .55, ticketCut: .68, rarity: 'legendary' },
-        supreme: { coins: [275, 625], gems: [6, 13], tickets: [4, 6], coinCut: .30, gemCut: .46, ticketCut: .58, rarity: 'legendary' },
-        champion: { coins: [375, 800], gems: [8, 17], tickets: [5, 8], coinCut: .25, gemCut: .40, ticketCut: .50, rarity: 'mythic' },
-        divine: { coins: [500, 1200], gems: [12, 24], tickets: [7, 10], coinCut: .20, gemCut: .32, ticketCut: .40, rarity: 'mythic' },
-        event: { coins: [90, 260], gems: [2, 7], tickets: [2, 4], coinCut: .38, gemCut: .63, ticketCut: .78, rarity: 'special' },
+        gold: { coins: [100, 250], gems: [2, 6], tickets: [1, 3], coinCut: .46, gemCut: .72, ticketCut: .87, rarity: 'epic' },
+        magic: { coins: [140, 350], gems: [3, 8], tickets: [2, 3], coinCut: .40, gemCut: .64, ticketCut: .78, rarity: 'epic' },
+        royal: { coins: [200, 475], gems: [5, 11], tickets: [2, 4], coinCut: .36, gemCut: .55, ticketCut: .68, rarity: 'legendary' },
+        supreme: { coins: [275, 625], gems: [6, 13], tickets: [3, 5], coinCut: .30, gemCut: .46, ticketCut: .58, rarity: 'legendary' },
+        champion: { coins: [375, 800], gems: [8, 17], tickets: [4, 6], coinCut: .25, gemCut: .40, ticketCut: .50, rarity: 'mythic' },
+        divine: { coins: [500, 1200], gems: [12, 24], tickets: [5, 8], coinCut: .20, gemCut: .32, ticketCut: .40, rarity: 'mythic' },
+        event: { coins: [90, 260], gems: [2, 7], tickets: [1, 3], coinCut: .38, gemCut: .63, ticketCut: .78, rarity: 'special' },
       },
     },
     shop: {
@@ -771,7 +771,7 @@
         daily_info_same: 'El mismo tablero para todos · cambia a medianoche', daily_info_mut: 'Mutador de hoy', daily_info_medals: 'Medallas', daily_info_best: 'Mejor de hoy', daily_info_no_best: 'Sin intentos todavía', daily_info_ghost: 'Tu fantasma: tu mejor intento de hoy', daily_info_streak: 'Racha con congelación ética', daily_info_first: '+5 💎 primer intento del día', daily_note_next: '🎯 Siguiente: {m} {n}', daily_medal_up: '¡Medalla de {m}! Siguiente: {n}', daily_medal_max: '¡Oro asegurado!',
         daily_learning_label: 'Hoy entrenas', daily_practice_in: 'Después, practica en {mode}', daily_practice_cta: 'Practicar en {mode}', daily_skill_pure: 'Cadenas limpias y lectura del tablero', daily_skill_ice: 'Liberar bloqueos sin perder el ritmo', daily_skill_window: 'Sostener combos rápidos', daily_skill_variety: 'Reconocer patrones con más iconos', daily_skill_rocks: 'Trazar rutas entre obstáculos', daily_skill_fast: 'Decidir bajo presión', daily_skill_crystal: 'Priorizar objetivos especiales', daily_skill_nohints: 'Leer el tablero sin asistencia',
         mode_note_clasico: 'Maestría: termina sin errores para 3★', mode_note_clasico_streak: 'Racha perfecta: ×{n}',
-        mode_note_aventura: 'Descubre: {m}', mode_note_contrarreloj: 'Cada convergencia compra segundos', mode_note_daily: 'Reto diario: bronce, plata u oro', mode_note_zen: 'Sin castigo',
+        mode_note_aventura: 'Descubre: {m}', mode_note_contrarreloj: 'Cada convergencia compra segundos', mode_note_daily: 'Reto diario: bronce, plata u oro', mode_note_surv_gems: 'Hitos de hoy: hasta {n} 💎 por oleadas', mode_note_surv_gems_done: 'Gemas de hoy completadas · los hitos pagan monedas', mode_note_zen: 'Sin castigo',
         mode_brief_clasico: 'Clásico · busca 3 estrellas', mode_brief_aventura: 'Aventura · lee el bioma y adapta la ruta',
         mode_brief_contrarreloj: 'Contrarreloj · prioriza combos para comprar tiempo', mode_brief_supervivencia: 'Supervivencia · prepara tu arsenal antes de la oleada', mode_brief_zen: 'Zen · calma, limpieza y colección',
         result_focus_clasico: 'Repite niveles sin errores para encadenar perfectos.', result_focus_aventura: 'El siguiente bioma cambia el objetivo: mira el banner antes de actuar.',
@@ -1121,7 +1121,7 @@
         daily_info_same: 'Same board for everyone · changes at midnight', daily_info_mut: "Today's twist", daily_info_medals: 'Medals', daily_info_best: "Today's best", daily_info_no_best: 'No attempts yet', daily_info_ghost: 'Your ghost: your best try today', daily_info_streak: 'Ethical freeze streak', daily_info_first: '+5 💎 first try of the day', daily_note_next: '🎯 Next: {m} {n}', daily_medal_up: '{m} medal! Next: {n}', daily_medal_max: 'Gold secured!',
         daily_learning_label: 'Today you train', daily_practice_in: 'Then practise in {mode}', daily_practice_cta: 'Practise in {mode}', daily_skill_pure: 'Clean chains and board reading', daily_skill_ice: 'Break blockers without losing rhythm', daily_skill_window: 'Sustain fast combos', daily_skill_variety: 'Recognise patterns with more icons', daily_skill_rocks: 'Route around obstacles', daily_skill_fast: 'Decide under pressure', daily_skill_crystal: 'Prioritise special goals', daily_skill_nohints: 'Read the board without assistance',
         mode_note_clasico: 'Mastery: finish with no mistakes for 3★', mode_note_clasico_streak: 'Perfect streak: ×{n}',
-        mode_note_aventura: 'Discover: {m}', mode_note_contrarreloj: 'Every convergence buys seconds', mode_note_daily: 'Daily run: bronze, silver or gold', mode_note_zen: 'Breathe: no punishment',
+        mode_note_aventura: 'Discover: {m}', mode_note_contrarreloj: 'Every convergence buys seconds', mode_note_daily: 'Daily run: bronze, silver or gold', mode_note_surv_gems: "Today's milestones: up to {n} 💎 from waves", mode_note_surv_gems_done: 'Daily gems complete · milestones now pay coins', mode_note_zen: 'Breathe: no punishment',
         mode_brief_clasico: 'Classic · chase 3 stars', mode_brief_aventura: 'Adventure · read the biome and adapt',
         mode_brief_contrarreloj: 'Time Attack · use combos to buy time', mode_brief_supervivencia: 'Survival · prepare your loadout before the wave', mode_brief_zen: 'Zen · calm, clearing and collection',
         result_focus_clasico: 'Replay levels with no mistakes to chain perfect clears.', result_focus_aventura: 'The next biome changes the goal: read the banner before acting.',
@@ -7786,6 +7786,12 @@
         return I18n.t('mode_note_aventura').replace('{m}', mod);
       }
       if (mode === 'contrarreloj') return State.isDaily ? this.dailyNoteText() : I18n.t('mode_note_contrarreloj');
+      if (mode === 'supervivencia') {
+        const left = Meta.survivalGemsLeftToday();
+        return left > 0
+          ? I18n.t('mode_note_surv_gems').replace('{n}', left)
+          : I18n.t('mode_note_surv_gems_done');
+      }
       if (mode === 'zen') {
         const fl = Meta.zenFlowers();
         return I18n.t('mode_note_zen') + (fl > 0 ? ' · 🌸 ' + fl : '');

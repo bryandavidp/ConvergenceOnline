@@ -497,6 +497,7 @@ function forecastCurrencies(summary) {
 
 function runEconomyForecast(options = {}) {
   const days = Math.max(1, options.days | 0 || 7);
+  const daysPerWeek = Math.min(7, Math.max(1, options.daysPerWeek | 0 || 7));
   const sessionsPerDay = Math.max(1, options.sessionsPerDay | 0 || 2);
   const minutes = Math.max(1, Number(options.minutesPerSession) || 8);
   const profile = PROFILES[options.profile] ? options.profile : 'average';
@@ -516,7 +517,7 @@ function runEconomyForecast(options = {}) {
   const catalogItems = coinCatalog();
   const catalogTotal = catalogItems.reduce((sum, item) => sum + item.cost, 0);
   const report = {
-    policy: policyId, profile, days, sessionsPerDay, minutesPerSession: minutes, seed, diff,
+    policy: policyId, profile, days, daysPerWeek, sessionsPerDay, minutesPerSession: minutes, seed, diff,
     catalogTotal, catalogDoneDay: null,
     start: null, end: null, checkpoints: [],
   };
@@ -545,6 +546,27 @@ function runEconomyForecast(options = {}) {
     let revivesPaid = 0;
 
     for (let day = 1; day <= days; day++) {
+      // Día de descanso (perfiles de N días/semana): nadie toca la app; solo el
+      // reloj avanza y los cofres siguen abriéndose en su temporizador.
+      if (((day - 1) % 7) >= daysPerWeek) {
+        VDATE.offsetMs = day * DAY_MS;
+        if (checkpoints.includes(day)) {
+          const summaryOff = cv.EconomyAudit.summary();
+          report.checkpoints.push({
+            day,
+            balances: { coins: cv.Meta.coins(), gems: cv.Meta.gems(), tickets: cv.Meta.tickets() },
+            flows: forecastCurrencies(summaryOff),
+            itemsBought, revivesPaid, chestsAccelerated,
+            chestReserve: cv.Meta.chests(),
+            chestQueueHours: Math.round(chestQueueHours() * 10) / 10,
+            boosterStock: cv.Meta.boosterInventory(),
+            cosmeticsOwned: catalogItems.filter((item) => item.owned()).length,
+            catalogDoneDay: report.catalogDoneDay,
+            level: cv.Meta.level(),
+          });
+        }
+        continue;
+      }
       // Ritual diario: login + sesiones de juego.
       cv.Meta.claimReward();
       for (let s = 0; s < sessionsPerDay; s++) {
@@ -567,18 +589,18 @@ function runEconomyForecast(options = {}) {
         VDATE.offsetMs += minutes * 60000 + 5 * 60000; // sesión + descanso
       }
 
-      // Gasto post-sesión (política).
-      if (policy.buysCosmetics) {
-        for (const item of catalogItems) {
-          if (!item.owned() && cv.Meta.coins() - item.cost >= (policy.coinReserve || 0) && item.buy()) itemsBought++;
-        }
-      }
-      // ECO-40: la rotación de estilo es el sumidero recurrente post-catálogo.
+      // Gasto post-sesión (política). La rotación va PRIMERO: es la oferta que
+      // caduca hoy (escasez honesta); el catálogo permanente espera sin problema.
       if (policy.buysRotation && cv.StyleShop) {
         for (const offer of cv.StyleShop.todayOffers()) {
           const cost = offer.price.coins || 0;
           if (cost && cv.Meta.coins() - cost < (policy.coinReserve || 0)) continue;
           if (cv.Meta.buyStyleVariant(offer.kind, offer.base, offer.tint)) itemsBought++;
+        }
+      }
+      if (policy.buysCosmetics) {
+        for (const item of catalogItems) {
+          if (!item.owned() && cv.Meta.coins() - item.cost >= (policy.coinReserve || 0) && item.buy()) itemsBought++;
         }
       }
       if (cv.Meta.chestSlotLimit() < 4 && cv.Meta.gems() >= cv.Meta.CHEST_SLOT_GEMS) {
@@ -767,6 +789,7 @@ if (require.main === module) {
   } else if (economyMode) {
     const report = runEconomyForecast({
       days: +opt('days', 7),
+      daysPerWeek: +opt('dayspw', 7),
       sessionsPerDay: +opt('sessions', 2),
       minutesPerSession: +opt('minutes', 8),
       profile: opt('profile', 'average'),

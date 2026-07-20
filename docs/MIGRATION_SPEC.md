@@ -575,7 +575,15 @@ Además: en Supervivencia +25% de carga de suministro y +24 de frenesí; en Zen 
 ```
 xpBase     = round(score/10 + maxCombo*5 + level*20 + (perfect ? 100 : 0))
 xpGained   = xpBase * (xpMultiplier === 4 ? 4 : 1)
-coinsGained= round(score/40 + maxCombo*2 + level*5  + (perfect ? 40  : 0))
+
+// ECO-1 (v3.x): liquidación de monedas con rendimiento decreciente
+presupuesto = round((base_modo + minutos*15 + coef_modo*sqrt(score/100)
+              + min(maxCombo, 20) + bonusObjetivo) * multDificultad)
+coinsGained = max(0, presupuesto - monedasPagadasDuranteLaRun)   // ECO-12
+// base/coef por modo, bonusObjetivo (0 en modos sin fin) y multiplicadores:
+// EconomyConfig.settlement (game.js) es la fuente de verdad numérica.
+// Clásico liquida por nivel: Economy.classicLevelCoins (base 28 + estrellas*10
+// + min(70, score/150), racha tope +25%, factor de tiempo clamp(seg/90, 0.18, 1)).
 ```
 Los bonos descritos en §5.1/§5.2 se suman a `xpBase` antes de multiplicar. El resultado expone `xpBase`,
 `xpMultiplier`, `xpBoostBonus = xpGained - xpBase` y `xpGained` para que el modal pueda desglosarlo. Las monedas no

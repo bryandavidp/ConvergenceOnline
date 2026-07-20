@@ -53,6 +53,8 @@ Los enlaces siguientes son absolutos y apuntan directamente a archivos servidos 
 | Documento | Contenido | Enlace público |
 |---|---|---|
 | `docs/ECONOMY_REBALANCE_README.md` | Ruta de implementación por fases para reequilibrar monedas, gemas, tickets, cofres, cosméticos y tienda. | [Abrir](https://bryandavidp.github.io/ConvergenceOnline/docs/ECONOMY_REBALANCE_README.md) |
+| `docs/ECONOMY_REBALANCE_PROGRESS.md` | Estado real de ejecución del reequilibrio económico (registro por fase, baterías antes/después y decisiones). | [Abrir](https://bryandavidp.github.io/ConvergenceOnline/docs/ECONOMY_REBALANCE_PROGRESS.md) |
+| `docs/ECONOMY_BASELINE.md` | Forecast económico longitudinal (30/90/180 días) por perfil × política, con guardarraíles y desviaciones conocidas. | [Abrir](https://bryandavidp.github.io/ConvergenceOnline/docs/ECONOMY_BASELINE.md) |
 | `docs/CHEST_SYSTEM_MASTER_PLAN.md` | Análisis y plan maestro del sistema de cofres. | [Abrir](https://bryandavidp.github.io/ConvergenceOnline/docs/CHEST_SYSTEM_MASTER_PLAN.md) |
 | `docs/CHEST_REDESIGN_WORKLOG.md` | Registro de trabajo del rediseño visual y funcional de cofres. | [Abrir](https://bryandavidp.github.io/ConvergenceOnline/docs/CHEST_REDESIGN_WORKLOG.md) |
 
