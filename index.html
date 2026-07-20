@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.11.0" />
+  <link rel="stylesheet" href="styles.css?v=2.12.0" />
 </head>
 <body data-screen="login">
   <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
@@ -469,6 +469,21 @@
       </div>
     </div>
 
+    <!-- Contenido de un pack de iconos de tablero (reutilizable: tienda + colección) -->
+    <div class="modal icon-pack-modal" id="modal-icon-pack" role="dialog" aria-modal="true" aria-labelledby="icon-pack-title" hidden>
+      <div class="m-head"><span class="m-emblem" id="icon-pack-emblem" aria-hidden="true"></span><h2 id="icon-pack-title">Pack</h2></div>
+      <div class="modal-body">
+        <div class="icon-pack-meta"><span class="rarity-chip" id="icon-pack-rarity"></span><p class="modal-sub" id="icon-pack-desc"></p></div>
+        <h3 class="group-title" data-i18n="iconpack_contents">Iconos del pack</h3>
+        <div class="icon-pack-grid" id="icon-pack-grid" aria-label="Iconos del pack"></div>
+        <p class="icon-pack-note" id="icon-pack-note" hidden></p>
+      </div>
+      <div class="modal-actions modal-buttons">
+        <button class="btn btn-primary" id="icon-pack-action" type="button"></button>
+        <button class="btn btn-ghost" id="icon-pack-close" type="button" data-close data-i18n="back">Volver</button>
+      </div>
+    </div>
+
     <!-- Nivel completado -->
     <div class="modal modal-win" id="modal-level" role="dialog" aria-modal="true" aria-labelledby="level-title" hidden>
       <div class="m-head"><span class="m-emblem" id="level-emblem" aria-hidden="true"><img class="ic" src="img/ui/star.png" alt=""></span><h2 id="level-title">¡Nivel completado!</h2></div>
@@ -849,6 +864,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.11.0" defer></script>
+  <script src="game.js?v=2.12.0" defer></script>
 </body>
 </html>
