@@ -1,5 +1,12 @@
 # Plan maestro de modos de juego — Convergence
 
+> **⚠️ Actualización económica (ECO-1/2, 2026-07-20):** los pagos por modo
+> cambiaron con el reequilibrio: liquidación con rendimiento decreciente
+> (`Economy.settlementCoins`, presupuesto que descuenta lo pagado en la run),
+> Clásico por nivel con factor de tiempo anti-farmeo, oleadas de Supervivencia
+> `3+0,9w` con kicker ×1,5, gemas de hito +1 con tope 6/día y revives 50/100/200.
+> Ver `docs/ECONOMY_REBALANCE_PROGRESS.md` y `EconomyConfig` (game.js).
+
 > **Rol de este documento:** auditoría profunda de los 7 modos de juego (estado real verificado contra `game.js` v2.0.3, no solo contra la documentación) + plan de mejora completo orientado a un objetivo: **una app profesional con modos muy pulidos, cada uno con identidad, energía y razón de existir propia**. Todo lo propuesto está fundamentado en (a) lo que el código ya hace, (b) psicología del jugador aplicada, y (c) patrones probados en juegos de referencia del género.
 >
 > Documentos hermanos: [`MIGRATION_SPEC.md`](./MIGRATION_SPEC.md) (fórmulas exactas) · [`ENGAGEMENT_GAME_FEEL_PLAN.md`](./ENGAGEMENT_GAME_FEEL_PLAN.md) (game feel, Fases 1–3 hechas) · [`V1_MASTER_PLAN.md`](./V1_MASTER_PLAN.md) (cierre V1) · [`ROADMAP.md`](./ROADMAP.md) (backlog general).

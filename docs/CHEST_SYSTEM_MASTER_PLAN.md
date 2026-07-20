@@ -1,5 +1,15 @@
 # Sistema de cofres — análisis, benchmark contra Clash Royale y plan de mejora
 
+> **⚠️ Actualización económica (ECO-2/3/5/6, 2026-07-20):** tras el reequilibrio
+> (`docs/ECONOMY_REBALANCE_README.md` + `docs/ECONOMY_REBALANCE_PROGRESS.md`):
+> las GEMAS de cofres ya no escalan con el nivel (×1,0; monedas tope ×2,0),
+> las tablas de monedas/gemas/tickets se recortaron, los cosméticos caen por
+> BANDA DE RAREZA por tier, el fallback de pool agotado es un booster (nunca
+> divisa), el premium cuesta 60💎 sin gemas dentro, los precios de tienda salen
+> de `Economy.chestEv`, la escalera de Supervivencia da 1 cofre directo/tier/día
+> y el pipeline gotea máx. 4 cofres/día (sin perder objetivos). La 4ª ranura
+> acelera la cola un 15%. Fuente numérica: `EconomyConfig` (game.js).
+
 Fecha de análisis: 2026-07-18 · Versión de la app analizada: 2.6.85 (rama `clon-vanilla`)
 
 Complementa a `docs/CHEST_REDESIGN_WORKLOG.md` (registro del rediseño visual ya entregado). Este documento

@@ -19,7 +19,7 @@
 | ECO-5 Tienda | ✅ HECHA | (ver git log: "ECO-5") | Packs 3600/7000 · premium 60💎 sin gemas · cofres por EV · tests de dominancia |
 | ECO-6 Cola de cofres | ✅ HECHA | (ver git log: "ECO-6") | Escalera 1/tier/día · pipeline ≤4/día (sin pérdida) · 4ª ranura +15% · métricas de cola |
 | ECO-7 Forecast 30/90/180 | ✅ HECHA | (ver git log: "ECO-7") | Matriz 6 perfiles · guardarraíles CI · docs/ECONOMY_BASELINE.md · tickets de cofres altos recortados |
-| ECO-8 UX y release | ⬜ pendiente | — | |
+| ECO-8 UX y release | ✅ HECHA | (ver git log: "ECO-8") | Nota de liquidación en modal · test de migración de perfil viejo · docs · v3.0.0 |
 
 ## Batería "ANTES" (v2.9.3, congelada 2026-07-20)
 
@@ -369,6 +369,42 @@ superv. difícil hábil   1114                  (≤1200) ✅
   manual con la matriz (comandos en ECONOMY_BASELINE.md).
 - Extra ECO-80 adelantado: el lanzador de Supervivencia muestra el cupo diario
   de gemas restante (`mode_note_surv_gems[_done]` ES/EN).
+
+## ECO-8 — qué se hizo y cómo verificarlo (2026-07-20)
+
+- **ECO-80 UX** (lo que faltaba tras lo adelantado en fases previas): nota
+  explicativa de la liquidación en el modal de fin de partida
+  (`settlement_note` ES/EN, `.settlement-note`) — "por qué se gana el premio";
+  el resto ya estaba: límites diarios visibles y no punitivos, recompensas
+  sustitutas, rareza + cofre mínimo, valor de la 4ª ranura, compra directa vs
+  aleatoria, métricas de cola.
+- **ECO-81 migración**: `tests/economy-migration.test.js` (3 tests) siembra un
+  `cv_meta` de v2.9.3 ANTES de cargar game.js y verifica: saldos y propiedad
+  intactos, campos nuevos con cupo diario íntegro, esquema 10, y que el perfil
+  migrado opera (recordGame + rotación) sin errores.
+- **ECO-82 fuentes de verdad**: `MIGRATION_SPEC.md` (§6.9 nueva fórmula +
+  sumideros actualizados), `BALANCE_BASELINE.md` (era v3.0.0: batería, tasas
+  §3.1 y EV de cofres), `ECONOMY_BASELINE.md` (ECO-7), notas de cabecera en
+  `CHEST_SYSTEM_MASTER_PLAN.md` y `GAME_MODES_MASTER_PLAN.md`,
+  `DOCUMENTATION_INDEX.md` con los 2 documentos nuevos.
+- **ECO-83 release**: suite completa (317 pass / 2 fallos preexistentes de
+  board-themes), lint 0 errores, baterías antes/después capturadas, forecast
+  30/90/180 documentado, y **bump v2.9.3 → v3.0.0** con `tools/bump-version.sh`
+  (VERSION + CACHE + los dos `?v=` verificados).
+
+## PENDIENTE PARA EL PROPIETARIO (no automatizable)
+
+1. **Playtest manual** (checklist del plan §ECO-83): compra con y sin saldo,
+   límites diarios en dispositivo real, pool cosmético agotado, ceremonia del
+   premium, rotación de estilo en móvil.
+2. **Decisiones de producto §8 del plan** — implementadas con la recomendación,
+   pendientes de validación visual/playtest: fallback = booster (en vez de
+   fragmentos de estilo), 4ª ranura +15%, premium 60💎, packs 3.600/7.000,
+   venta directa por gemas. Cambiarlas = recalcular forecast (comandos en
+   ECONOMY_BASELINE.md).
+3. **Vigilancia** de las desviaciones †1–†4 de `ECONOMY_BASELINE.md`
+   (catálogo hábil 17 días, reservas de acumuladores, tickets del strategic a
+   largo plazo, saldo post-contenido).
 
 ## Registro de decisiones tomadas
 

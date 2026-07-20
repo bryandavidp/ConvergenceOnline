@@ -342,7 +342,7 @@ como partida y vuelve a capturar el multiplicador al comenzar el siguiente nivel
 
 Tres monedas + cofres, todo dentro de `Meta`.
 
-- **Monedas (coins):** se ganan al final de cada partida (`recordGame()`, fórmula en §6.5), al completar niveles de Clásico, en recompensas de oleada de Supervivencia, en bonos de tablero vacío de Zen, en la recompensa diaria, y al abrir cofres. Se gastan en: skins de tablero (0-3000), temas de color (0-300), revivir en Supervivencia (escalante 120→240→480, máx. 3/run) y potenciadores pre-nivel de Clásico (60-90 cuando no hay unidad en el arsenal).
+- **Monedas (coins):** se ganan al final de cada partida (`recordGame()`, fórmula en §6.5), al completar niveles de Clásico, en recompensas de oleada de Supervivencia, en bonos de tablero vacío de Zen, en la recompensa diaria, y al abrir cofres. Se gastan en: skins de tablero (0-3000), temas de color (0-300), revivir en Supervivencia (ECO-42: escalante 50→100→200, máx. 3/run), potenciadores (ECO-41: 30-50 cuando no hay unidad en el arsenal) y la tienda rotatoria de estilo (ECO-40). Valores exactos: `EconomyConfig` en game.js.
 - **Gemas (gems):** se ganan en hitos de oleada de Supervivencia (`2 + floor(wave/5)` cada 5 oleadas), en recompensa de mundo completado (+20), en cofres según tipo/nivel y en el primer intento diario del Reto (+5). Sumideros: cofre premium (25💎), continuar partida en Clásico/Aventura (15💎), cuarta ranura (150💎) y saltos de cofre a `ceil(3 × horasRestantes)`.
 - **Tickets:** se ganan en cofres según tipo y en tiradas bonus. Se gastan en rerollear la misión diaria (1 ticket).
 

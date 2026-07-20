@@ -215,3 +215,52 @@ supervivencia  dificil   skilled   563237   887041    480s    x41   oleada 22   
 2. **El dead-air es real y enorme para jugadores rápidos** (66–85% de los turnos del bot skilled sin jugada disponible; 40–54% para el medio): confirma D2 del plan con datos. El warm-up lo mitiga solo al inicio; el cuello es la espera post-limpieza (el tablero se vacía más rápido de lo que spawnea). FB-2 implementa el DDA suave solo en Contrarreloj/Reto; el perfil average baja a 39% sin inflar score ni duración.
 3. **La oleada de Supervivencia es puramente temporal para bots** (oleada 18 a los 8 min en los 3 perfiles): el número de oleada mide tiempo jugado, no habilidad. El récord de oleada humano diferencia por atención sostenida — coherente con el hallazgo 1.
 4. **Guardarraíl de medallas** activo en CI (`tests/balance-guardrail.test.js`): bot estándar (average, 3 min, seeds fijos) con mediana calibrada 60649 en v2.2.0 y banda ±40%. Recalibrar solo en cambios de balance deliberados.
+
+## Batería v3.0.0 (reequilibrio económico ECO-0…ECO-8) — 40 runs/config
+
+**Cambio de época económico** (ver `docs/ECONOMY_REBALANCE_PROGRESS.md` y
+`docs/ECONOMY_BASELINE.md`). El gameplay NO cambió: score, combo, progresión,
+deadAir y errores son idénticos bit a bit a la era v2.9.3; solo la columna
+`coins` refleja la economía nueva (liquidación con rendimiento decreciente,
+presupuesto anti doble pago y fuentes en-run recortadas).
+
+```
+modo           diff      perfil    sc p50   sc p90   dur50  combo    progreso  deadAir    err  coins    cap
+clasico        normal    skilled    53910    77475     14s     x7      13 nvl      67%    0.3      0   100%
+aventura       normal    skilled    47806    97319    354s    x12      nvl 12      72%    4.8    266    95%
+contrarreloj   normal    skilled   150442   171249    225s   x121       nvl 1      25%    8.0    232     5%
+supervivencia  normal    skilled   197410   398436    480s    x26   oleada 18      61%    8.2    636   100%
+clasico        normal    average    35660    46080     31s     x8       9 nvl      43%    1.8      0   100%
+aventura       normal    average    27517    51661    356s    x10       nvl 8      53%   10.8      0   100%
+contrarreloj   normal    average    29419    43389    168s    x27       nvl 1      14%    9.7    135     0%
+supervivencia  normal    average   114359   191780    480s    x20   oleada 18      36%   20.8    611   100%
+clasico        normal    casual     13490    18090     53s     x7       5 nvl      17%    6.0      0   100%
+aventura       normal    casual     19272    28186    356s    x11       nvl 6      16%   21.9     18    98%
+contrarreloj   normal    casual      3857     6583    113s    x10       nvl 1       3%    7.9     72     0%
+supervivencia  normal    casual     33483    40800    480s    x14   oleada 18      13%   29.3    437   100%
+supervivencia  dificil   skilled   625841   901784    480s    x41   oleada 22      42%   12.3    989   100%
+zen            normal    casual      6294     8122    240s    x10       nvl 1      23%   12.7     85   100%
+```
+
+**Monedas por 10 minutos** (`node tools/balance-sim.js --rates --runs 25`, la
+métrica de las puertas §3.1 del plan — todas dentro de banda; Aventura hábil 545
+es la desviación aceptada documentada):
+
+```
+              casual   medio   hábil    (objetivos: 250-450 / 400-650 / 600-900)
+clasico          450     645     765
+aventura         445     472     545
+contrarreloj     380     479     631
+supervivencia    458     648     784
+zen              288       -       -
+supervivencia difícil hábil: 1176   (≤1200)
+```
+
+**EV de cofres por apertura** (`--chests --runs 40`, monedas escalan ≤×2.0,
+gemas planas, tickets recortados en tiers altos):
+
+```
+wood  L1 C48/G0.6 · L31 C109/G0.7   | royal    L1 C252/G2.5 · L31 C405/G2.4
+silver L1 C110/G1.2 · L31 C210/G1.6 | supreme  L1 C295/G3.1 · L31 C581/G2.4
+magic L1 C173/G1.0 · L31 C349/G1.3  | divine   L1 C458/G3.1 · L31 C766/G5.0
+```

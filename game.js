@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.9.3';
+  const VERSION = '3.0.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -973,7 +973,7 @@
         surv_frenzy: 'Frenesí', surv_frenzy_ready: '¡Frenesí activado!', surv_wave_reward: 'Oleada {w} · +{c} monedas',
         surv_milestone: 'Hito de oleada {w}', surv_gem_cap: 'tope diario de gemas alcanzado', surv_chest_progress: 'progreso de cofre (el directo de este tier ya cayó hoy)', surv_wave_record: '¡Récord! Oleada {w}', surv_best_wave: 'Mejor oleada',
         surv_rewards: 'Recompensas', surv_reward_line: '+{c} monedas · +{g} gemas · +{ch} cofres', surv_time_record: '¡Récord de supervivencia!',
-        coins: 'monedas', gems: 'gemas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
+        settlement_note: 'Premio de la partida: tiempo jugado + puntos + combo · lo cobrado durante la run ya está descontado', coins: 'monedas', gems: 'gemas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
         next: 'Próximo', new_icons: 'Nuevos iconos', chapter: 'Capítulo', next_to: 'Ir al nivel {n} →', lets_play: '¡A jugar!',
         obj_clear: 'Vacía el tablero', obj_score: 'Consigue {n} pts', obj_score_live: 'Puntos: {p}/{n}', obj_survive: 'Sobrevive {n}s', obj_boss: 'JEFE · rompe los 💎', obj_boss_live: 'JEFE · rompe los 💎 ({n})',
         biomemod_nebula: '', biomemod_asteroid: '🪨 Aparecen rocas que estorban', biomemod_ice: '🧊 Casillas heladas: tócalas para romperlas', biomemod_core: '🔥 Los iconos aparecen más rápido', biomemod_void: '🕳️ Menos pistas disponibles', biomemod_crystal: '💎 Cristales con puntos extra',
@@ -1323,7 +1323,7 @@
         surv_frenzy: 'Frenzy', surv_frenzy_ready: 'Frenzy active!', surv_wave_reward: 'Wave {w} · +{c} coins',
         surv_milestone: 'Wave {w} milestone', surv_gem_cap: 'daily gem cap reached', surv_chest_progress: 'chest progress (this tier already dropped today)', surv_wave_record: 'Record! Wave {w}', surv_best_wave: 'Best wave',
         surv_rewards: 'Rewards', surv_reward_line: '+{c} coins · +{g} gems · +{ch} chests', surv_time_record: 'Survival record!',
-        coins: 'coins', gems: 'gems', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
+        settlement_note: 'Run reward: time played + score + combo · anything collected mid-run is already deducted', coins: 'coins', gems: 'gems', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
         next: 'Next', new_icons: 'New icons', chapter: 'Chapter', next_to: 'Go to level {n} →', lets_play: "Let's play!",
         obj_clear: 'Clear the board', obj_score: 'Reach {n} pts', obj_score_live: 'Points: {p}/{n}', obj_survive: 'Survive {n}s', obj_boss: 'BOSS · break the 💎', obj_boss_live: 'BOSS · break the 💎 ({n})',
         biome_nebula: 'Nebula', biome_asteroid: 'Asteroid Belt', biome_ice: 'Ice Field', biome_core: 'Burning Core', biome_void: 'The Void', biome_crystal: 'Crystalia',
@@ -9703,6 +9703,7 @@
         `<div class="xp-line${boostedXp ? ' is-boosted' : ''}"><span class="xp-gain">+${r.xpGained} XP</span>${boostedXp ? `<span class="xp-boost-result">XP ×${r.xpMultiplier}</span>` : ''}<span class="xp-coins">${iconInline('coin')} <span class="xp-coins-n">+${r.coinsGained || 0}</span></span><span class="xp-rank">${Meta.rank()} · ${I18n.t('lvl')} ${lvl}</span></div>` +
         `<div class="xpbar"><div class="xpbar-fill" style="width:${Math.min(100, have / need * 100).toFixed(0)}%"></div></div>` +
         xpBreakdown +
+        (r.coinsGained > 0 ? `<div class="settlement-note">${esc(I18n.t('settlement_note'))}</div>` : '') +
         (r.leveledUp ? `<div class="xp-up">${iconInline('upgrade')} ${I18n.t('lvl')} ${lvl}!</div>` : '') +
         (r.missionDone ? `<div class="mission-done">${iconInline('check')} ${I18n.t('daily_done')} · +150 XP</div>` : '') +
         (r.weeklyDone ? `<div class="mission-done">${iconInline('calendar')} ${I18n.t('weekly_done')} · +400 XP</div>` : '') +
