@@ -361,7 +361,6 @@ test('las acciones enrutan recursos y estilos por flujos distintos, con guard du
   const resourceEnd = js.indexOf('// Tienda de temas', resourceAt);
   const resourceRoute = js.slice(resourceAt, resourceEnd);
   const collectionsAt = html.indexOf('id="view-collections"');
-  const collectionsStyleCta = html.indexOf('data-act="open-style-shop"', collectionsAt);
 
   assert.ok(actionsAt >= 0 && actionsEnd > actionsAt, 'no se pudo aislar el router data-act');
   assert.match(actions, /a === 'buy-coins'[^\n]+openResourceShop\('coins'\)/);
@@ -370,7 +369,12 @@ test('las acciones enrutan recursos y estilos por flujos distintos, con guard du
   assert.match(actions, /a === 'open-style-shop'[^\n]+openShop\(\)/);
   assert.match(actions, /a === 'nav-collections'[^\n]+openCollections\(\)/);
   assert.ok(collectionsAt >= 0, 'falta la vista Colecciones');
-  assert.ok(collectionsStyleCta > collectionsAt, 'Colecciones debe llevar a tableros y temas');
+  // El hub rediseñado de Colecciones enruta a tableros/temas mediante tarjetas
+  // de categoría (data-col-open); el detalle de cada una ofrece el CTA a la
+  // tienda de estilos (open-style-shop).
+  assert.match(js, /data-col-open=/, 'las categorías de Colecciones deben ser navegables');
+  assert.match(js, /boards:\s*\{[\s\S]*?act:\s*'open-style-shop'/, 'Tableros debe enrutar a la tienda de estilos');
+  assert.match(js, /themes:\s*\{[\s\S]*?act:\s*'open-style-shop'/, 'Temas debe enrutar a la tienda de estilos');
 
   assert.ok(resourceAt >= 0 && resourceEnd > resourceAt, 'no se pudo aislar openResourceShop');
   assert.match(resourceRoute, /document\.body\.dataset\.screen === 'game'/);
