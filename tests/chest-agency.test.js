@@ -332,11 +332,19 @@ test('CH-5: el ciclo genérico completo ya no produce cofres event sin contexto'
   const snapshot = fullSnapshot(), state = Meta.state;
   try {
     resetChestAgency(state, TODAY);
-    withDate(TODAY, () => {
-      for (let objective = 0; objective < 32 * Meta.CHEST_PIPELINE_TARGET; objective++) {
-        Meta.recordChestProgress('test');
-      }
-    });
+    // ECO-6: el pipeline gotea como máximo `pipelineDailyCap` cofres al día, así
+    // que el ciclo completo de 32 se recorre a lo largo de varios días virtuales.
+    const cap = globalThis.window.__cv.EconomyConfig.chests.pipelineDailyCap;
+    const days = Math.ceil(32 / cap);
+    for (let day = 0; day < days; day++) {
+      const date = new Date(Date.parse(`${TODAY}T00:00:00Z`) + day * 86400000).toISOString().slice(0, 10);
+      state.dailyChest = { date }; // el Choice diario no interfiere en el recuento
+      withDate(date, () => {
+        for (let objective = 0; objective < cap * Meta.CHEST_PIPELINE_TARGET; objective++) {
+          Meta.recordChestProgress('test');
+        }
+      });
+    }
     const cycle = Meta.chestInventory().filter((entry) => entry.source === 'pipeline:test');
     assert.equal(cycle.length, 32);
     assert.equal(cycle.some((entry) => entry.type === 'event'), false);

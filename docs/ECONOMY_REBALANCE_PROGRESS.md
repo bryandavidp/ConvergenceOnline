@@ -17,7 +17,7 @@
 | ECO-3 Cofres/cosméticos | ✅ HECHA | (ver git log: "ECO-3") | Rareza por tier · fallback consumible · EV analítico creciente · monedas de cofres ×0,5 |
 | ECO-4 Sumideros | ✅ HECHA | (ver git log: "ECO-4") | Tienda rotatoria de tintes · boosters/revives recalibrados · venta directa por gemas |
 | ECO-5 Tienda | ✅ HECHA | (ver git log: "ECO-5") | Packs 3600/7000 · premium 60💎 sin gemas · cofres por EV · tests de dominancia |
-| ECO-6 Cola de cofres | ⬜ pendiente | — | |
+| ECO-6 Cola de cofres | ✅ HECHA | (ver git log: "ECO-6") | Escalera 1/tier/día · pipeline ≤4/día (sin pérdida) · 4ª ranura +15% · métricas de cola |
 | ECO-7 Forecast 30/90/180 | ⬜ pendiente | — | |
 | ECO-8 UX y release | ⬜ pendiente | — | |
 
@@ -319,6 +319,35 @@ superv. difícil hábil   1114                  (≤1200) ✅
 - **Tests**: nuevo `tests/economy-dominance.test.js` (5: ratio, monotonía de
   packs ≤+35%, EV/gema de cofres, no-dominancia del premium con muestreo
   seedeado, nota XP). Suite completa: 305 pass / 2 preexistentes.
+
+## ECO-6 — qué se hizo y cómo verificarlo (2026-07-20)
+
+- **ECO-60 escalera diaria**: `Meta.claimSurvivalChestTier(tier)` sobre
+  `economyDaily.survivalChestTiers` — el cofre directo de cada tier (oleada
+  10/20/30…) cae solo la PRIMERA vez del día; repetir el hito paga progreso real
+  del pipeline (`recordChestProgress('supervivencia-hito')`), con toast
+  `surv_chest_progress` ES/EN. La escalera se rearma al cambiar de día.
+- **Tope diario del pipeline** (extensión medida de ECO-6): el pipeline universal
+  gotea máx. `pipelineDailyCap = 4` cofres/día; los objetivos NUNCA se pierden
+  (los `wins` se conservan y drenan al día siguiente, cadencia garantizada).
+  Motivo: sin esto, el intensivo generaba ~12 cofres/día (§3.4 pide ≤24 h de
+  desbloqueo/día). El test CH-5 del ciclo de 32 se adaptó a varios días virtuales.
+- **ECO-61 cuarta ranura**: mantiene un solo temporizador y añade
+  `slotSpeedBonus = 0.15` — todos los temporizadores nuevos (arranque, auto-
+  encadenado, coste de "abrir ahora") corren un 15% más rápido con la 4ª ranura
+  (`queueDurationMs` en Meta). El coste (150💎) comunica el beneficio ANTES de
+  pagar (`chest_unlock_slot_cost` actualizado ES/EN).
+- **ECO-62 métricas**: `Meta.chestQueueSummary()` → horas pendientes totales,
+  nº en cola, siguiente cofre y bonus activo; renderizado bajo las ranuras
+  (`chest_queue_meta`/`chest_queue_empty`/`chest_queue_boosted`, CSS
+  `.chest-queue-meta`).
+- **Puertas medidas** (forecast 14 días, 6×10 min/día, saver hábil — peor caso
+  acumulador): reserva 170 cofres/1.509 h ANTES → **10 cofres/150 h** DESPUÉS;
+  perfil medio ya estable (2–4 cofres). 1 h/día de Supervivencia genera ≤~24 h
+  de desbloqueo (escalera 1/tier/día + pipeline ≤4/día). El jugador sin gemas
+  procesa su flujo medio.
+- **Tests**: nuevo `tests/chest-queue.test.js` (6). Adaptado:
+  `chest-agency.test.js` (ciclo de 32 en 8 días). Suite: 311 pass / 2 preexistentes.
 
 ## Registro de decisiones tomadas
 

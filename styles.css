@@ -2837,6 +2837,8 @@ body.mode-surv .booster-bar { grid-template-columns: minmax(0, 1fr) 56px; }
 .style-rotation-rarity { position: absolute; top: 6px; right: 8px; font-size: 10px; }
 /* ECO-53/54: notas de transparencia en la tienda de recursos */
 .resource-chest-skip-note, .resource-xp-note { display: block; font-size: 10px; line-height: 1.3; opacity: .7; margin-top: 4px; }
+/* ECO-62: métricas de cola de cofres */
+.chest-queue-meta { flex: 1 1 100%; font-size: 11px; opacity: .75; margin: 6px 2px 0; }
 .shop-item .shop-sw { width: 46px; height: 46px; border-radius: 12px; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.25); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 2px 6px rgba(0,0,0,.4); }
 .shop-item button.shop-sw { padding: 0; cursor: pointer; }
 .shop-item button.shop-sw:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }

@@ -178,7 +178,14 @@
       premiumGems: 60,
       premiumCoinScaleCap: 1.5,
       slotGems: 150,
+      // ECO-61: la 4a ranura ya no es solo espacio — acelera TODA la cola un 15%
+      // de forma permanente (sigue habiendo un unico temporizador activo).
+      slotSpeedBonus: 0.15,
       pipelineTarget: 3,
+      // ECO-6: tope de cofres del pipeline por dia. Los objetivos NUNCA se pierden
+      // (los wins siguen acumulando y drenan manana): solo se pausa el goteo para
+      // que 1 h/dia no genere una cola imposible de procesar (§3.4 del plan).
+      pipelineDailyCap: 4,
       // Tablas de recompensa por tier (consumidas por CHEST_TYPES.reward).
       rewards: {
         wood: { coins: [30, 100], gems: [1, 3], tickets: [1, 1], coinCut: .60, gemCut: .90, ticketCut: .98, rarity: 'common' },
@@ -686,7 +693,7 @@
         chest_view_all: 'Ver todos', chest_selected: 'Cofre seleccionado', chest_catalog_title: 'Tipos de cofres', chest_catalog_sub: 'Cuanto más raro sea el cofre, mejores serán sus recompensas.', chest_catalog_close: 'Volver a mis cofres',
         chest_contains: 'Qué puede contener', chest_type_panel: 'Tipo de cofre', chest_ceremony_title: 'Apertura del cofre', chest_contents_coins: 'Monedas', chest_contents_gems: 'Gemas', chest_contents_tickets: 'Tickets', chest_contents_cosmetics: 'Cosméticos y más',
         chest_slots_title: 'Ranuras de cofres', chest_possible_rewards: 'Posibles recompensas', chest_slot_opening: 'Abriendo', chest_slot_ready: '¡Listo!', chest_slot_blocked: 'Bloqueado', chest_slot_waiting: 'En espera', chest_slot_empty: 'Ranura vacía',
-        chest_unlock_slot: 'Desbloquea otra ranura', chest_unlock_slot_cost: 'Toca otra vez para desbloquearla por {n} gemas', chest_slot_unlocked: '¡Nueva ranura desbloqueada!', chest_more_waiting: '+{n} cofre(s) en reserva',
+        chest_unlock_slot: 'Desbloquea otra ranura', chest_unlock_slot_cost: 'Toca otra vez: {n} gemas · además tu cola de cofres corre un 15% más rápida para siempre', chest_slot_unlocked: '¡Nueva ranura desbloqueada! Cola un 15% más rápida', chest_more_waiting: '+{n} cofre(s) en reserva', chest_queue_meta: 'Cola pendiente: {h} h · siguiente: {c}', chest_queue_empty: 'Sin cofres en cola', chest_queue_boosted: 'Cola un 15% más rápida (4ª ranura)',
         chest_start_unlock: 'Abrir', chest_open_now_action: 'Abrir ahora', chest_collect: 'Recoger', chest_unlocking_action: 'En progreso', chest_only_one: 'Solo puedes desbloquear un cofre a la vez.', chest_timer_started: '¡El cofre ha empezado a abrirse!',
         chest_premium_action: 'Abrir cofre premium', chest_premium_note: 'Premio instantáneo con mejores probabilidades', chest_duration: 'Duración', chest_size_label: 'Tamaño', chest_type_label: 'Tipo',
         chest_reward_boosters: 'Potenciadores', chest_reward_objects: 'Objetos', chest_reward_boards: 'Tableros', chest_reward_themes: 'Temas', chest_reward_avatars: 'Iconos y bordes', chest_reward_surprise: 'Y más…',
@@ -964,7 +971,7 @@
         feat_al_limite: 'Al límite', feat_al_limite_d: 'Supera 2 oleadas seguidas con 1 sola vida',
         feat_economo: 'Económico', feat_economo_d: 'Llega a la oleada 15 sin revivir',
         surv_frenzy: 'Frenesí', surv_frenzy_ready: '¡Frenesí activado!', surv_wave_reward: 'Oleada {w} · +{c} monedas',
-        surv_milestone: 'Hito de oleada {w}', surv_gem_cap: 'tope diario de gemas alcanzado', surv_wave_record: '¡Récord! Oleada {w}', surv_best_wave: 'Mejor oleada',
+        surv_milestone: 'Hito de oleada {w}', surv_gem_cap: 'tope diario de gemas alcanzado', surv_chest_progress: 'progreso de cofre (el directo de este tier ya cayó hoy)', surv_wave_record: '¡Récord! Oleada {w}', surv_best_wave: 'Mejor oleada',
         surv_rewards: 'Recompensas', surv_reward_line: '+{c} monedas · +{g} gemas · +{ch} cofres', surv_time_record: '¡Récord de supervivencia!',
         coins: 'monedas', gems: 'gemas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
         next: 'Próximo', new_icons: 'Nuevos iconos', chapter: 'Capítulo', next_to: 'Ir al nivel {n} →', lets_play: '¡A jugar!',
@@ -1036,7 +1043,7 @@
         chest_view_all: 'View all', chest_selected: 'Selected chest', chest_catalog_title: 'Chest types', chest_catalog_sub: 'The rarer the chest, the better its rewards.', chest_catalog_close: 'Back to my chests',
         chest_contains: 'What it can contain', chest_type_panel: 'Chest type', chest_ceremony_title: 'Chest opening', chest_contents_coins: 'Coins', chest_contents_gems: 'Gems', chest_contents_tickets: 'Tickets', chest_contents_cosmetics: 'Cosmetics and more',
         chest_slots_title: 'Chest slots', chest_possible_rewards: 'Possible rewards', chest_slot_opening: 'Opening', chest_slot_ready: 'Ready!', chest_slot_blocked: 'Locked', chest_slot_waiting: 'Waiting', chest_slot_empty: 'Empty slot',
-        chest_unlock_slot: 'Unlock another slot', chest_unlock_slot_cost: 'Tap again to unlock it for {n} gems', chest_slot_unlocked: 'New slot unlocked!', chest_more_waiting: '+{n} chest(s) in reserve',
+        chest_unlock_slot: 'Unlock another slot', chest_unlock_slot_cost: 'Tap again: {n} gems · your chest queue also runs 15% faster forever', chest_slot_unlocked: 'New slot unlocked! Queue 15% faster', chest_more_waiting: '+{n} chest(s) in reserve', chest_queue_meta: 'Queue pending: {h} h · next: {c}', chest_queue_empty: 'No chests queued', chest_queue_boosted: 'Queue 15% faster (4th slot)',
         chest_start_unlock: 'Open', chest_open_now_action: 'Open now', chest_collect: 'Collect', chest_unlocking_action: 'In progress', chest_only_one: 'You can only unlock one chest at a time.', chest_timer_started: 'The chest has started opening!',
         chest_premium_action: 'Open premium chest', chest_premium_note: 'Instant reward with better odds', chest_duration: 'Duration', chest_size_label: 'Size', chest_type_label: 'Type',
         chest_reward_boosters: 'Boosters', chest_reward_objects: 'Items', chest_reward_boards: 'Boards', chest_reward_themes: 'Themes', chest_reward_avatars: 'Icons & frames', chest_reward_surprise: 'And more…',
@@ -1314,7 +1321,7 @@
         feat_al_limite: 'On the edge', feat_al_limite_d: 'Clear 2 waves in a row with a single life',
         feat_economo: 'Thrifty', feat_economo_d: 'Reach wave 15 without reviving',
         surv_frenzy: 'Frenzy', surv_frenzy_ready: 'Frenzy active!', surv_wave_reward: 'Wave {w} · +{c} coins',
-        surv_milestone: 'Wave {w} milestone', surv_gem_cap: 'daily gem cap reached', surv_wave_record: 'Record! Wave {w}', surv_best_wave: 'Best wave',
+        surv_milestone: 'Wave {w} milestone', surv_gem_cap: 'daily gem cap reached', surv_chest_progress: 'chest progress (this tier already dropped today)', surv_wave_record: 'Record! Wave {w}', surv_best_wave: 'Best wave',
         surv_rewards: 'Rewards', surv_reward_line: '+{c} coins · +{g} gems · +{ch} chests', surv_time_record: 'Survival record!',
         coins: 'coins', gems: 'gems', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
         next: 'Next', new_icons: 'New icons', chapter: 'Chapter', next_to: 'Go to level {n} →', lets_play: "Let's play!",
@@ -3578,6 +3585,7 @@
     // ECO-20: límites económicos diarios (retrocompatible; empieza el día con el
     // cupo íntegro — actualizar la app nunca castiga).
     if (!m.economyDaily || typeof m.economyDaily !== 'object') m.economyDaily = { date: '', survivalGems: 0, survivalChestTiers: {} };
+    if (typeof m.economyDaily.pipelineChests !== 'number') m.economyDaily.pipelineChests = 0;
     if (typeof m.economyDaily.survivalGems !== 'number') m.economyDaily.survivalGems = 0;
     if (!m.economyDaily.survivalChestTiers || typeof m.economyDaily.survivalChestTiers !== 'object') m.economyDaily.survivalChestTiers = {};
     if (!m.worlds || typeof m.worlds !== 'object') m.worlds = {};
@@ -3608,6 +3616,13 @@
     function freshChestUid() {
       m.chestSeq = Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Number(m.chestSeq) || 0) + 1);
       return `ch-${Date.now().toString(36)}-${m.chestSeq.toString(36)}`;
+    }
+    // ECO-61: duracion EFECTIVA de un temporizador de cola (aplica el +15% de la
+    // 4a ranura). La duracion guardada del cofre no se muta: futuros cambios del
+    // bonus se aplican solos a los timers nuevos.
+    function queueDurationMs(chest) {
+      const bonus = (m.chestSlots | 0) >= 4 ? 1 - EconomyConfig.chests.slotSpeedBonus : 1;
+      return Math.max(1, Math.round(storedChestDuration(chest) * bonus));
     }
     function makeChest(type, source, durationMs, snapshot) {
       const validType = validChestType(type);
@@ -3950,7 +3965,7 @@
           m.chestUnlock = null; changed = true;
           const next = this._shortestWaitingChest();
           if (next) {
-            const durationMs = storedChestDuration(next);
+            const durationMs = queueDurationMs(next);
             m.chestUnlock = { uid: next.uid, startedAt: anchor, endsAt: anchor + durationMs, durationMs, auto: true };
           }
         }
@@ -3991,7 +4006,31 @@
       },
       chestDurationMs(uid) {
         const chest = ensureChestInventory().find((entry) => entry.uid === uid);
-        return chest ? storedChestDuration(chest) : 0;
+        return chest ? queueDurationMs(chest) : 0;
+      },
+      // ECO-62: resumen de cola para la UI — horas pendientes, siguiente cofre y
+      // si el bonus de la 4a ranura esta activo. Nada de "+N en reserva" opaco.
+      chestQueueSummary() {
+        this.advanceChestTimers();
+        const running = this.chestUnlock();
+        let ms = running ? Math.max(0, running.remainingMs) : 0;
+        const waiting = this.chestAutoQueue();
+        waiting.forEach((chest) => { ms += queueDurationMs(chest); });
+        return {
+          pendingHours: Math.round(ms / 360000) / 10,
+          pendingCount: (running ? 1 : 0) + waiting.length,
+          nextType: running ? running.type : (waiting[0] ? waiting[0].type : null),
+          speedBonus: (m.chestSlots | 0) >= 4 ? EconomyConfig.chests.slotSpeedBonus : 0,
+        };
+      },
+      // ECO-60: cada tier de la escalera de Supervivencia solo entrega su cofre
+      // directo UNA vez al dia. Devuelve true si este es el primero de hoy.
+      claimSurvivalChestTier(tier) {
+        const daily = this.economyDaily();
+        if (daily.survivalChestTiers[tier]) return false;
+        daily.survivalChestTiers[tier] = 1;
+        save();
+        return true;
       },
       chestTimerState(uid) {
         this.advanceChestTimers();
@@ -4019,7 +4058,7 @@
         const chest = list.find((entry) => entry.uid === uid);
         if (!chest || (m.chestReady || []).includes(uid)) return null;
         if (m.chestUnlock) return m.chestUnlock.uid === uid ? this.chestUnlock() : null;
-        const durationMs = storedChestDuration(chest);
+        const durationMs = queueDurationMs(chest);
         m.chestUnlock = { uid, startedAt: Date.now(), endsAt: Date.now() + durationMs, durationMs };
         save();
         return this.chestUnlock();
@@ -4031,7 +4070,7 @@
         if ((m.chestReady || []).includes(uid)) return 0;
         const current = m.chestUnlock;
         const remainingMs = !current || current.uid !== uid
-          ? storedChestDuration(chest)
+          ? queueDurationMs(chest)
           : Math.max(0, (Number(current.endsAt) || 0) - Date.now());
         if (remainingMs <= 0) return 0;
         return Math.max(1, Math.ceil(CHEST_SKIP_GEMS_PER_HOUR * remainingMs / CHEST_HOUR_MS));
@@ -4087,7 +4126,7 @@
           if (!m.chestUnlock) {
             const next = this._shortestWaitingChest();
             if (next) {
-              const durationMs = storedChestDuration(next);
+              const durationMs = queueDurationMs(next);
               m.chestUnlock = { uid: next.uid, startedAt: Date.now(), endsAt: Date.now() + durationMs, durationMs, auto: true };
             }
           }
@@ -4114,7 +4153,7 @@
         if (!m.chestUnlock) {
           const next = this._shortestWaitingChest();
           if (next) {
-            const durationMs = storedChestDuration(next);
+            const durationMs = queueDurationMs(next);
             m.chestUnlock = { uid: next.uid, startedAt: Date.now(), endsAt: Date.now() + durationMs, durationMs, auto: true };
           }
         }
@@ -4148,8 +4187,12 @@
         const p = m.chestPipeline;
         p.wins = Math.max(0, p.wins | 0) + 1;
         let chest = null, daily = null, dailyChoice = null;
-        if (p.wins >= this.CHEST_PIPELINE_TARGET) {
+        const dayState = this.economyDaily();
+        // ECO-6: el goteo diario tiene tope; los wins sobrantes se conservan y el
+        // primer objetivo de manana los libera (cadencia garantizada, sin perdida).
+        if (p.wins >= this.CHEST_PIPELINE_TARGET && (dayState.pipelineChests || 0) < EconomyConfig.chests.pipelineDailyCap) {
           p.wins -= this.CHEST_PIPELINE_TARGET;
+          dayState.pipelineChests = (dayState.pipelineChests || 0) + 1;
           const type = CHEST_DROP_SEQUENCE[Math.max(0, p.cycle | 0) % CHEST_DROP_SEQUENCE.length];
           p.cycle = Math.max(0, p.cycle | 0) + 1;
           this.addChest(1, type, 'pipeline:' + (source || 'win'));
@@ -4241,7 +4284,7 @@
         if (!m.chestUnlock) {
           const next = this._shortestWaitingChest();
           if (next) {
-            const durationMs = storedChestDuration(next);
+            const durationMs = queueDurationMs(next);
             m.chestUnlock = { uid: next.uid, startedAt: Date.now(), endsAt: Date.now() + durationMs, durationMs, auto: true };
           }
         }
@@ -4458,7 +4501,7 @@
       // desde ECO-60, cofres directos por tier). Se renueva solo al cambiar de día. ----
       economyDaily() {
         const d = today();
-        if (m.economyDaily.date !== d) { m.economyDaily = { date: d, survivalGems: 0, survivalChestTiers: {} }; save(); }
+        if (m.economyDaily.date !== d) { m.economyDaily = { date: d, survivalGems: 0, survivalChestTiers: {}, pipelineChests: 0 }; save(); }
         return m.economyDaily;
       },
       survivalGemsToday() { return this.economyDaily().survivalGems || 0; },
@@ -5839,8 +5882,17 @@
         if (clearedWave % EconomyConfig.survival.chestMilestoneEvery === 0) {
           const ladder = EconomyConfig.survival.chestLadder;
           const step = clearedWave / EconomyConfig.survival.chestMilestoneEvery - 1;
-          Meta.addChest(1, ladder[Math.min(ladder.length - 1, Math.max(0, step))], 'survival');
-          this.runChests++; txt = '+1 ' + I18n.t('tab_chests'); ic = 'chest';
+          const tier = ladder[Math.min(ladder.length - 1, Math.max(0, step))];
+          // ECO-60: el cofre directo de cada tier cae solo la PRIMERA vez del dia;
+          // repetir el hito sigue premiando con progreso real del pipeline.
+          if (Meta.claimSurvivalChestTier(tier)) {
+            Meta.addChest(1, tier, 'survival');
+            this.runChests++; txt = '+1 ' + I18n.t('tab_chests'); ic = 'chest';
+          } else {
+            const pipeline = Meta.recordChestProgress('supervivencia-hito');
+            if (pipeline && pipeline.chest) { this.runChests++; txt = '+1 ' + I18n.t('tab_chests'); ic = 'chest'; }
+            else { txt = I18n.t('surv_chest_progress'); ic = 'chest'; }
+          }
         }
         else {
           // ECO-20: gemas fijas por hito con tope diario; alcanzado el tope, el hito
@@ -12334,6 +12386,16 @@
         <span class="chest-slot-state">${esc(I18n.t('chest_slot_blocked'))}</span><span class="chest-slot-lock">＋</span>
         <b>${esc(I18n.t('chest_unlock_slot'))}</b><small><img src="img/ui/gem.png" alt="" aria-hidden="true"> ${Meta.CHEST_SLOT_GEMS}</small>
       </button>`;
+    }
+    // ECO-62: metricas honestas de la cola — horas pendientes, siguiente cofre y
+    // bonus de la 4a ranura. Una cola de dias no se esconde tras un "+N".
+    {
+      const queue = Meta.chestQueueSummary();
+      const meta = queue.pendingCount > 0
+        ? I18n.t('chest_queue_meta').replace('{h}', queue.pendingHours).replace('{c}', queue.nextType ? I18n.t(chestDef(queue.nextType).nameKey) : '—')
+        : I18n.t('chest_queue_empty');
+      const boosted = queue.speedBonus > 0 ? ` · ${esc(I18n.t('chest_queue_boosted'))}` : '';
+      html += `<p class="chest-queue-meta" data-chest-queue-meta>${esc(meta)}${boosted}</p>`;
     }
     wrap.innerHTML = html;
     wrap.querySelectorAll('[data-chest-slot]').forEach((button) => button.addEventListener('click', () => {
