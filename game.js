@@ -175,7 +175,8 @@
       guaranteedCoinShare: 0.25,
       upgradeChance: 0.10,
       bonusOdds: { coins: .52, gems: .23, tickets: .13, booster: .12 },
-      premiumGems: 25,
+      premiumGems: 60,
+      premiumCoinScaleCap: 1.5,
       slotGems: 150,
       pipelineTarget: 3,
       // Tablas de recompensa por tier (consumidas por CHEST_TYPES.reward).
@@ -199,8 +200,10 @@
         { id: 'gems-cache', kind: 'gems', amount: 330, compareAt: 300, priceEur: 3.39, best: true, asset: 'img/ui-generated/shop/gems-cache.png' },
         { id: 'gems-vault', kind: 'gems', amount: 1200, compareAt: 1000, priceEur: 11.99, asset: 'img/ui-generated/shop/gems-vault.png' },
         { id: 'coins-pouch', kind: 'coins', amount: 1000, priceEur: 1.09, asset: 'img/ui-generated/shop/coins-pouch.png' },
-        { id: 'coins-crate', kind: 'coins', amount: 6000, compareAt: 5000, priceEur: 3.39, best: true, asset: 'img/ui-generated/shop/coins-crate.png' },
-        { id: 'coins-vault', kind: 'coins', amount: 18000, compareAt: 15000, priceEur: 5.99, asset: 'img/ui-generated/shop/coins-vault.png' },
+        // ECO-51: cantidades corregidas manteniendo precios — la mejora real por
+        // tamano queda en +16% / +27% (antes +96% / +228%, dominaba todo).
+        { id: 'coins-crate', kind: 'coins', amount: 3600, compareAt: 3100, priceEur: 3.39, best: true, asset: 'img/ui-generated/shop/coins-crate.png' },
+        { id: 'coins-vault', kind: 'coins', amount: 7000, compareAt: 5500, priceEur: 5.99, asset: 'img/ui-generated/shop/coins-vault.png' },
       ],
       // Boosters de XP ×4 (gemas).
       xpOffers: [
@@ -209,10 +212,13 @@
         { id: 'xp-7d', hours: 168, gemCost: 160, labelKey: 'xp_pack_7d', best: true, asset: 'img/ui-generated/shop/xp-7d.png' },
       ],
       // Compra directa de cofres con gemas.
+      // ECO-53: precio = EV equivalente (Economy.chestEv, nivel 1) / 10 monedas-por-gema
+      // por un margen que BAJA con el tier (1.6 madera -> 1.15 divino): el valor por
+      // gema mejora moderadamente al subir, sin regalar los tiers altos.
       chestOffers: [
-        { id: 'wood', gemCost: 30 }, { id: 'bronze', gemCost: 50 }, { id: 'silver', gemCost: 90 },
-        { id: 'gold', gemCost: 140 }, { id: 'magic', gemCost: 210 }, { id: 'royal', gemCost: 300 },
-        { id: 'supreme', gemCost: 450 }, { id: 'champion', gemCost: 650 }, { id: 'divine', gemCost: 900 },
+        { id: 'wood', gemCost: 12 }, { id: 'bronze', gemCost: 15 }, { id: 'silver', gemCost: 26 },
+        { id: 'gold', gemCost: 34 }, { id: 'magic', gemCost: 60 }, { id: 'royal', gemCost: 80 },
+        { id: 'supreme', gemCost: 130 }, { id: 'champion', gemCost: 150 }, { id: 'divine', gemCost: 170 },
       ],
     },
     // ECO-30: rareza económica de cosméticos. Cada cofre solo entrega cosméticos
@@ -666,10 +672,10 @@
         test_payment_title: 'Modo de pruebas', test_payment_note: 'Las compras de monedas y gemas se acreditan automáticamente. No se realiza ningún cobro.', mock_payment_badge: 'PAGO DE PRUEBA',
         resource_shop_premium: 'RECURSO PREMIUM', resource_shop_game_currency: 'DIVISA DEL JUEGO', resource_shop_progress: 'PROGRESIÓN', best_value: 'MEJOR VALOR',
         xp_booster_title: 'XP Booster', xp_booster_desc: 'Multiplica ×4 todo el XP ganado en las partidas que empieces mientras esté activo.', xp_boost_this_match: 'Esta partida',
-        xp_boost_inactive: 'Sin booster activo', xp_boost_active: 'XP ×4 · {t}', xp_boost_extend: 'Extiende {t}', xp_boost_buy: 'Activar', xp_boost_no_gems: 'No tienes gemas suficientes para este booster.',
+        xp_progression_note: 'Progresión de nivel · los premios de cofres ya no crecen con tu nivel en gemas', xp_boost_inactive: 'Sin booster activo', xp_boost_active: 'XP ×4 · {t}', xp_boost_extend: 'Extiende {t}', xp_boost_buy: 'Activar', xp_boost_no_gems: 'No tienes gemas suficientes para este booster.',
         xp_boost_added: 'XP ×4 activo · +{t}', xp_pack_6h: '6 h', xp_pack_3d: '3 días', xp_pack_7d: '7 días', xp_result_breakdown: '{base} XP base ×{mult} · +{bonus} por booster',
         mock_purchase_done: 'Compra de prueba completada · +{n} {r}', resource_purchase_failed: 'No se pudo completar la compra. Inténtalo de nuevo.', store_game_blocked: 'La tienda de recursos está disponible desde Inicio. Tu partida sigue activa.',
-        resource_shop_chests: 'COFRES', chest_shop_title: 'Cofres', chest_shop_desc: 'Compra cofres al instante con gemas y ábrelos cuando quieras. El cofre de evento solo se gana jugando.', chest_shop_buy: 'Comprar cofre', chest_shop_add: 'Comprar', chest_shop_bought: '¡{c} añadido a tus cofres!', chest_shop_owned: 'Tienes {n}', chest_shop_owned_none: 'No tienes ninguno',
+        resource_shop_chests: 'COFRES', chest_shop_title: 'Cofres', chest_shop_desc: 'Compra cofres al instante con gemas y ábrelos cuando quieras. El cofre de evento solo se gana jugando.', chest_shop_buy: 'Comprar cofre', chest_shop_add: 'Comprar', chest_shop_bought: '¡{c} añadido a tus cofres!', chest_shop_owned: 'Tienes {n}', chest_shop_owned_none: 'No tienes ninguno', chest_shop_skip_note: 'Se abre con temporizador · abrir al instante: {n} 💎 extra',
         home_chest_cta: 'Cofre', energy_label: 'Energía', energy_off: 'OFF', get_energy: 'Conseguir energía',
         chests_title: 'Cofres', chests_have: 'Tienes {n} cofre(s)', chests_hint: 'Cada cofre revela de 2 a 4 premios: monedas, recursos, boosters o un cosmético raro.', chests_none: 'No tienes cofres · cumple objetivos en cualquier modo para ganar el siguiente', chest_reward: '¡Recompensa! {r}', open_chest: 'Abrir cofre',
         chests_kicker: 'Recompensas', chests_subtitle: 'Juega, consigue cofres y descubre premios increíbles.', chests_progress_title: 'Tu progreso', chests_progress_rule: 'Cumple objetivos en cualquier modo: cada {t} cae el siguiente cofre del ciclo.',
@@ -1016,10 +1022,10 @@
         test_payment_title: 'Test mode', test_payment_note: 'Coin and gem purchases are credited automatically. No payment is charged.', mock_payment_badge: 'TEST PAYMENT',
         resource_shop_premium: 'PREMIUM RESOURCE', resource_shop_game_currency: 'GAME CURRENCY', resource_shop_progress: 'PROGRESSION', best_value: 'BEST VALUE',
         xp_booster_title: 'XP Booster', xp_booster_desc: 'Multiplies by ×4 all XP earned in matches you start while it is active.', xp_boost_this_match: 'This match',
-        xp_boost_inactive: 'No active booster', xp_boost_active: 'XP ×4 · {t}', xp_boost_extend: 'Adds {t}', xp_boost_buy: 'Activate', xp_boost_no_gems: 'You do not have enough gems for this booster.',
+        xp_progression_note: 'Level progression · chest rewards no longer scale gem payouts with your level', xp_boost_inactive: 'No active booster', xp_boost_active: 'XP ×4 · {t}', xp_boost_extend: 'Adds {t}', xp_boost_buy: 'Activate', xp_boost_no_gems: 'You do not have enough gems for this booster.',
         xp_boost_added: 'XP ×4 active · +{t}', xp_pack_6h: '6 h', xp_pack_3d: '3 days', xp_pack_7d: '7 days', xp_result_breakdown: '{base} base XP ×{mult} · +{bonus} from booster',
         mock_purchase_done: 'Test purchase completed · +{n} {r}', resource_purchase_failed: 'The purchase could not be completed. Please try again.', store_game_blocked: 'The resource shop is available from Home. Your match is still active.',
-        resource_shop_chests: 'CHESTS', chest_shop_title: 'Chests', chest_shop_desc: 'Buy chests instantly with gems and open them whenever you like. The event chest is only earned by playing.', chest_shop_buy: 'Buy chest', chest_shop_add: 'Buy', chest_shop_bought: '{c} added to your chests!', chest_shop_owned: 'You have {n}', chest_shop_owned_none: 'You have none',
+        resource_shop_chests: 'CHESTS', chest_shop_title: 'Chests', chest_shop_desc: 'Buy chests instantly with gems and open them whenever you like. The event chest is only earned by playing.', chest_shop_buy: 'Buy chest', chest_shop_add: 'Buy', chest_shop_bought: '{c} added to your chests!', chest_shop_owned: 'You have {n}', chest_shop_owned_none: 'You have none', chest_shop_skip_note: 'Opens on a timer · open instantly: {n} 💎 extra',
         home_chest_cta: 'Chest', energy_label: 'Energy', energy_off: 'OFF', get_energy: 'Get energy',
         chests_title: 'Chests', chests_have: 'You have {n} chest(s)', chests_hint: 'Each chest reveals 2 to 4 rewards: coins, resources, boosters or a rare cosmetic.', chests_none: 'No chests · complete goals in any mode to earn the next one', chest_reward: 'Reward! {r}', open_chest: 'Open chest',
         chests_kicker: 'Rewards', chests_subtitle: 'Play, earn chests and discover incredible prizes.', chests_progress_title: 'Your progress', chests_progress_rule: 'Complete goals in any mode: every {t}, the next cycle chest drops.',
@@ -4243,6 +4249,17 @@
         save();
         return reward;
       },
+      // ECO-52: tirada menor del premium — nunca gemas (60% monedas, 20% ticket,
+      // 20% booster). Mantiene el premium como sumidero neto de la divisa premium.
+      _premiumBonusRoll(scale) {
+        const r = Math.random();
+        if (r < 0.60) return { kind: 'coins', amount: Math.max(1, Math.round((20 + Math.floor(Math.random() * 41)) * (scale || 1))), rarity: 'common', bonus: true };
+        if (r < 0.80) return { kind: 'ticket', amount: 1, rarity: 'common', bonus: true };
+        return {
+          kind: 'booster', boosterId: CHEST_BOOSTER_IDS[Math.floor(Math.random() * CHEST_BOOSTER_IDS.length)],
+          amount: 1, rarity: 'rare', bonus: true,
+        };
+      },
       // Tirada menor de la ceremonia (CH-4): recursos pequeños o un booster para
       // el arsenal persistente. Monedas y gemas escalan con el nivel.
       _chestBonusRoll(defn, scale, gemScale) {
@@ -4263,16 +4280,19 @@
           amount: 1, rarity: 'rare', bonus: true,
         };
       },
-      // ---- Cofre premium: sumidero de gemas. Mejor tabla, sin gemas (sería circular). ----
+      // ---- Cofre premium (ECO-52): sumidero de gemas de apertura INSTANTANEA.
+      // Sin gemas en ninguna tirada (seria circular), escalado de monedas topado a
+      // x1.5 y 8% de cosmetico respetando la banda del cofre magico. Calibrado para
+      // NO dominar ni ser dominado por comprar monedas o por el cofre magico. ----
       PREMIUM_CHEST_GEMS: EconomyConfig.chests.premiumGems,
       openPremiumChest() {
         if (!this.spendGems(this.PREMIUM_CHEST_GEMS, 'premium-chest')) return null;
-        const defn = CHEST_TYPES.magic, scale = chestCoinScale(m.level), gemScale = chestGemScale(m.level);
+        const scale = Math.min(EconomyConfig.chests.premiumCoinScaleCap, chestCoinScale(m.level));
         const roll = Math.random();
         let reward;
-        if (roll < 0.52) reward = { kind: 'coins', amount: Math.round((200 + Math.floor(Math.random() * 300)) * scale), rarity: 'common' };
-        else if (roll < 0.82) reward = { kind: 'ticket', amount: 2, rarity: 'common' };
-        else if (roll < 0.92) reward = { kind: 'coins', amount: Math.round((600 + Math.floor(Math.random() * 400)) * scale), rarity: 'jackpot' };
+        if (roll < 0.52) reward = { kind: 'coins', amount: Math.round((220 + Math.floor(Math.random() * 341)) * scale), rarity: 'common' };
+        else if (roll < 0.86) reward = { kind: 'ticket', amount: 2, rarity: 'common' };
+        else if (roll < 0.92) reward = { kind: 'coins', amount: Math.round((600 + Math.floor(Math.random() * 400)) * scale), rarity: 'rare' };
         else reward = this._rollCosmetic('magic');
         if (!reward) reward = this._cosmeticFallback();
         reward.chestType = 'magic'; reward.baseChestType = 'magic'; reward.upgradeRoll = null;
@@ -4280,7 +4300,7 @@
           kind: 'coins', amount: Math.max(1, Math.round((80 + Math.floor(Math.random() * 81)) * scale)),
           rarity: 'common', guaranteed: true,
         };
-        reward.items = [guaranteed, Object.assign({}, reward), this._chestBonusRoll(defn, scale, gemScale)];
+        reward.items = [guaranteed, Object.assign({}, reward), this._premiumBonusRoll(scale)];
         reward.items.forEach((item) => this._applyChestReward(item));
         save();
         return reward;
@@ -11446,6 +11466,7 @@
       <button class="resource-buy resource-buy-gems" type="button" data-xp-offer="${offer.id}" aria-label="${esc(I18n.t('xp_boost_buy'))}: ${esc(I18n.t(offer.labelKey))}, ${offer.gemCost} ${esc(I18n.t('gems'))}">
         ${iconInline('gem')} <strong>${offer.gemCost}</strong><small>${esc(I18n.t('xp_boost_extend').replace('{t}', I18n.t(offer.labelKey)))}</small>
       </button>
+      <small class="resource-xp-note">${esc(I18n.t('xp_progression_note'))}</small>
     </article>`;
   }
 
@@ -11465,6 +11486,7 @@
       <button class="resource-buy resource-buy-gems" type="button" data-chest-offer="${offer.id}" aria-label="${esc(I18n.t('chest_shop_buy'))}: ${esc(name)}, ${offer.gemCost} ${esc(I18n.t('gems'))}. ${esc(ownedLabel)}">
         ${iconInline('gem')} <strong>${offer.gemCost}</strong><small>${esc(I18n.t('chest_shop_add'))}</small>
       </button>
+      <small class="resource-chest-skip-note">${esc(I18n.t('chest_shop_skip_note').replace('{n}', defn.instantCost))}</small>
     </article>`;
   }
 

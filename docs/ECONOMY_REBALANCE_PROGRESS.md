@@ -16,7 +16,7 @@
 | ECO-2 Gemas/tickets | ✅ HECHA | (ver git log: "ECO-2") | Tope 6💎/día · escalado separado · Choice sin nivel · swap/regen con tickets |
 | ECO-3 Cofres/cosméticos | ✅ HECHA | (ver git log: "ECO-3") | Rareza por tier · fallback consumible · EV analítico creciente · monedas de cofres ×0,5 |
 | ECO-4 Sumideros | ✅ HECHA | (ver git log: "ECO-4") | Tienda rotatoria de tintes · boosters/revives recalibrados · venta directa por gemas |
-| ECO-5 Tienda | ⬜ pendiente | — | |
+| ECO-5 Tienda | ✅ HECHA | (ver git log: "ECO-5") | Packs 3600/7000 · premium 60💎 sin gemas · cofres por EV · tests de dominancia |
 | ECO-6 Cola de cofres | ⬜ pendiente | — | |
 | ECO-7 Forecast 30/90/180 | ⬜ pendiente | — | |
 | ECO-8 UX y release | ⬜ pendiente | — | |
@@ -292,6 +292,33 @@ superv. difícil hábil   1114                  (≤1200) ✅
   por encima de una reserva (modela "sin sentirse obligado").
 - **Tests**: nuevo `tests/economy-sinks.test.js` (6). Actualizados:
   `booster-economy-integration` (precio dinámico), `economy-audit` (revive 50/200).
+
+## ECO-5 — qué se hizo y cómo verificarlo (2026-07-20)
+
+- **ECO-50**: ratio interno formalizado en `EconomyConfig.valuation.gem = 10`
+  (comparación de ofertas/EV; NO conversión entre carteras).
+- **ECO-51 packs de monedas** (precios intactos, cantidades corregidas):
+  1,09€=1.000 (base) · 3,39€ 6.000→**3.600** (+16%) · 5,99€ 18.000→**7.000** (+27%).
+  `compareAt` honestos (3.100/5.500 = equivalente a tarifa base). Packs de gemas
+  sin cambios (+6/+9%).
+- **ECO-52 cofre premium**: 25→**60💎**; tabla: 52% monedas 220–560 · 34% ticket×2 ·
+  6% monedas altas 600–1000 · 8% cosmético de banda mágica; garantizado 80–160;
+  tirada bonus SIN gemas (60/20/20 monedas/ticket/booster, `_premiumBonusRoll`);
+  escalado de monedas topado a ×1,5 (`premiumCoinScaleCap`). EV medido (300
+  aperturas seedeadas, peor caso sin cosméticos): ~427 ≈ 71% del valor de comprar
+  monedas directas → ni domina ni queda dominado (test).
+- **ECO-53 cofres vendidos**: precios re-derivados de `Economy.chestEv(tier, 1)`
+  con margen decreciente 1,6→1,15: 30/50/90/140/210/300/450/650/900 →
+  **12/15/26/34/60/80/130/150/170💎**. Valor/gema estrictamente no decreciente
+  (5,7→8,6, mejora total ×1,49 ≤ moderada). UI: cada tarjeta separa "Comprar"
+  del coste potencial de "abrir al instante" (`chest_shop_skip_note` ES/EN).
+- **ECO-54 XP boosters**: nota visible "progresión, no inversión" en cada tarjeta
+  (`xp_progression_note` ES/EN) — coherente con que las gemas de cofres ya no
+  escalan con nivel (ECO-21). Precios 25/80/160 sin tocar (pendiente de la
+  progresión de niveles futura, como pide el plan).
+- **Tests**: nuevo `tests/economy-dominance.test.js` (5: ratio, monotonía de
+  packs ≤+35%, EV/gema de cofres, no-dominancia del premium con muestreo
+  seedeado, nota XP). Suite completa: 305 pass / 2 preexistentes.
 
 ## Registro de decisiones tomadas
 
