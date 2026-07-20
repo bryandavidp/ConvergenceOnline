@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.10.0" />
+  <link rel="stylesheet" href="styles.css?v=2.11.0" />
 </head>
 <body data-screen="login">
   <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
@@ -813,27 +813,42 @@
       </div>
     </section>
 
-    <section class="hub-view view-collections" id="view-collections" data-hub-view="collections" aria-labelledby="collections-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img class="ic" src="img/ui-generated/home/nav-collections.png" alt=""></span><h2 id="collections-title" data-i18n="collections_title">Colecciones</h2></div>
-      <p class="hub-view-intro" data-i18n="collections_sub">Reúne tableros, temas y logros mientras juegas.</p>
-      <div class="modal-body view-body collections-body">
-        <div class="collections-summary" id="collections-summary" aria-live="polite"></div>
-        <section class="collection-section" aria-labelledby="collection-boards-title">
-          <div class="collection-section-head"><h3 id="collection-boards-title" data-i18n="collections_boards">Tableros</h3><span id="collections-boards-count">0 / 0</span></div>
-          <div class="collection-grid" id="collections-boards"></div>
-        </section>
-        <section class="collection-section" aria-labelledby="collection-themes-title">
-          <div class="collection-section-head"><h3 id="collection-themes-title" data-i18n="collections_themes">Temas</h3><span id="collections-themes-count">0 / 0</span></div>
-          <div class="collection-grid collection-theme-grid" id="collections-themes"></div>
-        </section>
+    <!-- Colecciones: hub con 5 categorías (tableros/temas/iconos/bordes/logros). -->
+    <section class="hub-view view-collections col-view" id="view-collections" data-hub-view="collections" aria-labelledby="collections-title" hidden>
+      <div class="col-hero">
+        <span class="col-hero-emblem" aria-hidden="true"><img src="img/ui-generated/home/nav-collections.png" alt=""></span>
+        <div class="col-hero-copy">
+          <h2 id="collections-title" data-i18n="collections_title">Colecciones</h2>
+          <p data-i18n="collections_hub_sub">Reúne tableros, temas, iconos, bordes y logros mientras juegas.</p>
+        </div>
+        <img class="col-hero-mascot" src="img/ui-generated/home/avatar-robot.png" alt="" aria-hidden="true">
       </div>
-      <div class="modal-actions view-actions collections-actions">
-        <button class="btn btn-primary" type="button" data-act="open-style-shop" data-i18n="collections_explore_shop">Ver tableros y temas</button>
-        <button class="btn btn-ghost" type="button" data-act="nav-achievements" data-i18n="collections_view_achievements">Ver logros</button>
+      <div class="modal-body view-body col-hub-body">
+        <div class="col-pills" id="collections-pills" aria-hidden="true"></div>
+        <div class="col-cards" id="collections-cards"></div>
+      </div>
+    </section>
+
+    <!-- Colecciones: detalle de una categoría (rejilla por rareza). Reutilizable. -->
+    <section class="hub-view view-collection-detail col-view" id="view-collection-detail" data-hub-view="collection-detail" aria-labelledby="col-detail-title" hidden>
+      <div class="col-hero col-hero-detail">
+        <button class="col-back" type="button" data-view-back data-i18n-al="back" aria-label="Volver"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/arrow-left.svg')" aria-hidden="true"></span></button>
+        <span class="col-hero-emblem" id="col-detail-emblem" aria-hidden="true"></span>
+        <div class="col-hero-copy">
+          <h2 id="col-detail-title">—</h2>
+          <p id="col-detail-sub"></p>
+        </div>
+        <img class="col-hero-mascot" src="img/ui-generated/home/avatar-robot.png" alt="" aria-hidden="true">
+      </div>
+      <div class="modal-body view-body col-detail-body">
+        <div class="col-progress" id="col-detail-progress"></div>
+        <div class="col-toolbar" id="col-detail-toolbar"></div>
+        <div class="col-sections" id="col-detail-sections"></div>
+        <div class="col-banner" id="col-detail-banner"></div>
       </div>
     </section>
   </div>
 
-  <script src="game.js?v=2.10.0" defer></script>
+  <script src="game.js?v=2.11.0" defer></script>
 </body>
 </html>
