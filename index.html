@@ -24,9 +24,28 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.9.3" />
+  <link rel="stylesheet" href="styles.css?v=2.10.0" />
 </head>
 <body data-screen="login">
+  <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
+       Cubre la app desde el primer paint (su CSS va en <head>, sin depender de
+       ninguna imagen: el propio loader nunca puede verse "roto"). game.js precarga
+       los assets de la primera pantalla, refleja el progreso REAL en la barra y
+       revela la app solo cuando esos assets están cargados y son mostrables. -->
+  <div class="boot" id="boot-loader" role="status" aria-live="polite" aria-label="Cargando">
+    <div class="boot-inner">
+      <div class="boot-logo" aria-hidden="true">
+        <span class="boot-spinner"></span>
+        <span class="boot-core"></span>
+      </div>
+      <p class="boot-word logo">Convergence</p>
+      <div class="boot-track" id="boot-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Progreso de carga">
+        <span class="boot-fill" id="boot-fill"></span>
+      </div>
+      <p class="boot-status"><span id="boot-percent">0</span><span aria-hidden="true">%</span></p>
+    </div>
+  </div>
+
   <!-- Fondo de estrellas (decorativo) -->
   <div class="stars" aria-hidden="true"></div>
   <!-- Destello de pantalla (récord / tablero perfecto) -->
@@ -815,6 +834,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.9.3" defer></script>
+  <script src="game.js?v=2.10.0" defer></script>
 </body>
 </html>

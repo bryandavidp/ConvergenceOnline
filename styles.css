@@ -107,6 +107,66 @@ h1, h2, h3, p { margin: 0; }
   opacity: 0.5;
 }
 
+/* ---------- Pantalla de carga inicial (boot) ----------
+   Cubre la app hasta que los assets de la primera pantalla están cargados y son
+   mostrables (ver Preloader en game.js). Es AUTOCONTENIDA: no usa ninguna imagen,
+   solo formas/gradientes, para que el propio loader nunca pueda verse "roto"
+   mientras la red va lenta. Se pinta desde el primer frame (este CSS va en <head>). */
+.boot {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+  /* Mismo fondo espacial que el body: la revelación no cambia de color de golpe. */
+  background:
+    radial-gradient(70% 60% at 50% 108%, rgba(143,123,255,.18), transparent 72%),
+    radial-gradient(120% 120% at 50% 0%, var(--bg-2) 0%, var(--bg-1) 45%, var(--bg-0) 100%) var(--bg-0);
+  opacity: 1;
+  transition: opacity .5s ease, visibility .5s ease;
+}
+/* Estado final: se desvanece y deja de interceptar toques; game.js le pone
+   [hidden] tras la transición para sacarlo del árbol por completo. */
+.boot.boot-done { opacity: 0; visibility: hidden; pointer-events: none; }
+.boot-inner { display: flex; flex-direction: column; align-items: center; gap: 22px; width: min(320px, 82vw); text-align: center; }
+.boot-logo { position: relative; width: 96px; height: 96px; display: grid; place-items: center; }
+/* Anillo giratorio = "logo en modo spinner". Conic-gradient recortado con mask a
+   una corona fina; gira en el compositor (solo transform). */
+.boot-spinner {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg, var(--accent-2) 90deg, #fff 200deg, var(--level) 300deg, transparent 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px));
+  animation: bootSpin 1s linear infinite;
+}
+/* Núcleo: el diamante de convergencia del Inicio (misma geometría que .space-diamond). */
+.boot-core {
+  width: 34px; height: 34px; border-radius: 9px;
+  transform: rotate(30deg) skew(-6deg);
+  background: linear-gradient(145deg, rgba(28,117,255,.92), rgba(22,39,151,.5));
+  border: 1px solid rgba(120,170,255,.6);
+  box-shadow: inset 0 0 14px rgba(14,101,255,.5), 0 0 18px rgba(0,160,255,.4);
+  animation: bootPulse 1.8s ease-in-out infinite;
+}
+@keyframes bootSpin { to { transform: rotate(360deg); } }
+@keyframes bootPulse { 0%,100% { transform: rotate(30deg) skew(-6deg) scale(1); } 50% { transform: rotate(30deg) skew(-6deg) scale(1.12); } }
+.boot-word { font-size: clamp(1.7rem, 8vw, 2.3rem); }
+/* Barra de progreso REAL (la anima game.js según assets cargados). */
+.boot-track {
+  width: 100%; height: 8px; border-radius: 999px; overflow: hidden;
+  background: rgba(120,150,255,.16); border: 1px solid var(--line);
+}
+.boot-fill {
+  display: block; height: 100%; width: 0%; border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent-2), var(--level));
+  box-shadow: 0 0 12px rgba(0,208,255,.5);
+  transition: width .28s ease;
+}
+.boot-status { color: var(--muted); font-size: .82rem; letter-spacing: .5px; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) {
+  .boot-spinner { animation-duration: 2.6s; }
+  .boot-core { animation: none; }
+  .boot-fill { transition: none; }
+}
+
 /* ---------- Pantallas ---------- */
 #app {
   position: relative; z-index: 1;
