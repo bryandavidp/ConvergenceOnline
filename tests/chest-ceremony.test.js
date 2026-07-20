@@ -176,8 +176,8 @@ test('ECO-21 (antes CH-4): las monedas escalan hasta ×2.0 y las gemas NO escala
     const coins31 = openOne('divine', 31, [0, 0, 0]).amount;
     const gems1 = openOne('divine', 1, [0, .25, 0]).amount;
     const gems31 = openOne('divine', 31, [0, .25, 0]).amount;
-    assert.equal(coins1, 1000);
-    assert.equal(coins31, 2000);
+    assert.equal(coins1, 500);
+    assert.equal(coins31, 1000);
     assert.equal(gems1, 12);
     assert.equal(gems31, 12);
   } finally { restoreState(snapshot); }

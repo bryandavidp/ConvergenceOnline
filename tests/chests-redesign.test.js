@@ -98,7 +98,7 @@ test('cofres: un desbloqueo persiste, calcula omisión proporcional y queda list
     // mantiene determinista la recompensa principal de monedas.
     const reward = withRandomSequence([.5, 0, 0, 0], () => Meta.openChest(chest.uid));
     assert.equal(reward.kind, 'coins');
-    assert.equal(reward.amount, 60);
+    assert.equal(reward.amount, 30);
     assert.equal(reward.chestType, 'wood');
     assert.equal(Meta.chests(), 0);
     assert.equal(Meta.chestUnlock(), null);
@@ -115,7 +115,7 @@ test('cofres: las tablas de alto nivel escalan premio y la cuarta ranura cuesta 
     const divine = Meta.chestInventory()[0];
     const reward = withRandomSequence([0, 0], () => Meta.openChest(divine.uid));
     assert.equal(reward.kind, 'coins');
-    assert.equal(reward.amount, 1000);
+    assert.equal(reward.amount, 500);
     assert.equal(reward.rarity, 'mythic');
     assert.equal(reward.chestType, 'divine');
 
@@ -164,20 +164,20 @@ test('cofres CH-1/4: la banda solo promete categorías con tabla e inventario re
 
 test('cofres CH-1/4: chestOdds expone tiradas, escalado, bonus y mejora reales por tipo', () => {
   const wood = chestOdds('wood');
-  assert.deepEqual(wood.coins, { min: 60, max: 199, pct: 60 });
+  assert.deepEqual(wood.coins, { min: 30, max: 100, pct: 60 });
   assert.equal(wood.gems.pct, 30);
   assert.equal(wood.tickets.pct, 8);
   assert.equal(wood.cosmetic.pct, 2);
-  assert.deepEqual(wood.guaranteedCoins, { min: 15, max: 50 });
+  assert.deepEqual(wood.guaranteedCoins, { min: 8, max: 25 });
   assert.equal(wood.rolls, 2);
   assert.deepEqual(wood.upgrade, { to: 'bronze', pct: 10 });
   assert.deepEqual(wood.bonus, {
     count: 0,
     coinsPct: 52, gemsPct: 23, ticketsPct: 13, boosterPct: 12,
-    coins: { min: 10, max: 33 }, gems: { min: 1, max: 2 },
+    coins: { min: 10, max: 21 }, gems: { min: 1, max: 2 },
   });
   const divine = chestOdds('divine');
-  assert.deepEqual(divine.coins, { min: 1000, max: 2400, pct: 20 });
+  assert.deepEqual(divine.coins, { min: 500, max: 1200, pct: 20 });
   assert.equal(divine.gems.pct, 12);
   assert.equal(divine.tickets.pct, 8);
   assert.equal(divine.cosmetic.pct, 60);
@@ -186,10 +186,10 @@ test('cofres CH-1/4: chestOdds expone tiradas, escalado, bonus y mejora reales p
   assert.deepEqual(divine.upgrade, { to: null, pct: 0 });
   const divineLate = chestOdds('divine', 31);
   // ECO-21: monedas ×2.0 (tope nuevo) y gemas sin escalado por nivel.
-  assert.deepEqual(divineLate.coins, { min: 2000, max: 4800, pct: 20 });
+  assert.deepEqual(divineLate.coins, { min: 1000, max: 2400, pct: 20 });
   assert.deepEqual(divineLate.gems, { min: 12, max: 24, pct: 12 });
-  assert.deepEqual(divineLate.guaranteedCoins, { min: 500, max: 1200 });
-  assert.deepEqual(divineLate.bonus.coins, { min: 20, max: 594 });
+  assert.deepEqual(divineLate.guaranteedCoins, { min: 250, max: 600 });
+  assert.deepEqual(divineLate.bonus.coins, { min: 20, max: 306 });
   assert.deepEqual(divineLate.bonus.gems, { min: 1, max: 5 });
   // Un tipo desconocido cae a madera, igual que el resto del sistema.
   assert.deepEqual(chestOdds('nope'), chestOdds('wood'));

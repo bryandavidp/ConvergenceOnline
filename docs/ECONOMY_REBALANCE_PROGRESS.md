@@ -14,7 +14,7 @@
 | ECO-0 Medición/configuración | ✅ HECHA | (ver git log: "ECO-0") | EconomyConfig + EconomyAudit + forecast con políticas. Sims idénticos bit a bit al baseline |
 | ECO-1 Monedas | ✅ HECHA | (ver git log: "ECO-1") | settlementCoins con sqrt · Clásico con factor de tiempo · presupuesto anti doble pago |
 | ECO-2 Gemas/tickets | ✅ HECHA | (ver git log: "ECO-2") | Tope 6💎/día · escalado separado · Choice sin nivel · swap/regen con tickets |
-| ECO-3 Cofres/cosméticos | ⬜ pendiente | — | |
+| ECO-3 Cofres/cosméticos | ✅ HECHA | (ver git log: "ECO-3") | Rareza por tier · fallback consumible · EV analítico creciente · monedas de cofres ×0,5 |
 | ECO-4 Sumideros | ⬜ pendiente | — | |
 | ECO-5 Tienda | ⬜ pendiente | — | |
 | ECO-6 Cola de cofres | ⬜ pendiente | — | |
@@ -220,6 +220,44 @@ superv. difícil hábil   1114                  (≤1200) ✅
   (escala ×2.0/plano), `chests-redesign` (divine L31), `economy-audit` (forma nueva).
 - **Hallazgo medido para ECO-6**: el intensivo acumula **397 cofres / 3.830 h de cola**
   en 30 días (reserva creciente sin tope) — el problema exacto de ECO-6, ya cuantificado.
+
+## ECO-3 — qué se hizo y cómo verificarlo (2026-07-20)
+
+- **ECO-30 rareza**: todos los cosméticos (iconos, bordes, temas, tableros) declaran
+  `rarity` (common/rare/epic/legendary/mythic, asignada por coste).
+  `EconomyConfig.cosmetics.rarityByTier` define la banda de cada cofre
+  (madera/bronce=común · plata/oro=común+raro · mágico/real=raro+épico+legendario ·
+  supremo/campeón/divino=épico+legendario+mítico · evento=raro+épico) y
+  `minTierByRarity` el cofre mínimo por rareza. `Meta.chestCosmeticPool(tier)`
+  filtra por banda; sin argumento devuelve el pool completo (compatibilidad).
+- **ECO-32 fallback**: `Meta._cosmeticFallback()` — cuando la tirada cosmética no
+  puede entregar objeto nuevo, cae un **booster consumible** (arsenal), nunca
+  monedas/gemas escaladas. Eliminados el jackpot ×1,35 y las gemas de madera.
+  ⚠️ **Decisión de producto**: el plan recomendaba "fragmentos de estilo"; se
+  implementó la alternativa sancionada por el plan (`boosterChoice`) por alcance.
+  Si el propietario prefiere fragmentos, se construyen sobre este mismo punto
+  (`_cosmeticFallback`) + la tienda rotatoria de ECO-40.
+- **ECO-31 doble vía**: la tienda de personalización muestra en cada objeto no
+  poseído su rareza y "También en: {cofre mínimo} o superior"
+  (`cosmeticDualHint`, i18n `shop_also_in_chest`/`shop_rarity_*` ES/EN, CSS
+  `.shop-dual-hint`/`.shop-rarity-*` en styles.css).
+- **ECO-33 EV**: `Economy.chestEv(type, level)` — EV equivalente analítico
+  (valoración interna `EconomyConfig.valuation`: 1💎=10, ticket=40, booster=80,
+  cosmético por rareza 250→2200). Test de monotonía estricta madera→divino en
+  niveles 1 y 31. Además, **tablas de monedas de cofres ×0,5** (wood 30–100 …
+  divine 500–1200): el valor de los cofres altos vive en sus cosméticos raros,
+  no en imprimir divisa.
+- **Puerta de catálogo re-medida** (collector, 2×10 min/día): hábil día 16,
+  medio **día 19** (antes 11). La puerta "≥20 días" queda al borde para medio y
+  no alcanzada para hábil: con el suelo de ingreso de gameplay (§3.1) + ritual,
+  el catálogo FIJO de 33.080 se agota en ~16–20 días sí o sí. **Estirar a 30–45
+  días requiere ampliar catálogo** (tienda rotatoria ECO-40 + venta directa
+  ECO-43) — re-verificar en ECO-7 con esos sumideros activos.
+- **Tests**: nuevo `tests/chest-rarity.test.js` (5: rarezas válidas, bandas por
+  tier, pool parcial/agotado→fallback, EV monotónico, fallback neutro).
+  Actualizados: `fb-regression` (FB-7→ECO-32), `chests-redesign`, `chest-ceremony`.
+- Suite: 294 pass / 2 preexistentes. EV sim "después" en scratchpad
+  `eco3-chests-final.txt` (números citados arriba quedan en este doc como registro).
 
 ## Registro de decisiones tomadas
 

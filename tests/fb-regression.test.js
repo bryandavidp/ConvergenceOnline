@@ -546,7 +546,7 @@ test('FB-7: el drop cosmético concede no poseídos y grantTheme es idempotente'
   }
 });
 
-test('FB-7: pool cosmético vacío cae a gemas normales o jackpot premium', () => {
+test('FB-7/ECO-32: pool cosmético vacío cae a un consumible, nunca a divisa escalada', () => {
   const snap = snapshotEconomy();
   const m = Meta.state;
   try {
@@ -558,13 +558,15 @@ test('FB-7: pool cosmético vacío cae a gemas normales o jackpot premium', () =
     PlayerIcons.order.forEach((id) => { m.cosmetics.avatarIcons[id] = '2026-01-01'; });
     PlayerBorders.order.forEach((id) => { m.cosmetics.avatarBorders[id] = '2026-01-01'; });
 
+    // ECO-32: el fallback de colección completa es un booster (consumible útil),
+    // nunca monedas o gemas escaladas — completar la colección no imprime divisa.
     const normal = withRandomSequence([.5, 0, .99, 0], () => Meta.openChest());
-    assert.deepEqual({ kind: normal.kind, amount: normal.amount, fallback: normal.fallback }, { kind: 'gems', amount: 8, fallback: 'cosmetic' });
-    assert.equal(m.gems, Meta.PREMIUM_CHEST_GEMS + 8);
+    assert.deepEqual({ kind: normal.kind, amount: normal.amount, fallback: normal.fallback }, { kind: 'booster', amount: 1, fallback: 'cosmetic' });
+    assert.equal(m.gems, Meta.PREMIUM_CHEST_GEMS, 'el fallback no crea gemas');
 
     const premium = withRandomSequence([0.99, 0], () => Meta.openPremiumChest());
-    assert.deepEqual({ kind: premium.kind, amount: premium.amount, rarity: premium.rarity, fallback: premium.fallback }, { kind: 'coins', amount: 600, rarity: 'jackpot', fallback: 'cosmetic' });
-    assert.equal(m.gems, 8);
+    assert.deepEqual({ kind: premium.kind, amount: premium.amount, fallback: premium.fallback }, { kind: 'booster', amount: 1, fallback: 'cosmetic' });
+    assert.equal(m.gems, 0, 'el premium cobró sus gemas y el fallback no las devuelve');
     const allCoins = normal.items.concat(premium.items).filter((item) => item.kind === 'coins').reduce((sum, item) => sum + item.amount, 0);
     assert.equal(m.coins, allCoins, 'cada premio de la ceremonia se aplica exactamente una vez');
   } finally {

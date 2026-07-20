@@ -176,16 +176,16 @@
       pipelineTarget: 3,
       // Tablas de recompensa por tier (consumidas por CHEST_TYPES.reward).
       rewards: {
-        wood: { coins: [60, 199], gems: [1, 3], tickets: [1, 1], coinCut: .60, gemCut: .90, ticketCut: .98, rarity: 'common' },
-        bronze: { coins: [90, 260], gems: [1, 4], tickets: [1, 1], coinCut: .56, gemCut: .86, ticketCut: .96, rarity: 'common' },
-        silver: { coins: [140, 360], gems: [2, 5], tickets: [1, 2], coinCut: .50, gemCut: .78, ticketCut: .92, rarity: 'rare' },
-        gold: { coins: [200, 500], gems: [2, 6], tickets: [2, 3], coinCut: .46, gemCut: .72, ticketCut: .87, rarity: 'epic' },
-        magic: { coins: [280, 700], gems: [3, 8], tickets: [2, 4], coinCut: .40, gemCut: .64, ticketCut: .78, rarity: 'epic' },
-        royal: { coins: [400, 950], gems: [5, 11], tickets: [3, 5], coinCut: .36, gemCut: .55, ticketCut: .68, rarity: 'legendary' },
-        supreme: { coins: [550, 1250], gems: [6, 13], tickets: [4, 6], coinCut: .30, gemCut: .46, ticketCut: .58, rarity: 'legendary' },
-        champion: { coins: [750, 1600], gems: [8, 17], tickets: [5, 8], coinCut: .25, gemCut: .40, ticketCut: .50, rarity: 'mythic' },
-        divine: { coins: [1000, 2400], gems: [12, 24], tickets: [7, 10], coinCut: .20, gemCut: .32, ticketCut: .40, rarity: 'mythic' },
-        event: { coins: [180, 520], gems: [2, 7], tickets: [2, 4], coinCut: .38, gemCut: .63, ticketCut: .78, rarity: 'special' },
+        wood: { coins: [30, 100], gems: [1, 3], tickets: [1, 1], coinCut: .60, gemCut: .90, ticketCut: .98, rarity: 'common' },
+        bronze: { coins: [45, 130], gems: [1, 4], tickets: [1, 1], coinCut: .56, gemCut: .86, ticketCut: .96, rarity: 'common' },
+        silver: { coins: [70, 180], gems: [2, 5], tickets: [1, 2], coinCut: .50, gemCut: .78, ticketCut: .92, rarity: 'rare' },
+        gold: { coins: [100, 250], gems: [2, 6], tickets: [2, 3], coinCut: .46, gemCut: .72, ticketCut: .87, rarity: 'epic' },
+        magic: { coins: [140, 350], gems: [3, 8], tickets: [2, 4], coinCut: .40, gemCut: .64, ticketCut: .78, rarity: 'epic' },
+        royal: { coins: [200, 475], gems: [5, 11], tickets: [3, 5], coinCut: .36, gemCut: .55, ticketCut: .68, rarity: 'legendary' },
+        supreme: { coins: [275, 625], gems: [6, 13], tickets: [4, 6], coinCut: .30, gemCut: .46, ticketCut: .58, rarity: 'legendary' },
+        champion: { coins: [375, 800], gems: [8, 17], tickets: [5, 8], coinCut: .25, gemCut: .40, ticketCut: .50, rarity: 'mythic' },
+        divine: { coins: [500, 1200], gems: [12, 24], tickets: [7, 10], coinCut: .20, gemCut: .32, ticketCut: .40, rarity: 'mythic' },
+        event: { coins: [90, 260], gems: [2, 7], tickets: [2, 4], coinCut: .38, gemCut: .63, ticketCut: .78, rarity: 'special' },
       },
     },
     shop: {
@@ -210,6 +210,27 @@
         { id: 'gold', gemCost: 140 }, { id: 'magic', gemCost: 210 }, { id: 'royal', gemCost: 300 },
         { id: 'supreme', gemCost: 450 }, { id: 'champion', gemCost: 650 }, { id: 'divine', gemCost: 900 },
       ],
+    },
+    // ECO-30: rareza económica de cosméticos. Cada cofre solo entrega cosméticos
+    // de las rarezas de su banda — un Divino nunca suelta un objeto barato de tier
+    // bajo, y los comunes solo caen en cofres bajos.
+    cosmetics: {
+      rarityByTier: {
+        wood: ['common'], bronze: ['common'],
+        silver: ['common', 'rare'], gold: ['common', 'rare'],
+        magic: ['rare', 'epic', 'legendary'], royal: ['rare', 'epic', 'legendary'],
+        supreme: ['epic', 'legendary', 'mythic'], champion: ['epic', 'legendary', 'mythic'],
+        divine: ['epic', 'legendary', 'mythic'],
+        event: ['rare', 'epic'],
+      },
+      // Cofre mínimo donde puede caer cada rareza (para la pista de doble vía en tienda).
+      minTierByRarity: { common: 'wood', rare: 'silver', epic: 'magic', legendary: 'magic', mythic: 'supreme' },
+    },
+    // ECO-33/ECO-50: unidad de valor interna para comparar ofertas y calcular EV.
+    // NO habilita conversión directa entre carteras.
+    valuation: {
+      gem: 10, ticket: 40, booster: 80,
+      cosmeticByRarity: { common: 250, rare: 500, epic: 900, legendary: 1400, mythic: 2200 },
     },
     // Bonus en monedas por dejar el tablero vacío durante una run (Game.boardCleared):
     // clamp(puntosDelBonus/scoreDiv, min, max). Cuenta dentro del presupuesto ECO-12.
@@ -252,6 +273,36 @@
         + Math.min(c.scoreCap, Math.max(0, Number(score) || 0) / c.scoreDiv);
       return { coins: Math.round(base * (1 + streakPct / 100) * timeFactor), streakPct };
     },
+  };
+
+  /* ECO-33: EV equivalente analítico de un cofre (en "monedas de valor" según
+   * EconomyConfig.valuation). Determinista: sirve para el guardarraíl de EV
+   * estrictamente creciente por tier. No incluye la ruleta de mejora (solo puede
+   * subir el EV hacia el tier siguiente, así que no afecta a la monotonía). */
+  Economy.chestEv = function chestEv(type, level) {
+    const defn = CHEST_TYPES[type] || CHEST_TYPES.wood;
+    const r = defn.reward;
+    const v = EconomyConfig.valuation;
+    const cs = chestCoinScale(level || 1), gs = chestGemScale(level || 1);
+    const mean = (range) => (range[0] + range[1]) / 2;
+    const rarities = EconomyConfig.cosmetics.rarityByTier[defn.id] || ['common'];
+    const cosmeticValue = rarities.reduce((sum, rarity) => sum + v.cosmeticByRarity[rarity], 0) / rarities.length;
+    const guaranteed = mean(r.coins) * cs * CHEST_GUARANTEED_COIN_SHARE;
+    const main = r.coinCut * mean(r.coins) * cs
+      + (r.gemCut - r.coinCut) * mean(r.gems) * gs * v.gem
+      + (r.ticketCut - r.gemCut) * mean(r.tickets) * v.ticket
+      + (1 - r.ticketCut) * cosmeticValue;
+    const bonusCount = Math.max(0, chestRollCount(defn.id) - 2);
+    const bonusCoinSpan = Math.max(10, Math.round(r.coins[1] * 0.12));
+    const bonusGemSpan = Math.max(2, Math.round(r.gems[1] * 0.2));
+    const bo = CHEST_BONUS_ODDS;
+    const bonus = bonusCount * (
+      bo.coins * (10 + bonusCoinSpan / 2) * cs
+      + bo.gems * (1 + bonusGemSpan / 2) * gs * v.gem
+      + bo.tickets * v.ticket
+      + bo.booster * v.booster
+    );
+    return guaranteed + main + bonus;
   };
 
   /* ===================== EconomyAudit (ECO-02) =====================
@@ -586,6 +637,7 @@
         powerup_empty: 'No te quedan de este power-up',
         equipped: 'Equipado', equip: 'Equipar', free: 'Gratis', no_coins: 'Monedas insuficientes',
         shop_boards: 'Tableros visuales', shop_themes: 'Temas de color', shop_hint2: 'Los tableros son solo cambios visuales: no dan ventajas ni desventajas. Equipa tu estilo favorito para jugar.', board_unlocked: '¡Tablero desbloqueado!',
+        shop_also_in_chest: 'También en: {c} o superior', shop_rarity_common: 'Común', shop_rarity_rare: 'Raro', shop_rarity_epic: 'Épico', shop_rarity_legendary: 'Legendario', shop_rarity_mythic: 'Mítico',
         resource_shop_title: 'Tienda de recursos', style_shop_title: 'Personalización', resource_shop_short: 'Monedas, gemas y XP', style_shop_short: 'Personalización', style_shop_nav: 'Estilos', preview_theme: 'Vista previa de {name}',
         test_payment_title: 'Modo de pruebas', test_payment_note: 'Las compras de monedas y gemas se acreditan automáticamente. No se realiza ningún cobro.', mock_payment_badge: 'PAGO DE PRUEBA',
         resource_shop_premium: 'RECURSO PREMIUM', resource_shop_game_currency: 'DIVISA DEL JUEGO', resource_shop_progress: 'PROGRESIÓN', best_value: 'MEJOR VALOR',
@@ -934,6 +986,7 @@
         powerup_empty: 'No more of this power-up',
         equipped: 'Equipped', equip: 'Equip', free: 'Free', no_coins: 'Not enough coins',
         shop_boards: 'Visual boards', shop_themes: 'Color themes', shop_hint2: 'Boards are visual-only cosmetics: no advantages or disadvantages. Equip your favorite style before playing.', board_unlocked: 'Board unlocked!',
+        shop_also_in_chest: 'Also drops in: {c} or better', shop_rarity_common: 'Common', shop_rarity_rare: 'Rare', shop_rarity_epic: 'Epic', shop_rarity_legendary: 'Legendary', shop_rarity_mythic: 'Mythic',
         resource_shop_title: 'Resource shop', style_shop_title: 'Customization', resource_shop_short: 'Coins, gems & XP', style_shop_short: 'Customization', style_shop_nav: 'Styles', preview_theme: 'Preview {name}',
         test_payment_title: 'Test mode', test_payment_note: 'Coin and gem purchases are credited automatically. No payment is charged.', mock_payment_badge: 'TEST PAYMENT',
         resource_shop_premium: 'PREMIUM RESOURCE', resource_shop_game_currency: 'GAME CURRENCY', resource_shop_progress: 'PROGRESSION', best_value: 'BEST VALUE',
@@ -3308,16 +3361,16 @@
   const PlayerIcons = {
     DEFAULT: 'nova',
     DEFS: {
-      nova: { name: 'Nova', cost: 0, asset: 'img/player-icons/nova.png' },
-      comet: { name: 'Cometa', cost: 260, asset: 'img/player-icons/comet.png' },
-      prism: { name: 'Prisma', cost: 320, asset: 'img/player-icons/prism.png' },
-      sentinel: { name: 'Centinela', cost: 420, asset: 'img/player-icons/sentinel.png' },
-      nebula: { name: 'Nébula', cost: 560, asset: 'img/player-icons/nebula.png' },
-      orbit: { name: 'Órbita', cost: 720, asset: 'img/player-icons/orbit.png' },
-      flare: { name: 'Llama', cost: 920, asset: 'img/player-icons/flare.png' },
-      crystal: { name: 'Cristal', cost: 1150, asset: 'img/player-icons/crystal.png' },
-      void: { name: 'Vacío', cost: 1450, asset: 'img/player-icons/void.png' },
-      pulse: { name: 'Pulso', cost: 1750, asset: 'img/player-icons/pulse.png' },
+      nova: { name: 'Nova', cost: 0, rarity: 'common', asset: 'img/player-icons/nova.png' },
+      comet: { name: 'Cometa', cost: 260, rarity: 'common', asset: 'img/player-icons/comet.png' },
+      prism: { name: 'Prisma', cost: 320, rarity: 'common', asset: 'img/player-icons/prism.png' },
+      sentinel: { name: 'Centinela', cost: 420, rarity: 'rare', asset: 'img/player-icons/sentinel.png' },
+      nebula: { name: 'Nébula', cost: 560, rarity: 'rare', asset: 'img/player-icons/nebula.png' },
+      orbit: { name: 'Órbita', cost: 720, rarity: 'rare', asset: 'img/player-icons/orbit.png' },
+      flare: { name: 'Llama', cost: 920, rarity: 'epic', asset: 'img/player-icons/flare.png' },
+      crystal: { name: 'Cristal', cost: 1150, rarity: 'epic', asset: 'img/player-icons/crystal.png' },
+      void: { name: 'Vacío', cost: 1450, rarity: 'legendary', asset: 'img/player-icons/void.png' },
+      pulse: { name: 'Pulso', cost: 1750, rarity: 'legendary', asset: 'img/player-icons/pulse.png' },
     },
     order: ['nova', 'comet', 'prism', 'sentinel', 'nebula', 'orbit', 'flare', 'crystal', 'void', 'pulse'],
     html(id, cls) {
@@ -3330,16 +3383,16 @@
   const PlayerBorders = {
     DEFAULT: 'starlight',
     DEFS: {
-      starlight: { name: 'Luz estelar', cost: 0, asset: 'img/player-borders/starlight.png' },
-      plasma: { name: 'Plasma', cost: 320, asset: 'img/player-borders/plasma.png' },
-      royal: { name: 'Real', cost: 420, asset: 'img/player-borders/royal.png' },
-      aurora: { name: 'Aurora', cost: 560, asset: 'img/player-borders/aurora.png' },
-      comet: { name: 'Cometa', cost: 700, asset: 'img/player-borders/comet.png' },
-      crystal: { name: 'Cristal', cost: 920, asset: 'img/player-borders/crystal.png' },
-      eclipse: { name: 'Eclipse', cost: 1150, asset: 'img/player-borders/eclipse.png' },
-      circuit: { name: 'Circuito', cost: 1380, asset: 'img/player-borders/circuit.png' },
-      bloom: { name: 'Bloom', cost: 1580, asset: 'img/player-borders/bloom.png' },
-      mythic: { name: 'Mítico', cost: 1900, asset: 'img/player-borders/mythic.png' },
+      starlight: { name: 'Luz estelar', cost: 0, rarity: 'common', asset: 'img/player-borders/starlight.png' },
+      plasma: { name: 'Plasma', cost: 320, rarity: 'common', asset: 'img/player-borders/plasma.png' },
+      royal: { name: 'Real', cost: 420, rarity: 'rare', asset: 'img/player-borders/royal.png' },
+      aurora: { name: 'Aurora', cost: 560, rarity: 'rare', asset: 'img/player-borders/aurora.png' },
+      comet: { name: 'Cometa', cost: 700, rarity: 'rare', asset: 'img/player-borders/comet.png' },
+      crystal: { name: 'Cristal', cost: 920, rarity: 'epic', asset: 'img/player-borders/crystal.png' },
+      eclipse: { name: 'Eclipse', cost: 1150, rarity: 'epic', asset: 'img/player-borders/eclipse.png' },
+      circuit: { name: 'Circuito', cost: 1380, rarity: 'legendary', asset: 'img/player-borders/circuit.png' },
+      bloom: { name: 'Bloom', cost: 1580, rarity: 'legendary', asset: 'img/player-borders/bloom.png' },
+      mythic: { name: 'Mítico', cost: 1900, rarity: 'mythic', asset: 'img/player-borders/mythic.png' },
     },
     order: ['starlight', 'plasma', 'royal', 'aurora', 'comet', 'crystal', 'eclipse', 'circuit', 'bloom', 'mythic'],
     html(id, cls) {
@@ -4069,10 +4122,8 @@
         if (roll < profile.coinCut) reward = { kind: 'coins', amount: Math.round(ranged(profile.coins) * scale), rarity: profile.rarity };
         else if (roll < profile.gemCut) reward = { kind: 'gems', amount: Math.max(1, Math.round(ranged(profile.gems) * gemScale)), rarity: profile.rarity };
         else if (roll < profile.ticketCut) reward = { kind: 'ticket', amount: ranged(profile.tickets), rarity: profile.rarity };
-        else reward = this._rollCosmetic();
-        if (!reward) reward = openType === 'wood'
-          ? { kind: 'gems', amount: Math.max(1, Math.round((8 + Math.floor(Math.random() * 8)) * gemScale)), rarity: 'common', fallback: 'cosmetic' }
-          : { kind: 'coins', amount: Math.round(profile.coins[1] * 1.35 * scale), rarity: 'jackpot', fallback: 'cosmetic' };
+        else reward = this._rollCosmetic(openType);
+        if (!reward) reward = this._cosmeticFallback();
         reward.chestType = openType;
         reward.baseChestType = chest.type;
         reward.upgradeRoll = upgradeTo ? { from: chest.type, to: upgradeTo, chance: CHEST_UPGRADE_CHANCE, upgraded: !!tierUp } : null;
@@ -4139,8 +4190,8 @@
         if (roll < 0.52) reward = { kind: 'coins', amount: Math.round((200 + Math.floor(Math.random() * 300)) * scale), rarity: 'common' };
         else if (roll < 0.82) reward = { kind: 'ticket', amount: 2, rarity: 'common' };
         else if (roll < 0.92) reward = { kind: 'coins', amount: Math.round((600 + Math.floor(Math.random() * 400)) * scale), rarity: 'jackpot' };
-        else reward = this._rollCosmetic();
-        if (!reward) reward = { kind: 'coins', amount: Math.round((600 + Math.floor(Math.random() * 400)) * scale), rarity: 'jackpot', fallback: 'cosmetic' };
+        else reward = this._rollCosmetic('magic');
+        if (!reward) reward = this._cosmeticFallback();
         reward.chestType = 'magic'; reward.baseChestType = 'magic'; reward.upgradeRoll = null;
         const guaranteed = {
           kind: 'coins', amount: Math.max(1, Math.round((80 + Math.floor(Math.random() * 81)) * scale)),
@@ -4244,31 +4295,44 @@
       addZenFlower() { if (!m.zen) m.zen = { flowers: 0 }; m.zen.flowers++; save(); return m.zen.flowers; },
       grantBoard(id) { if (!m.boards.owned[id]) { m.boards.owned[id] = 1; save(); return true; } return false; },
       grantTheme(id) { if (this.owns(id)) return false; m.cosmetics.owned[id] = today(); save(); return true; },
-      chestCosmeticPool() {
+      // ECO-30: pool de cosméticos aún NO poseídos. Sin argumento devuelve el pool
+      // completo; con un tier de cofre, solo las rarezas de la banda de ese cofre.
+      chestCosmeticPool(chestTier) {
+        const allowed = chestTier ? (EconomyConfig.cosmetics.rarityByTier[chestTier] || ['common']) : null;
+        const fits = (rarity) => !allowed || allowed.includes(rarity || 'common');
         const pool = [];
         Boards.order.forEach((id) => {
           const b = Boards.DEFS[id];
-          if (b && id !== 'classic' && !b.exclusive && !this.ownsBoard(id)) pool.push({ cosmeticKind: 'board', id, name: b.name });
+          if (b && id !== 'classic' && !b.exclusive && !this.ownsBoard(id) && fits(b.rarity)) pool.push({ cosmeticKind: 'board', id, name: b.name, rarity: b.rarity || 'common' });
         });
         Themes.order.forEach((id) => {
           const t = Themes.DEFS[id];
-          if (t && id !== 'default' && !this.owns(id)) pool.push({ cosmeticKind: 'theme', id, name: t.name });
+          if (t && id !== 'default' && !this.owns(id) && fits(t.rarity)) pool.push({ cosmeticKind: 'theme', id, name: t.name, rarity: t.rarity || 'common' });
         });
         PlayerIcons.order.forEach((id) => {
           const item = PlayerIcons.DEFS[id];
-          if (item && id !== PlayerIcons.DEFAULT && !this.ownsAvatarIcon(id)) pool.push({ cosmeticKind: 'avatarIcon', id, name: item.name });
+          if (item && id !== PlayerIcons.DEFAULT && !this.ownsAvatarIcon(id) && fits(item.rarity)) pool.push({ cosmeticKind: 'avatarIcon', id, name: item.name, rarity: item.rarity || 'common' });
         });
         PlayerBorders.order.forEach((id) => {
           const item = PlayerBorders.DEFS[id];
-          if (item && id !== PlayerBorders.DEFAULT && !this.ownsAvatarBorder(id)) pool.push({ cosmeticKind: 'avatarBorder', id, name: item.name });
+          if (item && id !== PlayerBorders.DEFAULT && !this.ownsAvatarBorder(id) && fits(item.rarity)) pool.push({ cosmeticKind: 'avatarBorder', id, name: item.name, rarity: item.rarity || 'common' });
         });
         return pool;
       },
-      _rollCosmetic() {
-        const pool = this.chestCosmeticPool();
+      _rollCosmetic(chestTier) {
+        const pool = this.chestCosmeticPool(chestTier);
         if (!pool.length) return null;
         const item = pool[Math.floor(Math.random() * pool.length)];
-        return Object.assign({ kind: 'cosmetic', rarity: 'cosmetic' }, item);
+        return Object.assign({ kind: 'cosmetic' }, item, { rarity: 'cosmetic', itemRarity: item.rarity });
+      },
+      // ECO-32: cuando la tirada cosmética no puede entregar objeto nuevo del tier,
+      // el fallback es un CONSUMIBLE (booster para el arsenal) — nunca monedas o
+      // gemas escaladas: completar la colección ya no imprime divisa extra.
+      _cosmeticFallback() {
+        return {
+          kind: 'booster', boosterId: CHEST_BOOSTER_IDS[Math.floor(Math.random() * CHEST_BOOSTER_IDS.length)],
+          amount: 1, rarity: 'rare', fallback: 'cosmetic',
+        };
       },
       _applyChestReward(reward) {
         if (!reward) return null;
@@ -4922,12 +4986,12 @@
    */
   const Themes = {
     DEFS: {
-      default: { name: 'Cosmos', cost: 0, vars: {} },
-      neon: { name: 'Neón', cost: 150, vars: { '--bg-0': '#0a0420', '--bg-1': '#12063a', '--bg-2': '#1e0a5c', '--panel': '#1a1052', '--panel-2': '#241466', '--accent': '#b14bff', '--accent-2': '#19f0d0', '--level': '#ff5cf0', '--score': '#19f0d0' } },
-      sunset: { name: 'Ocaso', cost: 200, vars: { '--bg-0': '#1a0a14', '--bg-1': '#2e0f1e', '--bg-2': '#4a1530', '--panel': '#34122a', '--panel-2': '#451a38', '--accent': '#ff7a59', '--accent-2': '#ffd23f', '--level': '#ff5b6e', '--score': '#ffb24d' } },
-      forest: { name: 'Bosque', cost: 200, vars: { '--bg-0': '#04140f', '--bg-1': '#08231a', '--bg-2': '#0e3a2b', '--panel': '#0c3024', '--panel-2': '#114433', '--accent': '#2fbf71', '--accent-2': '#9be15d', '--level': '#27b6a0', '--score': '#9be15d' } },
-      aurora: { name: 'Aurora', cost: 300, vars: { '--bg-0': '#04101c', '--bg-1': '#082236', '--bg-2': '#0c3a52', '--panel': '#0b2c45', '--panel-2': '#103a59', '--accent': '#19f0d0', '--accent-2': '#7a5cff', '--level': '#3ad07f', '--score': '#19f0d0' } },
-      mono: { name: 'Eclipse', cost: 250, vars: { '--bg-0': '#0c0c10', '--bg-1': '#16161c', '--bg-2': '#24242e', '--panel': '#1c1c24', '--panel-2': '#26262f', '--accent': '#8a90a6', '--accent-2': '#cfd6ea', '--level': '#aeb6cc', '--score': '#cfd6ea' } },
+      default: { name: 'Cosmos', cost: 0, rarity: 'common', vars: {} },
+      neon: { name: 'Neón', cost: 150, rarity: 'common', vars: { '--bg-0': '#0a0420', '--bg-1': '#12063a', '--bg-2': '#1e0a5c', '--panel': '#1a1052', '--panel-2': '#241466', '--accent': '#b14bff', '--accent-2': '#19f0d0', '--level': '#ff5cf0', '--score': '#19f0d0' } },
+      sunset: { name: 'Ocaso', cost: 200, rarity: 'common', vars: { '--bg-0': '#1a0a14', '--bg-1': '#2e0f1e', '--bg-2': '#4a1530', '--panel': '#34122a', '--panel-2': '#451a38', '--accent': '#ff7a59', '--accent-2': '#ffd23f', '--level': '#ff5b6e', '--score': '#ffb24d' } },
+      forest: { name: 'Bosque', cost: 200, rarity: 'common', vars: { '--bg-0': '#04140f', '--bg-1': '#08231a', '--bg-2': '#0e3a2b', '--panel': '#0c3024', '--panel-2': '#114433', '--accent': '#2fbf71', '--accent-2': '#9be15d', '--level': '#27b6a0', '--score': '#9be15d' } },
+      aurora: { name: 'Aurora', cost: 300, rarity: 'rare', vars: { '--bg-0': '#04101c', '--bg-1': '#082236', '--bg-2': '#0c3a52', '--panel': '#0b2c45', '--panel-2': '#103a59', '--accent': '#19f0d0', '--accent-2': '#7a5cff', '--level': '#3ad07f', '--score': '#19f0d0' } },
+      mono: { name: 'Eclipse', cost: 250, rarity: 'rare', vars: { '--bg-0': '#0c0c10', '--bg-1': '#16161c', '--bg-2': '#24242e', '--panel': '#1c1c24', '--panel-2': '#26262f', '--accent': '#8a90a6', '--accent-2': '#cfd6ea', '--level': '#aeb6cc', '--score': '#cfd6ea' } },
     },
     order: ['default', 'neon', 'sunset', 'forest', 'aurora', 'mono'],
     allVars() { const s = {}; this.order.forEach((id) => Object.keys(this.DEFS[id].vars).forEach((k) => s[k] = 1)); return Object.keys(s); },
@@ -4952,18 +5016,18 @@
    */
   const Boards = {
     DEFS: {
-      classic: { name: 'Tablero Clásico', cost: 0, sw: 'linear-gradient(135deg,#1b2a52,#2f6bff)', chars: ['Marco espacial azul', 'Casillas limpias y legibles'] },
+      classic: { name: 'Tablero Clásico', cost: 0, rarity: 'common', sw: 'linear-gradient(135deg,#1b2a52,#2f6bff)', chars: ['Marco espacial azul', 'Casillas limpias y legibles'] },
       // Exclusivo del Jardín Zen (GM-23): se gana con 50 flores, no se compra.
-      jardin: { name: 'Jardín Zen', cost: 0, exclusive: true, sw: 'linear-gradient(135deg,#1d3a24,#9be15d 60%,#ffb7d5)', chars: ['Se gana con 50 flores zen', 'Pétalos y musgo en calma'] },
-      madera: { name: 'Tablero de Madera', cost: 500, sw: 'linear-gradient(135deg,#5a3a1e,#a86a36)', chars: ['Vetas cálidas de madera', 'Marco artesanal'] },
-      hielo: { name: 'Tablero de Hielo', cost: 800, sw: 'linear-gradient(135deg,#2a6a9e,#9fe6ff)', chars: ['Cristal frío y brillo polar', 'Casillas translúcidas'] },
-      lava: { name: 'Tablero de Lava', cost: 1200, sw: 'linear-gradient(135deg,#7a1e10,#ff5b2e)', chars: ['Roca oscura y magma', 'Borde incandescente'] },
-      cristal: { name: 'Tablero de Cristal', cost: 1500, sw: 'linear-gradient(135deg,#5a2a8e,#c08bff)', chars: ['Prismas violetas', 'Destellos de vidrio'] },
-      magico: { name: 'Tablero Mágico', cost: 2000, sw: 'linear-gradient(135deg,#3a1e6e,#8a5cff)', chars: ['Runas arcanas sutiles', 'Brillo encantado'] },
-      futurista: { name: 'Tablero Futurista', cost: 2500, sw: 'linear-gradient(135deg,#0e3a4a,#19f0d0)', chars: ['Circuitos neón', 'Paneles tecnológicos'] },
-      dorado: { name: 'Tablero Dorado', cost: 3000, sw: 'linear-gradient(135deg,#7a5a10,#ffd84d)', chars: ['Oro pulido', 'Detalles premium'] },
-      bosque: { name: 'Tablero del Bosque', cost: 1800, sw: 'linear-gradient(135deg,#1e4a2a,#6bd36b)', chars: ['Textura de hojas', 'Tonos naturales'] },
-      cosmico: { name: 'Tablero Cósmico', cost: 2200, sw: 'linear-gradient(135deg,#2a1a5e,#a06bff)', chars: ['Nebulosa profunda', 'Estrellas en el marco'] },
+      jardin: { name: 'Jardín Zen', cost: 0, rarity: 'legendary', exclusive: true, sw: 'linear-gradient(135deg,#1d3a24,#9be15d 60%,#ffb7d5)', chars: ['Se gana con 50 flores zen', 'Pétalos y musgo en calma'] },
+      madera: { name: 'Tablero de Madera', cost: 500, rarity: 'common', sw: 'linear-gradient(135deg,#5a3a1e,#a86a36)', chars: ['Vetas cálidas de madera', 'Marco artesanal'] },
+      hielo: { name: 'Tablero de Hielo', cost: 800, rarity: 'rare', sw: 'linear-gradient(135deg,#2a6a9e,#9fe6ff)', chars: ['Cristal frío y brillo polar', 'Casillas translúcidas'] },
+      lava: { name: 'Tablero de Lava', cost: 1200, rarity: 'rare', sw: 'linear-gradient(135deg,#7a1e10,#ff5b2e)', chars: ['Roca oscura y magma', 'Borde incandescente'] },
+      cristal: { name: 'Tablero de Cristal', cost: 1500, rarity: 'epic', sw: 'linear-gradient(135deg,#5a2a8e,#c08bff)', chars: ['Prismas violetas', 'Destellos de vidrio'] },
+      magico: { name: 'Tablero Mágico', cost: 2000, rarity: 'epic', sw: 'linear-gradient(135deg,#3a1e6e,#8a5cff)', chars: ['Runas arcanas sutiles', 'Brillo encantado'] },
+      futurista: { name: 'Tablero Futurista', cost: 2500, rarity: 'legendary', sw: 'linear-gradient(135deg,#0e3a4a,#19f0d0)', chars: ['Circuitos neón', 'Paneles tecnológicos'] },
+      dorado: { name: 'Tablero Dorado', cost: 3000, rarity: 'mythic', sw: 'linear-gradient(135deg,#7a5a10,#ffd84d)', chars: ['Oro pulido', 'Detalles premium'] },
+      bosque: { name: 'Tablero del Bosque', cost: 1800, rarity: 'epic', sw: 'linear-gradient(135deg,#1e4a2a,#6bd36b)', chars: ['Textura de hojas', 'Tonos naturales'] },
+      cosmico: { name: 'Tablero Cósmico', cost: 2200, rarity: 'legendary', sw: 'linear-gradient(135deg,#2a1a5e,#a06bff)', chars: ['Nebulosa profunda', 'Estrellas en el marco'] },
     },
     order: ['classic', 'madera', 'hielo', 'lava', 'cristal', 'magico', 'futurista', 'dorado', 'bosque', 'cosmico', 'jardin'],
     apply(id) {
@@ -11504,6 +11568,14 @@
   }
 
   // Tienda de temas (compra/equipa con monedas; previsualización en vivo)
+  // ECO-31: pista de doble vía — "También en: <cofre mínimo> o superior" + rareza.
+  // La tienda vende certeza; el cofre, sorpresa. Ambas rutas quedan visibles.
+  function cosmeticDualHint(rarity) {
+    const r = rarity || 'common';
+    const minTier = EconomyConfig.cosmetics.minTierByRarity[r] || 'wood';
+    const chestName = I18n.t(CHEST_TYPES[minTier].nameKey);
+    return `<small class="shop-dual-hint"><span class="shop-rarity shop-rarity-${r}">${esc(I18n.t('shop_rarity_' + r))}</span> · ${esc(I18n.t('shop_also_in_chest').replace('{c}', chestName))}</small>`;
+  }
   function buildShop() {
     const list = $('#shop-list'); if (!list) return;
     Econ.refresh();
@@ -11513,14 +11585,16 @@
       const button = equipped ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
         : owned ? `<button class="btn btn-primary btn-sm" data-picon-eq="${id}">${esc(I18n.t('equip'))}</button>`
           : `<button class="btn btn-primary btn-sm" data-picon-buy="${id}">${iconInline('coin')} ${item.cost}</button>`;
-      return `<article class="player-shop-item${equipped ? ' is-equipped' : ''}">${playerAvatarHtml(id, Meta.avatarBorder(), 'player-avatar-md')}<b>${esc(item.name)}</b>${button}</article>`;
+      const hint = owned ? '' : cosmeticDualHint(item.rarity);
+      return `<article class="player-shop-item${equipped ? ' is-equipped' : ''}">${playerAvatarHtml(id, Meta.avatarBorder(), 'player-avatar-md')}<b>${esc(item.name)}</b>${hint}${button}</article>`;
     }).join('');
     const borderCards = PlayerBorders.order.map((id) => {
       const item = PlayerBorders.DEFS[id], owned = Meta.ownsAvatarBorder(id), equipped = Meta.avatarBorder() === id;
       const button = equipped ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
         : owned ? `<button class="btn btn-primary btn-sm" data-pborder-eq="${id}">${esc(I18n.t('equip'))}</button>`
           : `<button class="btn btn-primary btn-sm" data-pborder-buy="${id}">${iconInline('coin')} ${item.cost}</button>`;
-      return `<article class="player-shop-item${equipped ? ' is-equipped' : ''}">${playerAvatarHtml(Meta.avatarIcon(), id, 'player-avatar-md')}<b>${esc(item.name)}</b>${button}</article>`;
+      const hint = owned ? '' : cosmeticDualHint(item.rarity);
+      return `<article class="player-shop-item${equipped ? ' is-equipped' : ''}">${playerAvatarHtml(Meta.avatarIcon(), id, 'player-avatar-md')}<b>${esc(item.name)}</b>${hint}${button}</article>`;
     }).join('');
     const eqB = Meta.equippedBoard();
     const boardsHTML = Boards.order.map((id) => {
@@ -11530,7 +11604,8 @@
           : b.exclusive ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('board_excl'))}</button>`
             : (b.cost === 0 ? `<button class="btn btn-primary btn-sm" data-beq="${id}">${esc(I18n.t('free'))}</button>`
               : `<button class="btn btn-primary btn-sm" data-bbuy="${id}">${iconInline('coin')} ${b.cost}</button>`);
-      return `<div class="board-card${eq ? ' on' : ''}" data-board="${id}"><span class="board-thumb" data-board="${id}" aria-hidden="true"><img src="img/board-themes/v2/${id}/preview.jpg" alt=""></span><span class="board-name">${esc(b.name)}</span><span class="board-chars">${b.chars.map((c) => `<span class="board-char">✦ ${esc(c)}</span>`).join('')}</span>${btn}</div>`;
+      const hint = owned || b.exclusive || !b.cost ? '' : cosmeticDualHint(b.rarity);
+      return `<div class="board-card${eq ? ' on' : ''}" data-board="${id}"><span class="board-thumb" data-board="${id}" aria-hidden="true"><img src="img/board-themes/v2/${id}/preview.jpg" alt=""></span><span class="board-name">${esc(b.name)}</span><span class="board-chars">${b.chars.map((c) => `<span class="board-char">✦ ${esc(c)}</span>`).join('')}</span>${hint}${btn}</div>`;
     }).join('');
     const curT = Meta.cosmetics().theme;
     const themesHTML = Themes.order.map((id) => {
@@ -11538,7 +11613,8 @@
       const btn = eq ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
         : owned ? `<button class="btn btn-primary btn-sm" data-equip="${id}">${esc(I18n.t('equip'))}</button>`
           : `<button class="btn btn-primary btn-sm" data-buy="${id}">${iconInline('coin')} ${t.cost}</button>`;
-      return `<div class="shop-item${eq ? ' on' : ''}" data-theme="${id}"><button class="shop-sw" type="button" data-theme-preview="${id}" style="background:${Themes.swatch(id)}" aria-label="${esc(I18n.t('preview_theme').replace('{name}', t.name))}"></button><span class="shop-name">${esc(t.name)}</span>${btn}</div>`;
+      const hint = owned || !t.cost ? '' : cosmeticDualHint(t.rarity);
+      return `<div class="shop-item${eq ? ' on' : ''}" data-theme="${id}"><button class="shop-sw" type="button" data-theme-preview="${id}" style="background:${Themes.swatch(id)}" aria-label="${esc(I18n.t('preview_theme').replace('{name}', t.name))}"></button><span class="shop-name">${esc(t.name)}</span>${hint}${btn}</div>`;
     }).join('');
     list.innerHTML = `<section class="player-shop-hero">${playerCardHtml('player-card-shop')}</section>
       <h3 class="group-title">${esc(I18n.t('shop_player_icons'))}</h3><div class="player-shop-grid">${iconCards}</div>
