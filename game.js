@@ -12035,20 +12035,42 @@
     const fill = $('#boot-fill'), pctEl = $('#boot-percent'), bar = $('#boot-progress');
 
     // 1) Manifiesto crítico: imágenes del shell visible de Login + Inicio.
-    //    Se excluye #hub-views (vistas secundarias ocultas) para no alargar la
-    //    espera con assets que no se ven en la primera pantalla.
+    //    Se excluye #hub-views del barrido genérico (las vistas ocultas se
+    //    añaden abajo de forma explícita, no de golpe).
     const urls = new Set();
+    const push = (u) => { if (u) urls.add(u); };
     const collect = (root) => {
       if (!root) return;
-      root.querySelectorAll('img[src]').forEach((im) => urls.add(im.currentSrc || im.src));
+      root.querySelectorAll('img[src]').forEach((im) => push(im.currentSrc || im.src));
       root.querySelectorAll('[style*="--icv2-url"]').forEach((el) => {
         const m = (el.style.getPropertyValue('--icv2-url') || '').match(/url\((['"]?)(.*?)\1\)/);
-        if (m && m[2]) urls.add(m[2]);
+        if (m && m[2]) push(m[2]);
       });
     };
     collect($('#screen-login'));
     const start = $('#screen-start');
     if (start) Array.from(start.children).forEach((c) => { if (c.id !== 'hub-views') collect(c); });
+
+    // 2) Tiendas + cofres + iconos/bordes: su arte se construye al abrir la
+    //    vista (no está aún en el DOM), así que se toma de las estructuras de
+    //    datos del juego para no divergir de la fuente. Envuelto en try por si
+    //    alguna estructura cambia: nunca debe romper el arranque.
+    try {
+      // Iconos y bordes de jugador (perfil/personalización).
+      Object.values(PlayerIcons.DEFS).forEach((d) => push(d.asset));
+      Object.values(PlayerBorders.DEFS).forEach((d) => push(d.asset));
+      // Cofres: atlas de cada tipo (incluye el de evento).
+      Object.values(CHEST_TYPES).forEach((c) => push(c.asset));
+      // Tienda de recursos: arte de ofertas de monedas/gemas y packs de XP.
+      Storefront.CURRENCY_OFFERS.forEach((o) => push(o.asset));
+      Storefront.XP_BOOST_OFFERS.forEach((o) => push(o.asset));
+      // Tienda de personalización: miniaturas de todos los tableros.
+      Boards.order.forEach((id) => push('img/board-themes/v2/' + id + '/preview.jpg'));
+    } catch (_) { /* estructura inesperada: seguimos con lo ya reunido */ }
+    // Imágenes estáticas de las propias vistas de tienda/cofres (cabeceras,
+    // fichas de recompensa…). Siguen en el DOM aunque estén ocultas.
+    ['view-resource-shop', 'view-shop', 'view-chests'].forEach((id) => collect(document.getElementById(id)));
+
     const assets = Array.from(urls).filter(Boolean);
 
     // La fuente variable cuenta como una unidad más de progreso.
@@ -12058,12 +12080,14 @@
 
     const total = assets.length + 1;
     let done = 0;
+    let armStall = () => {};
     const bump = () => {
       done++;
       const p = Math.min(100, Math.round((done / total) * 100));
       if (fill) fill.style.width = p + '%';
       if (pctEl) pctEl.textContent = String(p);
       if (bar) bar.setAttribute('aria-valuenow', String(p));
+      armStall(); // hay progreso: reinicia el tope por inactividad
     };
     const loadImg = (url) => new Promise((res) => {
       const img = new Image();
@@ -12087,13 +12111,19 @@
       warmSecondaryAssets();
     };
 
-    // Tope de seguridad: un asset colgado (nunca resuelve) no atrapa al usuario.
-    const capTimer = bootTimeout(reveal, 12000);
+    // Topes de seguridad para un manifiesto grande (tiendas/cofres/iconos):
+    //  - Por INACTIVIDAD: si no llega ningún asset en 8 s, se asume estancado y
+    //    se revela. En conexiones lentas, mientras haya progreso, sigue esperando.
+    //  - DURO: máximo absoluto por si el navegador nunca resuelve nada.
+    let stallTimer = 0;
+    armStall = () => { clearTimeout(stallTimer); stallTimer = bootTimeout(reveal, 8000); };
+    armStall();
+    bootTimeout(reveal, 30000);
     // Tiempo mínimo visible: evita un parpadeo brusco cuando el caché está caliente.
     const startedAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     Promise.all(jobs).then(() => {
       const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-      bootTimeout(() => { clearTimeout(capTimer); reveal(); }, Math.max(0, 450 - (now - startedAt)));
+      bootTimeout(() => { clearTimeout(stallTimer); reveal(); }, Math.max(0, 450 - (now - startedAt)));
     });
   }
 
