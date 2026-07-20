@@ -103,7 +103,9 @@ test('suministro: cada anillo paga poco, respeta dificultad y nunca crea booster
     assert.deepEqual(Survival.inv, {});
 
     State.diff = 'dificil'; Survival.charge = 100;
-    assert.equal(Survival.addSupplyCharge(0), 3, 'difícil aplica su multiplicador y redondea a 3');
+    // ECO-1: el multiplicador difícil vive en EconomyConfig (1.3 → 1.15).
+    const expectedHard = Math.max(1, Math.round(2 * globalThis.window.__cv.EconomyConfig.survival.coinMult.dificil));
+    assert.equal(Survival.addSupplyCharge(0), expectedHard, 'difícil aplica su multiplicador económico');
   } finally {
     restore(snapshot);
     State.mode = previous.mode; State.diff = previous.diff; State.coinsRun = 0;

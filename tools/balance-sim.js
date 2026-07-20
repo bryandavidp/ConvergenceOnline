@@ -169,6 +169,7 @@ function runOne(cfg) {
   }
 
   const stats = { polls: 0, noMove: 0 };
+  const coinsBefore = cv.Meta.coins();
   const maxMs = (cfg.maxMinutes || 6) * 60000;
   let nextActAt = profile.reaction;
   let sessionScore = 0, levelsCleared = 0;
@@ -215,6 +216,10 @@ function runOne(cfg) {
     }
   }
   const timedOut = State.status === 'playing'; // Zen o bot "inmortal": corte por tiempo
+  // ECO-1: los modos sin fin no liquidan nunca dentro del sim (el bot no muere a
+  // tiempo). settleOnCutoff modela "fin de la sesión": la run se liquida por el
+  // camino REAL (gameOver → recordGame) para poder medir monedas por minuto.
+  if (cfg.settleOnCutoff && timedOut) Game.gameOver('sim-cutoff');
 
   return {
     score: (cfg.mode === 'clasico' ? sessionScore : 0) + State.score,
@@ -231,6 +236,10 @@ function runOne(cfg) {
     miniKills: cfg.mode === 'supervivencia' ? (Survival._minisKilled || 0) : 0,
     deadAir: stats.polls ? stats.noMove / stats.polls : 0,
     coins: State.coinsRun + ((Game.metaResult && Game.metaResult.coinsGained) || 0),
+    // Ingreso REAL de la run: delta del saldo persistente (captura niveles de
+    // Clásico, oleadas, liquidación, misiones — todo lo que el jugador cobró).
+    coinsDelta: cv.Meta.coins() - coinsBefore,
+    activeMs: VCLOCK.t,
     timedOut,
   };
 }
@@ -246,10 +255,12 @@ function runBatch(cfg, runs) {
   const rows = [];
   for (let i = 0; i < runs; i++) rows.push(runOne(Object.assign({ seed: (cfg.seedBase || 1000) + i * 7919 }, cfg)));
   const timedOut = rows.filter((r) => r.timedOut).length;
+  rows.forEach((r) => { r.coinsPer10Min = r.activeMs > 0 ? r.coinsDelta / (r.activeMs / 60000) * 10 : 0; });
   return {
     cfg, runs,
     score: agg(rows, 'score'), elapsed: agg(rows, 'elapsed'), maxCombo: agg(rows, 'maxCombo'),
     progress: agg(rows, 'progress'),
+    coinsPer10Min: agg(rows, 'coinsPer10Min'),
     deadAir: agg(rows, 'deadAir').avg, mistakes: agg(rows, 'mistakes').avg, coins: agg(rows, 'coins').avg,
     feverRate: rows.filter((r) => r.fever).length / rows.length,
     timedOutRate: timedOut / rows.length,
@@ -541,6 +552,7 @@ function runEconomyForecast(options = {}) {
           mode, profile, diff: mode === 'supervivencia' ? diff : 'normal',
           maxMinutes: minutes, seed: (seed + globalSession * 7919) >>> 0,
           daily: s === 0, reviveBudget: mode === 'supervivencia' ? policy.reviveBudget : 0,
+          settleOnCutoff: true,
         };
         // Preparación (política): loadout de Supervivencia por la API real (stock
         // primero, monedas después). El bot no usa los boosters: es el peor caso
@@ -720,8 +732,26 @@ if (require.main === module) {
   const jsonOut = opt('json', '');
   const chestMode = args.includes('--chests');
   const economyMode = args.includes('--economy');
+  const ratesMode = args.includes('--rates');
 
-  if (economyMode) {
+  if (ratesMode) {
+    // ECO-1: monedas por 10 minutos de juego activo, con liquidación al corte.
+    // Es la métrica de las puertas §3.1 del plan de reequilibrio.
+    const configs = STANDARD.filter((c) => !modes.length || modes.includes(c.mode));
+    console.log(`coin-rates · ${runs} runs/config · liquidación al corte de sesión · monedas/10 min (p50 · p90 · media)`);
+    const results = [];
+    for (const cfg of configs) {
+      const r = runBatch(Object.assign({ settleOnCutoff: true }, cfg), runs);
+      results.push({ cfg: r.cfg, coinsPer10Min: r.coinsPer10Min, progress: r.progress.p50 });
+      console.log([
+        cfg.mode.padEnd(13), (cfg.diff || 'normal').padEnd(8), cfg.profile.padEnd(8),
+        String(Math.round(r.coinsPer10Min.p50)).padStart(6),
+        String(Math.round(r.coinsPer10Min.p90)).padStart(6),
+        String(Math.round(r.coinsPer10Min.avg)).padStart(6),
+      ].join('  '));
+    }
+    if (jsonOut) { require('fs').writeFileSync(jsonOut, JSON.stringify(results, null, 2)); console.log('\nJSON → ' + jsonOut); }
+  } else if (economyMode) {
     const report = runEconomyForecast({
       days: +opt('days', 7),
       sessionsPerDay: +opt('sessions', 2),

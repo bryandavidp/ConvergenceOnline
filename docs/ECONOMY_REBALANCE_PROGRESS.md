@@ -12,7 +12,7 @@
 | Fase | Estado | Commit | Notas |
 |---|---|---|---|
 | ECO-0 Medición/configuración | ✅ HECHA | (ver git log: "ECO-0") | EconomyConfig + EconomyAudit + forecast con políticas. Sims idénticos bit a bit al baseline |
-| ECO-1 Monedas | ⬜ pendiente | — | |
+| ECO-1 Monedas | ✅ HECHA | (ver git log: "ECO-1") | settlementCoins con sqrt · Clásico con factor de tiempo · presupuesto anti doble pago |
 | ECO-2 Gemas/tickets | ⬜ pendiente | — | |
 | ECO-3 Cofres/cosméticos | ⬜ pendiente | — | |
 | ECO-4 Sumideros | ⬜ pendiente | — | |
@@ -140,6 +140,51 @@ catálogo completo (33.080 monedas) se compraría en ~2 días de juego hábil.
 - **Hallazgo para ECO-4/ECO-43**: el `collector` no tiene NADA en qué gastar gemas
   en 2.9.3 (no hay ofertas directas de cosméticos): las gemas solo suben. Confirmado
   por forecast (3 días: +71 gemas, 0 quemadas).
+
+## ECO-1 — qué se hizo y cómo verificarlo (2026-07-20)
+
+- **ECO-10 `Economy.settlementCoins(ctx)`** (game.js, módulo `Economy` tras EconomyConfig):
+  `round((base_modo + minutos×15 + scoreCoef×√(score/100) + min(combo,20) + bonusObjetivo) × diffMult)`.
+  Calibración final en `EconomyConfig.settlement`: perMinute 15, comboCap 20,
+  objectiveBonus 30 (y **0 en contrarreloj/supervivencia/zen**, que ya cobran cada
+  tablero limpio en la run), diffMult 0.9/1.0/1.1, scoreCoef por modo:
+  aventura 8.5 · contrarreloj 4 · supervivencia 7.5 · zen 5 · default 6.
+- **ECO-11 Clásico** (`Economy.classicLevelCoins`): `(28 + estrellas×10 +
+  min(70, score/150)) × (1+racha·10%, tope 25%) × factorTiempo`, con
+  `factorTiempo = clamp(segundos/90, 0.18, 1)` — **anti-farmeo**: repetir niveles
+  triviales en 15 s paga ~1/5; un nivel normal de ≥90 s cobra completo.
+- **ECO-12 anti doble pago**: `recordGame` recibe `paidDuringRun` (=`State.coinsRun`:
+  oleadas, suministro, jefes, tablero vacío) y liquida `max(0, presupuesto − pagado)`.
+  Fuentes en-run recortadas: oleada `(3+0.9w)` (antes `4+1.45w`), kicker ×1.5 (antes ×2),
+  coinMult difícil 1.15 (antes 1.3), tablero vacío `clamp(pts/220, 2, 10)` (antes 3–16).
+- **Medición nueva**: `node tools/balance-sim.js --rates --runs 25` → monedas/10 min
+  con liquidación al corte de sesión (nueva métrica de las puertas §3.1). Resultado:
+
+```
+              casual   medio   hábil          objetivo
+clasico          450     645     765          (250-450/400-650/600-900)
+aventura         445     472     545 (†)
+contrarreloj     380     479     631
+supervivencia    383     578     709
+zen              288       -       -
+superv. difícil hábil   1114                  (≤1200) ✅
+```
+  († ) **Desviación aceptada:** Aventura hábil 545 < 600. Subir su scoreCoef rompería
+  el techo casual (445→>450). Se decidió priorizar el techo casual; revisar en ECO-7.
+- **Puerta de catálogo (≥20 días) NO se cumple todavía — a propósito:** el forecast
+  45 días collector hábil completa el catálogo el **día 11**, pero la fuente dominante
+  ya NO es gameplay (dentro de rangos): son los COFRES — el jugador llega a nivel 55
+  en 10 días y el escalado ×2,5 de monedas/gemas de cofres + ~10 cofres/día disparan
+  el ingreso (+30k monedas y +566 gemas en 10 días). Ese grifo es exactamente lo que
+  corrigen ECO-2 (escalado de gemas) y ECO-3 (EV de cofres). **Re-verificar esta
+  puerta al cerrar ECO-3.** Datos: scratchpad `eco1-catalog-forecast.txt` (sesión) y
+  cifras citadas aquí.
+- **Tests**: nuevo `tests/economy-settlement.test.js` (6). Actualizados:
+  `economy-audit.test.js` (forma nueva de settlement) y
+  `booster-economy-integration.test.js` (coinMult difícil ahora sale de EconomyConfig).
+- **Suite**: 282 pass / 2 fail preexistentes. Batería gameplay: score/progresión
+  IDÉNTICOS al baseline; columna coins baja como se esperaba (contrarreloj hábil
+  3991→232/run, superviv. difícil 1492→929, aventura hábil 759→266).
 
 ## Registro de decisiones tomadas
 

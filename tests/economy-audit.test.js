@@ -39,9 +39,11 @@ function mulberry32(seed) {
   };
 }
 
-test('EconomyConfig centraliza los números de 2.9.3 sin cambiarlos', () => {
-  assert.equal(EconomyConfig.settlement.scoreDiv, 40);
-  assert.equal(EconomyConfig.settlement.perfectBonus, 40);
+test('EconomyConfig centraliza los números económicos', () => {
+  // ECO-1: la liquidación es un presupuesto con rendimiento decreciente.
+  assert.ok(EconomyConfig.settlement.perActiveMinute > 0);
+  assert.ok(EconomyConfig.settlement.comboCap > 0);
+  assert.ok(EconomyConfig.settlement.modes.default.scoreCoef > 0);
   assert.equal(EconomyConfig.missions.dailyCoins, 60);
   assert.equal(EconomyConfig.missions.weeklyCoins, 200);
   assert.equal(EconomyConfig.loginReward.base, 20);

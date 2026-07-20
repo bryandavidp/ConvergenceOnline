@@ -94,18 +94,45 @@
    * coherente y medible por el simulador (tools/balance-sim.js).
    */
   const EconomyConfig = {
-    // Liquidación de fin de partida (Meta.recordGame): coins = score/scoreDiv
-    // + maxCombo*comboPer + level*levelPer + perfect*perfectBonus.
-    settlement: { scoreDiv: 40, comboPer: 2, levelPer: 5, perfectBonus: 40 },
+    // ECO-10: liquidación de fin de partida (Economy.settlementCoins). Sustituye
+    // al lineal score/40: presupuesto = base del modo + minutos activos + score con
+    // RENDIMIENTO DECRECIENTE (sqrt) + combo acotado + bonus de objetivo, todo por
+    // el multiplicador de dificultad. Calibrado contra §3.1 del plan de reequilibrio
+    // (casual 250–450 · medio 400–650 · hábil 600–900 · difícil hábil ≤1200 por 10 min).
+    settlement: {
+      perActiveMinute: 15,
+      scoreSqrtDiv: 100,
+      comboCap: 20,
+      objectiveBonus: 30,
+      diffMult: { facil: 0.9, normal: 1.0, dificil: 1.1 },
+      // objectiveBonus por modo: los modos SIN FIN (contrarreloj/supervivencia/zen)
+      // ya cobran cada tablero limpio durante la run (board-clear) — un bonus de
+      // "perfect" en la liquidación sería doble pago.
+      modes: {
+        default: { base: 10, scoreCoef: 6 },
+        tutorial: { base: 0, scoreCoef: 2 },
+        aventura: { base: 15, scoreCoef: 8.5 },
+        contrarreloj: { base: 8, scoreCoef: 4, objectiveBonus: 0 },
+        supervivencia: { base: 15, scoreCoef: 7.5, objectiveBonus: 0 },
+        zen: { base: 8, scoreCoef: 5, objectiveBonus: 0 },
+      },
+    },
     // Recompensas globales de misión diaria / reto semanal (se suman a cualquier modo).
     missions: { dailyCoins: 60, weeklyCoins: 200, dailyXp: 150, weeklyXp: 400 },
     // Recompensa diaria de login (Meta.claimReward): base + perDay·min(día, dayCap).
     loginReward: { base: 20, perDay: 10, dayCap: 7 },
     // Reto del día: gemas por el primer intento de cada día.
     dailyRun: { firstGems: 5 },
-    // Clásico (Game._classicComplete): coins = (base + stars·perStar + score/scoreDiv)
-    // · (1 + min(racha−1, streakWins)·streakPctPerWin%), tope streakPctCap%.
-    classic: { base: 20, perStar: 10, scoreDiv: 60, streakPctPerWin: 10, streakPctCap: 50 },
+    // ECO-11: Clásico (Game._classicComplete): coins = (base + stars·perStar +
+    // min(scoreCap, score/scoreDiv)) · (1 + racha·streakPctPerWin%, tope streakPctCap%).
+    // El término de score queda ACOTADO (antes score/60 sin tope) y la racha baja a +25%.
+    classic: {
+      base: 28, perStar: 10, scoreDiv: 150, scoreCap: 70, streakPctPerWin: 10, streakPctCap: 25,
+      // Anti-farmeo: un nivel resuelto en segundos paga una fracción del premio
+      // (factor = clamp(segundos/fullAtSeconds, floor, 1)). Un nivel normal de
+      // 1-2 minutos cobra completo; repetir niveles triviales deja de ser rentable.
+      timeFactor: { fullAtSeconds: 90, floor: 0.18 },
+    },
     // Potenciadores (coste en monedas cuando no hay stock del arsenal).
     boosterPrices: { bomb: 80, freeze: 60, clearLine: 90, wild: 100, x2: 70 },
     prelevelBoosters: { bomb: 80, freeze: 60, clearLine: 90 },
@@ -113,7 +140,7 @@
     continueGems: 15,
     survival: {
       // Monedas por oleada superada + kicker de profundidad desde kickerFromWave.
-      waveCoins: { base: 4, perWave: 1.45, min: 3, kickerFromWave: 15, kickerPow: 1.5, kickerMult: 2 },
+      waveCoins: { base: 3, perWave: 0.9, min: 3, kickerFromWave: 15, kickerPow: 1.5, kickerMult: 1.5 },
       // Gemas en oleadas múltiplo de `every` (que no son hito de cofre): base + floor(w/div).
       gemMilestone: { every: 5, base: 2, div: 5 },
       // Cofre directo en oleadas múltiplo de chestEvery, subiendo por la escalera.
@@ -124,7 +151,7 @@
       // Revivir: coste base·2^usos con tope, máx. usos por run.
       revive: { base: 120, cap: 480, max: 3 },
       // Multiplicador económico por dificultad (consumido por Survival.TUNE).
-      coinMult: { facil: 0.85, normal: 1.0, dificil: 1.3 },
+      coinMult: { facil: 0.85, normal: 1.0, dificil: 1.15 },
     },
     chests: {
       skipGemsPerHour: 3,
@@ -173,10 +200,47 @@
         { id: 'supreme', gemCost: 450 }, { id: 'champion', gemCost: 650 }, { id: 'divine', gemCost: 900 },
       ],
     },
+    // Bonus en monedas por dejar el tablero vacío durante una run (Game.boardCleared):
+    // clamp(puntosDelBonus/scoreDiv, min, max). Cuenta dentro del presupuesto ECO-12.
+    boardClear: { scoreDiv: 220, min: 2, max: 10 },
     // Recompensa por completar un mundo del Clásico (Worlds.claimReward).
     worldReward: { chestType: 'royal', gems: 20 },
     // Jardín zen: hitos de flores (cofre / tablero exclusivo).
     zenGarden: { chestAt: 10, chestType: 'magic', boardAt: 50 },
+  };
+
+  /* ===================== Economy (ECO-10: fórmulas derivadas) =====================
+   * Funciones puras sobre EconomyConfig. Sin estado: reciben el contexto de la
+   * partida y devuelven cantidades. Testeables en Node sin DOM.
+   */
+  const Economy = {
+    // Presupuesto de monedas de una partida terminada. ctx: { mode, score, elapsed(s),
+    // maxCombo, perfect, diff }. Rendimiento decreciente en score (sqrt), tiempo
+    // activo pagado por minuto, combo como bonus pequeño acotado.
+    settlementCoins(ctx) {
+      const s = EconomyConfig.settlement;
+      const tune = s.modes[ctx.mode] || s.modes.default;
+      const minutes = Math.max(0, Number(ctx.elapsed) || 0) / 60;
+      const score = Math.max(0, Number(ctx.score) || 0);
+      const diffMult = s.diffMult[ctx.diff] || 1;
+      const objectiveBonus = tune.objectiveBonus !== undefined ? tune.objectiveBonus : s.objectiveBonus;
+      const raw = tune.base
+        + minutes * s.perActiveMinute
+        + tune.scoreCoef * Math.sqrt(score / s.scoreSqrtDiv)
+        + Math.min(Math.max(0, ctx.maxCombo | 0), s.comboCap)
+        + (ctx.perfect ? objectiveBonus : 0);
+      return Math.max(0, Math.round(raw * diffMult));
+    },
+    // ECO-11: recompensa por nivel de Clásico (término de score acotado + racha suave).
+    classicLevelCoins({ stars, score, winStreak, elapsed }) {
+      const c = EconomyConfig.classic;
+      const streakPct = Math.min(c.streakPctCap, Math.max(0, (winStreak | 0) - 1) * c.streakPctPerWin);
+      const seconds = Math.max(0, Number(elapsed) || 0);
+      const timeFactor = Math.min(1, Math.max(c.timeFactor.floor, seconds / c.timeFactor.fullAtSeconds));
+      const base = c.base + Math.max(0, stars | 0) * c.perStar
+        + Math.min(c.scoreCap, Math.max(0, Number(score) || 0) / c.scoreDiv);
+      return { coins: Math.round(base * (1 + streakPct / 100) * timeFactor), streakPct };
+    },
   };
 
   /* ===================== EconomyAudit (ECO-02) =====================
@@ -4436,11 +4500,16 @@
         const xpGained = xpBase * xpMultiplier;
         const xpBoostBonus = xpGained - xpBase;
         const leveledUp = this.addXp(xpGained);
-        // Monedas de la partida (motor de economía/tienda). Fórmula en EconomyConfig.settlement.
-        const stl = EconomyConfig.settlement;
-        let coinsGained = ctx.awardBaseCoins === false
-          ? 0
-          : Math.round(ctx.score / stl.scoreDiv + ctx.maxCombo * stl.comboPer + ctx.level * stl.levelPer + (ctx.perfect ? stl.perfectBonus : 0));
+        // Monedas de la partida (motor de economía/tienda). ECO-10: presupuesto con
+        // rendimiento decreciente (Economy.settlementCoins). ECO-12: las monedas ya
+        // pagadas DURANTE la run (oleadas, suministro, jefes, tablero vacío) se
+        // descuentan del presupuesto — nunca doble pago, nunca liquidación negativa.
+        let coinsGained = 0;
+        if (ctx.awardBaseCoins !== false) {
+          const budget = Economy.settlementCoins(ctx);
+          const paidDuringRun = Math.max(0, ctx.paidDuringRun | 0);
+          coinsGained = Math.max(0, budget - paidDuringRun);
+        }
         if (coinsGained > 0) audit('coins', coinsGained, 'source', 'settlement');
         // Las recompensas globales de misión/reto siguen aplicándose aunque un modo
         // (Clásico) ya tenga su propia recompensa base de nivel.
@@ -8758,7 +8827,8 @@
       const combo = Math.min(State.combo || 1, 12);
       const raw = Config.EMPTY_BOARD_BONUS + chain * 90 + combo * 28 + (State.mode === 'supervivencia' ? wave * 45 : 0);
       const points = Math.max(250, Math.round(raw * d.scoreMult * m.mult * this.feverBoost() * (State.tempMult || 1) * this.sprintMult()));
-      const coins = clamp(Math.round(points / 220), 3, 16);
+      const bc = EconomyConfig.boardClear;
+      const coins = clamp(Math.round(points / bc.scoreDiv), bc.min, bc.max);
       const extra = [];
       const center = State.lastActionCell != null
         ? State.lastActionCell
@@ -8883,7 +8953,7 @@
         score: State.score, level: State.level, maxCombo: State.maxCombo,
         removed: State.removedTotal, elapsed: State.elapsed, mode: State.mode,
         perfect: State.perfectEver, fever: State.feverEver, daily: false,
-        awardBaseCoins: false,
+        awardBaseCoins: false, diff: State.diff,
         xpMultiplier: State.xpMultiplier,
       });
       const mastery = Meta.recordClassicPerfect(stars >= 3);
@@ -8894,9 +8964,9 @@
       const winStreak = Meta.recordClassicWin(true);
       // CH-2: cada nivel de Clásico superado alimenta el pipeline de cofres.
       chestProgressToast(Meta.recordChestProgress('clasico'));
-      const cl = EconomyConfig.classic;
-      const streakPct = Math.min(cl.streakPctCap, Math.max(0, winStreak - 1) * cl.streakPctPerWin);
-      const coins = Math.round((cl.base + stars * cl.perStar + Math.round(State.score / cl.scoreDiv)) * (1 + streakPct / 100));
+      const classicReward = Economy.classicLevelCoins({ stars, score: State.score, winStreak, elapsed: State.elapsed });
+      const streakPct = classicReward.streakPct;
+      const coins = classicReward.coins;
       Meta.addCoins(coins, 'classic-level');
       const coinsTotal = coins + (this.metaResult.coinsGained || 0);
       const modal = $('#modal-level'); if (modal) modal.style.setProperty('--modal-accent', w.accent);
@@ -9090,6 +9160,7 @@
         score: State.score, level: State.level, maxCombo: State.maxCombo,
         removed: State.removedTotal, elapsed: State.elapsed, mode: State.mode,
         perfect: State.perfectEver, fever: State.feverEver, daily: !!State.isDaily,
+        diff: State.diff, paidDuringRun: State.coinsRun,
         xpMultiplier: State.xpMultiplier,
       });
       // CH-2: feedback inmediato de cofres ganados al cerrar la partida.
@@ -12440,5 +12511,5 @@
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
   if (location.search.indexOf('dev') !== -1) EconomyAudit.enable();
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, EconomyConfig, EconomyAudit, Storage, FX, Meta, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, EconomyConfig, Economy, EconomyAudit, Storage, FX, Meta, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
 })();
