@@ -443,10 +443,10 @@ function runChestEconomy(options = {}) {
  *  - collector: prioriza cosméticos (compra directa, de barato a caro).
  */
 const POLICIES = {
-  saver: { reviveBudget: 0, loadout: [], buysCosmetics: false, accelerate: false, choicePick: 'gems' },
-  strategic: { reviveBudget: 1, loadout: ['freeze'], buysCosmetics: false, accelerate: false, choicePick: 'coins' },
-  spender: { reviveBudget: 3, loadout: ['bomb', 'freeze', 'x2'], buysCosmetics: true, accelerate: true, choicePick: 'coins' },
-  collector: { reviveBudget: 0, loadout: [], buysCosmetics: true, accelerate: false, choicePick: 'gems' },
+  saver: { reviveBudget: 0, loadout: [], buysCosmetics: false, accelerate: false, choicePick: 'gems', ticketUse: null },
+  strategic: { reviveBudget: 1, loadout: ['freeze'], buysCosmetics: false, accelerate: false, choicePick: 'coins', ticketUse: 'swap' },
+  spender: { reviveBudget: 3, loadout: ['bomb', 'freeze', 'x2'], buysCosmetics: true, accelerate: true, choicePick: 'coins', ticketUse: 'swap' },
+  collector: { reviveBudget: 0, loadout: [], buysCosmetics: true, accelerate: false, choicePick: 'gems', ticketUse: 'regen' },
 };
 
 const FORECAST_ROTATION = ['contrarreloj', 'supervivencia', 'clasico', 'aventura'];
@@ -600,8 +600,11 @@ function runEconomyForecast(options = {}) {
       // Fin del día: pasa el resto del día de reloj y se recogen los listos.
       VDATE.offsetMs = day * DAY_MS;
       for (const uid of cv.Meta.chestReadyUids()) {
-        const choice = cv.Meta.chestChoiceInfo(uid);
+        let choice = cv.Meta.chestChoiceInfo(uid);
         if (choice) {
+          // ECO-23: la política ejercita los sumideros de tickets por la API real.
+          if (policy.ticketUse === 'regen') choice = cv.Meta.regenerateChestChoice(uid) || choice;
+          else if (policy.ticketUse === 'swap') choice = cv.Meta.swapChestChoiceOption(uid, choice.choice.options[0].id) || choice;
           const pick = choice.choice.options.some((o) => o.id === policy.choicePick) ? policy.choicePick : choice.choice.options[0].id;
           cv.Meta.claimChestChoice(uid, pick);
         } else cv.Meta.openChest(uid);

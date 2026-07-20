@@ -147,7 +147,7 @@ test('CH-4: tier-up respeta la ruta, el límite 10% y divine publica probabilida
   } finally { restoreState(snapshot); }
 });
 
-test('CH-4: monedas y gemas escalan de nivel 1 a nivel 31 y quedan limitadas a ×2.5', () => {
+test('ECO-21 (antes CH-4): las monedas escalan hasta ×2.0 y las gemas NO escalan', () => {
   const snapshot = snapshotState();
   try {
     for (const type of CHEST_TYPE_ORDER) {
@@ -160,13 +160,13 @@ test('CH-4: monedas y gemas escalan de nivel 1 a nivel 31 y quedan limitadas a �
       assert.deepEqual([level1.gems.min, level1.gems.max], base.gems, `${type}: gemas nivel 1`);
       assert.deepEqual(
         [level31.coins.min, level31.coins.max],
-        base.coins.map((n) => Math.round(n * 2.5)),
-        `${type}: monedas nivel 31`,
+        base.coins.map((n) => Math.round(n * 2.0)),
+        `${type}: monedas nivel 31 (tope ×2.0)`,
       );
       assert.deepEqual(
         [level31.gems.min, level31.gems.max],
-        base.gems.map((n) => Math.round(n * 2.5)),
-        `${type}: gemas nivel 31`,
+        base.gems,
+        `${type}: gemas nivel 31 = gemas nivel 1 (la divisa premium no escala)`,
       );
       assert.deepEqual(beyondCap.coins, level31.coins, `${type}: tope de monedas`);
       assert.deepEqual(beyondCap.gems, level31.gems, `${type}: tope de gemas`);
@@ -177,9 +177,9 @@ test('CH-4: monedas y gemas escalan de nivel 1 a nivel 31 y quedan limitadas a �
     const gems1 = openOne('divine', 1, [0, .25, 0]).amount;
     const gems31 = openOne('divine', 31, [0, .25, 0]).amount;
     assert.equal(coins1, 1000);
-    assert.equal(coins31, 2500);
-    assert.equal(gems1, 35);
-    assert.equal(gems31, 88);
+    assert.equal(coins31, 2000);
+    assert.equal(gems1, 12);
+    assert.equal(gems31, 12);
   } finally { restoreState(snapshot); }
 });
 

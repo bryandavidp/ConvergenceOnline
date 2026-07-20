@@ -13,7 +13,7 @@
 |---|---|---|---|
 | ECO-0 Medición/configuración | ✅ HECHA | (ver git log: "ECO-0") | EconomyConfig + EconomyAudit + forecast con políticas. Sims idénticos bit a bit al baseline |
 | ECO-1 Monedas | ✅ HECHA | (ver git log: "ECO-1") | settlementCoins con sqrt · Clásico con factor de tiempo · presupuesto anti doble pago |
-| ECO-2 Gemas/tickets | ⬜ pendiente | — | |
+| ECO-2 Gemas/tickets | ✅ HECHA | (ver git log: "ECO-2") | Tope 6💎/día · escalado separado · Choice sin nivel · swap/regen con tickets |
 | ECO-3 Cofres/cosméticos | ⬜ pendiente | — | |
 | ECO-4 Sumideros | ⬜ pendiente | — | |
 | ECO-5 Tienda | ⬜ pendiente | — | |
@@ -185,6 +185,41 @@ superv. difícil hábil   1114                  (≤1200) ✅
 - **Suite**: 282 pass / 2 fail preexistentes. Batería gameplay: score/progresión
   IDÉNTICOS al baseline; columna coins baja como se esperaba (contrarreloj hábil
   3991→232/run, superviv. difícil 1492→929, aventura hábil 759→266).
+
+## ECO-2 — qué se hizo y cómo verificarlo (2026-07-20)
+
+- **ECO-20 tope diario**: `Meta.economyDaily()` (`cv_meta.economyDaily`, retrocompatible,
+  cupo íntegro el día de la actualización) + `Meta.addSurvivalGems(n)`. Hitos de
+  gemas de Supervivencia: **+1 gema** por hito (antes `2+w/5` creciente e ilimitado),
+  tope global **6/día**; alcanzado el tope el hito paga 30 monedas visibles
+  (`survival-milestone-fallback`, toast con `surv_gem_cap` ES/EN).
+- **ECO-21 escalado separado**: `chestCoinScale` (tope ×2.0) y `chestGemScale`
+  (×1.0 — las gemas de cofres YA NO escalan con el nivel). `chestOdds`, `openChest`,
+  `_chestBonusRoll`, `openPremiumChest` y el Choice Chest usan el escalado que toca.
+- **Recorte de gemas de cofres** (dos pasadas medidas): wood 3-10→1-3, bronze 4-12→1-4,
+  silver 5-15→2-5, gold 7-18→2-6, magic 10-24→3-8, royal 14-30→5-11, supreme 18-38→6-13,
+  champion 24-48→8-17, divine 35-70→12-24, event 8-22→2-7.
+- **ECO-22 Choice Chest**: opción de gemas con rango fijo por tier
+  (`choiceGems`: bronce 4–8, plata catch-up 6–10), sin escalado por nivel; la de
+  monedas escala moderado (coinScale).
+- **ECO-23 tickets**: `Meta.swapChestChoiceOption(uid, optionId)` (1 🎟️, sustituye
+  la opción por la CLASE de premio ausente, máx. 1/cofre) y
+  `Meta.regenerateChestChoice(uid)` (2 🎟️, re-sortea las 3, máx. 1/cofre). UI real
+  en el picker del Choice Chest (entradas extra `__swap`/`__regen` + segundo picker
+  para elegir qué sustituir; i18n `choice_*` ES/EN). El reroll de misión sigue a 1 🎟️.
+  El punto 4 del plan (intento bonus de reto por tickets) **no aplica**: el Reto del
+  día ya permite reintentos gratuitos ilimitados — documentado como N/A.
+- **Puertas medidas** (forecast 30 días, seed 15467792):
+  - Intensivo (skilled, 6×10 min/día, saver): **19,4 gemas/día** ✅ (≤20).
+    Desglose: 5 reto + 6,2 choice (elige gemas) + 5,1 cofres + 3 supervivencia.
+  - Medio (average, 2×10 min, strategic): ~10 gemas/día ✅ (ritual 10–14).
+  - Supervivencia ≤15 gemas/hora: trivial con tope 6/día ✅.
+  - Nivel 31 vs nivel 1: +0% gemas ✅ (test `economy-gems`).
+  - Tickets strategic: ganados 26 / gastados 23 → ratio 1,13 ✅ (0,9–1,2).
+- **Tests**: nuevo `tests/economy-gems.test.js` (7). Actualizados: `chest-ceremony`
+  (escala ×2.0/plano), `chests-redesign` (divine L31), `economy-audit` (forma nueva).
+- **Hallazgo medido para ECO-6**: el intensivo acumula **397 cofres / 3.830 h de cola**
+  en 30 días (reserva creciente sin tope) — el problema exacto de ECO-6, ya cuantificado.
 
 ## Registro de decisiones tomadas
 

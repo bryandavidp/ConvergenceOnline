@@ -185,11 +185,12 @@ test('cofres CH-1/4: chestOdds expone tiradas, escalado, bonus y mejora reales p
   assert.equal(divine.bonus.count, 2);
   assert.deepEqual(divine.upgrade, { to: null, pct: 0 });
   const divineLate = chestOdds('divine', 31);
-  assert.deepEqual(divineLate.coins, { min: 2500, max: 6000, pct: 20 });
-  assert.deepEqual(divineLate.gems, { min: 88, max: 175, pct: 12 });
-  assert.deepEqual(divineLate.guaranteedCoins, { min: 625, max: 1500 });
-  assert.deepEqual(divineLate.bonus.coins, { min: 25, max: 743 });
-  assert.deepEqual(divineLate.bonus.gems, { min: 3, max: 35 });
+  // ECO-21: monedas ×2.0 (tope nuevo) y gemas sin escalado por nivel.
+  assert.deepEqual(divineLate.coins, { min: 2000, max: 4800, pct: 20 });
+  assert.deepEqual(divineLate.gems, { min: 12, max: 24, pct: 12 });
+  assert.deepEqual(divineLate.guaranteedCoins, { min: 500, max: 1200 });
+  assert.deepEqual(divineLate.bonus.coins, { min: 20, max: 594 });
+  assert.deepEqual(divineLate.bonus.gems, { min: 1, max: 5 });
   // Un tipo desconocido cae a madera, igual que el resto del sistema.
   assert.deepEqual(chestOdds('nope'), chestOdds('wood'));
   // La suma por tipo debe cubrir el 100% (±1 por redondeo).

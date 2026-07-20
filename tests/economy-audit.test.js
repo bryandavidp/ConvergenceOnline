@@ -54,7 +54,8 @@ test('EconomyConfig centraliza los números económicos', () => {
   assert.equal(EconomyConfig.survival.revive.cap, 480);
   assert.equal(EconomyConfig.chests.premiumGems, Meta.PREMIUM_CHEST_GEMS);
   assert.equal(EconomyConfig.chests.slotGems, Meta.CHEST_SLOT_GEMS);
-  assert.equal(EconomyConfig.chests.levelScale.cap, 2.5);
+  assert.equal(EconomyConfig.chests.levelScale.coin.cap, 2.0);
+  assert.equal(EconomyConfig.chests.levelScale.gem.cap, 1.0);
   // Las ofertas de la tienda se derivan de EconomyConfig (una sola fuente de verdad).
   assert.equal(Storefront.CURRENCY_OFFERS.length, EconomyConfig.shop.currencyOffers.length);
   assert.equal(Storefront.CURRENCY_OFFERS[0].amount, EconomyConfig.shop.currencyOffers[0].amount);

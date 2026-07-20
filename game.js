@@ -138,11 +138,15 @@
     prelevelBoosters: { bomb: 80, freeze: 60, clearLine: 90 },
     // Continuar con gemas al llenarse el tablero (Clásico/Aventura).
     continueGems: 15,
+    // ECO-23: usos voluntarios y repetibles de tickets (decisiones de 1 y 2 tickets).
+    tickets: { missionReroll: 1, choiceSwap: 1, choiceRegen: 2 },
     survival: {
       // Monedas por oleada superada + kicker de profundidad desde kickerFromWave.
       waveCoins: { base: 3, perWave: 0.9, min: 3, kickerFromWave: 15, kickerPow: 1.5, kickerMult: 1.5 },
-      // Gemas en oleadas múltiplo de `every` (que no son hito de cofre): base + floor(w/div).
-      gemMilestone: { every: 5, base: 2, div: 5 },
+      // ECO-20: gemas de hito (oleadas múltiplo de `every` que no son hito de cofre):
+      // cantidad FIJA por hito con TOPE DIARIO global; al alcanzarlo, el hito nunca
+      // queda vacío — paga la recompensa sustituta en monedas (cuenta en el presupuesto).
+      gemMilestone: { every: 5, amount: 1, dailyCap: 6, fallbackCoins: 30 },
       // Cofre directo en oleadas múltiplo de chestEvery, subiendo por la escalera.
       chestMilestoneEvery: 10,
       chestLadder: ['wood', 'bronze', 'silver', 'gold', 'magic', 'royal', 'supreme', 'champion', 'divine'],
@@ -155,8 +159,15 @@
     },
     chests: {
       skipGemsPerHour: 3,
-      // Escalado por nivel meta de las cantidades de cofres: ×(1+perLevel·(nivel−1)), tope cap.
-      levelScale: { perLevel: 0.05, cap: 2.5 },
+      // ECO-21: escalado por nivel meta SEPARADO por divisa. Las monedas escalan
+      // moderadamente (tope ×2.0, antes ×2.5); las GEMAS no escalan (×1.0 constante)
+      // — el nivel alto ya no imprime divisa premium. Los tickets nunca escalaron.
+      levelScale: {
+        coin: { perLevel: 0.05, cap: 2.0 },
+        gem: { perLevel: 0, cap: 1.0 },
+      },
+      // ECO-22: rangos de la opción de gemas del Choice Chest (sin escalado por nivel).
+      choiceGems: { bronze: [4, 8], silver: [6, 10] },
       guaranteedCoinShare: 0.25,
       upgradeChance: 0.10,
       bonusOdds: { coins: .52, gems: .23, tickets: .13, booster: .12 },
@@ -165,16 +176,16 @@
       pipelineTarget: 3,
       // Tablas de recompensa por tier (consumidas por CHEST_TYPES.reward).
       rewards: {
-        wood: { coins: [60, 199], gems: [3, 10], tickets: [1, 1], coinCut: .60, gemCut: .90, ticketCut: .98, rarity: 'common' },
-        bronze: { coins: [90, 260], gems: [4, 12], tickets: [1, 1], coinCut: .56, gemCut: .86, ticketCut: .96, rarity: 'common' },
-        silver: { coins: [140, 360], gems: [5, 15], tickets: [1, 2], coinCut: .50, gemCut: .78, ticketCut: .92, rarity: 'rare' },
-        gold: { coins: [200, 500], gems: [7, 18], tickets: [2, 3], coinCut: .46, gemCut: .72, ticketCut: .87, rarity: 'epic' },
-        magic: { coins: [280, 700], gems: [10, 24], tickets: [2, 4], coinCut: .40, gemCut: .64, ticketCut: .78, rarity: 'epic' },
-        royal: { coins: [400, 950], gems: [14, 30], tickets: [3, 5], coinCut: .36, gemCut: .55, ticketCut: .68, rarity: 'legendary' },
-        supreme: { coins: [550, 1250], gems: [18, 38], tickets: [4, 6], coinCut: .30, gemCut: .46, ticketCut: .58, rarity: 'legendary' },
-        champion: { coins: [750, 1600], gems: [24, 48], tickets: [5, 8], coinCut: .25, gemCut: .40, ticketCut: .50, rarity: 'mythic' },
-        divine: { coins: [1000, 2400], gems: [35, 70], tickets: [7, 10], coinCut: .20, gemCut: .32, ticketCut: .40, rarity: 'mythic' },
-        event: { coins: [180, 520], gems: [8, 22], tickets: [2, 4], coinCut: .38, gemCut: .63, ticketCut: .78, rarity: 'special' },
+        wood: { coins: [60, 199], gems: [1, 3], tickets: [1, 1], coinCut: .60, gemCut: .90, ticketCut: .98, rarity: 'common' },
+        bronze: { coins: [90, 260], gems: [1, 4], tickets: [1, 1], coinCut: .56, gemCut: .86, ticketCut: .96, rarity: 'common' },
+        silver: { coins: [140, 360], gems: [2, 5], tickets: [1, 2], coinCut: .50, gemCut: .78, ticketCut: .92, rarity: 'rare' },
+        gold: { coins: [200, 500], gems: [2, 6], tickets: [2, 3], coinCut: .46, gemCut: .72, ticketCut: .87, rarity: 'epic' },
+        magic: { coins: [280, 700], gems: [3, 8], tickets: [2, 4], coinCut: .40, gemCut: .64, ticketCut: .78, rarity: 'epic' },
+        royal: { coins: [400, 950], gems: [5, 11], tickets: [3, 5], coinCut: .36, gemCut: .55, ticketCut: .68, rarity: 'legendary' },
+        supreme: { coins: [550, 1250], gems: [6, 13], tickets: [4, 6], coinCut: .30, gemCut: .46, ticketCut: .58, rarity: 'legendary' },
+        champion: { coins: [750, 1600], gems: [8, 17], tickets: [5, 8], coinCut: .25, gemCut: .40, ticketCut: .50, rarity: 'mythic' },
+        divine: { coins: [1000, 2400], gems: [12, 24], tickets: [7, 10], coinCut: .20, gemCut: .32, ticketCut: .40, rarity: 'mythic' },
+        event: { coins: [180, 520], gems: [2, 7], tickets: [2, 4], coinCut: .38, gemCut: .63, ticketCut: .78, rarity: 'special' },
       },
     },
     shop: {
@@ -616,7 +627,8 @@
         chest_tierup: '¡Ascenso sorpresa! Ahora es {c}', chest_tier_hold: 'Sin ascenso: sigue siendo {c}', chest_tier_max: 'Categoría máxima · no puede ascender más', chest_tier_roll: 'Ascenso sorpresa', chest_tier_success_detail: 'Tu {f} se convirtió en {t}. Recibirás las recompensas de {t}.', chest_tier_reward_note: 'Ascenso aplicado: {f} → {t}. Estos son los premios de {t}.', chest_tap_reveal: 'Toca para revelar', chest_upgrade_label: 'Posible ascenso al abrir', chest_upgrade_detail: '{p}% de convertirse en {c}. Si ocurre, recibirás {n} premios y las cantidades de ese cofre.', chest_open_now_cost: 'Abrir ahora: {n} gemas', chest_selected_announcement: '{c} seleccionado',
         chest_guaranteed_coins: 'Monedas garantizadas', chest_primary_roll: 'Premio principal', chest_bonus_rolls: '{n} premio(s) extra', chest_bonus_odds: 'Por extra: {c}% monedas {cmin}–{cmax} · {g}% gemas {gmin}–{gmax} · {t}% ticket x1 · {b}% booster x1', chest_level_scaled: 'Escala con tu nivel', booster_stock: 'Stock x{n}',
         booster_name_bomb: 'Bomba', booster_name_freeze: 'Congelación', booster_name_clearLine: 'Rayo', booster_name_wild: 'Escoba', booster_name_x2: 'Comodín',
-        daily_choice_event_label: 'Primera victoria', daily_choice_title: 'Cofre de elección', daily_choice_open: 'Elegir', daily_choice_view: 'Ver cofre', daily_choice_ready: 'Elige 1 de 3 premios', daily_choice_waiting: 'En espera · ábrelo para elegir', daily_choice_opening: 'Abriendo · {t}', daily_choice_sub: 'Los tres premios están visibles. Solo recibirás el que elijas.', daily_choice_catchup_sub: 'Recuperación por el día perdido: este cofre subió a Plata. Elige un premio.', daily_choice_cancel: 'Ahora no', chest_choice_label: 'Elige 1 de 3', chest_event_featured: 'Evento {w} · booster destacado: {b}', chest_event_bonus: 'Booster de evento garantizado: {b}',
+        daily_choice_event_label: 'Primera victoria', daily_choice_title: 'Cofre de elección', daily_choice_open: 'Elegir', daily_choice_view: 'Ver cofre', daily_choice_ready: 'Elige 1 de 3 premios', daily_choice_waiting: 'En espera · ábrelo para elegir', daily_choice_opening: 'Abriendo · {t}', daily_choice_sub: 'Los tres premios están visibles. Solo recibirás el que elijas.', daily_choice_catchup_sub: 'Recuperación por el día perdido: este cofre subió a Plata. Elige un premio.', daily_choice_cancel: 'Ahora no', chest_choice_label: 'Elige 1 de 3',
+        choice_swap_action: 'Sustituir un premio · {n} 🎟️', choice_swap_desc: 'Cambia una opción por la clase de premio que falta', choice_swap_pick: '¿Qué premio sustituyo?', choice_regen_action: 'Cambiar los 3 premios · {n} 🎟️', choice_regen_desc: 'Vuelve a sortear las tres opciones (una vez por cofre)', choice_ticket_done: 'Opciones nuevas listas', chest_event_featured: 'Evento {w} · booster destacado: {b}', chest_event_bonus: 'Booster de evento garantizado: {b}',
         soon_badge: 'Próximamente', notify_me: 'Avísame', notify_ok: '¡Te avisaremos cuando esté listo!',
         edit_name: 'Tu nombre', daily_banner_title: 'Recompensa diaria', daily_banner_sub: '¡Vuelve cada día y gana premios!', claim: 'Reclamar',
         home_classic: 'Partida clásica', home_classic_prefix: 'Partida', home_classic_name: 'Clásica', home_classic_sub: 'Juega en el tablero contra amigos o bots', home_surv_sub: 'Sobrevive a oleadas infinitas',
@@ -870,7 +882,7 @@
         feat_al_limite: 'Al límite', feat_al_limite_d: 'Supera 2 oleadas seguidas con 1 sola vida',
         feat_economo: 'Económico', feat_economo_d: 'Llega a la oleada 15 sin revivir',
         surv_frenzy: 'Frenesí', surv_frenzy_ready: '¡Frenesí activado!', surv_wave_reward: 'Oleada {w} · +{c} monedas',
-        surv_milestone: 'Hito de oleada {w}', surv_wave_record: '¡Récord! Oleada {w}', surv_best_wave: 'Mejor oleada',
+        surv_milestone: 'Hito de oleada {w}', surv_gem_cap: 'tope diario de gemas alcanzado', surv_wave_record: '¡Récord! Oleada {w}', surv_best_wave: 'Mejor oleada',
         surv_rewards: 'Recompensas', surv_reward_line: '+{c} monedas · +{g} gemas · +{ch} cofres', surv_time_record: '¡Récord de supervivencia!',
         coins: 'monedas', gems: 'gemas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
         next: 'Próximo', new_icons: 'Nuevos iconos', chapter: 'Capítulo', next_to: 'Ir al nivel {n} →', lets_play: '¡A jugar!',
@@ -963,7 +975,8 @@
         chest_tierup: 'Surprise upgrade! It is now a {c}', chest_tier_hold: 'No upgrade: it stays a {c}', chest_tier_max: 'Maximum category · it cannot upgrade further', chest_tier_roll: 'Surprise upgrade', chest_tier_success_detail: 'Your {f} became a {t}. You will receive the {t} rewards.', chest_tier_reward_note: 'Upgrade applied: {f} → {t}. These are the {t} rewards.', chest_tap_reveal: 'Tap to reveal', chest_upgrade_label: 'Chance to upgrade when opened', chest_upgrade_detail: '{p}% chance to become a {c}. If it does, you will receive its {n} rewards and amounts.', chest_open_now_cost: 'Open now: {n} gems', chest_selected_announcement: '{c} selected',
         chest_guaranteed_coins: 'Guaranteed coins', chest_primary_roll: 'Main reward', chest_bonus_rolls: '{n} extra reward(s)', chest_bonus_odds: 'Per extra: {c}% coins {cmin}–{cmax} · {g}% gems {gmin}–{gmax} · {t}% ticket x1 · {b}% booster x1', chest_level_scaled: 'Scales with your level', booster_stock: 'Stock x{n}',
         booster_name_bomb: 'Bomb', booster_name_freeze: 'Freeze', booster_name_clearLine: 'Ray', booster_name_wild: 'Broom', booster_name_x2: 'Wildcard',
-        daily_choice_event_label: 'First win', daily_choice_title: 'Choice Chest', daily_choice_open: 'Choose', daily_choice_view: 'View chest', daily_choice_ready: 'Pick 1 of 3 rewards', daily_choice_waiting: 'Waiting · open it to choose', daily_choice_opening: 'Opening · {t}', daily_choice_sub: 'All three rewards are visible. You only receive the one you choose.', daily_choice_catchup_sub: 'Catch-up for the missed day: this chest upgraded to Silver. Choose one reward.', daily_choice_cancel: 'Not now', chest_choice_label: 'Pick 1 of 3', chest_event_featured: 'Event {w} · featured booster: {b}', chest_event_bonus: 'Guaranteed event booster: {b}',
+        daily_choice_event_label: 'First win', daily_choice_title: 'Choice Chest', daily_choice_open: 'Choose', daily_choice_view: 'View chest', daily_choice_ready: 'Pick 1 of 3 rewards', daily_choice_waiting: 'Waiting · open it to choose', daily_choice_opening: 'Opening · {t}', daily_choice_sub: 'All three rewards are visible. You only receive the one you choose.', daily_choice_catchup_sub: 'Catch-up for the missed day: this chest upgraded to Silver. Choose one reward.', daily_choice_cancel: 'Not now', chest_choice_label: 'Pick 1 of 3',
+        choice_swap_action: 'Swap one reward · {n} 🎟️', choice_swap_desc: 'Replace one option with the missing reward kind', choice_swap_pick: 'Which reward should I replace?', choice_regen_action: 'Reroll all 3 rewards · {n} 🎟️', choice_regen_desc: 'Reroll the three options (once per chest)', choice_ticket_done: 'Fresh options ready', chest_event_featured: 'Event {w} · featured booster: {b}', chest_event_bonus: 'Guaranteed event booster: {b}',
         soon_badge: 'Coming soon', notify_me: 'Notify me', notify_ok: "We'll let you know when it's ready!",
         edit_name: 'Your name', daily_banner_title: 'Daily reward', daily_banner_sub: 'Come back every day and win prizes!', claim: 'Claim',
         home_classic: 'Classic game', home_classic_prefix: 'Classic', home_classic_name: 'Game', home_classic_sub: 'Play on the board against friends or bots', home_surv_sub: 'Survive endless waves',
@@ -1217,7 +1230,7 @@
         feat_al_limite: 'On the edge', feat_al_limite_d: 'Clear 2 waves in a row with a single life',
         feat_economo: 'Thrifty', feat_economo_d: 'Reach wave 15 without reviving',
         surv_frenzy: 'Frenzy', surv_frenzy_ready: 'Frenzy active!', surv_wave_reward: 'Wave {w} · +{c} coins',
-        surv_milestone: 'Wave {w} milestone', surv_wave_record: 'Record! Wave {w}', surv_best_wave: 'Best wave',
+        surv_milestone: 'Wave {w} milestone', surv_gem_cap: 'daily gem cap reached', surv_wave_record: 'Record! Wave {w}', surv_best_wave: 'Best wave',
         surv_rewards: 'Rewards', surv_reward_line: '+{c} coins · +{g} gems · +{ch} chests', surv_time_record: 'Survival record!',
         coins: 'coins', gems: 'gems', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
         next: 'Next', new_icons: 'New icons', chapter: 'Chapter', next_to: 'Go to level {n} →', lets_play: "Let's play!",
@@ -3250,10 +3263,11 @@
   const XP_BOOST_MULTIPLIER = 4;
   /* CH-4 (F7): monedas y gemas escalan con el nivel meta (como el escalado
    * por arena de CR) — +5%/nivel con tope ×2.5. Los tickets no escalan. */
-  function chestLevelScale(level) {
-    const s = EconomyConfig.chests.levelScale;
-    return Math.min(s.cap, 1 + s.perLevel * (Math.max(1, level | 0) - 1));
+  function scaleForLevel(rule, level) {
+    return Math.min(rule.cap, 1 + rule.perLevel * (Math.max(1, level | 0) - 1));
   }
+  function chestCoinScale(level) { return scaleForLevel(EconomyConfig.chests.levelScale.coin, level); }
+  function chestGemScale(level) { return scaleForLevel(EconomyConfig.chests.levelScale.gem, level); }
 
   /* Rangos y probabilidades REALES de un tipo de cofre, para mostrarlos tal cual
    * en la UI (CH-1: transparencia; ver docs/CHEST_SYSTEM_MASTER_PLAN.md §4-U2/E3).
@@ -3264,13 +3278,14 @@
     const validType = CHEST_TYPES[type] ? type : 'wood';
     const r = CHEST_TYPES[validType].reward;
     const pct = (v) => Math.round(v * 100);
-    const s = level ? chestLevelScale(level) : 1;
+    const s = level ? chestCoinScale(level) : 1;
+    const gs = level ? chestGemScale(level) : 1;
     const upgradeTo = CHEST_UPGRADE_PATH[validType] || null;
     const bonusCoinSpan = Math.max(10, Math.round(r.coins[1] * 0.12));
     const bonusGemSpan = Math.max(2, Math.round(r.gems[1] * 0.2));
     return {
       coins: { min: Math.round(r.coins[0] * s), max: Math.round(r.coins[1] * s), pct: pct(r.coinCut) },
-      gems: { min: Math.round(r.gems[0] * s), max: Math.round(r.gems[1] * s), pct: pct(r.gemCut - r.coinCut) },
+      gems: { min: Math.round(r.gems[0] * gs), max: Math.round(r.gems[1] * gs), pct: pct(r.gemCut - r.coinCut) },
       tickets: { min: r.tickets[0], max: r.tickets[1], pct: pct(r.ticketCut - r.gemCut) },
       cosmetic: { pct: Math.max(1, pct(1 - r.ticketCut)) },
       guaranteedCoins: {
@@ -3284,7 +3299,7 @@
         coinsPct: pct(CHEST_BONUS_ODDS.coins), gemsPct: pct(CHEST_BONUS_ODDS.gems),
         ticketsPct: pct(CHEST_BONUS_ODDS.tickets), boosterPct: pct(CHEST_BONUS_ODDS.booster),
         coins: { min: Math.max(1, Math.round(10 * s)), max: Math.max(1, Math.round((9 + bonusCoinSpan) * s)) },
-        gems: { min: Math.max(1, Math.round(s)), max: Math.max(1, Math.round(bonusGemSpan * s)) },
+        gems: { min: Math.max(1, Math.round(gs)), max: Math.max(1, Math.round(bonusGemSpan * gs)) },
       },
     };
   }
@@ -3418,6 +3433,11 @@
       const value = Number(m.boosterStock[id]);
       m.boosterStock[id] = Number.isSafeInteger(value) ? clamp(value, 0, 1000000) : 0;
     });
+    // ECO-20: límites económicos diarios (retrocompatible; empieza el día con el
+    // cupo íntegro — actualizar la app nunca castiga).
+    if (!m.economyDaily || typeof m.economyDaily !== 'object') m.economyDaily = { date: '', survivalGems: 0, survivalChestTiers: {} };
+    if (typeof m.economyDaily.survivalGems !== 'number') m.economyDaily.survivalGems = 0;
+    if (!m.economyDaily.survivalChestTiers || typeof m.economyDaily.survivalChestTiers !== 'object') m.economyDaily.survivalChestTiers = {};
     if (!m.worlds || typeof m.worlds !== 'object') m.worlds = {};
     if (!m.boards || typeof m.boards !== 'object') m.boards = { owned: { classic: 1 }, equipped: 'classic' };
     if (!m.boards.owned) m.boards.owned = { classic: 1 };
@@ -3472,21 +3492,31 @@
       const normalized = new Date(stamp).toISOString().slice(0, 10);
       return Number.isFinite(stamp) && normalized === String(value) ? Math.floor(stamp / 86400000) : null;
     }
-    function dailyChoiceOptions(type) {
+    const rangedRoll = ([min, max]) => min === max ? min : min + Math.floor(Math.random() * (max - min + 1));
+    // ECO-22/ECO-23: una opción individual del Choice Chest por clase de premio.
+    // Las monedas escalan moderadamente con el nivel; las GEMAS usan un rango fijo
+    // por tier (bronce 4–8, plata 6–10) sin escalado por nivel.
+    function choiceOptionOf(kind, type) {
       const defn = CHEST_TYPES[type] || CHEST_TYPES.bronze, r = defn.reward;
-      const scale = chestLevelScale(m.level);
-      const ranged = ([min, max]) => min === max ? min : min + Math.floor(Math.random() * (max - min + 1));
-      const thirdIsBooster = Math.random() < .5;
-      const third = thirdIsBooster
-        ? {
+      if (kind === 'coins') return { id: 'coins', kind: 'coins', amount: Math.max(1, Math.round(rangedRoll(r.coins) * chestCoinScale(m.level))), rarity: r.rarity };
+      if (kind === 'gems') {
+        const range = EconomyConfig.chests.choiceGems[type] || EconomyConfig.chests.choiceGems.bronze;
+        return { id: 'gems', kind: 'gems', amount: Math.max(1, rangedRoll(range)), rarity: r.rarity };
+      }
+      if (kind === 'booster') {
+        return {
           id: 'booster', kind: 'booster',
           boosterId: CHEST_BOOSTER_IDS[Math.floor(Math.random() * CHEST_BOOSTER_IDS.length)], amount: 1, rarity: 'rare',
-        }
-        : { id: 'tickets', kind: 'ticket', amount: Math.max(1, ranged(r.tickets)), rarity: r.rarity };
+        };
+      }
+      return { id: 'tickets', kind: 'ticket', amount: Math.max(1, rangedRoll(r.tickets)), rarity: r.rarity };
+    }
+    function dailyChoiceOptions(type) {
+      const thirdIsBooster = Math.random() < .5;
       return [
-        { id: 'coins', kind: 'coins', amount: Math.max(1, Math.round(ranged(r.coins) * scale)), rarity: r.rarity },
-        { id: 'gems', kind: 'gems', amount: Math.max(1, Math.round(ranged(r.gems) * scale)), rarity: r.rarity },
-        third,
+        choiceOptionOf('coins', type),
+        choiceOptionOf('gems', type),
+        choiceOptionOf(thirdIsBooster ? 'booster' : 'ticket', type),
       ];
     }
     const CHEST_REWARD_RARITIES = new Set(['common', 'rare', 'epic', 'legendary', 'mythic', 'special']);
@@ -4023,7 +4053,8 @@
         }
         const defn = CHEST_TYPES[openType] || CHEST_TYPES.wood;
         const profile = defn.reward;
-        const scale = chestLevelScale(m.level);
+        const scale = chestCoinScale(m.level);
+        const gemScale = chestGemScale(m.level);
         const ranged = ([min, max]) => min === max ? min : min + Math.floor(Math.random() * (max - min + 1));
         // Primer premio: monedas garantizadas. Se conserva una fracción moderada
         // del rango para que la ceremonia no multiplique sin control el EV antiguo.
@@ -4036,11 +4067,11 @@
         const roll = Math.random();
         let reward;
         if (roll < profile.coinCut) reward = { kind: 'coins', amount: Math.round(ranged(profile.coins) * scale), rarity: profile.rarity };
-        else if (roll < profile.gemCut) reward = { kind: 'gems', amount: Math.round(ranged(profile.gems) * scale), rarity: profile.rarity };
+        else if (roll < profile.gemCut) reward = { kind: 'gems', amount: Math.max(1, Math.round(ranged(profile.gems) * gemScale)), rarity: profile.rarity };
         else if (roll < profile.ticketCut) reward = { kind: 'ticket', amount: ranged(profile.tickets), rarity: profile.rarity };
         else reward = this._rollCosmetic();
         if (!reward) reward = openType === 'wood'
-          ? { kind: 'gems', amount: Math.round((8 + Math.floor(Math.random() * 8)) * scale), rarity: 'common', fallback: 'cosmetic' }
+          ? { kind: 'gems', amount: Math.max(1, Math.round((8 + Math.floor(Math.random() * 8)) * gemScale)), rarity: 'common', fallback: 'cosmetic' }
           : { kind: 'coins', amount: Math.round(profile.coins[1] * 1.35 * scale), rarity: 'jackpot', fallback: 'cosmetic' };
         reward.chestType = openType;
         reward.baseChestType = chest.type;
@@ -4054,7 +4085,7 @@
           // una tirada menor refleja ese evento sin cambiar después de semana.
           if (chest.event && chest.event.featuredBooster && items.length === chestRollCount(openType) - 1) {
             items.push({ kind: 'booster', boosterId: chest.event.featuredBooster, amount: 1, rarity: 'rare', bonus: true, event: true });
-          } else items.push(this._chestBonusRoll(defn, scale));
+          } else items.push(this._chestBonusRoll(defn, scale, gemScale));
         }
         reward.items = items;
         if (tierUp) reward.tierUp = tierUp;
@@ -4080,7 +4111,7 @@
       },
       // Tirada menor de la ceremonia (CH-4): recursos pequeños o un booster para
       // el arsenal persistente. Monedas y gemas escalan con el nivel.
-      _chestBonusRoll(defn, scale) {
+      _chestBonusRoll(defn, scale, gemScale) {
         const r = Math.random();
         if (r < CHEST_BONUS_ODDS.coins) {
           const span = Math.max(10, Math.round(defn.reward.coins[1] * 0.12));
@@ -4088,7 +4119,7 @@
         }
         if (r < CHEST_BONUS_ODDS.coins + CHEST_BONUS_ODDS.gems) {
           const amount = 1 + Math.floor(Math.random() * Math.max(2, Math.round(defn.reward.gems[1] * 0.2)));
-          return { kind: 'gems', amount: Math.max(1, Math.round(amount * (scale || 1))), rarity: 'common', bonus: true };
+          return { kind: 'gems', amount: Math.max(1, Math.round(amount * (gemScale || 1))), rarity: 'common', bonus: true };
         }
         if (r < CHEST_BONUS_ODDS.coins + CHEST_BONUS_ODDS.gems + CHEST_BONUS_ODDS.tickets) {
           return { kind: 'ticket', amount: 1, rarity: 'common', bonus: true };
@@ -4102,7 +4133,7 @@
       PREMIUM_CHEST_GEMS: EconomyConfig.chests.premiumGems,
       openPremiumChest() {
         if (!this.spendGems(this.PREMIUM_CHEST_GEMS, 'premium-chest')) return null;
-        const defn = CHEST_TYPES.magic, scale = chestLevelScale(m.level);
+        const defn = CHEST_TYPES.magic, scale = chestCoinScale(m.level), gemScale = chestGemScale(m.level);
         const roll = Math.random();
         let reward;
         if (roll < 0.52) reward = { kind: 'coins', amount: Math.round((200 + Math.floor(Math.random() * 300)) * scale), rarity: 'common' };
@@ -4115,7 +4146,7 @@
           kind: 'coins', amount: Math.max(1, Math.round((80 + Math.floor(Math.random() * 81)) * scale)),
           rarity: 'common', guaranteed: true,
         };
-        reward.items = [guaranteed, Object.assign({}, reward), this._chestBonusRoll(defn, scale)];
+        reward.items = [guaranteed, Object.assign({}, reward), this._chestBonusRoll(defn, scale, gemScale)];
         reward.items.forEach((item) => this._applyChestReward(item));
         save();
         return reward;
@@ -4256,10 +4287,64 @@
         }
         return reward;
       },
+      // ---- ECO-20: estado económico diario (tope de gemas de Supervivencia y,
+      // desde ECO-60, cofres directos por tier). Se renueva solo al cambiar de día. ----
+      economyDaily() {
+        const d = today();
+        if (m.economyDaily.date !== d) { m.economyDaily = { date: d, survivalGems: 0, survivalChestTiers: {} }; save(); }
+        return m.economyDaily;
+      },
+      survivalGemsToday() { return this.economyDaily().survivalGems || 0; },
+      survivalGemsLeftToday() {
+        return Math.max(0, EconomyConfig.survival.gemMilestone.dailyCap - this.survivalGemsToday());
+      },
+      // Concede gemas de hito de Supervivencia respetando el tope diario.
+      // Devuelve la cantidad realmente concedida (0 si el tope ya se alcanzó).
+      addSurvivalGems(n) {
+        const daily = this.economyDaily();
+        const grant = Math.max(0, Math.min(Math.max(0, n | 0), this.survivalGemsLeftToday()));
+        if (grant > 0) {
+          this.addGems(grant, 'survival-milestone');
+          daily.survivalGems = (daily.survivalGems || 0) + grant;
+          save();
+        }
+        return grant;
+      },
+      // ---- ECO-23: tickets sobre el Choice Chest — decisiones voluntarias. ----
+      // Sustituir UNA opción (1 ticket, máx. 1 vez por cofre): la opción elegida se
+      // reemplaza por la clase de premio que falta en la terna.
+      swapChestChoiceOption(uid, optionId) {
+        this.advanceChestTimers();
+        const list = ensureChestInventory();
+        const chest = list.find((entry) => entry.uid === uid && validChestChoice(entry.choice));
+        if (!chest || chest.choice.swapped || !(m.chestReady || []).includes(uid)) return null;
+        const index = chest.choice.options.findIndex((option) => option.id === optionId);
+        if (index < 0) return null;
+        const present = new Set(chest.choice.options.map((option) => option.kind));
+        const missing = ['coins', 'gems', 'ticket', 'booster'].find((kind) => !present.has(kind));
+        if (!missing) return null;
+        if (!this.spendTicket(EconomyConfig.tickets.choiceSwap, 'choice-swap')) return null;
+        chest.choice.options[index] = choiceOptionOf(missing, chest.choice.tier);
+        chest.choice.swapped = true;
+        save();
+        return this.chestChoiceInfo(uid);
+      },
+      // Regenerar las TRES opciones (2 tickets, máx. 1 vez por cofre).
+      regenerateChestChoice(uid) {
+        this.advanceChestTimers();
+        const list = ensureChestInventory();
+        const chest = list.find((entry) => entry.uid === uid && validChestChoice(entry.choice));
+        if (!chest || chest.choice.regenerated || !(m.chestReady || []).includes(uid)) return null;
+        if (!this.spendTicket(EconomyConfig.tickets.choiceRegen, 'choice-regen')) return null;
+        chest.choice.options = dailyChoiceOptions(chest.choice.tier);
+        chest.choice.regenerated = true;
+        save();
+        return this.chestChoiceInfo(uid);
+      },
       // ---- Reroll de la misión diaria: sumidero de tickets (1 por cambio). ----
       rerollDaily() {
         const cur = dailyMission(); // asegura que exista la misión de hoy
-        if (cur.done || !this.spendTicket(1, 'mission-reroll')) return null;
+        if (cur.done || !this.spendTicket(EconomyConfig.tickets.missionReroll, 'mission-reroll')) return null;
         const idx = MISSIONS.findIndex((x) => x.id === cur.id);
         const next = MISSIONS[(idx + 1) % MISSIONS.length];
         m.daily = { date: today(), id: next.id, progress: 0, done: false };
@@ -5532,7 +5617,19 @@
           Meta.addChest(1, ladder[Math.min(ladder.length - 1, Math.max(0, step))], 'survival');
           this.runChests++; txt = '+1 ' + I18n.t('tab_chests'); ic = 'chest';
         }
-        else { const gems = gm.base + Math.floor(clearedWave / gm.div); Meta.addGems(gems, 'survival-milestone'); this.runGems += gems; txt = '+' + gems + ' 💎'; ic = 'gem'; }
+        else {
+          // ECO-20: gemas fijas por hito con tope diario; alcanzado el tope, el hito
+          // paga la recompensa sustituta en monedas (visible, nunca un hito vacío).
+          const granted = Meta.addSurvivalGems(gm.amount);
+          if (granted > 0) { this.runGems += granted; txt = '+' + granted + ' 💎'; ic = 'gem'; }
+          else {
+            const fallback = Math.max(1, gm.fallbackCoins | 0);
+            Meta.addCoins(fallback, 'survival-milestone-fallback');
+            State.coinsRun += fallback; this.runCoins += fallback;
+            txt = '+' + fallback + ' ' + I18n.t('coins') + ' · ' + I18n.t('surv_gem_cap');
+            ic = 'coin';
+          }
+        }
         if (quietForBoss) { Econ.refresh(); return; }
         Toasts.event(I18n.t('surv_milestone').replace('{w}', clearedWave) + ' · +' + coins + ' ' + I18n.t('coins') + ' · ' + txt, 'good', 2600, ic);
         Render.flash(); FX.confetti(70); Sound.record(); Haptics.record(); Econ.refresh();
@@ -11850,6 +11947,25 @@
         desc: I18n.t('daily_choice_ready'),
       };
     });
+    // ECO-23: decisiones de tickets — sustituir 1 opción (1 🎟️) o re-sortear las 3
+    // (2 🎟️), cada una máx. una vez por cofre y solo si hay tickets suficientes.
+    const ticketCosts = EconomyConfig.tickets;
+    if (!info.choice.swapped && Meta.tickets() >= ticketCosts.choiceSwap) {
+      options.push({
+        id: '__swap', rarity: 'rare',
+        icon: '<img class="ic" src="img/ui/ticket.png" alt="" aria-hidden="true">',
+        name: I18n.t('choice_swap_action').replace('{n}', ticketCosts.choiceSwap),
+        desc: I18n.t('choice_swap_desc'),
+      });
+    }
+    if (!info.choice.regenerated && Meta.tickets() >= ticketCosts.choiceRegen) {
+      options.push({
+        id: '__regen', rarity: 'rare',
+        icon: '<img class="ic" src="img/ui/ticket.png" alt="" aria-hidden="true">',
+        name: I18n.t('choice_regen_action').replace('{n}', ticketCosts.choiceRegen),
+        desc: I18n.t('choice_regen_desc'),
+      });
+    }
     setChestButtonsBusy(true);
     Picker.open({
       title: I18n.t('daily_choice_title'),
@@ -11857,6 +11973,14 @@
       accent: chestDef(info.type).accent,
       options, cancelLabel: I18n.t('daily_choice_cancel'), safeDelayMs: 450,
       onPick: (optionId) => {
+        if (optionId === '__regen') {
+          const updated = Meta.regenerateChestChoice(uid);
+          Econ.refresh();
+          if (updated) { Sound.success(); Toasts.show(I18n.t('choice_ticket_done'), 'good', 1500, 'ticket'); openDailyChoicePicker(uid); }
+          else { Sound.miss(); setChestButtonsBusy(false); buildChests(); }
+          return;
+        }
+        if (optionId === '__swap') { openChoiceSwapPicker(uid); return; }
         const reward = Meta.claimChestChoice(uid, optionId);
         if (!reward) { Sound.miss(); setChestButtonsBusy(false); buildChests(); return; }
         Sound.success();
@@ -11866,6 +11990,34 @@
       onCancel: () => { setChestButtonsBusy(false); buildChests(); refreshEvents(); },
     });
     return true;
+  }
+  // ECO-23: segundo paso del swap — elegir QUÉ opción sustituir. Cancelar vuelve
+  // al picker principal sin gastar el ticket.
+  function openChoiceSwapPicker(uid) {
+    const info = Meta.chestChoiceInfo(uid);
+    if (!info || info.state !== 'ready') { setChestButtonsBusy(false); buildChests(); return; }
+    Picker.open({
+      title: I18n.t('choice_swap_pick'),
+      sub: I18n.t('choice_swap_desc'),
+      accent: chestDef(info.type).accent,
+      options: info.choice.options.map((option) => {
+        const reward = chestRewardInfo(option);
+        return {
+          id: option.id, rarity: reward.rarity,
+          icon: `<img class="ic" src="${reward.asset}" alt="" aria-hidden="true">`,
+          name: reward.label, desc: I18n.t('choice_swap_desc'),
+        };
+      }),
+      cancelLabel: I18n.t('daily_choice_cancel'), safeDelayMs: 200,
+      onPick: (optionId) => {
+        const updated = Meta.swapChestChoiceOption(uid, optionId);
+        Econ.refresh();
+        if (updated) { Sound.success(); Toasts.show(I18n.t('choice_ticket_done'), 'good', 1500, 'ticket'); }
+        else Sound.miss();
+        openDailyChoicePicker(uid);
+      },
+      onCancel: () => { openDailyChoicePicker(uid); },
+    });
   }
   function openDailyChoiceFromEvents() {
     const choices = Meta.dailyChoiceChests();
