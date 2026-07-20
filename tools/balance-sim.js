@@ -443,10 +443,12 @@ function runChestEconomy(options = {}) {
  *  - collector: prioriza cosméticos (compra directa, de barato a caro).
  */
 const POLICIES = {
-  saver: { reviveBudget: 0, loadout: [], buysCosmetics: false, accelerate: false, choicePick: 'gems', ticketUse: null },
-  strategic: { reviveBudget: 1, loadout: ['freeze'], buysCosmetics: false, accelerate: false, choicePick: 'coins', ticketUse: 'swap' },
-  spender: { reviveBudget: 3, loadout: ['bomb', 'freeze', 'x2'], buysCosmetics: true, accelerate: true, choicePick: 'coins', ticketUse: 'swap' },
-  collector: { reviveBudget: 0, loadout: [], buysCosmetics: true, accelerate: false, choicePick: 'gems', ticketUse: 'regen' },
+  saver: { reviveBudget: 0, loadout: [], buysCosmetics: false, buysRotation: false, coinReserve: 0, accelerate: false, choicePick: 'gems', ticketUse: null },
+  // ECO-4: strategic compra "sin sentirse obligado" — cosméticos y rotación solo
+  // por encima de una reserva de seguridad de monedas.
+  strategic: { reviveBudget: 1, loadout: ['freeze'], buysCosmetics: true, buysRotation: true, coinReserve: 1500, accelerate: false, choicePick: 'coins', ticketUse: 'swap' },
+  spender: { reviveBudget: 3, loadout: ['bomb', 'freeze', 'x2'], buysCosmetics: true, buysRotation: true, coinReserve: 0, accelerate: true, choicePick: 'coins', ticketUse: 'swap' },
+  collector: { reviveBudget: 0, loadout: [], buysCosmetics: true, buysRotation: true, coinReserve: 0, accelerate: false, choicePick: 'gems', ticketUse: 'regen' },
 };
 
 const FORECAST_ROTATION = ['contrarreloj', 'supervivencia', 'clasico', 'aventura'];
@@ -568,7 +570,15 @@ function runEconomyForecast(options = {}) {
       // Gasto post-sesión (política).
       if (policy.buysCosmetics) {
         for (const item of catalogItems) {
-          if (!item.owned() && cv.Meta.coins() >= item.cost && item.buy()) itemsBought++;
+          if (!item.owned() && cv.Meta.coins() - item.cost >= (policy.coinReserve || 0) && item.buy()) itemsBought++;
+        }
+      }
+      // ECO-40: la rotación de estilo es el sumidero recurrente post-catálogo.
+      if (policy.buysRotation && cv.StyleShop) {
+        for (const offer of cv.StyleShop.todayOffers()) {
+          const cost = offer.price.coins || 0;
+          if (cost && cv.Meta.coins() - cost < (policy.coinReserve || 0)) continue;
+          if (cv.Meta.buyStyleVariant(offer.kind, offer.base, offer.tint)) itemsBought++;
         }
       }
       if (cv.Meta.chestSlotLimit() < 4 && cv.Meta.gems() >= cv.Meta.CHEST_SLOT_GEMS) {

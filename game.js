@@ -134,8 +134,10 @@
       timeFactor: { fullAtSeconds: 90, floor: 0.18 },
     },
     // Potenciadores (coste en monedas cuando no hay stock del arsenal).
-    boosterPrices: { bomb: 80, freeze: 60, clearLine: 90, wild: 100, x2: 70 },
-    prelevelBoosters: { bomb: 80, freeze: 60, clearLine: 90 },
+    // ECO-41: coste ligado al ingreso esperado de la run (loadout máx. de
+    // Supervivencia ~ 20-35% del premio de una run media post-ECO-1).
+    boosterPrices: { bomb: 40, freeze: 30, clearLine: 45, wild: 50, x2: 35 },
+    prelevelBoosters: { bomb: 40, freeze: 30, clearLine: 45 },
     // Continuar con gemas al llenarse el tablero (Clásico/Aventura).
     continueGems: 15,
     // ECO-23: usos voluntarios y repetibles de tickets (decisiones de 1 y 2 tickets).
@@ -153,7 +155,9 @@
       // Suministro del anillo interior (Survival.redeemSupply).
       supplyCoins: { base: 2, perWave: 0, cap: 2 },
       // Revivir: coste base·2^usos con tope, máx. usos por run.
-      revive: { base: 120, cap: 480, max: 3 },
+      // ECO-42: primer revive accesible; los 3 suman 350 ~ 76% del premio de una
+      // run media (puerta 50-90%). La estructura sigue siendo base*2^usos con tope.
+      revive: { base: 50, cap: 200, max: 3 },
       // Multiplicador económico por dificultad (consumido por Survival.TUNE).
       coinMult: { facil: 0.85, normal: 1.0, dificil: 1.15 },
     },
@@ -225,6 +229,25 @@
       },
       // Cofre mínimo donde puede caer cada rareza (para la pista de doble vía en tienda).
       minTierByRarity: { common: 'wood', rare: 'silver', epic: 'magic', legendary: 'magic', mythic: 'supreme' },
+      // ECO-43: precio directo en gemas de iconos/bordes raro+ (bandas del plan:
+      // raro 60-90 / epico-legendario 120-180 / mitico 220-320). Los comunes solo
+      // se venden por monedas. La compra directa da certeza; el cofre, sorpresa.
+      directGems: { rare: 70, epic: 140, legendary: 170, mythic: 260 },
+    },
+    // ECO-40: tienda rotatoria de estilo - variantes de color (tintes) de iconos y
+    // bordes POSEIDOS. Rotacion determinista por fecha (sin servidor, sin falsa
+    // escasez). Precio segun la rareza del objeto base: monedas para comun-epico,
+    // gemas para legendario/mitico (sumidero premium repetible).
+    styleRotation: {
+      slots: 3,
+      tints: [
+        { id: 'jade', hue: 110 }, { id: 'crimson', hue: 315 },
+        { id: 'azure', hue: 185 }, { id: 'gold', hue: 40 },
+      ],
+      price: {
+        common: { coins: 350 }, rare: { coins: 550 }, epic: { coins: 900 },
+        legendary: { gems: 60 }, mythic: { gems: 90 },
+      },
     },
     // ECO-33/ECO-50: unidad de valor interna para comparar ofertas y calcular EV.
     // NO habilita conversión directa entre carteras.
@@ -637,6 +660,7 @@
         powerup_empty: 'No te quedan de este power-up',
         equipped: 'Equipado', equip: 'Equipar', free: 'Gratis', no_coins: 'Monedas insuficientes',
         shop_boards: 'Tableros visuales', shop_themes: 'Temas de color', shop_hint2: 'Los tableros son solo cambios visuales: no dan ventajas ni desventajas. Equipa tu estilo favorito para jugar.', board_unlocked: '¡Tablero desbloqueado!',
+        style_rotation_title: 'Estilo del día', style_rotation_sub: 'Variantes de color de tus iconos y bordes · la selección rota cada día', style_rotation_empty: 'Has coleccionado todas las variantes disponibles hoy. ¡Vuelve mañana!', style_variant_owned: 'En tu colección', style_variant_equip: 'Lucir', style_variant_equipped: 'Equipada', tint_jade: 'Jade', tint_crimson: 'Carmesí', tint_azure: 'Celeste', tint_gold: 'Dorado', style_variant_bought: '¡Variante nueva desbloqueada!',
         shop_also_in_chest: 'También en: {c} o superior', shop_rarity_common: 'Común', shop_rarity_rare: 'Raro', shop_rarity_epic: 'Épico', shop_rarity_legendary: 'Legendario', shop_rarity_mythic: 'Mítico',
         resource_shop_title: 'Tienda de recursos', style_shop_title: 'Personalización', resource_shop_short: 'Monedas, gemas y XP', style_shop_short: 'Personalización', style_shop_nav: 'Estilos', preview_theme: 'Vista previa de {name}',
         test_payment_title: 'Modo de pruebas', test_payment_note: 'Las compras de monedas y gemas se acreditan automáticamente. No se realiza ningún cobro.', mock_payment_badge: 'PAGO DE PRUEBA',
@@ -986,6 +1010,7 @@
         powerup_empty: 'No more of this power-up',
         equipped: 'Equipped', equip: 'Equip', free: 'Free', no_coins: 'Not enough coins',
         shop_boards: 'Visual boards', shop_themes: 'Color themes', shop_hint2: 'Boards are visual-only cosmetics: no advantages or disadvantages. Equip your favorite style before playing.', board_unlocked: 'Board unlocked!',
+        style_rotation_title: 'Style of the day', style_rotation_sub: 'Color variants of your icons and frames · the selection rotates daily', style_rotation_empty: 'You have collected every variant available today. Come back tomorrow!', style_variant_owned: 'In your collection', style_variant_equip: 'Wear', style_variant_equipped: 'Equipped', tint_jade: 'Jade', tint_crimson: 'Crimson', tint_azure: 'Azure', tint_gold: 'Gold', style_variant_bought: 'New variant unlocked!',
         shop_also_in_chest: 'Also drops in: {c} or better', shop_rarity_common: 'Common', shop_rarity_rare: 'Rare', shop_rarity_epic: 'Epic', shop_rarity_legendary: 'Legendary', shop_rarity_mythic: 'Mythic',
         resource_shop_title: 'Resource shop', style_shop_title: 'Customization', resource_shop_short: 'Coins, gems & XP', style_shop_short: 'Customization', style_shop_nav: 'Styles', preview_theme: 'Preview {name}',
         test_payment_title: 'Test mode', test_payment_note: 'Coin and gem purchases are credited automatically. No payment is charged.', mock_payment_badge: 'TEST PAYMENT',
@@ -3373,9 +3398,9 @@
       pulse: { name: 'Pulso', cost: 1750, rarity: 'legendary', asset: 'img/player-icons/pulse.png' },
     },
     order: ['nova', 'comet', 'prism', 'sentinel', 'nebula', 'orbit', 'flare', 'crystal', 'void', 'pulse'],
-    html(id, cls) {
+    html(id, cls, tint) {
       const d = this.DEFS[id] || this.DEFS[this.DEFAULT];
-      const klass = cls ? ` ${cls}` : '';
+      const klass = (cls ? ` ${cls}` : '') + (tint ? ` tint-${tint}` : '');
       return `<img class="player-icon-png${klass}" src="${d.asset}" alt="${esc(d.name)}" draggable="false">`;
     },
   };
@@ -3402,11 +3427,64 @@
     },
   };
 
-  function playerAvatarHtml(iconId, borderId, cls) {
+  // ECO-40: `tints` opcional {icon, border} aplica variantes de color compradas
+  // en la tienda rotatoria. Sin argumento, el avatar EQUIPADO usa sus tintes.
+  function playerAvatarHtml(iconId, borderId, cls, tints) {
     const icon = PlayerIcons.DEFS[iconId] ? iconId : PlayerIcons.DEFAULT;
     const border = PlayerBorders.DEFS[borderId] ? borderId : PlayerBorders.DEFAULT;
-    return `<span class="player-avatar-shell ${cls || ''}" data-player-frame="${border}"><span class="player-avatar-aura" aria-hidden="true"></span><span class="player-avatar-art">${PlayerIcons.html(icon)}</span><img class="player-avatar-frame" src="${PlayerBorders.DEFS[border].asset}" alt="" aria-hidden="true" draggable="false"></span>`;
+    let iconTint = tints && tints.icon || '', borderTint = tints && tints.border || '';
+    if (!tints) {
+      // Render del avatar actual: hereda los tintes equipados (si aplican al id).
+      if (icon === Meta.avatarIcon()) iconTint = Meta.avatarIconTint();
+      if (border === Meta.avatarBorder()) borderTint = Meta.avatarBorderTint();
+    }
+    return `<span class="player-avatar-shell ${cls || ''}" data-player-frame="${border}"><span class="player-avatar-aura" aria-hidden="true"></span><span class="player-avatar-art">${PlayerIcons.html(icon, '', iconTint)}</span><img class="player-avatar-frame${borderTint ? ' tint-' + borderTint : ''}" src="${PlayerBorders.DEFS[border].asset}" alt="" aria-hidden="true" draggable="false"></span>`;
   }
+
+  /* ===================== StyleShop (ECO-40: tienda rotatoria de estilo) =====================
+   * Variantes de color (tintes CSS) de iconos y bordes YA poseidos. La rotacion
+   * diaria es determinista por fecha: sin servidor, sin contadores falsos de
+   * escasez. Comprar exige que la oferta este en la rotacion de HOY.
+   */
+  const StyleShop = {
+    _hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; },
+    today() { return new Date().toISOString().slice(0, 10); },
+    tintDef(tintId) { return EconomyConfig.styleRotation.tints.find((t) => t.id === tintId) || null; },
+    priceFor(rarity) { return EconomyConfig.styleRotation.price[rarity] || EconomyConfig.styleRotation.price.common; },
+    // Pool completo de variantes elegibles (base poseida, variante NO poseida).
+    pool() {
+      const out = [];
+      const tints = EconomyConfig.styleRotation.tints;
+      PlayerIcons.order.forEach((base) => {
+        if (!Meta.ownsAvatarIcon(base)) return;
+        tints.forEach((t) => {
+          if (!Meta.ownsAvatarIconTint(base, t.id)) out.push({ kind: 'icon', base, tint: t.id, rarity: PlayerIcons.DEFS[base].rarity || 'common', name: PlayerIcons.DEFS[base].name });
+        });
+      });
+      PlayerBorders.order.forEach((base) => {
+        if (!Meta.ownsAvatarBorder(base)) return;
+        tints.forEach((t) => {
+          if (!Meta.ownsAvatarBorderTint(base, t.id)) out.push({ kind: 'border', base, tint: t.id, rarity: PlayerBorders.DEFS[base].rarity || 'common', name: PlayerBorders.DEFS[base].name });
+        });
+      });
+      return out;
+    },
+    // Rotacion determinista para una fecha: seleccion sin reemplazo sobre el pool
+    // ordenado de forma estable. Devuelve como maximo `slots` ofertas con precio.
+    offersFor(date) {
+      const pool = this.pool().sort((a, b) => (a.kind + a.base + a.tint) < (b.kind + b.base + b.tint) ? -1 : 1);
+      const offers = [];
+      const want = Math.min(EconomyConfig.styleRotation.slots, pool.length);
+      let salt = 0;
+      while (offers.length < want && pool.length) {
+        const idx = this._hash(`${date}:${offers.length}:${salt}`) % pool.length;
+        offers.push(Object.assign({ price: this.priceFor(pool[idx].rarity) }, pool.splice(idx, 1)[0]));
+        salt++;
+      }
+      return offers;
+    },
+    todayOffers() { return this.offersFor(this.today()); },
+  };
 
   /* ===================== Meta (progresión persistente) ===================== */
 
@@ -3429,6 +3507,11 @@
     if (!m.cosmetics.owned || typeof m.cosmetics.owned !== 'object') m.cosmetics.owned = {};
     if (!m.cosmetics.avatarIcons || typeof m.cosmetics.avatarIcons !== 'object') m.cosmetics.avatarIcons = {};
     if (!m.cosmetics.avatarBorders || typeof m.cosmetics.avatarBorders !== 'object') m.cosmetics.avatarBorders = {};
+    // ECO-40: variantes de color (tintes) retrocompatibles.
+    if (!m.cosmetics.avatarIconTints || typeof m.cosmetics.avatarIconTints !== 'object') m.cosmetics.avatarIconTints = {};
+    if (!m.cosmetics.avatarBorderTints || typeof m.cosmetics.avatarBorderTints !== 'object') m.cosmetics.avatarBorderTints = {};
+    if (typeof m.cosmetics.avatarIconTint !== 'string') m.cosmetics.avatarIconTint = '';
+    if (typeof m.cosmetics.avatarBorderTint !== 'string') m.cosmetics.avatarBorderTint = '';
     m.cosmetics.avatarIcons[PlayerIcons.DEFAULT] = m.cosmetics.avatarIcons[PlayerIcons.DEFAULT] || 1;
     m.cosmetics.avatarBorders[PlayerBorders.DEFAULT] = m.cosmetics.avatarBorders[PlayerBorders.DEFAULT] || 1;
     if (!PlayerIcons.DEFS[m.cosmetics.avatarIcon] || !m.cosmetics.avatarIcons[m.cosmetics.avatarIcon]) m.cosmetics.avatarIcon = PlayerIcons.DEFAULT;
@@ -4454,11 +4537,69 @@
       },
       equipAvatarIcon(id) {
         if (!PlayerIcons.DEFS[id] || !this.ownsAvatarIcon(id)) return false;
-        m.cosmetics.avatarIcon = id; save(); return true;
+        m.cosmetics.avatarIcon = id;
+        // ECO-40: al cambiar de icono, el tinte solo sobrevive si esta comprado para ese icono.
+        if (m.cosmetics.avatarIconTint && !this.ownsAvatarIconTint(id, m.cosmetics.avatarIconTint)) m.cosmetics.avatarIconTint = '';
+        save(); return true;
       },
       equipAvatarBorder(id) {
         if (!PlayerBorders.DEFS[id] || !this.ownsAvatarBorder(id)) return false;
-        m.cosmetics.avatarBorder = id; save(); return true;
+        m.cosmetics.avatarBorder = id;
+        if (m.cosmetics.avatarBorderTint && !this.ownsAvatarBorderTint(id, m.cosmetics.avatarBorderTint)) m.cosmetics.avatarBorderTint = '';
+        save(); return true;
+      },
+      // ---- ECO-40: variantes de color (tintes) de la tienda rotatoria ----
+      avatarIconTint: () => m.cosmetics.avatarIconTint || '',
+      avatarBorderTint: () => m.cosmetics.avatarBorderTint || '',
+      ownsAvatarIconTint: (base, tint) => !!(m.cosmetics.avatarIconTints && m.cosmetics.avatarIconTints[`${base}:${tint}`]),
+      ownsAvatarBorderTint: (base, tint) => !!(m.cosmetics.avatarBorderTints && m.cosmetics.avatarBorderTints[`${base}:${tint}`]),
+      styleVariantsOwnedCount: () => Object.keys(m.cosmetics.avatarIconTints || {}).length + Object.keys(m.cosmetics.avatarBorderTints || {}).length,
+      // Compra una variante de la rotacion de HOY (unica via: rotacion honesta por
+      // fecha). Cobra monedas o gemas segun la rareza del objeto base.
+      buyStyleVariant(kind, base, tint) {
+        const offer = StyleShop.todayOffers().find((o) => o.kind === kind && o.base === base && o.tint === tint);
+        if (!offer) return false;
+        if (offer.price.coins) { if (!this.spend(offer.price.coins, 'style-rotation')) return false; }
+        else if (offer.price.gems) { if (!this.spendGems(offer.price.gems, 'style-rotation')) return false; }
+        else return false;
+        const key = `${base}:${tint}`;
+        // Defensivo: perfiles antiguos/canónicos pueden no traer los mapas de tintes.
+        if (kind === 'icon') { m.cosmetics.avatarIconTints = m.cosmetics.avatarIconTints || {}; m.cosmetics.avatarIconTints[key] = today(); }
+        else { m.cosmetics.avatarBorderTints = m.cosmetics.avatarBorderTints || {}; m.cosmetics.avatarBorderTints[key] = today(); }
+        save(); return true;
+      },
+      equipAvatarIconTint(tint) {
+        if (tint && !this.ownsAvatarIconTint(this.avatarIcon(), tint)) return false;
+        m.cosmetics.avatarIconTint = tint || ''; save(); return true;
+      },
+      equipAvatarBorderTint(tint) {
+        if (tint && !this.ownsAvatarBorderTint(this.avatarBorder(), tint)) return false;
+        m.cosmetics.avatarBorderTint = tint || ''; save(); return true;
+      },
+      // ---- ECO-43: compra directa por gemas de iconos/bordes raro+ ----
+      avatarIconGemPrice(id) {
+        const item = PlayerIcons.DEFS[id];
+        return item ? EconomyConfig.cosmetics.directGems[item.rarity] || 0 : 0;
+      },
+      avatarBorderGemPrice(id) {
+        const item = PlayerBorders.DEFS[id];
+        return item ? EconomyConfig.cosmetics.directGems[item.rarity] || 0 : 0;
+      },
+      buyAvatarIconGems(id) {
+        if (!PlayerIcons.DEFS[id]) return false;
+        if (this.ownsAvatarIcon(id)) return true;
+        const cost = this.avatarIconGemPrice(id);
+        if (!cost || !this.spendGems(cost, 'shop-avatar-gems')) return false;
+        m.cosmetics.avatarIcons = m.cosmetics.avatarIcons || { [PlayerIcons.DEFAULT]: 1 };
+        m.cosmetics.avatarIcons[id] = today(); save(); return true;
+      },
+      buyAvatarBorderGems(id) {
+        if (!PlayerBorders.DEFS[id]) return false;
+        if (this.ownsAvatarBorder(id)) return true;
+        const cost = this.avatarBorderGemPrice(id);
+        if (!cost || !this.spendGems(cost, 'shop-avatar-gems')) return false;
+        m.cosmetics.avatarBorders = m.cosmetics.avatarBorders || { [PlayerBorders.DEFAULT]: 1 };
+        m.cosmetics.avatarBorders[id] = today(); save(); return true;
       },
       avatarIconOwnedCount: () => PlayerIcons.order.filter((id) => id === PlayerIcons.DEFAULT || !!(m.cosmetics.avatarIcons && m.cosmetics.avatarIcons[id])).length,
       avatarBorderOwnedCount: () => PlayerBorders.order.filter((id) => id === PlayerBorders.DEFAULT || !!(m.cosmetics.avatarBorders && m.cosmetics.avatarBorders[id])).length,
@@ -11580,19 +11721,35 @@
     const list = $('#shop-list'); if (!list) return;
     Econ.refresh();
     { const co = $('#shop-coins'); if (co) co.textContent = Meta.coins(); }
+    // ECO-40: rotación diaria de variantes de estilo (sumidero recurrente).
+    const rotationCards = StyleShop.todayOffers().map((offer) => {
+      const tintName = I18n.t('tint_' + offer.tint);
+      const preview = offer.kind === 'icon'
+        ? playerAvatarHtml(offer.base, Meta.avatarBorder(), 'player-avatar-md', { icon: offer.tint })
+        : playerAvatarHtml(Meta.avatarIcon(), offer.base, 'player-avatar-md', { border: offer.tint });
+      const price = offer.price.coins ? `${iconInline('coin')} ${offer.price.coins}` : `${iconInline('gem')} ${offer.price.gems}`;
+      return `<article class="player-shop-item style-rotation-item"><span class="style-rotation-rarity shop-rarity shop-rarity-${offer.rarity}">${esc(I18n.t('shop_rarity_' + offer.rarity))}</span>${preview}<b>${esc(offer.name)} · ${esc(tintName)}</b><button class="btn btn-primary btn-sm" data-style-buy="${offer.kind}:${offer.base}:${offer.tint}">${price}</button></article>`;
+    }).join('');
+    const rotationHtml = `<h3 class="group-title">${esc(I18n.t('style_rotation_title'))}</h3>
+      <p class="style-rotation-sub">${esc(I18n.t('style_rotation_sub'))}</p>
+      <div class="player-shop-grid">${rotationCards || `<p class="style-rotation-empty">${esc(I18n.t('style_rotation_empty'))}</p>`}</div>`;
     const iconCards = PlayerIcons.order.map((id) => {
       const item = PlayerIcons.DEFS[id], owned = Meta.ownsAvatarIcon(id), equipped = Meta.avatarIcon() === id;
-      const button = equipped ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
+      const gemPrice = Meta.avatarIconGemPrice(id);
+      const gemBtn = !owned && gemPrice ? `<button class="btn btn-ghost btn-sm" data-picon-gbuy="${id}">${iconInline('gem')} ${gemPrice}</button>` : '';
+      const button = (equipped ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
         : owned ? `<button class="btn btn-primary btn-sm" data-picon-eq="${id}">${esc(I18n.t('equip'))}</button>`
-          : `<button class="btn btn-primary btn-sm" data-picon-buy="${id}">${iconInline('coin')} ${item.cost}</button>`;
+          : `<button class="btn btn-primary btn-sm" data-picon-buy="${id}">${iconInline('coin')} ${item.cost}</button>`) + gemBtn;
       const hint = owned ? '' : cosmeticDualHint(item.rarity);
       return `<article class="player-shop-item${equipped ? ' is-equipped' : ''}">${playerAvatarHtml(id, Meta.avatarBorder(), 'player-avatar-md')}<b>${esc(item.name)}</b>${hint}${button}</article>`;
     }).join('');
     const borderCards = PlayerBorders.order.map((id) => {
       const item = PlayerBorders.DEFS[id], owned = Meta.ownsAvatarBorder(id), equipped = Meta.avatarBorder() === id;
-      const button = equipped ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
+      const gemPrice = Meta.avatarBorderGemPrice(id);
+      const gemBtn = !owned && gemPrice ? `<button class="btn btn-ghost btn-sm" data-pborder-gbuy="${id}">${iconInline('gem')} ${gemPrice}</button>` : '';
+      const button = (equipped ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
         : owned ? `<button class="btn btn-primary btn-sm" data-pborder-eq="${id}">${esc(I18n.t('equip'))}</button>`
-          : `<button class="btn btn-primary btn-sm" data-pborder-buy="${id}">${iconInline('coin')} ${item.cost}</button>`;
+          : `<button class="btn btn-primary btn-sm" data-pborder-buy="${id}">${iconInline('coin')} ${item.cost}</button>`) + gemBtn;
       const hint = owned ? '' : cosmeticDualHint(item.rarity);
       return `<article class="player-shop-item${equipped ? ' is-equipped' : ''}">${playerAvatarHtml(Meta.avatarIcon(), id, 'player-avatar-md')}<b>${esc(item.name)}</b>${hint}${button}</article>`;
     }).join('');
@@ -11617,6 +11774,7 @@
       return `<div class="shop-item${eq ? ' on' : ''}" data-theme="${id}"><button class="shop-sw" type="button" data-theme-preview="${id}" style="background:${Themes.swatch(id)}" aria-label="${esc(I18n.t('preview_theme').replace('{name}', t.name))}"></button><span class="shop-name">${esc(t.name)}</span>${hint}${btn}</div>`;
     }).join('');
     list.innerHTML = `<section class="player-shop-hero">${playerCardHtml('player-card-shop')}</section>
+      ${rotationHtml}
       <h3 class="group-title">${esc(I18n.t('shop_player_icons'))}</h3><div class="player-shop-grid">${iconCards}</div>
       <h3 class="group-title">${esc(I18n.t('shop_player_borders'))}</h3><div class="player-shop-grid">${borderCards}</div>
       <h3 class="group-title">${esc(I18n.t('shop_boards'))}</h3><div class="board-grid">${boardsHTML}</div>
@@ -11629,6 +11787,28 @@
       return false;
     };
     const refreshPlayerShop = () => { updateTopBars(); buildPlayerProfile(); buildShop(); };
+    list.querySelectorAll('[data-style-buy]').forEach((button) => button.addEventListener('click', () => {
+      if (!armBuy(button)) { Sound.ui(); return; }
+      const [kind, base, tint] = button.dataset.styleBuy.split(':');
+      if (Meta.buyStyleVariant(kind, base, tint)) {
+        if (kind === 'icon') { Meta.equipAvatarIcon(base); Meta.equipAvatarIconTint(tint); }
+        else { Meta.equipAvatarBorder(base); Meta.equipAvatarBorderTint(tint); }
+        Sound.success(); refreshPlayerShop(); Toasts.show(I18n.t('style_variant_bought'), 'good', 1800, 'player');
+      } else {
+        const offer = StyleShop.todayOffers().find((o) => o.kind === kind && o.base === base && o.tint === tint);
+        Sound.miss(); Toasts.show(I18n.t(offer && offer.price.gems ? 'no_gems' : 'no_coins'), 'warn', 1600);
+      }
+    }));
+    list.querySelectorAll('[data-picon-gbuy]').forEach((button) => button.addEventListener('click', () => {
+      if (!armBuy(button)) { Sound.ui(); return; }
+      if (Meta.buyAvatarIconGems(button.dataset.piconGbuy)) { Meta.equipAvatarIcon(button.dataset.piconGbuy); Sound.success(); refreshPlayerShop(); Toasts.show(I18n.t('equipped'), 'good', 1600, 'player'); }
+      else { Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 1600); }
+    }));
+    list.querySelectorAll('[data-pborder-gbuy]').forEach((button) => button.addEventListener('click', () => {
+      if (!armBuy(button)) { Sound.ui(); return; }
+      if (Meta.buyAvatarBorderGems(button.dataset.pborderGbuy)) { Meta.equipAvatarBorder(button.dataset.pborderGbuy); Sound.success(); refreshPlayerShop(); Toasts.show(I18n.t('equipped'), 'good', 1600, 'player'); }
+      else { Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 1600); }
+    }));
     list.querySelectorAll('[data-picon-buy]').forEach((button) => button.addEventListener('click', () => { if (!armBuy(button)) { Sound.ui(); return; } if (Meta.buyAvatarIcon(button.dataset.piconBuy)) { Meta.equipAvatarIcon(button.dataset.piconBuy); Sound.success(); refreshPlayerShop(); Toasts.show(I18n.t('equipped'), 'good', 1600, 'player'); } else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); } }));
     list.querySelectorAll('[data-pborder-buy]').forEach((button) => button.addEventListener('click', () => { if (!armBuy(button)) { Sound.ui(); return; } if (Meta.buyAvatarBorder(button.dataset.pborderBuy)) { Meta.equipAvatarBorder(button.dataset.pborderBuy); Sound.success(); refreshPlayerShop(); Toasts.show(I18n.t('equipped'), 'good', 1600, 'player'); } else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); } }));
     list.querySelectorAll('[data-picon-eq]').forEach((button) => button.addEventListener('click', () => { Meta.equipAvatarIcon(button.dataset.piconEq); Sound.ui(); refreshPlayerShop(); }));
@@ -12739,5 +12919,5 @@
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
   if (location.search.indexOf('dev') !== -1) EconomyAudit.enable();
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, EconomyConfig, Economy, EconomyAudit, Storage, FX, Meta, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, EconomyConfig, Economy, EconomyAudit, StyleShop, Storage, FX, Meta, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
 })();

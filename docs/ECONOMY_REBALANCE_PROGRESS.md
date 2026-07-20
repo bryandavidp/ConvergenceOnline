@@ -15,7 +15,7 @@
 | ECO-1 Monedas | ✅ HECHA | (ver git log: "ECO-1") | settlementCoins con sqrt · Clásico con factor de tiempo · presupuesto anti doble pago |
 | ECO-2 Gemas/tickets | ✅ HECHA | (ver git log: "ECO-2") | Tope 6💎/día · escalado separado · Choice sin nivel · swap/regen con tickets |
 | ECO-3 Cofres/cosméticos | ✅ HECHA | (ver git log: "ECO-3") | Rareza por tier · fallback consumible · EV analítico creciente · monedas de cofres ×0,5 |
-| ECO-4 Sumideros | ⬜ pendiente | — | |
+| ECO-4 Sumideros | ✅ HECHA | (ver git log: "ECO-4") | Tienda rotatoria de tintes · boosters/revives recalibrados · venta directa por gemas |
 | ECO-5 Tienda | ⬜ pendiente | — | |
 | ECO-6 Cola de cofres | ⬜ pendiente | — | |
 | ECO-7 Forecast 30/90/180 | ⬜ pendiente | — | |
@@ -258,6 +258,40 @@ superv. difícil hábil   1114                  (≤1200) ✅
   Actualizados: `fb-regression` (FB-7→ECO-32), `chests-redesign`, `chest-ceremony`.
 - Suite: 294 pass / 2 preexistentes. EV sim "después" en scratchpad
   `eco3-chests-final.txt` (números citados arriba quedan en este doc como registro).
+
+## ECO-4 — qué se hizo y cómo verificarlo (2026-07-20)
+
+- **ECO-40 tienda rotatoria (`StyleShop`)**: variantes de color (tintes CSS
+  hue-rotate: jade/carmesí/celeste/dorado) de iconos y bordes YA poseídos.
+  Rotación de 3 ofertas **determinista por fecha** (hash FNV sobre el pool
+  ordenado; sin servidor ni falsa escasez). Precio por rareza del objeto base:
+  común 350🪙 · raro 550🪙 · épico 900🪙 · legendario 60💎 · mítico 90💎
+  (`EconomyConfig.styleRotation`). Compra SOLO desde la rotación de hoy
+  (`Meta.buyStyleVariant`), propiedad en `cv_meta.cosmetics.avatarIconTints/
+  avatarBorderTints` (migración retrocompatible), equipado con
+  `equipAvatarIconTint/BorderTint` (se limpia al cambiar a una base sin la
+  variante). UI: sección "Estilo del día" al inicio de la tienda de
+  personalización + CSS `.tint-*`. Pool total ≈ 80 variantes ≈ +30-40k monedas
+  de catálogo vivo (alarga la vida del catálogo, ver nota ECO-3).
+  *No implementado (extensión futura): bundles icono+borde y acabados animados.*
+- **ECO-41 boosters**: precios 80/60/90/100/70 → **40/30/45/50/35**. Loadout
+  máximo de Supervivencia = 135 ≈ 33% del premio de una run media (puerta 20–35%,
+  verificado por test contra `Economy.settlementCoins`). Pre-nivel de Clásico
+  usa los mismos precios (decisión: coherencia entre modos; el gate por-nivel
+  25–45% es ambiguo con niveles cortos — documentado).
+- **ECO-42 revives**: base 120→**50**, tope 480→**200** (estructura base·2^usos
+  intacta). 3 revives = 350 ≈ 76% de la run media (puerta 50–90% ✅); primer
+  revive ≈ 11% (accesible ✅).
+- **ECO-43 venta directa**: `Meta.buyAvatarIconGems/BorderGems` — raro 70💎,
+  épico 140💎, legendario 170💎, mítico 260💎 (bandas del plan). Botón secundario
+  de gemas en la tienda para raro+; los comunes siguen solo por monedas.
+- **Puertas medidas** (forecast 14 días strategic average): quema **88,6%** de
+  las monedas ganadas (puerta ≥45%) conservando su reserva de 1.500; rotación
+  3.550🪙/14 días; sumidero repetible por divisa (test); nada caduca por
+  inactividad. Políticas del sim: strategic ahora compra cosméticos/rotación
+  por encima de una reserva (modela "sin sentirse obligado").
+- **Tests**: nuevo `tests/economy-sinks.test.js` (6). Actualizados:
+  `booster-economy-integration` (precio dinámico), `economy-audit` (revive 50/200).
 
 ## Registro de decisiones tomadas
 

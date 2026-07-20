@@ -2826,6 +2826,15 @@ body.mode-surv .booster-bar { grid-template-columns: minmax(0, 1fr) 56px; }
 .shop-rarity-epic { color: #c58bff; }
 .shop-rarity-legendary { color: #ffc52f; }
 .shop-rarity-mythic { color: #ff6cb0; }
+/* ECO-40: tintes de la tienda rotatoria (variantes de color de iconos/bordes) */
+.player-icon-png.tint-jade, .player-avatar-frame.tint-jade { filter: hue-rotate(110deg) saturate(1.15); }
+.player-icon-png.tint-crimson, .player-avatar-frame.tint-crimson { filter: hue-rotate(315deg) saturate(1.2); }
+.player-icon-png.tint-azure, .player-avatar-frame.tint-azure { filter: hue-rotate(185deg) saturate(1.1); }
+.player-icon-png.tint-gold, .player-avatar-frame.tint-gold { filter: hue-rotate(40deg) saturate(1.35) brightness(1.05); }
+.style-rotation-sub { font-size: 12px; opacity: .75; margin: -4px 0 8px; }
+.style-rotation-empty { font-size: 12px; opacity: .75; }
+.style-rotation-item { position: relative; }
+.style-rotation-rarity { position: absolute; top: 6px; right: 8px; font-size: 10px; }
 .shop-item .shop-sw { width: 46px; height: 46px; border-radius: 12px; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.25); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 2px 6px rgba(0,0,0,.4); }
 .shop-item button.shop-sw { padding: 0; cursor: pointer; }
 .shop-item button.shop-sw:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }

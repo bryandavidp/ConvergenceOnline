@@ -50,8 +50,9 @@ test('EconomyConfig centraliza los números económicos', () => {
   assert.equal(EconomyConfig.dailyRun.firstGems, 5);
   assert.equal(EconomyConfig.continueGems, Config.CONTINUE_GEMS);
   assert.deepEqual(Config.BOOSTER_PRICES, EconomyConfig.boosterPrices);
-  assert.equal(EconomyConfig.survival.revive.base, 120);
-  assert.equal(EconomyConfig.survival.revive.cap, 480);
+  // ECO-42: revive recalibrado (estructura base·2^usos intacta).
+  assert.equal(EconomyConfig.survival.revive.base, 50);
+  assert.equal(EconomyConfig.survival.revive.cap, 200);
   assert.equal(EconomyConfig.chests.premiumGems, Meta.PREMIUM_CHEST_GEMS);
   assert.equal(EconomyConfig.chests.slotGems, Meta.CHEST_SLOT_GEMS);
   assert.equal(EconomyConfig.chests.levelScale.coin.cap, 2.0);

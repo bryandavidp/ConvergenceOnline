@@ -34,7 +34,7 @@ test('economía booster: la cotización usa stock primero y el commit es una sol
 
     const committed = Meta.commitBoosterLoadout(quote.ids, Config.SURVIVAL_LOADOUT_MAX);
     assert.ok(committed);
-    assert.equal(Meta.coins(), 120);
+    assert.equal(Meta.coins(), 200 - Config.BOOSTER_PRICES.bomb);
     assert.equal(Meta.boosterCount('freeze'), 0);
 
     const before = clone(Meta.state);
