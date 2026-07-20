@@ -133,7 +133,10 @@ test('pipeline: una run de Supervivencia cuenta desde la oleada 5', () => {
 
 test('pipeline: la escalera de Supervivencia sigue intacta como bonus', () => {
   // La distribución por oleadas (10→wood … 90+→divine) no pasa por el pipeline.
+  // ECO-01: la escalera vive en EconomyConfig.survival y _waveReward la consume.
   const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'game.js'), 'utf8');
-  assert.match(src, /const ladder = \['wood', 'bronze', 'silver', 'gold', 'magic', 'royal', 'supreme', 'champion', 'divine'\]/);
-  assert.match(src, /clearedWave \/ 10 - 1/);
+  assert.match(src, /chestLadder: \['wood', 'bronze', 'silver', 'gold', 'magic', 'royal', 'supreme', 'champion', 'divine'\]/);
+  assert.match(src, /clearedWave \/ EconomyConfig\.survival\.chestMilestoneEvery - 1/);
+  const eco = globalThis.window.__cv.EconomyConfig;
+  assert.ok(eco && eco.survival && eco.survival.chestMilestoneEvery === 10);
 });

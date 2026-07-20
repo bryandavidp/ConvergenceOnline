@@ -86,6 +86,159 @@
     document.body.appendChild(box);
   }
 
+  /* ===================== EconomyConfig (ECO-01) =====================
+   * Única fuente de verdad de TODOS los números económicos del juego (monedas,
+   * gemas, tickets, cofres, precios). Los módulos consumidores (Config, Meta,
+   * Survival, Storefront, Game, Worlds) referencian estos valores en lugar de
+   * duplicarlos. Cambiar un número aquí = cambiar el juego entero de forma
+   * coherente y medible por el simulador (tools/balance-sim.js).
+   */
+  const EconomyConfig = {
+    // Liquidación de fin de partida (Meta.recordGame): coins = score/scoreDiv
+    // + maxCombo*comboPer + level*levelPer + perfect*perfectBonus.
+    settlement: { scoreDiv: 40, comboPer: 2, levelPer: 5, perfectBonus: 40 },
+    // Recompensas globales de misión diaria / reto semanal (se suman a cualquier modo).
+    missions: { dailyCoins: 60, weeklyCoins: 200, dailyXp: 150, weeklyXp: 400 },
+    // Recompensa diaria de login (Meta.claimReward): base + perDay·min(día, dayCap).
+    loginReward: { base: 20, perDay: 10, dayCap: 7 },
+    // Reto del día: gemas por el primer intento de cada día.
+    dailyRun: { firstGems: 5 },
+    // Clásico (Game._classicComplete): coins = (base + stars·perStar + score/scoreDiv)
+    // · (1 + min(racha−1, streakWins)·streakPctPerWin%), tope streakPctCap%.
+    classic: { base: 20, perStar: 10, scoreDiv: 60, streakPctPerWin: 10, streakPctCap: 50 },
+    // Potenciadores (coste en monedas cuando no hay stock del arsenal).
+    boosterPrices: { bomb: 80, freeze: 60, clearLine: 90, wild: 100, x2: 70 },
+    prelevelBoosters: { bomb: 80, freeze: 60, clearLine: 90 },
+    // Continuar con gemas al llenarse el tablero (Clásico/Aventura).
+    continueGems: 15,
+    survival: {
+      // Monedas por oleada superada + kicker de profundidad desde kickerFromWave.
+      waveCoins: { base: 4, perWave: 1.45, min: 3, kickerFromWave: 15, kickerPow: 1.5, kickerMult: 2 },
+      // Gemas en oleadas múltiplo de `every` (que no son hito de cofre): base + floor(w/div).
+      gemMilestone: { every: 5, base: 2, div: 5 },
+      // Cofre directo en oleadas múltiplo de chestEvery, subiendo por la escalera.
+      chestMilestoneEvery: 10,
+      chestLadder: ['wood', 'bronze', 'silver', 'gold', 'magic', 'royal', 'supreme', 'champion', 'divine'],
+      // Suministro del anillo interior (Survival.redeemSupply).
+      supplyCoins: { base: 2, perWave: 0, cap: 2 },
+      // Revivir: coste base·2^usos con tope, máx. usos por run.
+      revive: { base: 120, cap: 480, max: 3 },
+      // Multiplicador económico por dificultad (consumido por Survival.TUNE).
+      coinMult: { facil: 0.85, normal: 1.0, dificil: 1.3 },
+    },
+    chests: {
+      skipGemsPerHour: 3,
+      // Escalado por nivel meta de las cantidades de cofres: ×(1+perLevel·(nivel−1)), tope cap.
+      levelScale: { perLevel: 0.05, cap: 2.5 },
+      guaranteedCoinShare: 0.25,
+      upgradeChance: 0.10,
+      bonusOdds: { coins: .52, gems: .23, tickets: .13, booster: .12 },
+      premiumGems: 25,
+      slotGems: 150,
+      pipelineTarget: 3,
+      // Tablas de recompensa por tier (consumidas por CHEST_TYPES.reward).
+      rewards: {
+        wood: { coins: [60, 199], gems: [3, 10], tickets: [1, 1], coinCut: .60, gemCut: .90, ticketCut: .98, rarity: 'common' },
+        bronze: { coins: [90, 260], gems: [4, 12], tickets: [1, 1], coinCut: .56, gemCut: .86, ticketCut: .96, rarity: 'common' },
+        silver: { coins: [140, 360], gems: [5, 15], tickets: [1, 2], coinCut: .50, gemCut: .78, ticketCut: .92, rarity: 'rare' },
+        gold: { coins: [200, 500], gems: [7, 18], tickets: [2, 3], coinCut: .46, gemCut: .72, ticketCut: .87, rarity: 'epic' },
+        magic: { coins: [280, 700], gems: [10, 24], tickets: [2, 4], coinCut: .40, gemCut: .64, ticketCut: .78, rarity: 'epic' },
+        royal: { coins: [400, 950], gems: [14, 30], tickets: [3, 5], coinCut: .36, gemCut: .55, ticketCut: .68, rarity: 'legendary' },
+        supreme: { coins: [550, 1250], gems: [18, 38], tickets: [4, 6], coinCut: .30, gemCut: .46, ticketCut: .58, rarity: 'legendary' },
+        champion: { coins: [750, 1600], gems: [24, 48], tickets: [5, 8], coinCut: .25, gemCut: .40, ticketCut: .50, rarity: 'mythic' },
+        divine: { coins: [1000, 2400], gems: [35, 70], tickets: [7, 10], coinCut: .20, gemCut: .32, ticketCut: .40, rarity: 'mythic' },
+        event: { coins: [180, 520], gems: [8, 22], tickets: [2, 4], coinCut: .38, gemCut: .63, ticketCut: .78, rarity: 'special' },
+      },
+    },
+    shop: {
+      // Packs de divisa (checkout de prueba, Storefront.CURRENCY_OFFERS).
+      currencyOffers: [
+        { id: 'gems-spark', kind: 'gems', amount: 100, priceEur: 1.09, asset: 'img/ui-generated/shop/gems-spark.png' },
+        { id: 'gems-cache', kind: 'gems', amount: 330, compareAt: 300, priceEur: 3.39, best: true, asset: 'img/ui-generated/shop/gems-cache.png' },
+        { id: 'gems-vault', kind: 'gems', amount: 1200, compareAt: 1000, priceEur: 11.99, asset: 'img/ui-generated/shop/gems-vault.png' },
+        { id: 'coins-pouch', kind: 'coins', amount: 1000, priceEur: 1.09, asset: 'img/ui-generated/shop/coins-pouch.png' },
+        { id: 'coins-crate', kind: 'coins', amount: 6000, compareAt: 5000, priceEur: 3.39, best: true, asset: 'img/ui-generated/shop/coins-crate.png' },
+        { id: 'coins-vault', kind: 'coins', amount: 18000, compareAt: 15000, priceEur: 5.99, asset: 'img/ui-generated/shop/coins-vault.png' },
+      ],
+      // Boosters de XP ×4 (gemas).
+      xpOffers: [
+        { id: 'xp-6h', hours: 6, gemCost: 25, labelKey: 'xp_pack_6h', asset: 'img/ui-generated/shop/xp-6h.png' },
+        { id: 'xp-3d', hours: 72, gemCost: 80, labelKey: 'xp_pack_3d', best: true, asset: 'img/ui-generated/shop/xp-3d.png' },
+        { id: 'xp-7d', hours: 168, gemCost: 160, labelKey: 'xp_pack_7d', best: true, asset: 'img/ui-generated/shop/xp-7d.png' },
+      ],
+      // Compra directa de cofres con gemas.
+      chestOffers: [
+        { id: 'wood', gemCost: 30 }, { id: 'bronze', gemCost: 50 }, { id: 'silver', gemCost: 90 },
+        { id: 'gold', gemCost: 140 }, { id: 'magic', gemCost: 210 }, { id: 'royal', gemCost: 300 },
+        { id: 'supreme', gemCost: 450 }, { id: 'champion', gemCost: 650 }, { id: 'divine', gemCost: 900 },
+      ],
+    },
+    // Recompensa por completar un mundo del Clásico (Worlds.claimReward).
+    worldReward: { chestType: 'royal', gems: 20 },
+    // Jardín zen: hitos de flores (cofre / tablero exclusivo).
+    zenGarden: { chestAt: 10, chestType: 'magic', boardAt: 50 },
+  };
+
+  /* ===================== EconomyAudit (ECO-02) =====================
+   * Ledger local de auditoría económica: registra cada fuente (source) y sumidero
+   * (sink) de monedas/gemas/tickets/cofres con un motivo estable. Desactivado por
+   * defecto en producción; `?dev` y el simulador lo activan. Sin red ni persistencia:
+   * vive en memoria para depurar y para que el sim mida minted/burned por motivo.
+   */
+  const EconomyAudit = (() => {
+    const MAX_ENTRIES = 4000;
+    let enabled = false;
+    let seq = 0;
+    let sessionId = 'local';
+    const entries = [];
+    const totals = Object.create(null); // 'currency|direction|reason' → {count, amount}
+    return {
+      get enabled() { return enabled; },
+      enable(on) { enabled = on !== false; return enabled; },
+      setSession(id) { sessionId = String(id || 'local'); },
+      record(e) {
+        if (!enabled || !e) return null;
+        const amount = Math.abs(Number(e.amount));
+        if (!Number.isFinite(amount) || amount <= 0) return null;
+        const entry = {
+          seq: ++seq,
+          currency: String(e.currency || 'coins'),
+          amount,
+          direction: e.direction === 'sink' ? 'sink' : 'source',
+          reason: String(e.reason || 'unknown'),
+          mode: e.mode !== undefined ? e.mode : (typeof State !== 'undefined' && State ? State.mode : null),
+          level: Number.isFinite(Number(e.level)) ? Number(e.level) : null,
+          session: sessionId,
+        };
+        entries.push(entry);
+        if (entries.length > MAX_ENTRIES) entries.shift();
+        const key = entry.currency + '|' + entry.direction + '|' + entry.reason;
+        const t = totals[key] || (totals[key] = {
+          currency: entry.currency, direction: entry.direction, reason: entry.reason, count: 0, amount: 0,
+        });
+        t.count++; t.amount += amount;
+        return entry;
+      },
+      entries: () => entries.slice(),
+      // Informe determinista: totales por divisa (minted/burned/net) + desglose por
+      // motivo, ordenado por clave para que una misma seed produzca el mismo informe.
+      summary() {
+        const byCurrency = {};
+        const rows = Object.keys(totals).sort().map((key) => Object.assign({}, totals[key]));
+        rows.forEach((row) => {
+          const c = byCurrency[row.currency] || (byCurrency[row.currency] = { minted: 0, burned: 0, net: 0 });
+          if (row.direction === 'source') c.minted += row.amount; else c.burned += row.amount;
+          c.net = c.minted - c.burned;
+        });
+        return { session: sessionId, entries: entries.length, byCurrency, rows };
+      },
+      reset() {
+        entries.length = 0; seq = 0;
+        Object.keys(totals).forEach((key) => { delete totals[key]; });
+      },
+    };
+  })();
+
   /* ===================== Config ===================== */
   const Config = {
     SIZE: 8,
@@ -119,15 +272,15 @@
     WARMUP: { ms: 10000, convs: 3, factor: 0.55, rampMs: 2000 },
     // GM-02: continuar con gemas al llenarse el tablero (Clásico/Aventura) — 1 oferta
     // por nivel, despeja el 40%. Primer sumidero de gemas de gameplay.
-    CONTINUE_GEMS: 15,
+    CONTINUE_GEMS: EconomyConfig.continueGems,
     CONTINUE_CLEAR: 0.40,
     // Economía común de potenciadores. Clásico ofrece el subconjunto histórico;
     // Supervivencia permite preparar cualquiera de los cinco antes de confirmar
     // la partida. El stock persistente sustituye el coste, nunca se consume solo.
-    BOOSTER_PRICES: { bomb: 80, freeze: 60, clearLine: 90, wild: 100, x2: 70 },
+    BOOSTER_PRICES: EconomyConfig.boosterPrices,
     // GM-03: potenciadores pre-nivel de Clásico (coste en monedas, máx. 2 por nivel,
     // desde el 2º mundo).
-    PRELEVEL_BOOSTERS: { bomb: 80, freeze: 60, clearLine: 90 },
+    PRELEVEL_BOOSTERS: EconomyConfig.prelevelBoosters,
     PRELEVEL_MAX: 2,
     PRELEVEL_FROM_WORLD: 1,   // índice de mundo (0 = Bosque juega sin fricción)
     SURVIVAL_LOADOUT_MAX: 3,
@@ -2943,57 +3096,57 @@
     wood: {
       id: 'wood', nameKey: 'chest_type_wood', sizeKey: 'chest_size_small', rarityKey: 'chest_tier_basic', descKey: 'chest_desc_wood',
       asset: 'img/ui-generated/chests/atlas/wood.png', accent: '#8fd6ff', durationMs: 3 * 60 * 60 * 1000, instantCost: 9,
-      reward: { coins: [60, 199], gems: [3, 10], tickets: [1, 1], coinCut: .60, gemCut: .90, ticketCut: .98, rarity: 'common' },
+      reward: EconomyConfig.chests.rewards.wood,
     },
     bronze: {
       id: 'bronze', nameKey: 'chest_type_bronze', sizeKey: 'chest_size_small', rarityKey: 'chest_tier_common', descKey: 'chest_desc_bronze',
       asset: 'img/ui-generated/chests/atlas/bronze.png', accent: '#ff9a52', durationMs: 3 * 60 * 60 * 1000, instantCost: 9,
-      reward: { coins: [90, 260], gems: [4, 12], tickets: [1, 1], coinCut: .56, gemCut: .86, ticketCut: .96, rarity: 'common' },
+      reward: EconomyConfig.chests.rewards.bronze,
     },
     silver: {
       id: 'silver', nameKey: 'chest_type_silver', sizeKey: 'chest_size_medium', rarityKey: 'chest_tier_rare', descKey: 'chest_desc_silver',
       asset: 'img/ui-generated/chests/atlas/silver.png', accent: '#75c9ff', durationMs: 8 * 60 * 60 * 1000, instantCost: 24,
-      reward: { coins: [140, 360], gems: [5, 15], tickets: [1, 2], coinCut: .50, gemCut: .78, ticketCut: .92, rarity: 'rare' },
+      reward: EconomyConfig.chests.rewards.silver,
     },
     gold: {
       id: 'gold', nameKey: 'chest_type_gold', sizeKey: 'chest_size_medium', rarityKey: 'chest_tier_epic', descKey: 'chest_desc_gold',
       asset: 'img/ui-generated/chests/atlas/gold.png', accent: '#ffc52f', durationMs: 8 * 60 * 60 * 1000, instantCost: 24,
-      reward: { coins: [200, 500], gems: [7, 18], tickets: [2, 3], coinCut: .46, gemCut: .72, ticketCut: .87, rarity: 'epic' },
+      reward: EconomyConfig.chests.rewards.gold,
     },
     magic: {
       id: 'magic', nameKey: 'chest_type_magic', sizeKey: 'chest_size_large', rarityKey: 'chest_tier_epic', descKey: 'chest_desc_magic',
       asset: 'img/ui-generated/chests/atlas/magic.png', accent: '#d45cff', durationMs: 12 * 60 * 60 * 1000, instantCost: 36,
-      reward: { coins: [280, 700], gems: [10, 24], tickets: [2, 4], coinCut: .40, gemCut: .64, ticketCut: .78, rarity: 'epic' },
+      reward: EconomyConfig.chests.rewards.magic,
     },
     royal: {
       id: 'royal', nameKey: 'chest_type_royal', sizeKey: 'chest_size_large', rarityKey: 'chest_tier_legendary', descKey: 'chest_desc_royal',
       asset: 'img/ui-generated/chests/atlas/royal.png', accent: '#4fa2ff', durationMs: 12 * 60 * 60 * 1000, instantCost: 36,
-      reward: { coins: [400, 950], gems: [14, 30], tickets: [3, 5], coinCut: .36, gemCut: .55, ticketCut: .68, rarity: 'legendary' },
+      reward: EconomyConfig.chests.rewards.royal,
     },
     supreme: {
       id: 'supreme', nameKey: 'chest_type_supreme', sizeKey: 'chest_size_xlarge', rarityKey: 'chest_tier_legendary', descKey: 'chest_desc_supreme',
       asset: 'img/ui-generated/chests/atlas/supreme.png', accent: '#ff4f9a', durationMs: 24 * 60 * 60 * 1000, instantCost: 72,
-      reward: { coins: [550, 1250], gems: [18, 38], tickets: [4, 6], coinCut: .30, gemCut: .46, ticketCut: .58, rarity: 'legendary' },
+      reward: EconomyConfig.chests.rewards.supreme,
     },
     champion: {
       id: 'champion', nameKey: 'chest_type_champion', sizeKey: 'chest_size_xlarge', rarityKey: 'chest_tier_mythic', descKey: 'chest_desc_champion',
       asset: 'img/ui-generated/chests/atlas/champion.png', accent: '#9c6cff', durationMs: 24 * 60 * 60 * 1000, instantCost: 72,
-      reward: { coins: [750, 1600], gems: [24, 48], tickets: [5, 8], coinCut: .25, gemCut: .40, ticketCut: .50, rarity: 'mythic' },
+      reward: EconomyConfig.chests.rewards.champion,
     },
     divine: {
       id: 'divine', nameKey: 'chest_type_divine', sizeKey: 'chest_size_huge', rarityKey: 'chest_tier_mythic', descKey: 'chest_desc_divine',
       asset: 'img/ui-generated/chests/atlas/divine.png', accent: '#77edff', durationMs: 36 * 60 * 60 * 1000, instantCost: 108,
-      reward: { coins: [1000, 2400], gems: [35, 70], tickets: [7, 10], coinCut: .20, gemCut: .32, ticketCut: .40, rarity: 'mythic' },
+      reward: EconomyConfig.chests.rewards.divine,
     },
     event: {
       id: 'event', nameKey: 'chest_type_event', sizeKey: 'chest_size_variable', rarityKey: 'chest_tier_special', descKey: 'chest_desc_event',
       asset: 'img/ui-generated/chests/atlas/event.png', accent: '#5ee07a', durationMs: 8 * 60 * 60 * 1000, instantCost: 24,
-      reward: { coins: [180, 520], gems: [8, 22], tickets: [2, 4], coinCut: .38, gemCut: .63, ticketCut: .78, rarity: 'special' },
+      reward: EconomyConfig.chests.rewards.event,
     },
   });
 
   const CHEST_HOUR_MS = 60 * 60 * 1000;
-  const CHEST_SKIP_GEMS_PER_HOUR = 3;
+  const CHEST_SKIP_GEMS_PER_HOUR = EconomyConfig.chests.skipGemsPerHour;
   // Duraciones vigentes antes de CH-3. Solo se usan para migrar cofres que ya
   // estaban en el inventario y todavía no tenían una duración propia guardada.
   const LEGACY_CHEST_DURATIONS = Object.freeze({
@@ -3022,18 +3175,21 @@
   }
   /* CH-4: ruleta de mejora al abrir (publicada en el catálogo): un tier arriba con
    * 10% de probabilidad; el cofre de evento asciende a real. */
-  const CHEST_UPGRADE_CHANCE = 0.10;
+  const CHEST_UPGRADE_CHANCE = EconomyConfig.chests.upgradeChance;
   const CHEST_UPGRADE_PATH = {
     wood: 'bronze', bronze: 'silver', silver: 'gold', gold: 'magic', magic: 'royal',
     royal: 'supreme', supreme: 'champion', champion: 'divine', event: 'royal',
   };
-  const CHEST_GUARANTEED_COIN_SHARE = 0.25;
-  const CHEST_BONUS_ODDS = Object.freeze({ coins: .52, gems: .23, tickets: .13, booster: .12 });
+  const CHEST_GUARANTEED_COIN_SHARE = EconomyConfig.chests.guaranteedCoinShare;
+  const CHEST_BONUS_ODDS = Object.freeze(Object.assign({}, EconomyConfig.chests.bonusOdds));
   const CHEST_BOOSTER_IDS = Object.freeze(['bomb', 'freeze', 'clearLine', 'wild', 'x2']);
   const XP_BOOST_MULTIPLIER = 4;
   /* CH-4 (F7): monedas y gemas escalan con el nivel meta (como el escalado
    * por arena de CR) — +5%/nivel con tope ×2.5. Los tickets no escalan. */
-  function chestLevelScale(level) { return Math.min(2.5, 1 + 0.05 * (Math.max(1, level | 0) - 1)); }
+  function chestLevelScale(level) {
+    const s = EconomyConfig.chests.levelScale;
+    return Math.min(s.cap, 1 + s.perLevel * (Math.max(1, level | 0) - 1));
+  }
 
   /* Rangos y probabilidades REALES de un tipo de cofre, para mostrarlos tal cual
    * en la UI (CH-1: transparencia; ver docs/CHEST_SYSTEM_MASTER_PLAN.md §4-U2/E3).
@@ -3205,6 +3361,10 @@
     if (!m.boards.equipped || !m.boards.owned[m.boards.equipped]) m.boards.equipped = 'classic';
     m._v = SCHEMA;
     const save = () => { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch (_) { } };
+    // ECO-02: cada mutación económica pasa por aquí hacia el ledger de auditoría.
+    const audit = (currency, amount, direction, reason) => EconomyAudit.record({
+      currency, amount, direction, reason, level: m.level,
+    });
     const today = () => new Date().toISOString().slice(0, 10);
     const hashStr = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
     const CHEST_DROP_SEQUENCE = [
@@ -3432,29 +3592,41 @@
       },
       // ---- Economía (monedas) ----
       coins: () => m.coins || 0,
-      addCoins(n) { m.coins = (m.coins || 0) + Math.max(0, n | 0); save(); return m.coins; },
-      spend(n) {
+      addCoins(n, reason) {
+        const add = Math.max(0, n | 0);
+        if (add) audit('coins', add, 'source', reason || 'grant');
+        m.coins = (m.coins || 0) + add; save(); return m.coins;
+      },
+      spend(n, reason) {
         n = Number(n);
         if (!Number.isSafeInteger(n) || n < 0 || (m.coins || 0) < n) return false;
         if (!n) return true;
-        m.coins -= n; save(); return true;
+        m.coins -= n; audit('coins', n, 'sink', reason || 'spend'); save(); return true;
       },
       // ---- Economía (gemas: divisa premium) ----
       gems: () => m.gems || 0,
-      addGems(n) { m.gems = (m.gems || 0) + Math.max(0, n | 0); save(); return m.gems; },
-      spendGems(n) {
+      addGems(n, reason) {
+        const add = Math.max(0, n | 0);
+        if (add) audit('gems', add, 'source', reason || 'grant');
+        m.gems = (m.gems || 0) + add; save(); return m.gems;
+      },
+      spendGems(n, reason) {
         n = Number(n);
         if (!Number.isSafeInteger(n) || n < 0 || (m.gems || 0) < n) return false;
         if (!n) return true;
-        m.gems -= n; save(); return true;
+        m.gems -= n; audit('gems', n, 'sink', reason || 'spend'); save(); return true;
       },
       // ---- Economía (tickets: entradas a partidas especiales) ----
       tickets: () => m.tickets || 0,
-      addTickets(n) { m.tickets = (m.tickets || 0) + Math.max(0, n | 0); save(); return m.tickets; },
-      spendTicket(n) {
+      addTickets(n, reason) {
+        const add = Math.max(0, n | 0);
+        if (add) audit('tickets', add, 'source', reason || 'grant');
+        m.tickets = (m.tickets || 0) + add; save(); return m.tickets;
+      },
+      spendTicket(n, reason) {
         n = n === undefined ? 1 : Number(n);
         if (!Number.isSafeInteger(n) || n <= 0 || (m.tickets || 0) < n) return false;
-        m.tickets -= n; save(); return true;
+        m.tickets -= n; audit('tickets', n, 'sink', reason || 'spend'); save(); return true;
       },
       // ---- Arsenal persistente (CH-4): los boosters ganados en cofres solo entran
       // a una partida mediante una preparación confirmada. Nunca son una reserva
@@ -3501,6 +3673,7 @@
         const quote = this.quoteBoosterLoadout(ids, maxUnits);
         if (!quote || (m.coins || 0) < quote.coinCost) return null;
         if (quote.stock.some((id) => this.boosterCount(id) < 1)) return null;
+        if (quote.coinCost > 0) audit('coins', quote.coinCost, 'sink', 'booster-loadout');
         m.coins -= quote.coinCost;
         quote.stock.forEach((id) => { m.boosterStock[id] = this.boosterCount(id) - 1; });
         save();
@@ -3518,10 +3691,10 @@
         });
       },
       chestSlotLimit: () => clamp(m.chestSlots | 0, 3, 4),
-      CHEST_SLOT_GEMS: 150,
+      CHEST_SLOT_GEMS: EconomyConfig.chests.slotGems,
       unlockChestSlot() {
         if ((m.chestSlots | 0) >= 4) return true;
-        if (!this.spendGems(this.CHEST_SLOT_GEMS)) return false;
+        if (!this.spendGems(this.CHEST_SLOT_GEMS, 'chest-slot')) return false;
         m.chestSlots = 4; save(); return true;
       },
       // ---- Temporizadores (CH-3): un solo cofre EN CURSO a la vez; los terminados
@@ -3638,6 +3811,7 @@
         }
         m.chests = (m.chests || 0) + count;
         m.chestInventory = list;
+        audit('chests', count, 'source', source || 'reward');
         save();
         return m.chests;
       },
@@ -3697,6 +3871,7 @@
         });
         reward.items = [Object.assign({}, reward)];
         list.splice(index, 1); m.chestInventory = list; m.chests = Math.max(0, (m.chests || 0) - 1);
+        audit('chests', 1, 'sink', 'open-choice:' + chest.type);
         m.chestReady = (m.chestReady || []).filter((readyUid) => readyUid !== uid);
         m.chestNotifiedReady = (m.chestNotifiedReady || []).filter((readyUid) => readyUid !== uid);
         this._applyChestReward(reward);
@@ -3714,7 +3889,7 @@
       // suma; a cada TARGET objetivos cae el siguiente cofre del ciclo determinista
       // CHEST_DROP_SEQUENCE (cadencia garantizada de tiers altos, estilo chest cycle
       // de CR). La escalera de Supervivencia sigue aparte como bonus de hito. ----
-      CHEST_PIPELINE_TARGET: 3,
+      CHEST_PIPELINE_TARGET: EconomyConfig.chests.pipelineTarget,
       chestPipelineInfo() {
         if (!m.chestPipeline || typeof m.chestPipeline !== 'object') m.chestPipeline = { wins: 0, cycle: 0 };
         const p = m.chestPipeline, len = CHEST_DROP_SEQUENCE.length;
@@ -3822,6 +3997,7 @@
         list.splice(index, 1);
         m.chestInventory = list;
         m.chests = Math.max(0, (m.chests || 0) - 1);
+        audit('chests', 1, 'sink', 'open:' + chest.type);
         if (m.chestUnlock && m.chestUnlock.uid === chest.uid) m.chestUnlock = null;
         if (Array.isArray(m.chestReady)) m.chestReady = m.chestReady.filter((uid) => uid !== chest.uid);
         if (Array.isArray(m.chestNotifiedReady)) m.chestNotifiedReady = m.chestNotifiedReady.filter((uid) => uid !== chest.uid);
@@ -3859,9 +4035,9 @@
         };
       },
       // ---- Cofre premium: sumidero de gemas. Mejor tabla, sin gemas (sería circular). ----
-      PREMIUM_CHEST_GEMS: 25,
+      PREMIUM_CHEST_GEMS: EconomyConfig.chests.premiumGems,
       openPremiumChest() {
-        if (!this.spendGems(this.PREMIUM_CHEST_GEMS)) return null;
+        if (!this.spendGems(this.PREMIUM_CHEST_GEMS, 'premium-chest')) return null;
         const defn = CHEST_TYPES.magic, scale = chestLevelScale(m.level);
         const roll = Math.random();
         let reward;
@@ -3881,7 +4057,7 @@
         return reward;
       },
       // ---- Reto diario: mismo tablero para todos (semilla = fecha). ----
-      DAILY_FIRST_GEMS: 5,
+      DAILY_FIRST_GEMS: EconomyConfig.dailyRun.firstGems,
       DAILY_MEDALS: [750, 1500, 2500],
       dailyMedal(score) {
         score = Math.max(0, score | 0);
@@ -3910,7 +4086,7 @@
         m.dailyRun.plays++;
         const newBest = score > m.dailyRun.best;
         if (newBest) m.dailyRun.best = score | 0;
-        if (fresh) m.gems = (m.gems || 0) + this.DAILY_FIRST_GEMS; // premio por el primer intento del día
+        if (fresh) { m.gems = (m.gems || 0) + this.DAILY_FIRST_GEMS; audit('gems', this.DAILY_FIRST_GEMS, 'source', 'daily-first-try'); } // premio por el primer intento del día
         // Calendario de medallas (GM-14): la mejor medalla de cada día, tope 60 días FIFO.
         m.dailyRun.history[d] = this.dailyMedal(m.dailyRun.best);
         const keys = Object.keys(m.dailyRun.history).sort();
@@ -4001,9 +4177,10 @@
       },
       _applyChestReward(reward) {
         if (!reward) return null;
-        if (reward.kind === 'coins') m.coins = (m.coins || 0) + reward.amount;
-        else if (reward.kind === 'gems') m.gems = (m.gems || 0) + reward.amount;
-        else if (reward.kind === 'ticket') m.tickets = (m.tickets || 0) + reward.amount;
+        const reason = reward.choice ? 'chest-choice' : reward.guaranteed ? 'chest-guaranteed' : reward.bonus ? 'chest-bonus' : 'chest';
+        if (reward.kind === 'coins') { m.coins = (m.coins || 0) + reward.amount; audit('coins', reward.amount, 'source', reason); }
+        else if (reward.kind === 'gems') { m.gems = (m.gems || 0) + reward.amount; audit('gems', reward.amount, 'source', reason); }
+        else if (reward.kind === 'ticket') { m.tickets = (m.tickets || 0) + reward.amount; audit('tickets', reward.amount, 'source', reason); }
         else if (reward.kind === 'booster' && CHEST_BOOSTER_IDS.includes(reward.boosterId)) {
           m.boosterStock[reward.boosterId] = clamp(this.boosterCount(reward.boosterId) + Math.max(1, reward.amount | 0), 0, 1000000);
         }
@@ -4018,7 +4195,7 @@
       // ---- Reroll de la misión diaria: sumidero de tickets (1 por cambio). ----
       rerollDaily() {
         const cur = dailyMission(); // asegura que exista la misión de hoy
-        if (cur.done || !this.spendTicket(1)) return null;
+        if (cur.done || !this.spendTicket(1, 'mission-reroll')) return null;
         const idx = MISSIONS.findIndex((x) => x.id === cur.id);
         const next = MISSIONS[(idx + 1) % MISSIONS.length];
         m.daily = { date: today(), id: next.id, progress: 0, done: false };
@@ -4028,7 +4205,7 @@
       // ---- Cosméticos (propiedad y equipado) ----
       cosmetics: () => m.cosmetics,
       owns: (id) => id === 'default' || !!(m.cosmetics.owned && m.cosmetics.owned[id]),
-      buy(id, cost) { if (this.owns(id)) return true; if (!this.spend(cost)) return false; m.cosmetics.owned[id] = today(); save(); return true; },
+      buy(id, cost) { if (this.owns(id)) return true; if (!this.spend(cost, 'shop-theme')) return false; m.cosmetics.owned[id] = today(); save(); return true; },
       equip(slot, id) { if (!this.owns(id)) return false; m.cosmetics[slot] = id; save(); return true; },
       avatarIcon: () => PlayerIcons.DEFS[m.cosmetics.avatarIcon] ? m.cosmetics.avatarIcon : PlayerIcons.DEFAULT,
       avatarBorder: () => PlayerBorders.DEFS[m.cosmetics.avatarBorder] ? m.cosmetics.avatarBorder : PlayerBorders.DEFAULT,
@@ -4051,7 +4228,7 @@
         if (!item) return false;
         m.cosmetics.avatarIcons = m.cosmetics.avatarIcons || { [PlayerIcons.DEFAULT]: 1 };
         if (this.ownsAvatarIcon(id)) return true;
-        if (!this.spend(item.cost || 0)) return false;
+        if (!this.spend(item.cost || 0, 'shop-avatar-icon')) return false;
         m.cosmetics.avatarIcons[id] = today(); save(); return true;
       },
       buyAvatarBorder(id) {
@@ -4059,7 +4236,7 @@
         if (!item) return false;
         m.cosmetics.avatarBorders = m.cosmetics.avatarBorders || { [PlayerBorders.DEFAULT]: 1 };
         if (this.ownsAvatarBorder(id)) return true;
-        if (!this.spend(item.cost || 0)) return false;
+        if (!this.spend(item.cost || 0, 'shop-avatar-border')) return false;
         m.cosmetics.avatarBorders[id] = today(); save(); return true;
       },
       equipAvatarIcon(id) {
@@ -4078,7 +4255,7 @@
       equippedBoard: () => m.boards.equipped || 'classic',
       buyBoard(id, cost) {
         if (this.ownsBoard(id)) return true;
-        if (!this.spend(cost)) return false;
+        if (!this.spend(cost, 'shop-board')) return false;
         m.boards.owned[id] = 1; save(); return true;
       },
       equipBoard(id) { if (!this.ownsBoard(id)) return false; m.boards.equipped = id; save(); return true; },
@@ -4195,8 +4372,9 @@
         if (m.reward.date === today()) return 0;
         const y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
         m.reward.day = (m.reward.date === y) ? (m.reward.day + 1) : 1;
-        const amount = 20 + 10 * Math.min(m.reward.day, 7);
-        m.reward.date = today(); m.coins = (m.coins || 0) + amount; save();
+        const lr = EconomyConfig.loginReward;
+        const amount = lr.base + lr.perDay * Math.min(m.reward.day, lr.dayCap);
+        m.reward.date = today(); m.coins = (m.coins || 0) + amount; audit('coins', amount, 'source', 'daily-login'); save();
         return amount;
       },
       achievements: () => ACH.map(a => ({ id: a.id, name: a.name, desc: a.desc, unlocked: !!m.achievements[a.id] })),
@@ -4252,20 +4430,22 @@
         const pipeline = (ctx.mode === 'contrarreloj' && !ctx.daily && ctx.score >= 1000)
           ? this.recordChestProgress('contrarreloj') : null;
         let xpBase = Math.round(ctx.score / 10 + ctx.maxCombo * 5 + ctx.level * 20 + (ctx.perfect ? 100 : 0));
-        if (missionDone) xpBase += 150;
-        if (weeklyDone) xpBase += 400;
+        if (missionDone) xpBase += EconomyConfig.missions.dailyXp;
+        if (weeklyDone) xpBase += EconomyConfig.missions.weeklyXp;
         const xpMultiplier = Number(ctx.xpMultiplier) === XP_BOOST_MULTIPLIER ? XP_BOOST_MULTIPLIER : 1;
         const xpGained = xpBase * xpMultiplier;
         const xpBoostBonus = xpGained - xpBase;
         const leveledUp = this.addXp(xpGained);
-        // Monedas de la partida (motor de economía/tienda).
+        // Monedas de la partida (motor de economía/tienda). Fórmula en EconomyConfig.settlement.
+        const stl = EconomyConfig.settlement;
         let coinsGained = ctx.awardBaseCoins === false
           ? 0
-          : Math.round(ctx.score / 40 + ctx.maxCombo * 2 + ctx.level * 5 + (ctx.perfect ? 40 : 0));
+          : Math.round(ctx.score / stl.scoreDiv + ctx.maxCombo * stl.comboPer + ctx.level * stl.levelPer + (ctx.perfect ? stl.perfectBonus : 0));
+        if (coinsGained > 0) audit('coins', coinsGained, 'source', 'settlement');
         // Las recompensas globales de misión/reto siguen aplicándose aunque un modo
         // (Clásico) ya tenga su propia recompensa base de nivel.
-        if (missionDone) coinsGained += 60;
-        if (weeklyDone) coinsGained += 200;
+        if (missionDone) { coinsGained += EconomyConfig.missions.dailyCoins; audit('coins', EconomyConfig.missions.dailyCoins, 'source', 'mission-daily'); }
+        if (weeklyDone) { coinsGained += EconomyConfig.missions.weeklyCoins; audit('coins', EconomyConfig.missions.weeklyCoins, 'source', 'mission-weekly'); }
         m.coins = (m.coins || 0) + coinsGained;
         const cctx = Object.assign({ games: m.games }, ctx);
         const newAch = [];
@@ -4323,39 +4503,21 @@
    */
   const Storefront = {
     PAYMENT_MODE: 'mock-auto',
-    CURRENCY_OFFERS: Object.freeze([
-      Object.freeze({ id: 'gems-spark', kind: 'gems', amount: 100, priceEur: 1.09, asset: 'img/ui-generated/shop/gems-spark.png' }),
-      Object.freeze({ id: 'gems-cache', kind: 'gems', amount: 330, compareAt: 300, priceEur: 3.39, best: true, asset: 'img/ui-generated/shop/gems-cache.png' }),
-      Object.freeze({ id: 'gems-vault', kind: 'gems', amount: 1200, compareAt: 1000, priceEur: 11.99, asset: 'img/ui-generated/shop/gems-vault.png' }),
-      Object.freeze({ id: 'coins-pouch', kind: 'coins', amount: 1000, priceEur: 1.09, asset: 'img/ui-generated/shop/coins-pouch.png' }),
-      Object.freeze({ id: 'coins-crate', kind: 'coins', amount: 6000, compareAt: 5000, priceEur: 3.39, best: true, asset: 'img/ui-generated/shop/coins-crate.png' }),
-      Object.freeze({ id: 'coins-vault', kind: 'coins', amount: 18000, compareAt: 15000, priceEur: 5.99, asset: 'img/ui-generated/shop/coins-vault.png' }),
-    ]),
-    XP_BOOST_OFFERS: Object.freeze([
-      Object.freeze({ id: 'xp-6h', durationMs: 6 * 60 * 60 * 1000, multiplier: XP_BOOST_MULTIPLIER, gemCost: 25, labelKey: 'xp_pack_6h', asset: 'img/ui-generated/shop/xp-6h.png' }),
-      Object.freeze({ id: 'xp-3d', durationMs: 3 * 24 * 60 * 60 * 1000, multiplier: XP_BOOST_MULTIPLIER, gemCost: 80, labelKey: 'xp_pack_3d', best: true, asset: 'img/ui-generated/shop/xp-3d.png' }),
-      Object.freeze({ id: 'xp-7d', durationMs: 7 * 24 * 60 * 60 * 1000, multiplier: XP_BOOST_MULTIPLIER, gemCost: 160, labelKey: 'xp_pack_7d', best: true, asset: 'img/ui-generated/shop/xp-7d.png' }),
-    ]),
+    CURRENCY_OFFERS: Object.freeze(EconomyConfig.shop.currencyOffers.map((offer) => Object.freeze(Object.assign({}, offer)))),
+    XP_BOOST_OFFERS: Object.freeze(EconomyConfig.shop.xpOffers.map((offer) => Object.freeze({
+      id: offer.id, durationMs: offer.hours * 60 * 60 * 1000, multiplier: XP_BOOST_MULTIPLIER,
+      gemCost: offer.gemCost, labelKey: offer.labelKey, best: !!offer.best, asset: offer.asset,
+    }))),
     /* Compra directa de cofres con gemas (sink de la divisa premium). Sigue el
      * orden de rareza de CHEST_TYPE_ORDER sin el cofre de evento (ese solo se
      * gana jugando). Precios pensados para ser caros pero asequibles: el cofre
      * comprado entra al inventario y se abre por el flujo normal (ranura/instantáneo). */
-    CHEST_OFFERS: Object.freeze([
-      Object.freeze({ id: 'wood', gemCost: 30 }),
-      Object.freeze({ id: 'bronze', gemCost: 50 }),
-      Object.freeze({ id: 'silver', gemCost: 90 }),
-      Object.freeze({ id: 'gold', gemCost: 140 }),
-      Object.freeze({ id: 'magic', gemCost: 210 }),
-      Object.freeze({ id: 'royal', gemCost: 300 }),
-      Object.freeze({ id: 'supreme', gemCost: 450 }),
-      Object.freeze({ id: 'champion', gemCost: 650 }),
-      Object.freeze({ id: 'divine', gemCost: 900 }),
-    ]),
+    CHEST_OFFERS: Object.freeze(EconomyConfig.shop.chestOffers.map((offer) => Object.freeze(Object.assign({}, offer)))),
     checkoutCurrency(id) {
       const offer = this.CURRENCY_OFFERS.find((item) => item.id === id);
       if (!offer || !['coins', 'gems'].includes(offer.kind)) return null;
-      if (offer.kind === 'coins') Meta.addCoins(offer.amount);
-      else Meta.addGems(offer.amount);
+      if (offer.kind === 'coins') Meta.addCoins(offer.amount, 'shop-pack');
+      else Meta.addGems(offer.amount, 'shop-pack');
       return {
         id: `mock-${Date.now().toString(36)}-${offer.id}`,
         status: 'paid', paymentMode: this.PAYMENT_MODE,
@@ -4365,7 +4527,7 @@
     buyXpBoost(id, now) {
       const offer = this.XP_BOOST_OFFERS.find((item) => item.id === id);
       if (!offer) return null;
-      if (!Meta.spendGems(offer.gemCost)) return { status: 'declined', reason: 'insufficient-gems', offerId: id };
+      if (!Meta.spendGems(offer.gemCost, 'xp-boost')) return { status: 'declined', reason: 'insufficient-gems', offerId: id };
       const boost = Meta.activateXpBoost(offer.durationMs, now);
       return { status: 'paid', paymentMode: 'gems', offerId: id, gemCost: offer.gemCost, boost };
     },
@@ -4373,7 +4535,7 @@
       const offer = this.CHEST_OFFERS.find((item) => item.id === id);
       // El cofre de evento no se vende: no está en CHEST_OFFERS y este guard lo blinda.
       if (!offer || id === 'event' || !CHEST_TYPES[id]) return null;
-      if (!Meta.spendGems(offer.gemCost)) return { status: 'declined', reason: 'insufficient-gems', offerId: id };
+      if (!Meta.spendGems(offer.gemCost, 'chest-shop')) return { status: 'declined', reason: 'insufficient-gems', offerId: id };
       Meta.addChest(1, id, 'shop');
       return { status: 'paid', paymentMode: 'gems', offerId: id, gemCost: offer.gemCost, chestType: id };
     },
@@ -4941,7 +5103,9 @@
     // en monedas para que el jugador elija qué llevar en la siguiente preparación.
     // La carga se completa muchas veces en una run larga: el pago es deliberadamente
     // pequeño para no triplicar la economía persistente (validado por simulación).
-    SUPPLY_COIN_BASE: 2, SUPPLY_COIN_PER_WAVE: 0, SUPPLY_COIN_CAP: 2,
+    SUPPLY_COIN_BASE: EconomyConfig.survival.supplyCoins.base,
+    SUPPLY_COIN_PER_WAVE: EconomyConfig.survival.supplyCoins.perWave,
+    SUPPLY_COIN_CAP: EconomyConfig.survival.supplyCoins.cap,
     SPECIAL_CAP: { facil: 6, normal: 7, dificil: 8 },
     BLOCK_CAP: { facil: 4, normal: 5, dificil: 6 },
     BOMB_CAP: { facil: 2, normal: 2, dificil: 3 },
@@ -4950,9 +5114,9 @@
     // trapBase/Cap: densidad de trampas (·oleada) · varEvery: cada cuántas oleadas suben los iconos ·
     // bossEvery: cadencia de jefe · coinMult: multiplicador de recompensa.
     TUNE: {
-      facil: { waveMs: 32000, lives: 4, spawnDecay: 0.985, spawnFloor: 2000, trapBase: 0.008, trapCap: 0.05, varEvery: 8, bossEvery: 8, coinMult: 0.85 },
-      normal: { waveMs: 28000, lives: 3, spawnDecay: 0.975, spawnFloor: 1400, trapBase: 0.010, trapCap: 0.07, varEvery: 6, bossEvery: 6, coinMult: 1.0 },
-      dificil: { waveMs: 22000, lives: 3, spawnDecay: 0.960, spawnFloor: 900, trapBase: 0.016, trapCap: 0.10, varEvery: 5, bossEvery: 5, coinMult: 1.3 },
+      facil: { waveMs: 32000, lives: 4, spawnDecay: 0.985, spawnFloor: 2000, trapBase: 0.008, trapCap: 0.05, varEvery: 8, bossEvery: 8, coinMult: EconomyConfig.survival.coinMult.facil },
+      normal: { waveMs: 28000, lives: 3, spawnDecay: 0.975, spawnFloor: 1400, trapBase: 0.010, trapCap: 0.07, varEvery: 6, bossEvery: 6, coinMult: EconomyConfig.survival.coinMult.normal },
+      dificil: { waveMs: 22000, lives: 3, spawnDecay: 0.960, spawnFloor: 900, trapBase: 0.016, trapCap: 0.10, varEvery: 5, bossEvery: 5, coinMult: EconomyConfig.survival.coinMult.dificil },
     },
     tune() { return this.TUNE[State.diff] || this.TUNE.normal; },
     // Nivel efectivo de dificultad: sube con las oleadas y MANDA sobre el catálogo de
@@ -5280,23 +5444,26 @@
       if (clearedWave <= 0) return;
       const quietForBoss = ((clearedWave + 1) % this.tune().bossEvery) === 0;
       if (this.goldenWaveWaves > 0) { this.goldenWaveWaves--; if (!this.goldenWaveWaves) Render.multChip(); }
-      let coins = Math.round((4 + clearedWave * 1.45) * this.tune().coinMult * (this.mut.coinMult || 1));
-      if (clearedWave >= 15) coins += Math.round(Math.pow(clearedWave - 14, 1.5) * 2); // Kicker
-      coins = Math.max(3, coins);
-      Meta.addCoins(coins); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
+      const wc = EconomyConfig.survival.waveCoins;
+      let coins = Math.round((wc.base + clearedWave * wc.perWave) * this.tune().coinMult * (this.mut.coinMult || 1));
+      if (clearedWave >= wc.kickerFromWave) coins += Math.round(Math.pow(clearedWave - (wc.kickerFromWave - 1), wc.kickerPow) * wc.kickerMult); // Kicker
+      coins = Math.max(wc.min, coins);
+      Meta.addCoins(coins, 'survival-wave'); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
       if (!quietForBoss) Render.coinsReward(coins, I18n.t('coins'));
       // Coreografía de toasts (SV-13): en oleadas de hito, la recompensa de monedas
       // se FUSIONA con el toast del hito (antes eran dos toasts pisándose); en el
       // resto, va sola. Protege el canal de feedback en el instante de más carga.
       const coinTxt = I18n.t('surv_wave_reward').replace('{w}', clearedWave).replace('{c}', coins);
-      if (clearedWave % 5 === 0) {
+      const gm = EconomyConfig.survival.gemMilestone;
+      if (clearedWave % gm.every === 0) {
         let txt, ic;
-        if (clearedWave % 10 === 0) {
-          const ladder = ['wood', 'bronze', 'silver', 'gold', 'magic', 'royal', 'supreme', 'champion', 'divine'];
-          Meta.addChest(1, ladder[Math.min(ladder.length - 1, Math.max(0, clearedWave / 10 - 1))], 'survival');
+        if (clearedWave % EconomyConfig.survival.chestMilestoneEvery === 0) {
+          const ladder = EconomyConfig.survival.chestLadder;
+          const step = clearedWave / EconomyConfig.survival.chestMilestoneEvery - 1;
+          Meta.addChest(1, ladder[Math.min(ladder.length - 1, Math.max(0, step))], 'survival');
           this.runChests++; txt = '+1 ' + I18n.t('tab_chests'); ic = 'chest';
         }
-        else { const gems = 2 + Math.floor(clearedWave / 5); Meta.addGems(gems); this.runGems += gems; txt = '+' + gems + ' 💎'; ic = 'gem'; }
+        else { const gems = gm.base + Math.floor(clearedWave / gm.div); Meta.addGems(gems, 'survival-milestone'); this.runGems += gems; txt = '+' + gems + ' 💎'; ic = 'gem'; }
         if (quietForBoss) { Econ.refresh(); return; }
         Toasts.event(I18n.t('surv_milestone').replace('{w}', clearedWave) + ' · +' + coins + ' ' + I18n.t('coins') + ' · ' + txt, 'good', 2600, ic);
         Render.flash(); FX.confetti(70); Sound.record(); Haptics.record(); Econ.refresh();
@@ -5326,7 +5493,7 @@
     redeemSupply() {
       const raw = Math.min(this.SUPPLY_COIN_CAP, this.SUPPLY_COIN_BASE + Math.max(0, (this.wave | 0) - 1) * this.SUPPLY_COIN_PER_WAVE);
       const coins = Math.max(1, Math.round(raw * this.tune().coinMult * ((this.mut && this.mut.coinMult) || 1)));
-      Meta.addCoins(coins); State.coinsRun = (State.coinsRun || 0) + coins; this.runCoins += coins; Econ.refresh();
+      Meta.addCoins(coins, 'survival-supply'); State.coinsRun = (State.coinsRun || 0) + coins; this.runCoins += coins; Econ.refresh();
       Render.coinsReward(coins, I18n.t('coins'));
       Toasts.event(I18n.t('surv_supply_reward').replace('{n}', coins), 'good', 1700, 'coin');
       return coins;
@@ -5547,7 +5714,7 @@
         announce(msg);
         // Botín del jefe (JF-γ, gated B-J1): monedas por nivel del encuentro.
         const coins = 8 + 4 * (d.lvl || 1);
-        Meta.addCoins(coins); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
+        Meta.addCoins(coins, 'survival-boss'); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
         const rewardSource = d.rewardSource || Render.bossRewardSourcePoint();
         this._scheduleBeat('bossReward', 620, () => {
           Render.coinsReward(coins, I18n.t('coins'), rewardSource);
@@ -5752,7 +5919,9 @@
     // máx. 3). Plano a 120 trivializaba la muerte en runs largas (a oleada 20+ se
     // recupera en ~4 oleadas); la escalada restaura el peso emocional de morir sin
     // castigar la primera muerte del jugador nuevo.
-    REVIVE_BASE: 120, REVIVE_CAP: 480, REVIVE_MAX: 3,
+    REVIVE_BASE: EconomyConfig.survival.revive.base,
+    REVIVE_CAP: EconomyConfig.survival.revive.cap,
+    REVIVE_MAX: EconomyConfig.survival.revive.max,
     revives: 0,
     reviveCost() { return Math.min(this.REVIVE_CAP, this.REVIVE_BASE * Math.pow(2, this.revives)); },
     lastChance() {
@@ -5772,7 +5941,7 @@
     },
     revive() {
       const cost = this.reviveCost();
-      if (!Meta.spend(cost)) { Toasts.show(I18n.t('no_coins'), 'warn', 1500); return; }
+      if (!Meta.spend(cost, 'survival-revive')) { Toasts.show(I18n.t('no_coins'), 'warn', 1500); return; }
       this.revives++;
       this.lives = 1; Sound.lifeBlast(); Haptics.life(); this._lock(900, 'life-blast'); this._relief(0.6);
       Modal.close(); State.status = 'playing'; Loop.start(); if (Settings.music) Music.start();
@@ -6308,7 +6477,7 @@
         this._heraldEmpower = false; this._heraldSlain = true; // el jefe llega debilitado (−1 nivel)
         Toasts.event(I18n.t('mini_herald_down'), 'good', 1900, '📯');
       }
-      Meta.addCoins(coins); State.coinsRun += coins; Survival.runCoins += coins; Econ.refresh();
+      Meta.addCoins(coins, 'survival-mini'); State.coinsRun += coins; Survival.runCoins += coins; Econ.refresh();
       Render.coinsReward(coins, I18n.t('coins'));
       Survival._minisKilled = (Survival._minisKilled || 0) + 1;
       Sound.record(); Haptics.combo();
@@ -7062,7 +7231,7 @@
       if (!cleared) { Toasts.show(I18n.t('reward_locked'), 'warn', 1600); return; }
       if (this.rewardClaimed(this.sel)) { Toasts.show(I18n.t('reward_claimed'), 'info', 1400); return; }
       Meta.worldData(this.sel).reward = today2();
-      Meta.addChest(1, 'royal', 'world'); Meta.addGems(20);
+      Meta.addChest(1, EconomyConfig.worldReward.chestType, 'world'); Meta.addGems(EconomyConfig.worldReward.gems, 'world-reward');
       Toasts.show(I18n.t('reward_got'), 'good', 2200, '👑');
       Sound.milestone(); FX.confetti(80); Econ.refresh(); this.render();
     },
@@ -8435,7 +8604,7 @@
             options: [{ id: 'yes', icon: '💎', name: I18n.t('continue_yes').replace('{n}', Config.CONTINUE_GEMS), desc: I18n.t('continue_yes_d') }],
             cancelLabel: I18n.t('continue_no'),
             onPick: () => {
-              if (!Meta.spendGems(Config.CONTINUE_GEMS)) { this._overflowLose(); return; }
+              if (!Meta.spendGems(Config.CONTINUE_GEMS, 'continue')) { this._overflowLose(); return; }
               Econ.refresh();
               this.softClear(Config.CONTINUE_CLEAR);
               Toasts.show(I18n.t('continue_done'), 'good', 1800, '💎');
@@ -8597,7 +8766,7 @@
 
       State.score += points;
       State.coinsRun += coins;
-      Meta.addCoins(coins);
+      Meta.addCoins(coins, 'board-clear');
       Econ.refresh();
       Render.coinsReward(coins, I18n.t('coins'));
 
@@ -8619,8 +8788,8 @@
         // CH-2: un tablero limpio en Zen es un objetivo del pipeline (sin fallo posible,
         // pero limpiar el tablero entero es esfuerzo honesto).
         chestProgressToast(Meta.recordChestProgress('zen'));
-        if (fl === 10) { Meta.addChest(1, 'magic', 'zen'); Toasts.show(I18n.t('garden_10'), 'good', 2800, 'chest'); Econ.refresh(); }
-        if (fl === 50 && Meta.grantBoard('jardin')) { Toasts.show(I18n.t('garden_50'), 'good', 3400, '🌸'); Sound.record(); FX.confetti(90); }
+        if (fl === EconomyConfig.zenGarden.chestAt) { Meta.addChest(1, EconomyConfig.zenGarden.chestType, 'zen'); Toasts.show(I18n.t('garden_10'), 'good', 2800, 'chest'); Econ.refresh(); }
+        if (fl === EconomyConfig.zenGarden.boardAt && Meta.grantBoard('jardin')) { Toasts.show(I18n.t('garden_50'), 'good', 3400, '🌸'); Sound.record(); FX.confetti(90); }
         Render._hudDirty = true;
       }
 
@@ -8725,9 +8894,10 @@
       const winStreak = Meta.recordClassicWin(true);
       // CH-2: cada nivel de Clásico superado alimenta el pipeline de cofres.
       chestProgressToast(Meta.recordChestProgress('clasico'));
-      const streakPct = Math.min(5, Math.max(0, winStreak - 1)) * 10;
-      const coins = Math.round((20 + stars * 10 + Math.round(State.score / 60)) * (1 + streakPct / 100));
-      Meta.addCoins(coins);
+      const cl = EconomyConfig.classic;
+      const streakPct = Math.min(cl.streakPctCap, Math.max(0, winStreak - 1) * cl.streakPctPerWin);
+      const coins = Math.round((cl.base + stars * cl.perStar + Math.round(State.score / cl.scoreDiv)) * (1 + streakPct / 100));
+      Meta.addCoins(coins, 'classic-level');
       const coinsTotal = coins + (this.metaResult.coinsGained || 0);
       const modal = $('#modal-level'); if (modal) modal.style.setProperty('--modal-accent', w.accent);
       const emb = $('#level-emblem'); if (emb) emb.innerHTML = stars >= 3 ? icon('star') : (WORLD_IMG[w.id] ? iconAny(WORLD_IMG[w.id]) : w.glyph);
@@ -11886,14 +12056,14 @@
       if (!info) { Sound.miss(); buildChests(); return; }
       if (paidInstant && info.state !== 'ready') {
         const choiceCost = Meta.chestInstantCost(chest.uid);
-        if (choiceCost > 0 && !Meta.spendGems(choiceCost)) { Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 2800, 'gem'); syncChestButtons(); return; }
+        if (choiceCost > 0 && !Meta.spendGems(choiceCost, 'chest-skip')) { Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 2800, 'gem'); syncChestButtons(); return; }
         info = Meta.makeChestChoiceReady(chest.uid);
       }
       if (!info || info.state !== 'ready') { Sound.miss(); buildChests(); return; }
       syncHomeChests(); Econ.refresh(); openDailyChoicePicker(chest.uid); return;
     }
     const cost = paidInstant ? Meta.chestInstantCost(chest.uid) : 0;
-    if (cost > 0 && !Meta.spendGems(cost)) { Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 2800, 'gem'); syncChestButtons(); return; }
+    if (cost > 0 && !Meta.spendGems(cost, 'chest-skip')) { Sound.miss(); Toasts.show(I18n.t('no_gems'), 'warn', 2800, 'gem'); syncChestButtons(); return; }
     const r = Meta.openChest(chest.uid);
     if (!r) { Sound.miss(); buildChests(); return; }
     syncHomeChests(); Sound.success();
@@ -12269,5 +12439,6 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) EconomyAudit.enable();
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, EconomyConfig, EconomyAudit, Storage, FX, Meta, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
 })();

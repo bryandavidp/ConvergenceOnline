@@ -27,6 +27,24 @@ Object.defineProperty(globalThis, 'performance', {
   configurable: true, writable: true,
 });
 
+/* ---------- Calendario virtual (ECO-03) ----------
+ * El juego usa Date.now()/new Date() para timers de cofres, misiones diarias y
+ * rachas. Para simular DÍAS de economía se instala un Date virtual anclado a un
+ * lunes fijo (determinismo total) que solo avanza cuando el forecast lo pide.
+ * Se instala de forma PEREZOSA (solo dentro de runEconomyForecast) para que la
+ * batería de gameplay histórica siga siendo bit a bit idéntica. */
+const RealDate = Date;
+const VDATE = { baseMs: RealDate.UTC(2026, 0, 5, 8, 0, 0), offsetMs: 0 };
+class VirtualDate extends RealDate {
+  constructor(...args) {
+    if (args.length === 0) super(VDATE.baseMs + VDATE.offsetMs);
+    else super(...args);
+  }
+  static now() { return VDATE.baseMs + VDATE.offsetMs; }
+}
+function installVirtualDate() { globalThis.Date = VirtualDate; }
+function uninstallVirtualDate() { globalThis.Date = RealDate; }
+
 require('../tests/dom-stub.js');
 require('../game.js');
 
@@ -139,6 +157,9 @@ function runOne(cfg) {
 
   if (cfg.mode === 'clasico') { State.world = cfg.world || 'bosque'; State.worldLevel = cfg.level || 1; }
   Game.start(cfg.mode, cfg.diff || 'normal', cfg.mode === 'clasico' ? (cfg.level || 1) : undefined, cfg.seed);
+  // Reto del día (ECO-03): la primera sesión diaria del forecast puntúa como
+  // reto (gemas del primer intento + medalla), por el mismo camino que producción.
+  if (cfg.daily && cfg.mode === 'contrarreloj') State.isDaily = true;
   if (cfg.mode === 'aventura') { // aislar runs: advMax crece entre runs del mismo proceso
     if (cv.Picker.pending) cv.Picker.cancel(); // ruta ofrecida para el nivel de reanudación: descartar
     State.status = 'playing'; State.level = cfg.level || 1;
@@ -172,8 +193,18 @@ function runOne(cfg) {
         else cv.Picker.cancel();
         continue;
       }
-      // Supervivencia: modal de revivir → el bot no paga
-      if (cfg.mode === 'supervivencia') { Survival.giveUp(); }
+      // Supervivencia: modal de revivir → por defecto el bot no paga; las
+      // políticas de gasto (ECO-03) pueden financiar hasta cfg.reviveBudget
+      // revives por el código REAL de Survival.revive() (paga con Meta.spend).
+      if (cfg.mode === 'supervivencia') {
+        if ((cfg.reviveBudget | 0) > 0 && Survival.revives < Survival.REVIVE_MAX
+          && cv.Meta.coins() >= Survival.reviveCost()) {
+          cfg.reviveBudget--;
+          Survival.revive();
+          continue;
+        }
+        Survival.giveUp();
+      }
       else break;
     }
     if (State.status !== 'playing') break;
@@ -388,6 +419,252 @@ function runChestEconomy(options = {}) {
   return { seed, runs, types, levels, rows };
 }
 
+/* ---------- Forecast económico con políticas de gasto (ECO-03) ----------
+ * Juega DÍAS de calendario virtual con partidas reales (runOne) y una política
+ * de usuario que gasta por las APIs de producción (Meta.buy*, commitBoosterLoadout,
+ * Survival.revive, spendGems). Mide minted/burned por motivo vía EconomyAudit,
+ * saldos, compras, cofres ganados/abiertos, horas de cola y reserva.
+ *
+ * Políticas (plan ECO-03):
+ *  - saver:     nunca gasta salvo desbloqueos permanentes (4ª ranura).
+ *  - strategic: compra 1 booster para Supervivencia y revive 1 vez.
+ *  - spender:   loadout completo, hasta 3 revives y aceleración diaria de cofres.
+ *  - collector: prioriza cosméticos (compra directa, de barato a caro).
+ */
+const POLICIES = {
+  saver: { reviveBudget: 0, loadout: [], buysCosmetics: false, accelerate: false, choicePick: 'gems' },
+  strategic: { reviveBudget: 1, loadout: ['freeze'], buysCosmetics: false, accelerate: false, choicePick: 'coins' },
+  spender: { reviveBudget: 3, loadout: ['bomb', 'freeze', 'x2'], buysCosmetics: true, accelerate: true, choicePick: 'coins' },
+  collector: { reviveBudget: 0, loadout: [], buysCosmetics: true, accelerate: false, choicePick: 'gems' },
+};
+
+const FORECAST_ROTATION = ['contrarreloj', 'supervivencia', 'clasico', 'aventura'];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Catálogo comprable con monedas (tableros + temas + iconos + bordes), por coste
+// ascendente. Es el "catálogo de 33.080 monedas" del plan.
+function coinCatalog() {
+  const items = [];
+  cv.Boards.order.forEach((id) => {
+    const d = cv.Boards.DEFS[id];
+    if (d && d.cost > 0 && !d.exclusive) items.push({ kind: 'board', id, cost: d.cost, owned: () => cv.Meta.ownsBoard(id), buy: () => cv.Meta.buyBoard(id, d.cost) });
+  });
+  cv.Themes.order.forEach((id) => {
+    const d = cv.Themes.DEFS[id];
+    if (d && d.cost > 0) items.push({ kind: 'theme', id, cost: d.cost, owned: () => cv.Meta.owns(id), buy: () => cv.Meta.buy(id, d.cost) });
+  });
+  cv.PlayerIcons.order.forEach((id) => {
+    const d = cv.PlayerIcons.DEFS[id];
+    if (d && d.cost > 0) items.push({ kind: 'avatarIcon', id, cost: d.cost, owned: () => cv.Meta.ownsAvatarIcon(id), buy: () => cv.Meta.buyAvatarIcon(id) });
+  });
+  cv.PlayerBorders.order.forEach((id) => {
+    const d = cv.PlayerBorders.DEFS[id];
+    if (d && d.cost > 0) items.push({ kind: 'avatarBorder', id, cost: d.cost, owned: () => cv.Meta.ownsAvatarBorder(id), buy: () => cv.Meta.buyAvatarBorder(id) });
+  });
+  items.sort((a, b) => a.cost - b.cost || (a.id < b.id ? -1 : 1));
+  return items;
+}
+
+function chestQueueHours() {
+  const running = cv.Meta.chestUnlock();
+  const waiting = cv.Meta.chestAutoQueue();
+  let ms = running ? Math.max(0, running.remainingMs) : 0;
+  waiting.forEach((chest) => { ms += cv.Meta.chestDurationMs(chest.uid); });
+  return ms / 3600000;
+}
+
+function forecastCurrencies(summary) {
+  const out = {};
+  ['coins', 'gems', 'tickets', 'chests'].forEach((currency) => {
+    const c = (summary.byCurrency && summary.byCurrency[currency]) || { minted: 0, burned: 0, net: 0 };
+    out[currency] = { minted: c.minted, burned: c.burned, net: c.net };
+  });
+  return out;
+}
+
+function runEconomyForecast(options = {}) {
+  const days = Math.max(1, options.days | 0 || 7);
+  const sessionsPerDay = Math.max(1, options.sessionsPerDay | 0 || 2);
+  const minutes = Math.max(1, Number(options.minutesPerSession) || 8);
+  const profile = PROFILES[options.profile] ? options.profile : 'average';
+  const policyId = POLICIES[options.policy] ? options.policy : 'saver';
+  const policy = POLICIES[policyId];
+  const seed = Number.isFinite(Number(options.seed)) ? Number(options.seed) >>> 0 : 0xec0510;
+  const checkpoints = Array.isArray(options.checkpoints) && options.checkpoints.length
+    ? options.checkpoints.slice() : [days];
+  const diff = options.diff || 'normal';
+
+  const originalRandom = Math.random;
+  const originalMeta = cloneJson(cv.Meta.state);
+  const storage = typeof localStorage !== 'undefined' ? localStorage : null;
+  const originalStoredMeta = storage ? storage.getItem('cv_meta') : null;
+  const auditWasEnabled = cv.EconomyAudit.enabled;
+
+  const catalogItems = coinCatalog();
+  const catalogTotal = catalogItems.reduce((sum, item) => sum + item.cost, 0);
+  const report = {
+    policy: policyId, profile, days, sessionsPerDay, minutesPerSession: minutes, seed, diff,
+    catalogTotal, catalogDoneDay: null,
+    start: null, end: null, checkpoints: [],
+  };
+
+  try {
+    installVirtualDate();
+    VDATE.offsetMs = 0;
+    Math.random = mulberry32(seed);
+    // Perfil canónico: economía a cero, sin cosméticos, nivel 1 (progresa jugando).
+    resetChestSample(originalMeta, 1);
+    cv.Meta.state.xp = 0;
+    cv.Meta.state.games = 0;
+    cv.Meta.state.daily = { date: '' };
+    cv.Meta.state.weekly = { week: '', id: '', progress: 0, done: false };
+    cv.Meta.state.reward = { date: '', day: 0 };
+    cv.Meta.state.dailyRun = { date: '', best: 0, plays: 0 };
+    cv.Meta.state.dailyChest = { date: '' };
+    cv.Meta.state.chestPipeline = { wins: 0, cycle: 0 };
+    cv.EconomyAudit.enable();
+    cv.EconomyAudit.reset();
+    cv.EconomyAudit.setSession(`forecast-${policyId}-${profile}-${seed}`);
+    report.start = { coins: cv.Meta.coins(), gems: cv.Meta.gems(), tickets: cv.Meta.tickets(), chests: cv.Meta.chests() };
+
+    let itemsBought = 0;
+    let chestsAccelerated = 0;
+    let revivesPaid = 0;
+
+    for (let day = 1; day <= days; day++) {
+      // Ritual diario: login + sesiones de juego.
+      cv.Meta.claimReward();
+      for (let s = 0; s < sessionsPerDay; s++) {
+        const globalSession = (day - 1) * sessionsPerDay + s;
+        const mode = s === 0 ? 'contrarreloj' : FORECAST_ROTATION[globalSession % FORECAST_ROTATION.length];
+        const cfg = {
+          mode, profile, diff: mode === 'supervivencia' ? diff : 'normal',
+          maxMinutes: minutes, seed: (seed + globalSession * 7919) >>> 0,
+          daily: s === 0, reviveBudget: mode === 'supervivencia' ? policy.reviveBudget : 0,
+        };
+        // Preparación (política): loadout de Supervivencia por la API real (stock
+        // primero, monedas después). El bot no usa los boosters: es el peor caso
+        // económico (gasto sin retorno de gameplay).
+        if (mode === 'supervivencia' && policy.loadout.length) {
+          cv.Meta.commitBoosterLoadout(policy.loadout, cv.Config.SURVIVAL_LOADOUT_MAX);
+        }
+        runOne(cfg);
+        if (mode === 'supervivencia') revivesPaid += cv.Survival.revives | 0;
+        VDATE.offsetMs += minutes * 60000 + 5 * 60000; // sesión + descanso
+      }
+
+      // Gasto post-sesión (política).
+      if (policy.buysCosmetics) {
+        for (const item of catalogItems) {
+          if (!item.owned() && cv.Meta.coins() >= item.cost && item.buy()) itemsBought++;
+        }
+      }
+      if (cv.Meta.chestSlotLimit() < 4 && cv.Meta.gems() >= cv.Meta.CHEST_SLOT_GEMS) {
+        cv.Meta.unlockChestSlot(); // desbloqueo permanente: lo hacen TODAS las políticas
+      }
+      if (report.catalogDoneDay === null && catalogItems.every((item) => item.owned())) {
+        report.catalogDoneDay = day;
+      }
+
+      // Gestión de cofres: arrancar el temporizador si no hay ninguno en curso.
+      if (!cv.Meta.chestUnlock()) {
+        const next = cv.Meta.chestAutoQueue()[0];
+        if (next) cv.Meta.startChestUnlock(next.uid);
+      }
+      // Aceleración (spender): abre YA el cofre en curso una vez al día si puede pagarlo.
+      if (policy.accelerate) {
+        const running = cv.Meta.chestUnlock();
+        if (running) {
+          const cost = cv.Meta.chestInstantCost(running.uid);
+          if (cost > 0 && cv.Meta.spendGems(cost, 'chest-skip')) {
+            const choice = cv.Meta.chestChoiceInfo(running.uid);
+            if (choice) { cv.Meta.makeChestChoiceReady(running.uid); cv.Meta.claimChestChoice(running.uid, policy.choicePick); }
+            else cv.Meta.openChest(running.uid);
+            chestsAccelerated++;
+          }
+        }
+      }
+
+      // Fin del día: pasa el resto del día de reloj y se recogen los listos.
+      VDATE.offsetMs = day * DAY_MS;
+      for (const uid of cv.Meta.chestReadyUids()) {
+        const choice = cv.Meta.chestChoiceInfo(uid);
+        if (choice) {
+          const pick = choice.choice.options.some((o) => o.id === policy.choicePick) ? policy.choicePick : choice.choice.options[0].id;
+          cv.Meta.claimChestChoice(uid, pick);
+        } else cv.Meta.openChest(uid);
+      }
+      if (!cv.Meta.chestUnlock()) {
+        const next = cv.Meta.chestAutoQueue()[0];
+        if (next) cv.Meta.startChestUnlock(next.uid);
+      }
+
+      if (checkpoints.includes(day)) {
+        const summary = cv.EconomyAudit.summary();
+        report.checkpoints.push({
+          day,
+          balances: { coins: cv.Meta.coins(), gems: cv.Meta.gems(), tickets: cv.Meta.tickets() },
+          flows: forecastCurrencies(summary),
+          itemsBought, revivesPaid, chestsAccelerated,
+          chestReserve: cv.Meta.chests(),
+          chestQueueHours: Math.round(chestQueueHours() * 10) / 10,
+          boosterStock: cv.Meta.boosterInventory(),
+          cosmeticsOwned: catalogItems.filter((item) => item.owned()).length,
+          catalogDoneDay: report.catalogDoneDay,
+          level: cv.Meta.level(),
+        });
+      }
+    }
+
+    const summary = cv.EconomyAudit.summary();
+    report.end = {
+      balances: { coins: cv.Meta.coins(), gems: cv.Meta.gems(), tickets: cv.Meta.tickets() },
+      flows: forecastCurrencies(summary),
+      reasons: summary.rows,
+      itemsBought, revivesPaid, chestsAccelerated,
+      chestReserve: cv.Meta.chests(),
+      chestQueueHours: Math.round(chestQueueHours() * 10) / 10,
+      cosmeticsOwned: catalogItems.filter((item) => item.owned()).length,
+      level: cv.Meta.level(),
+    };
+    return report;
+  } finally {
+    Math.random = originalRandom;
+    uninstallVirtualDate();
+    VDATE.offsetMs = 0;
+    restoreMetaState(originalMeta);
+    if (storage) {
+      if (originalStoredMeta === null) storage.removeItem('cv_meta');
+      else storage.setItem('cv_meta', originalStoredMeta);
+    }
+    cv.EconomyAudit.enable(auditWasEnabled);
+    cv.EconomyAudit.reset();
+    cv.EconomyAudit.setSession('local');
+  }
+}
+
+function printForecast(report) {
+  console.log(`economy-forecast · ${report.days} días · ${report.sessionsPerDay} sesión(es)/día × ${report.minutesPerSession} min · política ${report.policy} · perfil ${report.profile} · seed ${report.seed}`);
+  console.log(`catálogo comprable: ${report.catalogTotal} monedas · completado: ${report.catalogDoneDay ? 'día ' + report.catalogDoneDay : 'no'}`);
+  for (const cp of report.checkpoints) {
+    const f = cp.flows;
+    console.log([
+      `día ${String(cp.day).padStart(3)}`,
+      `monedas ${String(cp.balances.coins).padStart(7)} (+${f.coins.minted}/-${f.coins.burned})`,
+      `gemas ${String(cp.balances.gems).padStart(5)} (+${f.gems.minted}/-${f.gems.burned})`,
+      `tickets ${String(cp.balances.tickets).padStart(3)}`,
+      `cosméticos ${cp.cosmeticsOwned}`,
+      `reserva ${cp.chestReserve} cofres/${cp.chestQueueHours}h`,
+      `nivel ${cp.level}`,
+    ].join(' · '));
+  }
+  const reasons = (report.end && report.end.reasons) || [];
+  if (reasons.length) {
+    console.log('flujos por motivo (divisa|dirección|motivo → cantidad):');
+    reasons.forEach((row) => console.log(`  ${row.currency}|${row.direction}|${row.reason} → ${row.amount} (${row.count}×)`));
+  }
+}
+
 const STANDARD = [];
 for (const profile of ['skilled', 'average', 'casual']) {
   STANDARD.push({ mode: 'clasico', diff: 'normal', profile, maxMinutes: 6 });
@@ -432,8 +709,8 @@ function printChestSummary(report) {
   }
 }
 
-/* Exportable para tests (guardarraíl de medallas del reto diario). */
-module.exports = { runOne, runBatch, runChestEconomy, PROFILES, cv, VCLOCK };
+/* Exportable para tests (guardarraíl de medallas del reto diario + forecast ECO). */
+module.exports = { runOne, runBatch, runChestEconomy, runEconomyForecast, PROFILES, POLICIES, cv, VCLOCK, VDATE };
 
 if (require.main === module) {
   const args = process.argv.slice(2);
@@ -442,8 +719,22 @@ if (require.main === module) {
   const modes = opt('modes', '').split(',').filter(Boolean);
   const jsonOut = opt('json', '');
   const chestMode = args.includes('--chests');
+  const economyMode = args.includes('--economy');
 
-  if (chestMode) {
+  if (economyMode) {
+    const report = runEconomyForecast({
+      days: +opt('days', 7),
+      sessionsPerDay: +opt('sessions', 2),
+      minutesPerSession: +opt('minutes', 8),
+      profile: opt('profile', 'average'),
+      policy: opt('policy', 'saver'),
+      diff: opt('diff', 'normal'),
+      seed: +opt('seed', 0xec0510),
+      checkpoints: opt('checkpoints', '').split(',').filter(Boolean).map(Number),
+    });
+    printForecast(report);
+    if (jsonOut) { require('fs').writeFileSync(jsonOut, JSON.stringify(report, null, 2)); console.log('\nJSON → ' + jsonOut); }
+  } else if (chestMode) {
     const types = opt('chest-types', '').split(',').filter(Boolean);
     const levels = opt('chest-levels', '').split(',').filter(Boolean);
     const report = runChestEconomy({

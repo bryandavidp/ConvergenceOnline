@@ -581,6 +581,13 @@ Los bonos descritos en §5.1/§5.2 se suman a `xpBase` antes de multiplicar. El 
 `xpMultiplier`, `xpBoostBonus = xpGained - xpBase` y `xpGained` para que el modal pueda desglosarlo. Las monedas no
 se multiplican; en Clásico se conserva su premio específico y no se duplica la recompensa base de `recordGame`.
 
+> **ECO-0 (v2.9.3+):** todas las constantes económicas de este documento (liquidación,
+> misiones, login, Clásico, Supervivencia, cofres, precios de tienda) viven ahora
+> centralizadas en el objeto `EconomyConfig` de `game.js`, con los MISMOS valores
+> (cero cambios de balance). Cada mutación de monedas/gemas/tickets/cofres queda
+> registrada en el ledger `EconomyAudit` (activo con `?dev` y en el simulador).
+> Estado y avances del reequilibrio: `docs/ECONOMY_REBALANCE_PROGRESS.md`.
+
 ---
 
 ## 7. Power-ups / boosters (Supervivencia)
