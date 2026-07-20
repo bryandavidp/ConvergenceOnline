@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.9.3';
+  const VERSION = '2.10.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -11986,12 +11986,124 @@
     else dailyRewardPopTimer = setTimeout(() => finishDailyRewardPop(banner), 900);
   }
 
+  /* ===================== Preloader / pantalla de carga =====================
+   * Precarga REAL de los assets de la PRIMERA pantalla (fuente de producto +
+   * imágenes del shell de Inicio/Login) y refleja el progreso en la barra del
+   * boot loader. Revela la app solo cuando esos assets están cargados y son
+   * MOSTRABLES (decode()), así Inicio no aparece "a medio pintar". El resto de
+   * imágenes del DOM se calientan después en segundo plano (no bloquean la
+   * entrada); los packs grandes ya los precachea el Service Worker. */
+  // setTimeout que NUNCA mantiene vivo el event loop de Node (los tests cargan
+  // game.js en Node sobre el dom-stub): en navegador no existe unref y se ignora.
+  function bootTimeout(fn, ms) {
+    const t = setTimeout(fn, ms);
+    if (t && typeof t.unref === 'function') t.unref();
+    return t;
+  }
+  function bootLoaderHide(boot) {
+    boot = boot || $('#boot-loader');
+    if (!boot || boot.hidden) return;
+    boot.classList.add('boot-done');
+    const drop = () => { boot.hidden = true; };
+    boot.addEventListener('transitionend', drop, { once: true });
+    bootTimeout(drop, 700); // respaldo si no llega transitionend (reduced-motion, etc.)
+  }
+
+  // Calentado en segundo plano: el resto de imágenes referenciadas en el DOM
+  // (vistas del hub, modales, juego, mundos). No toca la barra ni bloquea nada.
+  function warmSecondaryAssets() {
+    let queue;
+    try {
+      const seen = new Set();
+      queue = Array.from(document.querySelectorAll('img[src]'))
+        .map((im) => im.getAttribute('src'))
+        .filter((u) => u && !seen.has(u) && seen.add(u));
+    } catch (_) { return; }
+    let i = 0;
+    const pump = () => {
+      if (i >= queue.length) return;
+      const img = new Image();
+      img.onload = img.onerror = pump;
+      img.src = queue[i++];
+    };
+    for (let k = 0; k < 4; k++) pump(); // concurrencia acotada
+  }
+
+  function runBootPreloader() {
+    const boot = $('#boot-loader');
+    if (!boot) return; // sin loader (p. ej. entorno de tests): nada que hacer
+    const fill = $('#boot-fill'), pctEl = $('#boot-percent'), bar = $('#boot-progress');
+
+    // 1) Manifiesto crítico: imágenes del shell visible de Login + Inicio.
+    //    Se excluye #hub-views (vistas secundarias ocultas) para no alargar la
+    //    espera con assets que no se ven en la primera pantalla.
+    const urls = new Set();
+    const collect = (root) => {
+      if (!root) return;
+      root.querySelectorAll('img[src]').forEach((im) => urls.add(im.currentSrc || im.src));
+      root.querySelectorAll('[style*="--icv2-url"]').forEach((el) => {
+        const m = (el.style.getPropertyValue('--icv2-url') || '').match(/url\((['"]?)(.*?)\1\)/);
+        if (m && m[2]) urls.add(m[2]);
+      });
+    };
+    collect($('#screen-login'));
+    const start = $('#screen-start');
+    if (start) Array.from(start.children).forEach((c) => { if (c.id !== 'hub-views') collect(c); });
+    const assets = Array.from(urls).filter(Boolean);
+
+    // La fuente variable cuenta como una unidad más de progreso.
+    const fontJob = (document.fonts && document.fonts.load)
+      ? document.fonts.load('600 1em "Nunito Sans Game"').catch(() => {})
+      : Promise.resolve();
+
+    const total = assets.length + 1;
+    let done = 0;
+    const bump = () => {
+      done++;
+      const p = Math.min(100, Math.round((done / total) * 100));
+      if (fill) fill.style.width = p + '%';
+      if (pctEl) pctEl.textContent = String(p);
+      if (bar) bar.setAttribute('aria-valuenow', String(p));
+    };
+    const loadImg = (url) => new Promise((res) => {
+      const img = new Image();
+      const finish = () => { img.onload = img.onerror = null; res(); };
+      img.onload = finish; img.onerror = finish;
+      img.src = url;
+      // decode() garantiza que el bitmap está listo para pintar sin "pop" al revelar.
+      if (img.decode) img.decode().then(finish).catch(() => {});
+    });
+
+    const jobs = assets.map((u) => loadImg(u).then(bump));
+    jobs.push(fontJob.then(bump));
+
+    let revealed = false;
+    const reveal = () => {
+      if (revealed) return; revealed = true;
+      if (fill) fill.style.width = '100%';
+      if (pctEl) pctEl.textContent = '100';
+      if (bar) bar.setAttribute('aria-valuenow', '100');
+      bootLoaderHide(boot);
+      warmSecondaryAssets();
+    };
+
+    // Tope de seguridad: un asset colgado (nunca resuelve) no atrapa al usuario.
+    const capTimer = bootTimeout(reveal, 12000);
+    // Tiempo mínimo visible: evita un parpadeo brusco cuando el caché está caliente.
+    const startedAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    Promise.all(jobs).then(() => {
+      const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      bootTimeout(() => { clearTimeout(capTimer); reveal(); }, Math.max(0, 450 - (now - startedAt)));
+    });
+  }
+
   /* ===================== init / wiring ===================== */
   function init() {
     // Puerta de compatibilidad: la app usa color-mix() sin fallback (ver DESIGN_SYSTEM §9).
     // En navegadores sin soporte (Safari <16.2) los acentos se romperían: mejor avisar y
     // no arrancar que mostrar una UI a medias.
     if (!(window.CSS && window.CSS.supports && window.CSS.supports('color', 'color-mix(in srgb, red 50%, blue)'))) {
+      bootLoaderHide(); // sin esto, el loader taparía el aviso de navegador antiguo
       showBrowserWarn();
       return;
     }
@@ -12263,7 +12375,18 @@
         Game.start('contrarreloj', 'normal', undefined, ch);
       }
     }
+
+    // La app ya está construida DETRÁS del loader (tablero, top bars, carrusel,
+    // pantalla correcta mostrada). Precargamos los assets de la primera pantalla
+    // y, cuando son mostrables, revelamos: sin sensación de "sigue cargando".
+    runBootPreloader();
   }
+
+  // Salvavidas de último recurso: pase lo que pase (p. ej. init lanza una
+  // excepción antes de llegar al preloader), no dejar el loader tapando la app
+  // para siempre. Se programa ANTES de llamar a init, así queda armado aunque
+  // init falle de forma síncrona.
+  try { bootTimeout(() => bootLoaderHide(), 20000); } catch (_) { }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
