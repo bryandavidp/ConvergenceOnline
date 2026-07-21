@@ -13,7 +13,8 @@
 2. **Implementar el sistema de "Iconos"** = **packs de iconos de tablero**
    comprables. Los "iconos" son las figuras que aparecen en el tablero (el
    módulo `Icons`, formas SVG × colores). El sistema incluye **Cosmos**,
-   **Naturaleza Básico**, **Naturaleza Avanzado**, **Pack Neón** y **Joyas Prisma**, y queda
+   **Pack Gemas**, **Naturaleza Básico**, **Naturaleza Avanzado**, **Pack Neón**
+   y **Joyas Prisma**, y queda
    preparado para añadir más.
 3. El pack de iconos tiene **su sección en la Tienda** y **su panel en
    Colecciones**.
@@ -43,10 +44,10 @@
 
 ### 3.1 Modelo de datos
 - **`IconPacks`** (módulo tras `Icons`):
-  - `DEFAULT: 'cosmos'`; `DEFS` registra los cinco packs y `order` mantiene su
+  - `DEFAULT: 'cosmos'`; `DEFS` registra los seis packs y `order` mantiene su
     orden visible por precio.
-  - `CATALOGS`: catálogo de 8 figuras para Naturaleza Básico y Pack Neón, y de
-    10 para Naturaleza Avanzado y Joyas Prisma.
+  - `CATALOGS`: catálogo de 8 figuras para Naturaleza Básico y Pack Neón, de
+    10 para Naturaleza Avanzado y Joyas Prisma, y de 20 patrones para Pack Gemas.
   - `iconsOf(id)`: 16 ids representativos para Cosmos o tantos como artes
     declare el catálogo raster.
   - `svg(packId, iconId)`: conserva SVG para Cosmos y devuelve el PNG RGBA
@@ -94,6 +95,9 @@
   raster genéricos, precios 800/1600, precache, pruebas y bump 2.14.0.
 - [x] F8. Pack Neón: 8 artes PNG transparentes + miniatura, precio 1200,
   catálogo bilingüe, precache, pruebas y bump 2.15.0.
+- [x] F9. Pack Gemas: 20 patrones PNG transparentes + miniatura, precio 500,
+  cuatro familias coherentes con variantes de 1 a 5 figuras, precache, pruebas
+  de separación y bump 2.16.0.
 
 ## 5. Cómo quedó (referencia de mantenimiento)
 
@@ -108,7 +112,8 @@
   `openIconPackModal(id, { onChange })`.
 - **Modal de pack**: `openIconPackModal` / `fillIconPackModal` sobre
   `#modal-icon-pack` (index.html). Muestra todas las figuras reales de cada pack
-  (16 en Cosmos, 8 en Naturaleza Básico y Pack Neón, y 10 en los otros dos) +
+  (16 en Cosmos, 20 en Pack Gemas, 8 en Naturaleza Básico y Pack Neón, y 10 en
+  Naturaleza Avanzado y Joyas Prisma) +
   equipar/comprar.
 - **Tienda**: sección `shop_iconpacks` en `buildShop`; `data-ipack-view/eq/buy`.
 - **Renombrado**: `col_cat_icons` ahora = packs de tablero; `col_cat_avatars`
@@ -117,23 +122,26 @@
 ### Fidelidad / decisiones
 - Cosmos sigue siendo gratuito y equipado por defecto. Naturaleza Básico es
   raro y cuesta 800 monedas; Naturaleza Avanzado es épico y cuesta 1.600;
-  Pack Neón es épico y cuesta 1.200; Joyas Prisma es legendario y cuesta 1.800.
-  Todos usan confirmación en dos toques.
+  Pack Neón es épico y cuesta 1.200; Joyas Prisma es legendario y cuesta 1.800;
+  Pack Gemas es raro y cuesta 500. Todos usan confirmación en dos toques.
 - Los ids lógicos no cambian al equipar un pack: se preservan reglas, dificultad
   y partidas guardadas. La ventana máxima de ocho fichas se mapea sobre diez
   joyas, por lo que no hay duplicados visuales dentro de un nivel.
-- Los 36 iconos raster y sus cuatro miniaturas cuadradas son RGBA 512×512 y se
+- Los 56 iconos raster y sus cinco miniaturas cuadradas son RGBA 512×512 y se
   precachean para uso offline. La misma miniatura identifica cada pack en
   Tienda, Colecciones y el modal de detalle.
+- Pack Gemas reutiliza una única imagen maestra por familia. Sus composiciones
+  son deterministas y las variantes de cinco reducen cada figura a 96 px de
+  escala óptica para mantener las cinco siluetas separadas.
 
 ## 6. Verificación
 
-- Suite global: 274 pass / 2 fail. Los 2 fallos (`board themes V4 …`) son
-  **preexistentes** (fallan en la base). La selección de 65 pruebas de motor,
+- Suite global: 275 pass / 2 fail. Los 2 fallos (`board themes V4 …`) son
+  **preexistentes** (fallan en la base). La selección de 66 pruebas de motor,
   convergencia, Inicio y packs pasa completa.
 - `node --check game.js` y `node --check sw.js`: sin errores de sintaxis.
-- Navegador integrado (ES): cinco tarjetas en Tienda y Colecciones; modales de
-  Naturaleza y Neón con 8/10 iconos, precios 800/1200/1600, dimensiones
+- Navegador integrado (ES): seis tarjetas en Tienda y Colecciones; modales de
+  Gemas, Naturaleza y Neón con 20/8/10 iconos, precios 500/800/1200/1600, dimensiones
   naturales 512×512 y cero errores de consola. Todo verificado.
 
 ## 7. Registro
@@ -147,3 +155,5 @@
   integrados de extremo a extremo. Versión 2.14.0.
 - 2026-07-21: F8. Pack Neón generado e integrado de extremo a extremo. Versión
   2.15.0.
+- 2026-07-22: F9. Pack Gemas generado e integrado de extremo a extremo, con
+  separación reforzada en las variantes de cinco. Versión 2.16.0.

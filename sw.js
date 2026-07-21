@@ -67,7 +67,13 @@ const NEON_PACK_ASSETS = [
   'neon-square','neon-triangle','neon-star','neon-circle',
   'neon-diamond','neon-hexagon','neon-heart','neon-drop','thumbnail',
 ].map((n) => './img/icon-packs/neon/' + n + '.png');
-const ICON_PACK_ASSETS = PRISMATIC_PACK_ASSETS.concat(NATURE_BASIC_PACK_ASSETS, NATURE_ADVANCED_PACK_ASSETS, NEON_PACK_ASSETS);
+const GEM_PATTERN_PACK_ASSETS = [
+  'violet-diamond-1','violet-diamond-2','violet-diamond-3','violet-diamond-4','violet-diamond-5',
+  'orange-gem-1','orange-gem-2','orange-gem-3','orange-gem-4','orange-gem-5',
+  'blue-drop-1','blue-drop-2','blue-drop-3','blue-drop-4','blue-drop-5',
+  'pink-heart-1','pink-heart-2','pink-heart-3','pink-heart-4','pink-heart-5','thumbnail',
+].map((n) => './img/icon-packs/gem-pattern/' + n + '.png');
+const ICON_PACK_ASSETS = PRISMATIC_PACK_ASSETS.concat(NATURE_BASIC_PACK_ASSETS, NATURE_ADVANCED_PACK_ASSETS, NEON_PACK_ASSETS, GEM_PATTERN_PACK_ASSETS);
 const CORE_ART = ['./img/ui-generated/chests/chest-open.png'];
 const V2_ICONS = [
   './img/icons-v2/1-game/double.svg',
