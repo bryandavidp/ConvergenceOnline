@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.11.0';
+  const VERSION = '2.12.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -262,6 +262,34 @@
     };
   })();
 
+  /* ===================== IconPacks (packs de iconos de tablero) =====================
+   * Cosmético comprable: un "pack" es un estilo visual para las FIGURAS del
+   * tablero (las que convergen). Hoy sólo existe un set real (el renderer de
+   * `Icons`), así que sólo hay un pack ("Cosmos"). El modelo queda preparado
+   * para añadir más packs (cada uno con su propio render) sin tocar el resto.
+   * No afecta reglas ni economía: es puramente estético. Propiedad/equipado en
+   * Meta.cosmetics.iconPack(s), igual que los tableros.
+   */
+  const IconPacks = {
+    DEFAULT: 'cosmos',
+    DEFS: {
+      cosmos: { name: 'Cosmos', rarity: 'common', cost: 0, descKey: 'iconpack_cosmos_desc' },
+    },
+    order: ['cosmos'],
+    // Ids de icono representativos de un pack: una figura por forma (16).
+    iconsOf(id) {
+      void id; // (todos los packs comparten el catálogo base por ahora)
+      return Icons.CATALOG.slice(0, 16);
+    },
+    // Render de un icono concreto del pack (delega en el renderer base por ahora).
+    svg(id, iconId) { void id; return Icons.svg(iconId); },
+    // Collage de portada/emblema con las primeras `n` figuras del pack.
+    previewHtml(id, n = 4) {
+      const ids = this.iconsOf(id).slice(0, n);
+      return `<span class="iconpack-collage" data-count="${ids.length}" aria-hidden="true">${ids.map((ic) => `<span class="iconpack-collage-cell">${this.svg(id, ic)}</span>`).join('')}</span>`;
+    },
+  };
+
   /* ===================== Storage ===================== */
   const Storage = {
     get best() { return +(localStorage.getItem('cv_best') || 0); },
@@ -334,18 +362,22 @@
         rarity_commons: 'Comunes', rarity_rares: 'Raros', rarity_epics: 'Épicos', rarity_legendaries: 'Legendarios',
         col_cat_boards: 'Tableros', col_cat_boards_desc: 'Desbloquea nuevos tableros con diseños únicos y efectos especiales.',
         col_cat_themes: 'Temas', col_cat_themes_desc: 'Colecciona temas completos para personalizar tu experiencia.',
-        col_cat_icons: 'Iconos', col_cat_icons_desc: 'Desbloquea iconos exclusivos para tu perfil y destaca entre los demás.',
+        col_cat_icons: 'Iconos', col_cat_icons_desc: 'Colecciona packs de iconos para las fichas del tablero.',
+        col_cat_avatars: 'Avatares', col_cat_avatars_desc: 'Desbloquea avatares exclusivos para tu perfil y destaca entre los demás.',
         col_cat_borders: 'Bordes', col_cat_borders_desc: 'Consigue bordes especiales para enmarcar tu avatar y presumir tu estilo.',
         col_cat_achievements: 'Logros', col_cat_achievements_desc: 'Completa desafíos y alcanza hitos para ganar recompensas.',
-        col_icons_sub: 'Desbloquea iconos exclusivos y personaliza tu perfil.',
+        col_icons_sub: 'Personaliza los iconos que aparecen en el tablero.',
+        col_avatars_sub: 'Desbloquea avatares exclusivos y personaliza tu perfil.',
         col_borders_sub: 'Consigue bordes especiales para enmarcar tu avatar y presumir tu estilo.',
         col_boards_sub: 'Desbloquea tableros con diseños únicos y efectos especiales.',
         col_themes_sub: 'Colecciona temas completos para personalizar tu experiencia.',
         col_achievements_sub: 'Completa desafíos y alcanza hitos para ganar recompensas.',
-        col_progress_icons: 'Progreso de iconos', col_progress_borders: 'Progreso de bordes', col_progress_boards: 'Progreso de tableros', col_progress_themes: 'Progreso de temas', col_progress_achievements: 'Progreso de logros',
+        col_progress_icons: 'Progreso de iconos', col_progress_avatars: 'Progreso de avatares', col_progress_borders: 'Progreso de bordes', col_progress_boards: 'Progreso de tableros', col_progress_themes: 'Progreso de temas', col_progress_achievements: 'Progreso de logros',
         col_filter_all: 'Todos', col_sort_recent: 'Más reciente', col_sort_rarity: 'Rareza', col_sort_name: 'Nombre', col_sort_owned: 'Desbloqueados', col_sort_label: 'Ordenar por',
         col_locked_slot: 'Bloqueado · por descubrir', col_empty_rarity: 'Sin objetos de esta rareza todavía.',
-        col_banner_icons_title: 'Icono exclusivo', col_banner_icons_desc: 'Participa en eventos especiales para conseguir iconos únicos por tiempo limitado.', col_banner_icons_cta: 'Ir a eventos',
+        shop_iconpacks: 'Iconos de tablero', iconpack_view: 'Ver iconos', iconpack_contents: 'Iconos del pack', iconpack_cosmos_desc: 'El set clásico de figuras de Convergence.', iconpack_equipped_note: 'Estos iconos aparecen ahora en tu tablero.',
+        col_banner_icons_title: 'Más packs pronto', col_banner_icons_desc: 'Nuevos packs de iconos llegarán a la tienda. ¡Colecciónalos todos!', col_banner_icons_cta: 'Ir a tienda',
+        col_banner_avatars_title: 'Avatar exclusivo', col_banner_avatars_desc: 'Participa en eventos especiales para conseguir avatares únicos por tiempo limitado.', col_banner_avatars_cta: 'Ir a eventos',
         col_banner_borders_title: 'Presume tu estilo', col_banner_borders_desc: 'Los bordes no dan ventaja en el juego. ¡Coléccionalos todos y destaca!', col_banner_borders_cta: 'Ir a tienda',
         col_banner_boards_title: 'Cambia tu tablero', col_banner_boards_desc: 'Los tableros son solo cambios visuales: no dan ventajas. ¡Colecciónalos todos!', col_banner_boards_cta: 'Ir a tienda',
         col_banner_themes_title: 'Colorea tu juego', col_banner_themes_desc: 'Los temas repintan toda la interfaz. Elige el que más te guste.', col_banner_themes_cta: 'Ir a tienda',
@@ -393,7 +425,7 @@
         chests_play_survival: 'Jugar Supervivencia', chests_next_wave: 'Cofre extra en {n} oleadas', chests_open_now: 'O abrir ahora', chests_open_saved: 'Abrir cofre guardado', chests_available: 'Disponibles',
         chests_contents_note: 'Los cofres contienen monedas, gemas, tickets, potenciadores y cosméticos.', chest_opening: 'El cofre se está abriendo…', chest_opening_named: 'Abriendo {c}…', chest_opening_hint: 'Preparando tus recompensas',
         chest_reveal_title: 'Contenido del cofre', chest_cosmetic_title: '¡COSMÉTICO!', chest_rarity_common: 'Recompensa', chest_rarity_jackpot: 'Jackpot', chest_rarity_cosmetic: 'Especial', chest_continue: 'Seguir', chest_equip: 'Equipar',
-        chest_reward_coins: '+{n} monedas', chest_reward_gems: '+{n} gemas', chest_reward_ticket: '+{n} ticket(s)', chest_reward_booster: '+{n} {b}', chest_reward_board: 'Tablero: {n}', chest_reward_theme: 'Tema: {n}', chest_reward_avatar_icon: 'Icono: {n}', chest_reward_avatar_border: 'Borde: {n}',
+        chest_reward_coins: '+{n} monedas', chest_reward_gems: '+{n} gemas', chest_reward_ticket: '+{n} ticket(s)', chest_reward_booster: '+{n} {b}', chest_reward_board: 'Tablero: {n}', chest_reward_theme: 'Tema: {n}', chest_reward_avatar_icon: 'Avatar: {n}', chest_reward_avatar_border: 'Borde: {n}',
         chest_view_all: 'Ver todos', chest_selected: 'Cofre seleccionado', chest_catalog_title: 'Tipos de cofres', chest_catalog_sub: 'Cuanto más raro sea el cofre, mejores serán sus recompensas.', chest_catalog_close: 'Volver a mis cofres',
         chest_contains: 'Qué puede contener', chest_type_panel: 'Tipo de cofre', chest_ceremony_title: 'Apertura del cofre', chest_contents_coins: 'Monedas', chest_contents_gems: 'Gemas', chest_contents_tickets: 'Tickets', chest_contents_cosmetics: 'Cosméticos y más',
         chest_slots_title: 'Ranuras de cofres', chest_possible_rewards: 'Posibles recompensas', chest_slot_opening: 'Abriendo', chest_slot_ready: '¡Listo!', chest_slot_blocked: 'Bloqueado', chest_slot_waiting: 'En espera', chest_slot_empty: 'Ranura vacía',
@@ -453,7 +485,7 @@
         tutorial_btn: 'Tutorial interactivo', understood: 'Entendido',
         pause: 'Pausa', resume: 'Reanudar', restart: 'Reiniciar', menu: 'Menú', close: 'Cerrar', back: 'Volver', retry: 'Reintentar', share: 'Compartir',
         settings_title: '⚙️ Ajustes', settings_word: 'Ajustes', shop_title: '🛍️ Tienda', shop_hint: 'Temas del tablero. Pulsa para previsualizar.',
-        profile_title: '📊 Perfil', achievements_title: '🏆 Trofeos', profile_card_title: 'Tarjeta de jugador', profile_loadout_title: 'Tu estilo', profile_icons_title: 'Iconos', profile_borders_title: 'Bordes', profile_owned: '{n}/{total} desbloqueados', shop_player_hint: 'Personaliza tu tarjeta. También puedes conseguir iconos y bordes en los cofres.', shop_player_icons: 'Iconos de jugador', shop_player_borders: 'Bordes de icono', pause_run_title: 'Partida en curso', pause_score_label: 'Puntos', pause_combo_label: 'Combo', trophies_progress: '{n} de {total} trofeos', best_by_mode: 'Mejores marcas por modo', achievements: 'Logros',
+        profile_title: '📊 Perfil', achievements_title: '🏆 Trofeos', profile_card_title: 'Tarjeta de jugador', profile_loadout_title: 'Tu estilo', profile_icons_title: 'Avatares', profile_borders_title: 'Bordes', profile_owned: '{n}/{total} desbloqueados', shop_player_hint: 'Personaliza tu tarjeta. También puedes conseguir avatares y bordes en los cofres.', shop_player_icons: 'Avatares', shop_player_borders: 'Bordes de avatar', pause_run_title: 'Partida en curso', pause_score_label: 'Puntos', pause_combo_label: 'Combo', trophies_progress: '{n} de {total} trofeos', best_by_mode: 'Mejores marcas por modo', achievements: 'Logros',
         adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
         revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
         revive_gets: 'Recibes 1 vida y despeja el 60% del tablero', revive_count: 'Revivir {n}/{max}', revive_short: 'Te faltan {n} monedas',
@@ -702,18 +734,22 @@
         rarity_commons: 'Common', rarity_rares: 'Rare', rarity_epics: 'Epic', rarity_legendaries: 'Legendary',
         col_cat_boards: 'Boards', col_cat_boards_desc: 'Unlock new boards with unique designs and special effects.',
         col_cat_themes: 'Themes', col_cat_themes_desc: 'Collect complete themes to personalize your experience.',
-        col_cat_icons: 'Icons', col_cat_icons_desc: 'Unlock exclusive icons for your profile and stand out.',
+        col_cat_icons: 'Icons', col_cat_icons_desc: 'Collect icon packs for the board tiles.',
+        col_cat_avatars: 'Avatars', col_cat_avatars_desc: 'Unlock exclusive avatars for your profile and stand out.',
         col_cat_borders: 'Borders', col_cat_borders_desc: 'Get special borders to frame your avatar and show off your style.',
         col_cat_achievements: 'Achievements', col_cat_achievements_desc: 'Complete challenges and reach milestones to earn rewards.',
-        col_icons_sub: 'Unlock exclusive icons and personalize your profile.',
+        col_icons_sub: 'Customize the icons that appear on the board.',
+        col_avatars_sub: 'Unlock exclusive avatars and personalize your profile.',
         col_borders_sub: 'Get special borders to frame your avatar and show off your style.',
         col_boards_sub: 'Unlock boards with unique designs and special effects.',
         col_themes_sub: 'Collect complete themes to personalize your experience.',
         col_achievements_sub: 'Complete challenges and reach milestones to earn rewards.',
-        col_progress_icons: 'Icon progress', col_progress_borders: 'Border progress', col_progress_boards: 'Board progress', col_progress_themes: 'Theme progress', col_progress_achievements: 'Achievement progress',
+        col_progress_icons: 'Icon progress', col_progress_avatars: 'Avatar progress', col_progress_borders: 'Border progress', col_progress_boards: 'Board progress', col_progress_themes: 'Theme progress', col_progress_achievements: 'Achievement progress',
         col_filter_all: 'All', col_sort_recent: 'Most recent', col_sort_rarity: 'Rarity', col_sort_name: 'Name', col_sort_owned: 'Unlocked', col_sort_label: 'Sort by',
         col_locked_slot: 'Locked · to discover', col_empty_rarity: 'No items of this rarity yet.',
-        col_banner_icons_title: 'Exclusive icon', col_banner_icons_desc: 'Join special events to get unique icons for a limited time.', col_banner_icons_cta: 'Go to events',
+        shop_iconpacks: 'Board icons', iconpack_view: 'View icons', iconpack_contents: 'Pack icons', iconpack_cosmos_desc: 'The classic Convergence figure set.', iconpack_equipped_note: 'These icons now appear on your board.',
+        col_banner_icons_title: 'More packs soon', col_banner_icons_desc: 'New icon packs are coming to the shop. Collect them all!', col_banner_icons_cta: 'Go to shop',
+        col_banner_avatars_title: 'Exclusive avatar', col_banner_avatars_desc: 'Join special events to get unique avatars for a limited time.', col_banner_avatars_cta: 'Go to events',
         col_banner_borders_title: 'Show off your style', col_banner_borders_desc: 'Borders give no gameplay advantage. Collect them all and stand out!', col_banner_borders_cta: 'Go to shop',
         col_banner_boards_title: 'Change your board', col_banner_boards_desc: 'Boards are visual only: no advantages. Collect them all!', col_banner_boards_cta: 'Go to shop',
         col_banner_themes_title: 'Color your game', col_banner_themes_desc: 'Themes repaint the whole interface. Pick your favorite.', col_banner_themes_cta: 'Go to shop',
@@ -761,7 +797,7 @@
         chests_play_survival: 'Play Survival', chests_next_wave: 'Bonus chest in {n} waves', chests_open_now: 'Or open now', chests_open_saved: 'Open saved chest', chests_available: 'Available',
         chests_contents_note: 'Chests contain coins, gems, tickets, boosters and cosmetics.', chest_opening: 'The chest is opening…', chest_opening_named: 'Opening {c}…', chest_opening_hint: 'Preparing your rewards',
         chest_reveal_title: 'Chest contents', chest_cosmetic_title: 'COSMETIC!', chest_rarity_common: 'Reward', chest_rarity_jackpot: 'Jackpot', chest_rarity_cosmetic: 'Special', chest_continue: 'Continue', chest_equip: 'Equip',
-        chest_reward_coins: '+{n} coins', chest_reward_gems: '+{n} gems', chest_reward_ticket: '+{n} ticket(s)', chest_reward_booster: '+{n} {b}', chest_reward_board: 'Board: {n}', chest_reward_theme: 'Theme: {n}', chest_reward_avatar_icon: 'Icon: {n}', chest_reward_avatar_border: 'Frame: {n}',
+        chest_reward_coins: '+{n} coins', chest_reward_gems: '+{n} gems', chest_reward_ticket: '+{n} ticket(s)', chest_reward_booster: '+{n} {b}', chest_reward_board: 'Board: {n}', chest_reward_theme: 'Theme: {n}', chest_reward_avatar_icon: 'Avatar: {n}', chest_reward_avatar_border: 'Frame: {n}',
         chest_view_all: 'View all', chest_selected: 'Selected chest', chest_catalog_title: 'Chest types', chest_catalog_sub: 'The rarer the chest, the better its rewards.', chest_catalog_close: 'Back to my chests',
         chest_contains: 'What it can contain', chest_type_panel: 'Chest type', chest_ceremony_title: 'Chest opening', chest_contents_coins: 'Coins', chest_contents_gems: 'Gems', chest_contents_tickets: 'Tickets', chest_contents_cosmetics: 'Cosmetics and more',
         chest_slots_title: 'Chest slots', chest_possible_rewards: 'Possible rewards', chest_slot_opening: 'Opening', chest_slot_ready: 'Ready!', chest_slot_blocked: 'Locked', chest_slot_waiting: 'Waiting', chest_slot_empty: 'Empty slot',
@@ -821,7 +857,7 @@
         tutorial_btn: 'Interactive tutorial', understood: 'Got it',
         pause: 'Paused', resume: 'Resume', restart: 'Restart', menu: 'Menu', close: 'Close', back: 'Back', retry: 'Retry', share: 'Share',
         settings_title: '⚙️ Settings', settings_word: 'Settings', shop_title: '🛍️ Shop', shop_hint: 'Board themes. Tap to preview.',
-        profile_title: '📊 Profile', achievements_title: '🏆 Trophies', profile_card_title: 'Player card', profile_loadout_title: 'Your style', profile_icons_title: 'Icons', profile_borders_title: 'Frames', profile_owned: '{n}/{total} unlocked', shop_player_hint: 'Customize your player card. Icons and frames can also drop from chests.', shop_player_icons: 'Player icons', shop_player_borders: 'Icon frames', pause_run_title: 'Current run', pause_score_label: 'Score', pause_combo_label: 'Combo', trophies_progress: '{n} of {total} trophies', best_by_mode: 'Best by mode', achievements: 'Achievements',
+        profile_title: '📊 Profile', achievements_title: '🏆 Trophies', profile_card_title: 'Player card', profile_loadout_title: 'Your style', profile_icons_title: 'Avatars', profile_borders_title: 'Frames', profile_owned: '{n}/{total} unlocked', shop_player_hint: 'Customize your player card. Avatars and frames can also drop from chests.', shop_player_icons: 'Avatars', shop_player_borders: 'Avatar frames', pause_run_title: 'Current run', pause_score_label: 'Score', pause_combo_label: 'Combo', trophies_progress: '{n} of {total} trophies', best_by_mode: 'Best by mode', achievements: 'Achievements',
         adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
         revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
         revive_gets: 'Get 1 life and clear 60% of the board', revive_count: 'Revive {n}/{max}', revive_short: 'You need {n} more coins',
@@ -3197,7 +3233,7 @@
   const Meta = (() => {
     const KEY = 'cv_meta';
     const SCHEMA = 10;
-    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, gems: 0, tickets: 0, chests: 0, xpBoostUntil: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, worlds: {}, boards: { owned: { classic: 1 }, equipped: 'classic' }, survBest: 0, survBestWave: 0, stats: { totalScore: 0, bestCombo: 0, totalTime: 0 }, modes: {}, weekly: { week: '', id: '', progress: 0, done: false }, mastery: { classicPerfect: 0, bestClassicPerfect: 0 }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default', avatarIcon: PlayerIcons.DEFAULT, avatarBorder: PlayerBorders.DEFAULT, avatarIcons: { nova: 1 }, avatarBorders: { starlight: 1 } } };
+    const def = { _v: SCHEMA, xp: 0, level: 1, games: 0, totalRemoved: 0, coins: 0, gems: 0, tickets: 0, chests: 0, xpBoostUntil: 0, achievements: {}, daily: { date: '' }, streak: { count: 0, date: '' }, reward: { date: '', day: 0 }, adventure: { maxLevel: 1 }, worlds: {}, boards: { owned: { classic: 1 }, equipped: 'classic' }, survBest: 0, survBestWave: 0, stats: { totalScore: 0, bestCombo: 0, totalTime: 0 }, modes: {}, weekly: { week: '', id: '', progress: 0, done: false }, mastery: { classicPerfect: 0, bestClassicPerfect: 0 }, cosmetics: { owned: {}, theme: 'default', skin: 'default', fx: 'default', avatarIcon: PlayerIcons.DEFAULT, avatarBorder: PlayerBorders.DEFAULT, avatarIcons: { nova: 1 }, avatarBorders: { starlight: 1 }, iconPack: IconPacks.DEFAULT, iconPacks: { cosmos: 1 } } };
     Object.assign(def, { chestInventory: [], chestUnlock: null, chestSlots: 3, chestSeq: 0 });
     // Esquema 5 (CH-2): pipeline universal de cofres — objetivos de CUALQUIER modo
     // avanzan un ciclo determinista de cofres; cofre diario de primera victoria.
@@ -3217,6 +3253,10 @@
     m.cosmetics.avatarBorders[PlayerBorders.DEFAULT] = m.cosmetics.avatarBorders[PlayerBorders.DEFAULT] || 1;
     if (!PlayerIcons.DEFS[m.cosmetics.avatarIcon] || !m.cosmetics.avatarIcons[m.cosmetics.avatarIcon]) m.cosmetics.avatarIcon = PlayerIcons.DEFAULT;
     if (!PlayerBorders.DEFS[m.cosmetics.avatarBorder] || !m.cosmetics.avatarBorders[m.cosmetics.avatarBorder]) m.cosmetics.avatarBorder = PlayerBorders.DEFAULT;
+    // Packs de iconos de tablero (retrocompatible: partidas viejas reciben el pack por defecto).
+    if (!m.cosmetics.iconPacks || typeof m.cosmetics.iconPacks !== 'object') m.cosmetics.iconPacks = {};
+    m.cosmetics.iconPacks[IconPacks.DEFAULT] = m.cosmetics.iconPacks[IconPacks.DEFAULT] || 1;
+    if (!IconPacks.DEFS[m.cosmetics.iconPack] || !m.cosmetics.iconPacks[m.cosmetics.iconPack]) m.cosmetics.iconPack = IconPacks.DEFAULT;
     if (!m.streak || typeof m.streak !== 'object') m.streak = { count: Number(m.streak) || 0, date: '' };
     if (typeof m.streak.count !== 'number') m.streak.count = 0;
     if (!m.reward) m.reward = { date: '', day: 0 };
@@ -4144,6 +4184,22 @@
       },
       avatarIconOwnedCount: () => PlayerIcons.order.filter((id) => id === PlayerIcons.DEFAULT || !!(m.cosmetics.avatarIcons && m.cosmetics.avatarIcons[id])).length,
       avatarBorderOwnedCount: () => PlayerBorders.order.filter((id) => id === PlayerBorders.DEFAULT || !!(m.cosmetics.avatarBorders && m.cosmetics.avatarBorders[id])).length,
+      // ---- Packs de iconos de tablero (propiedad y equipado) ----
+      ownsIconPack: (id) => id === IconPacks.DEFAULT || !!(m.cosmetics.iconPacks && m.cosmetics.iconPacks[id]),
+      equippedIconPack: () => IconPacks.DEFS[m.cosmetics.iconPack] ? m.cosmetics.iconPack : IconPacks.DEFAULT,
+      equipIconPack(id) {
+        if (!IconPacks.DEFS[id] || !this.ownsIconPack(id)) return false;
+        m.cosmetics.iconPack = id; save(); return true;
+      },
+      buyIconPack(id) {
+        const item = IconPacks.DEFS[id];
+        if (!item) return false;
+        m.cosmetics.iconPacks = m.cosmetics.iconPacks || { [IconPacks.DEFAULT]: 1 };
+        if (this.ownsIconPack(id)) return true;
+        if (!this.spend(item.cost || 0)) return false;
+        m.cosmetics.iconPacks[id] = today(); save(); return true;
+      },
+      iconPackOwnedCount: () => IconPacks.order.filter((id) => id === IconPacks.DEFAULT || !!(m.cosmetics.iconPacks && m.cosmetics.iconPacks[id])).length,
       // ---- Tableros de la tienda (propiedad y equipado) ----
       boardsOwned: () => m.boards.owned,
       ownsBoard: (id) => id === 'classic' || !!(m.boards.owned && m.boards.owned[id]),
@@ -10730,7 +10786,8 @@
   }
 
   /* ===================== Colecciones (rareza) =====================
-   * Hub de 5 categorías + pantalla de detalle reutilizable con rejilla por
+   * Hub de 6 categorías (tableros, temas, iconos de tablero, avatares, bordes,
+   * logros) + pantalla de detalle reutilizable con rejilla por
    * rareza (Común/Raro/Épico/Legendario), filtros, orden y equipar. Cada
    * categoría se describe en COLLECTION_CATS y provee sus ítems vía collItems().
    */
@@ -10747,11 +10804,17 @@
       showNames: true, equippable: true,
       banner: { icon: 'img/ui-v2/home/gem.png', titleKey: 'col_banner_themes_title', descKey: 'col_banner_themes_desc', ctaKey: 'col_banner_themes_cta', act: 'open-style-shop' },
     },
-    icons: {
-      accent: '#22c3d6', emblem: 'img/ui-v2/home/robot.png',
+    iconpacks: {
+      accent: '#ff5b9e', emblemHtml: () => IconPacks.previewHtml(IconPacks.DEFAULT, 4),
       nameKey: 'col_cat_icons', descKey: 'col_cat_icons_desc', subKey: 'col_icons_sub', progressKey: 'col_progress_icons',
+      showNames: true, equippable: true, packModal: true,
+      banner: { icon: 'img/ui-v2/home/rocket.png', titleKey: 'col_banner_icons_title', descKey: 'col_banner_icons_desc', ctaKey: 'col_banner_icons_cta', act: 'open-style-shop' },
+    },
+    avatars: {
+      accent: '#22c3d6', emblem: 'img/ui-v2/home/robot.png',
+      nameKey: 'col_cat_avatars', descKey: 'col_cat_avatars_desc', subKey: 'col_avatars_sub', progressKey: 'col_progress_avatars',
       showNames: false, equippable: true,
-      banner: { icon: 'img/ui-v2/home/shield.png', titleKey: 'col_banner_icons_title', descKey: 'col_banner_icons_desc', ctaKey: 'col_banner_icons_cta', act: 'nav-events' },
+      banner: { icon: 'img/ui-v2/home/shield.png', titleKey: 'col_banner_avatars_title', descKey: 'col_banner_avatars_desc', ctaKey: 'col_banner_avatars_cta', act: 'nav-events' },
     },
     borders: {
       accent: '#4bb63c', emblem: 'img/player-borders/royal.png',
@@ -10766,17 +10829,21 @@
       banner: { icon: 'img/ui-v2/home/trophy.png', titleKey: 'col_banner_achievements_title', descKey: 'col_banner_achievements_desc', ctaKey: 'col_banner_achievements_cta', act: 'go-play' },
     },
   };
-  const COLLECTION_CAT_ORDER = ['boards', 'themes', 'icons', 'borders', 'achievements'];
-  let collectionDetailCat = 'icons';
+  const COLLECTION_CAT_ORDER = ['boards', 'themes', 'iconpacks', 'avatars', 'borders', 'achievements'];
+  let collectionDetailCat = 'boards';
   let collectionFilter = 'all';
   let collectionSort = 'recent';
   let _rfSeq = 0;
 
   // Ítems de una categoría, normalizados a {id, name, rarity, owned, equipped, index, art}.
   function collItems(catId) {
-    if (catId === 'icons') {
+    if (catId === 'avatars') {
       const eq = Meta.avatarIcon();
       return PlayerIcons.order.map((id, i) => { const d = PlayerIcons.DEFS[id]; return { id, name: d.name, rarity: Rarity.of(d), owned: Meta.ownsAvatarIcon(id), equipped: eq === id, index: i, art: PlayerIcons.html(id, 'col-art-img') }; });
+    }
+    if (catId === 'iconpacks') {
+      const eq = Meta.equippedIconPack();
+      return IconPacks.order.map((id, i) => { const d = IconPacks.DEFS[id]; return { id, name: d.name, rarity: Rarity.of(d), owned: Meta.ownsIconPack(id), equipped: eq === id, index: i, art: IconPacks.previewHtml(id, 4) }; });
     }
     if (catId === 'borders') {
       const eq = Meta.avatarBorder();
@@ -10796,7 +10863,8 @@
     return [];
   }
   function collEquip(catId, id) {
-    if (catId === 'icons') return Meta.equipAvatarIcon(id);
+    if (catId === 'avatars') return Meta.equipAvatarIcon(id);
+    if (catId === 'iconpacks') return Meta.equipIconPack(id);
     if (catId === 'borders') return Meta.equipAvatarBorder(id);
     if (catId === 'boards') { const ok = Meta.equipBoard(id); if (ok) Boards.apply(); return ok; }
     if (catId === 'themes') { const ok = Meta.equip('theme', id); if (ok) Cosmetics.apply(); return ok; }
@@ -10820,7 +10888,12 @@
     </svg>`;
   }
 
-  // Hub: 5 píldoras resumen + 5 tarjetas grandes de categoría.
+  // Emblema de una categoría: HTML inline (emblemHtml) o imagen (emblem).
+  function catEmblemHtml(c) {
+    return typeof c.emblemHtml === 'function' ? c.emblemHtml() : `<img src="${c.emblem}" alt="" aria-hidden="true">`;
+  }
+
+  // Hub: 6 píldoras resumen + 6 tarjetas grandes de categoría.
   function buildCollections() {
     const pills = $('#collections-pills');
     const cards = $('#collections-cards');
@@ -10830,14 +10903,14 @@
     if (pills) pills.innerHTML = COLLECTION_CAT_ORDER.map((id) => {
       const c = COLLECTION_CATS[id], n = counts[id];
       return `<span class="col-pill col-pill-${id}" style="--cat:${c.accent}">
-        <span class="col-pill-ic"><img src="${c.emblem}" alt="" aria-hidden="true"></span>
+        <span class="col-pill-ic">${catEmblemHtml(c)}</span>
         <span class="col-pill-tx"><small>${esc(I18n.t(c.nameKey))}</small><b>${n.owned} / ${n.total}</b></span>
       </span>`;
     }).join('');
     cards.innerHTML = COLLECTION_CAT_ORDER.map((id) => {
       const c = COLLECTION_CATS[id], n = counts[id];
       return `<button type="button" class="col-card col-card-${id}" data-col-open="${id}" style="--cat:${c.accent}">
-        <span class="col-card-emblem"><img src="${c.emblem}" alt="" aria-hidden="true"></span>
+        <span class="col-card-emblem">${catEmblemHtml(c)}</span>
         <span class="col-card-copy"><b>${esc(I18n.t(c.nameKey))}</b><small>${esc(I18n.t(c.descKey))}</small></span>
         <span class="col-card-badge">${n.owned} / ${n.total}</span>
         <span class="col-card-chev icv2" style="--icv2-url:url('img/icons-v2/8-ui/arrow-right.svg')" aria-hidden="true"></span>
@@ -10860,13 +10933,19 @@
   function collTileHtml(cat, it, showName) {
     const cls = ['col-tile', 'is-' + it.rarity, it.owned ? 'is-owned' : 'is-locked'];
     if (it.equipped) cls.push('is-equipped');
-    const clickable = cat.equippable && it.owned && !it.equipped;
+    // Packs (packModal): tocar SIEMPRE abre el modal de contenido (ver iconos +
+    // equipar), esté o no equipado, propio o no. El resto de categorías equipan
+    // al tocar los ítems propios no equipados.
+    const clickable = cat.packModal ? true : (cat.equippable && it.owned && !it.equipped);
     const tag = clickable ? 'button' : 'span';
-    const attrs = clickable ? ` type="button" data-col-equip="${esc(it.id)}"` : (cat.equippable && it.owned ? ' aria-disabled="true"' : '');
+    const dataAttr = cat.packModal ? `data-col-pack="${esc(it.id)}"` : `data-col-equip="${esc(it.id)}"`;
+    const attrs = clickable ? ` type="button" ${dataAttr}` : (cat.equippable && it.owned ? ' aria-disabled="true"' : '');
     const rarLabel = Rarity.label(it.rarity);
-    const aria = it.owned
-      ? `${esc(it.name)} · ${esc(rarLabel)}${it.equipped ? ' · ' + esc(I18n.t('equipped')) : (cat.equippable ? ' · ' + esc(I18n.t('equip')) : '')}`
-      : `${esc(it.name)} · ${esc(rarLabel)} · ${esc(I18n.t('col_locked_slot'))}`;
+    const aria = cat.packModal
+      ? `${esc(it.name)} · ${esc(rarLabel)} · ${esc(I18n.t('iconpack_view'))}`
+      : (it.owned
+        ? `${esc(it.name)} · ${esc(rarLabel)}${it.equipped ? ' · ' + esc(I18n.t('equipped')) : (cat.equippable ? ' · ' + esc(I18n.t('equip')) : '')}`
+        : `${esc(it.name)} · ${esc(rarLabel)} · ${esc(I18n.t('col_locked_slot'))}`);
     const badge = it.equipped ? '<span class="col-tile-check" aria-hidden="true">✓</span>'
       : (!it.owned ? '<span class="col-tile-lock" aria-hidden="true"><span class="icv2" style="--icv2-url:url(\'img/icons-v2/8-ui/lock.svg\')"></span></span>' : '');
     const nameHtml = showName ? `<span class="col-tile-name">${esc(it.name)}</span>` : '';
@@ -10888,7 +10967,7 @@
     const owned = items.filter((it) => it.owned).length, total = items.length;
     const tally = Rarity.tally(items);
 
-    const emblem = $('#col-detail-emblem'); if (emblem) emblem.innerHTML = `<img src="${cat.emblem}" alt="" aria-hidden="true">`;
+    const emblem = $('#col-detail-emblem'); if (emblem) emblem.innerHTML = catEmblemHtml(cat);
     const title = $('#col-detail-title'); if (title) title.textContent = I18n.t(cat.nameKey);
     const sub = $('#col-detail-sub'); if (sub) sub.textContent = I18n.t(cat.subKey);
     const detailView = $('#view-collection-detail');
@@ -10938,10 +11017,14 @@
           </section>`;
         }).join('');
       }
-      // Equipar.
+      // Equipar (categorías normales).
       sections.querySelectorAll('[data-col-equip]').forEach((btn) => btn.addEventListener('click', () => {
         if (collEquip(collectionDetailCat, btn.dataset.colEquip)) { Sound.success(); updateTopBars(); buildCollectionDetail(); }
         else Sound.ui();
+      }));
+      // Packs: abrir el modal de contenido (ver iconos + equipar).
+      sections.querySelectorAll('[data-col-pack]').forEach((btn) => btn.addEventListener('click', () => {
+        Sound.ui(); openIconPackModal(btn.dataset.colPack, { onChange: buildCollectionDetail });
       }));
     }
 
@@ -11074,6 +11157,58 @@
     buildCollectionDetail();
     HubViews.open('collection-detail', { nav: 'nav-collections' });
     requestAnimationFrame(refreshColDots);
+  }
+
+  /* ---- Modal de contenido de un pack de iconos (reutilizable: tienda + colección).
+   * Muestra TODOS los iconos del pack + acción equipar/comprar. `onChange` refresca
+   * la vista que lo abrió. */
+  let _iconPackOnChange = null;
+  function fillIconPackModal(packId) {
+    const pack = IconPacks.DEFS[packId]; if (!pack) return;
+    const rarity = Rarity.of(pack), accent = Rarity.accent(rarity);
+    const owned = Meta.ownsIconPack(packId), equipped = Meta.equippedIconPack() === packId;
+    const emblem = $('#icon-pack-emblem'); if (emblem) emblem.innerHTML = IconPacks.previewHtml(packId, 4);
+    const title = $('#icon-pack-title'); if (title) title.textContent = pack.name;
+    const chip = $('#icon-pack-rarity'); if (chip) { chip.textContent = Rarity.label(rarity); chip.style.setProperty('--rar', accent); }
+    const desc = $('#icon-pack-desc'); if (desc) desc.textContent = pack.descKey ? I18n.t(pack.descKey) : '';
+    const grid = $('#icon-pack-grid');
+    if (grid) grid.innerHTML = IconPacks.iconsOf(packId).map((ic) => `<span class="icon-pack-cell">${IconPacks.svg(packId, ic)}</span>`).join('');
+    const note = $('#icon-pack-note'); if (note) { note.hidden = !equipped; note.textContent = equipped ? I18n.t('iconpack_equipped_note') : ''; }
+    const action = $('#icon-pack-action');
+    if (action) {
+      action.classList.remove('confirming'); delete action.dataset.armed;
+      if (equipped) { action.disabled = true; action.innerHTML = esc(I18n.t('equipped')); }
+      else if (owned) { action.disabled = false; action.innerHTML = esc(I18n.t('equip')); }
+      else { action.disabled = false; action.innerHTML = pack.cost > 0 ? `${iconInline('coin')} ${pack.cost}` : esc(I18n.t('free')); }
+    }
+  }
+  function openIconPackModal(packId, opts = {}) {
+    if (!IconPacks.DEFS[packId]) return;
+    _iconPackOnChange = typeof opts.onChange === 'function' ? opts.onChange : null;
+    const action = $('#icon-pack-action');
+    if (action && !action.dataset.wired) {
+      action.dataset.wired = '1';
+      action.addEventListener('click', () => {
+        const id = action.dataset.pack;
+        const pack = IconPacks.DEFS[id]; if (!pack) return;
+        if (Meta.ownsIconPack(id)) {
+          if (Meta.equipIconPack(id)) Sound.success();
+        } else if (pack.cost > 0 && !action.dataset.armed) {
+          // Confirmación de compra en dos toques para packs de pago (futuros).
+          action.dataset.armed = '1'; action.classList.add('confirming');
+          const prev = action.innerHTML; action.innerHTML = `${esc(I18n.t('confirm_buy'))} ${prev}`;
+          setTimeout(() => { if (action.isConnected && action.dataset.armed) { delete action.dataset.armed; action.classList.remove('confirming'); fillIconPackModal(id); } }, 3000);
+          Sound.ui(); return;
+        } else if (Meta.buyIconPack(id)) { Meta.equipIconPack(id); Sound.success(); }
+        else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); return; }
+        updateTopBars();
+        fillIconPackModal(id);
+        if (_iconPackOnChange) _iconPackOnChange();
+      });
+    }
+    if (action) action.dataset.pack = packId;
+    fillIconPackModal(packId);
+    Modal.open('modal-icon-pack');
   }
 
   function playerCardHtml(extraClass = '') {
@@ -11503,10 +11638,24 @@
           : `<button class="btn btn-primary btn-sm" data-buy="${id}">${iconInline('coin')} ${t.cost}</button>`;
       return `<div class="shop-item${eq ? ' on' : ''}" data-theme="${id}"><button class="shop-sw" type="button" data-theme-preview="${id}" style="background:${Themes.swatch(id)}" aria-label="${esc(I18n.t('preview_theme').replace('{name}', t.name))}"></button><span class="shop-name">${esc(t.name)}</span>${btn}</div>`;
     }).join('');
+    const eqPack = Meta.equippedIconPack();
+    const iconPacksHTML = IconPacks.order.map((id) => {
+      const p = IconPacks.DEFS[id], owned = Meta.ownsIconPack(id), eq = eqPack === id, rarity = Rarity.of(p);
+      const btn = eq ? `<button class="btn btn-ghost btn-sm" disabled>${esc(I18n.t('equipped'))}</button>`
+        : owned ? `<button class="btn btn-primary btn-sm" data-ipack-eq="${id}">${esc(I18n.t('equip'))}</button>`
+          : `<button class="btn btn-primary btn-sm" data-ipack-buy="${id}">${p.cost === 0 ? esc(I18n.t('free')) : iconInline('coin') + ' ' + p.cost}</button>`;
+      return `<div class="iconpack-card${eq ? ' on' : ''}" data-pack="${id}">
+        <button class="iconpack-preview" type="button" data-ipack-view="${id}" aria-label="${esc(I18n.t('iconpack_view'))}">${IconPacks.previewHtml(id, 4)}</button>
+        <span class="iconpack-name">${esc(p.name)}</span>
+        <span class="rarity-chip" style="--rar:${Rarity.accent(rarity)}">${esc(Rarity.label(rarity))}</span>
+        <div class="iconpack-actions"><button class="btn btn-ghost btn-sm" type="button" data-ipack-view="${id}">${esc(I18n.t('iconpack_view'))}</button>${btn}</div>
+      </div>`;
+    }).join('');
     list.innerHTML = `<section class="player-shop-hero">${playerCardHtml('player-card-shop')}</section>
       <h3 class="group-title">${esc(I18n.t('shop_player_icons'))}</h3><div class="player-shop-grid">${iconCards}</div>
       <h3 class="group-title">${esc(I18n.t('shop_player_borders'))}</h3><div class="player-shop-grid">${borderCards}</div>
       <h3 class="group-title">${esc(I18n.t('shop_boards'))}</h3><div class="board-grid">${boardsHTML}</div>
+      <h3 class="group-title">${esc(I18n.t('shop_iconpacks'))}</h3><div class="iconpack-grid">${iconPacksHTML}</div>
       <h3 class="group-title">${esc(I18n.t('shop_themes'))}</h3><div class="themes-grid">${themesHTML}</div>`;
     const armBuy = (button) => {
       if (button.dataset.armed) return true;
@@ -11522,6 +11671,9 @@
     list.querySelectorAll('[data-pborder-eq]').forEach((button) => button.addEventListener('click', () => { Meta.equipAvatarBorder(button.dataset.pborderEq); Sound.ui(); refreshPlayerShop(); }));
     list.querySelectorAll('[data-bbuy]').forEach((button) => button.addEventListener('click', () => { if (!armBuy(button)) { Sound.ui(); return; } const id = button.dataset.bbuy; if (Meta.buyBoard(id, Boards.DEFS[id].cost)) { Sound.success(); Meta.equipBoard(id); Boards.apply(); buildShop(); Toasts.show(I18n.t('board_unlocked'), 'good', 1600); } else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); } }));
     list.querySelectorAll('[data-beq]').forEach((button) => button.addEventListener('click', () => { Meta.equipBoard(button.dataset.beq); Boards.apply(); Sound.ui(); buildShop(); }));
+    list.querySelectorAll('[data-ipack-view]').forEach((button) => button.addEventListener('click', () => { Sound.ui(); openIconPackModal(button.dataset.ipackView, { onChange: () => { updateTopBars(); buildShop(); } }); }));
+    list.querySelectorAll('[data-ipack-eq]').forEach((button) => button.addEventListener('click', () => { Meta.equipIconPack(button.dataset.ipackEq); Sound.ui(); buildShop(); }));
+    list.querySelectorAll('[data-ipack-buy]').forEach((button) => button.addEventListener('click', () => { if (!armBuy(button)) { Sound.ui(); return; } const id = button.dataset.ipackBuy; if (Meta.buyIconPack(id)) { Sound.success(); Meta.equipIconPack(id); buildShop(); Toasts.show(I18n.t('equipped'), 'good', 1600); } else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); } }));
     list.querySelectorAll('[data-theme-preview]').forEach((button) => button.addEventListener('click', () => { Cosmetics.previewTheme(button.dataset.themePreview); Sound.ui(); }));
     list.querySelectorAll('[data-buy]').forEach((button) => button.addEventListener('click', (event) => { event.stopPropagation(); if (!armBuy(button)) { Sound.ui(); return; } const id = button.dataset.buy; if (Meta.buy(id, Themes.DEFS[id].cost)) { Sound.success(); Meta.equip('theme', id); Cosmetics.apply(); refreshStart(); buildShop(); Toasts.show('¡Tema desbloqueado!', 'good', 1600); } else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); } }));
     list.querySelectorAll('[data-equip]').forEach((button) => button.addEventListener('click', (event) => { event.stopPropagation(); Meta.equip('theme', button.dataset.equip); Cosmetics.apply(); Sound.ui(); refreshStart(); buildShop(); }));
@@ -12646,6 +12798,7 @@
         if (Picker.pending) { e.preventDefault(); Picker.cancel(); }
         else if (Modal._id === 'modal-mode-launch' && !$('#mode-launch-detail').hidden) ModeLaunch.closeDetail();
         else if (Modal._id === 'modal-mode-launch') Modal.close();
+        else if (Modal._id === 'modal-icon-pack') Modal.close();
         else if (document.body.dataset.screen === 'start' && HubViews.current === 'chests'
           && $('#view-chests') && $('#view-chests').classList.contains('is-catalog-open')) toggleChestCatalog(false);
         else if (document.body.dataset.screen === 'start' && HubViews.current !== 'home') HubViews.back();

@@ -9214,7 +9214,8 @@ body.reduced-fx #screen-start .chest-reward-stage .chest-reveal { animation: non
 
 /* ---- Hub: píldoras resumen + tarjetas grandes ---- */
 #screen-start .col-hub-body { display: flex; flex-direction: column; gap: clamp(11px, 2vw, 17px); }
-#screen-start .col-pills { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(5px, 1vw, 9px); }
+#screen-start .col-pills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(5px, 1vw, 9px); }
+@media (min-width: 620px) { #screen-start .col-pills { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 #screen-start .col-pill {
   min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;
   padding: clamp(7px, 1.4vw, 11px) 4px; border-radius: 14px;
@@ -9401,6 +9402,41 @@ body.reduced-fx #screen-start .col-card, body.reduced-fx #screen-start .col-tile
   #screen-start .col-card { grid-template-columns: clamp(46px, 14vw, 62px) minmax(0, 1fr) auto; }
   #screen-start .col-card-chev { display: none; }
 }
+
+/* =========================================================================
+   PACKS DE ICONOS DE TABLERO · collage, chip de rareza, tienda y modal
+   (globales: se usan en Colecciones, Tienda y el modal de contenido)
+   ========================================================================= */
+.iconpack-collage { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 7%; width: 100%; height: 100%; padding: 8%; box-sizing: border-box; }
+.iconpack-collage-cell { display: grid; place-items: center; min-width: 0; min-height: 0; }
+.iconpack-collage-cell svg { width: 100%; height: 100%; }
+
+.rarity-chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: .62rem; font-weight: 900; text-transform: uppercase; letter-spacing: .4px; color: var(--rar, #9fb0d6); background: color-mix(in srgb, var(--rar, #9fb0d6) 18%, rgba(8,14,40,.85)); border: 1px solid color-mix(in srgb, var(--rar, #9fb0d6) 55%, transparent); }
+
+/* Tienda: tarjetas de pack */
+.iconpack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(146px, 1fr)); gap: clamp(9px, 1.6vw, 14px); }
+.iconpack-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 12px 14px; border-radius: 18px; border: 1px solid rgba(123,144,214,.32); background: linear-gradient(150deg, rgba(24,38,91,.9), rgba(9,17,50,.94)); box-shadow: inset 0 1px 0 rgba(255,255,255,.07); text-align: center; }
+.iconpack-card.on { border-color: rgba(255,91,158,.6); box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 0 18px -6px rgba(255,91,158,.55); }
+.iconpack-preview { width: clamp(90px, 27vw, 122px); height: clamp(90px, 27vw, 122px); padding: 0; border-radius: 16px; border: 1px solid rgba(120,140,220,.35); background: radial-gradient(120% 120% at 30% 20%, rgba(40,54,110,.5), rgba(8,14,40,.85)); cursor: pointer; overflow: hidden; transition: transform .15s ease, border-color .15s ease; }
+.iconpack-preview:hover, .iconpack-preview:focus-visible { transform: translateY(-2px); border-color: rgba(255,91,158,.6); outline: none; }
+.iconpack-name { color: #fff; font-size: .92rem; font-weight: 900; }
+.iconpack-actions { display: flex; flex-direction: column; gap: 6px; width: 100%; align-items: center; }
+.iconpack-actions .btn { min-width: 112px; }
+
+/* Modal de contenido del pack */
+.icon-pack-modal .m-emblem { overflow: hidden; }
+.icon-pack-meta { display: flex; align-items: center; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+.icon-pack-meta .modal-sub { margin: 0; }
+.icon-pack-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(7px, 1.8vw, 12px); }
+@media (min-width: 480px) { .icon-pack-grid { grid-template-columns: repeat(6, 1fr); } }
+.icon-pack-cell { aspect-ratio: 1 / 1; display: grid; place-items: center; padding: 13%; border-radius: 14px; border: 1px solid rgba(120,140,220,.26); background: linear-gradient(160deg, rgba(28,40,92,.55), rgba(8,14,40,.85)); }
+.icon-pack-cell svg { width: 100%; height: 100%; filter: drop-shadow(0 2px 4px rgba(0,0,0,.45)); }
+.icon-pack-note { margin: 12px 0 0; text-align: center; color: #45e072; font-size: .78rem; font-weight: 800; }
+
+/* Colección: el collage encaja dentro del marco del tile de pack */
+#screen-start .col-tile-art .iconpack-collage { width: 100%; height: 100%; padding: 13%; }
+body.reduced-fx .iconpack-preview { transition: none; }
+
 #screen-start .profile-edit-name { float: right; margin: 0 0 8px 8px; }
 
 @media (max-width: 620px) {
