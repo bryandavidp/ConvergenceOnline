@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.15.0';
+  const VERSION = '2.16.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -565,7 +565,8 @@
         how3: 'Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!', how4: 'Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.',
         how5: 'Los iconos aparecen solos: vacía el tablero antes de que se llene.',
         tutorial_btn: 'Tutorial interactivo', understood: 'Entendido',
-        pause: 'Pausa', resume: 'Reanudar', restart: 'Reiniciar', menu: 'Menú', close: 'Cerrar', back: 'Volver', retry: 'Reintentar', share: 'Compartir',
+        pause: 'Pausa', resume: 'Reanudar', restart: 'Reiniciar', menu: 'Menú', main_menu: 'Menú principal', close: 'Cerrar', back: 'Volver', retry: 'Reintentar', share: 'Compartir',
+        pause_subtitle: 'Tómate un respiro, ¡tú puedes!', pause_tag_endless: 'Oleadas infinitas', pause_tag_timed: 'Contra el reloj',
         settings_title: '⚙️ Ajustes', settings_word: 'Ajustes', shop_title: '🛍️ Tienda', shop_hint: 'Temas del tablero. Pulsa para previsualizar.',
         profile_title: '📊 Perfil', achievements_title: '🏆 Trofeos', profile_card_title: 'Tarjeta de jugador', profile_loadout_title: 'Tu estilo', profile_icons_title: 'Avatares', profile_borders_title: 'Bordes', profile_owned: '{n}/{total} desbloqueados', shop_player_hint: 'Personaliza tu tarjeta. También puedes conseguir avatares y bordes en los cofres.', shop_player_icons: 'Avatares', shop_player_borders: 'Bordes de avatar', pause_run_title: 'Partida en curso', pause_score_label: 'Puntos', pause_combo_label: 'Combo', trophies_progress: '{n} de {total} trofeos', best_by_mode: 'Mejores marcas por modo', achievements: 'Logros',
         adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
@@ -937,7 +938,8 @@
         how3: 'If <strong>2 or more match</strong>, they converge and vanish!', how4: 'Chain quick clears to raise the <strong>combo</strong> and multiply points.',
         how5: 'Icons spawn on their own: clear the board before it fills up.',
         tutorial_btn: 'Interactive tutorial', understood: 'Got it',
-        pause: 'Paused', resume: 'Resume', restart: 'Restart', menu: 'Menu', close: 'Close', back: 'Back', retry: 'Retry', share: 'Share',
+        pause: 'Paused', resume: 'Resume', restart: 'Restart', menu: 'Menu', main_menu: 'Main menu', close: 'Close', back: 'Back', retry: 'Retry', share: 'Share',
+        pause_subtitle: "Take a breather, you've got this!", pause_tag_endless: 'Endless waves', pause_tag_timed: 'Beat the clock',
         settings_title: '⚙️ Settings', settings_word: 'Settings', shop_title: '🛍️ Shop', shop_hint: 'Board themes. Tap to preview.',
         profile_title: '📊 Profile', achievements_title: '🏆 Trophies', profile_card_title: 'Player card', profile_loadout_title: 'Your style', profile_icons_title: 'Avatars', profile_borders_title: 'Frames', profile_owned: '{n}/{total} unlocked', shop_player_hint: 'Customize your player card. Avatars and frames can also drop from chests.', shop_player_icons: 'Avatars', shop_player_borders: 'Avatar frames', pause_run_title: 'Current run', pause_score_label: 'Score', pause_combo_label: 'Combo', trophies_progress: '{n} of {total} trophies', best_by_mode: 'Best by mode', achievements: 'Achievements',
         adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
@@ -2447,6 +2449,8 @@
     },
     open(name, options = {}) {
       const view = this._view(name); if (!view) return false;
+      // Navegar a otra vista (no-Ajustes) desde la pausa cancela el retorno.
+      if (pauseSettingsReturn && name !== 'settings') pauseSettingsReturn = false;
       const route = this._captureRoute();
       if (this.current === 'shop' && name !== 'shop') Cosmetics.apply();
       if (this.current === 'chests' && name !== 'chests') {
@@ -2486,6 +2490,8 @@
       return true;
     },
     back() {
+      // Ajustes abierto desde la pausa: "Volver" reabre el modal de pausa.
+      if (pauseSettingsReturn && this.current === 'settings') { returnFromPauseSettings(); return; }
       const route = this._history.pop();
       if (!route || route.kind === 'home') { this.home({ clearHistory: false }); return; }
       if (route.kind === 'hub') {
@@ -2505,6 +2511,7 @@
     },
     home(options = {}) {
       if (!this.host || !this.homeMain) return;
+      if (options.focus !== false) pauseSettingsReturn = false;
       if (this.current === 'shop') Cosmetics.apply();
       if (this.current === 'chests') {
         resetChestCeremony(); setChestButtonsBusy(false);
@@ -11226,6 +11233,25 @@
   }
   function openSettings() { buildSettings(); HubViews.open('settings'); }
 
+  // Acceso directo a Ajustes desde la pausa: abre Ajustes conservando la partida
+  // pausada y, al cerrar (X o "Volver"), reabre el modal de pausa sobre el juego.
+  let pauseSettingsReturn = false;
+  function openSettingsFromPause() {
+    if (State.status !== 'paused') return;
+    pauseSettingsReturn = true;
+    Sound.ui();
+    Modal.close();
+    openSettings();
+  }
+  function returnFromPauseSettings() {
+    pauseSettingsReturn = false;
+    HubViews.home({ focus: false });
+    Screens.show('game');
+    State.status = 'paused';
+    renderPauseSummary();
+    Modal.open('modal-pause');
+  }
+
   function openEvents() {
     refreshStart();
     HubViews.open('events', { nav: 'nav-events' });
@@ -11333,14 +11359,36 @@
     if (borders) borders.querySelectorAll('[data-profile-border-eq]').forEach((button) => button.addEventListener('click', () => { if (!Meta.equipAvatarBorder(button.dataset.profileBorderEq)) return; Sound.ui(); updateTopBars(); buildPlayerProfile(); }));
   }
 
+  // Etiqueta corta del modo para la tarjeta "Partida en curso" de la pausa.
+  function pauseModeTag(mode) {
+    const m = Config.MODES[mode] || {};
+    if (mode === 'supervivencia') return I18n.t('pause_tag_endless');
+    if (mode === 'aventura') return I18n.t('ml_adv_tag');
+    if (m.timed) return I18n.t('pause_tag_timed');
+    const goal = I18n.modeT(mode, 'goal');
+    if (goal) return goal;
+    return m.endless ? I18n.t('pause_tag_endless') : '';
+  }
+
   function renderPauseSummary() {
     const card = $('#pause-player-card'); if (card) card.innerHTML = playerCardHtml('player-card-pause');
     const summary = $('#pause-run-summary'); if (!summary) return;
-    const modeName = Config.MODES[State.mode] ? I18n.modeT(State.mode, 'name') : I18n.t('pause_run_title');
-    summary.innerHTML = `<div class="pause-run-heading"><small>${esc(I18n.t('pause_run_title'))}</small><b>${esc(modeName)}</b></div>
-      <div class="pause-run-stat"><span>${esc(I18n.t('pause_score_label'))}</span><strong>${fmtNum(State.score || 0)}</strong></div>
-      <div class="pause-run-stat"><span>${esc(I18n.t('pause_combo_label'))}</span><strong>×${fmtNum(State.maxCombo || State.combo || 0)}</strong></div>
-      <div class="pause-run-stat"><span>${esc(I18n.t(State.mode === 'supervivencia' ? 'st_wave' : 'st_level'))}</span><strong>${fmtNum(State.mode === 'supervivencia' ? (Survival.wave || 1) : (State.level || 1))}</strong></div>`;
+    const hasMode = !!Config.MODES[State.mode];
+    const modeName = hasMode ? I18n.modeT(State.mode, 'name') : I18n.t('pause_run_title');
+    const modeIcon = hasMode && MODE_IMG[State.mode] ? iconAny(MODE_IMG[State.mode]) : '';
+    const tag = hasMode ? pauseModeTag(State.mode) : '';
+    const isSurv = State.mode === 'supervivencia';
+    const progLabel = I18n.t(isSurv ? 'st_wave' : 'st_level');
+    const progVal = fmtNum(isSurv ? (Survival.wave || 1) : (State.level || 1));
+    summary.innerHTML = `<div class="pause-run-card">
+        <span class="pause-run-icon" aria-hidden="true">${modeIcon}</span>
+        <div class="pause-run-copy"><small>${esc(I18n.t('pause_run_title'))}</small><b>${esc(modeName)}</b>${tag ? `<span class="pause-run-tag">${esc(tag)}</span>` : ''}</div>
+      </div>
+      <div class="pause-run-stats">
+        <div class="pause-run-stat"><span>${esc(I18n.t('pause_score_label'))}</span><strong>${fmtNum(State.score || 0)}</strong></div>
+        <div class="pause-run-stat"><span>${esc(I18n.t('pause_combo_label'))}</span><strong>×${fmtNum(State.maxCombo || State.combo || 0)}</strong></div>
+        <div class="pause-run-stat"><span>${esc(progLabel)}</span><strong>${progVal}</strong></div>
+      </div>`;
   }
 
   function openMedals(view = 'profile') {
@@ -12897,6 +12945,7 @@
 
     // Modales
     on('btn-resume', 'click', () => Game.resume());
+    on('btn-pause-settings', 'click', () => openSettingsFromPause());
     on('btn-pause-restart', 'click', () => Game.restart());
     on('btn-pause-quit', 'click', () => Game.quit());
     on('btn-next-level', 'click', () => Game.nextLevel());

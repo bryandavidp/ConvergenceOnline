@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.15.0" />
+  <link rel="stylesheet" href="styles.css?v=2.16.0" />
 </head>
 <body data-screen="login">
   <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
@@ -458,14 +458,23 @@
 
     <!-- Pausa -->
     <div class="modal pause-modal" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true"><span class="icv2" style="--icv2-url:url('img/icons-v2/9-media/pause.svg')"></span></span><h2 id="pause-title" data-i18n="pause">Pausa</h2></div>
+      <!-- Acceso directo a Ajustes (vuelve a la pausa al cerrar). -->
+      <button class="pause-settings" type="button" id="btn-pause-settings" aria-label="Ajustes" data-i18n-al="settings_word">
+        <span class="pause-settings-badge" aria-hidden="true"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/settings.svg')"></span></span>
+        <span class="pause-settings-tx" data-i18n="settings_word">Ajustes</span>
+      </button>
+      <div class="pause-head">
+        <span class="pause-emblem" aria-hidden="true"><span class="icv2" style="--icv2-url:url('img/icons-v2/9-media/pause.svg')"></span></span>
+        <h2 id="pause-title" data-i18n="pause">Pausa</h2>
+        <p class="pause-subtitle" data-i18n="pause_subtitle">Tómate un respiro, ¡tú puedes!</p>
+      </div>
       <div class="pause-player-card" id="pause-player-card"></div>
       <div class="pause-run-summary" id="pause-run-summary"></div>
       <p class="modal-sub pause-note" id="pause-note" data-i18n="pause_no_save" hidden>Este modo no guarda la partida al salir.</p>
       <div class="modal-actions modal-buttons">
-        <button class="btn btn-primary btn-icon" id="btn-resume"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="resume">Reanudar</span></button>
-        <button class="btn btn-ghost btn-icon" id="btn-pause-restart"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/8-ui/refresh.svg')" aria-hidden="true"></span><span data-i18n="restart">Reiniciar</span></button>
-        <button class="btn btn-ghost btn-icon" id="btn-pause-quit"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/8-ui/cross.svg')" aria-hidden="true"></span><span data-i18n="menu">Menú</span></button>
+        <button class="btn btn-primary btn-icon pause-btn-resume" id="btn-resume"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="resume">Reanudar</span></button>
+        <button class="btn btn-icon pause-btn-restart" id="btn-pause-restart"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/8-ui/refresh.svg')" aria-hidden="true"></span><span data-i18n="restart">Reiniciar</span></button>
+        <button class="btn btn-icon pause-btn-menu" id="btn-pause-quit"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/6-buildings/house.svg')" aria-hidden="true"></span><span data-i18n="main_menu">Menú principal</span></button>
       </div>
     </div>
 
@@ -864,6 +873,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.15.0" defer></script>
+  <script src="game.js?v=2.16.0" defer></script>
 </body>
 </html>
