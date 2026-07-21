@@ -1,8 +1,8 @@
 /* Convergencia — Service Worker (offline-first).
  * Sube CACHE al publicar una versión nueva para invalidar la caché anterior. */
-const CACHE = 'cv-cache-v2.14.0';
+const CACHE = 'cv-cache-v2.15.0';
 const ASSETS = [
-  './', './index.html', './styles.css?v=2.14.0', './game.js?v=2.14.0', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=2.15.0', './game.js?v=2.15.0', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
   './fonts/NunitoSans-Variable.ttf',
   './img/ui-generated/chests/chest-open.png',
@@ -55,7 +55,11 @@ const NATURE_ADVANCED_PACK_ASSETS = [
   'hibiscus','bamboo','pine-cone','vine-spiral','emerald-crystal','tree-stump',
   'blueberries','flowering-cactus','maple-leaf','holly-leaf','thumbnail',
 ].map((n) => './img/icon-packs/nature-advanced/' + n + '.png');
-const ICON_PACK_ASSETS = PRISMATIC_PACK_ASSETS.concat(NATURE_BASIC_PACK_ASSETS, NATURE_ADVANCED_PACK_ASSETS);
+const NEON_PACK_ASSETS = [
+  'neon-square','neon-triangle','neon-star','neon-circle',
+  'neon-diamond','neon-hexagon','neon-heart','neon-drop','thumbnail',
+].map((n) => './img/icon-packs/neon/' + n + '.png');
+const ICON_PACK_ASSETS = PRISMATIC_PACK_ASSETS.concat(NATURE_BASIC_PACK_ASSETS, NATURE_ADVANCED_PACK_ASSETS, NEON_PACK_ASSETS);
 const V2_ICONS = [
   './img/icons-v2/1-game/double.svg',
   './img/icons-v2/2-items/map.svg',

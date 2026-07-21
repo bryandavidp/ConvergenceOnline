@@ -13,7 +13,7 @@
 2. **Implementar el sistema de "Iconos"** = **packs de iconos de tablero**
    comprables. Los "iconos" son las figuras que aparecen en el tablero (el
    módulo `Icons`, formas SVG × colores). El sistema incluye **Cosmos**,
-   **Naturaleza Básico**, **Naturaleza Avanzado** y **Joyas Prisma**, y queda
+   **Naturaleza Básico**, **Naturaleza Avanzado**, **Pack Neón** y **Joyas Prisma**, y queda
    preparado para añadir más.
 3. El pack de iconos tiene **su sección en la Tienda** y **su panel en
    Colecciones**.
@@ -43,10 +43,10 @@
 
 ### 3.1 Modelo de datos
 - **`IconPacks`** (módulo tras `Icons`):
-  - `DEFAULT: 'cosmos'`; `DEFS` registra los cuatro packs y `order` mantiene su
+  - `DEFAULT: 'cosmos'`; `DEFS` registra los cinco packs y `order` mantiene su
     orden visible por precio.
-  - `CATALOGS`: catálogo de 8 figuras para Naturaleza Básico y de 10 para
-    Naturaleza Avanzado y Joyas Prisma.
+  - `CATALOGS`: catálogo de 8 figuras para Naturaleza Básico y Pack Neón, y de
+    10 para Naturaleza Avanzado y Joyas Prisma.
   - `iconsOf(id)`: 16 ids representativos para Cosmos o tantos como artes
     declare el catálogo raster.
   - `svg(packId, iconId)`: conserva SVG para Cosmos y devuelve el PNG RGBA
@@ -92,6 +92,8 @@
   2.13.0.
 - [x] F7. Naturaleza Básico y Avanzado: 18 artes PNG + 2 miniaturas, catálogos
   raster genéricos, precios 800/1600, precache, pruebas y bump 2.14.0.
+- [x] F8. Pack Neón: 8 artes PNG transparentes + miniatura, precio 1200,
+  catálogo bilingüe, precache, pruebas y bump 2.15.0.
 
 ## 5. Cómo quedó (referencia de mantenimiento)
 
@@ -106,7 +108,7 @@
   `openIconPackModal(id, { onChange })`.
 - **Modal de pack**: `openIconPackModal` / `fillIconPackModal` sobre
   `#modal-icon-pack` (index.html). Muestra todas las figuras reales de cada pack
-  (16 en Cosmos, 8 en Naturaleza Básico y 10 en los otros dos) +
+  (16 en Cosmos, 8 en Naturaleza Básico y Pack Neón, y 10 en los otros dos) +
   equipar/comprar.
 - **Tienda**: sección `shop_iconpacks` en `buildShop`; `data-ipack-view/eq/buy`.
 - **Renombrado**: `col_cat_icons` ahora = packs de tablero; `col_cat_avatars`
@@ -115,12 +117,12 @@
 ### Fidelidad / decisiones
 - Cosmos sigue siendo gratuito y equipado por defecto. Naturaleza Básico es
   raro y cuesta 800 monedas; Naturaleza Avanzado es épico y cuesta 1.600;
-  Joyas Prisma es legendario y cuesta 1.800. Todos usan confirmación en dos
-  toques.
+  Pack Neón es épico y cuesta 1.200; Joyas Prisma es legendario y cuesta 1.800.
+  Todos usan confirmación en dos toques.
 - Los ids lógicos no cambian al equipar un pack: se preservan reglas, dificultad
   y partidas guardadas. La ventana máxima de ocho fichas se mapea sobre diez
   joyas, por lo que no hay duplicados visuales dentro de un nivel.
-- Los 28 iconos raster y sus tres miniaturas cuadradas son RGBA 512×512 y se
+- Los 36 iconos raster y sus cuatro miniaturas cuadradas son RGBA 512×512 y se
   precachean para uso offline. La misma miniatura identifica cada pack en
   Tienda, Colecciones y el modal de detalle.
 
@@ -130,9 +132,9 @@
   **preexistentes** (fallan en la base). La selección de 65 pruebas de motor,
   convergencia, Inicio y packs pasa completa.
 - `node --check game.js` y `node --check sw.js`: sin errores de sintaxis.
-- Navegador integrado (ES): cuatro tarjetas en Tienda y Colecciones; modales de
-  Naturaleza con 8/10 iconos, precios 800/1600, dimensiones naturales 512×512 y
-  cero errores de consola. Todo verificado.
+- Navegador integrado (ES): cinco tarjetas en Tienda y Colecciones; modales de
+  Naturaleza y Neón con 8/10 iconos, precios 800/1200/1600, dimensiones
+  naturales 512×512 y cero errores de consola. Todo verificado.
 
 ## 7. Registro
 
@@ -143,3 +145,5 @@
   extremo a extremo. Versión 2.13.0.
 - 2026-07-21: F7. Packs Naturaleza Básico y Naturaleza Avanzado generados e
   integrados de extremo a extremo. Versión 2.14.0.
+- 2026-07-21: F8. Pack Neón generado e integrado de extremo a extremo. Versión
+  2.15.0.

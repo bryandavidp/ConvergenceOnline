@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.14.0';
+  const VERSION = '2.15.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -276,9 +276,10 @@
       cosmos: { name: 'Cosmos', rarity: 'common', cost: 0, descKey: 'iconpack_cosmos_desc' },
       'nature-basic': { name: 'Naturaleza Básico', nameKey: 'iconpack_nature_basic_name', rarity: 'rare', cost: 800, descKey: 'iconpack_nature_basic_desc', raster: true, dir: 'nature-basic', thumbnail: 'thumbnail.png' },
       'nature-advanced': { name: 'Naturaleza Avanzado', nameKey: 'iconpack_nature_advanced_name', rarity: 'epic', cost: 1600, descKey: 'iconpack_nature_advanced_desc', raster: true, dir: 'nature-advanced', thumbnail: 'thumbnail.png' },
+      neon: { name: 'Pack Neón', nameKey: 'iconpack_neon_name', rarity: 'epic', cost: 1200, descKey: 'iconpack_neon_desc', raster: true, dir: 'neon', thumbnail: 'thumbnail.png' },
       prismatic: { name: 'Joyas Prisma', nameKey: 'iconpack_prismatic_name', rarity: 'legendary', cost: 1800, descKey: 'iconpack_prismatic_desc', raster: true, dir: 'prismatic-jewels', thumbnail: 'thumbnail.png' },
     },
-    order: ['cosmos', 'nature-basic', 'nature-advanced', 'prismatic'],
+    order: ['cosmos', 'nature-basic', 'neon', 'nature-advanced', 'prismatic'],
     CATALOGS: {
       prismatic: [
         { file: 'violet-diamond.png', es: 'Diamante violeta', en: 'Violet diamond', color: '#c038ff' },
@@ -313,6 +314,16 @@
         { file: 'flowering-cactus.png', es: 'Cactus florecido', en: 'Flowering cactus', color: '#63c73e' },
         { file: 'maple-leaf.png', es: 'Hoja de arce', en: 'Maple leaf', color: '#ed641b' },
         { file: 'holly-leaf.png', es: 'Hoja de acebo', en: 'Holly leaf', color: '#79d524' },
+      ],
+      neon: [
+        { file: 'neon-square.png', es: 'Cuadrado neón', en: 'Neon square', color: '#24a8ff' },
+        { file: 'neon-triangle.png', es: 'Triángulo neón', en: 'Neon triangle', color: '#27ec59' },
+        { file: 'neon-star.png', es: 'Estrella neón', en: 'Neon star', color: '#ffc326' },
+        { file: 'neon-circle.png', es: 'Círculo neón', en: 'Neon circle', color: '#ff294c' },
+        { file: 'neon-diamond.png', es: 'Rombo neón', en: 'Neon diamond', color: '#b83cff' },
+        { file: 'neon-hexagon.png', es: 'Hexágono neón', en: 'Neon hexagon', color: '#ff7d1f' },
+        { file: 'neon-heart.png', es: 'Corazón neón', en: 'Neon heart', color: '#ff3e9f' },
+        { file: 'neon-drop.png', es: 'Gota neón', en: 'Neon drop', color: '#22dce8' },
       ],
     },
     get PRISMATIC_ASSETS() { return this.CATALOGS.prismatic; },
@@ -446,7 +457,7 @@
         col_progress_icons: 'Progreso de iconos', col_progress_avatars: 'Progreso de avatares', col_progress_borders: 'Progreso de bordes', col_progress_boards: 'Progreso de tableros', col_progress_themes: 'Progreso de temas', col_progress_achievements: 'Progreso de logros',
         col_filter_all: 'Todos', col_sort_recent: 'Más reciente', col_sort_rarity: 'Rareza', col_sort_name: 'Nombre', col_sort_owned: 'Desbloqueados', col_sort_label: 'Ordenar por',
         col_locked_slot: 'Bloqueado · por descubrir', col_empty_rarity: 'Sin objetos de esta rareza todavía.',
-        shop_iconpacks: 'Iconos de tablero', iconpack_view: 'Ver iconos', iconpack_contents: 'Iconos del pack', iconpack_cosmos_desc: 'El set clásico de figuras de Convergence.', iconpack_nature_basic_name: 'Naturaleza Básico', iconpack_nature_basic_desc: 'Ocho figuras esenciales inspiradas en hojas, flores, agua y bosque.', iconpack_nature_advanced_name: 'Naturaleza Avanzado', iconpack_nature_advanced_desc: 'Diez figuras naturales poderosas con plantas, frutos, madera y cristal.', iconpack_prismatic_name: 'Joyas Prisma', iconpack_prismatic_desc: 'Diez joyas facetadas con color intenso, reflejos de cristal y brillo neón.', iconpack_equipped_note: 'Estos iconos aparecen ahora en tu tablero.',
+        shop_iconpacks: 'Iconos de tablero', iconpack_view: 'Ver iconos', iconpack_contents: 'Iconos del pack', iconpack_cosmos_desc: 'El set clásico de figuras de Convergence.', iconpack_nature_basic_name: 'Naturaleza Básico', iconpack_nature_basic_desc: 'Ocho figuras esenciales inspiradas en hojas, flores, agua y bosque.', iconpack_nature_advanced_name: 'Naturaleza Avanzado', iconpack_nature_advanced_desc: 'Diez figuras naturales poderosas con plantas, frutos, madera y cristal.', iconpack_neon_name: 'Pack Neón', iconpack_neon_desc: 'Ocho figuras clásicas reinventadas con tubos de luz y colores neón intensos.', iconpack_prismatic_name: 'Joyas Prisma', iconpack_prismatic_desc: 'Diez joyas facetadas con color intenso, reflejos de cristal y brillo neón.', iconpack_equipped_note: 'Estos iconos aparecen ahora en tu tablero.',
         col_banner_icons_title: 'Más packs pronto', col_banner_icons_desc: 'Nuevos packs de iconos llegarán a la tienda. ¡Colecciónalos todos!', col_banner_icons_cta: 'Ir a tienda',
         col_banner_avatars_title: 'Avatar exclusivo', col_banner_avatars_desc: 'Participa en eventos especiales para conseguir avatares únicos por tiempo limitado.', col_banner_avatars_cta: 'Ir a eventos',
         col_banner_borders_title: 'Presume tu estilo', col_banner_borders_desc: 'Los bordes no dan ventaja en el juego. ¡Coléccionalos todos y destaca!', col_banner_borders_cta: 'Ir a tienda',
@@ -818,7 +829,7 @@
         col_progress_icons: 'Icon progress', col_progress_avatars: 'Avatar progress', col_progress_borders: 'Border progress', col_progress_boards: 'Board progress', col_progress_themes: 'Theme progress', col_progress_achievements: 'Achievement progress',
         col_filter_all: 'All', col_sort_recent: 'Most recent', col_sort_rarity: 'Rarity', col_sort_name: 'Name', col_sort_owned: 'Unlocked', col_sort_label: 'Sort by',
         col_locked_slot: 'Locked · to discover', col_empty_rarity: 'No items of this rarity yet.',
-        shop_iconpacks: 'Board icons', iconpack_view: 'View icons', iconpack_contents: 'Pack icons', iconpack_cosmos_desc: 'The classic Convergence figure set.', iconpack_nature_basic_name: 'Nature Basic', iconpack_nature_basic_desc: 'Eight essential figures inspired by leaves, flowers, water and woodland.', iconpack_nature_advanced_name: 'Nature Advanced', iconpack_nature_advanced_desc: 'Ten powerful nature figures featuring plants, fruit, wood and crystal.', iconpack_prismatic_name: 'Prismatic Jewels', iconpack_prismatic_desc: 'Ten richly colored faceted jewels with crystal highlights and a neon glow.', iconpack_equipped_note: 'These icons now appear on your board.',
+        shop_iconpacks: 'Board icons', iconpack_view: 'View icons', iconpack_contents: 'Pack icons', iconpack_cosmos_desc: 'The classic Convergence figure set.', iconpack_nature_basic_name: 'Nature Basic', iconpack_nature_basic_desc: 'Eight essential figures inspired by leaves, flowers, water and woodland.', iconpack_nature_advanced_name: 'Nature Advanced', iconpack_nature_advanced_desc: 'Ten powerful nature figures featuring plants, fruit, wood and crystal.', iconpack_neon_name: 'Neon Pack', iconpack_neon_desc: 'Eight classic figures reinvented with luminous tubes and vivid neon colors.', iconpack_prismatic_name: 'Prismatic Jewels', iconpack_prismatic_desc: 'Ten richly colored faceted jewels with crystal highlights and a neon glow.', iconpack_equipped_note: 'These icons now appear on your board.',
         col_banner_icons_title: 'More packs soon', col_banner_icons_desc: 'New icon packs are coming to the shop. Collect them all!', col_banner_icons_cta: 'Go to shop',
         col_banner_avatars_title: 'Exclusive avatar', col_banner_avatars_desc: 'Join special events to get unique avatars for a limited time.', col_banner_avatars_cta: 'Go to events',
         col_banner_borders_title: 'Show off your style', col_banner_borders_desc: 'Borders give no gameplay advantage. Collect them all and stand out!', col_banner_borders_cta: 'Go to shop',

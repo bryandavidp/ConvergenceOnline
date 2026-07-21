@@ -43,12 +43,13 @@ test('Joyas Prisma registra los diez PNG transparentes del diseño', () => {
   }
 });
 
-test('Naturaleza Basico y Avanzado registran precios, rareza y todos sus PNG', () => {
+test('los packs raster registran precios, rareza y todos sus PNG', () => {
   const expected = [
     ['nature-basic', 'rare', 800, 8],
     ['nature-advanced', 'epic', 1600, 10],
+    ['neon', 'epic', 1200, 8],
   ];
-  assert.deepEqual(IconPacks.order, ['cosmos', 'nature-basic', 'nature-advanced', 'prismatic']);
+  assert.deepEqual(IconPacks.order, ['cosmos', 'nature-basic', 'neon', 'nature-advanced', 'prismatic']);
   for (const [packId, rarity, cost, count] of expected) {
     assert.equal(IconPacks.DEFS[packId].rarity, rarity);
     assert.equal(IconPacks.DEFS[packId].cost, cost);
@@ -70,8 +71,11 @@ test('el renderer resuelve cada pack raster desde su propia carpeta', () => {
   const iconId = IconPacks.iconsOf('nature-basic')[0];
   assert.match(IconPacks.svg('nature-basic', iconId), /nature-basic\/green-leaf\.png/);
   assert.match(IconPacks.svg('nature-advanced', iconId), /nature-advanced\/hibiscus\.png/);
+  assert.match(IconPacks.svg('neon', iconId), /neon\/neon-square\.png/);
   assert.equal(IconPacks.iconName('nature-basic', iconId, 'es'), 'Hoja verde');
   assert.equal(IconPacks.iconName('nature-advanced', iconId, 'en'), 'Hibiscus');
+  assert.equal(IconPacks.iconName('neon', iconId, 'es'), 'Cuadrado neón');
+  assert.equal(IconPacks.iconName('neon', iconId, 'en'), 'Neon square');
 });
 
 test('Joyas Prisma usa su miniatura generada en tienda y coleccion', () => {
@@ -84,17 +88,21 @@ test('Joyas Prisma usa su miniatura generada en tienda y coleccion', () => {
   assert.match(IconPacks.previewHtml('prismatic'), /prismatic-jewels\/thumbnail\.png/);
   assert.match(IconPacks.previewHtml('nature-basic'), /nature-basic\/thumbnail\.png/);
   assert.match(IconPacks.previewHtml('nature-advanced'), /nature-advanced\/thumbnail\.png/);
+  assert.match(IconPacks.previewHtml('neon'), /neon\/thumbnail\.png/);
   assert.match(IconPacks.previewHtml('cosmos'), /class="iconpack-collage"/);
   const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
   assert.match(sw, /'golden-star','thumbnail'/);
   assert.match(sw, /NATURE_BASIC_PACK_ASSETS/);
   assert.match(sw, /NATURE_ADVANCED_PACK_ASSETS/);
+  assert.match(sw, /NEON_PACK_ASSETS/);
+  assert.match(sw, /'neon-diamond','neon-hexagon','neon-heart','neon-drop','thumbnail'/);
 });
 
-test('los dos packs de naturaleza se compran por el precio indicado y se equipan', () => isolated(() => {
+test('los nuevos packs raster se compran por el precio indicado y se equipan', () => isolated(() => {
   for (const [packId, cost, firstFile] of [
     ['nature-basic', 800, 'green-leaf.png'],
     ['nature-advanced', 1600, 'hibiscus.png'],
+    ['neon', 1200, 'neon-square.png'],
   ]) {
     Meta.state.coins = 3000;
     Meta.state.cosmetics.iconPack = IconPacks.DEFAULT;
@@ -143,7 +151,7 @@ test('cambiar de pack repinta la misma ficha sin alterar su id lógico', () => i
 }));
 
 test('ningún pack raster duplica figuras distintas dentro de un nivel', () => {
-  for (const packId of ['nature-basic', 'nature-advanced', 'prismatic']) {
+  for (const packId of ['nature-basic', 'nature-advanced', 'neon', 'prismatic']) {
     for (let level = 1; level <= 160; level++) {
       const rendered = Engine.poolForLevel(level).map((iconId) => {
         const html = IconPacks.svg(packId, iconId);
