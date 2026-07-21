@@ -1,11 +1,19 @@
-/* Convergencia — Service Worker (offline-first).
- * Sube CACHE al publicar una versión nueva para invalidar la caché anterior. */
-const CACHE = 'cv-cache-v2.16.0';
+/* Convergencia — Service Worker (offline-first, dos cachés).
+ *
+ * CACHE (shell, VERSIONADO): HTML/CSS/JS/manifest/fuente/iconos de app. Se
+ *   invalida en cada release —lo sube `tools/bump-version.sh`—; `activate`
+ *   borra los shells viejos.
+ * ASSET_CACHE (imágenes, PERSISTENTE): todos los packs de imágenes. NO está
+ *   atado a la versión de la app y NO se borra en cada release, así las
+ *   imágenes ya descargadas sobreviven a las actualizaciones (antes se
+ *   re-descargaba todo en cada bump). Súbelo a mano (v1 → v2 …) SOLO si cambias
+ *   arte reutilizando la misma ruta de archivo. Ver docs/ASSET_CACHING_PLAN.md. */
+const CACHE = 'cv-cache-v2.17.0';
+const ASSET_CACHE = 'cv-assets-v1';
 const ASSETS = [
-  './', './index.html', './styles.css?v=2.16.0', './game.js?v=2.16.0', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=2.17.0', './game.js?v=2.17.0', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
   './fonts/NunitoSans-Variable.ttf',
-  './img/ui-generated/chests/chest-open.png',
 ];
 // Iconos de UI (pack en img/ui). Se precachean en best-effort: si alguno falla,
 // no rompe la instalación (de todos modos el fetch los cachea en runtime).
@@ -60,6 +68,7 @@ const NEON_PACK_ASSETS = [
   'neon-diamond','neon-hexagon','neon-heart','neon-drop','thumbnail',
 ].map((n) => './img/icon-packs/neon/' + n + '.png');
 const ICON_PACK_ASSETS = PRISMATIC_PACK_ASSETS.concat(NATURE_BASIC_PACK_ASSETS, NATURE_ADVANCED_PACK_ASSETS, NEON_PACK_ASSETS);
+const CORE_ART = ['./img/ui-generated/chests/chest-open.png'];
 const V2_ICONS = [
   './img/icons-v2/1-game/double.svg',
   './img/icons-v2/2-items/map.svg',
@@ -96,31 +105,32 @@ const V2_ICONS = [
   './img/icons-v2/12-misc/four-pointed-star.svg',
   './img/icons-v2/12-misc/radiation.svg',
 ];
+// Todas las imágenes de packs viven en ASSET_CACHE. Se precachean POR ÍTEM
+// (allSettled): un asset roto/404 ya no arrastra al lote entero ni se traga en
+// silencio (antes `addAll(...).catch()` perdía las N imágenes del lote si una
+// fallaba). El shell crítico (ASSETS) sí es estricto: si falla, la instalación
+// falla, que es lo correcto.
+const IMAGE_MANIFEST = [].concat(
+  CORE_ART, UI_ICONS, HOME_V2_ICONS, HOME_GENERATED_ART, MODE_GENERATED_ART,
+  MODE_LAUNCH_ART, SHOP_GENERATED_ART, BOARD_THEME_PREVIEWS, CHEST_ATLASES,
+  PLAYER_ICON_ASSETS, PLAYER_BORDER_ASSETS, ICON_PACK_ASSETS, V2_ICONS,
+);
 self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE)
-      .then((c) => c.addAll(ASSETS).then(() => Promise.all([
-        c.addAll(UI_ICONS).catch(() => {}),
-        c.addAll(HOME_V2_ICONS).catch(() => {}),
-        c.addAll(HOME_GENERATED_ART).catch(() => {}),
-        c.addAll(MODE_GENERATED_ART).catch(() => {}),
-        c.addAll(MODE_LAUNCH_ART).catch(() => {}),
-        c.addAll(SHOP_GENERATED_ART).catch(() => {}),
-        c.addAll(BOARD_THEME_PREVIEWS).catch(() => {}),
-        c.addAll(CHEST_ATLASES).catch(() => {}),
-        c.addAll(PLAYER_ICON_ASSETS).catch(() => {}),
-        c.addAll(PLAYER_BORDER_ASSETS).catch(() => {}),
-        c.addAll(ICON_PACK_ASSETS).catch(() => {}),
-        c.addAll(V2_ICONS).catch(() => {}),
-      ])))
-      .then(() => self.skipWaiting())
-  );
+  e.waitUntil((async () => {
+    const shell = await caches.open(CACHE);
+    await shell.addAll(ASSETS);
+    const assets = await caches.open(ASSET_CACHE);
+    await Promise.allSettled(IMAGE_MANIFEST.map((u) => assets.add(u)));
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      // Preserva el shell actual Y la caché de assets persistente: solo se
+      // purgan shells de versiones anteriores. Las imágenes sobreviven al bump.
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== ASSET_CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -154,7 +164,22 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Recursos: caché primero (offline instantáneo), con relleno de red.
+  // Imágenes: caché-primero contra ASSET_CACHE (persistente). Sirve al instante
+  // desde caché —arregla el tablero roto y la carga inicial— y rellena de red en
+  // el fallo. Offline: sirve lo cacheado. La frescura del arte se gestiona con el
+  // bump manual de ASSET_CACHE (los PNG son inmutables por ruta en la práctica).
+  if (/\.(png|jpe?g|webp|avif|gif|svg)$/i.test(url.pathname)) {
+    e.respondWith(
+      caches.open(ASSET_CACHE).then((c) => c.match(req).then((hit) => hit || fetch(req).then((r) => {
+        if (r && r.ok) c.put(req, r.clone());
+        return r;
+      }).catch(() => hit)))
+    );
+    return;
+  }
+
+  // Resto de recursos (shell versionado): caché primero (offline instantáneo),
+  // con relleno de red.
   e.respondWith(
     caches.match(req).then((m) => m || fetch(req).then((r) => {
       const cp = r.clone(); caches.open(CACHE).then((c) => c.put(req, cp)); return r;

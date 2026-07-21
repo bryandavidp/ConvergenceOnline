@@ -324,7 +324,7 @@ test('los nueve SKU apuntan a PNG únicos existentes y precacheados por el servi
   assert.equal(offers.length, 9, 'el storefront acordado tiene seis packs de divisa y tres de XP');
   assert.equal(new Set(offers.map((offer) => offer.asset)).size, 9, 'cada SKU necesita arte propio');
   assert.ok(precacheAt >= 0 && precacheEnd > precacheAt, 'falta SHOP_GENERATED_ART en sw.js');
-  assert.match(sw, /c\.addAll\(SHOP_GENERATED_ART\)/, 'SHOP_GENERATED_ART debe entrar en la instalación offline');
+  assert.match(sw, /IMAGE_MANIFEST = \[\]\.concat\([\s\S]*?\bSHOP_GENERATED_ART\b/, 'SHOP_GENERATED_ART debe entrar en la instalación offline');
 
   for (const offer of offers) {
     assert.match(offer.asset, /^img\/ui-generated\/shop\/[a-z0-9-]+\.png$/);
