@@ -22,6 +22,16 @@ function isolated(run) {
   try { return run(); } finally { restoreMeta(snapshot); }
 }
 
+function assertPngAsset(packId, fileName) {
+  const def = IconPacks.DEFS[packId];
+  const file = path.join(__dirname, '..', 'img', 'icon-packs', def.dir, fileName);
+  const png = fs.readFileSync(file);
+  assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10], `${fileName}: firma PNG`);
+  assert.equal(png.readUInt32BE(16), 512, `${fileName}: ancho`);
+  assert.equal(png.readUInt32BE(20), 512, `${fileName}: alto`);
+  assert.equal(png[25], 6, `${fileName}: debe conservar RGBA`);
+}
+
 test('Joyas Prisma registra los diez PNG transparentes del diseño', () => {
   assert.equal(IconPacks.DEFS.prismatic.rarity, 'legendary');
   assert.equal(IconPacks.DEFS.prismatic.cost, 1800);
@@ -29,12 +39,23 @@ test('Joyas Prisma registra los diez PNG transparentes del diseño', () => {
   assert.equal(IconPacks.iconsOf('prismatic').length, 10);
 
   for (const asset of IconPacks.PRISMATIC_ASSETS) {
-    const file = path.join(__dirname, '..', 'img', 'icon-packs', 'prismatic-jewels', asset.file);
-    const png = fs.readFileSync(file);
-    assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10], `${asset.file}: firma PNG`);
-    assert.equal(png.readUInt32BE(16), 512, `${asset.file}: ancho`);
-    assert.equal(png.readUInt32BE(20), 512, `${asset.file}: alto`);
-    assert.equal(png[25], 6, `${asset.file}: debe conservar RGBA`);
+    assertPngAsset('prismatic', asset.file);
+  }
+});
+
+test('Naturaleza Basico y Avanzado registran precios, rareza y todos sus PNG', () => {
+  const expected = [
+    ['nature-basic', 'rare', 800, 8],
+    ['nature-advanced', 'epic', 1600, 10],
+  ];
+  assert.deepEqual(IconPacks.order, ['cosmos', 'nature-basic', 'nature-advanced', 'prismatic']);
+  for (const [packId, rarity, cost, count] of expected) {
+    assert.equal(IconPacks.DEFS[packId].rarity, rarity);
+    assert.equal(IconPacks.DEFS[packId].cost, cost);
+    assert.equal(IconPacks.CATALOGS[packId].length, count);
+    assert.equal(IconPacks.iconsOf(packId).length, count);
+    for (const asset of IconPacks.CATALOGS[packId]) assertPngAsset(packId, asset.file);
+    assertPngAsset(packId, 'thumbnail.png');
   }
 });
 
@@ -45,6 +66,14 @@ test('el renderer conserva SVG para Cosmos y usa IMG para Joyas Prisma', () => {
   assert.match(IconPacks.svg('prismatic', iconId), /violet-diamond\.png/);
 });
 
+test('el renderer resuelve cada pack raster desde su propia carpeta', () => {
+  const iconId = IconPacks.iconsOf('nature-basic')[0];
+  assert.match(IconPacks.svg('nature-basic', iconId), /nature-basic\/green-leaf\.png/);
+  assert.match(IconPacks.svg('nature-advanced', iconId), /nature-advanced\/hibiscus\.png/);
+  assert.equal(IconPacks.iconName('nature-basic', iconId, 'es'), 'Hoja verde');
+  assert.equal(IconPacks.iconName('nature-advanced', iconId, 'en'), 'Hibiscus');
+});
+
 test('Joyas Prisma usa su miniatura generada en tienda y coleccion', () => {
   const file = path.join(__dirname, '..', 'img', 'icon-packs', 'prismatic-jewels', 'thumbnail.png');
   const png = fs.readFileSync(file);
@@ -53,9 +82,31 @@ test('Joyas Prisma usa su miniatura generada en tienda y coleccion', () => {
   assert.equal(png[25], 6, 'la miniatura conserva RGBA');
   assert.match(IconPacks.previewHtml('prismatic'), /class="iconpack-thumbnail"/);
   assert.match(IconPacks.previewHtml('prismatic'), /prismatic-jewels\/thumbnail\.png/);
+  assert.match(IconPacks.previewHtml('nature-basic'), /nature-basic\/thumbnail\.png/);
+  assert.match(IconPacks.previewHtml('nature-advanced'), /nature-advanced\/thumbnail\.png/);
   assert.match(IconPacks.previewHtml('cosmos'), /class="iconpack-collage"/);
-  assert.match(fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8'), /'golden-star','thumbnail'/);
+  const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
+  assert.match(sw, /'golden-star','thumbnail'/);
+  assert.match(sw, /NATURE_BASIC_PACK_ASSETS/);
+  assert.match(sw, /NATURE_ADVANCED_PACK_ASSETS/);
 });
+
+test('los dos packs de naturaleza se compran por el precio indicado y se equipan', () => isolated(() => {
+  for (const [packId, cost, firstFile] of [
+    ['nature-basic', 800, 'green-leaf.png'],
+    ['nature-advanced', 1600, 'hibiscus.png'],
+  ]) {
+    Meta.state.coins = 3000;
+    Meta.state.cosmetics.iconPack = IconPacks.DEFAULT;
+    delete Meta.state.cosmetics.iconPacks[packId];
+    assert.equal(Meta.buyIconPack(packId), true);
+    assert.equal(Meta.coins(), 3000 - cost);
+    assert.equal(Meta.ownsIconPack(packId), true);
+    assert.equal(Meta.equipIconPack(packId), true);
+    assert.equal(Meta.equippedIconPack(), packId);
+    assert.match(IconPacks.svg(packId, IconPacks.iconsOf(packId)[0]), new RegExp(firstFile.replace('.', '\\.')));
+  }
+}));
 
 test('Joyas Prisma se compra, descuenta monedas y queda equipado', () => isolated(() => {
   Meta.state.coins = 2000;
@@ -91,12 +142,14 @@ test('cambiar de pack repinta la misma ficha sin alterar su id lógico', () => i
   }
 }));
 
-test('ningún nivel muestra dos ids distintos con la misma joya', () => {
-  for (let level = 1; level <= 160; level++) {
-    const rendered = Engine.poolForLevel(level).map((iconId) => {
-      const html = IconPacks.svg('prismatic', iconId);
-      return html.match(/\/([^/]+\.png)"/)[1];
-    });
-    assert.equal(new Set(rendered).size, rendered.length, `nivel ${level}: joya visual duplicada`);
+test('ningún pack raster duplica figuras distintas dentro de un nivel', () => {
+  for (const packId of ['nature-basic', 'nature-advanced', 'prismatic']) {
+    for (let level = 1; level <= 160; level++) {
+      const rendered = Engine.poolForLevel(level).map((iconId) => {
+        const html = IconPacks.svg(packId, iconId);
+        return html.match(/\/([^/]+\.png)"/)[1];
+      });
+      assert.equal(new Set(rendered).size, rendered.length, `${packId}, nivel ${level}: figura visual duplicada`);
+    }
   }
 });

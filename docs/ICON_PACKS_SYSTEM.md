@@ -12,8 +12,8 @@
    internos (`avatarIcon`, `avatarIcons`, `PlayerIcons`) NO se tocan.
 2. **Implementar el sistema de "Iconos"** = **packs de iconos de tablero**
    comprables. Los "iconos" son las figuras que aparecen en el tablero (el
-   módulo `Icons`, formas SVG × colores). El sistema incluye **Cosmos** y
-   **Joyas Prisma**, un pack legendario de diez PNG transparentes, y queda
+   módulo `Icons`, formas SVG × colores). El sistema incluye **Cosmos**,
+   **Naturaleza Básico**, **Naturaleza Avanzado** y **Joyas Prisma**, y queda
    preparado para añadir más.
 3. El pack de iconos tiene **su sección en la Tienda** y **su panel en
    Colecciones**.
@@ -43,11 +43,14 @@
 
 ### 3.1 Modelo de datos
 - **`IconPacks`** (módulo tras `Icons`):
-  - `DEFAULT: 'cosmos'`; `DEFS` registra Cosmos y Joyas Prisma; `order`
-    mantiene el orden visible de ambos packs.
-  - `iconsOf(id)`: 16 ids representativos para Cosmos y 10 para Joyas Prisma.
+  - `DEFAULT: 'cosmos'`; `DEFS` registra los cuatro packs y `order` mantiene su
+    orden visible por precio.
+  - `CATALOGS`: catálogo de 8 figuras para Naturaleza Básico y de 10 para
+    Naturaleza Avanzado y Joyas Prisma.
+  - `iconsOf(id)`: 16 ids representativos para Cosmos o tantos como artes
+    declare el catálogo raster.
   - `svg(packId, iconId)`: conserva SVG para Cosmos y devuelve el PNG RGBA
-    correspondiente para Joyas Prisma.
+    correspondiente para cualquier pack raster.
   - `iconName`/`colorOf`: alinean accesibilidad y FX con el pack equipado.
   - `previewHtml(id, n)`: usa la miniatura dedicada del pack cuando existe y,
     como fallback, un collage de n iconos (emblema/portada del pack).
@@ -87,11 +90,13 @@
 - [x] F6. Joyas Prisma: 10 artes PNG + miniatura de pack, compra/equipado,
   renderer real del tablero, FX, accesibilidad, precache offline, pruebas y bump
   2.13.0.
+- [x] F7. Naturaleza Básico y Avanzado: 18 artes PNG + 2 miniaturas, catálogos
+  raster genéricos, precios 800/1600, precache, pruebas y bump 2.14.0.
 
 ## 5. Cómo quedó (referencia de mantenimiento)
 
 - **`IconPacks`** (game.js, tras `Icons`): `DEFAULT`, `DEFS`, `order`,
-  `PRISMATIC_ASSETS`, `iconsOf`, `svg`, `iconName`, `colorOf`, `previewHtml`.
+  `CATALOGS`, `iconsOf`, `svg`, `iconName`, `colorOf`, `previewHtml`.
   Añadir un pack nuevo = entrada en `DEFS`/`order` (con `rarity`/`cost`) y su
   catálogo/render.
 - **Meta**: `ownsIconPack`, `equippedIconPack`, `equipIconPack`, `buyIconPack`,
@@ -101,29 +106,33 @@
   `openIconPackModal(id, { onChange })`.
 - **Modal de pack**: `openIconPackModal` / `fillIconPackModal` sobre
   `#modal-icon-pack` (index.html). Muestra todas las figuras reales de cada pack
-  (16 en Cosmos, 10 en Joyas Prisma) + equipar/comprar.
+  (16 en Cosmos, 8 en Naturaleza Básico y 10 en los otros dos) +
+  equipar/comprar.
 - **Tienda**: sección `shop_iconpacks` en `buildShop`; `data-ipack-view/eq/buy`.
 - **Renombrado**: `col_cat_icons` ahora = packs de tablero; `col_cat_avatars`
   (nuevo) = avatares de perfil. i18n de perfil/tienda/cofres actualizado.
 
 ### Fidelidad / decisiones
-- Cosmos sigue siendo gratuito y equipado por defecto. Joyas Prisma es
-  legendario y cuesta 1.800 monedas, con confirmación en dos toques.
+- Cosmos sigue siendo gratuito y equipado por defecto. Naturaleza Básico es
+  raro y cuesta 800 monedas; Naturaleza Avanzado es épico y cuesta 1.600;
+  Joyas Prisma es legendario y cuesta 1.800. Todos usan confirmación en dos
+  toques.
 - Los ids lógicos no cambian al equipar un pack: se preservan reglas, dificultad
   y partidas guardadas. La ventana máxima de ocho fichas se mapea sobre diez
   joyas, por lo que no hay duplicados visuales dentro de un nivel.
-- Los diez PNG de Joyas Prisma y su miniatura cuadrada son RGBA 512×512 y se
-  precachean para uso offline. La misma miniatura identifica el pack en Tienda,
-  Colecciones y el modal de detalle.
+- Los 28 iconos raster y sus tres miniaturas cuadradas son RGBA 512×512 y se
+  precachean para uso offline. La misma miniatura identifica cada pack en
+  Tienda, Colecciones y el modal de detalle.
 
 ## 6. Verificación
 
-- Suite global: 270 pass / 2 fail. Los 2 fallos (`board themes V4 …`) son
-  **preexistentes** (fallan en la base). La selección de 62 pruebas de motor,
+- Suite global: 274 pass / 2 fail. Los 2 fallos (`board themes V4 …`) son
+  **preexistentes** (fallan en la base). La selección de 65 pruebas de motor,
   convergencia, Inicio y packs pasa completa.
 - `node --check game.js` y `node --check sw.js`: sin errores de sintaxis.
-- Navegador integrado (ES): tarjeta de tienda, modal con las diez joyas,
-  dimensiones naturales 512×512 y cero errores de consola. Todo verificado.
+- Navegador integrado (ES): cuatro tarjetas en Tienda y Colecciones; modales de
+  Naturaleza con 8/10 iconos, precios 800/1600, dimensiones naturales 512×512 y
+  cero errores de consola. Todo verificado.
 
 ## 7. Registro
 
@@ -132,3 +141,5 @@
   completado y verificado. Versión 2.12.0.
 - 2026-07-21: F6. Pack Joyas Prisma y su miniatura generados e integrados de
   extremo a extremo. Versión 2.13.0.
+- 2026-07-21: F7. Packs Naturaleza Básico y Naturaleza Avanzado generados e
+  integrados de extremo a extremo. Versión 2.14.0.

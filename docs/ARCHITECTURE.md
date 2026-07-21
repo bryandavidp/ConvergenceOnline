@@ -20,7 +20,7 @@ Mecánica base: el tablero es una grilla 8×8; el jugador toca una celda **vací
 | Persistencia | `localStorage` exclusivamente (sin backend, sin red) |
 | Audio | Web Audio API (osciladores sintetizados) — **no hay archivos de audio** |
 | PWA | `manifest.webmanifest` + `sw.js` (Service Worker hecho a mano, cache-first) |
-| Gráficos de tablero | Pack Cosmos generado como SVG + pack Joyas Prisma con 10 PNG RGBA y miniatura propia (`IconPacks`) |
+| Gráficos de tablero | Pack Cosmos generado como SVG + 3 packs raster con 28 PNG RGBA y miniaturas propias (`IconPacks`) |
 | Iconos de UI | Dos packs de assets estáticos: PNG plano (`img/ui/`) y SVG por categorías (`img/icons-v2/`) |
 
 ## 3. Mapa de archivos del repositorio
@@ -142,8 +142,8 @@ Picker y PreLevel están dentro de `<main>`, no son hijos de una pantalla concre
 
 ## 8. PWA / Service Worker
 
-- `sw.js` define `CACHE = 'cv-cache-v2.7.1'` — **debe subirse manualmente en cada release** junto con `VERSION` y los dos `?v=` de `index.html`.
-- Precachea los assets core y listas *best-effort* independientes para iconos UI/V2, arte de Inicio/modos/lanzador, atlas de cofres, los nueve PNG de `SHOP_GENERATED_ART` y los once `preview.jpg` de `BOARD_THEME_PREVIEWS`.
+- `sw.js` define `CACHE = 'cv-cache-v2.14.0'` — **debe subirse manualmente en cada release** junto con `VERSION` y los dos `?v=` de `index.html`.
+- Precachea los assets core y listas *best-effort* independientes para iconos UI/V2, arte de Inicio/modos/lanzador, atlas de cofres, packs de iconos de tablero, los nueve PNG de `SHOP_GENERATED_ART` y los once `preview.jpg` de `BOARD_THEME_PREVIEWS`.
 - El arte de la tienda de recursos vive en `img/ui-generated/shop/`; las miniaturas de personalización reutilizan `img/board-themes/v2/{id}/preview.jpg`. Ambos grupos quedan disponibles en la primera instalación offline aunque el usuario no haya abierto antes ninguna tienda.
 - Estrategia de fetch: navegación → *network-first* con fallback a caché (y fallback final a `index.html` cacheado si no hay red); resto de peticiones GET del mismo origen → *cache-first* con relleno de red en background.
 - `manifest.webmanifest`: `display: standalone`, `orientation: portrait`, `id: "/convergence/"`, iconos 192/512 + maskable.

@@ -1,8 +1,8 @@
 /* Convergencia — Service Worker (offline-first).
  * Sube CACHE al publicar una versión nueva para invalidar la caché anterior. */
-const CACHE = 'cv-cache-v2.13.0';
+const CACHE = 'cv-cache-v2.14.0';
 const ASSETS = [
-  './', './index.html', './styles.css?v=2.13.0', './game.js?v=2.13.0', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=2.14.0', './game.js?v=2.14.0', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
   './fonts/NunitoSans-Variable.ttf',
   './img/ui-generated/chests/chest-open.png',
@@ -43,10 +43,19 @@ const PLAYER_ICON_ASSETS = [
 const PLAYER_BORDER_ASSETS = [
   'starlight','plasma','royal','aurora','comet','crystal','eclipse','circuit','bloom','mythic',
 ].map((n) => './img/player-borders/' + n + '.png');
-const ICON_PACK_ASSETS = [
+const PRISMATIC_PACK_ASSETS = [
   'violet-diamond','amber-hex','aqua-drop','pink-heart','violet-spiral',
   'cyan-moon','golden-sun','emerald-clover','ruby-drop','golden-star','thumbnail',
 ].map((n) => './img/icon-packs/prismatic-jewels/' + n + '.png');
+const NATURE_BASIC_PACK_ASSETS = [
+  'green-leaf','water-drop','pink-flower','clover','acorn','sunflower',
+  'red-mushroom','mossy-rock','thumbnail',
+].map((n) => './img/icon-packs/nature-basic/' + n + '.png');
+const NATURE_ADVANCED_PACK_ASSETS = [
+  'hibiscus','bamboo','pine-cone','vine-spiral','emerald-crystal','tree-stump',
+  'blueberries','flowering-cactus','maple-leaf','holly-leaf','thumbnail',
+].map((n) => './img/icon-packs/nature-advanced/' + n + '.png');
+const ICON_PACK_ASSETS = PRISMATIC_PACK_ASSETS.concat(NATURE_BASIC_PACK_ASSETS, NATURE_ADVANCED_PACK_ASSETS);
 const V2_ICONS = [
   './img/icons-v2/1-game/double.svg',
   './img/icons-v2/2-items/map.svg',

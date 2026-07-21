@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.13.0';
+  const VERSION = '2.14.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -266,29 +266,61 @@
    * Un pack cambia únicamente el render, el nombre accesible y el color de FX de
    * las fichas: los ids lógicos del tablero permanecen intactos. Los packs PNG se
    * asignan por posición del catálogo; como cada nivel muestra <=8 ids contiguos y
-   * Joyas Prisma tiene 10 diseños, nunca aparecen dos fichas distintas con el mismo
-   * aspecto dentro de un nivel. Propiedad/equipado vive en Meta.cosmetics.iconPack(s).
+   * cada pack raster incluye al menos 8 diseños, nunca aparecen dos fichas distintas
+   * con el mismo aspecto dentro de un nivel. Propiedad/equipado vive en
+   * Meta.cosmetics.iconPack(s).
    */
   const IconPacks = {
     DEFAULT: 'cosmos',
     DEFS: {
       cosmos: { name: 'Cosmos', rarity: 'common', cost: 0, descKey: 'iconpack_cosmos_desc' },
-      prismatic: { name: 'Joyas Prisma', nameKey: 'iconpack_prismatic_name', rarity: 'legendary', cost: 1800, descKey: 'iconpack_prismatic_desc', raster: true, thumbnail: 'thumbnail.png' },
+      'nature-basic': { name: 'Naturaleza Básico', nameKey: 'iconpack_nature_basic_name', rarity: 'rare', cost: 800, descKey: 'iconpack_nature_basic_desc', raster: true, dir: 'nature-basic', thumbnail: 'thumbnail.png' },
+      'nature-advanced': { name: 'Naturaleza Avanzado', nameKey: 'iconpack_nature_advanced_name', rarity: 'epic', cost: 1600, descKey: 'iconpack_nature_advanced_desc', raster: true, dir: 'nature-advanced', thumbnail: 'thumbnail.png' },
+      prismatic: { name: 'Joyas Prisma', nameKey: 'iconpack_prismatic_name', rarity: 'legendary', cost: 1800, descKey: 'iconpack_prismatic_desc', raster: true, dir: 'prismatic-jewels', thumbnail: 'thumbnail.png' },
     },
-    order: ['cosmos', 'prismatic'],
-    RASTER_DIR: 'img/icon-packs/prismatic-jewels/',
-    PRISMATIC_ASSETS: [
-      { file: 'violet-diamond.png', es: 'Diamante violeta', en: 'Violet diamond', color: '#c038ff' },
-      { file: 'amber-hex.png', es: 'Gema ámbar', en: 'Amber gem', color: '#ff9a18' },
-      { file: 'aqua-drop.png', es: 'Gota aguamarina', en: 'Aquamarine drop', color: '#16cfff' },
-      { file: 'pink-heart.png', es: 'Corazón rosa', en: 'Pink heart', color: '#ff39a3' },
-      { file: 'violet-spiral.png', es: 'Espiral violeta', en: 'Violet spiral', color: '#8a35ff' },
-      { file: 'cyan-moon.png', es: 'Luna cian', en: 'Cyan moon', color: '#24dce8' },
-      { file: 'golden-sun.png', es: 'Sol dorado', en: 'Golden sun', color: '#ffbd22' },
-      { file: 'emerald-clover.png', es: 'Trébol esmeralda', en: 'Emerald clover', color: '#54d516' },
-      { file: 'ruby-drop.png', es: 'Gota rubí', en: 'Ruby drop', color: '#f21f2d' },
-      { file: 'golden-star.png', es: 'Estrella dorada', en: 'Golden star', color: '#ffc42c' },
-    ],
+    order: ['cosmos', 'nature-basic', 'nature-advanced', 'prismatic'],
+    CATALOGS: {
+      prismatic: [
+        { file: 'violet-diamond.png', es: 'Diamante violeta', en: 'Violet diamond', color: '#c038ff' },
+        { file: 'amber-hex.png', es: 'Gema ámbar', en: 'Amber gem', color: '#ff9a18' },
+        { file: 'aqua-drop.png', es: 'Gota aguamarina', en: 'Aquamarine drop', color: '#16cfff' },
+        { file: 'pink-heart.png', es: 'Corazón rosa', en: 'Pink heart', color: '#ff39a3' },
+        { file: 'violet-spiral.png', es: 'Espiral violeta', en: 'Violet spiral', color: '#8a35ff' },
+        { file: 'cyan-moon.png', es: 'Luna cian', en: 'Cyan moon', color: '#24dce8' },
+        { file: 'golden-sun.png', es: 'Sol dorado', en: 'Golden sun', color: '#ffbd22' },
+        { file: 'emerald-clover.png', es: 'Trébol esmeralda', en: 'Emerald clover', color: '#54d516' },
+        { file: 'ruby-drop.png', es: 'Gota rubí', en: 'Ruby drop', color: '#f21f2d' },
+        { file: 'golden-star.png', es: 'Estrella dorada', en: 'Golden star', color: '#ffc42c' },
+      ],
+      'nature-basic': [
+        { file: 'green-leaf.png', es: 'Hoja verde', en: 'Green leaf', color: '#65d92f' },
+        { file: 'water-drop.png', es: 'Gota de agua', en: 'Water drop', color: '#18bfff' },
+        { file: 'pink-flower.png', es: 'Flor rosa', en: 'Pink flower', color: '#ff4a9e' },
+        { file: 'clover.png', es: 'Trébol de cuatro hojas', en: 'Four-leaf clover', color: '#55d51f' },
+        { file: 'acorn.png', es: 'Bellota', en: 'Acorn', color: '#c47524' },
+        { file: 'sunflower.png', es: 'Girasol', en: 'Sunflower', color: '#ffc52d' },
+        { file: 'red-mushroom.png', es: 'Seta roja', en: 'Red mushroom', color: '#f04432' },
+        { file: 'mossy-rock.png', es: 'Roca musgosa', en: 'Mossy rock', color: '#8c8b72' },
+      ],
+      'nature-advanced': [
+        { file: 'hibiscus.png', es: 'Hibisco', en: 'Hibiscus', color: '#ff3f8d' },
+        { file: 'bamboo.png', es: 'Bambú', en: 'Bamboo', color: '#5bc52f' },
+        { file: 'pine-cone.png', es: 'Piña de pino', en: 'Pine cone', color: '#ad632b' },
+        { file: 'vine-spiral.png', es: 'Enredadera espiral', en: 'Curled vine', color: '#59d333' },
+        { file: 'emerald-crystal.png', es: 'Cristal esmeralda', en: 'Emerald crystal', color: '#10d77e' },
+        { file: 'tree-stump.png', es: 'Tocón de árbol', en: 'Tree stump', color: '#bd7b3b' },
+        { file: 'blueberries.png', es: 'Arándanos', en: 'Blueberries', color: '#388cff' },
+        { file: 'flowering-cactus.png', es: 'Cactus florecido', en: 'Flowering cactus', color: '#63c73e' },
+        { file: 'maple-leaf.png', es: 'Hoja de arce', en: 'Maple leaf', color: '#ed641b' },
+        { file: 'holly-leaf.png', es: 'Hoja de acebo', en: 'Holly leaf', color: '#79d524' },
+      ],
+    },
+    get PRISMATIC_ASSETS() { return this.CATALOGS.prismatic; },
+    _assets(id) { return this.CATALOGS[id] || null; },
+    _assetPath(id, file) {
+      const dir = this.DEFS[id]?.dir;
+      return dir ? `img/icon-packs/${dir}/${file}` : '';
+    },
     _index(iconId) {
       const i = Icons.CATALOG.indexOf(iconId);
       return i < 0 ? 0 : i;
@@ -297,29 +329,33 @@
       const d = this.DEFS[id];
       return d ? (d.nameKey ? I18n.t(d.nameKey) : d.name) : '';
     },
-    // Ids lógicos representativos: Cosmos muestra 16 formas; Joyas Prisma, sus 10 artes.
+    // Ids lógicos representativos: Cosmos muestra 16 formas; cada pack raster, su catálogo.
     iconsOf(id) {
-      return Icons.CATALOG.slice(0, id === 'prismatic' ? this.PRISMATIC_ASSETS.length : 16);
+      const assets = this._assets(id);
+      return Icons.CATALOG.slice(0, assets ? assets.length : 16);
     },
     // Conserva el nombre histórico `svg`: los consumidores aceptan SVG o IMG.
     svg(id, iconId) {
-      if (id !== 'prismatic') return Icons.svg(iconId);
-      const asset = this.PRISMATIC_ASSETS[this._index(iconId) % this.PRISMATIC_ASSETS.length];
-      return `<img class="board-pack-icon" src="${this.RASTER_DIR}${asset.file}" alt="" aria-hidden="true" draggable="false">`;
+      const assets = this._assets(id);
+      if (!assets) return Icons.svg(iconId);
+      const asset = assets[this._index(iconId) % assets.length];
+      return `<img class="board-pack-icon" src="${this._assetPath(id, asset.file)}" alt="" aria-hidden="true" draggable="false">`;
     },
     iconName(id, iconId, lang = 'es') {
-      if (id !== 'prismatic') return Icons.name(iconId);
-      const asset = this.PRISMATIC_ASSETS[this._index(iconId) % this.PRISMATIC_ASSETS.length];
+      const assets = this._assets(id);
+      if (!assets) return Icons.name(iconId);
+      const asset = assets[this._index(iconId) % assets.length];
       return asset[lang === 'en' ? 'en' : 'es'];
     },
     colorOf(id, iconId) {
-      if (id !== 'prismatic') return Icons.colorOf(iconId);
-      return this.PRISMATIC_ASSETS[this._index(iconId) % this.PRISMATIC_ASSETS.length].color;
+      const assets = this._assets(id);
+      if (!assets) return Icons.colorOf(iconId);
+      return assets[this._index(iconId) % assets.length].color;
     },
     // Portada dedicada cuando existe; los packs sin miniatura mantienen el collage.
     previewHtml(id, n = 4) {
       const def = this.DEFS[id];
-      if (def?.thumbnail) return `<img class="iconpack-thumbnail" src="${this.RASTER_DIR}${def.thumbnail}" alt="" aria-hidden="true" draggable="false">`;
+      if (def?.thumbnail) return `<img class="iconpack-thumbnail" src="${this._assetPath(id, def.thumbnail)}" alt="" aria-hidden="true" draggable="false">`;
       const ids = this.iconsOf(id).slice(0, n);
       return `<span class="iconpack-collage" data-count="${ids.length}" aria-hidden="true">${ids.map((ic) => `<span class="iconpack-collage-cell">${this.svg(id, ic)}</span>`).join('')}</span>`;
     },
@@ -410,7 +446,7 @@
         col_progress_icons: 'Progreso de iconos', col_progress_avatars: 'Progreso de avatares', col_progress_borders: 'Progreso de bordes', col_progress_boards: 'Progreso de tableros', col_progress_themes: 'Progreso de temas', col_progress_achievements: 'Progreso de logros',
         col_filter_all: 'Todos', col_sort_recent: 'Más reciente', col_sort_rarity: 'Rareza', col_sort_name: 'Nombre', col_sort_owned: 'Desbloqueados', col_sort_label: 'Ordenar por',
         col_locked_slot: 'Bloqueado · por descubrir', col_empty_rarity: 'Sin objetos de esta rareza todavía.',
-        shop_iconpacks: 'Iconos de tablero', iconpack_view: 'Ver iconos', iconpack_contents: 'Iconos del pack', iconpack_cosmos_desc: 'El set clásico de figuras de Convergence.', iconpack_prismatic_name: 'Joyas Prisma', iconpack_prismatic_desc: 'Diez joyas facetadas con color intenso, reflejos de cristal y brillo neón.', iconpack_equipped_note: 'Estos iconos aparecen ahora en tu tablero.',
+        shop_iconpacks: 'Iconos de tablero', iconpack_view: 'Ver iconos', iconpack_contents: 'Iconos del pack', iconpack_cosmos_desc: 'El set clásico de figuras de Convergence.', iconpack_nature_basic_name: 'Naturaleza Básico', iconpack_nature_basic_desc: 'Ocho figuras esenciales inspiradas en hojas, flores, agua y bosque.', iconpack_nature_advanced_name: 'Naturaleza Avanzado', iconpack_nature_advanced_desc: 'Diez figuras naturales poderosas con plantas, frutos, madera y cristal.', iconpack_prismatic_name: 'Joyas Prisma', iconpack_prismatic_desc: 'Diez joyas facetadas con color intenso, reflejos de cristal y brillo neón.', iconpack_equipped_note: 'Estos iconos aparecen ahora en tu tablero.',
         col_banner_icons_title: 'Más packs pronto', col_banner_icons_desc: 'Nuevos packs de iconos llegarán a la tienda. ¡Colecciónalos todos!', col_banner_icons_cta: 'Ir a tienda',
         col_banner_avatars_title: 'Avatar exclusivo', col_banner_avatars_desc: 'Participa en eventos especiales para conseguir avatares únicos por tiempo limitado.', col_banner_avatars_cta: 'Ir a eventos',
         col_banner_borders_title: 'Presume tu estilo', col_banner_borders_desc: 'Los bordes no dan ventaja en el juego. ¡Coléccionalos todos y destaca!', col_banner_borders_cta: 'Ir a tienda',
@@ -782,7 +818,7 @@
         col_progress_icons: 'Icon progress', col_progress_avatars: 'Avatar progress', col_progress_borders: 'Border progress', col_progress_boards: 'Board progress', col_progress_themes: 'Theme progress', col_progress_achievements: 'Achievement progress',
         col_filter_all: 'All', col_sort_recent: 'Most recent', col_sort_rarity: 'Rarity', col_sort_name: 'Name', col_sort_owned: 'Unlocked', col_sort_label: 'Sort by',
         col_locked_slot: 'Locked · to discover', col_empty_rarity: 'No items of this rarity yet.',
-        shop_iconpacks: 'Board icons', iconpack_view: 'View icons', iconpack_contents: 'Pack icons', iconpack_cosmos_desc: 'The classic Convergence figure set.', iconpack_prismatic_name: 'Prismatic Jewels', iconpack_prismatic_desc: 'Ten richly colored faceted jewels with crystal highlights and a neon glow.', iconpack_equipped_note: 'These icons now appear on your board.',
+        shop_iconpacks: 'Board icons', iconpack_view: 'View icons', iconpack_contents: 'Pack icons', iconpack_cosmos_desc: 'The classic Convergence figure set.', iconpack_nature_basic_name: 'Nature Basic', iconpack_nature_basic_desc: 'Eight essential figures inspired by leaves, flowers, water and woodland.', iconpack_nature_advanced_name: 'Nature Advanced', iconpack_nature_advanced_desc: 'Ten powerful nature figures featuring plants, fruit, wood and crystal.', iconpack_prismatic_name: 'Prismatic Jewels', iconpack_prismatic_desc: 'Ten richly colored faceted jewels with crystal highlights and a neon glow.', iconpack_equipped_note: 'These icons now appear on your board.',
         col_banner_icons_title: 'More packs soon', col_banner_icons_desc: 'New icon packs are coming to the shop. Collect them all!', col_banner_icons_cta: 'Go to shop',
         col_banner_avatars_title: 'Exclusive avatar', col_banner_avatars_desc: 'Join special events to get unique avatars for a limited time.', col_banner_avatars_cta: 'Go to events',
         col_banner_borders_title: 'Show off your style', col_banner_borders_desc: 'Borders give no gameplay advantage. Collect them all and stand out!', col_banner_borders_cta: 'Go to shop',
