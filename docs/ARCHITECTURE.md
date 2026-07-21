@@ -20,7 +20,7 @@ Mecánica base: el tablero es una grilla 8×8; el jugador toca una celda **vací
 | Persistencia | `localStorage` exclusivamente (sin backend, sin red) |
 | Audio | Web Audio API (osciladores sintetizados) — **no hay archivos de audio** |
 | PWA | `manifest.webmanifest` + `sw.js` (Service Worker hecho a mano, cache-first) |
-| Gráficos de tablero | Iconos SVG generados por código (`Icons`, formas × colores) — no son imágenes |
+| Gráficos de tablero | Pack Cosmos generado como SVG + pack Joyas Prisma con 10 PNG RGBA y miniatura propia (`IconPacks`) |
 | Iconos de UI | Dos packs de assets estáticos: PNG plano (`img/ui/`) y SVG por categorías (`img/icons-v2/`) |
 
 ## 3. Mapa de archivos del repositorio

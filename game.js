@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.12.0';
+  const VERSION = '2.13.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -263,28 +263,63 @@
   })();
 
   /* ===================== IconPacks (packs de iconos de tablero) =====================
-   * Cosmético comprable: un "pack" es un estilo visual para las FIGURAS del
-   * tablero (las que convergen). Hoy sólo existe un set real (el renderer de
-   * `Icons`), así que sólo hay un pack ("Cosmos"). El modelo queda preparado
-   * para añadir más packs (cada uno con su propio render) sin tocar el resto.
-   * No afecta reglas ni economía: es puramente estético. Propiedad/equipado en
-   * Meta.cosmetics.iconPack(s), igual que los tableros.
+   * Un pack cambia únicamente el render, el nombre accesible y el color de FX de
+   * las fichas: los ids lógicos del tablero permanecen intactos. Los packs PNG se
+   * asignan por posición del catálogo; como cada nivel muestra <=8 ids contiguos y
+   * Joyas Prisma tiene 10 diseños, nunca aparecen dos fichas distintas con el mismo
+   * aspecto dentro de un nivel. Propiedad/equipado vive en Meta.cosmetics.iconPack(s).
    */
   const IconPacks = {
     DEFAULT: 'cosmos',
     DEFS: {
       cosmos: { name: 'Cosmos', rarity: 'common', cost: 0, descKey: 'iconpack_cosmos_desc' },
+      prismatic: { name: 'Joyas Prisma', nameKey: 'iconpack_prismatic_name', rarity: 'legendary', cost: 1800, descKey: 'iconpack_prismatic_desc', raster: true, thumbnail: 'thumbnail.png' },
     },
-    order: ['cosmos'],
-    // Ids de icono representativos de un pack: una figura por forma (16).
+    order: ['cosmos', 'prismatic'],
+    RASTER_DIR: 'img/icon-packs/prismatic-jewels/',
+    PRISMATIC_ASSETS: [
+      { file: 'violet-diamond.png', es: 'Diamante violeta', en: 'Violet diamond', color: '#c038ff' },
+      { file: 'amber-hex.png', es: 'Gema ámbar', en: 'Amber gem', color: '#ff9a18' },
+      { file: 'aqua-drop.png', es: 'Gota aguamarina', en: 'Aquamarine drop', color: '#16cfff' },
+      { file: 'pink-heart.png', es: 'Corazón rosa', en: 'Pink heart', color: '#ff39a3' },
+      { file: 'violet-spiral.png', es: 'Espiral violeta', en: 'Violet spiral', color: '#8a35ff' },
+      { file: 'cyan-moon.png', es: 'Luna cian', en: 'Cyan moon', color: '#24dce8' },
+      { file: 'golden-sun.png', es: 'Sol dorado', en: 'Golden sun', color: '#ffbd22' },
+      { file: 'emerald-clover.png', es: 'Trébol esmeralda', en: 'Emerald clover', color: '#54d516' },
+      { file: 'ruby-drop.png', es: 'Gota rubí', en: 'Ruby drop', color: '#f21f2d' },
+      { file: 'golden-star.png', es: 'Estrella dorada', en: 'Golden star', color: '#ffc42c' },
+    ],
+    _index(iconId) {
+      const i = Icons.CATALOG.indexOf(iconId);
+      return i < 0 ? 0 : i;
+    },
+    packName(id) {
+      const d = this.DEFS[id];
+      return d ? (d.nameKey ? I18n.t(d.nameKey) : d.name) : '';
+    },
+    // Ids lógicos representativos: Cosmos muestra 16 formas; Joyas Prisma, sus 10 artes.
     iconsOf(id) {
-      void id; // (todos los packs comparten el catálogo base por ahora)
-      return Icons.CATALOG.slice(0, 16);
+      return Icons.CATALOG.slice(0, id === 'prismatic' ? this.PRISMATIC_ASSETS.length : 16);
     },
-    // Render de un icono concreto del pack (delega en el renderer base por ahora).
-    svg(id, iconId) { void id; return Icons.svg(iconId); },
-    // Collage de portada/emblema con las primeras `n` figuras del pack.
+    // Conserva el nombre histórico `svg`: los consumidores aceptan SVG o IMG.
+    svg(id, iconId) {
+      if (id !== 'prismatic') return Icons.svg(iconId);
+      const asset = this.PRISMATIC_ASSETS[this._index(iconId) % this.PRISMATIC_ASSETS.length];
+      return `<img class="board-pack-icon" src="${this.RASTER_DIR}${asset.file}" alt="" aria-hidden="true" draggable="false">`;
+    },
+    iconName(id, iconId, lang = 'es') {
+      if (id !== 'prismatic') return Icons.name(iconId);
+      const asset = this.PRISMATIC_ASSETS[this._index(iconId) % this.PRISMATIC_ASSETS.length];
+      return asset[lang === 'en' ? 'en' : 'es'];
+    },
+    colorOf(id, iconId) {
+      if (id !== 'prismatic') return Icons.colorOf(iconId);
+      return this.PRISMATIC_ASSETS[this._index(iconId) % this.PRISMATIC_ASSETS.length].color;
+    },
+    // Portada dedicada cuando existe; los packs sin miniatura mantienen el collage.
     previewHtml(id, n = 4) {
+      const def = this.DEFS[id];
+      if (def?.thumbnail) return `<img class="iconpack-thumbnail" src="${this.RASTER_DIR}${def.thumbnail}" alt="" aria-hidden="true" draggable="false">`;
       const ids = this.iconsOf(id).slice(0, n);
       return `<span class="iconpack-collage" data-count="${ids.length}" aria-hidden="true">${ids.map((ic) => `<span class="iconpack-collage-cell">${this.svg(id, ic)}</span>`).join('')}</span>`;
     },
@@ -375,7 +410,7 @@
         col_progress_icons: 'Progreso de iconos', col_progress_avatars: 'Progreso de avatares', col_progress_borders: 'Progreso de bordes', col_progress_boards: 'Progreso de tableros', col_progress_themes: 'Progreso de temas', col_progress_achievements: 'Progreso de logros',
         col_filter_all: 'Todos', col_sort_recent: 'Más reciente', col_sort_rarity: 'Rareza', col_sort_name: 'Nombre', col_sort_owned: 'Desbloqueados', col_sort_label: 'Ordenar por',
         col_locked_slot: 'Bloqueado · por descubrir', col_empty_rarity: 'Sin objetos de esta rareza todavía.',
-        shop_iconpacks: 'Iconos de tablero', iconpack_view: 'Ver iconos', iconpack_contents: 'Iconos del pack', iconpack_cosmos_desc: 'El set clásico de figuras de Convergence.', iconpack_equipped_note: 'Estos iconos aparecen ahora en tu tablero.',
+        shop_iconpacks: 'Iconos de tablero', iconpack_view: 'Ver iconos', iconpack_contents: 'Iconos del pack', iconpack_cosmos_desc: 'El set clásico de figuras de Convergence.', iconpack_prismatic_name: 'Joyas Prisma', iconpack_prismatic_desc: 'Diez joyas facetadas con color intenso, reflejos de cristal y brillo neón.', iconpack_equipped_note: 'Estos iconos aparecen ahora en tu tablero.',
         col_banner_icons_title: 'Más packs pronto', col_banner_icons_desc: 'Nuevos packs de iconos llegarán a la tienda. ¡Colecciónalos todos!', col_banner_icons_cta: 'Ir a tienda',
         col_banner_avatars_title: 'Avatar exclusivo', col_banner_avatars_desc: 'Participa en eventos especiales para conseguir avatares únicos por tiempo limitado.', col_banner_avatars_cta: 'Ir a eventos',
         col_banner_borders_title: 'Presume tu estilo', col_banner_borders_desc: 'Los bordes no dan ventaja en el juego. ¡Coléccionalos todos y destaca!', col_banner_borders_cta: 'Ir a tienda',
@@ -747,7 +782,7 @@
         col_progress_icons: 'Icon progress', col_progress_avatars: 'Avatar progress', col_progress_borders: 'Border progress', col_progress_boards: 'Board progress', col_progress_themes: 'Theme progress', col_progress_achievements: 'Achievement progress',
         col_filter_all: 'All', col_sort_recent: 'Most recent', col_sort_rarity: 'Rarity', col_sort_name: 'Name', col_sort_owned: 'Unlocked', col_sort_label: 'Sort by',
         col_locked_slot: 'Locked · to discover', col_empty_rarity: 'No items of this rarity yet.',
-        shop_iconpacks: 'Board icons', iconpack_view: 'View icons', iconpack_contents: 'Pack icons', iconpack_cosmos_desc: 'The classic Convergence figure set.', iconpack_equipped_note: 'These icons now appear on your board.',
+        shop_iconpacks: 'Board icons', iconpack_view: 'View icons', iconpack_contents: 'Pack icons', iconpack_cosmos_desc: 'The classic Convergence figure set.', iconpack_prismatic_name: 'Prismatic Jewels', iconpack_prismatic_desc: 'Ten richly colored faceted jewels with crystal highlights and a neon glow.', iconpack_equipped_note: 'These icons now appear on your board.',
         col_banner_icons_title: 'More packs soon', col_banner_icons_desc: 'New icon packs are coming to the shop. Collect them all!', col_banner_icons_cta: 'Go to shop',
         col_banner_avatars_title: 'Exclusive avatar', col_banner_avatars_desc: 'Join special events to get unique avatars for a limited time.', col_banner_avatars_cta: 'Go to events',
         col_banner_borders_title: 'Show off your style', col_banner_borders_desc: 'Borders give no gameplay advantage. Collect them all and stand out!', col_banner_borders_cta: 'Go to shop',
@@ -1571,7 +1606,7 @@
       this.popupsEl = $('#popups');
       this.boardEl.style.setProperty('--size', State.size);
       this.boardEl.innerHTML = '';
-      this.cells = []; this.glyphs = []; this._cellId = []; this._cellTile = [];
+      this.cells = []; this.glyphs = []; this._cellId = []; this._cellPack = []; this._cellTile = [];
       const frag = document.createDocumentFragment();
       for (let i = 0; i < State.size * State.size; i++) {
         const b = document.createElement('button');
@@ -1607,14 +1642,18 @@
     cellLabel(i) {
       const r = (i / State.size | 0) + 1, c = (i % State.size) + 1;
       const v = State.board[i];
-      return `Fila ${r}, columna ${c}: ${v ? Icons.name(v) : 'vacía'}`;
+      const packId = Meta.equippedIconPack();
+      return `Fila ${r}, columna ${c}: ${v ? IconPacks.iconName(packId, v, Settings.lang) : 'vacía'}`;
     },
 
-    // Pinta el SVG del icono solo cuando cambia (cache por celda para rendimiento)
+    // Pinta el icono solo cuando cambia el id lógico o el pack equipado.
     setGlyph(i, id) {
-      if (this._cellId[i] === id) return;
+      const packId = Meta.equippedIconPack(), packKey = id ? packId : null;
+      if (!this._cellPack) this._cellPack = [];
+      if (this._cellId[i] === id && this._cellPack[i] === packKey) return;
       this._cellId[i] = id;
-      this.glyphs[i].innerHTML = id ? Icons.svg(id) : '';
+      this._cellPack[i] = packKey;
+      this.glyphs[i].innerHTML = id ? IconPacks.svg(packId, id) : '';
     },
 
     // Overlay de casilla especial (roca/helada/cristal/cadenas/portal…) por clase, con caché.
@@ -2822,7 +2861,7 @@
       classes.push('cell', 'has-icon', 'converge-tile');
       el.className = Array.from(new Set(classes)).join(' ');
       el.dataset.tileGlyph = (source && source.dataset && source.dataset.tileGlyph) || '';
-      glyph.innerHTML = Icons.svg(id);
+      glyph.innerHTML = IconPacks.svg(Meta.equippedIconPack(), id);
       el.style.width = cellW.toFixed(1) + 'px'; el.style.height = cellH.toFixed(1) + 'px';
       const dx = to.x - from.x, dy = to.y - from.y;
       const horizontal = Math.abs(dx) >= Math.abs(dy);
@@ -2967,7 +3006,7 @@
       let flights = 0, trails = 0;
       activeCells.forEach((idx, k) => {
         const id = (Render._cellId && Render._cellId[idx]) || State.board[idx];
-        const iconColor = Icons.colorOf(id);
+        const iconColor = IconPacks.colorOf(Meta.equippedIconPack(), id);
         const from = grid.xy(idx);
         iconColors.push(iconColor);
         if (this._tracePath(group.trails[k], from, center, grid.cellPx, iconColor || color)) trails++;
@@ -6014,7 +6053,7 @@
       if (t && (t.type === 'boss' || t.type === 'cage')) return 0;
       if (!hadIcon && !t) return 0;
       if (hadIcon) {
-        FX.burst(j, Icons.colorOf(State.board[j]), fxN);
+        FX.burst(j, IconPacks.colorOf(Meta.equippedIconPack(), State.board[j]), fxN);
         State.board[j] = null;
         State.iconCount = Math.max(0, State.iconCount - 1);
       } else {
@@ -8627,7 +8666,7 @@
       const f = [];
       for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) f.push(i);
       let n = Math.floor(f.length * frac);
-      for (let k = 0; k < n && f.length; k++) { const idx = f.splice(rand(f.length), 1)[0]; FX.burst(idx, Icons.colorOf(State.board[idx]), 4); State.board[idx] = null; State.iconCount--; }
+      for (let k = 0; k < n && f.length; k++) { const idx = f.splice(rand(f.length), 1)[0]; FX.burst(idx, IconPacks.colorOf(Meta.equippedIconPack(), State.board[idx]), 4); State.board[idx] = null; State.iconCount--; }
       Render.syncAll();
     },
 
@@ -8907,7 +8946,8 @@
       const pool = Engine.poolForLevel(next);
       const curSpawn = Engine.spawnRateForLevel(State.level) / 1000, nxtSpawn = Engine.spawnRateForLevel(next) / 1000;
       const curVar = Engine.poolForLevel(State.level).length, nxtVar = pool.length;
-      const icons = pool.map(id => `<span class="ic-chip" title="${Icons.name(id)}">${Icons.svg(id)}</span>`).join('');
+      const packId = Meta.equippedIconPack();
+      const icons = pool.map(id => `<span class="ic-chip" title="${esc(IconPacks.iconName(packId, id, Settings.lang))}">${IconPacks.svg(packId, id)}</span>`).join('');
       let head, extra = '';
       if (State.mode === 'aventura') {
         const bi = Adventure.biomeOf(next), ch = Adventure.chapterOf(next), boss = Adventure.isBoss(next);
@@ -10843,7 +10883,7 @@
     }
     if (catId === 'iconpacks') {
       const eq = Meta.equippedIconPack();
-      return IconPacks.order.map((id, i) => { const d = IconPacks.DEFS[id]; return { id, name: d.name, rarity: Rarity.of(d), owned: Meta.ownsIconPack(id), equipped: eq === id, index: i, art: IconPacks.previewHtml(id, 4) }; });
+      return IconPacks.order.map((id, i) => { const d = IconPacks.DEFS[id]; return { id, name: IconPacks.packName(id), rarity: Rarity.of(d), owned: Meta.ownsIconPack(id), equipped: eq === id, index: i, art: IconPacks.previewHtml(id, 4) }; });
     }
     if (catId === 'borders') {
       const eq = Meta.avatarBorder();
@@ -11168,7 +11208,7 @@
     const rarity = Rarity.of(pack), accent = Rarity.accent(rarity);
     const owned = Meta.ownsIconPack(packId), equipped = Meta.equippedIconPack() === packId;
     const emblem = $('#icon-pack-emblem'); if (emblem) emblem.innerHTML = IconPacks.previewHtml(packId, 4);
-    const title = $('#icon-pack-title'); if (title) title.textContent = pack.name;
+    const title = $('#icon-pack-title'); if (title) title.textContent = IconPacks.packName(packId);
     const chip = $('#icon-pack-rarity'); if (chip) { chip.textContent = Rarity.label(rarity); chip.style.setProperty('--rar', accent); }
     const desc = $('#icon-pack-desc'); if (desc) desc.textContent = pack.descKey ? I18n.t(pack.descKey) : '';
     const grid = $('#icon-pack-grid');
@@ -11646,7 +11686,7 @@
           : `<button class="btn btn-primary btn-sm" data-ipack-buy="${id}">${p.cost === 0 ? esc(I18n.t('free')) : iconInline('coin') + ' ' + p.cost}</button>`;
       return `<div class="iconpack-card${eq ? ' on' : ''}" data-pack="${id}">
         <button class="iconpack-preview" type="button" data-ipack-view="${id}" aria-label="${esc(I18n.t('iconpack_view'))}">${IconPacks.previewHtml(id, 4)}</button>
-        <span class="iconpack-name">${esc(p.name)}</span>
+        <span class="iconpack-name">${esc(IconPacks.packName(id))}</span>
         <span class="rarity-chip" style="--rar:${Rarity.accent(rarity)}">${esc(Rarity.label(rarity))}</span>
         <div class="iconpack-actions"><button class="btn btn-ghost btn-sm" type="button" data-ipack-view="${id}">${esc(I18n.t('iconpack_view'))}</button>${btn}</div>
       </div>`;
@@ -12876,5 +12916,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, IconPacks, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
 })();
