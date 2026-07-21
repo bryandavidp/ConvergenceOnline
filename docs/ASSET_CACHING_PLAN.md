@@ -126,6 +126,33 @@ sirva imágenes al instante desde la caché persistente.
 - **Carga inicial:** el precache ya no se pierde por un solo asset roto; el
   runtime sirve imágenes desde caché persistente.
 
+## A2 — Precarga completa de iconos (anti-parpadeo) · v2.18.0
+
+Seguía habiendo "parpadeo" al abrir por primera vez pantallas y modales: sus
+iconos no estaban precargados. Causa: las vistas y modales se construyen bajo
+demanda (`buildSettings`, `buildShop`, `buildResourceShop`, mode-launch…), así
+que sus assets **no están en el DOM al arrancar**; y el calentado en segundo
+plano solo barría `img[src]`, **ignorando las máscaras CSS `--icv2-url`** (toda
+la iconografía v2).
+
+Solución (`game.js`):
+
+- **`Preload`** — fuente única de verdad del universo de assets de la UI:
+  `iconUrls()` (los 55 PNG de `img/ui` + todos los SVG del mapa `V2_ICONS` que
+  usan máscara `--icv2-url`) y `menuArtUrls()` (perfil, cofres, tiendas,
+  tableros y emblemas/CTA del modal de lanzamiento de modo, tomados de las
+  estructuras de datos, no del DOM).
+- **Manifiesto crítico del arranque** — ahora precarga (bloqueante, con
+  `decode()`) el **100% de iconos + arte de menús** vía `Preload`, no solo el
+  subconjunto presente en el DOM de Login/Inicio. Los iconos son diminutos
+  (~250 KB); el arte pesado ya se precargaba ahí.
+- **`warmSecondaryAssets`** — reescrito: calienta primero `Preload.allUrls()` y,
+  además, barre el DOM incluyendo las máscaras `--icv2-url` (antes omitidas),
+  con `decode()` y concurrencia acotada.
+
+Resultado: al llegar a Inicio, todos los iconos y el arte de menús/modales están
+descargados y decodificados; abrir cualquier pantalla o modal ya no parpadea.
+
 ## Fuera de alcance (siguiente iteración)
 
 - **D — Reducir nº/peso de assets:** sprite/atlas por pack (como los cofres),

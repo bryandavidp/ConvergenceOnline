@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.17.0';
+  const VERSION = '2.18.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -4750,6 +4750,57 @@
   const EMOJI_IMG = { '🎯': 'target', '💎': 'crystal', '🌀': 'teleporter', '💣': 'bomb', '🎁': 'gift', '⚡': 'bolt', '➕': 'plus', '🔒': 'lock', '🏆': 'trophy', '🪙': 'coin', '🏅': 'medal', '⬆️': 'upgrade', '🗓️': 'calendar', '✅': 'check', '🔥': 'fire', '⭐': 'star', '🌟': 'star', '👑': 'crown', '🧊': 'v2:snowflake', '❄️': 'v2:snowflake', '☣️': 'v2:radiation', '⛓️': 'v2:link', '🕸️': 'v2:connection', '🚧': 'v2:prohibited', '🟫': 'v2:drought', '🏜️': 'v2:cactus', '🏔️': 'v2:mountain', '🏙️': 'v2:town', '🪨': 'v2:meteor', '🕳️': 'v2:circle-ring', '🧹': 'v2:brush', '🃏': 'v2:double', '📳': 'v2:mobile-phone', '🔠': 'v2:font', '📲': 'v2:download', '📤': 'v2:share', '🔔': 'v2:notification', '📶': 'v2:wi-fi', '🎉': 'v2:four-pointed-star', '✨': 'v2:four-pointed-star', '🏁': 'v2:flag' };
   // <img> en línea si el emoji tiene equivalente; si no, el propio emoji (texto).
   const emojiIcon = (e) => EMOJI_IMG[e] ? iconAnyInline(EMOJI_IMG[e]) : e;
+
+  /* ===================== Preload (universo de assets de la UI) =====================
+   * Fuente única de verdad de las URLs de iconos/arte que la UI inserta por
+   * innerHTML al abrir vistas y modales. Como esas vistas se construyen bajo
+   * demanda, sus assets no están en el DOM al arrancar y provocaban un
+   * "parpadeo" la primera vez que se abrían. El preloader de arranque y el
+   * calentado en segundo plano consumen estas listas para tener el 100% de los
+   * iconos listos ANTES de que el usuario navegue. */
+  const Preload = {
+    // Todos los PNG del pack de UI (img/ui). Mantener sincronizado con la carpeta
+    // img/ui/ y con UI_ICONS de sw.js: son los iconos de cabeceras, filas, chips,
+    // econ y emblemas de modal repartidos por todo el juego.
+    UI_ICONS: [
+      'aura', 'bolt', 'bomb', 'book', 'calendar', 'cart', 'check', 'chest', 'clock',
+      'close', 'coin', 'crown', 'crystal', 'dice', 'fire', 'friend', 'gem', 'gift',
+      'heart', 'house', 'info', 'leaf', 'lock', 'luckyblock', 'magnet', 'medal',
+      'minus', 'music-off', 'music-on', 'pencil', 'pin', 'planet-hell', 'planet',
+      'player', 'players', 'plus', 'potion', 'question', 'rocket', 'search',
+      'settings', 'shield', 'skull', 'sound-off', 'sound-on', 'star-empty', 'star',
+      'stats', 'target', 'teleporter', 'ticket', 'trophy', 'upgrade', 'verify', 'warning',
+    ],
+    // URLs del universo de iconos: PNG de UI + SVG de iconografía v2 (máscaras CSS
+    // --icv2-url). Cubre el 100% de nombres que icon()/iconV2() pueden producir.
+    iconUrls() {
+      const urls = this.UI_ICONS.map((n) => `${ICONS_DIR}/${n}.png`);
+      Object.keys(V2_ICONS).forEach((n) => urls.push(iconV2Path(n)));
+      return urls;
+    },
+    // Arte de menús/modales que se construye al abrir la vista (aún no está en el
+    // DOM): se toma de las estructuras de datos para no depender del render.
+    menuArtUrls() {
+      const urls = [];
+      try {
+        Object.values(PlayerIcons.DEFS).forEach((d) => urls.push(d.asset));
+        Object.values(PlayerBorders.DEFS).forEach((d) => urls.push(d.asset));
+        Object.values(CHEST_TYPES).forEach((c) => urls.push(c.asset));
+        Storefront.CURRENCY_OFFERS.forEach((o) => urls.push(o.asset));
+        Storefront.XP_BOOST_OFFERS.forEach((o) => urls.push(o.asset));
+        Boards.order.forEach((id) => urls.push('img/board-themes/v2/' + id + '/preview.jpg'));
+        // Modal de lanzamiento de modo: emblema + icono de CTA de cada modo, que
+        // se construyen al abrirlo (por eso parpadeaban la primera vez).
+        Object.values(MODE_LAUNCH_META).forEach((m) => { urls.push(m.emblem); urls.push(m.startIcon); });
+      } catch (_) { /* estructura inesperada: devolvemos lo reunido */ }
+      return urls.filter(Boolean);
+    },
+    // Todo lo precargable de golpe (iconos + arte de menús), deduplicado.
+    allUrls() {
+      const seen = new Set();
+      return [].concat(this.iconUrls(), this.menuArtUrls()).filter((u) => u && !seen.has(u) && seen.add(u));
+    },
+  };
 
   /* ===================== Art (ilustraciones SVG hechas a mano, 0 imágenes externas) =====================
    * Librería de SVGs fieles a los mockups: avatar robot, cohete, regalo, trofeo,
@@ -12629,24 +12680,40 @@
     bootTimeout(drop, 700); // respaldo si no llega transitionend (reduced-motion, etc.)
   }
 
-  // Calentado en segundo plano: el resto de imágenes referenciadas en el DOM
-  // (vistas del hub, modales, juego, mundos). No toca la barra ni bloquea nada.
+  // Calentado en segundo plano tras revelar la app: descarga + decode del 100%
+  // de los iconos y del arte de menús/modales, para que NO parpadeen la primera
+  // vez que el usuario abre una pantalla o un modal (esas vistas se construyen
+  // bajo demanda, así que sus assets no están aún en el DOM). No bloquea nada.
   function warmSecondaryAssets() {
-    let queue;
+    if (typeof Image === 'undefined') return; // entorno de tests (Node)
+    const seen = new Set();
+    const queue = [];
+    const add = (u) => { if (u && !seen.has(u)) { seen.add(u); queue.push(u); } };
+    // 1) Prioridad: universo completo de iconos (PNG de UI + máscaras v2) y arte
+    //    de menús, tomado de las estructuras de datos (independiente del DOM).
+    try { Preload.allUrls().forEach(add); } catch (_) { /* seguimos con el DOM */ }
+    // 2) Además, lo que YA esté en el DOM: <img src> y máscaras --icv2-url (que
+    //    el barrido anterior no cubría y por eso parpadeaban).
     try {
-      const seen = new Set();
-      queue = Array.from(document.querySelectorAll('img[src]'))
-        .map((im) => im.getAttribute('src'))
-        .filter((u) => u && !seen.has(u) && seen.add(u));
-    } catch (_) { return; }
+      document.querySelectorAll('img[src]').forEach((im) => add(im.getAttribute('src')));
+      document.querySelectorAll('[style*="--icv2-url"]').forEach((el) => {
+        const m = (el.style.getPropertyValue('--icv2-url') || '').match(/url\((['"]?)(.*?)\1\)/);
+        if (m && m[2]) add(m[2]);
+      });
+    } catch (_) { /* DOM inesperado: seguimos con lo reunido */ }
     let i = 0;
     const pump = () => {
       if (i >= queue.length) return;
+      const url = queue[i++];
       const img = new Image();
-      img.onload = img.onerror = pump;
-      img.src = queue[i++];
+      let done = false;
+      const next = () => { if (done) return; done = true; img.onload = img.onerror = null; pump(); };
+      img.onload = next; img.onerror = next;
+      img.src = url;
+      // decode() deja el bitmap listo para pintar sin "pop" al abrir la vista.
+      if (img.decode) img.decode().then(next).catch(next);
     };
-    for (let k = 0; k < 4; k++) pump(); // concurrencia acotada
+    for (let k = 0; k < 6; k++) pump(); // concurrencia acotada
   }
 
   function runBootPreloader() {
@@ -12671,21 +12738,17 @@
     const start = $('#screen-start');
     if (start) Array.from(start.children).forEach((c) => { if (c.id !== 'hub-views') collect(c); });
 
-    // 2) Tiendas + cofres + iconos/bordes: su arte se construye al abrir la
-    //    vista (no está aún en el DOM), así que se toma de las estructuras de
-    //    datos del juego para no divergir de la fuente. Envuelto en try por si
-    //    alguna estructura cambia: nunca debe romper el arranque.
+    // 2) Universo COMPLETO de iconos (PNG de UI + máscaras v2) + arte de menús y
+    //    modales (perfil, cofres, tiendas, tableros, lanzamiento de modo). Todo
+    //    esto se construye al abrir la vista —no está aún en el DOM—, así que se
+    //    toma de las estructuras de datos (Preload) para no divergir de la
+    //    fuente. Precargar el 100% aquí es lo que elimina el "parpadeo" la
+    //    primera vez que se abre cada pantalla/modal. Los iconos son diminutos;
+    //    el arte pesado ya se precargaba aquí. Envuelto en try: nunca debe
+    //    romper el arranque.
     try {
-      // Iconos y bordes de jugador (perfil/personalización).
-      Object.values(PlayerIcons.DEFS).forEach((d) => push(d.asset));
-      Object.values(PlayerBorders.DEFS).forEach((d) => push(d.asset));
-      // Cofres: atlas de cada tipo (incluye el de evento).
-      Object.values(CHEST_TYPES).forEach((c) => push(c.asset));
-      // Tienda de recursos: arte de ofertas de monedas/gemas y packs de XP.
-      Storefront.CURRENCY_OFFERS.forEach((o) => push(o.asset));
-      Storefront.XP_BOOST_OFFERS.forEach((o) => push(o.asset));
-      // Tienda de personalización: miniaturas de todos los tableros.
-      Boards.order.forEach((id) => push('img/board-themes/v2/' + id + '/preview.jpg'));
+      Preload.iconUrls().forEach(push);
+      Preload.menuArtUrls().forEach(push);
     } catch (_) { /* estructura inesperada: seguimos con lo ya reunido */ }
     // Imágenes estáticas de las propias vistas de tienda/cofres (cabeceras,
     // fichas de recompensa…). Siguen en el DOM aunque estén ocultas.
