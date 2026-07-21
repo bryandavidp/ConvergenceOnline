@@ -71,7 +71,7 @@ Todo vive dentro de un único `(() => { 'use strict'; ... })()`. Está organizad
 | 12 | `Render` | 611 | Capa de renderizado DOM (memoiza por celda para evitar tocar el DOM sin cambios) |
 | 13 | `Toasts` / `announce` | 862 | Notificaciones toast + región para lector de pantalla |
 | 14 | `Screens` / `HubViews` / `Modal` | 921 | Router de pantallas, vistas internas del hub y diálogos de partida |
-| 15 | `FX` | 955 | Sistema de partículas DOM/WAAPI (sin canvas) |
+| 15 | `FX` | 955 | Sistema de partículas DOM/WAAPI del tablero (pool fijo, sin canvas). Su hermano de menús/tienda es `ShopFX` (buscar `Celebraciones de la tienda`), con el mismo patrón de pool/cap/coalescing — ver `ANIMATION_PERF_PLAN.md` (AP-*) |
 | 16 | `Music` | 1241 | Música de fondo generativa (osciladores) |
 | 17 | `Meta` | 1275 | Perfil de progresión/economía persistente (`cv_meta`) |
 | 18 | `Econ` | 1477 | Refresco de los "pills" de economía en el HUD |
