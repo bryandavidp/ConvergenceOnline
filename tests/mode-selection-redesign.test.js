@@ -241,7 +241,7 @@ test('modos: artes, precache y versión quedan sincronizados', () => {
     assert.equal(png[25] & 4, 4, `${rel} debe conservar transparencia`);
     assert.match(sw, new RegExp(`['"]${name}['"]`));
   }
-  assert.match(sw, /c\.addAll\(MODE_GENERATED_ART\)/);
+  assert.match(sw, /IMAGE_MANIFEST = \[\]\.concat\([\s\S]*?\bMODE_GENERATED_ART\b/);
 
   const version = js.match(/const VERSION = '([^']+)'/)?.[1];
   assert.ok(version);

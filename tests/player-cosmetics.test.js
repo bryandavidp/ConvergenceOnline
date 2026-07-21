@@ -107,6 +107,6 @@ test('el avatar generado y las vistas exponen el nuevo flujo visual', () => {
   assert.doesNotMatch(css, /data-player-frame-style=/);
   assert.doesNotMatch(css, /player-icon-svg/);
   assert.match(js, /img\/player-icons/);
-  assert.match(sw, /c\.addAll\(PLAYER_ICON_ASSETS\)/);
-  assert.match(sw, /c\.addAll\(PLAYER_BORDER_ASSETS\)/);
+  assert.match(sw, /IMAGE_MANIFEST = \[\]\.concat\([\s\S]*?\bPLAYER_ICON_ASSETS\b/);
+  assert.match(sw, /IMAGE_MANIFEST = \[\]\.concat\([\s\S]*?\bPLAYER_BORDER_ASSETS\b/);
 });

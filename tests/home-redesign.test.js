@@ -82,7 +82,7 @@ test('home: el subconjunto V2 está optimizado, completo y precargado', () => {
   const sw = read('sw.js');
   let total = 0;
   assert.match(sw, /HOME_V2_ICONS[^;]+\.map\(\(n\) => '\.\/img\/ui-v2\/home\/' \+ n \+ '\.png'\)/s);
-  assert.match(sw, /c\.addAll\(HOME_V2_ICONS\)/);
+  assert.match(sw, /IMAGE_MANIFEST = \[\]\.concat\([\s\S]*?\bHOME_V2_ICONS\b/);
 
   for (const icon of HOME_ICONS) {
     const rel = `img/ui-v2/home/${icon}.png`;
@@ -104,7 +104,7 @@ test('home: el subconjunto V2 está optimizado, completo y precargado', () => {
 test('home: el arte generado original existe, tiene alfa y se precarga offline', () => {
   const sw = read('sw.js');
   assert.match(sw, /HOME_GENERATED_ART[^;]+\.map\(\(n\) => '\.\/img\/ui-generated\/home\/' \+ n \+ '\.png'\)/s);
-  assert.match(sw, /c\.addAll\(HOME_GENERATED_ART\)/);
+  assert.match(sw, /IMAGE_MANIFEST = \[\]\.concat\([\s\S]*?\bHOME_GENERATED_ART\b/);
 
   for (const art of HOME_GENERATED_ART) {
     const rel = `img/ui-generated/home/${art}.png`;

@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.16.0';
+  const VERSION = '2.17.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -369,6 +369,23 @@
       if (def?.thumbnail) return `<img class="iconpack-thumbnail" src="${this._assetPath(id, def.thumbnail)}" alt="" aria-hidden="true" draggable="false">`;
       const ids = this.iconsOf(id).slice(0, n);
       return `<span class="iconpack-collage" data-count="${ids.length}" aria-hidden="true">${ids.map((ic) => `<span class="iconpack-collage-cell">${this.svg(id, ic)}</span>`).join('')}</span>`;
+    },
+    // A: precalienta (descarga + decode) los PNG de un pack raster para que el
+    // tablero los tenga listos antes de la primera partida. Fire-and-forget e
+    // idempotente. Cosmos (SVG inline) no tiene assets → no hace nada.
+    _preloaded: new Set(),
+    preload(id) {
+      if (typeof Image === 'undefined') return; // entorno de tests (Node)
+      if (this._preloaded.has(id)) return;
+      const assets = this._assets(id);
+      if (!assets) { this._preloaded.add(id); return; }
+      this._preloaded.add(id);
+      assets.forEach((a) => {
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = this._assetPath(id, a.file);
+        if (img.decode) img.decode().catch(() => {});
+      });
     },
   };
 
@@ -1702,7 +1719,20 @@
       if (this._cellId[i] === id && this._cellPack[i] === packKey) return;
       this._cellId[i] = id;
       this._cellPack[i] = packKey;
-      this.glyphs[i].innerHTML = id ? IconPacks.svg(packId, id) : '';
+      const g = this.glyphs[i];
+      g.innerHTML = id ? IconPacks.svg(packId, id) : '';
+      // Salvaguarda A: los packs raster pintan un <img>; si el PNG aún no está
+      // disponible (caché fría, primer arranque, offline), no dejar la celda
+      // vacía —el tablero se rompía—: caer al SVG inline de Cosmos del MISMO id
+      // lógico. Solo se reemplaza si la ficha no cambió entretanto.
+      if (id) {
+        const im = g.firstChild;
+        if (im && im.tagName === 'IMG') {
+          im.addEventListener('error', () => {
+            if (this._cellId[i] === id) g.innerHTML = Icons.svg(id);
+          }, { once: true });
+        }
+      }
     },
 
     // Overlay de casilla especial (roca/helada/cristal/cadenas/portal…) por clase, con caché.
@@ -4282,7 +4312,9 @@
       equippedIconPack: () => IconPacks.DEFS[m.cosmetics.iconPack] ? m.cosmetics.iconPack : IconPacks.DEFAULT,
       equipIconPack(id) {
         if (!IconPacks.DEFS[id] || !this.ownsIconPack(id)) return false;
-        m.cosmetics.iconPack = id; save(); return true;
+        m.cosmetics.iconPack = id; save();
+        IconPacks.preload(id); // A: calienta el pack recién equipado
+        return true;
       },
       buyIconPack(id) {
         const item = IconPacks.DEFS[id];
@@ -12784,6 +12816,9 @@
     I18n.apply();
     Cosmetics.apply();
     Boards.apply();
+    // A: calienta en segundo plano los PNG del pack de iconos equipado para que
+    // el tablero tenga su arte listo antes de la primera partida (no bloquea).
+    IconPacks.preload(Meta.equippedIconPack());
     Input.init();
     buildHomeModeCarousel();
     PWA.init();
