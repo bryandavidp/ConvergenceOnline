@@ -93,7 +93,8 @@ capas. Sostener 60 bajo carga es alcanzable en gama media-alta (Mi Pad 7, iPhone
 | RS-3 | **`will-change` disciplinado** en `.shop-fx` (quitar el permanente de los 100 nodos del pool; promoción transitoria como `.fxp`) — corrige la regresión de v2.19.0 | P0 | ✅ **Hecho v2.26.0** |
 | RS-5 | **Higiene de decodificación de imágenes**: `decoding="async"` en el helper `icon()`/`<img>` generados y en las 77 `<img>` de `index.html` | P1 | ✅ **Hecho v2.26.0** (dimensiones/aspect-ratio: pendiente RS-6) |
 | RS-7 | **Gobernador consciente del dispositivo**: arranque conservador en táctil `dpr≥2` o `deviceMemory≤4`, no solo iOS `dpr≥3` | P1 | ✅ **Hecho v2.26.0** |
-| RS-4 | **Presupuesto de capas de celda**: acotar/coalescer pulsos de celda concurrentes en cascadas grandes (integrado con el gobernador `perf-1/2`) | P1 | ⬜ **Siguiente** |
+| RS-4 | **Presupuesto de capas de celda**: acotar/coalescer pulsos de celda concurrentes en cascadas grandes (integrado con el gobernador `perf-1/2`) | P1 | ✅ **Hecho v2.27.0** |
+| RS-10 | **Reflujo síncrono por celda en el spawn masivo** (`spawnAnim` → WAAPI): eliminar el `void offsetWidth` que causaba layout thrashing al aparecer muchos iconos de golpe (refill tras vaciar el tablero) — pérdida de frames en iOS | P0 | ✅ **Hecho v2.28.0** |
 | RS-6 | **Reducir tamaño de capas**: acotar el pseudo sobredimensionado de skins, dimensiones explícitas en imágenes y confirmar que las capas FX full-screen no promueven hijos de más | P2 | ⬜ |
 | RS-8 | **Evaluar canvas único para partículas** (1 capa en vez de ~140) detrás de bandera, midiendo el regreso del bug blanco/negro; NO cambio a ciegas | P2 | ⬜ |
 | RS-9 | **Instrumentación multi-dispositivo**: `perf-probe` emulando Android hi-dpi + recuento de capas compuestas con presupuesto; validación real en Mi Pad 7 (chrome://inspect → Layers) | P2 | ⬜ (requiere navegador/dispositivo) |
@@ -144,9 +145,49 @@ full-board, blend siempre-vivo, 100 capas will-change) → el parpadeo a negro d
 RS-5 ataca las imágenes a medias. RS-7 da colchón durante el arranque. La confirmación definitiva es
 RS-9 (dispositivo real).
 
+### v2.27.0 — RS-4: presupuesto de capas de celda
+
+- **RS-4 · Tope de pulsos de celda concurrentes.** `Render.cellPulse` (`game.js`) ahora (a) **acota**
+  el nº de pulsos decorativos simultáneos con un tope que escala con el gobernador (28 en nivel 0, 18
+  en nivel 1, 10 en nivel 2): pasado el tope se omite **solo el adorno** (el estado de la celda ya lo
+  pinta `syncCell`/`syncAll`), invisible en cascadas enormes; y (b) **evita el reflujo síncrono**
+  (`void offsetWidth`) salvo al re-disparar sobre una celda que ya pulsa — en el camino común de
+  cascada (celda nueva) desaparece la tormenta de layout que además promovía decenas de capas a la vez.
+  Es justo el pico que en Android hi-dpi desalojaba backing stores → parpadeo a negro.
+  Test: `tests/render-stability.test.js` (tope 28 en nivel 0, 10 en nivel 2). Bump 2.26.0 → 2.27.0.
+
+### v2.28.0 — RS-10: eliminar el reflujo síncrono del spawn masivo (pico de hilo principal en iOS)
+
+> **Síntoma nuevo (iOS):** al aparecer **muchos iconos de golpe** (refill tras vaciar el tablero),
+> quizá con otra animación en curso, la interfaz **se laguea y pierde frames**. A diferencia del
+> parpadeo a negro (RS-1…RS-7, presupuesto de capas/GPU), esto es un **pico de trabajo en el hilo
+> principal**: *layout thrashing*.
+
+- **Causa raíz.** `Render.spawnAnim` reiniciaba la animación CSS `glyph-in` con el truco
+  `el.classList.remove('spawn'); void el.offsetWidth; el.classList.add('spawn')`. Ese `void
+  offsetWidth` fuerza un **recálculo de layout SÍNCRONO** del documento. Se llamaba **por celda**, y el
+  refill masivo lo invoca en bucle (`refilled.forEach((idx) => Render.spawnAnim(idx))`, `game.js:~9433`):
+  con 30-40 iconos nuevos eran **30-40 reflujos forzados en un único frame**, intercalados con
+  escrituras de clase → el hilo principal se bloquea y caen los frames (peor en Safari/iOS, cuyo layout
+  es más lento). La animación en sí (`glyph-in`: `transform: scale` + `opacity`) ya era barata.
+- **Corrección.** `spawnAnim` pasa a **WAAPI** (`glyph.animate([...])`): arranca sin `void offsetWidth`
+  (cero reflujo forzado), corre en el compositor y no depende de `FX.cap`. Misma animación (mismo
+  easing, misma duración 280 ms, mismo scale .2→1 / opacity 0→1). Al ser un cambio en `spawnAnim`,
+  **beneficia a TODOS sus llamadores** (refill, penalización, robos de jefe, meteoro…), no solo al
+  refill masivo. Ya no se añade la clase `.spawn` (la regla CSS `.cell.spawn .glyph` queda inerte).
+  Es el mismo patrón que ya se aplicó a `Render.popup` (WAAPI en vez de `void offsetWidth`) y a
+  `cellPulse` en RS-4. Test: `tests/render-stability.test.js` (usa WAAPI, no añade `.spawn`).
+  Bump 2.27.0 → 2.28.0.
+- **RS-10b (v2.29.0) · Mismo criterio en `iceHit`/`iceBreak`.** `iceHit` también se llama en bucle
+  (`placed.forEach((i) => Render.iceHit(i))`) en oleadas de escarcha/meteoro. Ahora el `void
+  offsetWidth` solo se fuerza al **re-disparar** sobre una celda que ya tiene la clase; una celda
+  nueva arranca la animación con solo añadir la clase → sin reflujo en el camino de bucle. Con esto,
+  ninguna animación disparada en bucle sobre celdas fuerza ya un reflujo síncrono por elemento
+  (los `void offsetWidth` restantes son de **un** elemento por evento —tap fallido, shake, flash,
+  fever— donde un reflujo aislado es despreciable). Bump 2.28.0 → 2.29.0.
+
 ### Siguiente ola (pendiente)
 
-- **RS-4** — cap/coalescing de pulsos de celda concurrentes en cascadas grandes.
 - **RS-6** — dimensiones explícitas en imágenes + acotar tamaño de pseudos de skin.
 - **RS-8** — evaluar (con bandera y medición) un canvas único para partículas.
 - **RS-9** — `perf-probe` con recuento de capas + validación en Mi Pad 7 real (chrome://inspect → Layers).

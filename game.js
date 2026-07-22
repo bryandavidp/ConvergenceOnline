@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.26.0';
+  const VERSION = '2.29.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -1902,13 +1902,26 @@
     syncAll() { for (let i = 0; i < State.board.length; i++) this.syncCell(i); },
 
     spawnAnim(i) {
-      const el = this.cells[i];
+      const el = this.cells[i], g = this.glyphs[i];
       // Limpia un posible estado de "clear" en curso: si un icono aparece en una
       // casilla que se acaba de vaciar (carrera spawn↔convergencia a alta velocidad),
       // el icono nuevo NO debe heredar la animación glyph-out ni quedar invisible.
       el.classList.remove('spawn', 'clear');
-      void el.offsetWidth;
-      el.classList.add('spawn');
+      if (!g) return;
+      // RS-10 (docs/RENDER_STABILITY_PLAN.md): WAAPI en vez de reiniciar la animación CSS con
+      // `void offsetWidth`. Ese reflujo SÍNCRONO se ejecutaba POR CELDA; en un refill masivo
+      // (decenas de iconos tras vaciar el tablero) eran decenas de reflujos forzados en un solo
+      // frame = layout thrashing y pérdida de frames, especialmente en Safari/iOS. WAAPI arranca
+      // sin reflujo, corre en el compositor (transform/opacity) y no depende de FX.cap.
+      const anims = g.getAnimations ? g.getAnimations() : null;
+      if (anims) anims.forEach((a) => { try { a.cancel(); } catch (_) { } });
+      if (typeof g.animate !== 'function') return;
+      try {
+        g.animate(
+          [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }],
+          { duration: 280, easing: 'cubic-bezier(.2,.9,.3,1.3)' },
+        );
+      } catch (_) { }
     },
     clearAnim(indices, target) {
       // En una convergencia, FX ya ha clonado la casilla completa (cuerpo + icono).
@@ -1952,20 +1965,44 @@
 
     miss(i) { const el = this.cells[i]; el.classList.remove('miss'); void el.offsetWidth; el.classList.add('miss'); },
 
+    // RS-10 (docs/RENDER_STABILITY_PLAN.md): iceHit se llama en BUCLE en oleadas de escarcha/
+    // meteoro (placed.forEach). El `void offsetWidth` (reflujo síncrono) solo hace falta para
+    // RE-disparar la animación sobre una celda que YA la tiene; una celda nueva arranca con
+    // solo añadir la clase. Condicionarlo quita el layout thrashing del camino de bucle.
     iceHit(i) {
       const el = this.cells[i];
-      el.classList.remove('ice-hit'); void el.offsetWidth; el.classList.add('ice-hit');
+      if (el.classList.contains('ice-hit')) { el.classList.remove('ice-hit'); void el.offsetWidth; }
+      el.classList.add('ice-hit');
       setTimeout(() => el.classList.remove('ice-hit'), 360);
     },
     iceBreak(i) {
       const el = this.cells[i];
-      el.classList.remove('ice-hit', 'ice-shatter'); void el.offsetWidth; el.classList.add('ice-shatter');
+      el.classList.remove('ice-hit');
+      if (el.classList.contains('ice-shatter')) { el.classList.remove('ice-shatter'); void el.offsetWidth; }
+      el.classList.add('ice-shatter');
       setTimeout(() => el.classList.remove('ice-shatter'), 520);
     },
+    // RS-4 (docs/RENDER_STABILITY_PLAN.md): tope de pulsos DECORATIVOS de celda simultáneos.
+    // En una cascada grande esto se llamaba decenas de veces (cleared.forEach): cada celda
+    // que anima promueve a una capa del compositor -> pico de memoria de GPU que en Android
+    // hi-dpi (Mi Pad 7) desaloja backing stores y las fichas parpadean a negro. El tope escala
+    // con el nivel del gobernador; pasado el tope se omite SOLO el adorno (el estado de la celda
+    // ya lo pinta syncCell/syncAll), invisible en cascadas enormes. Además el reflujo síncrono
+    // (`void offsetWidth`) solo se fuerza al RE-disparar sobre una celda que ya pulsa: en el
+    // camino común de cascada (celda nueva) se evita la tormenta de layout.
+    _pulseActive: 0,
+    _pulseCap() { const lvl = (Perf && typeof Perf.level === 'number') ? Perf.level : 0; return lvl >= 2 ? 10 : lvl >= 1 ? 18 : 28; },
     cellPulse(i, cls, ms = 700) {
       const el = this.cells[i]; if (!el) return;
-      el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
-      setTimeout(() => el.classList.remove(cls), ms);
+      const already = el.classList.contains(cls);
+      if (!already && this._pulseActive >= this._pulseCap()) return; // shed decoration under load
+      if (already) { el.classList.remove(cls); void el.offsetWidth; }
+      else this._pulseActive++;
+      el.classList.add(cls);
+      setTimeout(() => {
+        el.classList.remove(cls);
+        if (!already) this._pulseActive = Math.max(0, this._pulseActive - 1);
+      }, ms);
     },
     boardEvent(cls, ms = 900) {
       const w = document.querySelector('.board-wrap'); if (!w) return;
