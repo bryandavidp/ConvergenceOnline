@@ -269,6 +269,16 @@ El feedback de convergencia es un contrato visual de juego: con `reduced-fx` des
 
 La coreografía magnética vive en `.converge-layer` y reutiliza tres grupos preasignados; cada grupo contiene hasta cinco `.converge-tile`, cinco `.converge-trail`, doce `.converge-particle` y una `.converge-wave`. El viaje dura 165 ms y se lee como un disparo: micro-anticipación de un frame, aceleración inmediata, estiramiento longitudinal y colapso común. Cada estela crece detrás de su ficha hasta el punto de convergencia y permanece 140 ms tras el impacto para hacer legible el recorrido sin ralentizar la jugada. Estelas y fichas animan solo `transform`/`opacity`; gradientes, trazos y glow son pinturas estáticas de una animación one-shot inferior a 700 ms. No crear nodos durante una jugada ni hacer depender estas capas de `FX.cap`.
 
+**Regla de FX de UI (pooling, no `createElement` por evento).** Cualquier capa de celebración
+que se dispare por acción repetible debe usar **un pool fijo reutilizable con tope de concurrencia**
+(patrón `.fx` del tablero). Las celebraciones de la tienda (`.shop-fx` / `ShopFX`) siguen ahora este
+contrato: pool fijo de partículas + rótulos, cap con descarte, coalescing de compras seguidas y monedas
+pintadas por `background-image` (sin `<img>` ni `filter` animado). Motivo y detalle en
+[`ANIMATION_PERF_PLAN.md`](./ANIMATION_PERF_PLAN.md) (AP-*): crear ~33 nodos por tap se apilaba al
+pulsar repetido y saturaba el hilo principal en iOS. Norma general: toda animación `infinite` debe ser
+`transform`/`opacity`-only y estar en la lista de `reduced-fx`; las one-shot pueden usar `filter`/`box-shadow`
+si duran <700 ms.
+
 Las partículas, vuelos de glyph y popups creados con WAAPI se cancelan al terminar después de fijar `opacity:0`; no deben quedar animaciones con `fill:forwards/both` retenidas en `document.getAnimations()`, porque mantienen capas de compositor vivas sin aportar feedback visual.
 
 ## 7. Tablero: enfoque de renderizado

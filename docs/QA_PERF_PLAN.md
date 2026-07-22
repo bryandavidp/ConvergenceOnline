@@ -97,6 +97,12 @@ Orden: B-01…B-06 con test de regresión cada uno → capa 1 → capa 3 sobre l
 
 # 3. Rendimiento de animaciones en móvil (iOS): análisis y corrección
 
+> **Alcance de esta sección: el GAMEPLAY** (tablero, fiebre, confeti, ambientales, pulsos de
+> tiles). El otro síntoma reportado —repetir una acción con animación en **menús/tienda**
+> (comprar pulsando repetido) sobrecarga el hilo principal por acumulación de nodos DOM— se
+> analiza y corrige aparte en **[`ANIMATION_PERF_PLAN.md`](./ANIMATION_PERF_PLAN.md)** (tareas
+> AP-*). Causa raíz distinta (creación de nodos vs. coste de compositor), corrección distinta.
+
 ## 3.1 Síntoma y reproducción medida
 
 Síntoma reportado: en PC todo fluido; en iOS va "un poco más lento" y las animaciones no lucen como en PC. Reproducido en laboratorio con `tools/perf-probe.js` (Supervivencia en juego real con fiebre + confeti periódico, CPU emulada ×6 ≈ gama media móvil):

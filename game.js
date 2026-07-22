@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.18.0';
+  const VERSION = '2.19.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -1267,6 +1267,11 @@
   /* ===================== Sound (WebAudio, sin archivos) ===================== */
   const Sound = {
     ctx: null, sfxGain: null, musicGain: null, _unlocked: false,
+    // AP-8 (docs/ANIMATION_PERF_PLAN.md): tope de osciladores concurrentes. En cadenas de
+    // convergencias muy rápidas se creaban ráfagas de nodos WebAudio (cada `tone` es uno, y
+    // los acordes de combo 3-4 a la vez) que congestionaban el scheduler en el hilo principal.
+    // Por encima del tope se descarta el tono extra (inaudible en la ráfaga), nunca se corta uno vivo.
+    _osc: 0, MAX_OSC: 32,
     get enabled() { return Settings.sfx; },
     // Debe llamarse DENTRO de un gesto de usuario (iOS lo exige).
     ensure() {
@@ -1299,6 +1304,7 @@
     },
     tone(freq, dur, type = 'sine', vol = 0.2, when = 0) {
       if (!Settings.sfx || !this.ctx) return;
+      if (this._osc >= this.MAX_OSC) return; // ráfaga saturada: descarta este tono extra
       const t = this.ctx.currentTime + when;
       const osc = this.ctx.createOscillator();
       const g = this.ctx.createGain();
@@ -1307,6 +1313,8 @@
       g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       osc.connect(g).connect(this.sfxGain || this.ctx.destination);
+      this._osc++;
+      osc.onended = () => { this._osc = Math.max(0, this._osc - 1); };
       osc.start(t); osc.stop(t + dur + 0.02);
     },
     chord(freqs, dur, type = 'sine', vol = 0.12, stagger = 0) { freqs.forEach((f, i) => this.tone(f, dur, type, vol, i * stagger)); },
@@ -11609,6 +11617,16 @@
    * Todo con Web Animations API y respetando movimiento reducido (motionOff). */
   const ShopFX = {
     layer: null,
+    // Pool fijo de partículas reutilizables (AP-1/AP-4, ver docs/ANIMATION_PERF_PLAN.md):
+    // mismo patrón que el FX del tablero. CERO createElement por tap; al saturar el tope se
+    // DESCARTA la partícula (nunca se cancela una viva) -> nº de capas del compositor acotado
+    // por muy rápido que se pulse. Antes cada compra creaba ~33 nodos nuevos (16 monedas con
+    // <img>, 14 estrellas, rayos, anillo) que se apilaban al repetir y saturaban el hilo.
+    pool: [], idx: 0, active: 0, POOL: 96, CAP: 90,
+    // Rótulos "+cantidad" (estructura img+b): pool pequeño aparte, reutilizado round-robin.
+    chips: [], chipIdx: 0, CHIP_POOL: 4,
+    // Coalescing de compras seguidas (AP-2) + count-up cancelable por divisa.
+    _fly: { coins: null, gems: null }, _countRaf: { coins: 0, gems: 0 }, COALESCE_MS: 320,
     ensureLayer() {
       if (this.layer && this.layer.isConnected) return this.layer;
       let el = document.getElementById('shop-fx');
@@ -11617,7 +11635,27 @@
         el.id = 'shop-fx'; el.className = 'shop-fx'; el.setAttribute('aria-hidden', 'true');
         (document.body || document.documentElement).appendChild(el);
       }
-      this.layer = el; return el;
+      this.layer = el; this._buildPool(); return el;
+    },
+    _buildPool() {
+      if (this.pool.length || !this.layer) return;
+      const frag = document.createDocumentFragment();
+      for (let i = 0; i < this.POOL; i++) {
+        const s = document.createElement('span');
+        s.className = 'shopfx-p'; s.style.opacity = '0';
+        this.pool.push({ el: s, anim: null, busy: false });
+        frag.appendChild(s);
+      }
+      for (let i = 0; i < this.CHIP_POOL; i++) {
+        const c = document.createElement('span');
+        c.className = 'shopfx-amount'; c.style.opacity = '0';
+        const img = document.createElement('img'); img.alt = '';
+        const b = document.createElement('b');
+        c.appendChild(img); c.appendChild(b);
+        this.chips.push({ el: c, img, b, anim: null });
+        frag.appendChild(c);
+      }
+      this.layer.appendChild(frag);
     },
     centerOf(el) {
       if (!el || !el.getBoundingClientRect) return null;
@@ -11625,50 +11663,101 @@
       if (!r.width && !r.height) return null;
       return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height };
     },
-    _spawn(cls, cx, cy) {
-      const el = document.createElement('span');
-      el.className = cls; el.style.left = cx + 'px'; el.style.top = cy + 'px';
-      this.ensureLayer().appendChild(el); return el;
+    // Ranura LIBRE del pool (round-robin). Respeta el tope de concurrencia: si todo está
+    // ocupado o se alcanzó el cap, devuelve null y quien llama simplemente no emite esa
+    // partícula (mejor descartar un destello que crear un nodo y romper el frame).
+    _slot() {
+      if (this.active >= this.CAP) return null;
+      const N = this.pool.length;
+      for (let k = 0; k < N; k++) {
+        const p = this.pool[this.idx]; this.idx = (this.idx + 1) % N;
+        if (!p.busy) return p;
+      }
+      return null;
     },
-    _run(el, frames, opts) {
+    // Prepara una partícula del pool: fija forma (clase), posición y limpia estilos que
+    // otra forma pudiera haber dejado (evita contaminación entre reutilizaciones).
+    _particle(cls, cx, cy) {
+      const p = this._slot(); if (!p) return null;
+      const el = p.el;
+      el.className = 'shopfx-p ' + cls;
+      el.style.left = cx + 'px'; el.style.top = cy + 'px';
+      el.style.width = ''; el.style.height = ''; el.style.background = '';
+      el.style.backgroundImage = ''; el.style.boxShadow = ''; el.style.removeProperty('--fx-a');
+      el.style.opacity = '1';
+      p.busy = true; this.active++;
+      return p;
+    },
+    // Anima una ranura del pool y la LIBERA al terminar (nunca deja el nodo colgado ni la
+    // ranura ocupada). Al liberar vuelve a la clase base para soltar estilos de pintado.
+    _run(p, frames, opts) {
+      if (!p) return null;
+      const el = p.el;
       let anim;
       try { anim = el.animate(frames, opts); }
-      catch (_) { el.remove(); return null; }
-      const done = () => { try { anim.cancel(); } catch (_) { } el.remove(); };
+      catch (_) { el.style.opacity = '0'; if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); } return null; }
+      p.anim = anim;
+      const done = () => {
+        if (p.anim !== anim) return;
+        p.anim = null; el.style.opacity = '0'; el.className = 'shopfx-p';
+        if (p.busy) { p.busy = false; this.active = Math.max(0, this.active - 1); }
+        try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) { }
+      };
       anim.onfinish = done; anim.oncancel = done; return anim;
+    },
+    // Toma un rótulo "+N" del pool de chips (cancela el uso previo de esa ranura).
+    _chip(cx, cy) {
+      const c = this.chips[this.chipIdx = (this.chipIdx + 1) % this.chips.length];
+      if (c.anim) { try { c.anim.cancel(); } catch (_) { } c.anim = null; }
+      c.el.style.left = cx + 'px'; c.el.style.top = cy + 'px'; c.el.style.opacity = '1';
+      return c;
+    },
+    _runChip(chip, frames, opts) {
+      let anim;
+      try { anim = chip.el.animate(frames, opts); } catch (_) { chip.el.style.opacity = '0'; return; }
+      chip.anim = anim;
+      const done = () => { if (chip.anim !== anim) return; chip.anim = null; chip.el.style.opacity = '0'; try { anim.cancel(); } catch (_) { } };
+      anim.onfinish = done; anim.oncancel = done;
     },
     // "Wow" de recompensa: rayos giratorios + anillo + estallido de destellos,
     // centrados en el elemento (o rect) ancla. Se usa tal cual para cofres y como
     // puff de color para monedas/gemas.
     rewardWow(anchor, opts) {
+      this.ensureLayer();
       if (motionOff()) return;
       const accent = (opts && opts.accent) || '#ffc44d';
       const scale = (opts && opts.scale) || 1;
       const c = this.centerOf(anchor); if (!c) return;
-      const rays = this._spawn('shopfx-rays', c.x, c.y);
-      rays.style.setProperty('--fx-a', accent);
       const raySize = Math.max(210, Math.min(c.w, c.h) * 3.2) * scale;
-      rays.style.width = rays.style.height = raySize + 'px';
-      this._run(rays, [
-        { transform: 'translate(-50%,-50%) rotate(-22deg) scale(.2)', opacity: 0 },
-        { transform: 'translate(-50%,-50%) rotate(4deg) scale(1)', opacity: .82, offset: .38 },
-        { transform: 'translate(-50%,-50%) rotate(24deg) scale(1.16)', opacity: 0 },
-      ], { duration: 880, easing: 'cubic-bezier(.2,.7,.3,1)' });
-      const ring = this._spawn('shopfx-ring', c.x, c.y);
-      ring.style.setProperty('--fx-a', accent);
-      ring.style.width = ring.style.height = (raySize * .5) + 'px';
-      this._run(ring, [
-        { transform: 'translate(-50%,-50%) scale(.25)', opacity: .9 },
-        { transform: 'translate(-50%,-50%) scale(1.6)', opacity: 0 },
-      ], { duration: 600, easing: 'cubic-bezier(.2,.8,.3,1)' });
+      const rays = this._particle('shopfx-rays', c.x, c.y);
+      if (rays) {
+        rays.el.style.setProperty('--fx-a', accent);
+        rays.el.style.width = rays.el.style.height = raySize + 'px';
+        this._run(rays, [
+          { transform: 'translate(-50%,-50%) rotate(-22deg) scale(.2)', opacity: 0 },
+          { transform: 'translate(-50%,-50%) rotate(4deg) scale(1)', opacity: .82, offset: .38 },
+          { transform: 'translate(-50%,-50%) rotate(24deg) scale(1.16)', opacity: 0 },
+        ], { duration: 880, easing: 'cubic-bezier(.2,.7,.3,1)' });
+      }
+      const ring = this._particle('shopfx-ring', c.x, c.y);
+      if (ring) {
+        ring.el.style.setProperty('--fx-a', accent);
+        ring.el.style.width = ring.el.style.height = (raySize * .5) + 'px';
+        this._run(ring, [
+          { transform: 'translate(-50%,-50%) scale(.25)', opacity: .9 },
+          { transform: 'translate(-50%,-50%) scale(1.6)', opacity: 0 },
+        ], { duration: 600, easing: 'cubic-bezier(.2,.8,.3,1)' });
+      }
       const N = 14;
       for (let i = 0; i < N; i++) {
         const a = (Math.PI * 2 * i) / N + (Math.random() - .5) * .55;
         const dist = raySize * (.26 + Math.random() * .2);
-        const star = this._spawn('shopfx-star', c.x, c.y);
-        star.style.background = i % 3 === 0 ? '#fff' : accent;
+        const star = this._particle('shopfx-star', c.x, c.y);
+        if (!star) break; // pool saturado por una ráfaga: se dejan de emitir destellos extra
+        const col = i % 3 === 0 ? '#fff' : accent;
+        star.el.style.background = col; star.el.style.setProperty('--fx-a', col);
         const s = (6 + Math.random() * 8) * scale;
-        star.style.width = star.style.height = s + 'px';
+        star.el.style.width = star.el.style.height = s + 'px';
         const dx = Math.cos(a) * dist, dy = Math.sin(a) * dist;
         this._run(star, [
           { transform: 'translate(-50%,-50%) scale(.3)', opacity: 1 },
@@ -11680,34 +11769,51 @@
     // Monedas/gemas reales volando de la card al contador de la cabecera, con
     // rótulo "+cantidad", count-up del total y rebote del contador al llegar.
     flyCurrency(kind, amount, fromEl) {
+      this.ensureLayer();
       const target = document.querySelector(`#screen-start .hub-header-wallet-${kind} .hub-header-currency`)
         || document.querySelector(`#screen-start [data-econ-num="${kind}"]`);
       const from = this.centerOf(fromEl), to = this.centerOf(target);
       const newTotal = kind === 'gems' ? Meta.gems() : Meta.coins();
       const oldTotal = Math.max(0, newTotal - amount);
+      // Count-up SIEMPRE (barato) y cancelable por divisa: los taps seguidos no apilan rAF.
+      this.countUp(kind, oldTotal, newTotal, 760, 260);
       if (motionOff() || !from || !to) { this.bumpCounter(kind); return; }
       const asset = kind === 'gems' ? 'img/ui-v2/home/gem.png' : 'img/ui-generated/home/header-coin-star.png';
       const accent = kind === 'gems' ? '#57e0ff' : '#ffca3a';
+      // AP-2 · Coalescing: si repites la MISMA divisa dentro de la ventana y el rótulo sigue
+      // vivo, acumula "+N" en él y NO relances el enjambre completo. El feedback sube (el
+      // número crece con cada tap, el contador rebota) pero el coste de nodos queda acotado.
+      const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      const prev = this._fly[kind];
+      if (prev && prev.chip && prev.chip.anim && now - prev.at < this.COALESCE_MS) {
+        prev.total += amount; prev.at = now;
+        prev.chip.b.textContent = '+' + fmtCompact(prev.total);
+        this.bumpCounter(kind);
+        return;
+      }
       // Puff de color en la card.
       this.rewardWow(fromEl, { accent, scale: .82 });
-      // Rótulo "+cantidad" que asciende desde la card.
-      const chip = this._spawn('shopfx-amount', from.x, from.y - from.h * .22);
-      chip.style.setProperty('--fx-a', accent);
-      chip.innerHTML = `<img src="${asset}" alt=""><b>+${esc(fmtCompact(amount))}</b>`;
-      this._run(chip, [
+      // Rótulo "+cantidad" que asciende desde la card (nodo del pool de chips).
+      const chip = this._chip(from.x, from.y - from.h * .22);
+      chip.el.style.setProperty('--fx-a', accent);
+      chip.img.src = asset; chip.b.textContent = '+' + fmtCompact(amount);
+      this._runChip(chip, [
         { transform: 'translate(-50%,-50%) scale(.5)', opacity: 0 },
         { transform: 'translate(-50%,-135%) scale(1)', opacity: 1, offset: .3 },
         { transform: 'translate(-50%,-205%) scale(1)', opacity: 1, offset: .78 },
         { transform: 'translate(-50%,-255%) scale(.7)', opacity: 0 },
       ], { duration: 1050, easing: 'ease-out' });
-      // Enjambre de monedas/gemas en arco hacia el contador.
+      this._fly[kind] = { at: now, total: amount, chip };
+      // Enjambre de monedas/gemas en arco hacia el contador. Cada moneda es una partícula
+      // del pool que pinta el recurso vía background-image (AP-5): sin <img> hijo ni
+      // filter:drop-shadow -> capa pura transform/opacity, ×0 coste de pintado repetido.
       const N = 16;
       const ctrlX = (from.x + to.x) / 2 + (Math.random() - .5) * 70;
       const ctrlY = Math.min(from.y, to.y) - 100;
       for (let i = 0; i < N; i++) {
-        const coin = this._spawn('shopfx-coin', 0, 0);
-        const img = document.createElement('img'); img.src = asset; img.alt = '';
-        coin.appendChild(img);
+        const coin = this._particle('shopfx-coin', 0, 0);
+        if (!coin) break; // pool saturado: se dejan de emitir monedas extra
+        coin.el.style.backgroundImage = `url('${asset}')`;
         const sx = from.x + (Math.random() - .5) * from.w * .7;
         const sy = from.y + (Math.random() - .5) * from.h * .5;
         const M = 6, frames = [];
@@ -11721,7 +11827,6 @@
       }
       // El grueso de monedas aterriza ~700 ms; sincroniza rebote y fin del count-up.
       setTimeout(() => this.bumpCounter(kind), 700);
-      this.countUp(kind, oldTotal, newTotal, 760, 260);
     },
     bumpCounter(kind) {
       if (motionOff()) return;
@@ -11738,19 +11843,58 @@
     },
     countUp(kind, from, to, ms, delay) {
       const els = Array.from(document.querySelectorAll(`#screen-start [data-econ-num="${kind}"]`));
-      if (!els.length || from === to || typeof requestAnimationFrame !== 'function' || typeof performance === 'undefined') return;
+      if (!els.length || typeof requestAnimationFrame !== 'function' || typeof performance === 'undefined') return;
+      // Cancela un count-up en curso de la misma divisa: los taps seguidos no apilan bucles
+      // rAF que compiten por el mismo contador (antes cada compra abría uno nuevo).
+      if (this._countRaf[kind]) { try { cancelAnimationFrame(this._countRaf[kind]); } catch (_) { } this._countRaf[kind] = 0; }
       const set = (v) => els.forEach((el) => { el.textContent = fmtCompact(v); });
+      if (from === to) { set(to); return; }
       const start = performance.now() + (delay || 0);
       set(from);
       const step = (now) => {
         const t = Math.max(0, Math.min(1, (now - start) / ms));
         const eased = 1 - Math.pow(1 - t, 3);
         set(Math.round(from + (to - from) * eased));
-        if (t < 1) requestAnimationFrame(step); else set(to);
+        if (t < 1) this._countRaf[kind] = requestAnimationFrame(step); else { this._countRaf[kind] = 0; set(to); }
       };
-      requestAnimationFrame(step);
+      this._countRaf[kind] = requestAnimationFrame(step);
     },
   };
+
+  // AP-3 · Anti-rebote de taps: ignora pulsaciones de un mismo botón dentro de `ms`.
+  // Frena el doble-disparo accidental sin bloquear compras intencionadas (un tap cada
+  // ~180 ms sigue permitiendo ~5/seg). Clave por elemento; se limpia solo con el GC.
+  const _tapAt = new WeakMap();
+  function tapThrottle(el, ms) {
+    if (!el) return true;
+    const now = Date.now(), last = _tapAt.get(el) || 0;
+    if (now - last < ms) return false;
+    _tapAt.set(el, now); return true;
+  }
+
+  // AP-3 · Actualización QUIRÚRGICA de la tienda de recursos: refresca solo los estados
+  // que cambian tras una compra (is-poor por gemas, contador "tienes N" de cofres) SIN
+  // reescribir el innerHTML ni re-attachar listeners. Sustituye a llamar buildResourceShop()
+  // por tap, que reparseaba HTML + re-decodificaba imágenes y era la carga que se apilaba.
+  function refreshResourceShopState() {
+    const gems = Meta.gems();
+    Storefront.XP_BOOST_OFFERS.forEach((offer) => {
+      const card = document.querySelector(`[data-offer-card="${offer.id}"]`);
+      if (card) card.classList.toggle('is-poor', gems < offer.gemCost);
+    });
+    Storefront.CHEST_OFFERS.forEach((offer) => {
+      const card = document.querySelector(`[data-offer-card="chest-${offer.id}"]`);
+      if (!card) return;
+      card.classList.toggle('is-poor', gems < offer.gemCost);
+      const owned = Meta.chestInventory().filter((entry) => entry.type === offer.id).length;
+      card.classList.toggle('has-owned', owned > 0);
+      const badge = card.querySelector(`[data-chest-owned="${offer.id}"]`);
+      if (badge) {
+        const b = badge.querySelector('b'); if (b) b.textContent = owned;
+        badge.title = owned > 0 ? I18n.t('chest_shop_owned').replace('{n}', owned) : I18n.t('chest_shop_owned_none');
+      }
+    });
+  }
 
   function buildResourceShop() {
     const gems = $('#gem-offers'), coins = $('#coin-offers'), xp = $('#xp-boost-offers');
@@ -11769,14 +11913,7 @@
         const tx = await Storefront.checkoutCurrency(button.dataset.currencyOffer);
         if (!tx || tx.status !== 'paid') throw new Error('checkout-declined');
         Sound.success(); Haptics.level(); Econ.refresh(); updateTopBars(); refreshStart();
-        Storefront.XP_BOOST_OFFERS.forEach((offer) => {
-          const xpCard = document.querySelector(`[data-offer-card="${offer.id}"]`);
-          if (xpCard) xpCard.classList.toggle('is-poor', Meta.gems() < offer.gemCost);
-        });
-        Storefront.CHEST_OFFERS.forEach((offer) => {
-          const chestCard = document.querySelector(`[data-offer-card="chest-${offer.id}"]`);
-          if (chestCard) chestCard.classList.toggle('is-poor', Meta.gems() < offer.gemCost);
-        });
+        refreshResourceShopState();
         const label = I18n.t(tx.kind);
         Toasts.show(I18n.t('mock_purchase_done').replace('{n}', fmtNum(tx.amount)).replace('{r}', label), 'good', 2200, tx.kind === 'gems' ? 'gem' : 'coin');
         const card = document.querySelector(`[data-offer-card="${tx.offerId}"]`);
@@ -11792,17 +11929,19 @@
     }));
 
     document.querySelectorAll('[data-xp-offer]').forEach((button) => button.addEventListener('click', () => {
+      if (!tapThrottle(button, 200)) { Sound.ui(); return; }
       const id = button.dataset.xpOffer;
       const result = Storefront.buyXpBoost(id);
       if (!result || result.status !== 'paid') {
         Sound.miss(); Toasts.show(I18n.t('xp_boost_no_gems'), 'warn', 2200, 'gem'); return;
       }
       const offer = Storefront.XP_BOOST_OFFERS.find((item) => item.id === id);
-      Sound.success(); Haptics.level(); FX.confetti(34); Econ.refresh(); updateTopBars(); buildResourceShop();
+      Sound.success(); Haptics.level(); FX.confetti(34); Econ.refresh(); updateTopBars(); refreshResourceShopState();
       Toasts.show(I18n.t('xp_boost_added').replace('{t}', I18n.t(offer.labelKey)), 'good', 2400, 'potion');
     }));
 
     document.querySelectorAll('[data-chest-offer]').forEach((button) => button.addEventListener('click', () => {
+      if (!tapThrottle(button, 200)) { Sound.ui(); return; }
       const id = button.dataset.chestOffer;
       const result = Storefront.buyChest(id);
       if (!result || result.status !== 'paid') {
@@ -11810,8 +11949,8 @@
       }
       const defn = CHEST_TYPES[id] || CHEST_TYPES.wood;
       Sound.success(); Haptics.level(); FX.confetti(34); Econ.refresh(); updateTopBars(); syncHomeChests();
-      buildResourceShop(); // re-pinta con el contador "tienes N" ya incrementado
-      // Celebración "wow" de recompensa sobre la card recién repintada.
+      refreshResourceShopState(); // actualiza "tienes N" y is-poor sin reconstruir la tienda
+      // Celebración "wow" de recompensa sobre la misma card (ya no se repinta el nodo).
       const card = document.querySelector(`[data-offer-card="chest-${id}"]`);
       if (card) {
         card.classList.add('is-rewarded');
@@ -13133,5 +13272,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, IconPacks, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, IconPacks, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, ShopFX, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
 })();

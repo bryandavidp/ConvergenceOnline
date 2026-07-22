@@ -11404,8 +11404,10 @@ body.reduced-fx #modal-mode-launch { animation: none; }
   border-radius: 50%;
   box-shadow: 0 0 9px 1px color-mix(in srgb, var(--fx-a, #fff) 70%, transparent), 0 0 3px #fff;
 }
-.shopfx-coin { width: clamp(24px, 6.5vw, 32px); height: clamp(24px, 6.5vw, 32px); }
-.shopfx-coin img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .5)); }
+/* AP-5 (docs/ANIMATION_PERF_PLAN.md): la moneda se pinta con background-image en el propio
+   span del pool — sin <img> hijo ni filter:drop-shadow animado. Antes eran 16 capas con
+   filtro por compra, lo más caro de pintar en iOS; ahora son capas puras transform/opacity. */
+.shopfx-coin { width: clamp(24px, 6.5vw, 32px); height: clamp(24px, 6.5vw, 32px); background-size: contain; background-position: center; background-repeat: no-repeat; }
 .shopfx-amount {
   display: inline-flex;
   align-items: center;
