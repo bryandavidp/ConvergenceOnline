@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.22.0';
+  const VERSION = '2.23.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -2230,6 +2230,34 @@
         return { val: t, urgent };
       }
       return null; // Supervivencia y Zen: manda la puntuación (score-main)
+    },
+    // Desglose del multiplicador (HUD-S4): responde "¿de dónde sale mi ×3,4?".
+    // Información de CONSULTA (no de combate): se muestra al tocar el marcador.
+    _multFmt(f) { return '×' + (f % 1 === 0 ? f : +f.toFixed(2)); },
+    multBreakdown() {
+      const parts = [];
+      const add = (key, f) => { if (f > 1.001) parts.push(I18n.t('mult_breakdown_' + key) + ' ' + this._multFmt(f)); };
+      add('combo', State.comboMult);
+      add('fever', Game.feverBoost());
+      add('frenzy', State.tempMult || 1);
+      add('sprint', Game.sprintMult());
+      if (State.mode === 'supervivencia') add('boon', Survival.scoreMult());
+      const total = State.comboMult * Game.feverBoost() * (State.tempMult || 1) * Game.sprintMult()
+        * (State.mode === 'supervivencia' ? Survival.scoreMult() : 1);
+      return { parts, total };
+    },
+    _mbdT: 0,
+    toggleMultBreakdown() {
+      const el = $('#mult-bd'); if (!el) return;
+      if (State.mode === 'zen' || State.mode === 'tutorial') return; // HUD minimalista
+      if (!el.hidden) { el.hidden = true; return; }
+      const { parts, total } = this.multBreakdown();
+      if (total <= 1.001 || !parts.length) return; // nada relevante que desglosar
+      el.innerHTML = parts.map((p) => `<span>${esc(p)}</span>`).join('')
+        + `<span class="mbd-total">${esc(I18n.t('mult_breakdown_total') + ' ' + this._multFmt(total))}</span>`;
+      el.hidden = false;
+      clearTimeout(this._mbdT);
+      this._mbdT = setTimeout(() => { if (el) el.hidden = true; }, 4200);
     },
     // Chip del multiplicador TOTAL (combo × fiebre × temporal): un único número
     // legible junto al score que responde "¿por cuánto vale ahora cada jugada?" (GM-16).
@@ -6541,7 +6569,11 @@
       if ((this.scoreBoost || 0) > 0) chips.push(`<span class="sb-chip sb-rare" aria-label="${esc(I18n.t('boon_score_boost'))}">📈+${Math.round(this.scoreBoost * 100)}%</span>`);
       if (this.magnetMoves > 0) chips.push(`<span class="sb-chip sb-rare" aria-label="${esc(I18n.t('boon_magnet'))}">🧲×${this.magnetMoves}</span>`);
       if (this.slowWaves > 0) chips.push(`<span class="sb-chip" aria-label="${esc(I18n.t('boon_slow'))}">🐌×${this.slowWaves}</span>`);
-      const bsig = chips.join('');
+      // HUD-S5: como máximo 3 efectos visibles; el resto se agrupa en "+N" para no
+      // saturar la subfila (el detalle completo se consulta al pausar).
+      const bsig = chips.length > 3
+        ? chips.slice(0, 3).join('') + `<span class="sb-chip sb-more" aria-label="+${chips.length - 3}">+${chips.length - 3}</span>`
+        : chips.join('');
       if (r.build !== bsig) {
         r.build = bsig;
         const bd = $('#surv-build');
@@ -13308,6 +13340,8 @@
     on('btn-hint', 'click', () => Game.hint());
     on('btn-hint-tool', 'click', () => Game.hint());
     on('btn-pause', 'click', () => Game.pause());
+    // HUD-S4: tocar el marcador desglosa el multiplicador (combo/fiebre/frenesí/…).
+    { const gs = document.querySelector('.gscore'); if (gs) gs.addEventListener('click', () => Render.toggleMultBreakdown()); }
     { const br = $('#btn-restart'); if (br) br.addEventListener('click', () => Game.restart()); }
     { // Salir en plena partida: doble toque para evitar abandonos accidentales.
       let quitArm = 0;

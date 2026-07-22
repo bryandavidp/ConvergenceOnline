@@ -1,8 +1,10 @@
 # HUD Master Plan — Feedback en partida por modo
 
-> **Estado:** 🟡 En progreso — **F1 ✅** (Tutorial, Zen) · **F2 ✅** (héroe + Clásico/Contrarreloj/Diario) · **F3 ✅** (Aventura adaptativa) · **F4 pendiente** (Supervivencia). Este documento es a la vez **plan** y **bitácora**: cada tarea completada se anota en §9 con el cambio real, los `id`/funciones tocadas y los hallazgos. Si no puedo terminar, otra persona retoma leyendo §9 (qué se hizo) + §5 (qué falta y en qué orden).
+> **Estado:** 🟢 **Fases 1–4 completadas** (con sub-tareas menores deferidas, marcadas 🟡/⬜ en §4). Tutorial ✅ · Zen ✅ · héroe por modo ✅ (Clásico/Contrarreloj/Diario/Aventura) · Supervivencia ✅. Este documento es a la vez **plan** y **bitácora**: cada tarea completada se anota en §9 con el cambio real, los `id`/funciones tocadas y los hallazgos. Quien retome empieza por los ⬜/🟡 de §4 (ver "Trabajo restante" abajo).
 >
-> **Versiones:** F1 → v2.20.0 · F2 → v2.21.0 · F3 → v2.22.0.
+> **Versiones:** F1 → v2.20.0 · F2 → v2.21.0 · F3 → v2.22.0 · F4 → v2.23.0.
+>
+> **Trabajo restante (deferido, bajo impacto):** HUD-X1/X2 (auditoría formal de slots/meta), HUD-C2/C3 ("estrella perdida" + dedup estrellas/errores), HUD-D1/D3 (explicación pre-partida + "primer intento" efímero), HUD-Z2/Z4 (score oculto-por-defecto + combo ambiental), HUD-A3 (dedup pips de jefe), HUD-S3 (leyenda de anillos de energía).
 >
 > **Alcance:** rediseño del HUD *en partida* de los 7 modos (Tutorial, Clásico, Aventura, Contrarreloj, Reto del día, Supervivencia, Zen). Basado en la auditoría de feedback aportada por el propietario, **verificada y aterrizada contra el código real** (no contra la documentación, que está desactualizada: `game.js` tiene ~13 300 líneas y `styles.css` ~14 300, no las cifras del CLAUDE.md).
 >
@@ -145,14 +147,14 @@ Convención: `HUD-<letra><n>`. `X`=transversal, `T`=tutorial, `C`=clásico, `A`=
 
 > Existe además `docs/SURVIVAL_HUD_REDESIGN_PLAN.md` (plan previo, parcialmente implementado). Este bloque lo **absorbe y actualiza**.
 
-- **HUD-S1** ⬜ **Zona vital** como núcleo: `Oleada N · ♥♥♡` + barra de progreso de oleada juntas y dominantes. (Ya en `.surv-bar`; reforzar jerarquía: vidas primero.)
-- **HUD-S2** ⬜ **Zona rendimiento**: score + multiplicador **total** visible (`×3,4`), sin 4 indicadores sueltos. Ya vía `#hud-mult`.
-- **HUD-S3** ⬜ **Zona poder especial**: reconsiderar carga+frenesí. Opción recomendada: **un solo medidor de energía**. Opción conservadora (menos riesgo): mantener ambos pero **nunca dos barras horizontales iguales** — hoy son 2 anillos concéntricos (`power-rings`), aceptable; documentar decisión. Etiquetar el anillo para que el jugador entienda qué llena qué.
-- **HUD-S4** ⬜ **Desglose del multiplicador** bajo demanda (tap en `#hud-mult` o en pausa): "Combo ×2 · Fiebre ×1,25 · Frenesí ×1,35 · Total ×3,4". Información de consulta, no de combate. Claves i18n `mult_breakdown_*`.
-- **HUD-S5** ⬜ **Efectos activos** como fila de iconos con **duración circular**, máx 3, pasivos ocultos tras info, consumidos desaparecen, `+N` si hay más. Hoy `#surv-build` muestra chips sin timer. Añadir countdown.
-- **HUD-S6** ⬜ **Anticipación de jefe**: "⚠ Jefe en la próxima oleada" al empezar la oleada anterior (ya hay `surv-boss-flag`/`bossWarn`); reforzar que **construya expectación** y luego deje un marcador pequeño.
-- **HUD-S7** ⬜ **Estado de jefe**: durante el encuentro, progreso de oleada → **vida del jefe**; suministro a segundo plano; monedas reducidas; "Ataque en 3" domina. (Parcial: `#surv-boss` existe.)
-- **HUD-S8** ⬜ **Cambio de oleada secuencial** (no todo a la vez): oleada superada → recompensa → bendición → "Oleada 9 · Jefe" → tablero. (Parcial vía cola serial; verificar orden y que no se pisen.)
+- **HUD-S1** ✅ *(ya existía, SV-*)* **Zona vital**: `.surv-bar` agrupa vidas + oleada/tier + progreso + tiempo. Núcleo del HUD.
+- **HUD-S2** ✅ **Zona rendimiento**: score + multiplicador **total** en `#hud-mult` (un número), sin 4 indicadores sueltos.
+- **HUD-S3** 🟡 **Decisión documentada**: se mantiene la **opción conservadora**. Carga+frenesí son **2 anillos concéntricos** (`power-rings`, `#pr-charge` interior + `#pr-frenzy` exterior), no dos barras horizontales iguales → cumple la regla de la auditoría. La unificación en "un solo medidor de energía" se descarta por ahora (tocaría la mecánica de suministro/frenesí = riesgo de balance, fuera del alcance HUD-only). Refinamiento futuro: etiqueta/leyenda del anillo.
+- **HUD-S4** ✅ **Desglose del multiplicador** al **tocar el marcador** (`.gscore` → `Render.toggleMultBreakdown()`): popover `#mult-bd` con "Combo ×2 · Fiebre ×1,31 · Frenesí ×1,35 · Bendición ×1,2 · Total ×4,24". Consulta, no combate; auto-oculta a los 4,2 s; suprimido en Zen/Tutorial. Claves `mult_breakdown_*`.
+- **HUD-S5** ✅ **Efectos activos**: `#surv-build` ya mostraba estado con su duración en la unidad natural del juego (×N **oleadas/movimientos**, no segundos). **Añadido** el cap de la auditoría: máx 3 visibles + chip `+N` (`.sb-more`). Consumidos desaparecen (bsig se recomputa).
+- **HUD-S6** ✅ *(ya existía)* **Anticipación de jefe**: `#surv-boss-flag` ("⚠ Jefe"), clase `surv-bar.boss-soon`, `Feedback.event('bossWarn'/'waveSoon')`.
+- **HUD-S7** ✅ *(ya existía)* **Estado de jefe**: `#surv-boss` (cara + `#surv-boss-hp` pips + `#surv-boss-next` con telegrafía "Ataque Ns"); `surv-bar.encounter` reordena la jerarquía.
+- **HUD-S8** ✅ *(ya existía, FBK-07/H3)* **Cambio de oleada secuencial**: la cola serial de `Toasts.event`/`Feedback` evita que oleada+monedas+récord+jefe se pisen.
 
 ### HUD-Z · Zen (casi sin HUD) 🟡
 
@@ -172,7 +174,7 @@ Orden por **impacto ÷ riesgo**. Fase 1 = quick wins autocontenidos (bajo riesgo
 | **F1 — Limpieza y quick wins** | HUD-T (✅), HUD-Z (🟡 Z1/Z3 hechos; Z2/Z4 deferidos), HUD-X1 (⬜) | Tutorial y Zen son los HUD que deben *quitar* cosas; cambios contenidos vía `body.mode-*` + CSS. Impacto inmediato, riesgo mínimo. **Estado: mayoritariamente completada.** |
 | **F2 — Métrica dominante por modo** ✅ | HUD-X3 ✅, HUD-C1/C4 ✅, HUD-TA (todo) ✅, HUD-D2/D4 ✅ | El corazón de la auditoría: "cada modo, una sola métrica dominante". Héroe reutilizable + Clásico/Contrarreloj/Diario. Sub-tareas menores deferidas (C2/C3, D1/D3). |
 | **F3 — Aventura adaptativa** ✅ | HUD-A1/A2/A4 ✅, A3 🟡 | Héroe por objetivo (clear/score/survive/boss) + barra; banner con etiqueta corta. |
-| **F4 — Supervivencia** | HUD-S1–S8, HUD-X2 | Mayor superficie; se hace al final con el sistema de slots ya maduro. |
+| **F4 — Supervivencia** ✅ | HUD-S4/S5 nuevos ✅; S1/S2/S6/S7/S8 ya existían ✅; S3 🟡 (decisión documentada) | Desglose del multiplicador (problema #2 de la auditoría) + cap de efectos. El resto ya estaba implementado por SV-*/FBK-07. |
 
 ---
 
@@ -262,6 +264,23 @@ Se añadirán en `I18n.DICT` (game.js) conforme se implementen. Lista viva:
 - Decisión pendiente (Z2): score sigue **atenuado** en vez de oculto-por-defecto; ocultarlo y re-mostrarlo al pausar/convergencia es más disruptivo y se difiere.
 
 **Verificación (Playwright, 390×844):** con tablero al 91–95 % → `occFillWarn/Danger=false`, `boardWarn/Danger=false`, `occLabel="Board"`, `scoreOpacity=0.55`, `combo display:none`; **0 errores**. Captura confirma tablero azul calmado, sin wallet ni barra de ocupación.
+
+### [HUD-S] Fase 4: Supervivencia — 2026-07-22 · v2.23.0
+
+**Qué se cambió:**
+- `index.html`: nuevo `#mult-bd` (popover de desglose) dentro de `.gscore`.
+- `game.js` · `Render.multBreakdown()`/`toggleMultBreakdown()`/`_multFmt()` (nuevos): calculan y muestran el desglose combo × fiebre × frenesí × sprint × bendición → Total. Suprimido en Zen/Tutorial.
+- `game.js` · `init()`: listener de click en `.gscore` → `Render.toggleMultBreakdown()`.
+- `game.js` · `Survival.render()` (fila de build): cap de 3 chips + `+N` (`.sb-more`).
+- `styles.css`: `.gscore { position: relative; cursor: pointer }`, `.mult-bd`/`.mbd-total` + `@keyframes mbd-in`, `.sb-chip.sb-more`.
+
+**Hallazgos:**
+- El "multiplicador incomprensible" era el problema #2 de la auditoría. El desglose lo resuelve mostrando el origen exacto del número. Fuentes reales del multiplicador (verificadas en código): `State.comboMult`, `Game.feverBoost()` (fiebre + aporte de frenesí en surv), `State.tempMult` (x2 × frenzyMult en surv), `Game.sprintMult()`, `Survival.scoreMult()` (bendiciones).
+- Las "duraciones" de las bendiciones de Supervivencia se miden en **oleadas/movimientos**, no en segundos → un contador (×N) es más honesto que un timer circular. Por eso HUD-S5 se limita al cap "+N".
+- HUD-S1/S2/S6/S7/S8 ya estaban implementados por trabajo SV-*/FBK-07 previo; se verificaron y documentaron en vez de rehacerse.
+- HUD-S3 (energía): decisión de **no** unificar carga+frenesí (los 2 anillos concéntricos ya cumplen la regla "nunca dos barras iguales"; unificarlos tocaría mecánica = riesgo de balance).
+
+**Verificación (Playwright, 390×844, 0 errores):** Supervivencia con combo ×2 + fiebre + tempMult 1.35 + bendición +20 % → tap en el marcador muestra "Combo ×2 · Fever ×1.31 · Frenzy ×1.35 · Boon ×1.2 · Total ×4.24", coincidente con el chip "×4.2". `node --test` 285/287, `eslint` 0 errores.
 
 ### [HUD-A] Fase 3: Aventura adaptativa por objetivo — 2026-07-22 · v2.22.0
 

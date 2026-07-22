@@ -2274,6 +2274,7 @@ body.reduced-fx .sb-chip { animation: none; }
 .sb-chip.sb-mut { cursor: pointer; }
 .sb-chip.sb-rare { border-color: rgba(180,108,255,.5); color: #d9c2ff; }
 .sb-chip.sb-epic { border-color: rgba(255,216,77,.6); color: var(--gold); background: rgba(255,216,77,.1); }
+.sb-chip.sb-more { color: rgba(255,255,255,.6); border-style: dashed; }
 .surv-bar.soon .surv-wave { color: var(--bad); }
 .surv-bar.soon .surv-waveprog-fill { background: linear-gradient(90deg, var(--bad), var(--gold)); }
 .surv-time { color: var(--accent-2); font-variant-numeric: tabular-nums; }
@@ -2550,6 +2551,18 @@ body.reduced-fx .hud-hero.urgent .hero-val { animation: none; }
 .gscore.hero-on .hud-value { font-size: 1rem; font-weight: 900; text-shadow: none; color: rgba(255,255,255,.82); }
 .gscore.hero-on .score-main { margin-top: 3px; }
 .gscore.hero-on .score-meta { display: none; }
+/* Desglose del multiplicador (HUD-S4): popover de consulta al tocar el marcador. */
+.gscore { position: relative; cursor: pointer; }
+.mult-bd { position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 40;
+  display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; min-width: 132px;
+  background: rgba(9,14,34,.97); border: 1px solid color-mix(in srgb, var(--mode-accent, var(--accent-2)) 42%, transparent);
+  border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,.5);
+  font-size: .74rem; font-weight: 800; color: rgba(255,255,255,.82); font-variant-numeric: tabular-nums; white-space: nowrap;
+  animation: mbd-in .18s ease both; }
+.mult-bd[hidden] { display: none; }
+.mult-bd .mbd-total { margin-top: 3px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,.14); color: var(--mode-accent, var(--gold)); font-weight: 950; }
+@keyframes mbd-in { from { opacity: 0; transform: translate(-50%, -4px); } }
+body.reduced-fx .mult-bd { animation: none; }
 .mult-chip {
   --mult-a: rgba(234,240,255,.62);
   --mult-b: rgba(24,230,230,.42);

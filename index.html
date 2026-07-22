@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.22.0" />
+  <link rel="stylesheet" href="styles.css?v=2.23.0" />
 </head>
 <body data-screen="login">
   <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
@@ -277,6 +277,8 @@
               </div>
               <span class="score-main"><span class="hud-value" id="hud-score">0</span><span class="mult-chip" id="hud-mult" aria-hidden="true">×1</span></span>
               <span class="score-meta"><span class="score-best" id="hud-best-wrap"><span data-i18n="best_score">Mejor puntuación</span> <b id="hud-best">0</b></span></span>
+              <!-- Desglose del multiplicador (HUD-S4): aparece al tocar el marcador. -->
+              <div class="mult-bd" id="mult-bd" hidden aria-live="polite"></div>
             </div>
             <span class="score-spacer" aria-hidden="true"></span>
           </div>
@@ -895,6 +897,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.22.0" defer></script>
+  <script src="game.js?v=2.23.0" defer></script>
 </body>
 </html>
