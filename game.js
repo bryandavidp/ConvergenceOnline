@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.29.0';
+  const VERSION = '2.30.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -1373,16 +1373,36 @@
     // Por encima del tope se descarta el tono extra (inaudible en la ráfaga), nunca se corta uno vivo.
     _osc: 0, MAX_OSC: 32,
     get enabled() { return Settings.sfx; },
+    // ¿Hay ALGO que quiera reproducirse? Si sonido y música están ambos en OFF, la app no debe
+    // tocar la sesión de audio del dispositivo: nada de audioSession='playback' ni de mantener el
+    // contexto "running", porque iOS trataría la app como si emitiera sonido e interrumpiría el
+    // audio de fondo de otras apps (música, podcast...). Ese era el bug reportado.
+    wanted() { return !!(Settings.sfx || Settings.music); },
+    // Libera la sesión de audio suspendiendo el contexto (iOS deja de considerar la app como
+    // "reproduciendo" y el audio de fondo se reanuda). Idempotente y seguro fuera de gesto.
+    suspend() {
+      this._osc = 0;
+      if (this.ctx && this.ctx.state === 'running' && this.ctx.suspend) {
+        const r = this.ctx.suspend(); if (r && r.catch) r.catch(() => { });
+      }
+    },
+    // Reconcilia el estado del audio tras cambiar Settings.sfx/music o el foco de la pestaña.
+    // Debe correr dentro de un gesto para poder (re)activar el contexto en iOS; suspender es libre.
+    applyEnabled() { if (this.wanted()) this.ensure(); else this.suspend(); },
     // Debe llamarse DENTRO de un gesto de usuario (iOS lo exige).
     ensure() {
+      // Con sonido Y música desactivados NO agarramos la sesión de audio del dispositivo: ni
+      // fijamos audioSession='playback' ni creamos/reanudamos el contexto. Si ya existía, lo
+      // suspendemos para devolver la sesión al sistema (no interferir con el audio de fondo).
+      if (!this.wanted()) { this.suspend(); return; }
       const ua = navigator.userActivation;
       const activeGesture = !ua || ua.isActive;
       if (!this.ctx && !activeGesture) return;
       if (!this.ctx) {
         try {
-          // iOS 16.4+: enrutar al canal "playback" para que el audio suene aunque
-          // el interruptor físico de silencio esté activado (la causa más común de
-          // "no hay sonido en iPhone" mientras sí funciona en Android).
+          // iOS 16.4+: enrutar al canal "playback" para que el audio suene aunque el interruptor
+          // físico de silencio esté activado (la causa más común de "no hay sonido en iPhone").
+          // Solo se hace cuando el usuario SÍ quiere audio (guard de wanted() arriba).
           try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (_) { }
           this.ctx = new (window.AudioContext || window.webkitAudioContext)();
           this.sfxGain = this.ctx.createGain(); this.sfxGain.gain.value = 0.9; this.sfxGain.connect(this.ctx.destination);
@@ -1403,7 +1423,9 @@
       }
     },
     tone(freq, dur, type = 'sine', vol = 0.2, when = 0) {
-      if (!Settings.sfx || !this.ctx) return;
+      // Guard de estado 'running': programar sobre un contexto suspendido/interrumpido no suena,
+      // fuga el contador de osciladores (onended no dispara) y puede glitchear al reanudar.
+      if (!Settings.sfx || !this.ctx || this.ctx.state !== 'running') return;
       if (this._osc >= this.MAX_OSC) return; // ráfaga saturada: descarta este tono extra
       const t = this.ctx.currentTime + when;
       const osc = this.ctx.createOscillator();
@@ -1414,7 +1436,9 @@
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       osc.connect(g).connect(this.sfxGain || this.ctx.destination);
       this._osc++;
-      osc.onended = () => { this._osc = Math.max(0, this._osc - 1); };
+      // Desconectar el subgrafo al terminar: sin esto los nodos se acumulan durante la partida
+      // (osc+gain por cada tono) y sobrecargan el hilo de audio -> fallos/crackle en partidas largas.
+      osc.onended = () => { this._osc = Math.max(0, this._osc - 1); try { osc.disconnect(); g.disconnect(); } catch (_) { } };
       osc.start(t); osc.stop(t + dur + 0.02);
     },
     chord(freqs, dur, type = 'sine', vol = 0.12, stagger = 0) { freqs.forEach((f, i) => this.tone(f, dur, type, vol, i * stagger)); },
@@ -3582,7 +3606,7 @@
       if (this.timer) { clearInterval(this.timer); this.timer = 0; }
     },
     setIntensity(v) { this.intensity = clamp(v, 0, 1); if (this.timer && Sound.ctx) Sound.musicGain.gain.linearRampToValueAtTime(0.12 + 0.14 * this.intensity, Sound.ctx.currentTime + 0.3); },
-    _note(f, dur, t, vol, type) { const o = Sound.ctx.createOscillator(), g = Sound.ctx.createGain(); o.type = type || 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(Sound.musicGain); o.start(t); o.stop(t + dur + 0.02); },
+    _note(f, dur, t, vol, type) { const o = Sound.ctx.createOscillator(), g = Sound.ctx.createGain(); o.type = type || 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(Sound.musicGain); o.onended = () => { try { o.disconnect(); g.disconnect(); } catch (_) { } }; o.start(t); o.stop(t + dur + 0.02); },
     _sched() {
       if (!Sound.ctx) return;
       const tempo = 0.30 - 0.12 * this.intensity, ahead = Sound.ctx.currentTime + 0.2;
@@ -11826,8 +11850,11 @@
     list.innerHTML = html;
     list.querySelectorAll('[data-set]').forEach(btn => btn.addEventListener('click', () => {
       const k = btn.dataset.set; Settings[k] = !Settings[k]; btn.setAttribute('aria-checked', String(Settings[k]));
-      if (k === 'sfx' && Settings.sfx) { Sound.ensure(); Sound.ui(); }
-      if (k === 'music') { Settings.music && State.status === 'playing' ? Music.start() : Music.stop(); }
+      // Reconciliar la sesión de audio: al desactivar sonido Y música se suspende el contexto
+      // (libera la sesión del dispositivo); al activar alguno se reactiva dentro de este gesto.
+      if (k === 'sfx' || k === 'music') Sound.applyEnabled();
+      if (k === 'sfx' && Settings.sfx) Sound.ui();
+      if (k === 'music') { (Settings.music && State.status === 'playing') ? Music.start() : Music.stop(); }
       if (k === 'reducedFx') applyReducedFx();
       if (k === 'largeText') applyLargeText();
       if (k === 'sfx' || k === 'music') { const si = btn.closest('.set-row').querySelector('.set-badge'); if (si) si.innerHTML = icon(k === 'sfx' ? (Settings.sfx ? 'sound-on' : 'sound-off') : (Settings.music ? 'music-on' : 'music-off')); }
@@ -13560,7 +13587,12 @@
       if (document.hidden) return;
       if (HubViews.current === 'events') refreshEvents(); else syncHomeChests();
       Econ.refresh();
-      if (Sound.ctx && Sound.ctx.state !== 'running') { const r = Sound.ctx.resume(); if (r && r.catch) r.catch(() => { }); }
+      // Al volver a primer plano: reanudar el audio SOLO si el usuario lo quiere (sonido o música
+      // activados); si están en off, mantener el contexto suspendido para no retomar la sesión.
+      if (Sound.ctx) {
+        if (Sound.wanted() && Sound.ctx.state !== 'running') { const r = Sound.ctx.resume(); if (r && r.catch) r.catch(() => { }); }
+        else if (!Sound.wanted() && Sound.ctx.state === 'running') Sound.suspend();
+      }
     });
 
     // Bienvenida sin fricción: nombre opcional + color de avatar + invitado.
@@ -13747,6 +13779,9 @@
       if (!document.hidden) return;
       if (State.status === 'playing') Game.pause();
       RunSave.save();
+      // Al ir a segundo plano, soltar la sesión de audio del dispositivo (que la música/podcast
+      // de otras apps se reanude): suspender el contexto en vez de dejarlo "running".
+      Sound.suspend();
     });
     window.addEventListener('pagehide', () => RunSave.save());
 
