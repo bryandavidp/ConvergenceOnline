@@ -608,11 +608,14 @@ test('FB-8: navegar a una vista del hub tras game over cierra la run', () => {
   assert.match(openView, /Screens\.show\('start'\)/);
 });
 
-test('SV-HUD: el banner de jefe no se apila sobre las filas secundarias', () => {
+test('SV-HUD: el estado de jefe no reserva filas históricas ni duplica información', () => {
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
-  assert.match(css, /\.surv-bar\.encounter\s+\.surv-subrow\s*\{\s*display:\s*none;\s*\}/);
-  assert.match(css, /body\.mode-surv\s+\.surv-build\[hidden\]\s*\{[\s\S]*display:\s*flex\s*!important;[\s\S]*min-height:\s*25px;[\s\S]*visibility:\s*hidden;/);
-  assert.match(css, /body\.mode-surv\s+\.surv-bar\.encounter\s+\.surv-build\s*\{[\s\S]*display:\s*none\s*!important;[\s\S]*visibility:\s*hidden;/);
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  assert.doesNotMatch(html, /surv-subrow|surv-best-wave/);
+  assert.doesNotMatch(html, /id=["']surv-build["']/,
+    'el HUD de partida no debe mostrar el marcador semanal ni una fila de build');
+  assert.doesNotMatch(css, /\.surv-build|\.sb-chip/,
+    'el marcador retirado no debe conservar reglas que puedan volver a reservar espacio');
 });
 
 test('FB-2: Contrarreloj tiene material inicial propio y DDA de hambre acotado', () => {

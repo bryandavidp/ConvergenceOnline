@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.23.0';
+  const VERSION = '2.24.6';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -70,6 +70,20 @@
   function showUpdateBanner(reg) {
     if (_updateShown || !document.body) return;
     _updateShown = true;
+    const activate = () => {
+      try { if (reg && reg.waiting) reg.waiting.postMessage('skipWaiting'); } catch (_) { }
+      location.reload();
+    };
+    // Durante una partida también los avisos del sistema usan el único centro del
+    // HUD: nada fijo en el borde inferior puede volver a tapar tablero o contexto.
+    if (document.body.dataset.screen === 'game') {
+      Toasts.show({
+        key: 'app-update', kicker: 'HILO', title: I18n.t('update_ready'),
+        detail: I18n.t('update_btn'), icon: 'info', kind: 'info', priority: 34,
+        ms: 8000, onClick: activate,
+      });
+      return;
+    }
     const box = document.createElement('div');
     box.className = 'update-banner'; box.setAttribute('role', 'status');
     document.body.classList.add('has-update-banner');
@@ -78,10 +92,7 @@
     const btn = document.createElement('button');
     btn.className = 'btn btn-primary btn-sm';
     btn.textContent = I18n.t('update_btn');
-    btn.addEventListener('click', () => {
-      try { if (reg && reg.waiting) reg.waiting.postMessage('skipWaiting'); } catch (_) { }
-      location.reload();
-    });
+    btn.addEventListener('click', activate);
     box.appendChild(msg); box.appendChild(btn);
     document.body.appendChild(box);
   }
@@ -598,6 +609,16 @@
         q_missions: 'Misiones', q_daily: 'Diario', q_chests: 'Cofres', q_league: 'Liga', q_friends: 'Amigos', best_score: 'Mejor puntuación', play_word: 'Jugar',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
         hud_danger: 'Peligro', hud_board_fill: 'Tablero',
+        hud_event_boss: 'JEFE', hud_event_wave: 'NUEVA OLEADA', hud_event_next: 'A continuación',
+        hud_next_boss: 'Siguiente jefe', hud_new_shapes: 'Nuevas figuras',
+        hud_ctx_boss_rage: 'Jefe enfurecido', hud_phase_short: 'Fase {n}', hud_ctx_wave: 'Nueva oleada',
+        hud_ctx_time: 'Tiempo restante', hud_ctx_zen: 'Flujo sereno',
+        hud_ctx_double: 'Multiplicador ×2', hud_ctx_freeze: 'Tiempo congelado', hud_ctx_frenzy: 'Frenesí activo',
+        hud_survival_title: 'SUPERVIVENCIA', hud_survival_ready: 'PREPÁRATE', hud_survival_go: '¡Empieza!',
+        hud_narr_fever_title: 'FIEBRE', hud_narr_fever: '¡No pares!',
+        hud_narr_meteor: 'El cielo se quiebra.', hud_narr_tide: 'La marea sube.', hud_narr_frost: 'El frío avanza.',
+        hud_narr_lockdown: 'La jaula se cierra.', hud_narr_quake: 'El suelo recuerda.',
+        hud_narr_crystalid: 'El cristal vuelve a crecer.', hud_narr_void: 'Tiene hambre.', hud_narr_puppeteer: 'Los hilos se tensan.',
         hud_remaining: 'restantes', hud_survive_sub: 'Sobrevive', hud_boss_sub: 'Jefe', rec_close: 'A {n} del récord', rec_new: '¡Nuevo récord!',
         mult_breakdown_combo: 'Combo', mult_breakdown_fever: 'Fiebre', mult_breakdown_frenzy: 'Frenesí', mult_breakdown_boon: 'Bendición', mult_breakdown_sprint: 'Sprint', mult_breakdown_total: 'Total',
         hud_lives_explain: 'Tus vidas. Si llegas a 0, se acaba.',
@@ -974,6 +995,16 @@
         q_missions: 'Missions', q_daily: 'Daily', q_chests: 'Chests', q_league: 'League', q_friends: 'Friends', best_score: 'Best score', play_word: 'Play',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
         hud_danger: 'Danger', hud_board_fill: 'Board',
+        hud_event_boss: 'BOSS', hud_event_wave: 'NEW WAVE', hud_event_next: 'Coming up',
+        hud_next_boss: 'Next boss', hud_new_shapes: 'New shapes',
+        hud_ctx_boss_rage: 'Boss enraged', hud_phase_short: 'Phase {n}', hud_ctx_wave: 'New wave',
+        hud_ctx_time: 'Time left', hud_ctx_zen: 'Calm flow',
+        hud_ctx_double: '×2 multiplier', hud_ctx_freeze: 'Time frozen', hud_ctx_frenzy: 'Frenzy active',
+        hud_survival_title: 'SURVIVAL', hud_survival_ready: 'GET READY', hud_survival_go: 'Go!',
+        hud_narr_fever_title: 'FEVER', hud_narr_fever: 'Keep it going!',
+        hud_narr_meteor: 'The sky breaks open.', hud_narr_tide: 'The tide rises.', hud_narr_frost: 'The cold advances.',
+        hud_narr_lockdown: 'The cage closes.', hud_narr_quake: 'The ground remembers.',
+        hud_narr_crystalid: 'The crystal grows again.', hud_narr_void: 'It is hungry.', hud_narr_puppeteer: 'The strings tighten.',
         hud_remaining: 'left', hud_survive_sub: 'Survive', hud_boss_sub: 'Boss', rec_close: '{n} to record', rec_new: 'New record!',
         mult_breakdown_combo: 'Combo', mult_breakdown_fever: 'Fever', mult_breakdown_frenzy: 'Frenzy', mult_breakdown_boon: 'Boon', mult_breakdown_sprint: 'Sprint', mult_breakdown_total: 'Total',
         hud_lives_explain: 'Your lives. Reach 0 and it is game over.',
@@ -1707,6 +1738,7 @@
   const Render = {
     boardEl: null, cells: [], glyphs: [],
     popupsEl: null, popupPool: [], popupNext: 0, convergeLayer: null,
+    scoreFeedbackEl: null, scoreFeedbackPool: [], scoreFeedbackNext: 0,
 
     buildBoard() {
       this.boardEl = $('#board');
@@ -1728,19 +1760,15 @@
         this.cells.push(b); this.glyphs.push(g);
       }
       this.boardEl.appendChild(frag);
-      // pool de popups
+      // El host del tablero queda reservado a la coreografía espacial de las fichas.
+      // El texto de puntuación vive junto al marcador (initScoreFeedback), nunca aquí.
       this.popupsEl.innerHTML = '';
       this.convergeLayer = document.createElement('div');
       this.convergeLayer.className = 'converge-layer';
       this.convergeLayer.setAttribute('aria-hidden', 'true');
       this.popupsEl.appendChild(this.convergeLayer);
       this.popupPool = [];
-      for (let i = 0; i < 14; i++) {
-        const p = document.createElement('div');
-        p.className = 'popup';
-        this.popupsEl.appendChild(p);
-        this.popupPool.push(p);
-      }
+      this.initScoreFeedback();
       // buildBoard normalmente precede a FX.init; esta rama mantiene el pool unido
       // si en el futuro el tablero se reconstruye durante la misma sesión.
       if (FX.layer) FX._attachConvergeLayer(this.convergeLayer);
@@ -1983,21 +2011,15 @@
         tone: 'power',
       });
     },
-    coinsReward(amount, label, sourcePoint) {
+    coinsReward(amount, label, _sourcePoint) {
       amount = Math.max(0, amount | 0);
       if (!amount) return;
       const coinNum = $('#hud-coins');
-      const target = (State.mode === 'supervivencia' && $('#hud-run-coins-wrap')) || (coinNum && coinNum.parentElement) || coinNum;
+      const target = (coinNum && coinNum.parentElement) || coinNum;
       if (!target) return;
-      const icon = target.querySelector('.ic') || (coinNum && coinNum.parentElement && coinNum.parentElement.querySelector('.ic'));
-      return this.rewardFlyout({
-        iconMarkup: icon ? icon.outerHTML : iconInline('coin'),
-        targetEl: target,
-        label: label || I18n.t('coins'),
-        amount: '+' + fmtNum(amount),
-        tone: 'coin',
-        sourcePoint,
-      });
+      this.scoreFeedback('+' + fmtNum(amount) + ' ' + (label || I18n.t('coins')), 'var(--gold)', 'coins');
+      this.bump(target);
+      return 0;
     },
     // Pérdida de vida (FBK-10): los corazones del HUD reaccionan como DAÑO (sacudida
     // + destello rojo), reforzando que ha sido malo (no lo celebra el marco dorado).
@@ -2031,7 +2053,8 @@
         const count = b.querySelector('.b-count');
         if (count) count.classList.remove('count-pop');
         let flyMs = 0;
-        if (!motionOff() && token) {
+        const hudOnly = State.status === 'playing' || State.status === 'paused';
+        if (!motionOff() && token && !hudOnly) {
           b.classList.add('grant-incoming');
           flyMs = this.grantPop(token, id, label) || 0;
         }
@@ -2043,7 +2066,7 @@
           tag.textContent = '+1';
           if (count) { count.classList.remove('count-pop'); void count.offsetWidth; count.classList.add('count-pop'); }
         };
-        if (motionOff()) land(); else setTimeout(land, Math.max(360, flyMs - 80));
+        if (motionOff() || hudOnly) land(); else setTimeout(land, Math.max(360, flyMs - 80));
         b._grantTimer = setTimeout(() => {
           b.classList.remove('just-granted', 'grant-incoming');
           if (count) count.classList.remove('count-pop');
@@ -2055,26 +2078,67 @@
 
     hint(indices, on) { indices.forEach(i => this.cells[i].classList.toggle('hint', on)); },
 
-    popup(i, text, color) {
-      const r = (i / State.size | 0), c = i % State.size;
-      const p = this.popupPool[this.popupNext = (this.popupNext + 1) % this.popupPool.length];
+    initScoreFeedback() {
+      const host = $('#score-feedback');
+      if (!host) return;
+      this.scoreFeedbackEl = host;
+      if (this.scoreFeedbackPool.length) return;
+      host.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        const p = document.createElement('span');
+        p.className = 'score-fx';
+        host.appendChild(p);
+        this.scoreFeedbackPool.push(p);
+      }
+    },
+    scoreFeedback(text, color, tone = 'points') {
+      if (!text) return;
+      if (!this.scoreFeedbackPool.length) this.initScoreFeedback();
+      if (!this.scoreFeedbackPool.length) return;
+      const p = this.scoreFeedbackPool[this.scoreFeedbackNext = (this.scoreFeedbackNext + 1) % this.scoreFeedbackPool.length];
       p.textContent = text;
+      p.dataset.tone = tone;
       p.style.color = color || '#fff';
-      p.style.left = ((c + 0.5) / State.size * 100) + '%';
-      p.style.top = ((r + 0.5) / State.size * 100) + '%';
-      // WAAPI en lugar de reiniciar una animación CSS con `void offsetWidth`, que
-      // fuerza un reflujo sincrónico del documento en CADA eliminación (acumulado
-      // en combos rápidos, saturaba el hilo principal de iOS -> congelación).
-      p.getAnimations().forEach(a => a.cancel());
-      const anim = p.animate([
-        { opacity: 0, transform: 'translate(-50%,-50%) scale(.6)' },
-        { opacity: 1, transform: 'translate(-50%,-90%) scale(1.05)', offset: .18 },
-        { opacity: 0, transform: 'translate(-50%,-180%) scale(.95)' },
-      ], { duration: 1000, easing: 'ease-out', fill: 'forwards' });
+      clearTimeout(p._t);
+      p.getAnimations().forEach((a) => a.cancel());
+      const rank = tone === 'rank';
+      if (Settings.reducedFx) {
+        p.style.opacity = '1';
+        p.style.transform = 'translate(-50%, -12px)';
+        p._t = setTimeout(() => { p.style.opacity = '0'; }, rank ? 900 : 760);
+        return;
+      }
+      const anim = p.animate(rank ? [
+        { opacity: 0, transform: 'translate(-50%, 6px) scale(.72)' },
+        { opacity: 1, transform: 'translate(-50%, -10px) scale(1.08)', offset: .24 },
+        { opacity: 0, transform: 'translate(-50%, -34px) scale(.98)' },
+      ] : [
+        { opacity: 0, transform: 'translate(-50%, 2px) scale(.82)' },
+        { opacity: 1, transform: 'translate(-50%, -8px) scale(1)', offset: .18 },
+        { opacity: 0, transform: 'translate(-50%, -28px) scale(.96)' },
+      ], { duration: rank ? 900 : 760, easing: 'ease-out', fill: 'forwards' });
       if (anim && anim.finished) anim.finished.then(() => { p.style.opacity = '0'; anim.cancel(); }).catch(() => { });
+    },
+    // Compatibilidad con los productores existentes: el índice ya no posiciona
+    // texto sobre una celda; todo se agrega alrededor de la puntuación.
+    popup(_i, text, color) {
+      this.scoreFeedback(text, color, 'points');
     },
 
     bump(el) { el.getAnimations().forEach(a => a.cancel()); el.animate([{}, { transform: 'scale(1.18)', color: '#ffd84d', offset: .5 }, {}], { duration: 300, easing: 'ease' }); },
+
+    // Un único marcador sirve a todos los modos. En Supervivencia se monta dentro
+    // del pie de estado; al cambiar de modo vuelve a su slot normal. appendChild
+    // mueve el nodo real, por lo que conserva IDs, listeners y el pool de feedback.
+    mountScoreRow(inSurvival) {
+      const row = $('#hud-score-row');
+      const normalSlot = $('#hud-score-slot');
+      const survivalFooter = $('#surv-footer');
+      const target = inSurvival ? survivalFooter : normalSlot;
+      if (!row || !normalSlot || !survivalFooter || !target) return;
+      if (row.parentNode !== target) target.appendChild(row);
+      normalSlot.hidden = !!inSurvival;
+    },
 
     hud() {
       $('#hud-score').textContent = fmtNum(State.displayScore);
@@ -2083,13 +2147,13 @@
       const runCoins = $('#hud-run-coins');
       const runWrap = $('#hud-run-coins-wrap');
       if (runCoins) runCoins.textContent = fmtSigned(State.coinsRun || (State.mode === 'supervivencia' ? Survival.runCoins : 0));
-      if (runWrap) runWrap.hidden = State.mode !== 'supervivencia' && !(State.coinsRun > 0);
+      if (runWrap) runWrap.hidden = State.mode === 'supervivencia' || !(State.coinsRun > 0);
       refreshXpBoostIndicators();
 
       const isZen = State.mode === 'zen';
       const bestWrap = $('#hud-best-wrap');
       const zenWrap = $('#hud-zen-wrap');
-      if (bestWrap) bestWrap.hidden = isZen;
+      if (bestWrap) bestWrap.hidden = isZen || State.mode === 'supervivencia';
       if (zenWrap) {
         zenWrap.hidden = !isZen;
         if (isZen) {
@@ -2142,32 +2206,10 @@
       }
       // Barra de ocupación = medidor de peligro (cuanto más llena, peor)
       const occ = Engine.occupation();
-      const fill = $('#hud-progress-fill');
-      fill.style.width = occ.toFixed(1) + '%';
-      const occPct = $('#occ-percent');
-      if (occPct) occPct.textContent = Math.round(occ) + '%';
       // HUD-Z3: en Zen el tablero lleno se despeja solo (sin derrota), así que no hay
       // "peligro": el medidor se mantiene neutro (nada de ámbar/rojo ni sonido de alarma).
       const dl = State.mode === 'zen' ? 0 : (occ >= 85 ? 2 : occ >= 65 ? 1 : 0);
-      fill.classList.toggle('warn', dl === 1);
-      fill.classList.toggle('danger', dl === 2);
-      
-      const occLabel = $('#occ-label');
-      if (occLabel) {
-        occLabel.classList.toggle('warn', dl === 1);
-        occLabel.classList.toggle('danger', dl === 2);
-        const occText = $('#occ-text');
-        const occIcon = $('#occ-icon');
-        if (dl > 0) {
-          occText.textContent = I18n.t('hud_danger');
-          occText.setAttribute('data-i18n', 'hud_danger');
-          occIcon.style.setProperty('--icv2-url', "url('img/icons-v2/8-ui/exclamation.svg')");
-        } else {
-          occText.textContent = I18n.t('hud_board_fill');
-          occText.setAttribute('data-i18n', 'hud_board_fill');
-          occIcon.style.setProperty('--icv2-url', "url('img/icons-v2/8-ui/grid.svg')");
-        }
-      }
+      this.contextBar(occ, dl);
 
       this.danger(dl);
       if (dl === 2 && State.status === 'playing') {
@@ -2177,7 +2219,12 @@
       // Pistas
       ['hint-badge', 'hint-badge-tool'].forEach((id) => { const el = $('#' + id); if (el) el.textContent = fmtNum(State.hintsLeft); });
       const hintDisabled = State.hintsLeft <= 0 || performance.now() < State.hintReadyAt;
-      ['btn-hint', 'btn-hint-tool'].forEach((id) => { const el = $('#' + id); if (el) el.disabled = hintDisabled; });
+      const hintUnavailable = State.isDaily && State.dailyMut === 'nohints';
+      ['btn-hint', 'btn-hint-tool'].forEach((id) => {
+        const el = $('#' + id); if (!el) return;
+        el.disabled = hintDisabled;
+        el.hidden = hintUnavailable;
+      });
       this.multChip();
       this.hero();
     },
@@ -2316,43 +2363,24 @@
 
     combo() {
       this.multChip();
-      const el = $('#combo');
-      if (State.combo < 3) { el.hidden = true; el.setAttribute('aria-hidden', 'true'); el.classList.remove('urgent'); return; }
-      el.hidden = false;
-      $('#combo-mult').textContent = 'x' + (State.comboMult % 1 === 0 ? State.comboMult : State.comboMult.toFixed(1));
-      $('#combo-count').textContent = State.combo;
-      el.classList.toggle('lv2', State.comboMult >= 2 && State.comboMult < 3);
-      el.classList.toggle('lv3', State.comboMult >= 3 && State.comboMult < 5);
-      el.classList.toggle('lv4', State.comboMult >= 5);
-      el.getAnimations().forEach(a => a.cancel());
-      el.animate([{}, { transform: 'scale(1.14)', offset: .5 }, {}], { duration: 300, easing: 'ease' });
+      const el = $('#hud-mult');
+      if (el && State.combo < 3) el.classList.remove('expiring');
     },
     comboRing(frac) {
-      const C = 119.38;
-      $('#combo-ring-fill').style.strokeDashoffset = (C * (1 - clamp(frac, 0, 1))).toFixed(1);
-      const el = $('#combo');
-      if (el) el.classList.toggle('urgent', State.combo >= 3 && frac < 0.24);
+      const el = $('#hud-mult');
+      if (el) el.classList.toggle('expiring', State.combo >= 3 && frac < 0.24);
     },
 
-    // Tarjeta de presentación del jefe (JF-β, patrón Gungeon): franja one-shot
-    // sobre el tablero con nombre + epíteto + nivel. No es modal (pointer-events
-    // none, no bloquea input). En reduced-fx no existe: el banner ya informa.
-    bossCard(title, sub) {
-      if (Settings.reducedFx) return;
-      const parent = document.querySelector('.board-wrap'); if (!parent) return;
-      let el = document.getElementById('boss-card');
-      if (!el) { el = document.createElement('div'); el.id = 'boss-card'; el.className = 'boss-card'; parent.appendChild(el); }
-      el.innerHTML = '<div><strong></strong><span></span></div>';
-      el.querySelector('strong').textContent = title;
-      el.querySelector('span').textContent = sub;
-      el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    // La presentación del jefe usa el mismo centro de eventos que el resto del HUD.
+    bossCard(title, sub, icon, ariaLabel) {
+      Toasts.event({
+        key: 'boss-enter', kicker: I18n.t('hud_event_boss'), title, detail: sub,
+        icon: icon || 'skull', kind: 'bad', priority: 100, ms: 2400, ariaLabel,
+      });
     },
-    // Flash de rango central (¡BIEN!, ¡GENIAL!…)
+    // El rango se celebra alrededor de la puntuación, sin tapar la jugada.
     rankFlash(text, color) {
-      if (Settings.reducedFx) return;
-      const el = $('#rank'); if (!el) return;
-      el.textContent = text; el.style.color = color || '#fff';
-      el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+      this.scoreFeedback(text, color || '#fff', 'rank');
     },
     // Activar/desactivar el aura de Fever
     fever(on) {
@@ -2382,6 +2410,74 @@
       const el = $('#flash'); if (!el) return;
       el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
     },
+    _contextSig: '',
+    contextBar(occ, dangerLevel) {
+      const bar = $('#hud-context-bar'), fill = $('#hud-progress-fill');
+      const labelEl = $('#occ-label'), textEl = $('#occ-text'), iconEl = $('#occ-icon'), valueEl = $('#occ-percent');
+      if (!bar || !fill || !labelEl || !textEl || !iconEl || !valueEl) return;
+      const now = performance.now();
+      const dangerChannel = State.mode === 'supervivencia' || dangerLevel > 0;
+      let type = dangerChannel ? 'danger' : 'board';
+      let label = I18n.t(dangerChannel ? 'hud_danger' : 'hud_board_fill');
+      let value = Math.round(occ) + '%';
+      let frac = clamp(occ / 100, 0, 1);
+      let icon = dangerChannel ? '8-ui/exclamation' : '8-ui/grid';
+
+      if (State.mode === 'zen') {
+        type = 'zen'; label = I18n.t('hud_ctx_zen'); value = Math.round(occ) + '%';
+        frac = clamp(occ / 100, 0, 1); icon = '4-nature/flower';
+      } else if (Config.MODES[State.mode] && Config.MODES[State.mode].timed
+        && dangerLevel === 0 && State.timePressure > 0) {
+        type = 'time'; label = I18n.t('hud_ctx_time'); value = fmtTime(State.timeLeft);
+        frac = clamp(State.timeLeft / 20, 0, 1); icon = '9-media/clock';
+      } else if (State.mode === 'supervivencia') {
+        const enc = Bosses.enc;
+        if (enc && enc.kind === 'boss' && !enc.resolved) {
+          if (enc.phase > 1 && dangerLevel === 0 && now < (enc.phaseContextUntil || 0)) {
+            type = 'boss'; label = I18n.t('hud_ctx_boss_rage'); value = I18n.t('hud_phase_short').replace('{n}', enc.phase);
+            frac = clamp(enc.anchorsLeft / Math.max(1, enc.anchorsMax), 0, 1); icon = '1-game/skull';
+          }
+        }
+        if (type !== 'boss' && dangerLevel > 0) {
+          type = 'danger'; label = I18n.t('hud_danger'); value = Math.round(occ) + '%';
+          frac = clamp(occ / 100, 0, 1); icon = '8-ui/exclamation';
+        } else if (type !== 'boss' && dangerLevel === 0
+          && !(Toasts._evActive && /^wave-/.test(Toasts._evActive.key))
+          && Survival.waveAcc / Math.max(1, Survival.WAVE_MS) >= .78) {
+          const remaining = Math.max(0, Survival.WAVE_MS - Survival.waveAcc);
+          type = 'wave'; label = I18n.t('hud_ctx_wave'); value = Math.ceil(remaining / 1000) + 's';
+          frac = clamp(remaining / (Survival.WAVE_MS * .22), 0, 1); icon = '9-media/clock';
+        } else if (type !== 'boss' && dangerLevel === 0 && Survival.x2Until > now) {
+          const remaining = Survival.x2Until - now;
+          type = 'boost'; label = I18n.t('hud_ctx_double'); value = Math.ceil(remaining / 1000) + 's';
+          frac = clamp(remaining / 11000, 0, 1); icon = '4-nature/lightning';
+        } else if (type !== 'boss' && dangerLevel === 0 && Survival.freezeUntil > now) {
+          const remaining = Survival.freezeUntil - now;
+          type = 'cold'; label = I18n.t('hud_ctx_freeze'); value = Math.ceil(remaining / 1000) + 's';
+          frac = clamp(remaining / 7000, 0, 1); icon = '4-nature/snowflake';
+        } else if (type !== 'boss' && dangerLevel === 0 && Survival.frenzyActive()) {
+          const remaining = Math.max(0, Survival.frenzyUntil - now);
+          type = 'frenzy'; label = I18n.t('hud_ctx_frenzy'); value = Math.ceil(remaining / 1000) + 's';
+          frac = clamp(remaining / 10000, 0, 1); icon = '4-nature/fire';
+        }
+      }
+
+      const sig = [type, label, value, Math.round(frac * 100)].join('|');
+      if (sig === this._contextSig) return;
+      this._contextSig = sig;
+      bar.dataset.context = type;
+      bar.setAttribute('aria-label', label + ' ' + value);
+      textEl.removeAttribute('data-i18n');
+      textEl.textContent = label;
+      valueEl.textContent = value;
+      iconEl.style.setProperty('--icv2-url', "url('img/icons-v2/" + icon + ".svg')");
+      labelEl.classList.toggle('warn', type === 'wave' || (type === 'danger' && dangerLevel === 1));
+      labelEl.classList.toggle('danger', type === 'boss' || (type === 'danger' && dangerLevel === 2));
+      ['warn', 'danger', 'context-board', 'context-boss', 'context-wave', 'context-boost', 'context-cold', 'context-frenzy', 'context-time', 'context-zen'].forEach((c) => fill.classList.remove(c));
+      if (type === 'danger' && dangerLevel > 0) fill.classList.add(dangerLevel === 2 ? 'danger' : 'warn');
+      else if (type !== 'danger') fill.classList.add('context-' + type);
+      fill.style.width = (clamp(frac, 0, 1) * 100).toFixed(1) + '%';
+    },
     // Pulso de peligro del tablero según ocupación
     danger(level) { // 0 ninguno, 1 warn, 2 danger
       const w = document.querySelector('.board-wrap'); if (!w) return;
@@ -2398,87 +2494,211 @@
   const announceGame = (msg, ms = 1400) => { const t = Date.now(); if (t - _srLast < ms) return; _srLast = t; announce(msg); };
   const Toasts = {
     ICON: { info: 'info', good: 'check', warn: 'warning', bad: 'close' },
-    _evQ: [], _evActive: null,
-    // Construye el nodo de un toast (sin lógica de cola/fusión). `isEvent` añade la
-    // barra de tiempo restante (FBK-03): el usuario ve cuánto le queda para leerlo.
-    _node(msg, kind, ic, isEvent, ms) {
-      const t = document.createElement('div');
-      t.className = 'toast ' + kind + (isEvent ? ' event' : ''); t.dataset.msg = msg; t.dataset.n = '1';
-      if (isEvent) t.dataset.event = '1';
-      if (ic) {
-        const s = document.createElement('span'); s.className = 'toast-ic';
-        const tok = EMOJI_IMG[ic] || (/^(v2:)?[a-z][a-z0-9-]*$/.test(ic) ? ic : null);
-        if (tok) s.innerHTML = iconAny(tok); else s.textContent = ic;
-        t.appendChild(s);
-      }
-      const tx = document.createElement('span'); tx.className = 'toast-tx'; tx.textContent = msg; t.appendChild(tx);
-      if (isEvent && !Settings.reducedFx) {
-        const bar = document.createElement('span'); bar.className = 'toast-bar'; bar.style.animationDuration = ms + 'ms'; t.appendChild(bar);
-      }
-      return t;
+    MAX_QUEUE: 6,
+    _evQ: [], _evActive: null, _seq: 0, _timer: 0, _transitionTimer: 0,
+    _idleTimer: 0, _idleIndex: 0, _finishing: false, _paused: false, _pausedAt: 0,
+    _narratedEncounters: new WeakSet(),
+    _later(fn, ms) {
+      const timer = setTimeout(fn, ms);
+      if (timer && typeof timer.unref === 'function') timer.unref();
+      return timer;
     },
-    // Toasts de "chatter" (combos, power-ups, misc): inmediatos, fusionan repetidos.
+    _priority(kind, isEvent) {
+      const base = { info: 40, good: 50, warn: 60, bad: 80 }[kind] || 40;
+      return isEvent ? Math.max(70, base) : base;
+    },
+    _normalize(msg, kind, ms, iconArg, onClick, isEvent) {
+      const data = msg && typeof msg === 'object' ? msg : {};
+      let title = data.title != null ? String(data.title) : String(msg == null ? '' : msg);
+      let icon = data.icon != null ? data.icon : iconArg;
+      kind = data.kind || kind || 'info';
+      ms = Math.max(500, data.ms || ms || (isEvent ? 2200 : 2800));
+      if (icon == null && title) {
+        const match = title.match(/^(\p{Extended_Pictographic}️?)\s+/u);
+        if (match) { icon = match[1]; title = title.slice(match[0].length); }
+      }
+      icon = icon != null ? icon : (this.ICON[kind] || '');
+      const detail = data.detail != null ? String(data.detail) : '';
+      const kicker = data.kicker != null ? String(data.kicker) : '';
+      const action = data.onClick || onClick;
+      const liveExpiry = State.status === 'playing' && !action
+        ? Date.now() + Math.max(isEvent ? 5000 : 2600, ms * (isEvent ? 2.4 : 1.6))
+        : 0;
+      return {
+        key: data.key || [kicker, title, detail].join('|'), title, detail, kicker,
+        kind, ms, icon, onClick: action, event: data.event != null ? !!data.event : !!isEvent,
+        idle: !!data.idle, priority: data.priority != null ? +data.priority : this._priority(kind, isEvent),
+        expiresAt: data.expiresAt === false ? 0 : (data.expiresAt || liveExpiry), count: Math.max(1, data.count || 1), seq: ++this._seq,
+        ariaLabel: data.ariaLabel ? String(data.ariaLabel) : '', onStart: data.onStart, onFinish: data.onFinish,
+        remaining: ms, startedAt: 0,
+      };
+    },
     show(msg, kind = 'info', ms = 2800, iconArg, onClick) {
-      const el = $('#toasts'); if (!el) return;
-      // Si el mensaje empieza por un emoji (y no se pasó icono), úsalo como icono del toast.
-      if (iconArg == null) {
-        const m = msg.match(/^(\p{Extended_Pictographic}️?)\s+/u);
-        if (m) { iconArg = m[1]; msg = msg.slice(m[0].length); }
-      }
-      const ic = iconArg != null ? iconArg : (this.ICON[kind] || '');
-      // Fusión de repetidos aún visibles: incrementa ×N y reinicia el temporizador.
-      const dup = Array.prototype.find.call(el.children, c => c.dataset.msg === msg && !c.classList.contains('out'));
-      if (dup) {
-        const n = (+dup.dataset.n || 1) + 1; dup.dataset.n = n;
-        let x = dup.querySelector('.toast-x');
-        if (!x) { x = document.createElement('span'); x.className = 'toast-x'; dup.appendChild(x); }
-        x.textContent = '×' + n;
-        clearTimeout(dup._t); dup._t = setTimeout(() => this._out(dup), ms);
-        dup.classList.remove('pop'); void dup.offsetWidth; dup.classList.add('pop');
-        return;
-      }
-      const t = this._node(msg, kind, ic, false, ms);
-      // Toast accionable: un toque ejecuta la acción y lo cierra (auto-sugerencia de FX).
-      if (typeof onClick === 'function') {
-        t.classList.add('actionable');
-        t.addEventListener('click', () => { clearTimeout(t._t); this._out(t); onClick(); });
-      }
-      el.appendChild(t);
-      t._t = setTimeout(() => this._out(t), ms);
-      this._trim(el);
+      return this._enqueue(this._normalize(msg, kind, ms, iconArg, onClick, false));
     },
-    // Cola SERIAL de toasts de EVENTO (FBK-03): nunca se solapan dos avisos de evento.
-    // Antes, al cambiar de oleada, "Oleada N" + monedas + récord + iconos nuevos caían
-    // a la vez y se pisaban (hallazgo H3). Ahora se muestran de uno en uno.
     event(msg, kind = 'info', ms = 2200, iconArg) {
-      if (iconArg == null && typeof msg === 'string') {
-        const m = msg.match(/^(\p{Extended_Pictographic}️?)\s+/u);
-        if (m) { iconArg = m[1]; msg = msg.slice(m[0].length); }
+      return this._enqueue(this._normalize(msg, kind, ms, iconArg, null, true));
+    },
+    _enqueue(item) {
+      if (!item.title || (item.expiresAt && item.expiresAt <= Date.now())) return false;
+      clearTimeout(this._idleTimer); this._idleTimer = 0;
+      if (this._evActive && this._evActive.key === item.key) {
+        // Un productor puede seguir notificando mientras su estado permanece activo
+        // (jefe, aviso de oleada, modificador...). La misma clave representa el mismo
+        // evento semántico: no se vuelve a anunciar ni se reinicia su temporizador.
+        return false;
       }
-      const ic = iconArg != null ? iconArg : (this.ICON[kind] || '');
-      this._evQ.push({ msg, kind, ms, ic });
-      if (this._evQ.length > 4) this._evQ.shift();   // backstop: no acumular cola infinita
-      this._pumpEv();
+      const queued = this._evQ.find((it) => it.key === item.key);
+      if (queued) return false;
+      this._evQ.push(item);
+      this._sortQueue();
+      while (this._evQ.length > this.MAX_QUEUE) this._evQ.pop();
+      if (this._evActive && item.priority > this._evActive.priority) this._finishActive(true);
+      else this._pumpEv();
+      return true;
+    },
+    _sortQueue() { this._evQ.sort((a, b) => b.priority - a.priority || a.seq - b.seq); },
+    _render(item) {
+      const card = $('#hud-event-center'); if (!card) return;
+      const iconEl = $('#hud-event-icon'), kickerEl = $('#hud-event-kicker');
+      const titleEl = $('#hud-event-title'), detailEl = $('#hud-event-detail');
+      const countEl = $('#hud-event-count'), progressEl = $('#hud-event-progress');
+      card.hidden = false;
+      document.body.classList.add('hud-event-active');
+      card.classList.remove('info', 'good', 'warn', 'bad', 'event', 'idle', 'out', 'pop', 'actionable');
+      card.classList.add(item.kind);
+      if (item.event) card.classList.add('event');
+      if (item.idle) card.classList.add('idle');
+      card.dataset.msg = item.title; card.dataset.priority = String(item.priority);
+      card.setAttribute('aria-label', item.ariaLabel || [item.kicker, item.title, item.detail].filter(Boolean).join('. '));
+      if (iconEl) {
+        iconEl.hidden = !item.icon; iconEl.innerHTML = ''; iconEl.textContent = '';
+        if (item.icon) {
+          const token = EMOJI_IMG[item.icon] || (/^(v2:)?[a-z][a-z0-9-]*$/.test(item.icon) ? item.icon : null);
+          if (token) iconEl.innerHTML = iconAny(token); else iconEl.textContent = item.icon;
+        }
+      }
+      if (kickerEl) { kickerEl.hidden = !item.kicker; kickerEl.textContent = item.kicker; }
+      if (titleEl) titleEl.textContent = item.title;
+      if (detailEl) { detailEl.hidden = !item.detail; detailEl.textContent = item.detail; }
+      if (countEl) { countEl.hidden = item.count <= 1; countEl.textContent = '×' + item.count; }
+      if (progressEl) {
+        progressEl.hidden = Settings.reducedFx || !item.event;
+        progressEl.style.animation = 'none'; void progressEl.offsetWidth;
+        progressEl.style.animationDuration = item.remaining + 'ms';
+        progressEl.style.removeProperty('animation');
+        progressEl.style.animationPlayState = this._paused ? 'paused' : 'running';
+      }
+      card.onclick = null;
+      if (typeof item.onClick === 'function') {
+        card.classList.add('actionable');
+        card.onclick = () => { const fn = item.onClick; this._finishActive(true); fn(); };
+      }
+    },
+    _startTimer(item) {
+      clearTimeout(this._timer); this._timer = 0;
+      if (this._paused || item !== this._evActive) return;
+      item.startedAt = Date.now();
+      this._timer = this._later(() => this._finishActive(false), Math.max(1, item.remaining));
     },
     _pumpEv() {
-      const el = $('#toasts'); if (!el) return;
-      if (this._evActive && this._evActive.isConnected && !this._evActive.classList.contains('out')) return;
-      const it = this._evQ.shift(); this._evActive = null;
-      if (!it) return;
-      const t = this._node(it.msg, it.kind, it.ic, true, it.ms);
-      el.appendChild(t); this._evActive = t; this._trim(el);
-      t._t = setTimeout(() => { this._out(t); this._evActive = null; setTimeout(() => this._pumpEv(), 160); }, it.ms);
-    },
-    // Recorta el contenedor sin expulsar nunca el toast de evento activo.
-    _trim(el) {
-      const maxVisible = document.body.classList.contains('mode-surv') ? 2 : 3;
-      while (el.children.length > maxVisible) {
-        const victim = Array.prototype.find.call(el.children, c => c !== this._evActive && !c.classList.contains('out'));
-        if (!victim) break;
-        victim.remove();
+      if (this._paused || this._finishing || this._evActive) return;
+      let item = this._evQ.shift();
+      while (item && item.expiresAt && item.expiresAt <= Date.now()) item = this._evQ.shift();
+      if (!item) { this._scheduleIdle(); return; }
+      this._evActive = item;
+      this._render(item);
+      if (typeof item.onStart === 'function') {
+        try { item.onStart(); } catch (err) { console.error('HUD event start failed', err); }
       }
+      this._startTimer(item);
     },
-    _out(t) { if (!t) return; t.classList.add('out'); t.addEventListener('animationend', () => t.remove(), { once: true }); },
+    _finishActive(interrupted) {
+      if (!this._evActive || this._finishing) return;
+      clearTimeout(this._timer); this._timer = 0;
+      const finished = this._evActive;
+      this._evActive = null; this._finishing = true;
+      const card = $('#hud-event-center');
+      if (card && !Settings.reducedFx && !interrupted) card.classList.add('out');
+      const delay = card && !Settings.reducedFx && !interrupted ? 180 : 0;
+      clearTimeout(this._transitionTimer);
+      this._transitionTimer = this._later(() => {
+        if (card) { card.hidden = true; card.classList.remove('out', 'pop'); card.onclick = null; }
+        document.body.classList.remove('hud-event-active');
+        this._finishing = false;
+        if (!interrupted && typeof finished.onFinish === 'function') {
+          try { finished.onFinish(); } catch (err) { console.error('HUD event finish failed', err); }
+        }
+        this._pumpEv();
+      }, delay);
+    },
+    pause() {
+      if (this._paused) return;
+      this._paused = true; this._pausedAt = Date.now();
+      if (this._evActive && this._timer) {
+        this._evActive.remaining = Math.max(1, this._evActive.remaining - (Date.now() - this._evActive.startedAt));
+        clearTimeout(this._timer); this._timer = 0;
+      }
+      const progress = $('#hud-event-progress'); if (progress) progress.style.animationPlayState = 'paused';
+    },
+    resume() {
+      if (!this._paused) return;
+      const pausedFor = this._pausedAt ? Math.max(0, Date.now() - this._pausedAt) : 0;
+      this._paused = false; this._pausedAt = 0;
+      if (pausedFor) this._evQ.forEach((item) => { if (item.expiresAt) item.expiresAt += pausedFor; });
+      const progress = $('#hud-event-progress'); if (progress) progress.style.animationPlayState = 'running';
+      if (this._evActive) this._startTimer(this._evActive); else this._pumpEv();
+    },
+    reset() {
+      clearTimeout(this._timer); clearTimeout(this._transitionTimer); clearTimeout(this._idleTimer);
+      this._timer = this._transitionTimer = this._idleTimer = 0;
+      this._evQ = []; this._evActive = null; this._finishing = false; this._paused = false; this._pausedAt = 0;
+      this._narratedEncounters = new WeakSet();
+      const card = $('#hud-event-center');
+      if (card) { card.hidden = true; card.classList.remove('out', 'pop', 'actionable'); card.onclick = null; }
+      document.body.classList.remove('hud-event-active');
+    },
+    _idleItem() {
+      if (State.mode !== 'supervivencia' || State.status !== 'playing') return null;
+      const activeBoss = Bosses.enc && Bosses.enc.kind === 'boss' && !Bosses.enc.resolved ? Bosses.enc : null;
+      if (activeBoss) {
+        if (this._narratedEncounters.has(activeBoss)) return null;
+        this._narratedEncounters.add(activeBoss);
+        const def = Bosses.DEX[activeBoss.id] || {};
+        return this._normalize({
+          key: 'idle-boss-narrator-' + activeBoss.id,
+          kicker: Bosses.name(activeBoss.id),
+          title: I18n.t('hud_narr_' + activeBoss.id),
+          icon: def.icon || 'skull', kind: 'bad', priority: 24, ms: 1900, idle: true,
+        }, 'bad', 1900, def.icon, null, false);
+      }
+      const every = Survival.tune().bossEvery;
+      let delta = (every - (Survival.wave % every)) % every;
+      if (!delta) delta = every;
+      const nextBoss = Survival.wave + delta;
+      const nextPool = (Math.floor((Survival.wave - 1) / Survival.tune().varEvery) + 1) * Survival.tune().varEvery + 1;
+      const best = Meta.survBestWaveFor(State.diff);
+      const items = [];
+      if (!Survival.bossNext && !(Bosses.enc && Bosses.enc.kind === 'boss')) {
+        items.push({ key: 'idle-next-boss', kicker: I18n.t('hud_event_next'), title: I18n.t('hud_next_boss'), detail: I18n.t('st_wave') + ' ' + nextBoss, icon: 'skull' });
+      }
+      items.push({ key: 'idle-next-pool', kicker: I18n.t('hud_event_next'), title: I18n.t('hud_new_shapes'), detail: I18n.t('st_wave') + ' ' + nextPool, icon: 'star' });
+      if (best > 0) items.push({ key: 'idle-best-wave', kicker: I18n.t('st_record'), title: I18n.t('surv_best_wave'), detail: String(best), icon: 'trophy' });
+      const item = items[this._idleIndex++ % items.length];
+      return this._normalize({ ...item, kind: 'info', priority: 20, ms: 2400, idle: true }, 'info', 2400, item.icon, null, false);
+    },
+    _scheduleIdle() {
+      clearTimeout(this._idleTimer); this._idleTimer = 0;
+      if (State.mode !== 'supervivencia' || State.status !== 'playing') return;
+      this._idleTimer = this._later(() => {
+        this._idleTimer = 0;
+        if (this._evActive || this._evQ.length || this._paused) return;
+        const item = this._idleItem(); if (item) this._enqueue(item);
+      }, 1500);
+    },
+    // Compatibilidad con consumidores antiguos: el nuevo host siempre contiene uno.
+    _trim() {},
+    _out() { this._finishActive(false); },
   };
 
   /* ===================== Feedback (despachador de eventos, FBK-01) =============
@@ -2493,18 +2713,18 @@
   const Feedback = {
     // valence: threat(rojo) · warn(ámbar) · cold(azul) · boon(oro/verde) — vía `kind`.
     SIG: {
-      quake:    { kind: 'warn', ms: 2000, icon: 'teleporter',   snd: 'quake',    hap: 'quake',   toast: 'surv_quake' },
-      tide:     { kind: 'warn', ms: 2000, icon: '🌊',           snd: 'tide',     hap: 'roll',    toastEn: ['surv_tide', 'surv_tide_enraged'] },
-      meteor:   { kind: 'bad',  ms: 2000, icon: 'v2:meteor',    snd: 'meteor',   hap: 'impacts', toastEn: ['surv_meteor', 'surv_meteor_enraged'] },
-      frost:    { kind: 'info', ms: 1900, icon: 'v2:snowflake', snd: 'frost',    hap: 'ice',     toastEn: ['surv_frost', 'surv_frost_enraged'] },
-      lockdown: { kind: 'bad',  ms: 2000, icon: '🔒',           snd: 'lockdown', hap: 'clank',   toast: 'surv_lockdown' },
-      echo:     { kind: 'bad',  ms: 1900, icon: '🔁',           snd: 'echo',     hap: 'quake' },
-      lifeLost: { kind: 'bad',  ms: 1900, icon: 'heart',        snd: 'lifeBlast',hap: 'life',    toast: 'surv_life_lost' },
-      grant:    { kind: 'good', ms: 1700, icon: '✨',           snd: 'grant',    hap: 'reward',  frame: 'fbk-boon' },
-      waveUp:   { kind: 'warn', ms: 1600, icon: 'fire',         snd: 'waveUp',   hap: 'combo' },
-      waveSoon: { kind: 'warn', ms: 1500, icon: 'fire',         snd: 'danger',   hap: null,      toast: 'surv_wave_soon' },
-      bossWarn: { kind: 'bad',  ms: 2400, icon: null,           snd: 'bossWarn', hap: 'fire' },
-      bossPhase:{ kind: 'warn', ms: 1600, icon: '⚠️',           snd: 'danger',   hap: 'combo' },
+      quake:    { kind: 'warn', ms: 2000, priority: 88, icon: 'teleporter',   snd: 'quake',    hap: 'quake',   toast: 'surv_quake' },
+      tide:     { kind: 'warn', ms: 2000, priority: 88, icon: '🌊',           snd: 'tide',     hap: 'roll',    toastEn: ['surv_tide', 'surv_tide_enraged'] },
+      meteor:   { kind: 'bad',  ms: 2000, priority: 90, icon: 'v2:meteor',    snd: 'meteor',   hap: 'impacts', toastEn: ['surv_meteor', 'surv_meteor_enraged'] },
+      frost:    { kind: 'info', ms: 1900, priority: 86, icon: 'v2:snowflake', snd: 'frost',    hap: 'ice',     toastEn: ['surv_frost', 'surv_frost_enraged'] },
+      lockdown: { kind: 'bad',  ms: 2000, priority: 90, icon: '🔒',           snd: 'lockdown', hap: 'clank',   toast: 'surv_lockdown' },
+      echo:     { kind: 'bad',  ms: 1900, priority: 96, icon: '🔁',           snd: 'echo',     hap: 'quake' },
+      lifeLost: { kind: 'bad',  ms: 1900, priority: 100, icon: 'heart',       snd: 'lifeBlast',hap: 'life',    toast: 'surv_life_lost' },
+      grant:    { kind: 'good', ms: 1700, priority: 60, icon: '✨',           snd: 'grant',    hap: 'reward',  frame: 'fbk-boon' },
+      waveUp:   { kind: 'warn', ms: 1600, priority: 80, icon: 'fire',         snd: 'waveUp',   hap: 'combo' },
+      waveSoon: { kind: 'warn', ms: 1500, priority: 72, icon: 'fire',         snd: 'danger',   hap: null,      toast: 'surv_wave_soon' },
+      bossWarn: { kind: 'bad',  ms: 2400, priority: 98, icon: null,           snd: 'bossWarn', hap: 'fire' },
+      bossPhase:{ kind: 'warn', ms: 1600, priority: 95, icon: '⚠️',           snd: 'danger',   hap: 'combo' },
     },
     event(id, opts) {
       opts = opts || {};
@@ -2515,12 +2735,32 @@
         if (key) msg = I18n.t(key);
       }
       const icon = opts.icon != null ? opts.icon : s.icon;
-      if (msg != null) Toasts.event(msg, opts.kind || s.kind, opts.ms || s.ms, icon);
+      const title = opts.title != null ? opts.title : msg;
+      let accepted = true;
+      if (title != null) {
+        accepted = Toasts.event({
+          key: opts.key || id,
+          kicker: opts.kicker || '',
+          title,
+          detail: opts.detail || '',
+          kind: opts.kind || s.kind,
+          priority: opts.priority != null ? opts.priority : s.priority,
+          ms: opts.ms || s.ms,
+          icon,
+          expiresAt: opts.expiresAt === false ? false
+            : (opts.expiresAt || Date.now() + Math.max(3000, (opts.ms || s.ms) * 2)),
+        });
+      }
+      // La deduplicación cubre todos los canales: si este mismo evento ya está
+      // visible o en cola, tampoco repetimos sonido, vibración ni marco.
+      if (!accepted) return false;
       const frame = Object.prototype.hasOwnProperty.call(opts, 'frame') ? opts.frame : s.frame;
       if (frame) Render.boardEvent(frame, 800);
       const snd = opts.snd || s.snd; if (snd && Sound[snd]) Sound[snd]();
       const hap = opts.hap != null ? opts.hap : s.hap; if (hap && Haptics[hap]) Haptics[hap]();
-      if (opts.announce !== false && msg != null) announce(msg);
+      // El propio centro de eventos es una región aria-live; anunciarlo de nuevo en
+      // #sr-status haría que los lectores de pantalla oyeran cada aviso dos veces.
+      return true;
     },
   };
 
@@ -4684,7 +4924,7 @@
       const runCoins = $('#hud-run-coins');
       const runWrap = $('#hud-run-coins-wrap');
       if (runCoins) runCoins.textContent = fmtSigned(State.coinsRun || 0);
-      if (runWrap) runWrap.hidden = State.mode !== 'supervivencia' && !(State.coinsRun > 0);
+      if (runWrap) runWrap.hidden = State.mode === 'supervivencia' || !(State.coinsRun > 0);
       updateSinkBadges();
       refreshXpBoostIndicators();
     },
@@ -5264,8 +5504,8 @@
       this._rHp = -1; this._rNext = -1;
       if (boss) {
         document.documentElement.style.setProperty('--boss-accent', biome.accent);
-        Render.bossCard(I18n.t('advdex_' + biome.id), I18n.t('advdex_' + biome.id + '_e'));
-        announce(I18n.t('surv_boss_enter_sr').replace('{b}', I18n.t('advdex_' + biome.id)).replace('{n}', this.chapterOf(level) + 1).replace('{k}', this.crystalsLeft()));
+        const bossSr = I18n.t('surv_boss_enter_sr').replace('{b}', I18n.t('advdex_' + biome.id)).replace('{n}', this.chapterOf(level) + 1).replace('{k}', this.crystalsLeft());
+        Render.bossCard(I18n.t('advdex_' + biome.id), I18n.t('advdex_' + biome.id + '_e'), null, bossSr);
       } else if (State.mode === 'aventura') {
         document.documentElement.style.removeProperty('--boss-accent');
       }
@@ -5351,38 +5591,32 @@
         el.style.borderColor = biome.accent;
         bossHtml = `<span class="obj-boss-face"><b class="obf-name">${esc(I18n.t('advdex_' + biome.id))}</b><i class="obf-epithet">${esc(I18n.t('advdex_' + biome.id + '_e'))}</i><span class="obf-hp" id="adv-boss-hp" aria-hidden="true"></span><span class="obf-next" id="adv-boss-next" aria-hidden="true"></span></span>`;
       }
-      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span>${bossHtml}<span class="obj-goal" id="obj-goal">${this.objectiveLabel()}</span>${relicsHtml}${ModeSignals.noteHtml('aventura')}`;
+      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span>${bossHtml}<span class="obj-goal" id="obj-goal">${this.objectiveLabel()}</span>${relicsHtml}`;
     },
     // El progreso vivo lo pinta el héroe (Render.hero); el banner solo lleva la
     // etiqueta estática, así que refreshGoal ya no reescribe texto por frame.
     refreshGoal() { const g = $('#obj-goal'); if (g && g.textContent !== this.objectiveLabel()) g.textContent = this.objectiveLabel(); },
-    // Intro de capítulo: una tarjeta de bioma (nombre, modificadores, objetivo) mostrada
-    // una sola vez la primera vez que se entra en un capítulo. Congela el juego hasta
-    // descartarla (tap). Se salta si ya se vio o si no es el primer nivel del capítulo.
+    // Intro de capítulo: un único evento del HUD, nunca una capa sobre el tablero.
+    // Al terminar encadena las decisiones de ruta/reliquia que sí requieren interacción.
     maybeChapterIntro(level, then) {
-      const ov = $('#chapter-intro'); if (!ov) return false;
       if (this.licOf(level) !== 0) return false;
       const chapter = this.chapterOf(level);
       if (Meta.advChapterSeen(chapter)) return false;
       Meta.markAdvChapterSeen(chapter);
       const biome = this.biomeOf(level);
-      ov.style.setProperty('--mode-accent', biome.accent);
-      const set = (sel, html) => { const e = ov.querySelector(sel); if (e) e.innerHTML = html; };
-      set('.ci-glyph', BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph);
-      set('.ci-chapter', esc(I18n.t('chapter') + ' ' + (chapter + 1)));
-      set('.ci-name', esc(this.biomeName(biome)));
-      set('.ci-mods', esc(this.biomeModText(biome) || I18n.t('ci_no_mods')));
-      set('.ci-goal', esc(this.objectiveText()));
-      ov.hidden = false;
-      State.status = 'paused'; // congela spawns/reloj mientras se lee la intro
-      const close = () => {
-        ov.hidden = true;
-        ov.removeEventListener('click', close);
-        if (State.status === 'paused') State.status = 'playing';
-        // Tras la intro, la cadena de elecciones del capítulo (reliquia/ruta, GM-06/07).
+      const next = () => {
         if (then) then(); else this.maybeOfferRoute(level);
       };
-      ov.addEventListener('click', close);
+      const accepted = Toasts.event({
+        key: `adventure-chapter-${chapter}`,
+        kicker: `${I18n.t('chapter')} ${chapter + 1}`,
+        title: this.biomeName(biome),
+        detail: `${this.biomeModText(biome) || I18n.t('ci_no_mods')} · ${this.objectiveText()}`,
+        icon: BIOME_IMG[biome.id] || biome.glyph,
+        kind: 'info', priority: 86, ms: 2800,
+        onFinish: next,
+      });
+      if (!accepted) next();
       return true;
     },
   };
@@ -5456,20 +5690,14 @@
       Bosses._miniDry = 0; Bosses._lastWaveMini = false; Bosses._heraldEmpower = false; Bosses._heraldSlain = false; // minijefes (JF-δ)
       this._minisSeen = 0; this._minisKilled = 0;
       this.scoreBoost = 0; this.magnetMoves = 0; this.goldenWaveWaves = 0;
-      this._introUntil = 0; // ventana de gracia del arranque (FBK-07)
+      this._introUntil = 0; this._introPauseRemaining = 0; this._pauseAt = 0; // gracia/reloj de pausa (FBK-07)
       this.mut = this.weeklyMut(); // mutador semanal (GM-22)
-      // El tema de la semana ya NO se anuncia por toast al arrancar (parte de la
-      // avalancha del inicio, H5): se muestra en la tarjeta de objetivo (intro) y
-      // sigue siendo re-consultable en el chip 📅.
-      // Chip del mutador re-consultable (SV-11): tocar 📅 repite el aviso — el tema
-      // de la semana deja de vivir solo en un toast de 2.4s al empezar.
+      // El tema semanal se explica antes de entrar, en el lanzador del modo. Durante
+      // la partida no ocupa HUD: aquí solo permanece la información accionable.
       const gtop = document.querySelector('.gtop-context');
       if (gtop && !this._buildBound) {
         this._buildBound = true;
         gtop.addEventListener('click', (e) => {
-          if (e.target.closest('.sb-mut') && this.mut.id !== 'none') {
-            Toasts.show(I18n.t('survmut_' + this.mut.id), 'info', 2400, '📅');
-          }
           const expEl = e.target.closest('[data-explain]');
           if (expEl) {
             const key = expEl.getAttribute('data-explain');
@@ -5492,54 +5720,61 @@
     cleanup() {
       this.disarm();
       Bosses.abort(); // el encuentro no sobrevive al fin de partida (JF-α)
+      this._introUntil = 0; this._introPauseRemaining = 0; this._pauseAt = 0;
       this._beatQ = [];
       this.frenzyUntil = 0; this.x2Until = 0; this.freezeUntil = 0; this.lockUntil = 0;
       State.tempMult = 1;
       document.body.classList.remove('aiming', 'surv-frenzy-active', 'surv-frenzy-1', 'surv-frenzy-2', 'surv-frenzy-3');
-      const bd = $('#surv-build'); if (bd) { bd.hidden = true; bd.innerHTML = ''; }
     },
-    // ---- Arranque de partida (FBK-07): tarjeta de objetivo + cuenta 3·2·1 + gracia --
-    // Ataca H5 (demasiados toasts al inicio, objetivo poco claro). En vez de soltar
-    // 3 toasts pisándose, muestra qué es el modo, cómo se pierde y la meta; luego una
-    // cuenta atrás sobre el tablero YA visible (el jugador ubica vidas/oleada) y una
-    // ventana de gracia sin spawns ni eventos hasta que termina.
+    // ---- Arranque de partida (FBK-07): objetivo breve en el centro de eventos + gracia --
+    // El tablero queda completamente libre. La cola enseña una sola idea cada vez y
+    // la ventana de gracia conserva el tiempo de lectura sin crear una capa modal.
     INTRO_MS: 3200,
-    _introUntil: 0,
+    _introUntil: 0, _introPauseRemaining: 0, _pauseAt: 0,
     _introActive() { return performance.now() < (this._introUntil || 0); },
+    pauseIntro() {
+      this._introPauseRemaining = this._introActive() ? Math.max(1, this._introUntil - performance.now()) : 0;
+    },
+    resumeIntro() {
+      if (this._introPauseRemaining > 0) this._introUntil = performance.now() + this._introPauseRemaining;
+      this._introPauseRemaining = 0;
+    },
+    pauseClock() {
+      if (this._pauseAt) return;
+      this._pauseAt = performance.now();
+      this.pauseIntro();
+    },
+    resumeClock() {
+      const pausedAt = this._pauseAt;
+      if (!pausedAt) { this.resumeIntro(); return; }
+      const delta = Math.max(0, performance.now() - pausedAt);
+      const shift = (obj, key) => { if (obj[key] > pausedAt) obj[key] += delta; };
+      ['freezeUntil', 'x2Until', 'frenzyUntil', 'lockUntil', '_bossSurvivedAt', '_boonAt'].forEach((key) => shift(this, key));
+      ['spawnHoldUntil', 'comboUntil', 'warmupUntil'].forEach((key) => shift(State, key));
+      (this._beatQ || []).forEach((beat) => { if (beat.at > pausedAt) beat.at += delta; });
+      if (Bosses.face && Bosses.face.resolveUntil > pausedAt) Bosses.face.resolveUntil += delta;
+      if (Bosses.enc && Bosses.enc.phaseContextUntil > pausedAt) Bosses.enc.phaseContextUntil += delta;
+      this._pauseAt = 0;
+      this.resumeIntro();
+    },
     intro() {
-      const parent = document.querySelector('.board-wrap'); if (!parent) return;
-      let ov = document.getElementById('surv-intro');
-      if (!ov) { ov = document.createElement('div'); ov.id = 'surv-intro'; ov.className = 'surv-intro'; parent.appendChild(ov); }
-      const mutLine = this.mut.id !== 'none' ? `<div class="si-mut">📅 ${esc(I18n.t('survmut_' + this.mut.id))}</div>` : '';
-      ov.innerHTML = `<div class="si-card">
-          <div class="si-goal"><span class="si-ic">🎯</span><span>${esc(I18n.t('surv_intro_goal'))}</span></div>
-          <div class="si-goal"><span class="si-ic">🔗</span><span>${esc(I18n.t('surv_intro_merge'))}</span></div>
-          <div class="si-goal"><span class="si-ic">❤️</span><span>${esc(I18n.t('surv_intro_lose'))}</span></div>
-          ${mutLine}
-        </div><div class="si-count" id="si-count" aria-hidden="true"></div>`;
-      ov.hidden = false; ov.classList.remove('out');
-      announce(I18n.t('surv_intro_goal'));
-      // Sin animaciones: tarjeta breve y arranque (respeta reduced-fx).
-      if (Settings.reducedFx) {
-        this._introUntil = performance.now() + 1600;
-        setTimeout(() => { if (ov) ov.hidden = true; }, 1600);
-        return;
-      }
-      this._introUntil = performance.now() + this.INTRO_MS;
-      const cEl = ov.querySelector('#si-count');
-      let n = 3;
-      const tick = () => {
-        if (State.status !== 'playing') { ov.hidden = true; return; }
-        if (n > 0) {
-          cEl.textContent = n; cEl.classList.remove('go', 'pulse'); void cEl.offsetWidth; cEl.classList.add('pulse');
-          Sound.tap(); Haptics.tap(); n--; setTimeout(tick, 640);
-        } else {
-          cEl.textContent = I18n.t('surv_go'); cEl.classList.remove('pulse'); void cEl.offsetWidth; cEl.classList.add('go');
-          Sound.waveUp(); Haptics.combo();
-          setTimeout(() => { ov.classList.add('out'); setTimeout(() => { ov.hidden = true; ov.classList.remove('out'); }, 320); }, 360);
-        }
-      };
-      setTimeout(tick, 900); // ~0.9s para leer los objetivos antes de la cuenta
+      const reduced = Settings.reducedFx;
+      const introMs = reduced ? 1600 : this.INTRO_MS;
+      this._introUntil = performance.now() + introMs;
+      Toasts.event({
+        key: 'survival-intro', kicker: I18n.t('hud_survival_title'),
+        title: I18n.t('surv_intro_goal'), detail: I18n.t('surv_intro_merge'),
+        icon: 'target', kind: 'info', priority: 84, ms: reduced ? 900 : 1900, expiresAt: false,
+      });
+      // Se encola ya (sin timer paralelo): Pausa congela ambos beats y mantiene la
+      // coreografía sincronizada con la gracia de spawn.
+      Toasts.event({
+        key: 'survival-go', kicker: I18n.t('hud_survival_ready'),
+        title: I18n.t('hud_survival_go'), icon: 'fire', kind: 'good',
+        priority: 83, ms: reduced ? 650 : 1050,
+        expiresAt: false,
+        onStart: () => { Sound.waveUp(); Haptics.combo(); },
+      });
     },
     // Telegrafiado del jefe (GM-18): si la PRÓXIMA oleada trae evento jefe, se decide
     // ya el tipo (pre-roll) para poder avisar de forma específica antes de que llegue.
@@ -5720,10 +5955,9 @@
       // Primera FURIA MÁXIMA (tier 3) de la run: callout propio, una sola vez (SV-21).
       if (this.frenzyTier() === 3 && !this._frenzyT3Seen) {
         this._frenzyT3Seen = true;
-        Toasts.show(I18n.t('surv_frenzy_max'), 'warn', 2000, 'fire');
-        Render.rankFlash(I18n.t('surv_frenzy_max'), '#ff5cf0');
+        Toasts.event({ key: 'frenzy-max', kicker: I18n.t('hud_narr_fever_title'), title: I18n.t('surv_frenzy_max'), icon: 'fire', kind: 'warn', priority: 76, ms: 2000 });
       } else {
-        Toasts.show(I18n.t('surv_frenzy_ready'), 'warn', 1800, 'fire');
+        Toasts.event({ key: 'frenzy-ready', title: I18n.t('surv_frenzy_ready'), icon: 'fire', kind: 'warn', priority: 72, ms: 1800 });
       }
       // Hazaña 'frenetico' (SV-31): 3 frenesíes tier 3 en una run.
       if (this.frenzyTier() === 3) { this._t3Count = (this._t3Count || 0) + 1; if (this._t3Count === 3) this._feat('frenetico'); }
@@ -5731,17 +5965,13 @@
     },
     _waveReward(clearedWave) {
       if (clearedWave <= 0) return;
-      const quietForBoss = ((clearedWave + 1) % this.tune().bossEvery) === 0;
       if (this.goldenWaveWaves > 0) { this.goldenWaveWaves--; if (!this.goldenWaveWaves) Render.multChip(); }
       let coins = Math.round((4 + clearedWave * 1.45) * this.tune().coinMult * (this.mut.coinMult || 1));
       if (clearedWave >= 15) coins += Math.round(Math.pow(clearedWave - 14, 1.5) * 2); // Kicker
       coins = Math.max(3, coins);
       Meta.addCoins(coins); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
-      if (!quietForBoss) Render.coinsReward(coins, I18n.t('coins'));
-      // Coreografía de toasts (SV-13): en oleadas de hito, la recompensa de monedas
-      // se FUSIONA con el toast del hito (antes eran dos toasts pisándose); en el
-      // resto, va sola. Protege el canal de feedback en el instante de más carga.
-      const coinTxt = I18n.t('surv_wave_reward').replace('{w}', clearedWave).replace('{c}', coins);
+      // Las monedas son feedback inmediato del marcador, nunca otro evento en cola.
+      Render.coinsReward(coins, I18n.t('coins'));
       if (clearedWave % 5 === 0) {
         let txt, ic;
         if (clearedWave % 10 === 0) {
@@ -5750,12 +5980,13 @@
           this.runChests++; txt = '+1 ' + I18n.t('tab_chests'); ic = 'chest';
         }
         else { const gems = 2 + Math.floor(clearedWave / 5); Meta.addGems(gems); this.runGems += gems; txt = '+' + gems + ' 💎'; ic = 'gem'; }
-        if (quietForBoss) { Econ.refresh(); return; }
-        Toasts.event(I18n.t('surv_milestone').replace('{w}', clearedWave) + ' · +' + coins + ' ' + I18n.t('coins') + ' · ' + txt, 'good', 2600, ic);
+        Toasts.event({
+          key: 'survival-milestone-' + clearedWave,
+          kicker: I18n.t('surv_milestone').replace('{w}', clearedWave),
+          title: txt, icon: ic, kind: 'good', priority: 58, ms: 2200,
+          expiresAt: Date.now() + 7000,
+        });
         Render.flash(); FX.confetti(70); Sound.record(); Haptics.record(); Econ.refresh();
-      } else {
-        if (quietForBoss) return;
-        Toasts.event(coinTxt, 'good', 1700, 'coin');
       }
     },
     _checkWaveRecord() {
@@ -5781,7 +6012,6 @@
       const coins = Math.max(1, Math.round(raw * this.tune().coinMult * ((this.mut && this.mut.coinMult) || 1)));
       Meta.addCoins(coins); State.coinsRun = (State.coinsRun || 0) + coins; this.runCoins += coins; Econ.refresh();
       Render.coinsReward(coins, I18n.t('coins'));
-      Toasts.event(I18n.t('surv_supply_reward').replace('{n}', coins), 'good', 1700, 'coin');
       return coins;
     },
     // Convierte iconos huérfanos (del pool anterior) a iconos del pool actual para que
@@ -5925,8 +6155,12 @@
       // En frontera de jefe el toast de oleada se suprime (la bandera ⚠ y el aviso ya
       // lo anuncian) y el propio evento del jefe aporta su sonido; fuera de jefe, un
       // solo aviso de oleada con sonido propio (ya no comparte `danger` con los avisos).
-      if (!isBossWave) Feedback.event('waveUp', { msg: I18n.t('st_wave') + ' ' + this.wave, announce: false });
-      announce(I18n.t('sr_wave').replace('{n}', this.wave));
+      if (!isBossWave) Feedback.event('waveUp', {
+        key: 'wave-' + this.wave,
+        kicker: I18n.t('hud_event_wave'),
+        title: I18n.t('st_wave') + ' ' + this.wave,
+        priority: 80,
+      });
       this.addFrenzy(8 + this.frenzyTier() * 3);
       this._traps(Math.min(tn.trapCap, tn.trapBase * Math.max(0, this.wave - 2)));
       this._placeBombs(1 + Math.floor(this.wave / 6));
@@ -5993,18 +6227,18 @@
       const d = this._defeatBeat; this._defeatBeat = null;
       if (d) {
         const msg = I18n.t('surv_boss_defeated').replace('{b}', Bosses.name(d.id));
-        Toasts.show(msg, 'good', 2000, 'trophy');
-        Render.rankFlash(msg, '#ffd24d'); // no-op bajo reduced-fx
+        Toasts.event({
+          key: 'boss-defeated-' + d.id, kicker: I18n.t('hud_event_boss'),
+          title: msg, icon: 'trophy', kind: 'good', priority: 96, ms: 2200,
+        });
         Render.flash(); FX.confetti(d.flawless ? 74 : 60);
         Sound.bossDefeat(); Haptics.record();
-        announce(msg);
         // Botín del jefe (JF-γ, gated B-J1): monedas por nivel del encuentro.
         const coins = 8 + 4 * (d.lvl || 1);
         Meta.addCoins(coins); State.coinsRun += coins; this.runCoins += coins; Econ.refresh();
         const rewardSource = d.rewardSource || Render.bossRewardSourcePoint();
         this._scheduleBeat('bossReward', 620, () => {
           Render.coinsReward(coins, I18n.t('coins'), rewardSource);
-          Toasts.event('+' + fmtNum(coins) + ' ' + I18n.t('coins'), 'good', 1700, 'coin');
           Render.boardEvent('boss-reward', 760);
           Sound.bossReward(); Haptics.reward();
         });
@@ -6031,8 +6265,11 @@
         return;
       }
       const clean = !!this._noBoosterSinceBoss;
-      Toasts.show(I18n.t(clean ? 'surv_boss_cleared_clean' : 'surv_boss_cleared'), 'good', 1800, 'trophy');
-      Render.rankFlash(I18n.t('surv_boss_cleared'), '#ffd24d'); // no-op bajo reduced-fx
+      Toasts.event({
+        key: 'boss-cleared', kicker: I18n.t('hud_event_boss'),
+        title: I18n.t(clean ? 'surv_boss_cleared_clean' : 'surv_boss_cleared'),
+        icon: 'trophy', kind: 'good', priority: 92, ms: 1900,
+      });
       Render.flash(); FX.confetti(clean ? 54 : 40);
       Sound.record(); Haptics.record();
     },
@@ -6212,7 +6449,7 @@
       if (this.revives >= this.REVIVE_MAX) { this.giveUp(); return; }
       // Fade suave de música (SV-14): el corte seco (Music.stop(true)) se leía como
       // fallo técnico; el desvanecido da dramatismo. Sin cuenta atrás (regla ética).
-      State.status = 'paused'; Loop.stop(); Music.stop();
+      this.pauseClock(); State.status = 'paused'; Toasts.pause(); Loop.stop(); Music.stop();
       const cost = this.reviveCost(); const cc = $('#revive-cost'); if (cc) cc.textContent = cost;
       const short = Math.max(0, cost - Meta.coins());
       const rb = $('#btn-revive'); if (rb) rb.disabled = short > 0;
@@ -6228,7 +6465,7 @@
       if (!Meta.spend(cost)) { Toasts.show(I18n.t('no_coins'), 'warn', 1500); return; }
       this.revives++;
       this.lives = 1; Sound.lifeBlast(); Haptics.life(); this._lock(900, 'life-blast'); this._relief(0.6);
-      Modal.close(); State.status = 'playing'; Loop.start(); if (Settings.music) Music.start();
+      Modal.close(); this.resumeClock(); State.status = 'playing'; Toasts.resume(); Loop.start(); if (Settings.music) Music.start();
       this.render();
     },
     giveUp() { Modal.close(); Game.gameOver(I18n.t('reason_surv').replace('{s}', Math.floor(this.survSec))); },
@@ -6471,21 +6708,11 @@
         const sb = $('#surv-bar'); if (sb) sb.classList.toggle('soon', wp >= 78);
       }
       // Bandera de jefe entrante (GM-18): visible durante TODA la oleada previa.
-      if (r.bossNext !== this.bossNext) {
-        r.bossNext = this.bossNext;
-        const sb = $('#surv-bar'); if (sb) sb.classList.toggle('boss-soon', this.bossNext);
-        const bf = $('#surv-boss-flag'); if (bf) { bf.hidden = !this.bossNext; bf.textContent = I18n.t('surv_boss_soon'); }
-      }
-      // Récord de oleada: tras batirlo en vivo (SV-21), la etiqueta pasa a estado
-      // dorado "¡y subiendo!" el resto de la run — el récord se saborea cada segundo.
-      const bestWave = Meta.survBestWave();
-      const bestTxt = this._liveRecord
-        ? I18n.t('surv_wave_record_live').replace('{w}', bestWave)
-        : (bestWave > 0 ? I18n.t('surv_best_wave') + ' ' + bestWave : '');
-      if (r.bestWave !== bestTxt) {
-        r.bestWave = bestTxt;
-        const bw = $('#surv-best-wave');
-        if (bw) { bw.textContent = bestTxt; bw.hidden = !bestTxt; bw.classList.toggle('record-live', !!this._liveRecord); }
+      const bossSoon = !!this.bossNext && !(Bosses.enc && Bosses.enc.kind === 'boss');
+      if (r.bossNext !== bossSoon) {
+        r.bossNext = bossSoon;
+        const sb = $('#surv-bar'); if (sb) sb.classList.toggle('boss-soon', bossSoon);
+        const bf = $('#surv-boss-flag'); if (bf) { bf.hidden = !bossSoon; bf.textContent = I18n.t('surv_boss_soon'); }
       }
       // Anillos concéntricos (GM-21): interior = suministro (→ monedas), exterior =
       // frenesí (→ furia). Un solo widget en vez de dos barras que subían a la par.
@@ -6556,28 +6783,6 @@
             nx.classList.toggle('retreating', enc.resolved === 'retreat');
           }
         }
-      }
-      // Fila de build (SV-10/11): chips de SOLO LECTURA con las bendiciones que
-      // tienen estado (lo instantáneo ya se ve en vidas/anillo/inventario) y el
-      // mutador semanal. El build deja de ser invisible sin añadir medidores.
-      const chips = [];
-      if (this.mut.id !== 'none') {
-        const mi = { ice: '❄️', chaos: '🌀', frenzy: '🔥' }[this.mut.id] || '';
-        chips.push(`<button type="button" class="sb-chip sb-mut" aria-label="${esc(I18n.t('survmut_' + this.mut.id))}">📅${mi}</button>`);
-      }
-      if (this.goldenWaveWaves > 0) chips.push(`<span class="sb-chip sb-epic" aria-label="${esc(I18n.t('boon_golden_wave'))}">👑×${this.goldenWaveWaves}</span>`);
-      if ((this.scoreBoost || 0) > 0) chips.push(`<span class="sb-chip sb-rare" aria-label="${esc(I18n.t('boon_score_boost'))}">📈+${Math.round(this.scoreBoost * 100)}%</span>`);
-      if (this.magnetMoves > 0) chips.push(`<span class="sb-chip sb-rare" aria-label="${esc(I18n.t('boon_magnet'))}">🧲×${this.magnetMoves}</span>`);
-      if (this.slowWaves > 0) chips.push(`<span class="sb-chip" aria-label="${esc(I18n.t('boon_slow'))}">🐌×${this.slowWaves}</span>`);
-      // HUD-S5: como máximo 3 efectos visibles; el resto se agrupa en "+N" para no
-      // saturar la subfila (el detalle completo se consulta al pausar).
-      const bsig = chips.length > 3
-        ? chips.slice(0, 3).join('') + `<span class="sb-chip sb-more" aria-label="+${chips.length - 3}">+${chips.length - 3}</span>`
-        : chips.join('');
-      if (r.build !== bsig) {
-        r.build = bsig;
-        const bd = $('#surv-build');
-        if (bd) { bd.innerHTML = bsig; bd.hidden = !bsig; }
       }
     },
   };
@@ -6861,14 +7066,14 @@
       // CSS), tarjeta de presentación estilo Gungeon y announce accesible. El sting
       // reutiliza bossWarn hasta los leitmotivs de QP-4.
       document.documentElement.style.setProperty('--boss-accent', def.accent);
-      Render.bossCard(this.name(id), I18n.t('bossdex_' + id + '_e') + ' · ' + this.lvlLabel(this.enc.lvl));
+      const bossSr = I18n.t('surv_boss_enter_sr').replace('{b}', this.name(id)).replace('{n}', this.enc.lvl).replace('{k}', this.enc.anchorsMax);
+      Render.bossCard(this.name(id), I18n.t('bossdex_' + id + '_e'), def.icon, bossSr);
       // Presentación del jefe (§5.2): breve retención de entrada para que la boss card
       // sea LEGIBLE y el jugador tenga tiempo de reacción antes de que el encuentro
       // corra. Sin este lock la entrada se sentía instantánea (la card pasaba volando).
       // BP-0: el primer ataque llega a ~9.5s; primero se lee jefe + anclas, luego tell.
       Survival._lock(1200, def.frame);
       Sound.bossWarn(); Haptics.fire(8);
-      announce(I18n.t('surv_boss_enter_sr').replace('{b}', this.name(id)).replace('{n}', this.enc.lvl).replace('{k}', this.enc.anchorsMax));
       Render.hudSoon();
       return this.enc;
     },
@@ -6970,6 +7175,7 @@
       // Fase 2 al caer la mitad de las anclas (§3.4): el patrón cambia, no solo escala.
       if (e.phase === 1 && e.anchorsLeft <= Math.floor(e.anchorsMax / 2)) {
         e.phase = 2;
+        e.phaseContextUntil = performance.now() + 3500;
         const maxAcc = Math.max(0, e.attackEvery - this.PHASE_ATTACK_GRACE_MS);
         if (e.atkAcc > maxAcc) {
           e.atkAcc = maxAcc;
@@ -7643,10 +7849,18 @@
       return text ? `<span class="obj-mode-note"${daily ? ' id="daily-note"' : ''}>${esc(text)}</span>` : '';
     },
     brief(mode) {
-      if (mode === 'tutorial') return;
+      if (mode === 'tutorial') return false;
       const key = 'mode_brief_' + mode;
       const msg = I18n.t(key);
-      if (msg && msg !== key) Toasts.show(msg, 'info', 1700, MODE_IMG[mode] || (Config.MODES[mode] && Config.MODES[mode].emoji));
+      if (!msg || msg === key) return false;
+      const m = Config.MODES[mode] || {};
+      return Toasts.event({
+        key: `mode-start-${mode}-${State.seed}`,
+        kicker: I18n.modeT(mode, 'name'),
+        title: msg,
+        icon: MODE_IMG[mode] || m.emoji,
+        kind: 'info', priority: 68, ms: 2200,
+      });
     },
     resultHtml() {
       const key = 'result_focus_' + State.mode;
@@ -7751,7 +7965,10 @@
       this._returnFocus = document.activeElement || null;
       this.pending = { options, onPick, onCancel };
       this._wasPlaying = State.status === 'playing';
-      if (this._wasPlaying) State.status = 'paused';
+      if (this._wasPlaying) {
+        if (State.mode === 'supervivencia') Survival.pauseClock();
+        State.status = 'paused'; Toasts.pause();
+      }
       ov.style.setProperty('--pick-accent', accent || 'var(--accent-2)');
       { const t = $('#pick-title'); if (t) t.textContent = title || ''; }
       { const s = $('#pick-sub'); if (s) { s.hidden = !sub; s.textContent = sub || ''; } }
@@ -7833,7 +8050,10 @@
       const ov = $('#pick-overlay'); if (ov) ov.hidden = true;
       this.pending = null;
       if (restoreFocus !== false) this._restoreFocus();
-      if (this._wasPlaying && State.status === 'paused') { State.status = 'playing'; Loop.kick(); }
+      if (this._wasPlaying && State.status === 'paused') {
+        if (State.mode === 'supervivencia') Survival.resumeClock();
+        State.status = 'playing'; Toasts.resume(); Loop.kick();
+      }
       this._wasPlaying = false;
     },
   };
@@ -8372,8 +8592,10 @@
       this.start('clasico', 'normal', n);
     },
 
-    start(mode, diff, startLevel, seed) {
+    start(mode, diff, startLevel, seed, opts) {
       Picker.dismiss();
+      Toasts.reset();
+      opts = opts || {};
       { const pl = $('#prelevel'); if (pl) pl.hidden = true; }
       document.documentElement.style.removeProperty('--boss-accent'); // acento de jefe residual (JF-ζ)
       State.mode = mode;
@@ -8408,6 +8630,7 @@
       // Tiempo en HUD solo cuando importa (Contrarreloj): top minimalista.
       document.body.classList.toggle('mode-timed', !!Config.MODES[mode].timed);
       { const sb = $('#surv-bar'); if (sb) sb.hidden = !isSurv; const bb = $('#booster-bar'); if (bb) bb.hidden = !isSurv; }
+      Render.mountScoreRow(isSurv);
       if (isSurv) Survival.start();
       // No-Supervivencia: limpiar residuos de potenciadores (GM-03 los reintroduce
       // en Clásico tras el lanzador; reiniciar = consumibles del intento perdidos).
@@ -8426,24 +8649,24 @@
       Loop.start();
       if (Settings.music) Music.start();
       announce(`Partida iniciada. Modo ${Config.MODES[mode].name}.`);
-      // Supervivencia (FBK-07): en vez de la avalancha de toasts del arranque
-      // (¡A jugar! + resumen de modo + mutador), una tarjeta de objetivo con cuenta
-      // atrás y ventana de gracia. El resto de modos conservan su aviso breve.
-      if (isSurv) { Survival.intro(); }
-      else { Toasts.show(I18n.t('lets_play'), 'good', 1400); ModeSignals.brief(mode); }
-      // Aventura: intro de bioma una vez por capítulo (congela hasta descartar) y,
-      // al entrar en capítulo, elección de ruta (GM-06; encadenada tras la intro).
+      // Supervivencia usa el centro de eventos y una ventana de gracia; reanudaciones
+      // y retos pueden componer su propio aviso único con `silentIntro`.
+      let adventureIntroShown = false;
+      // Aventura comunica el nuevo bioma en el mismo centro de eventos. Las únicas
+      // capas que quedan son elecciones reales del jugador (ruta/reliquia).
       if (mode === 'aventura') {
-        const introShown = Adventure.maybeChapterIntro(State.level);
-        if (!introShown) Adventure.maybeOfferRoute(State.level);
+        adventureIntroShown = Adventure.maybeChapterIntro(State.level);
+        if (!adventureIntroShown) Adventure.maybeOfferRoute(State.level);
       }
+      if (isSurv) Survival.intro();
+      else if (!opts.silentIntro && !adventureIntroShown) ModeSignals.brief(mode);
     },
 
     // Reto del día: tablero de Contrarreloj idéntico para todos (semilla = fecha).
     // El primer intento del día premia gemas; se guarda la mejor marca diaria.
     startDaily() {
       const d = new Date().toISOString().slice(0, 10);
-      this.start('contrarreloj', 'normal', undefined, 'daily:' + d);
+      this.start('contrarreloj', 'normal', undefined, 'daily:' + d, { silentIntro: true });
       State.isDaily = true;
       ModeSignals.markDaily(true);
       // Mutador del día (GM-15): mismo tema para todos, elegido por la fecha.
@@ -8451,8 +8674,11 @@
       State.dailyMut = mut;
       DailyMut.apply(mut);
       this.showGoalBanner();
-      Toasts.show(I18n.t('daily_challenge'), 'info', 1800, '🎯');
-      if (mut !== 'pure') Toasts.show(I18n.t('dmut_' + mut), 'warn', 2800, '🎲');
+      Toasts.event({
+        key: 'daily-start', kicker: I18n.t('daily_challenge'),
+        title: mut === 'pure' ? I18n.t('lets_play') : I18n.t('dmut_' + mut),
+        icon: 'target', kind: mut === 'pure' ? 'info' : 'warn', priority: 78, ms: 2400,
+      });
     },
 
     // Reanuda la partida guardada por RunSave (si existe). Devuelve true si lo hizo.
@@ -8462,7 +8688,7 @@
       RunSave.clear();
       if (s.mode === 'clasico') { State.world = s.world; State.worldLevel = s.worldLevel; }
       // start() monta el nivel desde cero (objetivos/hooks de modo incluidos)...
-      this.start(s.mode, s.diff, s.mode === 'clasico' ? s.worldLevel : undefined, s.seed);
+      this.start(s.mode, s.diff, s.mode === 'clasico' ? s.worldLevel : undefined, s.seed, { silentIntro: true });
       // ...y el snapshot pisa tablero y progreso con lo que había al interrumpirse.
       State.level = s.level;
       State.pool = Engine.poolForLevel(s.level);
@@ -8497,7 +8723,7 @@
       // Una nueva run de Supervivencia es una nueva decisión económica. Volver al
       // lanzador evita reintentar vacío o recomprar el loadout anterior en silencio.
       if (State.mode === 'supervivencia') {
-        Modal.close(); Loop.stop(); Music.stop(); State.status = 'idle'; Survival.cleanup();
+        Modal.close(); Loop.stop(); Music.stop(); State.status = 'idle'; Toasts.reset(); Survival.cleanup();
         openSurvivalDiff(); return;
       }
       Modal.close(); this.start(State.mode, State.diff);
@@ -8507,6 +8733,7 @@
       Picker.dismiss(); // B-06: ídem al salir al menú
       { const pl = $('#prelevel'); if (pl) pl.hidden = true; }
       Loop.stop(); Music.stop(); State.status = 'idle'; Modal.close();
+      Toasts.reset();
       ModeSignals.clear(); this.clearHintHighlight();
       if (typeof Survival !== 'undefined') Survival.cleanup();
       // Clásico: salir devuelve al mapa de mundos (su hub natural).
@@ -8523,11 +8750,13 @@
       // (Supervivencia y Contrarreloj/Reto), no solo a Supervivencia.
       { const pn = $('#pause-note'); if (pn) pn.hidden = !RunSave.EXCLUDED[State.mode]; }
       renderPauseSummary();
-      State.status = 'paused'; Music.stop(true); Modal.open('modal-pause'); announce('Juego en pausa.');
+      if (State.mode === 'supervivencia') Survival.pauseClock();
+      State.status = 'paused'; Toasts.pause(); Music.stop(true); Modal.open('modal-pause'); announce('Juego en pausa.');
     },
     resume() {
       if (State.status !== 'paused') return;
-      State.status = 'playing'; Modal.close(); Loop.last = performance.now(); Loop.kick();
+      if (State.mode === 'supervivencia') Survival.resumeClock();
+      State.status = 'playing'; Toasts.resume(); Modal.close(); Loop.last = performance.now(); Loop.kick();
       if (Settings.music) Music.start();
     },
 
@@ -8614,7 +8843,12 @@
         State.spawnHoldUntil = performance.now() + 500;
         Render.fever(true); Render.feverBurst(); Sound.fever(); Haptics.fever();
         if (Settings.music) Music.setIntensity(1);
-        Toasts.show(I18n.t('fever_on'), 'warn', 1400, 'fire');
+        Toasts.event({
+          key: 'fever-on', kicker: I18n.t('hud_narr_fever_title'),
+          title: I18n.t('hud_narr_fever'), detail: I18n.t('fever_on'),
+          icon: 'fire', kind: 'warn', priority: 74, ms: 1500,
+          expiresAt: Date.now() + 3200,
+        });
       }
 
       // Puntos (icono×10×nivel × combo × dificultad × modo × fever)
@@ -8653,7 +8887,11 @@
       if (!State.bestPlay || points > State.bestPlay.points) {
         State.bestPlay = { points, combo: State.combo, removed, wave: State.mode === 'supervivencia' ? Survival.wave : 0, level: State.level };
       }
-      if (Config.MILESTONES[State.combo]) { State.score += Config.MILESTONES[State.combo]; Toasts.show(`¡Combo ×${State.combo}! +${Config.MILESTONES[State.combo]}`, 'good'); Sound.milestone(); Haptics.milestone(); }
+      if (Config.MILESTONES[State.combo]) {
+        State.score += Config.MILESTONES[State.combo];
+        Render.scoreFeedback(`Combo ×${State.combo} · +${Config.MILESTONES[State.combo]}`, color, 'combo');
+        Sound.milestone(); Haptics.milestone();
+      }
 
       // Contrarreloj: bonus de tiempo por convergencia (los combos suman más)
       if (m.timed) {
@@ -8667,7 +8905,7 @@
         State.timeLeft = Math.min(Config.TIMED_CAP, State.timeLeft + raw);
         const got = Math.round(State.timeLeft - before);
         if (got > 0) Render.bump($('#hud-time'));
-        Toasts.show(got > 0 ? `+${got}s` : '⏱️ tope', 'info', 1100);
+        Render.scoreFeedback(got > 0 ? `+${got}s` : '⏱️ tope', 'var(--time)', 'time');
       }
 
       // FX clona las fichas completas antes de vaciar el tablero: cuerpo cuadrado e
@@ -8987,7 +9225,12 @@
       el.style.borderColor = m.accent || '';
       const stars = State.mode === 'clasico'
         ? `<span class="obj-stars" id="obj-stars" title="${I18n.t('stars_help')}" aria-label="${I18n.t('stars_label')}"></span>` : '';
-      el.innerHTML = `<span class="obj-biome" style="color:${m.accent || 'var(--accent-2)'}">${MODE_IMG[State.mode] ? iconAnyInline(MODE_IMG[State.mode]) : m.emoji} ${I18n.modeT(State.mode, 'name')}</span><span class="obj-goal">${I18n.modeT(State.mode, 'goal')}</span>${stars}${ModeSignals.noteHtml(State.mode)}`;
+      const daily = State.isDaily && State.mode === 'contrarreloj';
+      const identity = daily ? I18n.t('daily_challenge') : I18n.modeT(State.mode, 'name');
+      const mutatorKey = daily && State.dailyMut ? 'dmut_' + State.dailyMut + '_n' : '';
+      const goal = mutatorKey ? I18n.t(mutatorKey) : I18n.modeT(State.mode, 'goal');
+      const icon = daily ? 'target' : MODE_IMG[State.mode];
+      el.innerHTML = `<span class="obj-biome" style="color:${m.accent || 'var(--accent-2)'}">${icon ? iconAnyInline(icon) : m.emoji} ${identity}</span><span class="obj-goal">${goal}</span>${stars}`;
       this.updateLiveStars();
       this.updateDailyObjective(undefined, { toast: false });
     },
@@ -9275,6 +9518,7 @@
     },
 
     nextLevel() {
+      Toasts.reset();
       // Clásico: avanza al siguiente nivel del mundo (ya desbloqueado) y sigue jugando.
       if (State.mode === 'clasico') {
         State.worldLevel = (State.worldLevel || 1) + 1;
@@ -9323,6 +9567,7 @@
     },
 
     win(reason) {
+      Toasts.reset();
       this.endGame();
       Sound.level(); Haptics.level(); FX.confetti(110);
       $('#over-title').textContent = I18n.t('over_victory').replace(/^[^A-Za-z0-9¿¡]+/, '').trim();
@@ -9334,6 +9579,8 @@
 
     gameOver(reason) {
       if (this.ended) return;
+      // Cierra el relato de la jugada anterior antes de encolar resultados de run.
+      Toasts.reset();
       // Supervivencia: registra el récord de tiempo sobrevivido.
       this._survNew = false; this._survWaveNew = false; this._survRunResult = null;
       if (State.mode === 'supervivencia') {

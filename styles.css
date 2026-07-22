@@ -953,18 +953,31 @@ body.reduced-fx #btn-play { animation: none; }
 }
 
 /* ============ JUEGO ============ */
-/* Tablero = HÉROE en posición FIJA para TODOS los modos. Rejilla de 3 bandas:
-   [status+contexto] · [TABLERO] · [boosters/pulgar]. El tablero (fila 2, auto =
-   --board-size) queda a una posición proporcional a la pantalla, independiente de
-   cuánto "cromo" añada cada modo (surv-bar/obj-banner/booster) → no se mueve. */
+/* HUD de juego: cabecera natural, tablero elástico y herramientas. La fila central
+   calcula el lado del tablero con su altura REAL; así ningún modo puede dibujarlo
+   debajo de los contenedores superiores en pantallas cortas o landscape. */
 .screen-game {
   display: grid;
-  grid-template-rows: 3fr auto 2fr;
+  grid-template-columns: 100%;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   justify-items: center;
   align-content: stretch;
   row-gap: 0;
+  min-height: 0;
+  height: 100%;
+  padding-top: max(8px, env(safe-area-inset-top));
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
   --board-size: min(96vw, 66vh, 620px);
   --board-size: min(96vw, 66svh, 620px);
+  --hud-accent: var(--mode-accent, var(--accent-2));
+  --hud-surface-top: color-mix(in srgb, var(--hud-accent) 14%, #151d51);
+  --hud-surface-bottom: #070d2b;
+  --hud-border: color-mix(in srgb, var(--hud-accent) 52%, #6978c6 24%);
+  --hud-lip: color-mix(in srgb, var(--hud-accent) 34%, #020617);
+  --hud-glow: color-mix(in srgb, var(--hud-accent) 22%, transparent);
+  --hud-highlight: rgba(255,255,255,.14);
+  --hud-radius-panel: clamp(17px, 3vw, 22px);
+  --hud-radius-card: clamp(12px, 2vw, 16px);
 }
 .gtop { grid-row: 1; }
 .board-area { grid-row: 2; }
@@ -972,12 +985,30 @@ body.reduced-fx #btn-play { animation: none; }
 
 /* Cabecera: status pegado ARRIBA; contexto+ocupación pegados al borde del tablero
    (margin-top:auto). El aire intermedio es el respiro donde aparecen los toasts. */
-.gtop { width: min(620px, 100%); align-self: stretch; display: flex; flex-direction: column; min-height: 0; }
+.gtop { width: min(620px, 100%); justify-self: center; align-self: start; display: flex; flex-direction: column; min-height: 0; }
 .gtop-main { display: flex; align-items: center; gap: 10px; }
-.gtop-context { margin-top: auto; display: flex; flex-direction: column; gap: 6px; padding-top: 8px; }
+.gtop-context { margin-top: 0; display: flex; flex-direction: column; gap: 6px; padding-top: 8px; }
 /* Supervivencia: cromo apilado alto → se compactan los huecos verticales para que el
    tablero (fijo por ancho) quepa entero con el banco de boosters en pantallas cortas. */
 body.mode-surv .gtop-context { gap: 4px; padding-top: 4px; }
+/* En los modos compactos, el estado permanente y el evento comparten el mismo
+   zócalo. Un aviso sustituye temporalmente al estado en vez de añadir otra fila. */
+body:not(.mode-surv):not(.mode-tutorial) .gtop-context {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "mode-slot" "score-slot";
+  gap: 6px;
+  padding-top: 6px;
+}
+body:not(.mode-surv):not(.mode-tutorial) .obj-banner,
+body:not(.mode-surv):not(.mode-tutorial) .event-dock { grid-area: mode-slot; }
+body:not(.mode-surv):not(.mode-tutorial) .obj-banner { z-index: 1; }
+body:not(.mode-surv):not(.mode-tutorial) .event-dock { z-index: 2; }
+body:not(.mode-surv):not(.mode-tutorial) .hud-score-slot { grid-area: score-slot; }
+body.hud-event-active:not(.mode-surv):not(.mode-tutorial) .obj-banner { visibility: hidden; }
+body:not(.mode-surv):not(.mode-tutorial) .event-dock .toasts { inset: 0; }
+body:not(.mode-surv):not(.mode-tutorial) .event-dock .toast { min-height: 58px; }
+.hud-score-slot { width: 100%; min-width: 0; }
 .gctx { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; flex: 0 0 auto; min-width: 0; }
 /* Fichas de estado: misma familia visual que la bandeja del tablero (borde
    azulado + leve degradado + highlight) para que HUD y tablero se lean como uno. */
@@ -1008,8 +1039,13 @@ body.time-critical .board-wrap { box-shadow: 0 0 0 1px rgba(255,93,115,.38), 0 0
 .mult-chip.on { color: var(--mode-accent, var(--accent-2)); text-shadow: 0 0 10px color-mix(in srgb, var(--mode-accent, var(--accent-2)) 45%, transparent); }
 .mult-chip.hot { color: var(--gold); text-shadow: 0 0 12px rgba(255,216,77,.55); }
 .controls { display: flex; gap: 8px; flex: 0 0 auto; }
-/* Controles meta como botones circulares (evoca la pausa redonda de la referencia) */
-.controls .icon-btn { border-radius: 50%; }
+/* Controles meta: mini emblema elevado de la misma familia que Pausa/Launcher. */
+.controls .icon-btn {
+  border: 2px solid color-mix(in srgb, var(--hud-accent) 56%, rgba(134,151,235,.54));
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 28%, color-mix(in srgb, var(--hud-accent) 32%, rgba(76,89,190,.38)), #09102f 70%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.18), inset 0 -2px 0 rgba(0,0,0,.46), 0 4px 0 var(--hud-lip), 0 9px 19px rgba(0,0,0,.34), 0 0 15px var(--hud-glow);
+}
 #btn-pause .icv2 { display: none; }
 #btn-pause::before {
   content: '';
@@ -1047,42 +1083,58 @@ body.time-critical .board-wrap { box-shadow: 0 0 0 1px rgba(255,93,115,.38), 0 0
 }
 .hint-btn:disabled { opacity: .4; }
 .hint-btn:disabled .badge { background: #888; color: #222; }
-/* Pista como FAB en la zona natural del pulgar (inferior derecha) */
+/* Pista integrada en la consola contextual: sigue al tablero y nunca tapa datos. */
 .hint-fab {
-  position: absolute; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom));
-  width: 56px; height: 56px; border-radius: 50%; font-size: 1.6rem; z-index: 45;
-  background: linear-gradient(180deg, #243160, #141c3c); border: 1px solid var(--line);
-  box-shadow: 0 6px 0 rgba(0,0,0,.45), 0 12px 22px rgba(0,0,0,.45);
+  position: relative;
+  right: auto;
+  bottom: auto;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 2px solid color-mix(in srgb, var(--gold) 62%, rgba(255,255,255,.24));
+  border-radius: 12px;
+  padding: 5px;
+  font-size: 1rem;
+  z-index: 1;
+  background: radial-gradient(circle at 45% 28%, rgba(255,216,77,.28), transparent 38%), linear-gradient(180deg, #243160, #0c1438);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.17), 0 3px 0 #3b2765, 0 7px 14px rgba(0,0,0,.30), 0 0 10px rgba(255,216,77,.18);
 }
-.hint-fab:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.45), 0 5px 12px rgba(0,0,0,.4); }
+.hint-fab .ic { width: 20px; height: 20px; }
+.hint-fab:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 1px 0 #3b2765, 0 4px 9px rgba(0,0,0,.34); }
 .hud-value.bump { animation: bump .3s ease; }
 @keyframes bump { 50% { transform: scale(1.18); color: var(--gold); } }
 
 /* Tablero */
 .board-area {
   width: 100%;
+  justify-self: stretch;
   flex: 1;
   display: grid;
   place-items: center;
   min-height: 0;
+  align-self: stretch;
   position: relative;
+  container-type: size;
 }
 .board-column {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   justify-items: stretch;
   row-gap: 8px;
-  width: fit-content;
+  width: min(100%, 96vw, 620px);
+  width: min(100%, 96vw, calc(100cqh - 52px), 620px);
   max-width: 100%;
+  max-height: 100%;
   min-height: 0;
 }
 .board-shell {
   position: relative;
   justify-self: center;
-  width: var(--board-size);
-  height: var(--board-size);
+  width: 100%;
+  height: auto;
   aspect-ratio: 1 / 1;
   max-width: 100%;
+  max-height: none;
 }
 .board-wrap {
   position: relative;
@@ -1667,35 +1719,6 @@ body.reduced-fx .board-wrap.boss-warn-board {
   34% { transform: scale(1.012); filter: brightness(1.13) saturate(1.14); box-shadow: 0 18px 44px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,216,77,.80), 0 0 40px rgba(255,216,77,.44); }
   100% { filter: none; }
 }
-/* Arranque de Supervivencia (FBK-07): tarjeta de objetivo + cuenta 3·2·1 sobre el
-   tablero ya visible (scrim ligero: el tablero se ve detrás para ubicar vidas/oleada). */
-.surv-intro {
-  position: absolute; inset: 0; z-index: 6;
-  display: grid; place-items: center; gap: 12px; align-content: center;
-  border-radius: inherit; padding: 16px; text-align: center;
-  background: rgba(8,12,30,.52); animation: si-in .28s ease both;
-}
-.surv-intro[hidden] { display: none; }
-.surv-intro.out { animation: si-out .3s ease forwards; }
-.si-card {
-  display: flex; flex-direction: column; gap: 10px; width: min(320px, 88%);
-  background: linear-gradient(180deg, rgba(24,32,66,.95), rgba(14,20,46,.97));
-  border: 1px solid rgba(255,255,255,.14); border-radius: 16px; padding: 16px;
-  box-shadow: 0 18px 44px rgba(0,0,0,.5);
-}
-.si-goal { display: flex; align-items: center; gap: 10px; text-align: left; color: #eaf0ff; font-weight: 700; font-size: .92rem; line-height: 1.25; }
-.si-ic { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-size: 1.05rem; background: rgba(255,255,255,.08); }
-.si-mut { margin-top: 2px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.1); color: var(--warn); font-weight: 800; font-size: .85rem; }
-.si-count { min-height: 1.3em; font-weight: 900; font-size: 2.6rem; color: #fff; text-shadow: 0 3px 12px rgba(0,0,0,.6); }
-.si-count.pulse { animation: si-count-pop .6s ease; }
-.si-count.go { color: var(--good); animation: si-count-go .5s ease; }
-@keyframes si-in { from { opacity: 0; } }
-@keyframes si-out { to { opacity: 0; } }
-@keyframes si-count-pop { 0% { transform: scale(1.7); opacity: .2; } 45% { transform: scale(1); opacity: 1; } }
-@keyframes si-count-go { 0% { transform: scale(.6); } 55% { transform: scale(1.18); } 100% { transform: scale(1); } }
-body.reduced-fx .surv-intro,
-body.reduced-fx .si-count.pulse,
-body.reduced-fx .si-count.go { animation: none !important; }
 .board-wrap.board-clear-bonus { animation: board-clear-bonus .95s cubic-bezier(.18,.8,.22,1); border-color: rgba(255,216,77,.96); }
 .board-wrap.boost-bomb { animation: bomb-board .58s ease-out; }
 .board-wrap.boost-clearLine { animation: line-board .58s ease-out; }
@@ -2028,15 +2051,10 @@ body.mode-tutorial .occ,
 body.mode-tutorial .booster-bar,
 body.mode-tutorial .hint-fab { display: none !important; }
 body.mode-tutorial .gtop-context { gap: 0; padding: 0; min-height: 0; }
-/* Zen (GM-24 · HUD-Z): santuario sin evaluación — casi sin HUD. Sin combo, sin
-   multiplicador, sin economía y sin medidor de ocupación (llenar el tablero no es
-   derrota: se despeja solo con un mensaje sereno). Quedan tablero + pista + pausa,
-   y el score atenuado como recompensa ambiental discreta. */
+/* Zen (GM-24 · HUD-Z): conserva los recursos prioritarios y reutiliza la consola
+   contextual con un tono sereno. Solo desaparece el combo competitivo; llenar el
+   tablero no se comunica como peligro porque el modo lo despeja sin derrota. */
 body.mode-zen .combo { display: none !important; }
-body.mode-zen .mult-chip { visibility: hidden; }
-body.mode-zen .gscore .hud-value { opacity: .55; text-shadow: none; }
-body.mode-zen .hud-wallet,
-body.mode-zen .occ { display: none; }
 /* Clásico (GM-03): la barra de potenciadores sin los anillos de Supervivencia */
 body.mode-clasico #power-rings { display: none; }
 /* Ghost personal (GM-12): delta contra tu mejor intento */
@@ -2170,13 +2188,29 @@ body.reduced-fx .converge-layer { display: none; }
 .avatar-dot.sel { border-color: #fff; transform: scale(1.18); box-shadow: 0 0 0 3px var(--av), 0 0 16px var(--av), 0 2px 8px rgba(0,0,0,.5); }
 .avatar-dot.mini { width: 22px; height: 22px; border-width: 2px; cursor: default; flex: 0 0 auto; }
 
-/* Tutorial interactivo (coach-marks) */
-.coach { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 70; width: min(440px, 92vw); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+/* Tutorial interactivo (coach-marks): ocupa la fila inferior del HUD. La guía
+   reduce el área elástica del tablero en vez de superponerse a sus casillas. */
+.coach {
+  position: relative;
+  grid-row: 3;
+  justify-self: center;
+  align-self: end;
+  z-index: 4;
+  width: min(440px, 100%);
+  margin-top: 8px;
+  padding: 0 4px 4px;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
 /* HUD-T3: contador de paso ("Paso 2 de 3"), la única métrica del tutorial. */
-.coach-step { pointer-events: none; font-size: .74rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-2); background: rgba(10,16,40,.82); border: 1px solid color-mix(in srgb, var(--accent-2) 46%, transparent); border-radius: 999px; padding: 4px 12px; }
+.coach-step { pointer-events: none; font-size: .7rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: color-mix(in srgb, var(--hud-accent) 72%, #fff); background: linear-gradient(180deg, color-mix(in srgb, var(--hud-accent) 18%, #182250), #080e2d); border: 2px solid color-mix(in srgb, var(--hud-accent) 58%, rgba(255,255,255,.18)); border-radius: 999px; padding: 3px 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 3px 0 var(--hud-lip), 0 7px 14px rgba(0,0,0,.28); }
 .coach-step:empty { display: none; }
-.coach-text { pointer-events: none; background: rgba(10,16,40,.96); color: var(--text); border: 1px solid var(--accent-2); border-radius: 14px; padding: 12px 16px; font-weight: 600; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: coach-in .3s ease both; }
-.coach-skip { pointer-events: auto; padding: 8px 16px; }
+.coach-text { width: 100%; margin: 0; pointer-events: none; background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--hud-accent) 16%, transparent), transparent 52%), linear-gradient(180deg, var(--hud-surface-top), var(--hud-surface-bottom)); color: var(--text); border: 2px solid var(--hud-border); border-radius: var(--hud-radius-panel); padding: 10px 14px; font-size: .84rem; line-height: 1.28; font-weight: 700; text-align: center; box-shadow: inset 0 1px 0 var(--hud-highlight), inset 0 -1px 0 rgba(0,0,0,.45), 0 4px 0 var(--hud-lip), 0 10px 22px rgba(0,0,0,.34), 0 0 16px var(--hud-glow); animation: coach-in .3s ease both; }
+.coach-skip,
+.coach-play { pointer-events: auto; min-height: 36px; padding: 7px 16px; border-width: 2px; box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 3px 0 var(--hud-lip), 0 7px 14px rgba(0,0,0,.28); }
 @keyframes coach-in { from { opacity: 0; transform: translateY(10px); } }
 body.reduced-fx .coach-text { animation: none; }
 
@@ -2216,13 +2250,33 @@ body.reduced-fx .coach-text { animation: none; }
 .medal-tx strong { font-weight: 800; }
 .medal-tx small { color: var(--muted); }
 
-/* Banner de objetivo (Aventura) */
-.obj-banner { display: flex; justify-content: space-between; align-items: center; gap: 8px 10px; margin: 0 auto 6px; width: min(96vw, 620px); max-width: 100%; background: linear-gradient(180deg, rgba(40,52,96,.6), rgba(18,26,56,.7)); border: 1px solid rgba(120,150,255,.28); border-radius: 12px; padding: 7px 14px; font-size: .82rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
-.obj-biome { color: var(--accent-2); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; }
-.obj-goal { color: var(--gold); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+/* Estado del modo: versión compacta de las tarjetas del launcher/pause. */
+.obj-banner {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  min-height: 52px;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  padding: 7px 13px 9px;
+  border: 2px solid var(--hud-border);
+  border-radius: var(--hud-radius-panel);
+  background:
+    radial-gradient(circle at 14% 0%, var(--hud-glow), transparent 42%),
+    linear-gradient(180deg, var(--hud-surface-top), var(--hud-surface-bottom));
+  box-shadow: inset 0 1px 0 var(--hud-highlight), inset 0 -1px 0 rgba(0,0,0,.46), 0 4px 0 var(--hud-lip), 0 10px 24px rgba(0,0,0,.30), 0 0 18px var(--hud-glow);
+  font-size: .8rem;
+  overflow: hidden;
+}
+.obj-biome { color: var(--hud-accent); font-size: .69rem; font-weight: 1000; letter-spacing: .045em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 45%; min-width: 0; }
+.obj-goal { color: #f7f8ff; font-weight: 950; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
 .obj-mode-note { flex: 0 1 auto; min-width: 0; max-width: 42%; color: color-mix(in srgb, var(--mode-accent, var(--accent-2)) 72%, #fff); font-size: .68rem; font-weight: 900; text-transform: uppercase; letter-spacing: .35px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.mode-aventura .obj-mode-note { color: color-mix(in srgb, var(--level) 76%, #fff); }
-body.mode-zen .obj-banner { border-color: rgba(155,225,93,.34); background: linear-gradient(180deg, rgba(42,88,58,.42), rgba(14,34,36,.72)); }
+body.mode-zen .obj-banner { border-color: var(--hud-border); }
 /* Cara del jefe de bioma en Aventura (JF-ζ): identidad compartida con Supervivencia,
    dentro del banner de objetivo. Presentación pura — la mecánica GM-08 no cambia. */
 .obj-boss-face { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 4px 7px; min-width: 0; }
@@ -2231,6 +2285,14 @@ body.mode-zen .obj-banner { border-color: rgba(155,225,93,.34); background: line
 .obf-hp { color: color-mix(in srgb, var(--boss-accent, var(--mode-accent, #a06bff)) 70%, #fff); font-size: .74rem; font-weight: 950; letter-spacing: 1.5px; }
 .obf-next { display: inline-flex; align-items: center; min-height: 20px; padding: 2px 6px; border-radius: 999px;
   border: 1px solid rgba(255,255,255,.14); background: rgba(0,0,0,.24); color: #fff; font-size: .66rem; font-weight: 950; font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) {
+  .obj-banner { align-content: center; padding-inline: 11px; }
+  .obj-biome { flex: 1 1 62%; }
+  .obj-goal { order: 3; flex: 1 1 100%; color: rgba(244,247,255,.78); font-size: .67rem; text-transform: uppercase; letter-spacing: .035em; }
+  .obj-stars, .obj-relics { margin-left: auto; }
+  .obj-boss-face { order: 3; flex: 1 1 100%; align-items: center; }
+  .obj-boss-face + .obj-goal { order: 4; }
+}
 
 /* Supervivencia 2.0 */
 body.mode-surv .lvl-chip { display: none; }
@@ -2244,9 +2306,6 @@ body.mode-zen .lvl-chip { display: none; }
 .surv-wave-row { display: inline-flex; align-items: center; gap: 7px; }
 .surv-wave { color: var(--warn); }
 .surv-tier { font-size: .64rem; font-weight: 800; color: #04122e; background: var(--warn); border-radius: 999px; padding: 1px 7px; }
-.surv-best-wave { font-size: .62rem; color: rgba(255,216,77,.88); font-weight: 800; text-transform: uppercase; letter-spacing: .25px; line-height: 1; }
-/* Récord de oleada batido en vivo (SV-21): estado dorado persistente el resto de la run. */
-.surv-best-wave.record-live { color: var(--gold); text-shadow: 0 0 8px rgba(255,216,77,.55); }
 /* Última vida (SV-21): pulso lento del chip de vidas — tensión, no pánico. Única
    animación infinite del modo: elemento diminuto (transform/opacity) y en reduced-fx. */
 .surv-lives.last-life { animation: lastLife 1.15s ease-in-out infinite; transform-origin: left center; }
@@ -2264,17 +2323,6 @@ body.reduced-fx .surv-boss-flag { animation: none; }
 .surv-bar.boss-soon .surv-waveprog-fill { background: linear-gradient(90deg, var(--bad), #ff2d55); }
 .surv-bar.soon { border-color: rgba(255,178,77,.58); box-shadow: 0 0 18px rgba(255,178,77,.18); }
 
-/* Fila de build (SV-10/11): chips de solo lectura del estado de la run (bendiciones
-   con duración + mutador semanal). El build deja de ser invisible sin nuevos medidores. */
-.surv-build { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0 auto 6px; width: min(96vw, 620px); max-width: 100%; }
-.sb-chip { font-size: .72rem; font-weight: 800; line-height: 1; color: var(--text);
-  background: rgba(0,0,0,.34); border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px;
-  display: inline-flex; align-items: center; gap: 2px; animation: chipPop .24s ease both; }
-body.reduced-fx .sb-chip { animation: none; }
-.sb-chip.sb-mut { cursor: pointer; }
-.sb-chip.sb-rare { border-color: rgba(180,108,255,.5); color: #d9c2ff; }
-.sb-chip.sb-epic { border-color: rgba(255,216,77,.6); color: var(--gold); background: rgba(255,216,77,.1); }
-.sb-chip.sb-more { color: rgba(255,255,255,.6); border-style: dashed; }
 .surv-bar.soon .surv-wave { color: var(--bad); }
 .surv-bar.soon .surv-waveprog-fill { background: linear-gradient(90deg, var(--bad), var(--gold)); }
 .surv-time { color: var(--accent-2); font-variant-numeric: tabular-nums; }
@@ -2358,19 +2406,23 @@ body.mode-surv .board-area {
   min-height: 0;
   align-self: stretch;
   place-items: center;
+  container-type: size;
 }
-body.mode-surv .board-column { row-gap: 6px; }
-/* El tablero llena la ALTURA de la región flexible (height:100%) y queda cuadrado por
-   aspect-ratio, pero se ACOTA por ancho con max-width/max-height = --board-size (96vw,
-   tope 620). Así: en teléfonos manda el ancho (tablero fijo, cuadrado); en ventanas
-   cortas manda la altura de la región (se reduce lo justo). Nunca desborda la región →
-   jamás se solapa con el HUD ni los boosters, en ninguna pantalla. */
+body.mode-surv .board-column {
+  width: min(100%, 96vw, 620px);
+  width: min(100%, 96vw, calc(100cqh - 36px), 620px);
+  max-width: 100%;
+  max-height: 100%;
+  row-gap: 6px;
+}
+/* Las unidades del contenedor hacen que ancho y alto disponible participen en el
+   mismo cálculo. El contexto resta 36px y el tablero conserva siempre 1:1. */
 body.mode-surv .board-shell {
-  width: auto;
-  height: 100%;
+  width: 100%;
+  height: auto;
   aspect-ratio: 1 / 1;
-  max-width: var(--board-size);
-  max-height: var(--board-size);
+  max-width: 100%;
+  max-height: none;
   align-self: end;
 }
 body.mode-surv .board-wrap {
@@ -2386,7 +2438,8 @@ body.mode-surv .board-wrap {
   gap: 8px;
 }
 body.mode-surv .gtop-main { margin-bottom: 0; }
-body.mode-surv .wallet-pill { min-height: 24px; padding: 3px 7px; }
+body.mode-surv .wallet-pill { min-height: 30px; padding: 4px 8px; border-color: rgba(135,155,255,.30); }
+body.mode-surv .controls .icon-btn { border-color: rgba(135,155,255,.32); background: radial-gradient(circle at 45% 32%, rgba(105,112,255,.28), rgba(9,16,43,.94) 72%); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 0 16px rgba(104,80,255,.16), 0 7px 18px rgba(0,0,0,.28); }
 .hud-wallet { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .wallet-pill {
   appearance: none;
@@ -2395,18 +2448,19 @@ body.mode-surv .wallet-pill { min-height: 24px; padding: 3px 7px; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid var(--line);
+  border: 2px solid color-mix(in srgb, var(--hud-accent) 38%, rgba(122,145,222,.48));
   border-radius: 999px;
-  padding: 4px 7px;
-  background: linear-gradient(180deg, rgba(35,52,106,.74), rgba(12,20,49,.82));
+  padding: 4px 7px 5px;
+  background: radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--hud-accent) 16%, transparent), transparent 44%), linear-gradient(180deg, #172557, #080f31);
   color: var(--text);
   font: inherit;
   font-size: .74rem;
   font-weight: 900;
   line-height: 1;
   white-space: nowrap;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 7px 18px rgba(0,0,0,.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(0,0,0,.52), 0 3px 0 rgba(2,5,21,.78), 0 8px 18px rgba(0,0,0,.30), 0 0 12px var(--hud-glow);
 }
+.wallet-pill[hidden] { display: none; }
 .wallet-pill .ic { width: 14px; height: 14px; }
 .wallet-pill b { color: var(--gold); font-variant-numeric: tabular-nums; }
 .wallet-gems { border-color: rgba(180,108,255,.38); }
@@ -2417,13 +2471,14 @@ body.mode-surv .wallet-pill { min-height: 24px; padding: 3px 7px; }
   position: relative;
   width: 16px;
   height: 16px;
-  border: 1px solid rgba(255,216,77,.62);
+  border: 1px solid rgba(255,255,255,.56);
   border-radius: 50%;
-  background: rgba(255,216,77,.10);
-  color: var(--gold);
+  background: linear-gradient(180deg, #76eb55, #1cad45);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.48), 0 2px 0 #12662d, 0 0 9px rgba(73,224,91,.34);
   flex: 0 0 auto;
 }
-.wallet-gems .wallet-plus { border-color: rgba(200,167,255,.62); background: rgba(168,121,255,.12); color: #d8c2ff; }
+.wallet-gems .wallet-plus { border-color: rgba(255,255,255,.56); background: linear-gradient(180deg, #76eb55, #1cad45); color: #fff; }
 .wallet-plus::before,
 .wallet-plus::after {
   content: '';
@@ -2437,63 +2492,99 @@ body.mode-surv .wallet-pill { min-height: 24px; padding: 3px 7px; }
   transform: translate(-50%, -50%);
 }
 .wallet-plus::after { transform: translate(-50%, -50%) rotate(90deg); }
-/* Carril de sucesos: reserva ALTURA ACOTADA para 1 evento (los toasts se serializan
-   en cola, uno visible a la vez) — así el layout no salta al aparecer un toast pero
-   tampoco deja un hueco muerto grande en pantallas altas ni roba espacio al tablero
-   en pantallas cortas. Antes eran 104px fijos (hueco de ~110px sin eventos). */
+/* Centro de eventos: una sola tarjeta estable. El hueco no cambia entre mensajes,
+   así que el tablero jamás salta ni recibe overlays informativos. */
 .event-dock {
   position: relative;
-  height: clamp(38px, 5.2vh, 46px);
+  height: 58px;
   flex: none;
   display: block;
-  padding: 2px 0;
-  overflow: hidden;
+  padding: 3px 0;
+  overflow: visible;
 }
-/* En supervivencia el carril de sucesos es fijo y compacto (el cromo apilado es alto),
-   pero suficientemente alto para que el toast no se recorte verticalmente. */
-body.mode-surv .event-dock { height: 36px; }
+body.mode-surv .event-dock { height: 58px; }
 .event-dock .toasts {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  inset: 3px 0;
+  transform: none;
   z-index: var(--z-toast);
-  width: min(420px, 92vw);
-  max-height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
+  width: 100%;
+  display: grid;
+  place-items: stretch;
   pointer-events: none;
 }
 .event-dock .toast {
-  min-height: 30px;
-  padding: 5px 11px;
-  border-radius: 12px;
+  width: 100%;
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border: 2px solid color-mix(in srgb, var(--tc) 56%, rgba(115,137,224,.34));
+  border-radius: var(--hud-radius-panel);
   font-size: .8rem;
-  line-height: 1.15;
-  box-shadow: 0 6px 16px rgba(0,0,0,.42), 0 0 12px color-mix(in srgb, var(--tc) 28%, transparent), inset 0 1px 0 rgba(255,255,255,.12);
+  line-height: 1.05;
+  background:
+    radial-gradient(circle at 12% 50%, color-mix(in srgb, var(--tc) 22%, transparent), transparent 35%),
+    linear-gradient(180deg, rgba(22,34,75,.94), rgba(8,15,40,.96));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.17), inset 0 -1px 0 rgba(0,0,0,.48), 0 4px 0 color-mix(in srgb, var(--tc) 28%, #020617), 0 10px 22px rgba(0,0,0,.38), 0 0 18px color-mix(in srgb, var(--tc) 22%, transparent);
 }
-.event-dock .toast.event { padding-bottom: 8px; }
-.event-dock .toast .toast-ic { width: 20px; height: 20px; font-size: .86rem; }
+.event-dock .toast.event { padding-bottom: 9px; }
+.event-dock .toast.idle { opacity: .82; --tc: rgba(145,172,255,.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 2px 0 rgba(10,17,50,.72), 0 7px 16px rgba(0,0,0,.24); }
+.event-dock .toast .toast-ic {
+  width: 32px; height: 32px; font-size: 1rem;
+  background: radial-gradient(circle, color-mix(in srgb, var(--tc) 38%, rgba(10,16,42,.9)), rgba(6,10,28,.82));
+  border: 1px solid color-mix(in srgb, var(--tc) 70%, rgba(255,255,255,.18));
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.16), inset 0 -2px 0 rgba(0,0,0,.38), 0 3px 0 color-mix(in srgb, var(--tc) 26%, #020617), 0 0 12px color-mix(in srgb, var(--tc) 28%, transparent);
+}
+.event-dock .toast-copy { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: 8px; row-gap: 2px; }
+.event-dock .toast-kicker { color: color-mix(in srgb, var(--tc) 74%, #fff); font-size: .58rem; font-weight: 1000; letter-spacing: .08em; line-height: 1; text-transform: uppercase; white-space: nowrap; }
+.event-dock .toast-tx { color: #f5f7ff; font-size: .82rem; font-weight: 1000; line-height: 1.08; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.event-dock .toast-detail { grid-column: 1 / -1; color: rgba(225,232,255,.68); font-size: .66rem; font-weight: 760; line-height: 1.08; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.event-dock .toast .toast-bar { height: 2px; background: linear-gradient(90deg, transparent, var(--tc) 14%, var(--tc) 86%, transparent); }
+body:not(.mode-surv):not(.mode-tutorial) .event-dock .toast {
+  background: radial-gradient(circle at 12% 50%, color-mix(in srgb, var(--tc) 22%, transparent), transparent 35%), linear-gradient(180deg, #182250, #070d2b);
+}
 .score-row {
   width: 100%;
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr) 64px;
   align-items: center;
   gap: 6px;
-  min-height: 60px;
+  min-height: 64px;
+  box-sizing: border-box;
+  padding: 6px 10px 8px;
+  border: 2px solid color-mix(in srgb, var(--hud-accent) 38%, rgba(116,139,221,.32));
+  border-radius: var(--hud-radius-panel);
+  background:
+    radial-gradient(ellipse at 50% 28%, color-mix(in srgb, var(--hud-accent) 16%, transparent), transparent 54%),
+    linear-gradient(180deg, color-mix(in srgb, var(--hud-accent) 8%, #121b49), #060c29);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13), inset 0 -1px 0 rgba(0,0,0,.50), 0 4px 0 color-mix(in srgb, var(--hud-accent) 22%, #020617), 0 10px 24px rgba(0,0,0,.28), 0 0 18px var(--hud-glow);
 }
-/* Fila de puntuación compacta SOLO en Supervivencia (HUD apilado alto → hay que ganar
-   alto para el tablero fijo). Otros modos conservan la fila holgada. */
-body.mode-surv .score-row { grid-template-columns: 48px minmax(0, 1fr) 48px; min-height: 46px; }
+/* En Supervivencia la fila compartida se apoya directamente sobre el pie del
+   bloque principal: mantiene su estructura técnica, pero no dibuja otra tarjeta. */
+body.mode-surv .surv-footer > .score-row {
+  grid-template-columns: minmax(32px, 1fr) auto minmax(32px, 1fr);
+  gap: 4px;
+  min-height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
 .score-side { display: grid; justify-items: start; align-items: center; min-width: 0; }
 .score-side .power-rings { display: none; }
 body.mode-surv .score-side .power-rings { display: block; }
 body.mode-surv .score-side .gctx { display: none; }
+body.mode-surv .score-side { grid-column: 3; grid-row: 1; justify-items: end; }
+body.mode-surv .gscore { grid-column: 2; grid-row: 1; }
+body.mode-surv .score-spacer { grid-column: 1; grid-row: 1; }
 .score-row .power-rings { width: 42px; height: 42px; }
 .score-row .pr-flame { font-size: .95rem; }
+body.mode-surv .surv-footer > .score-row .power-rings { width: 32px; height: 32px; }
+body.mode-surv .surv-footer > .score-row .pr-flame { font-size: .76rem; }
 .score-spacer { display: block; }
 .gscore {
   display: flex;
@@ -2501,8 +2592,21 @@ body.mode-surv .score-side .gctx { display: none; }
   align-items: center;
   justify-content: center;
   min-width: 0;
-  padding: 0;
+  min-height: 46px;
+  padding: 3px 10px;
+  border-radius: var(--hud-radius-card);
+  background: radial-gradient(ellipse at 50% 38%, color-mix(in srgb, var(--hud-accent) 14%, rgba(25,37,92,.42)), rgba(5,10,31,.42) 74%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 0 0 1px color-mix(in srgb, var(--hud-accent) 18%, transparent);
 }
+body.mode-surv .surv-footer .gscore {
+  min-height: 32px;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+body.mode-surv .surv-footer .gscore .hud-value { font-size: clamp(1.3rem, 5.8vw, 1.7rem); }
+body.mode-surv .surv-footer .score-meta { display: none; }
 .gscore .hud-value {
   font-size: clamp(1.9rem, 8vw, 2.45rem);
   font-weight: 1000;
@@ -2533,6 +2637,12 @@ body.mode-surv .score-side .gctx { display: none; }
   white-space: nowrap;
 }
 .score-best b { color: var(--gold); font-variant-numeric: tabular-nums; }
+/* Feedback inmediato: pool fijo superpuesto al marcador (puntos/combo/monedas).
+   Solo anima transform/opacity y nunca crea nodos durante la partida. */
+.score-feedback { position: absolute; left: 50%; top: 42%; z-index: 6; width: 1px; height: 1px; overflow: visible; pointer-events: none; }
+.score-fx { position: absolute; left: 0; top: 0; width: max-content; max-width: min(72vw, 280px); opacity: 0; color: #fff; font-size: .78rem; font-weight: 1000; line-height: 1; letter-spacing: .01em; text-align: center; white-space: nowrap; text-shadow: 0 2px 4px rgba(0,0,0,.72), 0 0 12px currentColor; will-change: transform, opacity; }
+.score-fx[data-tone="coins"] { color: var(--gold); }
+.score-fx[data-tone="rank"] { font-size: .9rem; letter-spacing: .05em; text-transform: uppercase; }
 /* Héroe del marcador (HUD-X3): la métrica dominante del modo. */
 .hud-hero { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; line-height: 1; }
 .hud-hero[hidden] { display: none; }
@@ -2646,89 +2756,85 @@ body.reduced-fx .mult-bd { animation: none; }
   44% { opacity: .92; }
   100% { opacity: .72; transform: translateX(0) scaleX(1); }
 }
+body.mode-surv .mult-bd { top: auto; bottom: calc(100% + 8px); }
 .surv-bar {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   justify-content: stretch;
   align-items: stretch;
-  gap: 5px;
-  margin: 0 auto 6px;
+  gap: 6px;
+  margin: 0 auto;
   width: min(96vw, 620px);
   max-width: 100%;
-  padding: 6px 10px;
-  border-radius: 13px;
-  background: linear-gradient(180deg, rgba(10,18,44,.76), rgba(8,14,35,.82));
-  border: 1px solid rgba(255,216,77,.42);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 9px 24px rgba(0,0,0,.24);
+  padding: 6px;
+  border-radius: var(--hud-radius-panel);
+  background:
+    radial-gradient(circle at 10% 0%, rgba(134,78,255,.14), transparent 36%),
+    linear-gradient(180deg, rgba(19,31,72,.92), rgba(7,14,38,.94));
+  border: 2px solid var(--hud-border);
+  box-shadow: inset 0 1px 0 var(--hud-highlight), inset 0 -1px 0 rgba(0,0,0,.5), 0 4px 0 var(--hud-lip), 0 11px 25px rgba(0,0,0,.34), 0 0 20px var(--hud-glow);
 }
-.surv-grid { display: grid; grid-template-columns: 76px minmax(0, 1fr) 64px; align-items: center; gap: 8px; min-width: 0; width: 100%; justify-self: stretch; }
-.surv-metric { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.surv-k { color: rgba(255,255,255,.55); font-size: .58rem; font-weight: 900; line-height: 1; text-transform: uppercase; }
-.surv-lives { min-width: 0; letter-spacing: 1px; color: var(--bad); line-height: 1; }
-.surv-time-box { align-items: flex-end; }
-.surv-time { color: var(--accent-2); font-size: 1rem; font-weight: 1000; font-variant-numeric: tabular-nums; line-height: 1; }
-.surv-wave-wrap { display: grid; grid-template-rows: auto auto; align-items: center; gap: 5px; min-width: 0; width: 100%; }
-.surv-wave-row { display: flex; justify-content: center; align-items: center; gap: 7px; min-width: 0; }
-.surv-wave { color: var(--gold); font-size: .96rem; font-weight: 1000; }
-.surv-tier { height: 18px; display: inline-flex; align-items: center; color: #06122b; background: var(--gold); font-size: .62rem; font-weight: 1000; padding: 0 7px; }
-.surv-waveprog { width: 100%; height: 7px; }
-.surv-subrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; width: 100%; justify-self: stretch; color: rgba(255,255,255,.70); font-size: .62rem; font-weight: 900; line-height: 1; text-transform: uppercase; }
-.surv-next { justify-self: end; }
-.surv-build {
+.surv-grid { display: grid; grid-template-columns: 82px minmax(0, 1fr) 72px; align-items: stretch; gap: 6px; min-width: 0; width: 100%; justify-self: stretch; }
+.surv-footer {
   width: 100%;
   min-width: 0;
-  box-sizing: border-box;
-  justify-self: stretch;
-  margin: 0;
-  padding-top: 5px;
-  border-top: 1px solid rgba(145,172,255,.16);
-  justify-content: center;
-  /* Una sola línea SIEMPRE: los chips de build (mutador + bendiciones) nunca envuelven
-     a una 2.ª fila (rompería la altura reservada del HUD y desbordaría el tablero fijo);
-     si no caben, hacen scroll horizontal invisible. */
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
+  display: block;
+  padding-top: 4px;
+  border-top: 1px solid rgba(145,172,255,.14);
 }
-.surv-build::-webkit-scrollbar { display: none; }
-body.mode-surv .surv-build[hidden] {
-  display: flex !important;
-  min-height: 25px;
-  visibility: hidden;
-  pointer-events: none;
+.surv-metric,
+.surv-wave-wrap {
+  min-height: 48px;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--hud-accent) 28%, rgba(124,151,232,.24));
+  border-radius: var(--hud-radius-card);
+  background: linear-gradient(180deg, rgba(28,43,96,.74), rgba(6,12,35,.82));
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.08), inset 0 -2px 4px rgba(0,0,0,.30), 0 2px 0 rgba(3,7,25,.48);
 }
+.surv-metric { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; min-width: 0; }
+.surv-k { color: rgba(224,231,255,.58); font-size: .56rem; font-weight: 1000; line-height: 1; letter-spacing: .06em; text-transform: uppercase; }
+.surv-lives { min-width: 0; display: inline-flex; justify-content: center; gap: 2px; color: var(--bad); line-height: 1; }
+.surv-lives .ic { width: 16px; height: 16px; filter: drop-shadow(0 0 5px rgba(255,72,112,.45)); }
+.surv-time-box { align-items: center; }
+.surv-time { color: #9c77ff; font-size: 1rem; font-weight: 1000; font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 0 10px rgba(156,119,255,.34); }
+.surv-wave-wrap { display: grid; grid-template-rows: auto auto; align-items: center; gap: 6px; width: 100%; }
+.surv-wave-row { display: flex; justify-content: center; align-items: center; gap: 7px; min-width: 0; }
+.surv-wave { color: #f3f5ff; font-size: .88rem; font-weight: 1000; white-space: nowrap; }
+.surv-tier { height: 18px; display: inline-flex; align-items: center; color: #06122b; background: var(--gold); font-size: .62rem; font-weight: 1000; padding: 0 7px; }
+.surv-waveprog { width: 100%; height: 7px; background: rgba(2,7,22,.72); box-shadow: inset 0 1px 2px rgba(0,0,0,.5); }
+.surv-waveprog-fill { background: linear-gradient(90deg, #ffdc55, #ffb337); box-shadow: 0 0 8px rgba(255,202,63,.30); }
 /* ===== Sistema de jefes (JF-β, docs/BOSS_SYSTEM_MASTER_PLAN.md §5) =====
    Banner del encuentro: primera fila DENTRO de #surv-bar, encima de vidas/oleada/
    tiempo. Solo existe durante el encuentro (hidden fuera: coste cero). El acento
    por jefe llega vía --boss-accent (lo fija Bosses.startEncounter en :root). */
-.surv-boss { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 8px;
-  min-height: 34px; padding: 4px 6px; border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--boss-accent, var(--accent-2)) 62%, rgba(255,255,255,.12));
+.surv-boss { display: grid; grid-template-columns: 38px minmax(0, 1fr) minmax(76px, auto); align-items: center; gap: 9px;
+  min-height: 44px; padding: 5px 7px; border-radius: 11px;
+  border: 2px solid color-mix(in srgb, var(--boss-accent, var(--accent-2)) 62%, rgba(255,255,255,.12));
   background: linear-gradient(90deg,
     color-mix(in srgb, var(--boss-accent, var(--accent-2)) 26%, rgba(8,14,35,.9)),
     rgba(8,14,35,.78) 58%,
     color-mix(in srgb, var(--boss-accent, var(--accent-2)) 12%, rgba(8,14,35,.92)));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.11), inset 0 -2px 0 rgba(0,0,0,.34), 0 3px 0 color-mix(in srgb, var(--boss-accent, var(--accent-2)) 24%, #020617), 0 0 18px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 18%, transparent);
   animation: chipPop .24s ease both; }
 body.reduced-fx .surv-boss { animation: none; }
-.sbx-portrait { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; overflow: hidden;
+.sbx-portrait { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--boss-accent, var(--accent-2)) 70%, rgba(255,255,255,.18));
   background: linear-gradient(145deg,
     color-mix(in srgb, var(--boss-accent, var(--accent-2)) 55%, #fff 6%),
     color-mix(in srgb, var(--boss-accent, var(--accent-2)) 20%, #050814 80%));
   box-shadow: 0 0 14px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 30%, transparent);
   font-size: .95rem; line-height: 1; }
-.sbx-portrait img, .sbx-portrait span[style] { width: 17px; height: 17px; }
+.sbx-portrait img, .sbx-portrait span[style] { width: 21px; height: 21px; }
 .sbx-mid { min-width: 0; display: grid; gap: 3px; }
 .sbx-name { display: flex; align-items: baseline; gap: 6px; min-width: 0; color: #fff;
-  font-size: .78rem; font-weight: 950; line-height: 1; text-transform: uppercase;
+  font-size: .8rem; font-weight: 1000; line-height: 1; letter-spacing: .02em; text-transform: uppercase;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sbx-lvl { color: var(--gold); font-size: .66rem; font-style: normal; font-weight: 950; flex: none; }
 .sbx-hp { color: color-mix(in srgb, var(--boss-accent, var(--accent-2)) 68%, #fff);
-  font-size: .78rem; font-weight: 950; line-height: 1; letter-spacing: 2px;
+  font-size: .72rem; font-weight: 950; line-height: 1; letter-spacing: 2px;
   text-shadow: 0 0 8px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 44%, transparent); }
 .sbx-next { display: inline-flex; align-items: center; gap: 4px; justify-content: center;
-  min-width: 74px; max-width: min(38vw, 156px); min-height: 24px; padding: 3px 7px; border-radius: 999px;
+  min-width: 76px; max-width: min(38vw, 156px); min-height: 30px; padding: 4px 8px; border-radius: 9px;
   border: 1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.22);
   color: #fff; font-size: .7rem; font-weight: 950; font-variant-numeric: tabular-nums; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; }
@@ -2755,16 +2861,8 @@ body.reduced-fx .sbx-next.telegraph { animation: none; }
 /* Nivel III+ / eco: borde rojizo ESTÁTICO (sin pulso: presupuesto QP-2). */
 .surv-boss.lvl-high { box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(255,93,115,.55); }
 .surv-bar.encounter { border-color: color-mix(in srgb, var(--boss-accent, var(--gold)) 60%, rgba(255,255,255,.12));
-  min-height: 92px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 9px 24px rgba(0,0,0,.24),
     0 0 18px color-mix(in srgb, var(--boss-accent, var(--gold)) 16%, transparent); }
-/* Presupuesto móvil (§5.1): durante el encuentro el banner sustituye las filas
-   secundarias para no cambiar el alto del HUD. */
-.surv-bar.encounter .surv-subrow { display: none; }
-body.mode-surv .surv-bar.encounter .surv-build {
-  display: none !important;
-  visibility: hidden;
-}
 /* Celdas del cuerpo del jefe: ancla (bajo un icono) y variante blindada. */
 .cell.tile-boss { border-color: color-mix(in srgb, var(--boss-accent, var(--accent-2)) 86%, #fff);
   background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--boss-accent, var(--accent-2)) 40%, transparent), transparent 58%), rgba(10,18,44,.9);
@@ -2789,33 +2887,34 @@ body.mode-surv .surv-bar.encounter .surv-build {
 .cell.tile-cage::before { content: ""; position: absolute; inset: 0; z-index: 1;
   background: center / 54% no-repeat url("img/ui/lock.png");
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.65)); opacity: .86; }
-/* Boss card (§5.2): franja de presentación sobre el tablero, one-shot ~1.15s.
-   No es modal (pointer-events none); en reduced-fx no existe (el banner informa). */
-.boss-card { position: absolute; z-index: 6; left: 14px; right: 14px; top: 38%; min-height: 74px;
-  display: grid; place-items: center; padding: 12px; border-radius: 12px; pointer-events: none; opacity: 0;
-  border: 1px solid color-mix(in srgb, var(--boss-accent, var(--accent-2)) 64%, rgba(255,255,255,.16));
-  background: linear-gradient(90deg, rgba(4,7,20,.92),
-    color-mix(in srgb, var(--boss-accent, var(--accent-2)) 24%, rgba(4,7,20,.96)), rgba(4,7,20,.92));
-  box-shadow: 0 20px 48px rgba(0,0,0,.55), 0 0 26px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 22%, transparent); }
-/* Retención larga (~2s legibles): la presentación del jefe entra rápido, SE MANTIENE
-   para poder leer nombre+epíteto+nivel, y sale. Antes duraba 1.15s (entrada+salida
-   incluidas): apenas medio segundo legible — "pasaba volando" (feedback del propietario). */
-.boss-card.show { animation: bossCard 2.6s cubic-bezier(.2,.8,.25,1) both; }
-@keyframes bossCard {
-  0% { opacity: 0; transform: translateY(10px) scale(.94); }
-  7% { opacity: 1; transform: none; }
-  86% { opacity: 1; transform: none; }
-  100% { opacity: 0; transform: translateY(-6px) scale(.98); }
+.occ { gap: 8px; padding: 0 4px; }
+.context-bar {
+  min-height: 32px;
+  padding: 5px 8px 6px;
+  border: 2px solid color-mix(in srgb, var(--hud-accent) 34%, rgba(120,144,226,.26));
+  border-radius: 14px;
+  background: radial-gradient(circle at 10% 0%, var(--hud-glow), transparent 38%), linear-gradient(180deg, rgba(22,35,80,.88), rgba(5,11,32,.94));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -1px 0 rgba(0,0,0,.5), 0 3px 0 color-mix(in srgb, var(--hud-accent) 18%, #020617), 0 8px 17px rgba(0,0,0,.25);
 }
-.boss-card strong { display: block; color: #fff; font-size: 1.3rem; line-height: 1.05; text-align: center;
-  text-transform: uppercase; font-weight: 950;
-  text-shadow: 0 0 14px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 44%, transparent); }
-.boss-card span { display: block; margin-top: 5px; text-align: center; font-weight: 850; font-size: .74rem;
-  color: color-mix(in srgb, var(--boss-accent, var(--accent-2)) 58%, #fff); }
-
-.occ { gap: 7px; padding: 0 4px; }
-.occ-percent { min-width: 34px; color: var(--warn); font-size: .75rem; font-weight: 950; text-align: right; font-variant-numeric: tabular-nums; }
-.occ-bar-wrap { height: 7px; }
+.context-bar .occ-label { min-width: 78px; min-height: 22px; padding: 2px 7px; border: 1px solid color-mix(in srgb, var(--hud-accent) 28%, rgba(255,255,255,.10)); border-radius: 999px; background: color-mix(in srgb, var(--hud-accent) 10%, rgba(4,9,29,.72)); color: rgba(239,242,255,.84); font-size: .65rem; font-weight: 1000; letter-spacing: .035em; text-transform: uppercase; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+.context-bar .occ-label .icv2 { width: 16px; height: 16px; }
+.occ-percent { min-width: 34px; color: var(--warn); font-size: .75rem; font-weight: 1000; text-align: right; font-variant-numeric: tabular-nums; }
+.occ-bar-wrap { height: 9px; background: rgba(1,4,16,.86); border: 1px solid rgba(118,139,214,.18); box-shadow: inset 0 2px 4px rgba(0,0,0,.72), 0 1px 0 rgba(255,255,255,.05); }
+.context-bar[data-context="danger"] .bar-fill { background: linear-gradient(90deg, #ffc22f 0%, #ff8a38 48%, #ff3d6f 100%); }
+.bar-fill.context-boss { background: linear-gradient(90deg, var(--boss-accent, #9a68ff), #ff4e73); }
+.bar-fill.context-wave { background: linear-gradient(90deg, #ffdc55, #ff8c42); }
+.bar-fill.context-boost { background: linear-gradient(90deg, #ffe454, #ff9a37); }
+.bar-fill.context-cold { background: linear-gradient(90deg, #5bd8ff, #789dff); }
+.bar-fill.context-frenzy { background: linear-gradient(90deg, #ffb13b, #ff4f82, #9b6bff); }
+.bar-fill.context-time { background: linear-gradient(90deg, #a66dff, #ff5e9f); }
+.bar-fill.context-zen { background: linear-gradient(90deg, #60d98b, #b5ea62); }
+.context-bar[data-context="boss"] .occ-percent { color: var(--boss-accent, #b778ff); }
+.context-bar[data-context="wave"] .occ-percent,
+.context-bar[data-context="boost"] .occ-percent { color: var(--gold); }
+.context-bar[data-context="cold"] .occ-percent { color: #7adfff; }
+.context-bar[data-context="frenzy"] .occ-percent { color: #ff7db2; }
+.context-bar[data-context="time"] .occ-percent { color: #ff8fc2; }
+.context-bar[data-context="zen"] .occ-percent { color: #aeea75; }
 body.mode-surv .hint-fab { display: none; }
 #btn-hint-tool { display: none; }
 body.mode-surv #btn-hint-tool { display: grid; }
@@ -2829,10 +2928,10 @@ body.mode-surv #btn-hint-tool { display: grid; }
   min-height: 68px;
   margin: 6px auto 0;
   padding: 6px;
-  border: 1px solid rgba(145,172,255,.22);
-  border-radius: 17px;
-  background: linear-gradient(180deg, rgba(18,31,72,.76), rgba(6,11,32,.84));
-  box-shadow: 0 12px 28px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08);
+  border: 2px solid var(--hud-border);
+  border-radius: var(--hud-radius-panel);
+  background: radial-gradient(circle at 50% 0%, var(--hud-glow), transparent 48%), linear-gradient(180deg, rgba(23,37,84,.94), rgba(5,10,31,.96));
+  box-shadow: inset 0 1px 0 var(--hud-highlight), inset 0 -1px 0 rgba(0,0,0,.52), 0 4px 0 var(--hud-lip), 0 12px 28px rgba(0,0,0,.38), 0 0 18px var(--hud-glow);
 }
 body.mode-surv .booster-bar { grid-template-columns: minmax(0, 1fr) 56px; }
 .boosters {
@@ -2852,10 +2951,10 @@ body.mode-surv .booster-bar { grid-template-columns: minmax(0, 1fr) 56px; }
   align-items: center;
   gap: 3px;
   padding: 10px 4px 5px;
-  border: 1px solid rgba(151,174,255,.30);
+  border: 2px solid color-mix(in srgb, var(--tool-color, var(--hud-accent)) 40%, rgba(146,168,244,.34));
   border-radius: 14px;
   background: radial-gradient(circle at 50% 18%, rgba(255,255,255,.12), transparent 30%), linear-gradient(180deg, rgba(37,54,112,.88), rgba(13,22,58,.94));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 8px 18px rgba(0,0,0,.24);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.13), inset 0 -2px 0 rgba(0,0,0,.40), 0 3px 0 color-mix(in srgb, var(--tool-color, var(--hud-accent)) 20%, #020617), 0 8px 18px rgba(0,0,0,.28);
   color: #dbe8ff;
   font-size: 1rem;
   font: inherit;
@@ -2891,7 +2990,8 @@ body.mode-surv .booster-bar { grid-template-columns: minmax(0, 1fr) 56px; }
   border: 2px solid #111936;
   font-size: .62rem;
 }
-.booster.empty { opacity: .45; }
+.booster.empty { opacity: 1; }
+.booster.empty .b-ic, .booster.empty .b-label { opacity: .42; filter: saturate(.5); }
 .booster.grant-incoming,
 .booster.just-granted { border-color: rgba(255,216,77,.58); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 0 18px rgba(255,216,77,.20), 0 8px 18px rgba(0,0,0,.24); }
 .booster .earned-tag {
@@ -2913,6 +3013,41 @@ body.mode-surv .booster-bar { grid-template-columns: minmax(0, 1fr) 56px; }
 @keyframes count-pop { 42% { transform: translateY(-1px) scale(1.18); } }
 .hint-tool { border-color: rgba(255,216,77,.38); }
 .hint-tool .b-ic { color: var(--gold); }
+
+@media (max-width: 360px) {
+  body.mode-surv .hud-wallet { gap: 4px; }
+  body.mode-surv .wallet-pill { gap: 4px; padding-inline: 6px; font-size: .68rem; }
+  body.mode-surv .wallet-pill .ic { width: 13px; height: 13px; }
+  body.mode-surv .wallet-plus { width: 14px; height: 14px; }
+  body.mode-surv .wallet-xp-boost small { display: none; }
+  .surv-grid { grid-template-columns: 70px minmax(0, 1fr) 62px; gap: 4px; }
+  .surv-metric, .surv-wave-wrap { padding-inline: 5px; }
+  .surv-lives .ic { width: 14px; height: 14px; }
+  body.mode-surv .surv-footer > .score-row { grid-template-columns: minmax(30px, 1fr) auto minmax(30px, 1fr); }
+  body.mode-surv .surv-footer > .score-row .power-rings { width: 30px; height: 30px; }
+  .event-dock .toast { grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; padding-inline: 9px; }
+  .event-dock .toast .toast-ic { width: 29px; height: 29px; }
+  .context-bar .occ-label { min-width: 68px; font-size: .62rem; }
+}
+
+@media (max-height: 760px) {
+  body.mode-surv .event-dock { height: 50px; }
+  body.mode-surv .event-dock .toasts { inset-block: 2px; }
+  body.mode-surv .event-dock .toast { min-height: 46px; padding-block: 5px; }
+  body.mode-surv .surv-metric,
+  body.mode-surv .surv-wave-wrap { min-height: 36px; padding-block: 3px; }
+  body.mode-surv .surv-metric { gap: 3px; }
+  body.mode-surv .surv-wave-wrap { gap: 4px; }
+  body.mode-surv .surv-waveprog { height: 5px; }
+  body.mode-surv .surv-bar { gap: 4px; padding: 5px; }
+  body.mode-surv .surv-footer { padding-top: 3px; }
+  body.mode-surv .surv-footer > .score-row { min-height: 36px; }
+  body.mode-surv .surv-footer .gscore { min-height: 30px; }
+  body.mode-surv .surv-boss { min-height: 40px; padding-block: 4px; }
+  body.mode-surv .booster-bar { min-height: 62px; padding: 5px; margin-top: 4px; }
+  body.mode-surv .booster { height: 51px; padding-top: 7px; }
+  body.mode-surv .context-bar { min-height: 27px; padding-block: 3px; }
+}
 
 /* Mapa de Aventura */
 .adventure-map { display: flex; align-items: center; gap: 4px; overflow-x: auto; padding: 10px 2px; margin: 8px 0 16px; }
@@ -3240,22 +3375,6 @@ body.reduced-fx .chest-reveal { animation: none; }
 .empty-sub { color: var(--muted); font-size: .8rem; line-height: 1.3; max-width: 34ch; }
 .empty-state .empty-cta { margin-top: 3px; }
 
-/* Intro de capítulo de Aventura: overlay dentro de la pantalla de juego, una vez por capítulo */
-.chapter-intro { position: absolute; inset: 0; z-index: var(--z-overlay); display: grid; place-items: center;
-  padding: 24px; background: rgba(4,8,20,.82); animation: screen-in .25s ease both; cursor: pointer; }
-.chapter-intro .ci-card { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
-  max-width: 340px; padding: 24px 22px; border-radius: 20px;
-  background: var(--surface-mid); border: 1px solid var(--line-strong);
-  box-shadow: var(--shadow-deep), 0 0 28px color-mix(in srgb, var(--mode-accent, var(--accent-2)) 40%, transparent); }
-.chapter-intro .ci-glyph { font-size: 3.2rem; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,.5)); }
-.chapter-intro .ci-glyph .ic-inline, .chapter-intro .ci-glyph .icv2-inline { width: 1em; height: 1em; }
-.chapter-intro .ci-chapter { font-size: .8rem; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--mode-accent, var(--accent-2)); }
-.chapter-intro .ci-name { font-size: 1.5rem; font-weight: 900; }
-.chapter-intro .ci-mods { font-size: .85rem; color: var(--text); }
-.chapter-intro .ci-goal { font-size: .82rem; color: var(--muted); }
-.chapter-intro .ci-tap { margin-top: 8px; font-size: .75rem; font-weight: 700; color: var(--muted); opacity: .85; animation: ctaPulse 2s ease-in-out infinite; }
-body.reduced-fx .chapter-intro, body.reduced-fx .chapter-intro .ci-tap { animation: none; }
-
 /* Explicación de sistemas de Supervivencia (bajo el selector de dificultad) */
 .surv-sys-title { margin: 12px 2px 6px; }
 .surv-systems { list-style: none; display: flex; flex-direction: column; gap: 7px; text-align: left; }
@@ -3286,6 +3405,9 @@ body.reduced-fx .chapter-intro, body.reduced-fx .chapter-intro .ci-tap { animati
   animation: toast-in .3s ease both;
 }
 .update-banner button { flex: 0 0 auto; }
+/* Si el aviso nació en el menú, permanece disponible allí pero nunca acompaña
+   al jugador ni ocupa el espacio de contexto/toolbelt durante una partida. */
+body:not([data-screen="start"]) .update-banner { display: none !important; }
 body[data-screen="start"] .update-banner {
   bottom: max(100px, calc(90px + env(safe-area-inset-bottom)));
 }
@@ -3488,7 +3610,7 @@ body.modal-open .missions-fab {
   pointer-events: none;
   filter: blur(1px);
 }
-body.modal-open .hint-fab { transform: translateY(10px) scale(.88); }
+body.modal-open .hint-fab { transform: none; }
 body.modal-open .missions-fab { transform: translateY(-50%) scale(.88); }
 
 /* ========================================================================
@@ -5475,7 +5597,7 @@ body.reduced-fx #screen-start .daily-banner.is-popping::after { display: none; }
 /* Juego móvil: tablero un poco más presente y HUD algo más compacto. */
 @media (max-width: 719px) {
   .screen-game {
-    grid-template-rows: 2.35fr auto 1.55fr;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     --board-size: min(98vw, 70svh, 620px);
     padding-left: 8px;
     padding-right: 8px;
@@ -5510,10 +5632,6 @@ body.reduced-fx #screen-start .daily-banner.is-popping::after { display: none; }
     border-radius: 20px;
   }
   .board { gap: min(4px, 1vmin); }
-  .hint-fab {
-    right: 14px;
-    bottom: calc(12px + env(safe-area-inset-bottom));
-  }
 }
 
 @media (max-width: 380px) {
@@ -5579,7 +5697,6 @@ body.reduced-fx.surv-frenzy-active .board-wrap { animation: none !important; }
    terremoto, popup de ventaja) también lo consulta vía motionOff(). */
 @media (prefers-reduced-motion: reduce) {
   .toast, .toast.pop, .toast .toast-bar,
-  .surv-intro, .si-count.pulse, .si-count.go,
   .board-wrap.surv-quake, .board-wrap.surv-quake-settle, .board-wrap.surv-tide,
   .board-wrap.surv-meteor-board, .board-wrap.surv-lockdown, .board-wrap.surv-rain,
   .board-wrap.surv-frost, .board-wrap.surv-wave-up, .board-wrap.surv-wave-soon,

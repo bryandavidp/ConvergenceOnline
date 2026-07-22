@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.23.0" />
+  <link rel="stylesheet" href="styles.css?v=2.24.6" />
 </head>
 <body data-screen="login">
   <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
@@ -55,14 +55,6 @@
 
   <!-- Región para mensajes a lector de pantalla -->
   <p id="sr-status" class="sr-only" role="status" aria-live="polite"></p>
-
-  <!-- Tutorial interactivo (coach-marks) -->
-  <div class="coach" id="coach" hidden>
-    <span class="coach-step" id="coach-step" aria-hidden="true"></span>
-    <p class="coach-text" id="coach-text" aria-live="polite"></p>
-    <button class="btn btn-primary coach-play" id="coach-play" hidden>Jugar nivel 1</button>
-    <button class="btn btn-ghost coach-skip" id="coach-skip" data-i18n="coach_skip">Saltar tutorial</button>
-  </div>
 
   <main id="app">
 
@@ -217,10 +209,6 @@
           </div>
         </div>
 
-        <div class="event-dock">
-          <div class="toasts" id="toasts" aria-live="polite"></div>
-        </div>
-
         <!-- Contexto del modo + puntuación + ocupación: cerca del tablero -->
         <div class="gtop-context">
           <!-- Banner de objetivo (modo Aventura) -->
@@ -244,11 +232,30 @@
               </div>
               <span class="surv-metric surv-time-box"><span class="surv-k" data-i18n="hud_time">Tiempo</span><span class="surv-time" id="surv-time" data-explain="hud_time_explain">0s</span></span>
             </div>
-            <div class="surv-subrow"><span class="surv-best-wave" id="surv-best-wave"></span><span class="surv-next">Pool +1</span></div>
-            <div class="surv-build" id="surv-build" aria-label="Bendiciones activas" hidden></div>
+            <!-- Pie compacto de Supervivencia. Game.start mueve aquí el único
+                 #hud-score-row compartido, sin clonar datos ni listeners. -->
+            <div class="surv-footer" id="surv-footer"></div>
           </div>
 
-          <div class="score-row" aria-label="Puntuación y frenesí">
+          <!-- Centro único de eventos: los avisos se priorizan y serializan aquí.
+               Nunca se dibujan textos informativos sobre el tablero. -->
+          <div class="event-dock" id="hud-event-dock" aria-label="Centro de eventos">
+            <div class="toasts" id="toasts" role="status" aria-live="polite" aria-atomic="true">
+              <article class="toast hud-event-card info" id="hud-event-center" hidden>
+                <span class="toast-ic" id="hud-event-icon" aria-hidden="true"></span>
+                <span class="toast-copy">
+                  <small class="toast-kicker" id="hud-event-kicker" hidden></small>
+                  <strong class="toast-tx" id="hud-event-title"></strong>
+                  <span class="toast-detail" id="hud-event-detail" hidden></span>
+                </span>
+                <span class="toast-x" id="hud-event-count" hidden></span>
+                <span class="toast-bar" id="hud-event-progress" aria-hidden="true"></span>
+              </article>
+            </div>
+          </div>
+
+          <div class="hud-score-slot" id="hud-score-slot">
+          <div class="score-row" id="hud-score-row" aria-label="Puntuación, multiplicador y frenesí">
             <div class="score-side">
               <div class="power-rings" id="power-rings" aria-hidden="true">
                 <svg viewBox="0 0 56 56">
@@ -267,6 +274,9 @@
               </div>
             </div>
             <div class="gscore">
+              <!-- Feedback inmediato (puntos, combo, monedas): pool fijo junto al
+                   marcador; nunca ocupa el tablero ni entra en la cola de eventos. -->
+              <div class="score-feedback" id="score-feedback" aria-hidden="true"></div>
               <!-- Héroe: la métrica DOMINANTE del modo (restantes / tiempo / medalla /
                    objetivo / jefe). Solo visible en modos con objetivo-héroe; en
                    Supervivencia y Zen manda la puntuación (score-main). Ver Render.hero(). -->
@@ -282,6 +292,7 @@
             </div>
             <span class="score-spacer" aria-hidden="true"></span>
           </div>
+          </div>
 
         </div>
         <!-- Velocidad: conservada para Render.hud pero oculta (HUD minimalista) -->
@@ -291,26 +302,18 @@
       <div class="board-area">
         <div class="board-column">
           <div class="board-shell">
-            <!-- Indicador de combo (multiplicador): encima del tablero, a la derecha -->
-            <div class="combo" id="combo" hidden aria-hidden="true">
-              <svg viewBox="0 0 44 44" class="combo-ring"><circle class="combo-ring-bg" cx="22" cy="22" r="19"/><circle class="combo-ring-fill" id="combo-ring-fill" cx="22" cy="22" r="19"/></svg>
-              <span class="combo-mult" id="combo-mult">x1</span>
-              <span class="combo-count" id="combo-count">0</span>
-            </div>
-
             <div class="board-wrap">
               <div class="board" id="board" role="grid" aria-label="Tablero de juego"></div>
-              <!-- Capa de números flotantes, contenida dentro del tablero -->
+              <!-- Host técnico de la coreografía de fichas. No contiene texto HUD. -->
               <div class="popups" id="popups" aria-hidden="true"></div>
               <!-- Aura de modo Fever -->
               <div class="fever" id="fever" aria-hidden="true"></div>
-              <!-- Flash de rango de combo -->
-              <div class="rank" id="rank" aria-hidden="true"></div>
             </div>
           </div>
 
-          <!-- Ocupación: franja fina justo debajo del tablero (estados warn/danger) -->
-          <div class="occ" data-explain="hud_danger_explain">
+          <!-- Barra contextual: peligro por defecto; cede el espacio a ataques,
+               oleadas o efectos temporales cuando son más urgentes. -->
+          <div class="occ context-bar" id="hud-context-bar" data-context="danger" data-explain="hud_danger_explain">
             <span class="occ-label" id="occ-label">
               <span class="icv2" id="occ-icon" style="--icv2-url:url('img/icons-v2/8-ui/grid.svg')" aria-hidden="true"></span>
               <span class="occ-text" id="occ-text" data-i18n="hud_board_fill">Tablero</span>
@@ -320,20 +323,17 @@
               <div class="bar-fill" id="hud-progress-fill"></div>
             </div>
             <span class="occ-percent" id="occ-percent">0%</span>
+            <button class="icon-btn hint-btn hint-fab" id="btn-hint" aria-label="Pista"><img class="ic ic-inline" src="img/ui/search.png" alt=""><span class="badge" id="hint-badge">3</span></button>
           </div>
         </div>
       </div>
 
-      <!-- Intro de capítulo (Aventura): tarjeta de bioma mostrada una vez por capítulo -->
-      <div class="chapter-intro" id="chapter-intro" hidden>
-        <div class="ci-card" role="dialog" aria-label="Nuevo capítulo">
-          <span class="ci-glyph" aria-hidden="true"></span>
-          <span class="ci-chapter"></span>
-          <h2 class="ci-name"></h2>
-          <p class="ci-mods"></p>
-          <p class="ci-goal"></p>
-          <span class="ci-tap" data-i18n="ci_tap">Toca para empezar</span>
-        </div>
+      <!-- Tutorial interactivo: tercera fila del HUD, nunca superpuesta al tablero. -->
+      <div class="coach" id="coach" hidden>
+        <span class="coach-step" id="coach-step" aria-hidden="true"></span>
+        <p class="coach-text" id="coach-text" aria-live="polite"></p>
+        <button class="btn btn-primary coach-play" id="coach-play" hidden>Jugar nivel 1</button>
+        <button class="btn btn-ghost coach-skip" id="coach-skip" data-i18n="coach_skip">Saltar tutorial</button>
       </div>
 
       <!-- Barra de potenciadores (Supervivencia): toolbelt de objetos + pista integrada -->
@@ -342,8 +342,6 @@
         <button class="booster hint-tool" id="btn-hint-tool" aria-label="Pista"><span class="b-ic"><img class="ic ic-inline" src="img/ui/search.png" alt=""></span><span class="b-label">Pista</span><span class="b-count" id="hint-badge-tool">3</span></button>
       </div>
 
-      <!-- Pista: FAB en la zona natural del pulgar (acción usada en juego) -->
-      <button class="icon-btn hint-btn hint-fab" id="btn-hint" aria-label="Pista"><img class="ic ic-inline" src="img/ui/search.png" alt=""><span class="badge" id="hint-badge">3</span></button>
     </section>
 
     <!-- Selector global de eleccion (bendiciones/rutas/reliquias/continuar/Zen) -->
@@ -897,6 +895,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.23.0" defer></script>
+  <script src="game.js?v=2.24.6" defer></script>
 </body>
 </html>
