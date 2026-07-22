@@ -178,6 +178,13 @@ RS-9 (dispositivo real).
   Es el mismo patrón que ya se aplicó a `Render.popup` (WAAPI en vez de `void offsetWidth`) y a
   `cellPulse` en RS-4. Test: `tests/render-stability.test.js` (usa WAAPI, no añade `.spawn`).
   Bump 2.27.0 → 2.28.0.
+- **RS-10b (v2.29.0) · Mismo criterio en `iceHit`/`iceBreak`.** `iceHit` también se llama en bucle
+  (`placed.forEach((i) => Render.iceHit(i))`) en oleadas de escarcha/meteoro. Ahora el `void
+  offsetWidth` solo se fuerza al **re-disparar** sobre una celda que ya tiene la clase; una celda
+  nueva arranca la animación con solo añadir la clase → sin reflujo en el camino de bucle. Con esto,
+  ninguna animación disparada en bucle sobre celdas fuerza ya un reflujo síncrono por elemento
+  (los `void offsetWidth` restantes son de **un** elemento por evento —tap fallido, shake, flash,
+  fever— donde un reflujo aislado es despreciable). Bump 2.28.0 → 2.29.0.
 
 ### Siguiente ola (pendiente)
 

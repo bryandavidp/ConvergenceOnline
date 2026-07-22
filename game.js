@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.28.0';
+  const VERSION = '2.29.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -1965,14 +1965,21 @@
 
     miss(i) { const el = this.cells[i]; el.classList.remove('miss'); void el.offsetWidth; el.classList.add('miss'); },
 
+    // RS-10 (docs/RENDER_STABILITY_PLAN.md): iceHit se llama en BUCLE en oleadas de escarcha/
+    // meteoro (placed.forEach). El `void offsetWidth` (reflujo síncrono) solo hace falta para
+    // RE-disparar la animación sobre una celda que YA la tiene; una celda nueva arranca con
+    // solo añadir la clase. Condicionarlo quita el layout thrashing del camino de bucle.
     iceHit(i) {
       const el = this.cells[i];
-      el.classList.remove('ice-hit'); void el.offsetWidth; el.classList.add('ice-hit');
+      if (el.classList.contains('ice-hit')) { el.classList.remove('ice-hit'); void el.offsetWidth; }
+      el.classList.add('ice-hit');
       setTimeout(() => el.classList.remove('ice-hit'), 360);
     },
     iceBreak(i) {
       const el = this.cells[i];
-      el.classList.remove('ice-hit', 'ice-shatter'); void el.offsetWidth; el.classList.add('ice-shatter');
+      el.classList.remove('ice-hit');
+      if (el.classList.contains('ice-shatter')) { el.classList.remove('ice-shatter'); void el.offsetWidth; }
+      el.classList.add('ice-shatter');
       setTimeout(() => el.classList.remove('ice-shatter'), 520);
     },
     // RS-4 (docs/RENDER_STABILITY_PLAN.md): tope de pulsos DECORATIVOS de celda simultáneos.
