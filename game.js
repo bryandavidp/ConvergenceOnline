@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.24.6';
+  const VERSION = '2.25.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -288,13 +288,17 @@
     DEFAULT: 'cosmos',
     DEFS: {
       cosmos: { name: 'Cosmos', rarity: 'common', cost: 0, descKey: 'iconpack_cosmos_desc' },
+      'basic-redesigned': { name: 'Básico Rediseñado', nameKey: 'iconpack_basic_redesigned_name', rarity: 'common', cost: 350, descKey: 'iconpack_basic_redesigned_desc', raster: true, dir: 'basic-redesigned', thumbnail: 'thumbnail.png' },
       'gem-pattern': { name: 'Pack Gemas', nameKey: 'iconpack_gem_pattern_name', rarity: 'rare', cost: 500, descKey: 'iconpack_gem_pattern_desc', raster: true, dir: 'gem-pattern', thumbnail: 'thumbnail.png' },
       'nature-basic': { name: 'Naturaleza Básico', nameKey: 'iconpack_nature_basic_name', rarity: 'rare', cost: 800, descKey: 'iconpack_nature_basic_desc', raster: true, dir: 'nature-basic', thumbnail: 'thumbnail.png' },
       'nature-advanced': { name: 'Naturaleza Avanzado', nameKey: 'iconpack_nature_advanced_name', rarity: 'epic', cost: 1600, descKey: 'iconpack_nature_advanced_desc', raster: true, dir: 'nature-advanced', thumbnail: 'thumbnail.png' },
       neon: { name: 'Pack Neón', nameKey: 'iconpack_neon_name', rarity: 'epic', cost: 1200, descKey: 'iconpack_neon_desc', raster: true, dir: 'neon', thumbnail: 'thumbnail.png' },
+      marine: { name: 'Pack Marino', nameKey: 'iconpack_marine_name', rarity: 'epic', cost: 1200, descKey: 'iconpack_marine_desc', raster: true, dir: 'marine', thumbnail: 'thumbnail.png' },
+      magic: { name: 'Pack Mágico', nameKey: 'iconpack_magic_name', rarity: 'epic', cost: 1500, descKey: 'iconpack_magic_desc', raster: true, dir: 'magic', thumbnail: 'thumbnail.png' },
       prismatic: { name: 'Joyas Prisma', nameKey: 'iconpack_prismatic_name', rarity: 'legendary', cost: 1800, descKey: 'iconpack_prismatic_desc', raster: true, dir: 'prismatic-jewels', thumbnail: 'thumbnail.png' },
+      elemental: { name: 'Pack Elemental', nameKey: 'iconpack_elemental_name', rarity: 'legendary', cost: 2000, descKey: 'iconpack_elemental_desc', raster: true, dir: 'elemental', thumbnail: 'thumbnail.png' },
     },
-    order: ['cosmos', 'gem-pattern', 'nature-basic', 'neon', 'nature-advanced', 'prismatic'],
+    order: ['cosmos', 'basic-redesigned', 'gem-pattern', 'nature-basic', 'neon', 'marine', 'magic', 'nature-advanced', 'prismatic', 'elemental'],
     CATALOGS: {
       prismatic: [
         { file: 'violet-diamond.png', es: 'Diamante violeta', en: 'Violet diamond', color: '#c038ff' },
@@ -329,6 +333,62 @@
         { file: 'pink-heart-3.png', es: '3 corazones rosas', en: '3 pink hearts', color: '#ff3d9b' },
         { file: 'pink-heart-4.png', es: '4 corazones rosas', en: '4 pink hearts', color: '#ff3d9b' },
         { file: 'pink-heart-5.png', es: '5 corazones rosas', en: '5 pink hearts', color: '#ff3d9b' },
+      ],
+      'basic-redesigned': [
+        { file: 'red-circle.png', es: 'Círculo rojo', en: 'Red circle', color: '#ff4055' },
+        { file: 'blue-square.png', es: 'Cuadrado azul', en: 'Blue square', color: '#2878f5' },
+        { file: 'green-triangle.png', es: 'Triángulo verde', en: 'Green triangle', color: '#32d34b' },
+        { file: 'yellow-star.png', es: 'Estrella amarilla', en: 'Yellow star', color: '#ffc928' },
+        { file: 'purple-heart.png', es: 'Corazón violeta', en: 'Purple heart', color: '#9d48ed' },
+        { file: 'cyan-diamond.png', es: 'Rombo cian', en: 'Cyan diamond', color: '#19cadb' },
+        { file: 'orange-hexagon.png', es: 'Hexágono naranja', en: 'Orange hexagon', color: '#ff8a18' },
+        { file: 'pink-plus.png', es: 'Cruz rosa', en: 'Pink plus', color: '#ef4b9b' },
+        { file: 'lime-drop.png', es: 'Gota lima', en: 'Lime drop', color: '#a8df08' },
+        { file: 'white-ring.png', es: 'Anillo blanco', en: 'White ring', color: '#eef3ff' },
+        { file: 'teal-pentagon.png', es: 'Pentágono turquesa', en: 'Teal pentagon', color: '#16b8a5' },
+        { file: 'purple-crescent.png', es: 'Luna violeta', en: 'Purple crescent', color: '#6749e8' },
+        { file: 'red-sunburst.png', es: 'Destello rojo', en: 'Red sunburst', color: '#ff4055' },
+        { file: 'blue-flower.png', es: 'Flor azul', en: 'Blue flower', color: '#3179f1' },
+        { file: 'green-clover.png', es: 'Trébol verde', en: 'Green clover', color: '#32cf45' },
+        { file: 'yellow-circle.png', es: 'Círculo dorado', en: 'Golden circle', color: '#ffd020' },
+        { file: 'gold-square.png', es: 'Cuadrado dorado', en: 'Golden square', color: '#d9ab60' },
+        { file: 'silver-square-outline.png', es: 'Marco cuadrado plateado', en: 'Silver square outline', color: '#dbe4f6' },
+        { file: 'cyan-triangle-outline.png', es: 'Marco triangular cian', en: 'Cyan triangle outline', color: '#20d5de' },
+        { file: 'yellow-hexagon-outline.png', es: 'Marco hexagonal dorado', en: 'Golden hexagon outline', color: '#ffc51d' },
+      ],
+      elemental: [
+        { file: 'fire.png', es: 'Fuego', en: 'Fire', color: '#ff651d' },
+        { file: 'water.png', es: 'Agua', en: 'Water', color: '#1dafff' },
+        { file: 'earth.png', es: 'Tierra', en: 'Earth', color: '#a96a35' },
+        { file: 'wind.png', es: 'Viento', en: 'Wind', color: '#54dbe5' },
+        { file: 'lightning.png', es: 'Rayo', en: 'Lightning', color: '#ffcb28' },
+        { file: 'ice.png', es: 'Hielo', en: 'Ice', color: '#42cfff' },
+        { file: 'storm.png', es: 'Tormenta', en: 'Storm', color: '#35c77c' },
+        { file: 'lava.png', es: 'Lava', en: 'Lava', color: '#ef4a1e' },
+        { file: 'light.png', es: 'Luz', en: 'Light', color: '#ffc928' },
+        { file: 'darkness.png', es: 'Oscuridad', en: 'Darkness', color: '#7b32d8' },
+        { file: 'shield.png', es: 'Escudo elemental', en: 'Elemental shield', color: '#aa55db' },
+        { file: 'meteor.png', es: 'Meteoro', en: 'Meteor', color: '#ff5d1d' },
+      ],
+      marine: [
+        { file: 'starfish.png', es: 'Estrella de mar', en: 'Starfish', color: '#f06426' },
+        { file: 'pink-shell.png', es: 'Concha rosa', en: 'Pink shell', color: '#f5a27d' },
+        { file: 'yellow-fish.png', es: 'Pez amarillo', en: 'Yellow fish', color: '#2aaee7' },
+        { file: 'seahorse.png', es: 'Caballito de mar', en: 'Seahorse', color: '#f3a526' },
+        { file: 'red-coral.png', es: 'Coral rojo', en: 'Red coral', color: '#ef4b3f' },
+        { file: 'purple-octopus.png', es: 'Pulpo morado', en: 'Purple octopus', color: '#9a51df' },
+        { file: 'blue-jellyfish.png', es: 'Medusa azul', en: 'Blue jellyfish', color: '#29bfe8' },
+        { file: 'pearl.png', es: 'Perla nacarada', en: 'Pearl', color: '#eadcf3' },
+      ],
+      magic: [
+        { file: 'magic-crystal.png', es: 'Cristal mágico', en: 'Magic crystal', color: '#a53cf1' },
+        { file: 'blue-potion.png', es: 'Poción azul', en: 'Blue potion', color: '#1aa9ee' },
+        { file: 'enchanted-book.png', es: 'Libro encantado', en: 'Enchanted book', color: '#d89a62' },
+        { file: 'star-wand.png', es: 'Varita estelar', en: 'Star wand', color: '#ffc42a' },
+        { file: 'energy-orb.png', es: 'Orbe de energía', en: 'Energy orb', color: '#8245e5' },
+        { file: 'sacred-rune.png', es: 'Runa sagrada', en: 'Sacred rune', color: '#27bde9' },
+        { file: 'mystic-incense.png', es: 'Incienso místico', en: 'Mystic incense', color: '#9340d6' },
+        { file: 'enchanted-amulet.png', es: 'Amuleto encantado', en: 'Enchanted amulet', color: '#9d42dd' },
       ],
       'nature-basic': [
         { file: 'green-leaf.png', es: 'Hoja verde', en: 'Green leaf', color: '#65d92f' },
@@ -511,7 +571,7 @@
         col_progress_icons: 'Progreso de iconos', col_progress_avatars: 'Progreso de avatares', col_progress_borders: 'Progreso de bordes', col_progress_boards: 'Progreso de tableros', col_progress_themes: 'Progreso de temas', col_progress_achievements: 'Progreso de logros',
         col_filter_all: 'Todos', col_sort_recent: 'Más reciente', col_sort_rarity: 'Rareza', col_sort_name: 'Nombre', col_sort_owned: 'Desbloqueados', col_sort_label: 'Ordenar por',
         col_locked_slot: 'Bloqueado · por descubrir', col_empty_rarity: 'Sin objetos de esta rareza todavía.',
-        shop_iconpacks: 'Iconos de tablero', iconpack_view: 'Ver iconos', iconpack_contents: 'Iconos del pack', iconpack_cosmos_desc: 'El set clásico de figuras de Convergence.', iconpack_gem_pattern_name: 'Pack Gemas', iconpack_gem_pattern_desc: 'Veinte patrones brillantes de una a cinco gemas que añaden un reto visual mayor.', iconpack_nature_basic_name: 'Naturaleza Básico', iconpack_nature_basic_desc: 'Ocho figuras esenciales inspiradas en hojas, flores, agua y bosque.', iconpack_nature_advanced_name: 'Naturaleza Avanzado', iconpack_nature_advanced_desc: 'Diez figuras naturales poderosas con plantas, frutos, madera y cristal.', iconpack_neon_name: 'Pack Neón', iconpack_neon_desc: 'Ocho figuras clásicas reinventadas con tubos de luz y colores neón intensos.', iconpack_prismatic_name: 'Joyas Prisma', iconpack_prismatic_desc: 'Diez joyas facetadas con color intenso, reflejos de cristal y brillo neón.', iconpack_equipped_note: 'Estos iconos aparecen ahora en tu tablero.',
+        shop_iconpacks: 'Iconos de tablero', iconpack_view: 'Ver iconos', iconpack_contents: 'Iconos del pack', iconpack_cosmos_desc: 'El set clásico de figuras de Convergence.', iconpack_basic_redesigned_name: 'Básico Rediseñado', iconpack_basic_redesigned_desc: 'Veinte figuras clásicas renovadas con volumen, brillo y colores más definidos.', iconpack_gem_pattern_name: 'Pack Gemas', iconpack_gem_pattern_desc: 'Veinte patrones brillantes de una a cinco gemas que añaden un reto visual mayor.', iconpack_nature_basic_name: 'Naturaleza Básico', iconpack_nature_basic_desc: 'Ocho figuras esenciales inspiradas en hojas, flores, agua y bosque.', iconpack_nature_advanced_name: 'Naturaleza Avanzado', iconpack_nature_advanced_desc: 'Diez figuras naturales poderosas con plantas, frutos, madera y cristal.', iconpack_neon_name: 'Pack Neón', iconpack_neon_desc: 'Ocho figuras clásicas reinventadas con tubos de luz y colores neón intensos.', iconpack_marine_name: 'Pack Marino', iconpack_marine_desc: 'Ocho criaturas y tesoros que evocan las profundidades del océano.', iconpack_magic_name: 'Pack Mágico', iconpack_magic_desc: 'Ocho objetos encantados cargados de energía arcana.', iconpack_prismatic_name: 'Joyas Prisma', iconpack_prismatic_desc: 'Diez joyas facetadas con color intenso, reflejos de cristal y brillo neón.', iconpack_elemental_name: 'Pack Elemental', iconpack_elemental_desc: 'Doce fuerzas primordiales con materiales, luces y efectos espectaculares.', iconpack_equipped_note: 'Estos iconos aparecen ahora en tu tablero.',
         col_banner_icons_title: 'Más packs pronto', col_banner_icons_desc: 'Nuevos packs de iconos llegarán a la tienda. ¡Colecciónalos todos!', col_banner_icons_cta: 'Ir a tienda',
         col_banner_avatars_title: 'Avatar exclusivo', col_banner_avatars_desc: 'Participa en eventos especiales para conseguir avatares únicos por tiempo limitado.', col_banner_avatars_cta: 'Ir a eventos',
         col_banner_borders_title: 'Presume tu estilo', col_banner_borders_desc: 'Los bordes no dan ventaja en el juego. ¡Coléccionalos todos y destaca!', col_banner_borders_cta: 'Ir a tienda',
@@ -897,7 +957,7 @@
         col_progress_icons: 'Icon progress', col_progress_avatars: 'Avatar progress', col_progress_borders: 'Border progress', col_progress_boards: 'Board progress', col_progress_themes: 'Theme progress', col_progress_achievements: 'Achievement progress',
         col_filter_all: 'All', col_sort_recent: 'Most recent', col_sort_rarity: 'Rarity', col_sort_name: 'Name', col_sort_owned: 'Unlocked', col_sort_label: 'Sort by',
         col_locked_slot: 'Locked · to discover', col_empty_rarity: 'No items of this rarity yet.',
-        shop_iconpacks: 'Board icons', iconpack_view: 'View icons', iconpack_contents: 'Pack icons', iconpack_cosmos_desc: 'The classic Convergence figure set.', iconpack_gem_pattern_name: 'Gem Pattern Pack', iconpack_gem_pattern_desc: 'Twenty bright patterns from one to five gems that add a greater visual challenge.', iconpack_nature_basic_name: 'Nature Basic', iconpack_nature_basic_desc: 'Eight essential figures inspired by leaves, flowers, water and woodland.', iconpack_nature_advanced_name: 'Nature Advanced', iconpack_nature_advanced_desc: 'Ten powerful nature figures featuring plants, fruit, wood and crystal.', iconpack_neon_name: 'Neon Pack', iconpack_neon_desc: 'Eight classic figures reinvented with luminous tubes and vivid neon colors.', iconpack_prismatic_name: 'Prismatic Jewels', iconpack_prismatic_desc: 'Ten richly colored faceted jewels with crystal highlights and a neon glow.', iconpack_equipped_note: 'These icons now appear on your board.',
+        shop_iconpacks: 'Board icons', iconpack_view: 'View icons', iconpack_contents: 'Pack icons', iconpack_cosmos_desc: 'The classic Convergence figure set.', iconpack_basic_redesigned_name: 'Redesigned Basic', iconpack_basic_redesigned_desc: 'Twenty classic figures refreshed with volume, shine and more defined colors.', iconpack_gem_pattern_name: 'Gem Pattern Pack', iconpack_gem_pattern_desc: 'Twenty bright patterns from one to five gems that add a greater visual challenge.', iconpack_nature_basic_name: 'Nature Basic', iconpack_nature_basic_desc: 'Eight essential figures inspired by leaves, flowers, water and woodland.', iconpack_nature_advanced_name: 'Nature Advanced', iconpack_nature_advanced_desc: 'Ten powerful nature figures featuring plants, fruit, wood and crystal.', iconpack_neon_name: 'Neon Pack', iconpack_neon_desc: 'Eight classic figures reinvented with luminous tubes and vivid neon colors.', iconpack_marine_name: 'Marine Pack', iconpack_marine_desc: 'Eight creatures and treasures evoking the depths of the ocean.', iconpack_magic_name: 'Magic Pack', iconpack_magic_desc: 'Eight enchanted objects charged with arcane energy.', iconpack_prismatic_name: 'Prismatic Jewels', iconpack_prismatic_desc: 'Ten richly colored faceted jewels with crystal highlights and a neon glow.', iconpack_elemental_name: 'Elemental Pack', iconpack_elemental_desc: 'Twelve primal forces with spectacular materials, lights and effects.', iconpack_equipped_note: 'These icons now appear on your board.',
         col_banner_icons_title: 'More packs soon', col_banner_icons_desc: 'New icon packs are coming to the shop. Collect them all!', col_banner_icons_cta: 'Go to shop',
         col_banner_avatars_title: 'Exclusive avatar', col_banner_avatars_desc: 'Join special events to get unique avatars for a limited time.', col_banner_avatars_cta: 'Go to events',
         col_banner_borders_title: 'Show off your style', col_banner_borders_desc: 'Borders give no gameplay advantage. Collect them all and stand out!', col_banner_borders_cta: 'Go to shop',

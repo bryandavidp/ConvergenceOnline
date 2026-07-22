@@ -8,10 +8,10 @@
  *   imágenes ya descargadas sobreviven a las actualizaciones (antes se
  *   re-descargaba todo en cada bump). Súbelo a mano (v1 → v2 …) SOLO si cambias
  *   arte reutilizando la misma ruta de archivo. Ver docs/ASSET_CACHING_PLAN.md. */
-const CACHE = 'cv-cache-v2.24.6';
+const CACHE = 'cv-cache-v2.25.0';
 const ASSET_CACHE = 'cv-assets-v1';
 const ASSETS = [
-  './', './index.html', './styles.css?v=2.24.6', './game.js?v=2.24.6', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=2.25.0', './game.js?v=2.25.0', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
   './fonts/NunitoSans-Variable.ttf',
 ];
@@ -73,7 +73,26 @@ const GEM_PATTERN_PACK_ASSETS = [
   'blue-drop-1','blue-drop-2','blue-drop-3','blue-drop-4','blue-drop-5',
   'pink-heart-1','pink-heart-2','pink-heart-3','pink-heart-4','pink-heart-5','thumbnail',
 ].map((n) => './img/icon-packs/gem-pattern/' + n + '.png');
-const ICON_PACK_ASSETS = PRISMATIC_PACK_ASSETS.concat(NATURE_BASIC_PACK_ASSETS, NATURE_ADVANCED_PACK_ASSETS, NEON_PACK_ASSETS, GEM_PATTERN_PACK_ASSETS);
+const BASIC_REDESIGNED_PACK_ASSETS = [
+  'red-circle','blue-square','green-triangle','yellow-star','purple-heart',
+  'cyan-diamond','orange-hexagon','pink-plus','lime-drop','white-ring',
+  'teal-pentagon','purple-crescent','red-sunburst','blue-flower','green-clover',
+  'yellow-circle','gold-square','silver-square-outline','cyan-triangle-outline','yellow-hexagon-outline','thumbnail',
+].map((n) => './img/icon-packs/basic-redesigned/' + n + '.png');
+const ELEMENTAL_PACK_ASSETS = [
+  'fire','water','earth','wind','lightning','ice','storm','lava','light','darkness','shield','meteor','thumbnail',
+].map((n) => './img/icon-packs/elemental/' + n + '.png');
+const MARINE_PACK_ASSETS = [
+  'starfish','pink-shell','yellow-fish','seahorse','red-coral','purple-octopus','blue-jellyfish','pearl','thumbnail',
+].map((n) => './img/icon-packs/marine/' + n + '.png');
+const MAGIC_PACK_ASSETS = [
+  'magic-crystal','blue-potion','enchanted-book','star-wand','energy-orb','sacred-rune','mystic-incense','enchanted-amulet','thumbnail',
+].map((n) => './img/icon-packs/magic/' + n + '.png');
+const ICON_PACK_ASSETS = PRISMATIC_PACK_ASSETS.concat(
+  NATURE_BASIC_PACK_ASSETS, NATURE_ADVANCED_PACK_ASSETS, NEON_PACK_ASSETS,
+  GEM_PATTERN_PACK_ASSETS, BASIC_REDESIGNED_PACK_ASSETS, ELEMENTAL_PACK_ASSETS,
+  MARINE_PACK_ASSETS, MAGIC_PACK_ASSETS,
+);
 const CORE_ART = ['./img/ui-generated/chests/chest-open.png'];
 const V2_ICONS = [
   './img/icons-v2/1-game/double.svg',
