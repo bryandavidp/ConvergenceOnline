@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.19.2';
+  const VERSION = '2.23.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -179,7 +179,10 @@
       },
       zen: {
         name: 'Zen', emoji: '☯️', timed: false, penalties: false, mult: 0.8, relaxed: true, endless: true, noFever: true, accent: '#9be15d', goal: 'Sin fallos ni prisa',
-        onOverflow() { Game.softClear(0.45); }, desc: 'Ritmo relajado, sin penalizaciones ni fin de partida. Juega y respira.'
+        // HUD-Z3: llenar el tablero en Zen NO es derrota. Transición calmada (mensaje
+        // sereno + limpieza parcial), sin rojo ni alarma (el color de peligro se
+        // suprime en Render.hud para Zen).
+        onOverflow() { Toasts.show(I18n.t('zen_release'), 'info', 1400); Game.softClear(0.45); }, desc: 'Ritmo relajado, sin penalizaciones ni fin de partida. Juega y respira.'
       },
     },
     MODE_ORDER: ['tutorial', 'clasico', 'aventura', 'contrarreloj', 'supervivencia', 'zen'],
@@ -595,6 +598,8 @@
         q_missions: 'Misiones', q_daily: 'Diario', q_chests: 'Cofres', q_league: 'Liga', q_friends: 'Amigos', best_score: 'Mejor puntuación', play_word: 'Jugar',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
         hud_danger: 'Peligro', hud_board_fill: 'Tablero',
+        hud_remaining: 'restantes', hud_survive_sub: 'Sobrevive', hud_boss_sub: 'Jefe', rec_close: 'A {n} del récord', rec_new: '¡Nuevo récord!',
+        mult_breakdown_combo: 'Combo', mult_breakdown_fever: 'Fiebre', mult_breakdown_frenzy: 'Frenesí', mult_breakdown_boon: 'Bendición', mult_breakdown_sprint: 'Sprint', mult_breakdown_total: 'Total',
         hud_lives_explain: 'Tus vidas. Si llegas a 0, se acaba.',
         hud_wave_explain: 'Ronda actual. Cada oleada es más dura.',
         hud_tier_explain: 'Dificultad: sube cada varias oleadas',
@@ -612,7 +617,7 @@
         adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
         revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
         revive_gets: 'Recibes 1 vida y despeja el 60% del tablero', revive_count: 'Revivir {n}/{max}', revive_short: 'Te faltan {n} monedas',
-        coach_skip: 'Saltar tutorial',
+        coach_skip: 'Saltar tutorial', coach_step: 'Paso {n} de {t}',
         coach1: '👆 Toca la casilla VACÍA que brilla, entre dos iconos iguales, para juntarlos.',
         coach2: '✨ ¡Eso es! Si coinciden en varias direcciones, eliminas más de golpe.',
         coach3: '⚡ Ahora encadena: junta las dos parejas rápido, antes de que se agote el círculo, para subir el combo.',
@@ -710,7 +715,7 @@
         continue_no: 'Terminar partida', continue_done: '¡Continúas! Tablero despejado',
         classic_win_streak: 'Racha de victorias ×{n} · +{p}% monedas',
         zen_pace_title: 'Ritmo zen', zen_pace_slow: 'Sereno', zen_pace_slow_d: 'Figuras muy lentas, para respirar',
-        zen_pace_normal: 'Fluido', zen_pace_normal_d: 'Ritmo tranquilo estándar',
+        zen_pace_normal: 'Fluido', zen_pace_normal_d: 'Ritmo tranquilo estándar', zen_release: 'Liberando espacio…',
         pl_sub: 'Lleva hasta 2 potenciadores (opcional)', pl_play: 'Jugar', pl_play_cost: 'Jugar · {c} monedas',
         pl_skip: 'Sin potenciadores', pl_first: 'Nuevo: puedes llevar potenciadores a los niveles. Se usan tocando su botón en partida.',
         pl_max: 'Máximo {n} potenciadores', pl_no_coins: 'Monedas insuficientes',
@@ -834,6 +839,7 @@
         coins: 'monedas', gems: 'gemas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
         next: 'Próximo', new_icons: 'Nuevos iconos', chapter: 'Capítulo', next_to: 'Ir al nivel {n} →', lets_play: '¡A jugar!',
         obj_clear: 'Vacía el tablero', obj_score: 'Consigue {n} pts', obj_score_live: 'Puntos: {p}/{n}', obj_survive: 'Sobrevive {n}s', obj_boss: 'JEFE · rompe los 💎', obj_boss_live: 'JEFE · rompe los 💎 ({n})',
+        objlabel_clear: 'Limpiar', objlabel_score: 'Puntuar', objlabel_survive: 'Sobrevivir', objlabel_boss: 'Jefe',
         biomemod_nebula: '', biomemod_asteroid: '🪨 Aparecen rocas que estorban', biomemod_ice: '🧊 Casillas heladas: tócalas para romperlas', biomemod_core: '🔥 Los iconos aparecen más rápido', biomemod_void: '🕳️ Menos pistas disponibles', biomemod_crystal: '💎 Cristales con puntos extra',
         sum_level: 'Nivel alcanzado {n}', sum_time: 'Tiempo {t}', sum_wave: 'Oleada {w} · {s}s sobrevividos', sum_chapter: 'Capítulo {c} · Nivel {n}',
         level_done: '¡Nivel completado!', perfect_done: '¡Tablero perfecto!', level_sub: 'Nivel {n} superado', perfect_sub: 'Tablero limpio · bonus +{b}', level_reason_score: 'Objetivo cumplido: {n} pts', level_reason_clear: 'Tablero vaciado', level_reason_boss: 'Cristales del jefe destruidos', level_reason_survive: 'Has resistido {n}s', boss_next: '¡Jefe a la vista!',
@@ -968,6 +974,8 @@
         q_missions: 'Missions', q_daily: 'Daily', q_chests: 'Chests', q_league: 'League', q_friends: 'Friends', best_score: 'Best score', play_word: 'Play',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
         hud_danger: 'Danger', hud_board_fill: 'Board',
+        hud_remaining: 'left', hud_survive_sub: 'Survive', hud_boss_sub: 'Boss', rec_close: '{n} to record', rec_new: 'New record!',
+        mult_breakdown_combo: 'Combo', mult_breakdown_fever: 'Fever', mult_breakdown_frenzy: 'Frenzy', mult_breakdown_boon: 'Boon', mult_breakdown_sprint: 'Sprint', mult_breakdown_total: 'Total',
         hud_lives_explain: 'Your lives. Reach 0 and it is game over.',
         hud_wave_explain: 'Current round. Each wave gets harder.',
         hud_tier_explain: 'Difficulty: goes up every few waves',
@@ -985,7 +993,7 @@
         adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
         revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
         revive_gets: 'Get 1 life and clear 60% of the board', revive_count: 'Revive {n}/{max}', revive_short: 'You need {n} more coins',
-        coach_skip: 'Skip tutorial',
+        coach_skip: 'Skip tutorial', coach_step: 'Step {n} of {t}',
         coach1: '👆 Tap the glowing EMPTY cell between two matching icons to merge them.',
         coach2: "✨ That's it! If they match in several directions, you clear more at once.",
         coach3: '⚡ Now chain them: clear both pairs quickly, before the ring runs out, to build your combo.',
@@ -1083,7 +1091,7 @@
         continue_no: 'End game', continue_done: 'You continue! Board cleared',
         classic_win_streak: 'Win streak ×{n} · +{p}% coins',
         zen_pace_title: 'Zen pace', zen_pace_slow: 'Serene', zen_pace_slow_d: 'Very slow icons, room to breathe',
-        zen_pace_normal: 'Flowing', zen_pace_normal_d: 'Standard calm pace',
+        zen_pace_normal: 'Flowing', zen_pace_normal_d: 'Standard calm pace', zen_release: 'Freeing space…',
         pl_sub: 'Bring up to 2 power-ups (optional)', pl_play: 'Play', pl_play_cost: 'Play · {c} coins',
         pl_skip: 'No power-ups', pl_first: 'New: you can bring power-ups into levels. Tap their button in-game to use them.',
         pl_max: 'Max {n} power-ups', pl_no_coins: 'Not enough coins',
@@ -1207,6 +1215,7 @@
         coins: 'coins', gems: 'gems', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
         next: 'Next', new_icons: 'New icons', chapter: 'Chapter', next_to: 'Go to level {n} →', lets_play: "Let's play!",
         obj_clear: 'Clear the board', obj_score: 'Reach {n} pts', obj_score_live: 'Points: {p}/{n}', obj_survive: 'Survive {n}s', obj_boss: 'BOSS · break the 💎', obj_boss_live: 'BOSS · break the 💎 ({n})',
+        objlabel_clear: 'Clear', objlabel_score: 'Score', objlabel_survive: 'Survive', objlabel_boss: 'Boss',
         biome_nebula: 'Nebula', biome_asteroid: 'Asteroid Belt', biome_ice: 'Ice Field', biome_core: 'Burning Core', biome_void: 'The Void', biome_crystal: 'Crystalia',
         biomemod_nebula: '', biomemod_asteroid: '🪨 Rocks block the board', biomemod_ice: '🧊 Frozen cells: tap to break', biomemod_core: '🔥 Icons spawn faster', biomemod_void: '🕳️ Fewer hints available', biomemod_crystal: '💎 Crystals worth extra points',
         sum_level: 'Reached level {n}', sum_time: 'Time {t}', sum_wave: 'Wave {w} · {s}s survived', sum_chapter: 'Chapter {c} · Level {n}',
@@ -1433,6 +1442,7 @@
     displayScore: 0,        // marcador animado (count-up)
     fever: false, feverEver: false, perfectEver: false,
     recordHit: false,       // récord superado en vivo (una vez por partida)
+    recordNear: false,      // aviso "a X del récord" mostrado (una vez por partida, HUD-TA4)
     minIcons: 99,           // mínimo de iconos alcanzado en el nivel (near-miss, GM-01)
     bestPlay: null,         // jugada pico de la partida {points, combo, removed, wave, level} (GM-28)
     spawnHoldUntil: 0,      // pausa breve de spawns (entrada en Fiebre, GM-27)
@@ -2136,7 +2146,9 @@
       fill.style.width = occ.toFixed(1) + '%';
       const occPct = $('#occ-percent');
       if (occPct) occPct.textContent = Math.round(occ) + '%';
-      const dl = occ >= 85 ? 2 : occ >= 65 ? 1 : 0;
+      // HUD-Z3: en Zen el tablero lleno se despeja solo (sin derrota), así que no hay
+      // "peligro": el medidor se mantiene neutro (nada de ámbar/rojo ni sonido de alarma).
+      const dl = State.mode === 'zen' ? 0 : (occ >= 85 ? 2 : occ >= 65 ? 1 : 0);
       fill.classList.toggle('warn', dl === 1);
       fill.classList.toggle('danger', dl === 2);
       
@@ -2167,6 +2179,85 @@
       const hintDisabled = State.hintsLeft <= 0 || performance.now() < State.hintReadyAt;
       ['btn-hint', 'btn-hint-tool'].forEach((id) => { const el = $('#' + id); if (el) el.disabled = hintDisabled; });
       this.multChip();
+      this.hero();
+    },
+    // Héroe del marcador (HUD-X3): resuelve la ÚNICA métrica dominante del modo y la
+    // pinta grande en el centro, degradando la puntuación a línea secundaria. Si el
+    // modo no tiene objetivo-héroe (Supervivencia, Zen), devuelve null y manda el score.
+    hero() {
+      const wrap = $('#hud-hero');
+      const gscore = document.querySelector('.gscore');
+      if (!wrap || !gscore) return;
+      const info = this._heroInfo();
+      const on = !!info;
+      gscore.classList.toggle('hero-on', on);
+      wrap.hidden = !on;
+      if (!on) { wrap.classList.remove('urgent'); return; }
+      const valEl = $('#hud-hero-val');
+      if (valEl && valEl.textContent !== String(info.val)) valEl.textContent = info.val;
+      const subEl = $('#hud-hero-sub');
+      if (subEl) { subEl.hidden = !info.sub; if (info.sub) subEl.textContent = info.sub; }
+      const barEl = $('#hud-hero-bar');
+      if (barEl) {
+        const hasBar = info.frac != null;
+        barEl.hidden = !hasBar;
+        if (hasBar) { const f = $('#hud-hero-bar-fill'); if (f) f.style.width = (clamp(info.frac, 0, 1) * 100).toFixed(1) + '%'; }
+      }
+      wrap.classList.toggle('urgent', !!info.urgent);
+      // Acento del héroe: el color del objetivo cambia con el modo (--mode-accent).
+    },
+    // Resuelve {val, sub?, frac?, urgent?} o null. val es texto/numero ya formateado.
+    _heroInfo() {
+      const mode = State.mode;
+      if (mode === 'clasico') {
+        const n = State.iconCount;
+        return { val: n, sub: I18n.t('hud_remaining'), urgent: n > 0 && n <= 5 };
+      }
+      if (mode === 'aventura') return Adventure.heroInfo ? Adventure.heroInfo() : null;
+      if (Config.MODES[mode] && Config.MODES[mode].timed) {
+        const t = fmtTime(State.timeLeft);
+        const urgent = State.timePressure === 2;
+        if (State.isDaily) {
+          const next = ModeSignals.dailyNextMedalInfo(State.score);
+          if (next) {
+            const meds = Meta.DAILY_MEDALS, idx = meds.indexOf(next.threshold);
+            const prev = idx > 0 ? meds[idx - 1] : 0;
+            const frac = (State.score - prev) / (next.threshold - prev);
+            return { val: t, sub: next.icon + ' ' + fmtNum(State.score) + ' / ' + fmtNum(next.threshold), frac, urgent };
+          }
+          return { val: t, sub: ModeSignals.dailyMedalIcon('gold') + ' ' + I18n.t('daily_medal_max'), urgent };
+        }
+        return { val: t, urgent };
+      }
+      return null; // Supervivencia y Zen: manda la puntuación (score-main)
+    },
+    // Desglose del multiplicador (HUD-S4): responde "¿de dónde sale mi ×3,4?".
+    // Información de CONSULTA (no de combate): se muestra al tocar el marcador.
+    _multFmt(f) { return '×' + (f % 1 === 0 ? f : +f.toFixed(2)); },
+    multBreakdown() {
+      const parts = [];
+      const add = (key, f) => { if (f > 1.001) parts.push(I18n.t('mult_breakdown_' + key) + ' ' + this._multFmt(f)); };
+      add('combo', State.comboMult);
+      add('fever', Game.feverBoost());
+      add('frenzy', State.tempMult || 1);
+      add('sprint', Game.sprintMult());
+      if (State.mode === 'supervivencia') add('boon', Survival.scoreMult());
+      const total = State.comboMult * Game.feverBoost() * (State.tempMult || 1) * Game.sprintMult()
+        * (State.mode === 'supervivencia' ? Survival.scoreMult() : 1);
+      return { parts, total };
+    },
+    _mbdT: 0,
+    toggleMultBreakdown() {
+      const el = $('#mult-bd'); if (!el) return;
+      if (State.mode === 'zen' || State.mode === 'tutorial') return; // HUD minimalista
+      if (!el.hidden) { el.hidden = true; return; }
+      const { parts, total } = this.multBreakdown();
+      if (total <= 1.001 || !parts.length) return; // nada relevante que desglosar
+      el.innerHTML = parts.map((p) => `<span>${esc(p)}</span>`).join('')
+        + `<span class="mbd-total">${esc(I18n.t('mult_breakdown_total') + ' ' + this._multFmt(total))}</span>`;
+      el.hidden = false;
+      clearTimeout(this._mbdT);
+      this._mbdT = setTimeout(() => { if (el) el.hidden = true; }, 4200);
     },
     // Chip del multiplicador TOTAL (combo × fiebre × temporal): un único número
     // legible junto al score que responde "¿por cuánto vale ahora cada jugada?" (GM-16).
@@ -5160,6 +5251,9 @@
       if (this.objective === 'score') this.target = this.scoreTarget(level);
       if (this.objective === 'survive') this.target = 18 + chapter * 4;
       if (this.objective === 'boss') this._placeCrystals(2 + Math.min(chapter, 4));
+      // Referencia de cristales para la barra de progreso del héroe (HUD-A3): cuenta
+      // tras colocar (los cristales pueden regenerarse, así que la barra clampa).
+      this.bossCrystals0 = this.objective === 'boss' ? Math.max(1, this.crystalsLeft()) : 0;
       // Efectos de run elegidos por el jugador (GM-06/07), tras los del bioma.
       if (this.route) this._applyRoute();
       if (this.hasRelic('combo')) State.comboWindow += 400;
@@ -5203,6 +5297,28 @@
       if (this.objective === 'survive') return I18n.t('obj_survive').replace('{n}', this.target);
       return I18n.t('obj_clear');
     },
+    // Etiqueta CORTA y estática del objetivo, para el banner (identidad). El progreso
+    // VIVO va al héroe del marcador (heroInfo), evitando duplicar el dato (HUD-A1).
+    objectiveLabel() { return I18n.t('objlabel_' + this.objective); },
+    // Métrica dominante del nivel para Render.hero() (HUD-A). El slot es el mismo en
+    // todas las misiones; solo cambia el contenido (limpiar/puntuar/sobrevivir/jefe).
+    heroInfo() {
+      const obj = this.objective;
+      if (obj === 'score') {
+        const p = Math.min(this.target, Math.max(0, State.score - this.levelScore0));
+        return { val: fmtNum(p) + ' / ' + fmtNum(this.target), frac: this.target ? p / this.target : 0 };
+      }
+      if (obj === 'survive') {
+        const left = Math.max(0, this.target - (State.elapsed - this.levelStart));
+        return { val: fmtTime(left), sub: I18n.t('hud_survive_sub'), frac: this.target ? 1 - left / this.target : 0, urgent: left <= 5 };
+      }
+      if (obj === 'boss') {
+        const n = this.crystalsLeft(), tot = this.bossCrystals0 || n || 1;
+        return { val: '◆ ' + n, sub: I18n.t('hud_boss_sub'), frac: 1 - Math.min(1, n / tot), urgent: n > 0 && n <= 2 };
+      }
+      const n = State.iconCount; // 'clear'
+      return { val: n, sub: I18n.t('hud_remaining'), urgent: n > 0 && n <= 5 };
+    },
     completionReason() {
       if (this.objective === 'score') return I18n.t('level_reason_score').replace('{n}', this.target);
       if (this.objective === 'survive') return I18n.t('level_reason_survive').replace('{n}', this.target);
@@ -5235,9 +5351,11 @@
         el.style.borderColor = biome.accent;
         bossHtml = `<span class="obj-boss-face"><b class="obf-name">${esc(I18n.t('advdex_' + biome.id))}</b><i class="obf-epithet">${esc(I18n.t('advdex_' + biome.id + '_e'))}</i><span class="obf-hp" id="adv-boss-hp" aria-hidden="true"></span><span class="obf-next" id="adv-boss-next" aria-hidden="true"></span></span>`;
       }
-      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span>${bossHtml}<span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>${relicsHtml}${ModeSignals.noteHtml('aventura')}`;
+      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span>${bossHtml}<span class="obj-goal" id="obj-goal">${this.objectiveLabel()}</span>${relicsHtml}${ModeSignals.noteHtml('aventura')}`;
     },
-    refreshGoal() { const g = $('#obj-goal'); if (g) g.textContent = this.objectiveText(); },
+    // El progreso vivo lo pinta el héroe (Render.hero); el banner solo lleva la
+    // etiqueta estática, así que refreshGoal ya no reescribe texto por frame.
+    refreshGoal() { const g = $('#obj-goal'); if (g && g.textContent !== this.objectiveLabel()) g.textContent = this.objectiveLabel(); },
     // Intro de capítulo: una tarjeta de bioma (nombre, modificadores, objetivo) mostrada
     // una sola vez la primera vez que se entra en un capítulo. Congela el juego hasta
     // descartarla (tap). Se salta si ya se vio o si no es el primer nivel del capítulo.
@@ -6451,7 +6569,11 @@
       if ((this.scoreBoost || 0) > 0) chips.push(`<span class="sb-chip sb-rare" aria-label="${esc(I18n.t('boon_score_boost'))}">📈+${Math.round(this.scoreBoost * 100)}%</span>`);
       if (this.magnetMoves > 0) chips.push(`<span class="sb-chip sb-rare" aria-label="${esc(I18n.t('boon_magnet'))}">🧲×${this.magnetMoves}</span>`);
       if (this.slowWaves > 0) chips.push(`<span class="sb-chip" aria-label="${esc(I18n.t('boon_slow'))}">🐌×${this.slowWaves}</span>`);
-      const bsig = chips.join('');
+      // HUD-S5: como máximo 3 efectos visibles; el resto se agrupa en "+N" para no
+      // saturar la subfila (el detalle completo se consulta al pausar).
+      const bsig = chips.length > 3
+        ? chips.slice(0, 3).join('') + `<span class="sb-chip sb-more" aria-label="+${chips.length - 3}">+${chips.length - 3}</span>`
+        : chips.join('');
       if (r.build !== bsig) {
         r.build = bsig;
         const bd = $('#surv-build');
@@ -7951,6 +8073,10 @@
       this.active = true; this.step = 0; this.targets = []; this.tIdx = 0;
       Loop.stop(); Music.stop(true);
       State.mode = 'tutorial'; State.diff = 'facil'; State.level = 1;
+      // HUD-T1: el tutorial debe tener el HUD más limpio del juego. `mode-tutorial`
+      // oculta wallet/score/objetivo/combo/ocupación/toolbelt vía CSS (styles.css),
+      // dejando solo pausa + tablero + coach.
+      ModeSignals.apply('tutorial');
       State.comboWindow = Config.DIFFICULTY.facil.comboWindow; // para que el paso 3 encadene combo
       State.score = 0; State.displayScore = 0; State.combo = 0; State.comboMult = 1; State.comboAt = 0;
       State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.elapsed = 0; State.timeLeft = 0;
@@ -7975,6 +8101,7 @@
       State.displayScore = State.score;
       Render.syncAll(); Render.combo(); Render.hud();
       Render.hint([this.targets[0]], true);
+      { const st = $('#coach-step'); if (st) st.textContent = I18n.t('coach_step').replace('{n}', this.step + 1).replace('{t}', this.STEPS.length); }
       $('#coach-text').textContent = I18n.t(s.textKey);
     },
     notify() {
@@ -8000,6 +8127,7 @@
       State.status = 'idle'; Game.ended = true;
       Storage.tutorialDone = true;
       Sound.success();
+      { const st = $('#coach-step'); if (st) st.textContent = ''; }
       { const ct = $('#coach-text'); if (ct) ct.textContent = I18n.t('coach_done'); }
       { const pl = $('#coach-play'); if (pl) { pl.hidden = false; pl.textContent = I18n.t('coach_play1'); } }
       { const sk = $('#coach-skip'); if (sk) sk.textContent = I18n.t('coach_menu'); }
@@ -8016,8 +8144,11 @@
       this.active = false;
       this._clearHint();
       { const c = $('#coach'); if (c) c.hidden = true; }
+      { const st = $('#coach-step'); if (st) st.textContent = ''; }
       { const pl = $('#coach-play'); if (pl) pl.hidden = true; }
       { const sk = $('#coach-skip'); if (sk) sk.textContent = I18n.t('coach_skip'); }
+      // HUD-T1: al volver al menú, retirar el HUD-limpio del tutorial.
+      ModeSignals.clear();
       State.status = 'idle'; Game.ended = true; Storage.tutorialDone = true;
       showHome(Storage.lastMode || 'clasico');
     },
@@ -8259,7 +8390,7 @@
       State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.coinsRun = 0; State.tempMult = 1;
       State.xpMultiplier = Meta.xpBoost().multiplier;
       State.emptyBonusClaimed = false; State.emptyBoards = 0; State.lastActionCell = null;
-      State.fever = false; State.feverEver = false; State.perfectEver = false; State.recordHit = false;
+      State.fever = false; State.feverEver = false; State.perfectEver = false; State.recordHit = false; State.recordNear = false;
       State.timePressure = 0;
       State.minIcons = 99; State.bestPlay = null; State.spawnHoldUntil = 0;
       State.mutFast = false; State.dailyMut = null; State.ghostSamples = []; // mutador diario (GM-15) · ghost (GM-12)
@@ -8587,6 +8718,14 @@
       if (!State.recordHit && Storage.best > 0 && State.score > Storage.best) {
         State.recordHit = true; Render.flash(); Sound.record(); Haptics.record(); FX.celebrate(i);
         Toasts.show(I18n.t('new_record'), 'good', 1600, 'trophy');
+      }
+      // Récord CERCANO (HUD-TA4): aviso contextual al alcanzar el 85% del récord, una
+      // sola vez y solo en modos de puntuación. El récord no vive en el HUD permanente
+      // (se ocultó con .score-meta); aparece solo cuando puede cambiar tu decisión.
+      else if (!State.recordNear && Config.MODES[State.mode].scoreAttack
+          && Storage.best > 0 && State.score >= Storage.best * 0.85 && State.score < Storage.best) {
+        State.recordNear = true;
+        Toasts.show(I18n.t('rec_close').replace('{n}', fmtNum(Storage.best - State.score)), 'warn', 1700, 'trophy');
       }
 
       Render.hudSoon();
@@ -13201,6 +13340,8 @@
     on('btn-hint', 'click', () => Game.hint());
     on('btn-hint-tool', 'click', () => Game.hint());
     on('btn-pause', 'click', () => Game.pause());
+    // HUD-S4: tocar el marcador desglosa el multiplicador (combo/fiebre/frenesí/…).
+    { const gs = document.querySelector('.gscore'); if (gs) gs.addEventListener('click', () => Render.toggleMultBreakdown()); }
     { const br = $('#btn-restart'); if (br) br.addEventListener('click', () => Game.restart()); }
     { // Salir en plena partida: doble toque para evitar abandonos accidentales.
       let quitArm = 0;

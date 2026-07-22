@@ -987,8 +987,7 @@ body.mode-surv .gtop-context { gap: 4px; padding-top: 4px; }
 .g-chip b { color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }
 .lvl-chip b { color: var(--level); }
 .rec-chip b { color: var(--gold); }
-.time-chip { display: none; }                       /* visible solo en Contrarreloj */
-body.mode-timed .time-chip { display: inline-flex; }
+.time-chip { display: none; }                       /* el tiempo vive en el héroe (HUD-TA1) */
 .time-chip b { color: var(--time); font-size: .95rem; }
 .time-chip.urgent { border-color: color-mix(in srgb, var(--bad) 70%, var(--line)); box-shadow: 0 0 18px rgba(255,93,115,.24); }
 body.time-pressure .time-chip b { color: var(--warn); }
@@ -2017,10 +2016,27 @@ body.reduced-fx .pick-opt.rarity-epic::after { display: none; }
 .obj-relics { margin-left: 8px; letter-spacing: 2px; }
 /* Racha de victorias de Clásico (GM-05) */
 .win-streak-line { margin: 4px 0 2px; font-size: .8rem; font-weight: 800; color: var(--gold); }
-/* Zen (GM-24): santuario sin evaluación — sin combo, multiplicador ni score chillón */
+/* Tutorial (HUD-T): el HUD más limpio del juego. Nada de wallet/objetivo/score/
+   combo/ocupación/toolbelt compite con la enseñanza; solo pausa + tablero + coach.
+   El tablero sigue enseñando (halo de casilla, líneas de visión). */
+body.mode-tutorial .hud-wallet,
+body.mode-tutorial .event-dock,
+body.mode-tutorial .obj-banner,
+body.mode-tutorial .score-row,
+body.mode-tutorial #combo,
+body.mode-tutorial .occ,
+body.mode-tutorial .booster-bar,
+body.mode-tutorial .hint-fab { display: none !important; }
+body.mode-tutorial .gtop-context { gap: 0; padding: 0; min-height: 0; }
+/* Zen (GM-24 · HUD-Z): santuario sin evaluación — casi sin HUD. Sin combo, sin
+   multiplicador, sin economía y sin medidor de ocupación (llenar el tablero no es
+   derrota: se despeja solo con un mensaje sereno). Quedan tablero + pista + pausa,
+   y el score atenuado como recompensa ambiental discreta. */
 body.mode-zen .combo { display: none !important; }
 body.mode-zen .mult-chip { visibility: hidden; }
 body.mode-zen .gscore .hud-value { opacity: .55; text-shadow: none; }
+body.mode-zen .hud-wallet,
+body.mode-zen .occ { display: none; }
 /* Clásico (GM-03): la barra de potenciadores sin los anillos de Supervivencia */
 body.mode-clasico #power-rings { display: none; }
 /* Ghost personal (GM-12): delta contra tu mejor intento */
@@ -2156,6 +2172,9 @@ body.reduced-fx .converge-layer { display: none; }
 
 /* Tutorial interactivo (coach-marks) */
 .coach { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 70; width: min(440px, 92vw); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+/* HUD-T3: contador de paso ("Paso 2 de 3"), la única métrica del tutorial. */
+.coach-step { pointer-events: none; font-size: .74rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-2); background: rgba(10,16,40,.82); border: 1px solid color-mix(in srgb, var(--accent-2) 46%, transparent); border-radius: 999px; padding: 4px 12px; }
+.coach-step:empty { display: none; }
 .coach-text { pointer-events: none; background: rgba(10,16,40,.96); color: var(--text); border: 1px solid var(--accent-2); border-radius: 14px; padding: 12px 16px; font-weight: 600; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: coach-in .3s ease both; }
 .coach-skip { pointer-events: auto; padding: 8px 16px; }
 @keyframes coach-in { from { opacity: 0; transform: translateY(10px); } }
@@ -2217,6 +2236,8 @@ body.mode-zen .obj-banner { border-color: rgba(155,225,93,.34); background: line
 body.mode-surv .lvl-chip { display: none; }
 /* Contrarreloj (score attack): sin niveles → se oculta el chip de Nivel; manda Tiempo + Puntuación. */
 body.mode-timed .lvl-chip { display: none; }
+/* Zen (HUD-Z1): modo infinito sin niveles → el chip de Nivel es ruido. */
+body.mode-zen .lvl-chip { display: none; }
 .surv-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 auto 6px; width: min(96vw, 620px); max-width: 100%; background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; font-size: .9rem; font-weight: 700; }
 .surv-lives { letter-spacing: 1px; min-width: 60px; }
 .surv-wave-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1 1 auto; min-width: 0; }
@@ -2253,6 +2274,7 @@ body.reduced-fx .sb-chip { animation: none; }
 .sb-chip.sb-mut { cursor: pointer; }
 .sb-chip.sb-rare { border-color: rgba(180,108,255,.5); color: #d9c2ff; }
 .sb-chip.sb-epic { border-color: rgba(255,216,77,.6); color: var(--gold); background: rgba(255,216,77,.1); }
+.sb-chip.sb-more { color: rgba(255,255,255,.6); border-style: dashed; }
 .surv-bar.soon .surv-wave { color: var(--bad); }
 .surv-bar.soon .surv-waveprog-fill { background: linear-gradient(90deg, var(--bad), var(--gold)); }
 .surv-time { color: var(--accent-2); font-variant-numeric: tabular-nums; }
@@ -2511,6 +2533,36 @@ body.mode-surv .score-side .gctx { display: none; }
   white-space: nowrap;
 }
 .score-best b { color: var(--gold); font-variant-numeric: tabular-nums; }
+/* Héroe del marcador (HUD-X3): la métrica dominante del modo. */
+.hud-hero { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; line-height: 1; }
+.hud-hero[hidden] { display: none; }
+.hero-val { font-size: clamp(1.85rem, 8.2vw, 2.45rem); font-weight: 1000; color: var(--mode-accent, var(--score)); font-variant-numeric: tabular-nums; line-height: .95; white-space: nowrap;
+  text-shadow: 0 0 16px color-mix(in srgb, var(--mode-accent, var(--score)) 42%, transparent); }
+.hero-sub { max-width: 92vw; font-size: .66rem; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; color: rgba(255,255,255,.72); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hero-sub[hidden] { display: none; }
+.hero-bar { width: min(210px, 62vw); height: 5px; margin-top: 2px; border-radius: 999px; background: rgba(255,255,255,.14); overflow: hidden; }
+.hero-bar[hidden] { display: none; }
+.hero-bar-fill { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--mode-accent, var(--accent-2)); transition: width .3s ease; }
+.hud-hero.urgent .hero-val { color: var(--bad); animation: hero-pulse .8s ease-in-out infinite; }
+@keyframes hero-pulse { 50% { transform: scale(1.06); } }
+body.reduced-fx .hud-hero.urgent .hero-val { animation: none; }
+/* Modo objetivo-héroe: la puntuación se degrada a línea secundaria pequeña y el
+   "Mejor" sale del HUD permanente (el récord pasa a ser contextual, HUD-TA4). */
+.gscore.hero-on .hud-value { font-size: 1rem; font-weight: 900; text-shadow: none; color: rgba(255,255,255,.82); }
+.gscore.hero-on .score-main { margin-top: 3px; }
+.gscore.hero-on .score-meta { display: none; }
+/* Desglose del multiplicador (HUD-S4): popover de consulta al tocar el marcador. */
+.gscore { position: relative; cursor: pointer; }
+.mult-bd { position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 40;
+  display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; min-width: 132px;
+  background: rgba(9,14,34,.97); border: 1px solid color-mix(in srgb, var(--mode-accent, var(--accent-2)) 42%, transparent);
+  border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,.5);
+  font-size: .74rem; font-weight: 800; color: rgba(255,255,255,.82); font-variant-numeric: tabular-nums; white-space: nowrap;
+  animation: mbd-in .18s ease both; }
+.mult-bd[hidden] { display: none; }
+.mult-bd .mbd-total { margin-top: 3px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,.14); color: var(--mode-accent, var(--gold)); font-weight: 950; }
+@keyframes mbd-in { from { opacity: 0; transform: translate(-50%, -4px); } }
+body.reduced-fx .mult-bd { animation: none; }
 .mult-chip {
   --mult-a: rgba(234,240,255,.62);
   --mult-b: rgba(24,230,230,.42);

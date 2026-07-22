@@ -58,8 +58,13 @@ test('pausa: versión de shell sincronizada', () => {
   const js = read('game.js');
   const sw = read('sw.js');
 
-  assert.match(js, /const VERSION = '2\.19\.2'/);
-  assert.match(html, /styles\.css\?v=2\.19\.2/);
-  assert.match(html, /game\.js\?v=2\.19\.2/);
-  assert.match(sw, /cv-cache-v2\.19\.2/);
+  // Versión-agnóstico: se toma VERSION de game.js como fuente de verdad y se exige
+  // que CACHE (sw.js) y los ?v= de index.html coincidan. Así el triple bump se
+  // valida en cada release sin fijar un número que rompa el test tras cada versión.
+  const m = js.match(/const VERSION = '([\d.]+)'/);
+  assert.ok(m, 'game.js debe declarar const VERSION');
+  const v = m[1].replace(/\./g, '\\.');
+  assert.match(html, new RegExp(`styles\\.css\\?v=${v}`));
+  assert.match(html, new RegExp(`game\\.js\\?v=${v}`));
+  assert.match(sw, new RegExp(`cv-cache-v${v}`));
 });

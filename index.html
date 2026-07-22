@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.19.2" />
+  <link rel="stylesheet" href="styles.css?v=2.23.0" />
 </head>
 <body data-screen="login">
   <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
@@ -58,6 +58,7 @@
 
   <!-- Tutorial interactivo (coach-marks) -->
   <div class="coach" id="coach" hidden>
+    <span class="coach-step" id="coach-step" aria-hidden="true"></span>
     <p class="coach-text" id="coach-text" aria-live="polite"></p>
     <button class="btn btn-primary coach-play" id="coach-play" hidden>Jugar nivel 1</button>
     <button class="btn btn-ghost coach-skip" id="coach-skip" data-i18n="coach_skip">Saltar tutorial</button>
@@ -266,8 +267,18 @@
               </div>
             </div>
             <div class="gscore">
+              <!-- Héroe: la métrica DOMINANTE del modo (restantes / tiempo / medalla /
+                   objetivo / jefe). Solo visible en modos con objetivo-héroe; en
+                   Supervivencia y Zen manda la puntuación (score-main). Ver Render.hero(). -->
+              <div class="hud-hero" id="hud-hero" hidden>
+                <span class="hero-val" id="hud-hero-val"></span>
+                <span class="hero-sub" id="hud-hero-sub" hidden></span>
+                <div class="hero-bar" id="hud-hero-bar" hidden aria-hidden="true"><span class="hero-bar-fill" id="hud-hero-bar-fill"></span></div>
+              </div>
               <span class="score-main"><span class="hud-value" id="hud-score">0</span><span class="mult-chip" id="hud-mult" aria-hidden="true">×1</span></span>
               <span class="score-meta"><span class="score-best" id="hud-best-wrap"><span data-i18n="best_score">Mejor puntuación</span> <b id="hud-best">0</b></span></span>
+              <!-- Desglose del multiplicador (HUD-S4): aparece al tocar el marcador. -->
+              <div class="mult-bd" id="mult-bd" hidden aria-live="polite"></div>
             </div>
             <span class="score-spacer" aria-hidden="true"></span>
           </div>
@@ -886,6 +897,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.19.2" defer></script>
+  <script src="game.js?v=2.23.0" defer></script>
 </body>
 </html>
