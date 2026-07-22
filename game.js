@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.21.0';
+  const VERSION = '2.22.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -839,6 +839,7 @@
         coins: 'monedas', gems: 'gemas', daily_done: '¡Misión diaria completada!', weekly_done: '¡Reto semanal completado!', lvl: 'Nivel',
         next: 'Próximo', new_icons: 'Nuevos iconos', chapter: 'Capítulo', next_to: 'Ir al nivel {n} →', lets_play: '¡A jugar!',
         obj_clear: 'Vacía el tablero', obj_score: 'Consigue {n} pts', obj_score_live: 'Puntos: {p}/{n}', obj_survive: 'Sobrevive {n}s', obj_boss: 'JEFE · rompe los 💎', obj_boss_live: 'JEFE · rompe los 💎 ({n})',
+        objlabel_clear: 'Limpiar', objlabel_score: 'Puntuar', objlabel_survive: 'Sobrevivir', objlabel_boss: 'Jefe',
         biomemod_nebula: '', biomemod_asteroid: '🪨 Aparecen rocas que estorban', biomemod_ice: '🧊 Casillas heladas: tócalas para romperlas', biomemod_core: '🔥 Los iconos aparecen más rápido', biomemod_void: '🕳️ Menos pistas disponibles', biomemod_crystal: '💎 Cristales con puntos extra',
         sum_level: 'Nivel alcanzado {n}', sum_time: 'Tiempo {t}', sum_wave: 'Oleada {w} · {s}s sobrevividos', sum_chapter: 'Capítulo {c} · Nivel {n}',
         level_done: '¡Nivel completado!', perfect_done: '¡Tablero perfecto!', level_sub: 'Nivel {n} superado', perfect_sub: 'Tablero limpio · bonus +{b}', level_reason_score: 'Objetivo cumplido: {n} pts', level_reason_clear: 'Tablero vaciado', level_reason_boss: 'Cristales del jefe destruidos', level_reason_survive: 'Has resistido {n}s', boss_next: '¡Jefe a la vista!',
@@ -1214,6 +1215,7 @@
         coins: 'coins', gems: 'gems', daily_done: 'Daily mission complete!', weekly_done: 'Weekly challenge complete!', lvl: 'Level',
         next: 'Next', new_icons: 'New icons', chapter: 'Chapter', next_to: 'Go to level {n} →', lets_play: "Let's play!",
         obj_clear: 'Clear the board', obj_score: 'Reach {n} pts', obj_score_live: 'Points: {p}/{n}', obj_survive: 'Survive {n}s', obj_boss: 'BOSS · break the 💎', obj_boss_live: 'BOSS · break the 💎 ({n})',
+        objlabel_clear: 'Clear', objlabel_score: 'Score', objlabel_survive: 'Survive', objlabel_boss: 'Boss',
         biome_nebula: 'Nebula', biome_asteroid: 'Asteroid Belt', biome_ice: 'Ice Field', biome_core: 'Burning Core', biome_void: 'The Void', biome_crystal: 'Crystalia',
         biomemod_nebula: '', biomemod_asteroid: '🪨 Rocks block the board', biomemod_ice: '🧊 Frozen cells: tap to break', biomemod_core: '🔥 Icons spawn faster', biomemod_void: '🕳️ Fewer hints available', biomemod_crystal: '💎 Crystals worth extra points',
         sum_level: 'Reached level {n}', sum_time: 'Time {t}', sum_wave: 'Wave {w} · {s}s survived', sum_chapter: 'Chapter {c} · Level {n}',
@@ -5221,6 +5223,9 @@
       if (this.objective === 'score') this.target = this.scoreTarget(level);
       if (this.objective === 'survive') this.target = 18 + chapter * 4;
       if (this.objective === 'boss') this._placeCrystals(2 + Math.min(chapter, 4));
+      // Referencia de cristales para la barra de progreso del héroe (HUD-A3): cuenta
+      // tras colocar (los cristales pueden regenerarse, así que la barra clampa).
+      this.bossCrystals0 = this.objective === 'boss' ? Math.max(1, this.crystalsLeft()) : 0;
       // Efectos de run elegidos por el jugador (GM-06/07), tras los del bioma.
       if (this.route) this._applyRoute();
       if (this.hasRelic('combo')) State.comboWindow += 400;
@@ -5264,6 +5269,28 @@
       if (this.objective === 'survive') return I18n.t('obj_survive').replace('{n}', this.target);
       return I18n.t('obj_clear');
     },
+    // Etiqueta CORTA y estática del objetivo, para el banner (identidad). El progreso
+    // VIVO va al héroe del marcador (heroInfo), evitando duplicar el dato (HUD-A1).
+    objectiveLabel() { return I18n.t('objlabel_' + this.objective); },
+    // Métrica dominante del nivel para Render.hero() (HUD-A). El slot es el mismo en
+    // todas las misiones; solo cambia el contenido (limpiar/puntuar/sobrevivir/jefe).
+    heroInfo() {
+      const obj = this.objective;
+      if (obj === 'score') {
+        const p = Math.min(this.target, Math.max(0, State.score - this.levelScore0));
+        return { val: fmtNum(p) + ' / ' + fmtNum(this.target), frac: this.target ? p / this.target : 0 };
+      }
+      if (obj === 'survive') {
+        const left = Math.max(0, this.target - (State.elapsed - this.levelStart));
+        return { val: fmtTime(left), sub: I18n.t('hud_survive_sub'), frac: this.target ? 1 - left / this.target : 0, urgent: left <= 5 };
+      }
+      if (obj === 'boss') {
+        const n = this.crystalsLeft(), tot = this.bossCrystals0 || n || 1;
+        return { val: '◆ ' + n, sub: I18n.t('hud_boss_sub'), frac: 1 - Math.min(1, n / tot), urgent: n > 0 && n <= 2 };
+      }
+      const n = State.iconCount; // 'clear'
+      return { val: n, sub: I18n.t('hud_remaining'), urgent: n > 0 && n <= 5 };
+    },
     completionReason() {
       if (this.objective === 'score') return I18n.t('level_reason_score').replace('{n}', this.target);
       if (this.objective === 'survive') return I18n.t('level_reason_survive').replace('{n}', this.target);
@@ -5296,9 +5323,11 @@
         el.style.borderColor = biome.accent;
         bossHtml = `<span class="obj-boss-face"><b class="obf-name">${esc(I18n.t('advdex_' + biome.id))}</b><i class="obf-epithet">${esc(I18n.t('advdex_' + biome.id + '_e'))}</i><span class="obf-hp" id="adv-boss-hp" aria-hidden="true"></span><span class="obf-next" id="adv-boss-next" aria-hidden="true"></span></span>`;
       }
-      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span>${bossHtml}<span class="obj-goal" id="obj-goal">${this.objectiveText()}</span>${relicsHtml}${ModeSignals.noteHtml('aventura')}`;
+      el.innerHTML = `<span class="obj-biome">${BIOME_IMG[biome.id] ? iconAnyInline(BIOME_IMG[biome.id]) : biome.glyph} ${I18n.t('chapter')} ${this.chapterOf(level) + 1} · ${this.biomeName(biome)}</span>${bossHtml}<span class="obj-goal" id="obj-goal">${this.objectiveLabel()}</span>${relicsHtml}${ModeSignals.noteHtml('aventura')}`;
     },
-    refreshGoal() { const g = $('#obj-goal'); if (g) g.textContent = this.objectiveText(); },
+    // El progreso vivo lo pinta el héroe (Render.hero); el banner solo lleva la
+    // etiqueta estática, así que refreshGoal ya no reescribe texto por frame.
+    refreshGoal() { const g = $('#obj-goal'); if (g && g.textContent !== this.objectiveLabel()) g.textContent = this.objectiveLabel(); },
     // Intro de capítulo: una tarjeta de bioma (nombre, modificadores, objetivo) mostrada
     // una sola vez la primera vez que se entra en un capítulo. Congela el juego hasta
     // descartarla (tap). Se salta si ya se vio o si no es el primer nivel del capítulo.

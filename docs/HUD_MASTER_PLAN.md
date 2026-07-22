@@ -1,8 +1,8 @@
 # HUD Master Plan — Feedback en partida por modo
 
-> **Estado:** 🟡 En progreso — **F1 ✅** (Tutorial, Zen) · **F2 ✅** (héroe + Clásico/Contrarreloj/Diario) · **F3/F4 pendientes** (Aventura, Supervivencia). Este documento es a la vez **plan** y **bitácora**: cada tarea completada se anota en §9 con el cambio real, los `id`/funciones tocadas y los hallazgos. Si no puedo terminar, otra persona retoma leyendo §9 (qué se hizo) + §5 (qué falta y en qué orden).
+> **Estado:** 🟡 En progreso — **F1 ✅** (Tutorial, Zen) · **F2 ✅** (héroe + Clásico/Contrarreloj/Diario) · **F3 ✅** (Aventura adaptativa) · **F4 pendiente** (Supervivencia). Este documento es a la vez **plan** y **bitácora**: cada tarea completada se anota en §9 con el cambio real, los `id`/funciones tocadas y los hallazgos. Si no puedo terminar, otra persona retoma leyendo §9 (qué se hizo) + §5 (qué falta y en qué orden).
 >
-> **Versiones:** F1 → v2.20.0 · F2 → v2.21.0.
+> **Versiones:** F1 → v2.20.0 · F2 → v2.21.0 · F3 → v2.22.0.
 >
 > **Alcance:** rediseño del HUD *en partida* de los 7 modos (Tutorial, Clásico, Aventura, Contrarreloj, Reto del día, Supervivencia, Zen). Basado en la auditoría de feedback aportada por el propietario, **verificada y aterrizada contra el código real** (no contra la documentación, que está desactualizada: `game.js` tiene ~13 300 líneas y `styles.css` ~14 300, no las cifras del CLAUDE.md).
 >
@@ -116,16 +116,16 @@ Convención: `HUD-<letra><n>`. `X`=transversal, `T`=tutorial, `C`=clásico, `A`=
 - **HUD-C3** ⬜ *(Deferido)* Revisar duplicación estrellas/errores; de momento no se muestra contador de errores (solo estrellas), así que el solape es menor.
 - **HUD-C4** ✅ Combo oculto en ×1 (ya lo hacía `Render.combo()`); verificado que no compite con "restantes" (el mult-chip queda junto al score degradado).
 
-### HUD-A · Aventura (HUD adaptativo por objetivo)
+### HUD-A · Aventura (HUD adaptativo por objetivo) ✅
 
-- **HUD-A1** ⬜ Slot de objetivo **único que cambia de contenido** (no cuatro widgets). Según `Adventure.objective`:
-  - `clear` → "N restantes" (contador, sin barra).
-  - `score` → "6 450 / 10 000" + barra de progreso (aquí el score **es** el objetivo, hazlo dominante).
-  - `survive` → "Sobrevive 32 s" (tiempo domina).
-  - `boss` → "Jefe 68%" + fase (vida del jefe domina; ya hay cara de jefe en banner).
-- **HUD-A2** ⬜ Añadir **barra de progreso** al objetivo (`#obj-goal`) en objetivos `score`/`boss`. Datos ya disponibles: `objectiveText()`, `this.target`, `crystalsLeft()`.
-- **HUD-A3** ⬜ Estado de jefe: durante el encuentro, el slot de objetivo pasa a **vida del jefe + fase + ataque próximo**; el resto de métricas se atenúan. (Ya hay cara de jefe; falta que domine y que las demás bajen de jerarquía.)
-- **HUD-A4** ⬜ Modificador de bioma como estado pasivo compacto (ya en `ModeSignals.noteHtml('aventura')`); verificar que no compite con el objetivo.
+- **HUD-A1** ✅ Slot de objetivo **único que cambia de contenido** vía `Adventure.heroInfo()` (consumido por `Render._heroInfo()`):
+  - `clear` → `{val: iconCount, sub: "restantes"}`.
+  - `score` → `{val: "6 450 / 10 000", frac}` (el score ES el objetivo → dominante + barra).
+  - `survive` → `{val: fmtTime(restante), sub: "Sobrevive", frac, urgent≤5s}`.
+  - `boss` → `{val: "◆ N", sub: "Jefe", frac (destrucción de cristales), urgent≤2}`.
+- **HUD-A2** ✅ **Barra de progreso** en el héroe para `score`/`survive`/`boss` (`#hud-hero-bar`). El banner ya no repite el progreso: `Adventure.banner()`/`refreshGoal()` muestran solo la **etiqueta corta estática** (`objectiveLabel()`: Limpiar/Puntuar/Sobrevivir/Jefe), evitando duplicar el dato.
+- **HUD-A3** 🟡 El slot de objetivo pasa a **progreso del jefe** (héroe "◆ N" + barra). *Pendiente refinamiento*: durante el jefe la cara del banner (`#adv-boss-hp` pips) también muestra cristales → leve duplicación; opción futura: ocultar los pips del banner cuando el héroe está activo. Atenuar el resto de métricas es opcional.
+- **HUD-A4** ✅ Modificador de bioma como estado pasivo compacto (`ModeSignals.noteHtml('aventura')` en el banner); no compite con el héroe.
 
 ### HUD-TA · Contrarreloj (tiempo = héroe) ✅
 
@@ -171,7 +171,7 @@ Orden por **impacto ÷ riesgo**. Fase 1 = quick wins autocontenidos (bajo riesgo
 |---|---|---|
 | **F1 — Limpieza y quick wins** | HUD-T (✅), HUD-Z (🟡 Z1/Z3 hechos; Z2/Z4 deferidos), HUD-X1 (⬜) | Tutorial y Zen son los HUD que deben *quitar* cosas; cambios contenidos vía `body.mode-*` + CSS. Impacto inmediato, riesgo mínimo. **Estado: mayoritariamente completada.** |
 | **F2 — Métrica dominante por modo** ✅ | HUD-X3 ✅, HUD-C1/C4 ✅, HUD-TA (todo) ✅, HUD-D2/D4 ✅ | El corazón de la auditoría: "cada modo, una sola métrica dominante". Héroe reutilizable + Clásico/Contrarreloj/Diario. Sub-tareas menores deferidas (C2/C3, D1/D3). |
-| **F3 — Aventura adaptativa** | HUD-A1–A4 | Depende del componente héroe (F2, ✅) y de barras de progreso. |
+| **F3 — Aventura adaptativa** ✅ | HUD-A1/A2/A4 ✅, A3 🟡 | Héroe por objetivo (clear/score/survive/boss) + barra; banner con etiqueta corta. |
 | **F4 — Supervivencia** | HUD-S1–S8, HUD-X2 | Mayor superficie; se hace al final con el sistema de slots ya maduro. |
 
 ---
@@ -262,6 +262,28 @@ Se añadirán en `I18n.DICT` (game.js) conforme se implementen. Lista viva:
 - Decisión pendiente (Z2): score sigue **atenuado** en vez de oculto-por-defecto; ocultarlo y re-mostrarlo al pausar/convergencia es más disruptivo y se difiere.
 
 **Verificación (Playwright, 390×844):** con tablero al 91–95 % → `occFillWarn/Danger=false`, `boardWarn/Danger=false`, `occLabel="Board"`, `scoreOpacity=0.55`, `combo display:none`; **0 errores**. Captura confirma tablero azul calmado, sin wallet ni barra de ocupación.
+
+### [HUD-A] Fase 3: Aventura adaptativa por objetivo — 2026-07-22 · v2.22.0
+
+**Qué se cambió:**
+- `game.js` · `Adventure.heroInfo()` (nuevo): resuelve la métrica dominante por `objective` (clear/score/survive/boss) con `{val, sub?, frac?, urgent?}`. Consumido por `Render._heroInfo()` (que ya delegaba en `Adventure.heroInfo` desde F2).
+- `game.js` · `Adventure.objectiveLabel()` (nuevo): etiqueta corta estática (`objlabel_*`).
+- `game.js` · `Adventure.banner()`: `#obj-goal` ahora muestra `objectiveLabel()` (estático) en vez de `objectiveText()` (vivo) → el progreso vivo vive solo en el héroe, sin duplicar.
+- `game.js` · `Adventure.refreshGoal()`: solo reescribe si cambia la etiqueta (ya no por frame).
+- `game.js` · `Adventure.setup()`: guarda `this.bossCrystals0 = crystalsLeft()` tras colocar cristales de jefe (referencia para la barra, que clampa ante regeneración).
+- `game.js` · `I18n.DICT` ES/EN: `objlabel_clear/score/survive/boss`.
+
+**Hallazgos:**
+- El score-objetivo encaja perfecto en el héroe: `val` = "actual / target" es un número distinto de `#hud-score` crudo (que el count-up sigue animando como línea secundaria). Sin colisión.
+- Jefe: los cristales pueden regenerarse (`_placeCrystals` al converger uno), por eso la barra usa `1 - min(1, n/bossCrystals0)` (clampada) en vez de un total fijo.
+- Duplicación menor jefe: el banner (cara del jefe) y el héroe muestran ambos el conteo de cristales; se deja como refinamiento futuro (HUD-A3).
+
+**Verificación (Playwright, 390×844, 0 errores):**
+- clear → héroe "8" / "left", banner "Clear".
+- score → héroe "6 450 / 10 000", barra 64.5 %, banner "Score".
+- survive → héroe "0:26", sub "Survive", barra 18.8 %, banner "Survive".
+- boss → héroe "◆ 0", sub "Boss", barra 100 %, banner "Boss".
+- `node --test` 285/287, `eslint` 0 errores. Capturas confirman héroe morado (acento Aventura) + barra bajo el número.
 
 ### [HUD-X3 · HUD-C · HUD-TA · HUD-D] Fase 2: métrica dominante por modo — 2026-07-22 · v2.21.0
 
