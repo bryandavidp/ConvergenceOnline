@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.19.2';
+  const VERSION = '2.20.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -179,7 +179,10 @@
       },
       zen: {
         name: 'Zen', emoji: '☯️', timed: false, penalties: false, mult: 0.8, relaxed: true, endless: true, noFever: true, accent: '#9be15d', goal: 'Sin fallos ni prisa',
-        onOverflow() { Game.softClear(0.45); }, desc: 'Ritmo relajado, sin penalizaciones ni fin de partida. Juega y respira.'
+        // HUD-Z3: llenar el tablero en Zen NO es derrota. Transición calmada (mensaje
+        // sereno + limpieza parcial), sin rojo ni alarma (el color de peligro se
+        // suprime en Render.hud para Zen).
+        onOverflow() { Toasts.show(I18n.t('zen_release'), 'info', 1400); Game.softClear(0.45); }, desc: 'Ritmo relajado, sin penalizaciones ni fin de partida. Juega y respira.'
       },
     },
     MODE_ORDER: ['tutorial', 'clasico', 'aventura', 'contrarreloj', 'supervivencia', 'zen'],
@@ -612,7 +615,7 @@
         adventure_title: '🚀 Aventura', adventure_sub: 'Viaje infinito por biomas. Cada capítulo cambia las reglas y termina con un mini-jefe.',
         revive_title: '💔 ¡Última oportunidad!', revive_sub: 'Te has quedado sin vidas. ¿Revivir y seguir sobreviviendo?', giveup: 'Rendirse',
         revive_gets: 'Recibes 1 vida y despeja el 60% del tablero', revive_count: 'Revivir {n}/{max}', revive_short: 'Te faltan {n} monedas',
-        coach_skip: 'Saltar tutorial',
+        coach_skip: 'Saltar tutorial', coach_step: 'Paso {n} de {t}',
         coach1: '👆 Toca la casilla VACÍA que brilla, entre dos iconos iguales, para juntarlos.',
         coach2: '✨ ¡Eso es! Si coinciden en varias direcciones, eliminas más de golpe.',
         coach3: '⚡ Ahora encadena: junta las dos parejas rápido, antes de que se agote el círculo, para subir el combo.',
@@ -710,7 +713,7 @@
         continue_no: 'Terminar partida', continue_done: '¡Continúas! Tablero despejado',
         classic_win_streak: 'Racha de victorias ×{n} · +{p}% monedas',
         zen_pace_title: 'Ritmo zen', zen_pace_slow: 'Sereno', zen_pace_slow_d: 'Figuras muy lentas, para respirar',
-        zen_pace_normal: 'Fluido', zen_pace_normal_d: 'Ritmo tranquilo estándar',
+        zen_pace_normal: 'Fluido', zen_pace_normal_d: 'Ritmo tranquilo estándar', zen_release: 'Liberando espacio…',
         pl_sub: 'Lleva hasta 2 potenciadores (opcional)', pl_play: 'Jugar', pl_play_cost: 'Jugar · {c} monedas',
         pl_skip: 'Sin potenciadores', pl_first: 'Nuevo: puedes llevar potenciadores a los niveles. Se usan tocando su botón en partida.',
         pl_max: 'Máximo {n} potenciadores', pl_no_coins: 'Monedas insuficientes',
@@ -985,7 +988,7 @@
         adventure_title: '🚀 Adventure', adventure_sub: 'Endless journey across biomes. Each chapter changes the rules and ends with a mini-boss.',
         revive_title: '💔 Last chance!', revive_sub: 'You ran out of lives. Revive and keep surviving?', giveup: 'Give up',
         revive_gets: 'Get 1 life and clear 60% of the board', revive_count: 'Revive {n}/{max}', revive_short: 'You need {n} more coins',
-        coach_skip: 'Skip tutorial',
+        coach_skip: 'Skip tutorial', coach_step: 'Step {n} of {t}',
         coach1: '👆 Tap the glowing EMPTY cell between two matching icons to merge them.',
         coach2: "✨ That's it! If they match in several directions, you clear more at once.",
         coach3: '⚡ Now chain them: clear both pairs quickly, before the ring runs out, to build your combo.',
@@ -1083,7 +1086,7 @@
         continue_no: 'End game', continue_done: 'You continue! Board cleared',
         classic_win_streak: 'Win streak ×{n} · +{p}% coins',
         zen_pace_title: 'Zen pace', zen_pace_slow: 'Serene', zen_pace_slow_d: 'Very slow icons, room to breathe',
-        zen_pace_normal: 'Flowing', zen_pace_normal_d: 'Standard calm pace',
+        zen_pace_normal: 'Flowing', zen_pace_normal_d: 'Standard calm pace', zen_release: 'Freeing space…',
         pl_sub: 'Bring up to 2 power-ups (optional)', pl_play: 'Play', pl_play_cost: 'Play · {c} coins',
         pl_skip: 'No power-ups', pl_first: 'New: you can bring power-ups into levels. Tap their button in-game to use them.',
         pl_max: 'Max {n} power-ups', pl_no_coins: 'Not enough coins',
@@ -2136,7 +2139,9 @@
       fill.style.width = occ.toFixed(1) + '%';
       const occPct = $('#occ-percent');
       if (occPct) occPct.textContent = Math.round(occ) + '%';
-      const dl = occ >= 85 ? 2 : occ >= 65 ? 1 : 0;
+      // HUD-Z3: en Zen el tablero lleno se despeja solo (sin derrota), así que no hay
+      // "peligro": el medidor se mantiene neutro (nada de ámbar/rojo ni sonido de alarma).
+      const dl = State.mode === 'zen' ? 0 : (occ >= 85 ? 2 : occ >= 65 ? 1 : 0);
       fill.classList.toggle('warn', dl === 1);
       fill.classList.toggle('danger', dl === 2);
       
@@ -7951,6 +7956,10 @@
       this.active = true; this.step = 0; this.targets = []; this.tIdx = 0;
       Loop.stop(); Music.stop(true);
       State.mode = 'tutorial'; State.diff = 'facil'; State.level = 1;
+      // HUD-T1: el tutorial debe tener el HUD más limpio del juego. `mode-tutorial`
+      // oculta wallet/score/objetivo/combo/ocupación/toolbelt vía CSS (styles.css),
+      // dejando solo pausa + tablero + coach.
+      ModeSignals.apply('tutorial');
       State.comboWindow = Config.DIFFICULTY.facil.comboWindow; // para que el paso 3 encadene combo
       State.score = 0; State.displayScore = 0; State.combo = 0; State.comboMult = 1; State.comboAt = 0;
       State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.elapsed = 0; State.timeLeft = 0;
@@ -7975,6 +7984,7 @@
       State.displayScore = State.score;
       Render.syncAll(); Render.combo(); Render.hud();
       Render.hint([this.targets[0]], true);
+      { const st = $('#coach-step'); if (st) st.textContent = I18n.t('coach_step').replace('{n}', this.step + 1).replace('{t}', this.STEPS.length); }
       $('#coach-text').textContent = I18n.t(s.textKey);
     },
     notify() {
@@ -8000,6 +8010,7 @@
       State.status = 'idle'; Game.ended = true;
       Storage.tutorialDone = true;
       Sound.success();
+      { const st = $('#coach-step'); if (st) st.textContent = ''; }
       { const ct = $('#coach-text'); if (ct) ct.textContent = I18n.t('coach_done'); }
       { const pl = $('#coach-play'); if (pl) { pl.hidden = false; pl.textContent = I18n.t('coach_play1'); } }
       { const sk = $('#coach-skip'); if (sk) sk.textContent = I18n.t('coach_menu'); }
@@ -8016,8 +8027,11 @@
       this.active = false;
       this._clearHint();
       { const c = $('#coach'); if (c) c.hidden = true; }
+      { const st = $('#coach-step'); if (st) st.textContent = ''; }
       { const pl = $('#coach-play'); if (pl) pl.hidden = true; }
       { const sk = $('#coach-skip'); if (sk) sk.textContent = I18n.t('coach_skip'); }
+      // HUD-T1: al volver al menú, retirar el HUD-limpio del tutorial.
+      ModeSignals.clear();
       State.status = 'idle'; Game.ended = true; Storage.tutorialDone = true;
       showHome(Storage.lastMode || 'clasico');
     },

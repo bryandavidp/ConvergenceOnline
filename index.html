@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.19.2" />
+  <link rel="stylesheet" href="styles.css?v=2.20.0" />
 </head>
 <body data-screen="login">
   <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
@@ -58,6 +58,7 @@
 
   <!-- Tutorial interactivo (coach-marks) -->
   <div class="coach" id="coach" hidden>
+    <span class="coach-step" id="coach-step" aria-hidden="true"></span>
     <p class="coach-text" id="coach-text" aria-live="polite"></p>
     <button class="btn btn-primary coach-play" id="coach-play" hidden>Jugar nivel 1</button>
     <button class="btn btn-ghost coach-skip" id="coach-skip" data-i18n="coach_skip">Saltar tutorial</button>
@@ -886,6 +887,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.19.2" defer></script>
+  <script src="game.js?v=2.20.0" defer></script>
 </body>
 </html>
