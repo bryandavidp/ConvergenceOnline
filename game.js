@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.25.0';
+  const VERSION = '2.26.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -5120,7 +5120,9 @@
    * toasts, leaderboard). Las fichas del tablero siguen siendo SVG (ver Icons).
    */
   const ICONS_DIR = 'img/ui';
-  const icon = (name, cls) => `<img class="ic${cls ? ' ' + cls : ''}" src="${ICONS_DIR}/${name}.png" alt="" draggable="false">`;
+  // RS-5 (docs/RENDER_STABILITY_PLAN.md): decoding="async" evita que la imagen decodifique en
+  // el hilo principal al pintarse (jank + "imágenes a medias" al navegar bajo presión de memoria).
+  const icon = (name, cls) => `<img class="ic${cls ? ' ' + cls : ''}" src="${ICONS_DIR}/${name}.png" alt="" decoding="async" draggable="false">`;
   const iconInline = (name) => icon(name, 'ic-inline');
   const ICONS_V2_DIR = 'img/icons-v2';
   const V2_ICONS = {
@@ -8452,7 +8454,14 @@
     _badMs: 0, _goodMs: 0, _l2Ms: 0, _bootGuard: false, suggested: false,
     init() {
       try { this.suggested = localStorage.getItem('cv_perf_suggested') === '1'; } catch (_) { }
-      const hiDpiTouch = (navigator.maxTouchPoints || 0) > 0 && (window.devicePixelRatio || 1) >= 3;
+      // RS-7 (docs/RENDER_STABILITY_PLAN.md): arranque conservador NO solo en iOS Pro (dpr≥3).
+      // Las tablets Android de alta densidad (p. ej. Xiaomi Mi Pad 7) tienen menos margen de
+      // memoria de GPU por su resolución altísima: cualquier táctil con dpr≥2 o poca RAM
+      // arranca en nivel 1 hasta acumular EMA bueno (se relaja solo a los 5s).
+      const touch = (navigator.maxTouchPoints || 0) > 0;
+      const dpr = window.devicePixelRatio || 1;
+      const lowMem = (navigator.deviceMemory || 8) <= 4;
+      const hiDpiTouch = touch && (dpr >= 2 || lowMem);
       this._bootGuard = hiDpiTouch;   // el primer descenso desde el arranque móvil pide solo 5s
       this.level = -1;                // fuerza a apply() a escribir la clase aunque el nivel sea 0
       this.apply(hiDpiTouch ? 1 : 0);
@@ -12105,7 +12114,7 @@
       for (let i = 0; i < this.CHIP_POOL; i++) {
         const c = document.createElement('span');
         c.className = 'shopfx-amount'; c.style.opacity = '0';
-        const img = document.createElement('img'); img.alt = '';
+        const img = document.createElement('img'); img.alt = ''; img.decoding = 'async';
         const b = document.createElement('b');
         c.appendChild(img); c.appendChild(b);
         this.chips.push({ el: c, img, b, anim: null });

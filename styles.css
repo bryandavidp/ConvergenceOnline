@@ -1174,7 +1174,10 @@ body.time-critical .board-wrap { box-shadow: 0 0 0 1px rgba(255,93,115,.38), 0 0
   background: var(--board-pattern);
   background-size: var(--board-pattern-size);
   opacity: var(--board-pattern-opacity);
-  mix-blend-mode: screen;
+  /* RS-2 (docs/RENDER_STABILITY_PLAN.md): SIN mix-blend-mode. El `screen` obligaba al
+     compositor a renderizar un grupo aislado del tablero y hacer readback cada frame (capa
+     full-board siempre viva); sobre el fondo oscuro el patrón se ve casi igual con
+     composición normal. Menos memoria de capa = menos parpadeo a negro en Android hi-dpi. */
   animation: var(--board-bg-animation);
   transform-origin: center;
 }
@@ -2141,14 +2144,18 @@ body.reduced-fx .converge-layer { display: none; }
    sin box-shadow animado) y salida con "exhalación" de desaturación. Los popups de
    puntos crecen mientras dura la Fiebre. Todo se anula bajo reduced-fx (JS no añade
    las clases y el aura .fever ya se oculta con display:none). */
+/* RS-1 (docs/RENDER_STABILITY_PLAN.md): SOLO transform. Antes animaba `filter:
+   saturate/brightness` sobre TODO el tablero -> re-rasterizaba una textura full-board a dpr×
+   cada frame; en Android hi-dpi (Mi Pad 7) ese pico agotaba la memoria de GPU y las fichas
+   parpadeaban a negro. El zoom conserva el "espectáculo"; el calor lo aporta el aura .fever. */
 .board-wrap.fever-burst { animation: fever-burst .6s cubic-bezier(.2,.8,.3,1); }
 @keyframes fever-burst {
-  0% { transform: scale(1); filter: saturate(1); }
-  30% { transform: scale(1.022); filter: saturate(1.35) brightness(1.07); }
-  100% { transform: scale(1); filter: saturate(1); }
+  0% { transform: scale(1); }
+  30% { transform: scale(1.024); }
+  100% { transform: scale(1); }
 }
 .board-wrap.fever-out { animation: fever-out .34s ease-out; }
-@keyframes fever-out { 40% { transform: scale(.995); filter: brightness(.94); } }
+@keyframes fever-out { 40% { transform: scale(.994); } }
 .board-wrap.fever-on .popup { font-size: clamp(1.3rem, 5.7vmin, 2.1rem); }
 /* El aro de combo "arde" en Fiebre; el estado urgente (ventana a punto de expirar)
    tiene prioridad — la urgencia informa, la llama solo decora. */
@@ -11555,7 +11562,11 @@ body.reduced-fx #modal-mode-launch { animation: none; }
    Full-screen fija sobre todo #app (como .fx), inerte al puntero. Se puebla y
    vacía por JS con Web Animations API. Se oculta con movimiento reducido. */
 .shop-fx { position: fixed; inset: 0; z-index: 82; pointer-events: none; overflow: hidden; contain: layout style; }
-.shop-fx > span { position: absolute; top: 0; left: 0; will-change: transform, opacity; }
+/* RS-3 (docs/RENDER_STABILITY_PLAN.md): SIN will-change permanente. Marcarlo en los ~100
+   nodos del pool reservaba backing stores de capa aunque estuvieran inertes (opacity:0),
+   sumando presión de memoria de GPU. La animación WAAPI ya promueve la capa solo mientras
+   corre (mismo criterio que .fxp, styles.css §Capa FX). */
+.shop-fx > span { position: absolute; top: 0; left: 0; }
 .shopfx-rays {
   border-radius: 50%;
   background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--fx-a, #ffc44d) 90%, transparent) 0deg 4deg, transparent 4deg 20deg);

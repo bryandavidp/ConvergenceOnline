@@ -279,6 +279,15 @@ pulsar repetido y saturaba el hilo principal en iOS. Norma general: toda animaci
 `transform`/`opacity`-only y estar en la lista de `reduced-fx`; las one-shot pueden usar `filter`/`box-shadow`
 si duran <700 ms.
 
+**Regla de presupuesto de capas del compositor (memoria de GPU).** El parpadeo de fichas —blanco en
+iOS/WebKit, **negro** en Android/Chromium— es desalojo de backing stores por presión de memoria de GPU:
+demasiadas capas compuestas, o demasiado grandes, o re-rasterizadas por frame. Reglas duras: (1) **nunca**
+animar `filter` ni `mix-blend-mode` sobre superficies grandes (todo el tablero, overlays full-screen) —
+re-rasterizan una textura enorme a `dpr×` cada frame; (2) **no** poner `will-change` permanente en pools de
+nodos inertes (promoción transitoria vía WAAPI, como `.fxp`); (3) minimizar el nº de capas full-screen fijas
+y el tamaño de los pseudos animados. Detalle, inventario de capas y plan en
+[`RENDER_STABILITY_PLAN.md`](./RENDER_STABILITY_PLAN.md) (RS-*).
+
 Las partículas, vuelos de glyph y popups creados con WAAPI se cancelan al terminar después de fijar `opacity:0`; no deben quedar animaciones con `fill:forwards/both` retenidas en `document.getAnimations()`, porque mantienen capas de compositor vivas sin aportar feedback visual.
 
 ## 7. Tablero: enfoque de renderizado
