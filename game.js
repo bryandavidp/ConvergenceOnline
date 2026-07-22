@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.27.0';
+  const VERSION = '2.28.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -1902,13 +1902,26 @@
     syncAll() { for (let i = 0; i < State.board.length; i++) this.syncCell(i); },
 
     spawnAnim(i) {
-      const el = this.cells[i];
+      const el = this.cells[i], g = this.glyphs[i];
       // Limpia un posible estado de "clear" en curso: si un icono aparece en una
       // casilla que se acaba de vaciar (carrera spawn↔convergencia a alta velocidad),
       // el icono nuevo NO debe heredar la animación glyph-out ni quedar invisible.
       el.classList.remove('spawn', 'clear');
-      void el.offsetWidth;
-      el.classList.add('spawn');
+      if (!g) return;
+      // RS-10 (docs/RENDER_STABILITY_PLAN.md): WAAPI en vez de reiniciar la animación CSS con
+      // `void offsetWidth`. Ese reflujo SÍNCRONO se ejecutaba POR CELDA; en un refill masivo
+      // (decenas de iconos tras vaciar el tablero) eran decenas de reflujos forzados en un solo
+      // frame = layout thrashing y pérdida de frames, especialmente en Safari/iOS. WAAPI arranca
+      // sin reflujo, corre en el compositor (transform/opacity) y no depende de FX.cap.
+      const anims = g.getAnimations ? g.getAnimations() : null;
+      if (anims) anims.forEach((a) => { try { a.cancel(); } catch (_) { } });
+      if (typeof g.animate !== 'function') return;
+      try {
+        g.animate(
+          [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }],
+          { duration: 280, easing: 'cubic-bezier(.2,.9,.3,1.3)' },
+        );
+      } catch (_) { }
     },
     clearAnim(indices, target) {
       // En una convergencia, FX ya ha clonado la casilla completa (cuerpo + icono).

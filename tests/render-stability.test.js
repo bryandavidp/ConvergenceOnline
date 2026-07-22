@@ -77,6 +77,18 @@ test('RS-4: los pulsos de celda concurrentes se acotan (tope por nivel del gober
   Perf.level = 0; Render._pulseActive = 0;
 });
 
+test('RS-10: spawnAnim usa WAAPI (sin reflujo por celda ni clase .spawn)', () => {
+  let animated = 0;
+  const g = makeEl('span');
+  g.getAnimations = () => [];
+  g.animate = () => { animated++; return { cancel() { }, onfinish: null, oncancel: null }; };
+  const cell = makeEl('button');
+  Render.cells = [cell]; Render.glyphs = [g];
+  Render.spawnAnim(0);
+  assert.equal(animated, 1, 'anima el glifo por WAAPI (arranca sin reflujo)');
+  assert.ok(!cell.classList.contains('spawn'), 'ya NO añade la clase .spawn que reiniciaba la animación CSS con void offsetWidth');
+});
+
 test('RS-7: dispositivo de poca RAM arranca conservador aunque el dpr sea bajo', () => {
   const dprBak = window.devicePixelRatio, mtpBak = navigator.maxTouchPoints, memBak = navigator.deviceMemory;
   window.devicePixelRatio = 1; navigator.maxTouchPoints = 1; navigator.deviceMemory = 2;
