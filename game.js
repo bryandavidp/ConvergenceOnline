@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.19.0';
+  const VERSION = '2.19.2';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -11442,11 +11442,18 @@
     const name = (Storage.profile && Storage.profile.name) || Storage.user || (Settings.lang === 'es' ? 'Jugador' : 'Player');
     const level = Meta.level(), need = Math.max(1, Meta.xpForLevel(level)), xp = Meta.xp();
     const progress = clamp(xp / need * 100, 0, 100);
+    const isPauseCard = extraClass.split(/\s+/).includes('player-card-pause');
+    const owned = Meta.avatarIconOwnedCount() + Meta.avatarBorderOwnedCount();
+    const total = PlayerIcons.order.length + PlayerBorders.order.length;
+    const rankBadge = isPauseCard ? '<span class="player-card-rank-badge" aria-hidden="true"><img src="img/ui-generated/mode-launch/survival-rank.png" alt=""></span>' : '';
+    const collection = isPauseCard
+      ? `<span class="player-card-collection">${owned} / ${total}<img src="img/icon-packs/prismatic-jewels/golden-star.png" alt="" aria-hidden="true"></span>`
+      : `<span class="player-card-collection">${owned} / ${total}</span>`;
     return `<article class="player-card ${extraClass}">
       <div class="player-card-avatar">${playerAvatarHtml(Meta.avatarIcon(), Meta.avatarBorder(), 'player-avatar-lg')}</div>
-      <div class="player-card-copy"><small>${esc(I18n.t('profile_card_title'))}</small><h3>${esc(name)}</h3><p>${esc(Meta.rank())} · Lv. ${level}</p>
+      <div class="player-card-copy"><small>${esc(I18n.t('profile_card_title'))}</small><h3>${esc(name)}</h3><p class="player-card-rank">${rankBadge}<span>${esc(Meta.rank())} · Lv. ${level}</span></p>
         <div class="player-card-xp" role="progressbar" aria-valuemin="0" aria-valuemax="${need}" aria-valuenow="${xp}"><span style="width:${progress.toFixed(1)}%"></span></div>
-        <div class="player-card-meta"><span>${fmtNum(xp)} / ${fmtNum(need)} XP</span><span>${Meta.avatarIconOwnedCount() + Meta.avatarBorderOwnedCount()} / ${PlayerIcons.order.length + PlayerBorders.order.length}</span></div>
+        <div class="player-card-meta"><span>${fmtNum(xp)} / ${fmtNum(need)} XP</span>${collection}</div>
       </div>
     </article>`;
   }
@@ -11494,14 +11501,17 @@
     const isSurv = State.mode === 'supervivencia';
     const progLabel = I18n.t(isSurv ? 'st_wave' : 'st_level');
     const progVal = fmtNum(isSurv ? (Survival.wave || 1) : (State.level || 1));
-    summary.innerHTML = `<div class="pause-run-card">
-        <span class="pause-run-icon" aria-hidden="true">${modeIcon}</span>
+    const modeArt = isSurv
+      ? '<span class="pause-run-art pause-run-art-survival" aria-hidden="true"><img src="img/ui-generated/modes/mode-survival.png" alt=""></span>'
+      : `<span class="pause-run-art pause-run-art-generic" aria-hidden="true">${modeIcon}</span>`;
+    summary.innerHTML = `<div class="pause-run-hero">
+        ${modeArt}
         <div class="pause-run-copy"><small>${esc(I18n.t('pause_run_title'))}</small><b>${esc(modeName)}</b>${tag ? `<span class="pause-run-tag">${esc(tag)}</span>` : ''}</div>
       </div>
       <div class="pause-run-stats">
-        <div class="pause-run-stat"><span>${esc(I18n.t('pause_score_label'))}</span><strong>${fmtNum(State.score || 0)}</strong></div>
-        <div class="pause-run-stat"><span>${esc(I18n.t('pause_combo_label'))}</span><strong>×${fmtNum(State.maxCombo || State.combo || 0)}</strong></div>
-        <div class="pause-run-stat"><span>${esc(progLabel)}</span><strong>${progVal}</strong></div>
+        <div class="pause-run-stat is-score"><span>${esc(I18n.t('pause_score_label'))}</span><strong><img src="img/icon-packs/prismatic-jewels/golden-star.png" alt="" aria-hidden="true">${fmtNum(State.score || 0)}</strong></div>
+        <div class="pause-run-stat is-combo"><span>${esc(I18n.t('pause_combo_label'))}</span><strong>×${fmtNum(State.maxCombo || State.combo || 0)}</strong></div>
+        <div class="pause-run-stat is-progress"><span>${esc(progLabel)}</span><strong>${progVal}</strong></div>
       </div>`;
   }
 

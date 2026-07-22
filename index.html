@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.19.0" />
+  <link rel="stylesheet" href="styles.css?v=2.19.2" />
 </head>
 <body data-screen="login">
   <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
@@ -458,6 +458,14 @@
 
     <!-- Pausa -->
     <div class="modal pause-modal" id="modal-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+      <div class="pause-head-decor" aria-hidden="true">
+        <span class="pause-decor-gem"><img src="img/icon-packs/prismatic-jewels/violet-diamond.png" alt=""></span>
+        <span class="pause-decor-star"><img src="img/icon-packs/prismatic-jewels/golden-star.png" alt=""></span>
+        <span class="pause-decor-orb pause-decor-orb-a"></span>
+        <span class="pause-decor-orb pause-decor-orb-b"></span>
+        <span class="pause-decor-orb pause-decor-orb-c"></span>
+        <span class="pause-decor-orb pause-decor-orb-d"></span>
+      </div>
       <!-- Acceso directo a Ajustes (vuelve a la pausa al cerrar). -->
       <button class="pause-settings" type="button" id="btn-pause-settings" aria-label="Ajustes" data-i18n-al="settings_word">
         <span class="pause-settings-badge" aria-hidden="true"><span class="icv2" style="--icv2-url:url('img/icons-v2/8-ui/settings.svg')"></span></span>
@@ -468,13 +476,18 @@
         <h2 id="pause-title" data-i18n="pause">Pausa</h2>
         <p class="pause-subtitle" data-i18n="pause_subtitle">Tómate un respiro, ¡tú puedes!</p>
       </div>
-      <div class="pause-player-card" id="pause-player-card"></div>
-      <div class="pause-run-summary" id="pause-run-summary"></div>
-      <p class="modal-sub pause-note" id="pause-note" data-i18n="pause_no_save" hidden>Este modo no guarda la partida al salir.</p>
-      <div class="modal-actions modal-buttons">
-        <button class="btn btn-primary btn-icon pause-btn-resume" id="btn-resume"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="resume">Reanudar</span></button>
-        <button class="btn btn-icon pause-btn-restart" id="btn-pause-restart"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/8-ui/refresh.svg')" aria-hidden="true"></span><span data-i18n="restart">Reiniciar</span></button>
-        <button class="btn btn-icon pause-btn-menu" id="btn-pause-quit"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/6-buildings/house.svg')" aria-hidden="true"></span><span data-i18n="main_menu">Menú principal</span></button>
+      <div class="pause-scroll">
+        <div class="pause-player-card" id="pause-player-card"></div>
+        <section class="pause-run-panel" aria-labelledby="pause-run-heading">
+          <h3 class="sr-only" id="pause-run-heading" data-i18n="pause_run_title">Partida en curso</h3>
+          <div class="pause-run-summary" id="pause-run-summary"></div>
+          <p class="modal-sub pause-note" id="pause-note" data-i18n="pause_no_save" hidden>Este modo no guarda la partida al salir.</p>
+        </section>
+        <div class="modal-actions modal-buttons">
+          <button class="btn btn-primary btn-icon pause-btn-resume" id="btn-resume"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="resume">Reanudar</span></button>
+          <button class="btn btn-icon pause-btn-restart" id="btn-pause-restart"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/8-ui/refresh.svg')" aria-hidden="true"></span><span data-i18n="restart">Reiniciar</span></button>
+          <button class="btn btn-icon pause-btn-menu" id="btn-pause-quit"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/6-buildings/house.svg')" aria-hidden="true"></span><span data-i18n="main_menu">Menú principal</span></button>
+        </div>
       </div>
     </div>
 
@@ -873,6 +886,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.19.0" defer></script>
+  <script src="game.js?v=2.19.2" defer></script>
 </body>
 </html>
