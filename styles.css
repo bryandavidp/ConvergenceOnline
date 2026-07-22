@@ -987,8 +987,7 @@ body.mode-surv .gtop-context { gap: 4px; padding-top: 4px; }
 .g-chip b { color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }
 .lvl-chip b { color: var(--level); }
 .rec-chip b { color: var(--gold); }
-.time-chip { display: none; }                       /* visible solo en Contrarreloj */
-body.mode-timed .time-chip { display: inline-flex; }
+.time-chip { display: none; }                       /* el tiempo vive en el héroe (HUD-TA1) */
 .time-chip b { color: var(--time); font-size: .95rem; }
 .time-chip.urgent { border-color: color-mix(in srgb, var(--bad) 70%, var(--line)); box-shadow: 0 0 18px rgba(255,93,115,.24); }
 body.time-pressure .time-chip b { color: var(--warn); }
@@ -2533,6 +2532,24 @@ body.mode-surv .score-side .gctx { display: none; }
   white-space: nowrap;
 }
 .score-best b { color: var(--gold); font-variant-numeric: tabular-nums; }
+/* Héroe del marcador (HUD-X3): la métrica dominante del modo. */
+.hud-hero { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; line-height: 1; }
+.hud-hero[hidden] { display: none; }
+.hero-val { font-size: clamp(1.85rem, 8.2vw, 2.45rem); font-weight: 1000; color: var(--mode-accent, var(--score)); font-variant-numeric: tabular-nums; line-height: .95; white-space: nowrap;
+  text-shadow: 0 0 16px color-mix(in srgb, var(--mode-accent, var(--score)) 42%, transparent); }
+.hero-sub { max-width: 92vw; font-size: .66rem; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; color: rgba(255,255,255,.72); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hero-sub[hidden] { display: none; }
+.hero-bar { width: min(210px, 62vw); height: 5px; margin-top: 2px; border-radius: 999px; background: rgba(255,255,255,.14); overflow: hidden; }
+.hero-bar[hidden] { display: none; }
+.hero-bar-fill { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--mode-accent, var(--accent-2)); transition: width .3s ease; }
+.hud-hero.urgent .hero-val { color: var(--bad); animation: hero-pulse .8s ease-in-out infinite; }
+@keyframes hero-pulse { 50% { transform: scale(1.06); } }
+body.reduced-fx .hud-hero.urgent .hero-val { animation: none; }
+/* Modo objetivo-héroe: la puntuación se degrada a línea secundaria pequeña y el
+   "Mejor" sale del HUD permanente (el récord pasa a ser contextual, HUD-TA4). */
+.gscore.hero-on .hud-value { font-size: 1rem; font-weight: 900; text-shadow: none; color: rgba(255,255,255,.82); }
+.gscore.hero-on .score-main { margin-top: 3px; }
+.gscore.hero-on .score-meta { display: none; }
 .mult-chip {
   --mult-a: rgba(234,240,255,.62);
   --mult-b: rgba(24,230,230,.42);

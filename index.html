@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.20.0" />
+  <link rel="stylesheet" href="styles.css?v=2.21.0" />
 </head>
 <body data-screen="login">
   <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
@@ -267,6 +267,14 @@
               </div>
             </div>
             <div class="gscore">
+              <!-- Héroe: la métrica DOMINANTE del modo (restantes / tiempo / medalla /
+                   objetivo / jefe). Solo visible en modos con objetivo-héroe; en
+                   Supervivencia y Zen manda la puntuación (score-main). Ver Render.hero(). -->
+              <div class="hud-hero" id="hud-hero" hidden>
+                <span class="hero-val" id="hud-hero-val"></span>
+                <span class="hero-sub" id="hud-hero-sub" hidden></span>
+                <div class="hero-bar" id="hud-hero-bar" hidden aria-hidden="true"><span class="hero-bar-fill" id="hud-hero-bar-fill"></span></div>
+              </div>
               <span class="score-main"><span class="hud-value" id="hud-score">0</span><span class="mult-chip" id="hud-mult" aria-hidden="true">×1</span></span>
               <span class="score-meta"><span class="score-best" id="hud-best-wrap"><span data-i18n="best_score">Mejor puntuación</span> <b id="hud-best">0</b></span></span>
             </div>
@@ -887,6 +895,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.20.0" defer></script>
+  <script src="game.js?v=2.21.0" defer></script>
 </body>
 </html>

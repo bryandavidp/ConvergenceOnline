@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.20.0';
+  const VERSION = '2.21.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -598,6 +598,8 @@
         q_missions: 'Misiones', q_daily: 'Diario', q_chests: 'Cofres', q_league: 'Liga', q_friends: 'Amigos', best_score: 'Mejor puntuación', play_word: 'Jugar',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
         hud_danger: 'Peligro', hud_board_fill: 'Tablero',
+        hud_remaining: 'restantes', hud_survive_sub: 'Sobrevive', hud_boss_sub: 'Jefe', rec_close: 'A {n} del récord', rec_new: '¡Nuevo récord!',
+        mult_breakdown_combo: 'Combo', mult_breakdown_fever: 'Fiebre', mult_breakdown_frenzy: 'Frenesí', mult_breakdown_boon: 'Bendición', mult_breakdown_sprint: 'Sprint', mult_breakdown_total: 'Total',
         hud_lives_explain: 'Tus vidas. Si llegas a 0, se acaba.',
         hud_wave_explain: 'Ronda actual. Cada oleada es más dura.',
         hud_tier_explain: 'Dificultad: sube cada varias oleadas',
@@ -971,6 +973,8 @@
         q_missions: 'Missions', q_daily: 'Daily', q_chests: 'Chests', q_league: 'League', q_friends: 'Friends', best_score: 'Best score', play_word: 'Play',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
         hud_danger: 'Danger', hud_board_fill: 'Board',
+        hud_remaining: 'left', hud_survive_sub: 'Survive', hud_boss_sub: 'Boss', rec_close: '{n} to record', rec_new: 'New record!',
+        mult_breakdown_combo: 'Combo', mult_breakdown_fever: 'Fever', mult_breakdown_frenzy: 'Frenzy', mult_breakdown_boon: 'Boon', mult_breakdown_sprint: 'Sprint', mult_breakdown_total: 'Total',
         hud_lives_explain: 'Your lives. Reach 0 and it is game over.',
         hud_wave_explain: 'Current round. Each wave gets harder.',
         hud_tier_explain: 'Difficulty: goes up every few waves',
@@ -1436,6 +1440,7 @@
     displayScore: 0,        // marcador animado (count-up)
     fever: false, feverEver: false, perfectEver: false,
     recordHit: false,       // récord superado en vivo (una vez por partida)
+    recordNear: false,      // aviso "a X del récord" mostrado (una vez por partida, HUD-TA4)
     minIcons: 99,           // mínimo de iconos alcanzado en el nivel (near-miss, GM-01)
     bestPlay: null,         // jugada pico de la partida {points, combo, removed, wave, level} (GM-28)
     spawnHoldUntil: 0,      // pausa breve de spawns (entrada en Fiebre, GM-27)
@@ -2172,6 +2177,57 @@
       const hintDisabled = State.hintsLeft <= 0 || performance.now() < State.hintReadyAt;
       ['btn-hint', 'btn-hint-tool'].forEach((id) => { const el = $('#' + id); if (el) el.disabled = hintDisabled; });
       this.multChip();
+      this.hero();
+    },
+    // Héroe del marcador (HUD-X3): resuelve la ÚNICA métrica dominante del modo y la
+    // pinta grande en el centro, degradando la puntuación a línea secundaria. Si el
+    // modo no tiene objetivo-héroe (Supervivencia, Zen), devuelve null y manda el score.
+    hero() {
+      const wrap = $('#hud-hero');
+      const gscore = document.querySelector('.gscore');
+      if (!wrap || !gscore) return;
+      const info = this._heroInfo();
+      const on = !!info;
+      gscore.classList.toggle('hero-on', on);
+      wrap.hidden = !on;
+      if (!on) { wrap.classList.remove('urgent'); return; }
+      const valEl = $('#hud-hero-val');
+      if (valEl && valEl.textContent !== String(info.val)) valEl.textContent = info.val;
+      const subEl = $('#hud-hero-sub');
+      if (subEl) { subEl.hidden = !info.sub; if (info.sub) subEl.textContent = info.sub; }
+      const barEl = $('#hud-hero-bar');
+      if (barEl) {
+        const hasBar = info.frac != null;
+        barEl.hidden = !hasBar;
+        if (hasBar) { const f = $('#hud-hero-bar-fill'); if (f) f.style.width = (clamp(info.frac, 0, 1) * 100).toFixed(1) + '%'; }
+      }
+      wrap.classList.toggle('urgent', !!info.urgent);
+      // Acento del héroe: el color del objetivo cambia con el modo (--mode-accent).
+    },
+    // Resuelve {val, sub?, frac?, urgent?} o null. val es texto/numero ya formateado.
+    _heroInfo() {
+      const mode = State.mode;
+      if (mode === 'clasico') {
+        const n = State.iconCount;
+        return { val: n, sub: I18n.t('hud_remaining'), urgent: n > 0 && n <= 5 };
+      }
+      if (mode === 'aventura') return Adventure.heroInfo ? Adventure.heroInfo() : null;
+      if (Config.MODES[mode] && Config.MODES[mode].timed) {
+        const t = fmtTime(State.timeLeft);
+        const urgent = State.timePressure === 2;
+        if (State.isDaily) {
+          const next = ModeSignals.dailyNextMedalInfo(State.score);
+          if (next) {
+            const meds = Meta.DAILY_MEDALS, idx = meds.indexOf(next.threshold);
+            const prev = idx > 0 ? meds[idx - 1] : 0;
+            const frac = (State.score - prev) / (next.threshold - prev);
+            return { val: t, sub: next.icon + ' ' + fmtNum(State.score) + ' / ' + fmtNum(next.threshold), frac, urgent };
+          }
+          return { val: t, sub: ModeSignals.dailyMedalIcon('gold') + ' ' + I18n.t('daily_medal_max'), urgent };
+        }
+        return { val: t, urgent };
+      }
+      return null; // Supervivencia y Zen: manda la puntuación (score-main)
     },
     // Chip del multiplicador TOTAL (combo × fiebre × temporal): un único número
     // legible junto al score que responde "¿por cuánto vale ahora cada jugada?" (GM-16).
@@ -8273,7 +8329,7 @@
       State.maxCombo = 0; State.removedTotal = 0; State.mistakes = 0; State.coinsRun = 0; State.tempMult = 1;
       State.xpMultiplier = Meta.xpBoost().multiplier;
       State.emptyBonusClaimed = false; State.emptyBoards = 0; State.lastActionCell = null;
-      State.fever = false; State.feverEver = false; State.perfectEver = false; State.recordHit = false;
+      State.fever = false; State.feverEver = false; State.perfectEver = false; State.recordHit = false; State.recordNear = false;
       State.timePressure = 0;
       State.minIcons = 99; State.bestPlay = null; State.spawnHoldUntil = 0;
       State.mutFast = false; State.dailyMut = null; State.ghostSamples = []; // mutador diario (GM-15) · ghost (GM-12)
@@ -8601,6 +8657,14 @@
       if (!State.recordHit && Storage.best > 0 && State.score > Storage.best) {
         State.recordHit = true; Render.flash(); Sound.record(); Haptics.record(); FX.celebrate(i);
         Toasts.show(I18n.t('new_record'), 'good', 1600, 'trophy');
+      }
+      // Récord CERCANO (HUD-TA4): aviso contextual al alcanzar el 85% del récord, una
+      // sola vez y solo en modos de puntuación. El récord no vive en el HUD permanente
+      // (se ocultó con .score-meta); aparece solo cuando puede cambiar tu decisión.
+      else if (!State.recordNear && Config.MODES[State.mode].scoreAttack
+          && Storage.best > 0 && State.score >= Storage.best * 0.85 && State.score < Storage.best) {
+        State.recordNear = true;
+        Toasts.show(I18n.t('rec_close').replace('{n}', fmtNum(Storage.best - State.score)), 'warn', 1700, 'trophy');
       }
 
       Render.hudSoon();

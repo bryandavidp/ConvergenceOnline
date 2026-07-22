@@ -1,8 +1,8 @@
 # HUD Master Plan — Feedback en partida por modo
 
-> **Estado:** 🟡 En progreso — **Fase 1 mayormente completada** (Tutorial ✅, Zen 🟡). Fases 2–4 pendientes. Este documento es a la vez **plan** y **bitácora**: cada tarea completada se anota en §9 con el cambio real, los `id`/funciones tocadas y los hallazgos. Si no puedo terminar, otra persona retoma leyendo §9 (qué se hizo) + §5 (qué falta y en qué orden).
+> **Estado:** 🟡 En progreso — **F1 ✅** (Tutorial, Zen) · **F2 ✅** (héroe + Clásico/Contrarreloj/Diario) · **F3/F4 pendientes** (Aventura, Supervivencia). Este documento es a la vez **plan** y **bitácora**: cada tarea completada se anota en §9 con el cambio real, los `id`/funciones tocadas y los hallazgos. Si no puedo terminar, otra persona retoma leyendo §9 (qué se hizo) + §5 (qué falta y en qué orden).
 >
-> **Versión de referencia del código:** cambios de F1 entregados en **v2.20.0**.
+> **Versiones:** F1 → v2.20.0 · F2 → v2.21.0.
 >
 > **Alcance:** rediseño del HUD *en partida* de los 7 modos (Tutorial, Clásico, Aventura, Contrarreloj, Reto del día, Supervivencia, Zen). Basado en la auditoría de feedback aportada por el propietario, **verificada y aterrizada contra el código real** (no contra la documentación, que está desactualizada: `game.js` tiene ~13 300 líneas y `styles.css` ~14 300, no las cifras del CLAUDE.md).
 >
@@ -100,7 +100,7 @@ Convención: `HUD-<letra><n>`. `X`=transversal, `T`=tutorial, `C`=clásico, `A`=
 
 - **HUD-X1** ⬜ Formalizar la "gramática de slots" en CSS: revisar que cada `body.mode-*` declara explícitamente qué slots muestra/oculta, evitando estados heredados entre modos. Documentar el contrato en comentario de `styles.css`.
 - **HUD-X2** ⬜ Auditar que **ningún dato meta/no accionable** vive en el HUD permanente (ver lista §7 de la auditoría). Mover a pre-partida/pausa/resultados: nombre completo del modo, récord lejano, texto "combo", ×1, fiebre inactiva, boosters pasivos, recompensas futuras, monedas por oleada, próximo jefe lejano.
-- **HUD-X3** ⬜ Componente único de "métrica dominante" reutilizable (`.hud-hero`) que cualquier modo pueda poblar con {icono, valor, sub}, para no duplicar markup por objetivo.
+- **HUD-X3** ✅ Componente único de "métrica dominante" reutilizable (`.hud-hero` en `.gscore`; `Render.hero()`/`_heroInfo()`) que cualquier modo puebla con `{val, sub?, frac?, urgent?}`. `.gscore.hero-on` degrada la puntuación. Usado ya por Clásico, Contrarreloj y Diario; Aventura lo consumirá en F3.
 
 ### HUD-T · Tutorial (HUD más limpio de todo el juego) ✅
 
@@ -109,12 +109,12 @@ Convención: `HUD-<letra><n>`. `X`=transversal, `T`=tutorial, `C`=clásico, `A`=
 - **HUD-T3** ✅ Añadir contador de paso "Paso X de 3" al overlay `#coach` (nuevo `#coach-step`), poblado desde `Coach._render()`. Clave i18n `coach_step` = "Paso {n} de {t}" / "Step {n} of {t}".
 - **HUD-T4** ✅ Verificado con Playwright: tablero sigue enseñando (halo de casilla) y sin residuo de HUD al salir a un modo normal (ver bitácora §9).
 
-### HUD-C · Clásico (figuras restantes = héroe)
+### HUD-C · Clásico (figuras restantes = héroe) 🟡
 
-- **HUD-C1** ⬜ Hacer de **figuras restantes** el dato dominante. Reutilizar el slot héroe: mostrar `State.iconCount` grande (icono + "N restantes") y **degradar la puntuación** a métrica secundaria (subfila). Fuente del dato: `State.iconCount` (ya mantenido por `Engine`).
-- **HUD-C2** ⬜ Estrellas debajo del objetivo como estado permanente secundario (ya existe `#obj-stars`; reposicionar/estilar para que lean el rendimiento en vivo). Al fallar: estrella se agrieta → vacía + destello "Estrella perdida" (evento efímero, no contador de errores). Clave i18n `star_lost`.
-- **HUD-C3** ⬜ Eliminar duplicación: no mostrar simultáneamente estrellas + nº de errores + texto "sin errores" + racha. La racha perfecta se integra en las estrellas (glow), no como chip aparte.
-- **HUD-C4** ⬜ Combo oculto en ×1; visible solo al iniciar cadena (ya lo hace `Render.combo()` con `combo < 3`). Verificar que en Clásico no compite con "restantes".
+- **HUD-C1** ✅ **Figuras restantes** es ahora el dato dominante vía el héroe reutilizable (`Render.hero()` → `_heroInfo()` devuelve `{val: State.iconCount, sub: "restantes"}`); la puntuación se degrada a línea secundaria (`.gscore.hero-on`). Pulso `urgent` cuando quedan ≤5.
+- **HUD-C2** ⬜ *(Deferido F2.1)* "Estrella perdida" como destello efímero al fallar. Las estrellas en vivo ya viven en `#obj-stars` del banner (`updateLiveStars()`). Clave i18n `star_lost` aún no añadida.
+- **HUD-C3** ⬜ *(Deferido)* Revisar duplicación estrellas/errores; de momento no se muestra contador de errores (solo estrellas), así que el solape es menor.
+- **HUD-C4** ✅ Combo oculto en ×1 (ya lo hacía `Render.combo()`); verificado que no compite con "restantes" (el mult-chip queda junto al score degradado).
 
 ### HUD-A · Aventura (HUD adaptativo por objetivo)
 
@@ -127,19 +127,19 @@ Convención: `HUD-<letra><n>`. `X`=transversal, `T`=tutorial, `C`=clásico, `A`=
 - **HUD-A3** ⬜ Estado de jefe: durante el encuentro, el slot de objetivo pasa a **vida del jefe + fase + ataque próximo**; el resto de métricas se atenúan. (Ya hay cara de jefe; falta que domine y que las demás bajen de jerarquía.)
 - **HUD-A4** ⬜ Modificador de bioma como estado pasivo compacto (ya en `ModeSignals.noteHtml('aventura')`); verificar que no compite con el objetivo.
 
-### HUD-TA · Contrarreloj (tiempo = héroe)
+### HUD-TA · Contrarreloj (tiempo = héroe) ✅
 
-- **HUD-TA1** ⬜ Invertir jerarquía: **tiempo dominante y centrado**, puntuación a un lado. Hoy el tiempo es `.time-chip` (pequeño). Mover el tiempo al slot héroe en `mode-timed`.
-- **HUD-TA2** ⬜ Sin etiquetas "Tiempo"/"Puntos" tras los primeros segundos (lectura periférica).
-- **HUD-TA3** ⬜ Combo/fiebre en un único elemento (ya `#hud-mult` + `#combo`); verificar que al entrar en fiebre el componente **cambia de estado** en vez de aparecer uno nuevo.
-- **HUD-TA4** ⬜ Récord contextual: no permanente. Mostrar "A {n} del récord" al alcanzar ~80–90 %, y "¡Nuevo récord!" al superarlo (evento). Datos: `Storage.best`. Claves i18n `rec_close`, `rec_new`.
+- **HUD-TA1** ✅ **Tiempo dominante y centrado** vía héroe (`_heroInfo()` para modos `timed` → `{val: fmtTime(timeLeft)}`); score degradado. Se ocultó el `.time-chip` lateral (ya redundante).
+- **HUD-TA2** ✅ El héroe muestra el tiempo sin etiqueta "Tiempo"; el score degradado tampoco lleva etiqueta "Puntos".
+- **HUD-TA3** ✅ Combo/fiebre ya unificados en `#hud-mult` (GM-16); al entrar en fiebre el mismo chip cambia de estado. Sin elemento nuevo.
+- **HUD-TA4** ✅ Récord contextual: "¡Nuevo récord!" ya existía al superar `Storage.best`; **añadido** "A {n} del récord" al alcanzar el 85 %, una vez por partida, solo en modos `scoreAttack` (`State.recordNear`). El "Mejor" permanente se ocultó (`.score-meta` en hero-on). Claves i18n `rec_close`/`rec_new`.
 
-### HUD-D · Reto del día (siguiente medalla = progreso)
+### HUD-D · Reto del día (siguiente medalla = progreso) 🟡
 
-- **HUD-D1** ⬜ Explicación completa del reto **solo antes de jugar** (pre-partida). Durante la partida, reducir a etiqueta corta o eliminar.
-- **HUD-D2** ⬜ Sistema de medallas como **progreso a la siguiente** (no 3 medallas grandes): "🥈 1 120 / 1 500" + barra. Al conseguir: animación breve + el objetivo se transforma en la siguiente medalla. Datos: `Meta.dailyNextMedal()`, `ModeSignals.dailyNextMedalInfo()`, `Meta.DAILY_MEDALS`.
-- **HUD-D3** ⬜ "Primer intento · +N gemas" como intro efímera al inicio, no texto permanente. Dato: `Meta` (primer intento del día).
-- **HUD-D4** ⬜ Reutiliza HUD-TA (tiempo dominante) porque el Diario es Contrarreloj seedeado.
+- **HUD-D1** ⬜ *(Deferido)* Explicación completa solo pre-partida. Hoy el banner de identidad ("Combos = more time") sigue durante la partida; es breve y no cortado, así que baja prioridad.
+- **HUD-D2** ✅ Medalla como **progreso a la siguiente** en el héroe: `hero-sub` = "🥈 1 120 / 1 500" + `hero-bar` con fracción entre medalla previa y siguiente (`Meta.DAILY_MEDALS`). Sin fila de 3 medallas.
+- **HUD-D3** ⬜ *(Deferido)* "Primer intento · +N gemas" como intro efímera.
+- **HUD-D4** ✅ Reutiliza el héroe de HUD-TA (tiempo dominante) + la capa de medalla propia del Diario.
 
 ### HUD-S · Supervivencia (vidas > oleada > energía; reducir barras)
 
@@ -170,8 +170,8 @@ Orden por **impacto ÷ riesgo**. Fase 1 = quick wins autocontenidos (bajo riesgo
 | Fase | Tareas | Justificación |
 |---|---|---|
 | **F1 — Limpieza y quick wins** | HUD-T (✅), HUD-Z (🟡 Z1/Z3 hechos; Z2/Z4 deferidos), HUD-X1 (⬜) | Tutorial y Zen son los HUD que deben *quitar* cosas; cambios contenidos vía `body.mode-*` + CSS. Impacto inmediato, riesgo mínimo. **Estado: mayoritariamente completada.** |
-| **F2 — Métrica dominante por modo** | HUD-C1–C4, HUD-TA1–TA4, HUD-D1–D4, HUD-X3 | El corazón de la auditoría: "cada modo, una sola métrica dominante". Requiere el componente héroe reutilizable (HUD-X3). |
-| **F3 — Aventura adaptativa** | HUD-A1–A4 | Depende del componente héroe (F2) y de barras de progreso. |
+| **F2 — Métrica dominante por modo** ✅ | HUD-X3 ✅, HUD-C1/C4 ✅, HUD-TA (todo) ✅, HUD-D2/D4 ✅ | El corazón de la auditoría: "cada modo, una sola métrica dominante". Héroe reutilizable + Clásico/Contrarreloj/Diario. Sub-tareas menores deferidas (C2/C3, D1/D3). |
+| **F3 — Aventura adaptativa** | HUD-A1–A4 | Depende del componente héroe (F2, ✅) y de barras de progreso. |
 | **F4 — Supervivencia** | HUD-S1–S8, HUD-X2 | Mayor superficie; se hace al final con el sistema de slots ya maduro. |
 
 ---
@@ -262,6 +262,32 @@ Se añadirán en `I18n.DICT` (game.js) conforme se implementen. Lista viva:
 - Decisión pendiente (Z2): score sigue **atenuado** en vez de oculto-por-defecto; ocultarlo y re-mostrarlo al pausar/convergencia es más disruptivo y se difiere.
 
 **Verificación (Playwright, 390×844):** con tablero al 91–95 % → `occFillWarn/Danger=false`, `boardWarn/Danger=false`, `occLabel="Board"`, `scoreOpacity=0.55`, `combo display:none`; **0 errores**. Captura confirma tablero azul calmado, sin wallet ni barra de ocupación.
+
+### [HUD-X3 · HUD-C · HUD-TA · HUD-D] Fase 2: métrica dominante por modo — 2026-07-22 · v2.21.0
+
+**Qué se cambió:**
+- `index.html` · `.gscore`: nuevo bloque `#hud-hero` (`#hud-hero-val`, `#hud-hero-sub`, `#hud-hero-bar` + fill) antes de `.score-main`.
+- `game.js` · `Render.hud()`: al final llama `this.hero()`. Nuevos métodos `Render.hero()` (togglea `.gscore.hero-on`, puebla val/sub/bar/urgent) y `Render._heroInfo()` (resuelve la métrica dominante):
+  - `clasico` → `{val: iconCount, sub: "restantes", urgent: n≤5}`.
+  - `timed` (contrarreloj) → `{val: fmtTime(timeLeft), urgent: timePressure===2}`; si `isDaily`, añade `sub` "🥉/🥈/🥇 score / umbral" y `frac` de progreso entre medalla previa y siguiente.
+  - `aventura` → delega en `Adventure.heroInfo()` (aún no existe → null → score-héroe; se implementa en F3).
+  - `supervivencia`/`zen` → null (manda `score-main`).
+- `game.js` · convergencia (~L8660): añadido aviso "A {n} del récord" al 85 % (`State.recordNear`, una vez, solo `scoreAttack`). Nuevo flag `State.recordNear` (default + reset en `start()`).
+- `game.js` · `I18n.DICT` ES/EN: `hud_remaining`, `hud_survive_sub`, `hud_boss_sub`, `rec_close`, `rec_new`, `mult_breakdown_*` (estas últimas para F4).
+- `styles.css`: estilos `.hud-hero`/`.hero-val`/`.hero-sub`/`.hero-bar`/`.hero-bar-fill` + `@keyframes hero-pulse`; `.gscore.hero-on` degrada `.hud-value` (1rem) y oculta `.score-meta`; se ocultó `.time-chip` (el tiempo vive en el héroe).
+- `tests/pause-redesign.test.js`: el test de "versión de shell sincronizada" se hizo **versión-agnóstico** (deriva VERSION de game.js y exige que CACHE/`?v=` coincidan) — antes fijaba 2.19.2 y rompía en cada bump.
+
+**Hallazgos:**
+- `#hud-score` sigue siendo el mismo elemento (el count-up del loop lo escribe); el héroe **no** lo sustituye, solo lo degrada por CSS → sin conflicto con la animación.
+- Para el score-objetivo de Aventura (score IS el objetivo) el modelo del héroe encaja: `val` = "actual / target" (número distinto del `#hud-score` crudo), sin colisión. Se hará en F3.
+- El "Mejor puntuación" permanente desaparece en modos objetivo-héroe → el récord pasa a contextual (nudge al 85 % + "¡Nuevo récord!"), justo lo que pedía la auditoría.
+
+**Verificación (Playwright, 390×844, 0 errores):**
+- Clásico: héroe "12 LEFT" azul dominante, score "0 ×1" pequeño (16px), `.score-meta` oculto.
+- Contrarreloj: héroe "0:37" rosa, score "12 480" pequeño.
+- Diario: héroe "0:42", sub "🥈 1 120 / 1 500", barra a 49.3 %, score pequeño.
+- Supervivencia: héroe OFF, score grande (31.2px), `.score-meta` visible → **sin regresión**.
+- Clásico con combo ×3 y Supervivencia con combo: mult-chip legible junto al score. `node --test` 285/287 (2 preexistentes), `eslint` 0 errores.
 
 ### [Regresión] Modos normales intactos — 2026-07-22 · v2.20.0
 
