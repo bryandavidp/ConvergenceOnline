@@ -10,11 +10,11 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-require('./dom-stub.js');
+const { makeEl } = require('./dom-stub.js');
 require('../game.js');
 
 const cv = globalThis.window.__cv;
-const { Perf } = cv;
+const { Perf, Render } = cv;
 
 const css = fs.readFileSync(path.join(__dirname, '..', 'styles.css'), 'utf8');
 const gamejs = fs.readFileSync(path.join(__dirname, '..', 'game.js'), 'utf8');
@@ -61,6 +61,20 @@ test('RS-7: arranque conservador en táctil de alta densidad (dpr≥2)', () => {
   Perf.init();
   assert.equal(Perf.level, 0, 'escritorio arranca en nivel 0');
   window.devicePixelRatio = dprBak; navigator.maxTouchPoints = mtpBak;
+});
+
+test('RS-4: los pulsos de celda concurrentes se acotan (tope por nivel del gobernador)', () => {
+  Render.cells = Array.from({ length: 64 }, () => makeEl('div'));
+  // Nivel 0: tope 28. Una "cascada" de 64 celdas no debe promover más de 28 capas a la vez.
+  Perf.level = 0; Render._pulseActive = 0;
+  for (let i = 0; i < 64; i++) Render.cellPulse(i, 'bomb-cleared', 700);
+  assert.ok(Render._pulseActive <= 28, `nivel 0: ${Render._pulseActive} pulsos activos <= 28`);
+  assert.ok(Render._pulseActive >= 20, 'sí llega a pulsar un lote grande (no se queda corto)');
+  // Nivel 2 (gama baja / bajo presión): tope 10.
+  Perf.level = 2; Render._pulseActive = 0;
+  for (let i = 0; i < 64; i++) Render.cellPulse(i, 'bomb-cleared', 700);
+  assert.ok(Render._pulseActive <= 10, `nivel 2: ${Render._pulseActive} pulsos activos <= 10`);
+  Perf.level = 0; Render._pulseActive = 0;
 });
 
 test('RS-7: dispositivo de poca RAM arranca conservador aunque el dpr sea bajo', () => {

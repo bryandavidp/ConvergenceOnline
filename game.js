@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.26.0';
+  const VERSION = '2.27.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -1962,10 +1962,27 @@
       el.classList.remove('ice-hit', 'ice-shatter'); void el.offsetWidth; el.classList.add('ice-shatter');
       setTimeout(() => el.classList.remove('ice-shatter'), 520);
     },
+    // RS-4 (docs/RENDER_STABILITY_PLAN.md): tope de pulsos DECORATIVOS de celda simultáneos.
+    // En una cascada grande esto se llamaba decenas de veces (cleared.forEach): cada celda
+    // que anima promueve a una capa del compositor -> pico de memoria de GPU que en Android
+    // hi-dpi (Mi Pad 7) desaloja backing stores y las fichas parpadean a negro. El tope escala
+    // con el nivel del gobernador; pasado el tope se omite SOLO el adorno (el estado de la celda
+    // ya lo pinta syncCell/syncAll), invisible en cascadas enormes. Además el reflujo síncrono
+    // (`void offsetWidth`) solo se fuerza al RE-disparar sobre una celda que ya pulsa: en el
+    // camino común de cascada (celda nueva) se evita la tormenta de layout.
+    _pulseActive: 0,
+    _pulseCap() { const lvl = (Perf && typeof Perf.level === 'number') ? Perf.level : 0; return lvl >= 2 ? 10 : lvl >= 1 ? 18 : 28; },
     cellPulse(i, cls, ms = 700) {
       const el = this.cells[i]; if (!el) return;
-      el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
-      setTimeout(() => el.classList.remove(cls), ms);
+      const already = el.classList.contains(cls);
+      if (!already && this._pulseActive >= this._pulseCap()) return; // shed decoration under load
+      if (already) { el.classList.remove(cls); void el.offsetWidth; }
+      else this._pulseActive++;
+      el.classList.add(cls);
+      setTimeout(() => {
+        el.classList.remove(cls);
+        if (!already) this._pulseActive = Math.max(0, this._pulseActive - 1);
+      }, ms);
     },
     boardEvent(cls, ms = 900) {
       const w = document.querySelector('.board-wrap'); if (!w) return;
