@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.34.0';
+  const VERSION = '2.34.1';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -2815,20 +2815,7 @@
           icon: def.icon || 'skull', kind: 'bad', priority: 24, ms: 1900, idle: true,
         }, 'bad', 1900, def.icon, null, false);
       }
-      const every = Survival.tune().bossEvery;
-      let delta = (every - (Survival.wave % every)) % every;
-      if (!delta) delta = every;
-      const nextBoss = Survival.wave + delta;
-      const nextPool = (Math.floor((Survival.wave - 1) / Survival.tune().varEvery) + 1) * Survival.tune().varEvery + 1;
-      const best = Meta.survBestWaveFor(State.diff);
-      const items = [];
-      if (!Survival.bossNext && !(Bosses.enc && Bosses.enc.kind === 'boss')) {
-        items.push({ key: 'idle-next-boss', kicker: I18n.t('hud_event_next'), title: I18n.t('hud_next_boss'), detail: I18n.t('st_wave') + ' ' + nextBoss, icon: 'skull' });
-      }
-      items.push({ key: 'idle-next-pool', kicker: I18n.t('hud_event_next'), title: I18n.t('hud_new_shapes'), detail: I18n.t('st_wave') + ' ' + nextPool, icon: 'star' });
-      if (best > 0) items.push({ key: 'idle-best-wave', kicker: I18n.t('st_record'), title: I18n.t('surv_best_wave'), detail: String(best), icon: 'trophy' });
-      const item = items[this._idleIndex++ % items.length];
-      return this._normalize({ ...item, kind: 'info', priority: 20, ms: 2400, idle: true }, 'info', 2400, item.icon, null, false);
+      return null;
     },
     _scheduleIdle() {
       clearTimeout(this._idleTimer); this._idleTimer = 0;

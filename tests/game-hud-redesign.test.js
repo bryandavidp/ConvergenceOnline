@@ -209,6 +209,9 @@ test('HUD: el narrador y el feedback se emiten una vez por instancia de evento',
     Bosses.enc = { id: 'void', kind: 'boss', resolved: false };
     assert.equal(Toasts._idleItem().key, 'idle-boss-narrator-void',
       'una nueva instancia del mismo jefe si puede narrarse una vez');
+    Bosses.enc = null;
+    assert.equal(Toasts._idleItem(), null,
+      'sin encuentro de jefe activo _idleItem no debe generar notificaciones en bucle');
 
     let sounds = 0;
     Sound.danger = () => { sounds++; };
