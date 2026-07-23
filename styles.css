@@ -14276,6 +14276,266 @@ body.reduced-fx #modal-mode-launch { animation: none; }
   transform: none;
 }
 
+/* =========================================================================
+   Supervivencia — presentación compacta y ordenada (referencia 2026).
+   Override acotado a [data-mode="supervivencia"]: los demás modos conservan su
+   geometría fija. Flujo vertical con ritmo uniforme; el cuerpo desplaza en
+   móviles pequeños. Banner de "Semana especial" reubicado sobre "Cómo funciona".
+   ========================================================================= */
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3cqw;
+  padding-top: 2.4cqw;
+  padding-bottom: 3cqw;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-body > * { height: auto; margin: 0; }
+
+/* Ficha de sesión: 4 columnas iguales con divisores finos. */
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-session {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  padding: 2.5cqw 1cqw;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-session-item {
+  grid-template-columns: 6.4cqw minmax(0, 1fr);
+  gap: 1cqw;
+  padding: .2cqw 1.6cqw;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-session-item + .mode-session-item {
+  border-left: .16cqw solid rgba(120, 88, 205, .4);
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-session-item > span:first-child { width: 6.4cqw; height: 6.4cqw; }
+#modal-mode-launch[data-mode="supervivencia"] .mode-session-item img { width: 7.4cqw; height: 7.4cqw; }
+#modal-mode-launch[data-mode="supervivencia"] .mode-session-item small { font-size: clamp(8px, 1.82cqw, 11px); }
+#modal-mode-launch[data-mode="supervivencia"] .mode-session-item b {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+  font-size: clamp(9.5px, 2.1cqw, 13px);
+}
+
+/* Rango: una sola fila (escudo · nombre · barra · progreso · logros). */
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-progress-card { height: auto; min-height: 0; padding: 3.4cqw 3.4cqw; }
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-rank-layout {
+  display: flex;
+  align-items: center;
+  gap: 2.3cqw;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-rank-badge {
+  flex: 0 0 auto;
+  width: 10.4cqw;
+  height: 10.4cqw;
+  transform: none;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-rank-badge img { width: 132%; height: 132%; }
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-rank-name {
+  flex: 0 0 auto;
+  color: #c69bff;
+  font-size: 2.9cqw;
+  font-weight: 1000;
+  line-height: 1;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-rank-layout .mode-launch-progress-track {
+  flex: 1 1 auto;
+  height: 2.9cqw;
+  margin: 0;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-rank-layout .mode-launch-progress-track i {
+  background: linear-gradient(180deg, #c58bff, #8a44f0 58%, #6f2fd6);
+  box-shadow: 0 0 1.4cqw rgba(150, 90, 255, .72), inset 0 .3cqw 0 rgba(255, 255, 255, .42);
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-rank-total {
+  flex: 0 0 auto;
+  color: #dfe2ff;
+  font-size: 2.75cqw;
+  font-weight: 900;
+  white-space: nowrap;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-rank-feats {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 1cqw;
+  height: auto;
+  padding-left: 2.3cqw;
+  border-left: .16cqw solid rgba(120, 88, 205, .5);
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-rank-feats img { width: 6cqw; height: 6cqw; transform: none; }
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-rank-feats b {
+  color: #fff;
+  font-size: 2.72cqw;
+  font-weight: 1000;
+  white-space: nowrap;
+  transform: none;
+}
+
+/* Dificultad: tres tarjetas iguales, cara + etiqueta en una línea. */
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-choice-block { height: auto; min-height: 0; padding: 3cqw 2.8cqw 3.2cqw; }
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-choice-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2cqw;
+  height: auto;
+  margin-top: 2.8cqw;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-choice {
+  display: flex;
+  grid-template-columns: none;
+  grid-template-rows: none;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2cqw;
+  min-height: 0;
+  padding: 3.1cqw 1cqw;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-choice.is-selected {
+  height: auto;
+  align-self: auto;
+  padding: 3.1cqw 1cqw;
+  transform: none;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-choice .mode-launch-face {
+  flex: 0 0 auto;
+  width: 7.2cqw;
+  height: 7.2cqw;
+  transform: none;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-choice .mode-launch-face img { width: 10.4cqw; height: 10.4cqw; }
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-choice b {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 2.95cqw;
+  text-align: center;
+  transform: none;
+}
+
+/* Rasgos de la dificultad: una fila con divisores. */
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-traits { height: auto; min-height: 0; padding: 1.9cqw 1.05cqw; }
+
+/* Arsenal: cinco fichas compactas (icono + stock). */
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-loadout { height: auto; min-height: 0; padding: 3.1cqw 3cqw 3.2cqw; }
+.surv-loadout-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2cqw;
+  margin-bottom: 2.6cqw;
+}
+.surv-loadout-badge {
+  flex: 0 0 auto;
+  padding: .7cqw 2.3cqw;
+  color: #ffd24a;
+  font-size: 2.3cqw;
+  font-weight: 1000;
+  line-height: 1;
+  text-transform: uppercase;
+  border: .18cqw solid rgba(255, 197, 55, .55);
+  border-radius: 99px;
+  background: rgba(255, 197, 55, .1);
+}
+.surv-loadout-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1.7cqw;
+}
+.surv-loadout-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1cqw;
+  min-width: 0;
+  padding: 2cqw 1cqw 1.6cqw;
+  color: #cdd6ff;
+  border: .28cqw solid rgba(112, 60, 190, .58);
+  border-radius: 2.6cqw;
+  background: linear-gradient(160deg, rgba(38, 26, 96, .9), rgba(15, 13, 66, .95));
+  box-shadow: inset 0 .2cqw 0 rgba(255, 255, 255, .1), 0 .6cqw 1.2cqw rgba(0, 0, 0, .26);
+  cursor: pointer;
+}
+.surv-loadout-item:hover { filter: brightness(1.08); }
+.surv-loadout-item.is-selected {
+  border-color: #ffb52b;
+  box-shadow: 0 0 0 .2cqw #ff7b32, 0 0 2cqw rgba(255, 174, 38, .78), inset 0 .2cqw 0 rgba(255, 255, 255, .18);
+}
+.surv-loadout-item:focus-visible { outline: .42cqw solid #fff; outline-offset: .3cqw; }
+.surv-loadout-icon {
+  width: 10cqw;
+  height: 10cqw;
+  display: grid;
+  place-items: center;
+}
+.surv-loadout-icon img,
+.surv-loadout-icon .ic { width: 9.4cqw; height: 9.4cqw; max-width: none; object-fit: contain; }
+.surv-loadout-icon .icv2 { width: 8.2cqw; height: 8.2cqw; background-color: currentColor; }
+.surv-loadout-count {
+  color: #eef1ff;
+  font-size: 2.45cqw;
+  font-weight: 1000;
+  line-height: 1;
+}
+
+/* Cómo funciona: acordeón plegado por defecto. */
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-how-card { height: auto; min-height: 0; padding: 0; overflow: hidden; }
+.mode-launch-how-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 2cqw;
+  padding: 3.5cqw 3.3cqw;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.mode-launch-how-q {
+  flex: 0 0 auto;
+  width: 5.6cqw;
+  height: 5.6cqw;
+  display: grid;
+  place-items: center;
+  color: #c69bff;
+  font-size: 3.1cqw;
+  font-weight: 1000;
+  line-height: 1;
+  border: .2cqw solid rgba(150, 110, 240, .58);
+  border-radius: 50%;
+}
+.mode-launch-how-toggle h3 { flex: 1 1 auto; min-width: 0; }
+.mode-launch-how-caret {
+  flex: 0 0 auto;
+  width: 2.5cqw;
+  height: 2.5cqw;
+  border-right: .55cqw solid #b98eff;
+  border-bottom: .55cqw solid #b98eff;
+  border-radius: .2cqw;
+  transform: translateY(-.6cqw) rotate(45deg);
+  transition: transform .2s ease;
+}
+.mode-launch-how-collapsible.is-open .mode-launch-how-caret { transform: translateY(.4cqw) rotate(-135deg); }
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-how-grid {
+  display: none;
+  grid-template-columns: 1fr;
+  gap: 1.6cqw;
+  margin: 0;
+  padding: 0 3.3cqw 3cqw;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-how-collapsible.is-open .mode-launch-how-grid { display: grid; }
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-how-item,
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-how-item:nth-child(2),
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-how-item:nth-child(3) {
+  grid-template-columns: 8cqw minmax(0, 1fr);
+  align-items: center;
+  gap: 2.2cqw;
+}
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-how-item:nth-child(3) p { width: auto; }
+#modal-mode-launch[data-mode="supervivencia"] .mode-launch-how-item p > span { display: inline; }
 
 /* ===================== Player identity 2.9 ===================== */
 .player-avatar-shell {

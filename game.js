@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.30.0';
+  const VERSION = '2.31.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -885,13 +885,13 @@
         surv_diff_facil_d: '4 vidas · ritmo suave · monedas ×0.85', surv_diff_normal_d: '3 vidas · estándar · monedas ×1', surv_diff_dificil_d: '3 vidas · ritmo alto · monedas ×1.3',
         surv_launch_record: 'Récord: oleada {w}', surv_launch_norecord: 'Récord: —',
         mode_launch_close: 'Cerrar', mode_launch_back: 'Volver', mode_launch_details: 'Ver detalles', mode_launch_progress: 'Tu progreso', mode_launch_how: 'Cómo funciona', mode_launch_record: 'Récord', mode_launch_no_record: '—', mode_launch_plays: 'Partidas', mode_launch_level: 'Nivel', mode_launch_chapter: 'Capítulo', mode_launch_best: 'Mejor marca', mode_launch_worlds: 'Mundos', mode_launch_stars: 'Estrellas', mode_launch_next_boss: 'Próximo jefe', mode_launch_start_time: 'Tiempo inicial', mode_launch_time_cap: 'Tope de reloj', mode_launch_each_match: 'Cada convergencia', mode_launch_flowers: 'Flores', mode_launch_goal: 'Objetivo', mode_launch_pace: 'Ritmo',
-        session_title: 'Ficha de la sesión', session_duration: 'Duración estimada', session_save: 'Guardado', session_goal: 'Objetivo', session_entry: 'Entrada y premios', session_save_yes: 'Se puede retomar', session_save_no: 'Una sola sesión',
+        session_title: 'Ficha de la sesión', session_duration: 'Duración', session_save: 'Guardado', session_goal: 'Objetivo', session_entry: 'Entrada', session_save_yes: 'Se puede retomar', session_save_no: 'Una sesión',
         session_classic_duration: '3–6 min/nivel', session_classic_goal: 'Vacía el tablero', session_classic_entry: 'Gratis · boosters opcionales',
         session_adventure_duration: '4–7 min/nivel', session_adventure_goal: 'Cumple el objetivo', session_adventure_entry: 'Gratis · monedas y XP',
         session_timed_duration: '1–4 min', session_timed_goal: 'Máxima puntuación', session_timed_entry: 'Gratis · monedas y XP',
-        session_survival_duration: 'Sin límite', session_survival_goal: 'Aguanta las oleadas', session_survival_entry: 'Gratis · arsenal opcional',
+        session_survival_duration: 'Sin límite', session_survival_goal: 'Aguanta oleadas', session_survival_entry: 'Gratis',
         session_zen_duration: 'Sin límite', session_zen_goal: 'Juega a tu ritmo', session_zen_entry: 'Gratis · flores y colección',
-        ml_surv_tag: 'Oleadas infinitas ∞', ml_surv_weekly: 'Progreso semanal', ml_surv_choose: 'Elige dificultad', ml_surv_feats: 'Esta semana', ml_surv_how3: 'Pierdes una vida si el tablero se desborda.', ml_surv_week_none_title: 'Semana clásica', ml_surv_week_none_sub: 'Sin modificador', ml_surv_week_ice_title: 'Semana del hielo', ml_surv_week_ice_sub: 'Trampas heladas · monedas ×1.15', ml_surv_week_chaos_title: 'Semana del caos', ml_surv_week_chaos_sub: 'El terremoto ha vuelto', ml_surv_week_frenzy_title: 'Semana de la furia', ml_surv_week_frenzy_sub: 'Frenesí +30%',
+        ml_surv_tag: 'Oleadas infinitas ∞', ml_surv_weekly: 'Progreso semanal', ml_surv_special: 'Semana especial', ml_surv_choose: 'Dificultad', ml_surv_feats: 'Esta semana', ml_surv_how3: 'Pierdes una vida si el tablero se desborda.', ml_surv_week_none_title: 'Semana clásica', ml_surv_week_none_sub: 'Sin modificador', ml_surv_week_ice_title: 'Semana del hielo', ml_surv_week_ice_sub: 'Trampas heladas · monedas ×1.15', ml_surv_week_chaos_title: 'Semana del caos', ml_surv_week_chaos_sub: 'El terremoto ha vuelto', ml_surv_week_frenzy_title: 'Semana de la furia', ml_surv_week_frenzy_sub: 'Frenesí +30%',
         surv_loadout_title: 'Prepara tu arsenal', surv_loadout_sub: 'Elige hasta {n}. Usamos tu stock antes de cobrar monedas.', surv_loadout_count: '{n}/{max} equipados', surv_loadout_price: '{n} monedas', surv_loadout_none: 'Sin boosters: puedes jugar gratis y financiar la próxima preparación.', surv_loadout_uses_stock: '{n} del stock', surv_loadout_cost: '{n} monedas', surv_loadout_max: 'Máximo {n} boosters por partida', surv_start_empty: 'Empezar sin boosters', surv_start_stock: 'Empezar · usar {n} del stock', surv_start_cost: 'Empezar · {n} monedas',
         ml_classic_tag: 'Por niveles', ml_classic_world: 'Mundo actual', ml_classic_route: 'Tu partida', ml_classic_cta: 'Abrir mapa clásico', ml_classic_how1: 'Supera niveles y desbloquea mundos nuevos.', ml_classic_how2: 'Gana hasta 3 estrellas según tus errores.', ml_classic_how3: 'Cada mundo añade obstáculos y reglas propias.',
         ml_adv_tag: 'Viaje infinito', ml_adv_biome: 'Bioma actual', ml_adv_route: 'Tu expedición', ml_adv_cta: 'Continuar aventura', ml_adv_how1: 'Avanza por capítulos de cinco niveles.', ml_adv_how2: 'Cada bioma cambia objetivos y obstáculos.', ml_adv_how3: 'El último nivel de cada capítulo tiene mini-jefe.',
@@ -1271,13 +1271,13 @@
         surv_diff_facil_d: '4 lives · gentle pace · coins ×0.85', surv_diff_normal_d: '3 lives · standard · coins ×1', surv_diff_dificil_d: '3 lives · fast pace · coins ×1.3',
         surv_launch_record: 'Record: wave {w}', surv_launch_norecord: 'Record: —',
         mode_launch_close: 'Close', mode_launch_back: 'Back', mode_launch_details: 'View details', mode_launch_progress: 'Your progress', mode_launch_how: 'How it works', mode_launch_record: 'Record', mode_launch_no_record: '—', mode_launch_plays: 'Runs', mode_launch_level: 'Level', mode_launch_chapter: 'Chapter', mode_launch_best: 'Best score', mode_launch_worlds: 'Worlds', mode_launch_stars: 'Stars', mode_launch_next_boss: 'Next boss', mode_launch_start_time: 'Starting time', mode_launch_time_cap: 'Clock cap', mode_launch_each_match: 'Each convergence', mode_launch_flowers: 'Flowers', mode_launch_goal: 'Goal', mode_launch_pace: 'Pace',
-        session_title: 'Session brief', session_duration: 'Estimated duration', session_save: 'Save', session_goal: 'Goal', session_entry: 'Entry and rewards', session_save_yes: 'Can be resumed', session_save_no: 'Single session',
+        session_title: 'Session brief', session_duration: 'Duration', session_save: 'Save', session_goal: 'Goal', session_entry: 'Entry', session_save_yes: 'Can be resumed', session_save_no: 'One session',
         session_classic_duration: '3–6 min/level', session_classic_goal: 'Clear the board', session_classic_entry: 'Free · optional boosters',
         session_adventure_duration: '4–7 min/level', session_adventure_goal: 'Complete the goal', session_adventure_entry: 'Free · coins and XP',
         session_timed_duration: '1–4 min', session_timed_goal: 'Highest score', session_timed_entry: 'Free · coins and XP',
-        session_survival_duration: 'Unlimited', session_survival_goal: 'Survive the waves', session_survival_entry: 'Free · optional loadout',
+        session_survival_duration: 'No limit', session_survival_goal: 'Survive waves', session_survival_entry: 'Free',
         session_zen_duration: 'Unlimited', session_zen_goal: 'Play at your pace', session_zen_entry: 'Free · flowers and collection',
-        ml_surv_tag: 'Infinite waves ∞', ml_surv_weekly: 'Weekly progress', ml_surv_choose: 'Choose difficulty', ml_surv_feats: 'This week', ml_surv_how3: 'You lose one life if the board overflows.', ml_surv_week_none_title: 'Classic week', ml_surv_week_none_sub: 'No modifier', ml_surv_week_ice_title: 'Ice week', ml_surv_week_ice_sub: 'Frozen traps · coins ×1.15', ml_surv_week_chaos_title: 'Chaos week', ml_surv_week_chaos_sub: 'The quake is back', ml_surv_week_frenzy_title: 'Fury week', ml_surv_week_frenzy_sub: 'Frenzy +30%',
+        ml_surv_tag: 'Infinite waves ∞', ml_surv_weekly: 'Weekly progress', ml_surv_special: 'Special week', ml_surv_choose: 'Difficulty', ml_surv_feats: 'This week', ml_surv_how3: 'You lose one life if the board overflows.', ml_surv_week_none_title: 'Classic week', ml_surv_week_none_sub: 'No modifier', ml_surv_week_ice_title: 'Ice week', ml_surv_week_ice_sub: 'Frozen traps · coins ×1.15', ml_surv_week_chaos_title: 'Chaos week', ml_surv_week_chaos_sub: 'The quake is back', ml_surv_week_frenzy_title: 'Fury week', ml_surv_week_frenzy_sub: 'Frenzy +30%',
         surv_loadout_title: 'Prepare your loadout', surv_loadout_sub: 'Pick up to {n}. Stock is used before coins are charged.', surv_loadout_count: '{n}/{max} equipped', surv_loadout_price: '{n} coins', surv_loadout_none: 'No boosters: play for free and fund your next loadout.', surv_loadout_uses_stock: '{n} from stock', surv_loadout_cost: '{n} coins', surv_loadout_max: 'Maximum {n} boosters per run', surv_start_empty: 'Start without boosters', surv_start_stock: 'Start · use {n} from stock', surv_start_cost: 'Start · {n} coins',
         ml_classic_tag: 'Level based', ml_classic_world: 'Current world', ml_classic_route: 'Your game', ml_classic_cta: 'Open classic map', ml_classic_how1: 'Clear levels and unlock new worlds.', ml_classic_how2: 'Earn up to 3 stars based on your mistakes.', ml_classic_how3: 'Each world adds its own obstacles and rules.',
         ml_adv_tag: 'Endless journey', ml_adv_biome: 'Current biome', ml_adv_route: 'Your expedition', ml_adv_cta: 'Continue adventure', ml_adv_how1: 'Advance through five-level chapters.', ml_adv_how2: 'Each biome changes goals and obstacles.', ml_adv_how3: 'Every chapter ends with a mini-boss.',
@@ -10065,6 +10065,18 @@
     current: 'supervivencia',
     zenDiff: Config.DIFF_ORDER.includes(Storage.zenDiff) ? Storage.zenDiff : 'normal',
     survLoadout: {},
+    howOpen: false,
+
+    // Acordeón de "Cómo funciona": arranca plegado y alterna sin salir del panel.
+    toggleHow() {
+      this.howOpen = !this.howOpen;
+      Sound.ui();
+      this.renderBody();
+      requestAnimationFrame(() => {
+        const toggle = document.querySelector('[data-ml-how-toggle]');
+        if (toggle) toggle.focus({ preventScroll: true });
+      });
+    },
 
     img(src, cls = '') {
       return `<img${cls ? ` class="${cls}"` : ''} src="${src}" alt="">`;
@@ -10180,6 +10192,7 @@
         refreshStart();
       }
       this.current = mode;
+      this.howOpen = false;
       if (mode === 'supervivencia') {
         survDiff = Config.DIFF_ORDER.includes(Storage.survDiff) ? Storage.survDiff : 'normal';
         // Cada apertura empieza sin gasto preseleccionado. El jugador puede ver el
@@ -10271,29 +10284,18 @@
 
     survivalLoadoutHtml() {
       const ids = this.survivalLoadoutIds();
-      const quote = this.survivalLoadoutQuote() || { stock: [], purchased: [], coinCost: 0 };
       const items = Boosters.order.map((id) => {
         const selected = !!this.survLoadout[id];
         const stock = Meta.boosterCount(id);
-        const price = stock > 0
-          ? I18n.t('booster_stock').replace('{n}', stock)
-          : I18n.t('surv_loadout_price').replace('{n}', Config.BOOSTER_PRICES[id]);
-        return `<button type="button" class="surv-loadout-item${selected ? ' is-selected' : ''}${stock > 0 ? ' has-stock' : ''}" data-surv-booster="${id}" aria-pressed="${selected}">
+        const label = `${I18n.t('booster_name_' + id)} · ${stock > 0 ? I18n.t('booster_stock').replace('{n}', stock) : I18n.t('surv_loadout_price').replace('{n}', Config.BOOSTER_PRICES[id])}`;
+        return `<button type="button" class="surv-loadout-item${selected ? ' is-selected' : ''}${stock > 0 ? ' has-stock' : ''}" data-surv-booster="${id}" aria-pressed="${selected}" aria-label="${esc(label)}">
           <span class="surv-loadout-icon" aria-hidden="true">${BOOSTER_IMG[id] ? iconAnyInline(BOOSTER_IMG[id]) : Boosters.DEFS[id].glyph}</span>
-          <span class="surv-loadout-copy"><b>${esc(I18n.t('booster_name_' + id))}</b><small>${price}</small></span>
+          <small class="surv-loadout-count">×${fmtNum(stock)}</small>
         </button>`;
       }).join('');
-      let summary = I18n.t('surv_loadout_none');
-      if (ids.length) {
-        const parts = [];
-        if (quote.stock.length) parts.push(I18n.t('surv_loadout_uses_stock').replace('{n}', quote.stock.length));
-        if (quote.coinCost > 0) parts.push(I18n.t('surv_loadout_cost').replace('{n}', quote.coinCost));
-        summary = parts.join(' · ');
-      }
       return `<section class="mode-launch-card mode-launch-loadout" aria-labelledby="surv-loadout-title">
-        <div class="surv-loadout-head"><span><h3 id="surv-loadout-title">${esc(I18n.t('surv_loadout_title'))}</h3><small>${esc(I18n.t('surv_loadout_sub').replace('{n}', Config.SURVIVAL_LOADOUT_MAX))}</small></span><b>${esc(I18n.t('surv_loadout_count').replace('{n}', ids.length).replace('{max}', Config.SURVIVAL_LOADOUT_MAX))}</b></div>
+        <div class="surv-loadout-head"><h3 id="surv-loadout-title">${esc(I18n.t('surv_loadout_title'))}</h3><b class="surv-loadout-badge">${esc(I18n.t('surv_loadout_count').replace('{n}', ids.length).replace('{max}', Config.SURVIVAL_LOADOUT_MAX))}</b></div>
         <div class="surv-loadout-grid">${items}</div>
-        <p class="surv-loadout-summary">${esc(summary)}</p>
       </section>`;
     },
 
@@ -10346,10 +10348,6 @@
       const span = rank.nextAt ? rank.nextAt - rank.at : 1;
       const done = rank.nextAt ? rank.total - rank.at : 1;
       const pct = rank.nextAt ? clamp(done / span * 100, 0, 100) : 100;
-      const rankProgress = rank.nextAt
-        ? `${rank.total}/${target} ${I18n.t('card_feat_waves').toLowerCase()}`
-        : I18n.t('surv_rank_max');
-      const nextRank = rank.next ? I18n.t('srank_' + rank.next) : I18n.t('surv_rank_max');
       const feats = Meta.survFeatCount();
       const mut = Survival.weeklyMut();
       const mutId = ['none', 'ice', 'chaos', 'frenzy'].includes(mut.id) ? mut.id : 'none';
@@ -10362,32 +10360,26 @@
       const diffs = Config.DIFF_ORDER.map((diff) => {
         const selected = diff === survDiff;
         const record = Meta.survBestWaveFor(diff);
-        return `<button class="mode-launch-choice mode-launch-choice-${diff}${selected ? ' is-selected' : ''}" type="button" role="radio" aria-checked="${selected}" data-mode-option="${diff}">
+        const recordLabel = record > 0 ? I18n.t('surv_launch_record').replace('{w}', record) : I18n.t('surv_launch_norecord');
+        return `<button class="mode-launch-choice mode-launch-choice-${diff}${selected ? ' is-selected' : ''}" type="button" role="radio" aria-checked="${selected}" data-mode-option="${diff}" aria-label="${esc(I18n.t('diff_' + diff) + ' · ' + recordLabel)}">
           <span class="mode-launch-face" aria-hidden="true">${this.img(diffIcon[diff])}</span>
           <b>${esc(I18n.t('diff_' + diff))}</b>
-          <small>${record > 0 ? esc(I18n.t('surv_launch_record').replace('{w}', record)) : esc(I18n.t('surv_launch_norecord'))}</small>
         </button>`;
       }).join('');
       const traits = I18n.t('surv_diff_' + survDiff + '_d').split(' · ');
       const howLines = [I18n.t('surv_sys_charge'), I18n.t('surv_sys_frenzy'), I18n.t('ml_surv_how3')];
+      const rankTotal = rank.nextAt ? `${fmtNum(rank.total)}/${fmtNum(target)}` : I18n.t('surv_rank_max');
+      const howOpen = !!this.howOpen;
       return `
         <section class="mode-launch-card mode-launch-progress-card">
-          <h3>${esc(I18n.t('ml_surv_weekly'))}</h3>${this.infoButton()}
           <div class="mode-launch-rank-layout">
             <span class="mode-launch-rank-badge">${this.img('img/ui-generated/mode-launch/survival-rank.png')}</span>
-            <div class="mode-launch-rank-copy">
-              <div class="mode-launch-rank-line"><b>${esc(I18n.t('srank_' + rank.id))}</b><strong>${esc(rankProgress)}</strong></div>
-              <span class="mode-launch-progress-track"><i style="width:${pct.toFixed(1)}%"></i></span>
-              <small>${esc(nextRank)}</small>
-            </div>
-            <div class="mode-launch-feats">${this.img('img/ui-generated/mode-launch/medal.png')}<b>${feats}/${Survival.FEATS.length}</b><small>${esc(I18n.t('ml_surv_feats'))}</small></div>
+            <b class="mode-launch-rank-name">${esc(I18n.t('srank_' + rank.id))}</b>
+            <span class="mode-launch-progress-track"><i style="width:${pct.toFixed(1)}%"></i></span>
+            <strong class="mode-launch-rank-total">${esc(rankTotal)}</strong>
+            <span class="mode-launch-rank-feats">${this.img('img/ui-generated/mode-launch/medal.png')}<b>${feats}/${Survival.FEATS.length}</b></span>
           </div>
         </section>
-        <button class="mode-launch-card mode-launch-context-card" type="button" data-mode-detail="context" aria-label="${esc(`${I18n.t('mode_launch_details')}: ${I18n.t('ml_surv_week_' + mutId + '_title')}`)}">
-          <span class="mode-launch-calendar" aria-hidden="true">${this.img('img/ui-generated/mode-launch/calendar.png')}<b>${esc(day)}</b></span>
-          <span class="mode-launch-context-copy"><small>${esc(I18n.t('surv_week_label'))}</small><b>${esc(I18n.t('ml_surv_week_' + mutId + '_title'))}</b><span>${esc(I18n.t('ml_surv_week_' + mutId + '_sub'))}</span></span>
-          <span class="mode-launch-chevron" aria-hidden="true"></span>
-        </button>
         <section class="mode-launch-choice-block">
           <h3>${esc(I18n.t('ml_surv_choose'))}</h3>
           <div class="mode-launch-choice-grid" role="radiogroup" aria-label="${esc(I18n.t('ml_surv_choose'))}">${diffs}</div>
@@ -10398,8 +10390,17 @@
           ${this.metric('img/ui-generated/mode-launch/coin.png', traits[2] || '', '')}
         </div>
         ${this.survivalLoadoutHtml()}
-        <section class="mode-launch-card mode-launch-how-card">
-          <h3>${esc(I18n.t('mode_launch_how'))}</h3>${this.infoButton('how')}
+        <button class="mode-launch-card mode-launch-context-card" type="button" data-mode-detail="context" aria-label="${esc(`${I18n.t('mode_launch_details')}: ${I18n.t('ml_surv_week_' + mutId + '_title')}`)}">
+          <span class="mode-launch-calendar" aria-hidden="true">${this.img('img/ui-generated/mode-launch/calendar.png')}<b>${esc(day)}</b></span>
+          <span class="mode-launch-context-copy"><small>${esc(I18n.t('ml_surv_special'))}</small><b>${esc(I18n.t('ml_surv_week_' + mutId + '_title'))}</b><span>${esc(I18n.t('ml_surv_week_' + mutId + '_sub'))}</span></span>
+          <span class="mode-launch-chevron" aria-hidden="true"></span>
+        </button>
+        <section class="mode-launch-card mode-launch-how-card mode-launch-how-collapsible${howOpen ? ' is-open' : ''}">
+          <button class="mode-launch-how-toggle" type="button" data-ml-how-toggle aria-expanded="${howOpen}">
+            <span class="mode-launch-how-q" aria-hidden="true">?</span>
+            <h3>${esc(I18n.t('mode_launch_how'))}</h3>
+            <span class="mode-launch-how-caret" aria-hidden="true"></span>
+          </button>
           <div class="mode-launch-how-grid">
             ${this.howItem('img/ui-generated/mode-launch/bolt.png', howLines[0])}
             ${this.howItem('', howLines[1], 'ring')}
@@ -13636,6 +13637,7 @@
       if (detail) { ModeLaunch.openDetail(detail.dataset.modeDetail, detail); return; }
       const survBooster = e.target.closest('[data-surv-booster]');
       if (survBooster) { ModeLaunch.toggleSurvivalBooster(survBooster.dataset.survBooster); return; }
+      if (e.target.closest('[data-ml-how-toggle]')) { ModeLaunch.toggleHow(); return; }
       const option = e.target.closest('[data-mode-option]');
       if (option) { ModeLaunch.select(option.dataset.modeOption); return; }
       const el = e.target.closest('[data-act]'); if (!el) return;
