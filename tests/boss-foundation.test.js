@@ -571,12 +571,13 @@ test('JF-β: el banner se enciende con el encuentro y se apaga al resolverse', (
     assert.equal(document.querySelector('#surv-boss-hp').textContent, '◆'.repeat(e.anchorsLeft) + '◇'.repeat(e.anchorsMax - e.anchorsLeft));
     Bosses.resolve('retreat');
     Survival.render();
-    assert.equal(banner.hidden, false, 'banner persiste durante la retirada');
-    assert.ok(banner.classList.contains('resolved'));
+    const resCard = document.querySelector('#surv-boss-result');
+    assert.equal(resCard.hidden, false, 'card de resultado visible durante la retirada');
+    assert.ok(resCard.classList.contains('resolved'));
     Bosses.face.resolveUntil = globalThis.performance.now() - 1;
     Bosses.tick(16);
     Survival.render();
-    assert.equal(banner.hidden, true, 'banner apagado tras expirar la retirada');
+    assert.equal(resCard.hidden, true, 'card de resultado apagada tras expirar la retirada');
     assert.ok(!bar.classList.contains('encounter'));
   } finally { cleanup(); }
 });
@@ -624,14 +625,14 @@ test('BP-0: el banner persiste brevemente tras derrota y luego se apaga', () => 
     Survival.render();
     Bosses.resolve('defeat');
     Survival.render();
-    const banner = document.querySelector('#surv-boss');
-    assert.equal(banner.hidden, false, 'banner visible durante resolucion');
-    assert.ok(banner.classList.contains('resolved'));
-    assert.ok(document.querySelector('#surv-boss-next').textContent.includes(Bosses.name('frost')));
+    const resCard = document.querySelector('#surv-boss-result');
+    assert.equal(resCard.hidden, false, 'tarjeta dedicada de resultado visible durante resolucion');
+    assert.ok(resCard.classList.contains('resolved'));
+    assert.ok(document.querySelector('#surv-boss-result-name').textContent.includes(Bosses.name('frost')));
     Bosses.face.resolveUntil = globalThis.performance.now() - 1;
     Bosses.tick(16);
     Survival.render();
-    assert.equal(banner.hidden, true, 'banner apagado al terminar resolucion');
+    assert.equal(resCard.hidden, true, 'tarjeta dedicada de resultado apagada al terminar resolucion');
   } finally { cleanup(); }
 });
 

@@ -217,21 +217,33 @@
           <div class="surv-bar" id="surv-bar" hidden>
             <div class="surv-grid">
               <span class="surv-metric surv-life-box"><span class="surv-k">Vidas</span><span class="surv-lives" id="surv-lives" data-explain="hud_lives_explain">❤️❤️❤️</span></span>
-              <div class="surv-wave-wrap" id="surv-wave-wrap">
-                <span class="surv-wave-row"><span class="surv-wave" id="surv-wave" data-explain="hud_wave_explain">Oleada 1</span><span class="surv-tier" id="surv-tier" aria-label="Tier de dificultad" data-explain="hud_tier_explain">N1</span><span class="surv-boss-flag" id="surv-boss-flag" data-i18n="surv_boss_soon" hidden>⚠ Jefe</span></span>
-                <span class="surv-waveprog" aria-hidden="true" data-explain="hud_waveprog_explain"><span class="surv-waveprog-fill" id="surv-waveprog-fill"></span></span>
-              </div>
-              <!-- Banner del encuentro (JF-β): la cara del jefe, sustituye la oleada en la celda central durante el encuentro -->
-              <div class="surv-boss" id="surv-boss" hidden>
-                <span class="sbx-portrait" id="surv-boss-icon" aria-hidden="true"></span>
-                <div class="sbx-mid">
-                  <div class="sbx-head">
-                    <span class="sbx-name"><span id="surv-boss-name"></span><i class="sbx-lvl" id="surv-boss-lvl"></i></span>
-                    <span class="sbx-leave" id="surv-boss-leave" aria-label="Tiempo para abandonar"></span>
+              <!-- Visor de carrusel vertical del HUD central (Oleada / Jefe / Resultado) -->
+              <div class="surv-card-carousel" id="surv-card-carousel">
+                <!-- Card 1: Oleadas -->
+                <div class="surv-card surv-wave-wrap card-active" id="surv-wave-wrap">
+                  <span class="surv-wave-row"><span class="surv-wave" id="surv-wave" data-explain="hud_wave_explain">Oleada 1</span><span class="surv-tier" id="surv-tier" aria-label="Tier de dificultad" data-explain="hud_tier_explain">N1</span><span class="surv-boss-flag" id="surv-boss-flag" data-i18n="surv_boss_soon" hidden>⚠ Jefe</span></span>
+                  <span class="surv-waveprog" aria-hidden="true" data-explain="hud_waveprog_explain"><span class="surv-waveprog-fill" id="surv-waveprog-fill"></span></span>
+                </div>
+                <!-- Card 2: Jefe activo -->
+                <div class="surv-card surv-boss" id="surv-boss" hidden>
+                  <span class="sbx-portrait" id="surv-boss-icon" aria-hidden="true"></span>
+                  <div class="sbx-mid">
+                    <div class="sbx-head">
+                      <span class="sbx-name"><span id="surv-boss-name"></span><i class="sbx-lvl" id="surv-boss-lvl"></i></span>
+                      <span class="sbx-leave" id="surv-boss-leave" aria-label="Tiempo para abandonar"></span>
+                    </div>
+                    <div class="sbx-sub">
+                      <span class="sbx-hp" id="surv-boss-hp"></span>
+                      <span class="sbx-next" id="surv-boss-next" aria-hidden="true"></span>
+                    </div>
                   </div>
-                  <div class="sbx-sub">
-                    <span class="sbx-hp" id="surv-boss-hp"></span>
-                    <span class="sbx-next" id="surv-boss-next" aria-hidden="true"></span>
+                </div>
+                <!-- Card 3: Tarjeta dedicada de resultado del encuentro (Derrotado / Retirado) -->
+                <div class="surv-card surv-boss-result" id="surv-boss-result" hidden>
+                  <span class="sbx-result-icon" id="surv-boss-result-icon" aria-hidden="true">👑</span>
+                  <div class="sbx-result-mid">
+                    <span class="sbx-result-title" id="surv-boss-result-title"></span>
+                    <span class="sbx-result-name" id="surv-boss-result-name"></span>
                   </div>
                 </div>
               </div>
