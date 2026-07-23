@@ -2789,9 +2789,7 @@ body.mode-surv .mult-bd { top: auto; bottom: calc(100% + 8px); }
   padding-top: 4px;
   border-top: 1px solid rgba(145,172,255,.14);
 }
-.surv-metric,
-.surv-wave-wrap,
-.surv-boss {
+.surv-metric {
   min-height: 48px;
   padding: 6px 8px;
   border: 1px solid color-mix(in srgb, var(--hud-accent) 28%, rgba(124,151,232,.24));
@@ -2805,12 +2803,125 @@ body.mode-surv .mult-bd { top: auto; bottom: calc(100% + 8px); }
 .surv-lives .ic { width: 16px; height: 16px; filter: drop-shadow(0 0 5px rgba(255,72,112,.45)); }
 .surv-time-box { align-items: center; }
 .surv-time { color: #9c77ff; font-size: 1rem; font-weight: 1000; font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 0 10px rgba(156,119,255,.34); }
+
+/* Mazo / Carrusel vertical de tarjetas (.surv-center-deck / .surv-card-carousel) */
+.surv-center-deck,
+.surv-card-carousel {
+  position: relative;
+  width: 100%;
+  height: 48px;
+  min-height: 48px;
+  overflow: hidden;
+  border-radius: var(--hud-radius-card);
+}
+.surv-card {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--hud-accent) 28%, rgba(124,151,232,.24));
+  border-radius: var(--hud-radius-card);
+  background: linear-gradient(180deg, rgba(28,43,96,.74), rgba(6,12,35,.82));
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.08), inset 0 -2px 4px rgba(0,0,0,.30), 0 2px 0 rgba(3,7,25,.48);
+  opacity: 0;
+  transform: translateY(100%);
+  pointer-events: none;
+  visibility: hidden;
+  transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s ease, border-color 0.3s ease;
+}
+body.reduced-fx .surv-card { transition: none; }
+.surv-card.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+  z-index: 2;
+}
+.surv-card.exit-up {
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+  visibility: hidden;
+  z-index: 1;
+}
+.surv-card.enter-down {
+  opacity: 0;
+  transform: translateY(100%);
+  pointer-events: none;
+  visibility: hidden;
+  z-index: 1;
+}
+
 .surv-wave-wrap { display: grid; grid-template-rows: auto auto; align-items: center; gap: 6px; width: 100%; }
 .surv-wave-row { display: flex; justify-content: center; align-items: center; gap: 7px; min-width: 0; }
 .surv-wave { color: #f3f5ff; font-size: .88rem; font-weight: 1000; white-space: nowrap; }
 .surv-tier { height: 18px; display: inline-flex; align-items: center; color: #06122b; background: var(--gold); font-size: .62rem; font-weight: 1000; padding: 0 7px; }
 .surv-waveprog { width: 100%; height: 7px; background: rgba(2,7,22,.72); box-shadow: inset 0 1px 2px rgba(0,0,0,.5); }
 .surv-waveprog-fill { background: linear-gradient(90deg, #ffdc55, #ffb337); box-shadow: 0 0 8px rgba(255,202,63,.30); }
+
+/* Tarjeta dedicada de resultado del encuentro (Derrotado / Retirado) */
+.surv-boss-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 4px 8px;
+  border: 1px solid color-mix(in srgb, var(--boss-accent, var(--gold)) 70%, rgba(255,255,255,.18));
+  border-radius: var(--hud-radius-card);
+  background: radial-gradient(circle at 18% 50%, color-mix(in srgb, var(--boss-accent, var(--gold)) 32%, transparent), transparent 70%), linear-gradient(180deg, rgba(28,43,96,.88), rgba(6,12,35,.94));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 0 16px color-mix(in srgb, var(--boss-accent, var(--gold)) 28%, transparent);
+}
+.surv-boss-result.defeated {
+  --boss-accent: var(--gold);
+  border-color: #ffd84d;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 0 20px rgba(255,216,77,.45);
+}
+.surv-boss-result.retreating {
+  --boss-accent: #a0aab8;
+  border-color: rgba(160,170,184,.45);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 0 10px rgba(160,170,184,.2);
+}
+.sbx-result-icon {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.12);
+  display: grid;
+  place-items: center;
+  font-size: 1.15rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.2);
+}
+.sbx-result-mid {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  min-width: 0;
+}
+.sbx-result-title {
+  color: #fff;
+  font-size: .8rem;
+  font-weight: 1000;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 4px rgba(0,0,0,.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sbx-result-name {
+  color: rgba(235, 242, 255, 0.82);
+  font-size: .68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ===== Sistema de jefes (JF-β, docs/BOSS_SYSTEM_MASTER_PLAN.md §5) =====
    Banner del encuentro: sustituye a .surv-wave-wrap en la columna central de .surv-grid.
    Solo existe durante el encuentro (hidden fuera: coste cero). El acento
@@ -2822,8 +2933,58 @@ body.mode-surv .mult-bd { top: auto; bottom: calc(100% + 8px); }
     color-mix(in srgb, var(--boss-accent, var(--accent-2)) 28%, rgba(28,43,96,.82)),
     rgba(6,12,35,.88));
   box-shadow: inset 0 2px 0 rgba(255,255,255,.11), inset 0 -2px 4px rgba(0,0,0,.30), 0 2px 0 color-mix(in srgb, var(--boss-accent, var(--accent-2)) 24%, #020617);
-  animation: chipPop .24s ease both;
   width: 100%; min-width: 0; box-sizing: border-box; }
+
+/* Card dedicada de Resultado de Jefe (JF-β): visualización limpia al derrotar o al huir */
+.surv-boss-result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 4px 10px;
+  border-color: color-mix(in srgb, var(--boss-accent, var(--gold)) 70%, rgba(255,255,255,.2));
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--boss-accent, var(--gold)) 32%, rgba(28,43,96,.9)),
+    rgba(6,12,35,.92));
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.14), 0 0 16px color-mix(in srgb, var(--boss-accent, var(--gold)) 30%, transparent);
+}
+.surv-boss-result.defeated {
+  --boss-accent: #ffd24d;
+}
+.surv-boss-result.retreating {
+  --boss-accent: #94e8ff;
+}
+.sbx-result-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,.5));
+}
+.sbx-result-mid {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.15;
+  min-width: 0;
+}
+.sbx-result-title {
+  font-size: .82rem;
+  font-weight: 1000;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--boss-accent, var(--gold));
+  text-shadow: 0 0 10px color-mix(in srgb, var(--boss-accent, var(--gold)) 50%, transparent);
+}
+.sbx-result-name {
+  font-size: .7rem;
+  color: rgba(255, 255, 255, 0.88);
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 body.reduced-fx .surv-boss { animation: none; }
 .sbx-portrait { width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; border-radius: 50%; overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--boss-accent, var(--accent-2)) 70%, rgba(255,255,255,.18));

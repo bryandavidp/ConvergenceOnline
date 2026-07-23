@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.33.0';
+  const VERSION = '2.34.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -6887,23 +6887,64 @@
       // Banner del encuentro (JF-β): la cara del jefe ENCIMA de vidas/oleada/tiempo.
       // Diffing por firma (id|nivel|fase|PV|segundos|telegraph): 1 escritura DOM por
       // cambio y la cuenta atrás solo re-escribe al cambiar el segundo (§5.6).
-      const enc = Bosses.enc || Bosses.face;
-      if (r.encOn !== !!enc) {
-        r.encOn = !!enc; r.encSig = ''; r.encIcon = '';
-        const sb2 = $('#surv-bar'); if (sb2) sb2.classList.toggle('encounter', !!enc);
-        const eb = $('#surv-boss');
-        if (eb) { eb.hidden = !enc; if (!enc) eb.classList.remove('phase2', 'lvl-high', 'resolved', 'defeated', 'retreating'); }
-        const ww = $('#surv-wave-wrap'); if (ww) ww.hidden = !!enc;
+      // Banner del encuentro y Carrusel vertical de tarjetas (JF-β):
+      // Conmuta suavemente entre Oleadas -> Jefe activo -> Resultado dedicado -> Oleadas
+      const activeEnc = Bosses.enc;
+      const faceEnc = Bosses.face;
+      const cardState = activeEnc ? 'boss' : (faceEnc ? 'result' : 'wave');
+
+      if (r.cardState !== cardState) {
+        r.cardState = cardState;
+        r.encSig = ''; r.encIcon = '';
+        const sb2 = $('#surv-bar'); if (sb2) sb2.classList.toggle('encounter', !!activeEnc || !!faceEnc);
+
+        const setCardStatus = (el, st) => {
+          if (!el) return;
+          if (st === 'active') {
+            el.hidden = false;
+            void el.offsetWidth;
+            el.classList.remove('exit-up', 'enter-down');
+            el.classList.add('active');
+          } else if (st === 'exit-up') {
+            el.classList.remove('active', 'enter-down');
+            el.classList.add('exit-up');
+            el.hidden = true;
+          } else if (st === 'enter-down') {
+            el.classList.remove('active', 'exit-up');
+            el.classList.add('enter-down');
+            el.hidden = true;
+          }
+        };
+
+        const waveCard = $('#surv-wave-wrap');
+        const bossCard = $('#surv-boss');
+        const resCard = $('#surv-boss-result');
+
+        if (cardState === 'boss') {
+          setCardStatus(waveCard, 'exit-up');
+          setCardStatus(resCard, 'enter-down');
+          setCardStatus(bossCard, 'active');
+        } else if (cardState === 'result') {
+          setCardStatus(bossCard, 'exit-up');
+          setCardStatus(waveCard, 'enter-down');
+          setCardStatus(resCard, 'active');
+        } else {
+          setCardStatus(bossCard, 'exit-up');
+          setCardStatus(resCard, 'exit-up');
+          setCardStatus(waveCard, 'active');
+        }
       }
-      if (enc) {
+
+      if (activeEnc) {
+        const enc = activeEnc;
         const mini = enc.kind === 'mini';
         const def = (mini ? Bosses.MINIDEX[enc.id] : Bosses.DEX[enc.id]) || {};
         // Jefes: cuenta atrás del ataque · minijefes: tiempo que les queda en el tablero.
-        const secs = enc.resolved ? 0 : mini
+        const secs = mini
           ? Math.max(0, Math.ceil((enc.durMs - enc.ms) / 1000))
           : Math.max(0, Math.ceil((enc.attackEvery - enc.atkAcc) / 1000));
-        const leaveSecs = enc.resolved ? 0 : Math.max(0, Math.ceil((enc.durMs - enc.ms) / 1000));
-        const sig = enc.id + '|' + enc.lvl + '|' + enc.phase + '|' + enc.anchorsLeft + '|' + secs + '|' + leaveSecs + '|' + (enc.telegraphed ? 1 : 0) + '|' + (enc.resolved || '') + '|' + (enc.resolveLabel || '');
+        const leaveSecs = Math.max(0, Math.ceil((enc.durMs - enc.ms) / 1000));
+        const sig = enc.id + '|' + enc.lvl + '|' + enc.phase + '|' + enc.anchorsLeft + '|' + secs + '|' + leaveSecs + '|' + (enc.telegraphed ? 1 : 0);
         if (r.encSig !== sig) {
           r.encSig = sig;
           const eb = $('#surv-boss');
@@ -6911,9 +6952,6 @@
             eb.classList.toggle('mini', mini);
             eb.classList.toggle('phase2', enc.phase > 1);
             eb.classList.toggle('lvl-high', !mini && enc.lvl >= 3);
-            eb.classList.toggle('resolved', !!enc.resolved);
-            eb.classList.toggle('defeated', enc.resolved === 'defeat');
-            eb.classList.toggle('retreating', enc.resolved === 'retreat');
           }
           if (r.encIcon !== enc.id) {
             r.encIcon = enc.id;
@@ -6928,17 +6966,12 @@
           }
           const nx = $('#surv-boss-next');
           if (nx) {
-            nx.textContent = enc.resolved
-              ? enc.resolveLabel
-              : (mini ? ((def.atkIcon || '⚠') + ' ' + secs + 's') : (Bosses.atkName(enc) + ' ' + secs + 's'));
+            nx.textContent = mini ? ((def.atkIcon || '⚠') + ' ' + secs + 's') : (Bosses.atkName(enc) + ' ' + secs + 's');
             nx.classList.toggle('telegraph', !!enc.telegraphed);
-            nx.classList.toggle('resolved', !!enc.resolved);
-            nx.classList.toggle('defeated', enc.resolved === 'defeat');
-            nx.classList.toggle('retreating', enc.resolved === 'retreat');
           }
           const blv = $('#surv-boss-leave');
           if (blv) {
-            blv.textContent = enc.resolved ? '' : I18n.t('surv_boss_leave').replace('{s}', leaveSecs);
+            blv.textContent = I18n.t('surv_boss_leave').replace('{s}', leaveSecs);
           }
         }
       }
@@ -7397,19 +7430,44 @@
       }
     },
     _setResolveFace(e, outcome) {
-      const defeat = outcome === 'defeat';
+      const defeat = outcome === 'defeat' || outcome === 'miniKill';
+      const def = (e.kind === 'mini' ? this.MINIDEX[e.id] : this.DEX[e.id]) || {};
+      const name = e.kind === 'mini' ? this.miniName(e.id) : this.name(e.id);
       this.face = {
-        id: e.id, lvl: e.lvl, kind: 'boss', phase: e.phase,
+        id: e.id, lvl: e.lvl, kind: e.kind || 'boss', phase: e.phase,
         anchorsMax: e.anchorsMax,
         anchorsLeft: defeat ? 0 : Math.max(0, e.anchorsLeft || 0),
         resolved: outcome,
-        resolveLabel: (defeat ? I18n.t('surv_boss_defeated') : I18n.t('surv_boss_retreat')).replace('{b}', this.name(e.id)),
+        resolveLabel: (defeat ? I18n.t('surv_boss_defeated') : I18n.t('surv_boss_retreat')).replace('{b}', name),
         resolveUntil: performance.now() + this.RESOLVE_FACE_MS,
-        attackEvery: e.attackEvery || ((this.DEX[e.id] || {}).attackMs || 12000),
+        attackEvery: e.attackEvery || (def.attackMs || 12000),
         atkAcc: 0,
         telegraphed: false,
       };
-      Render.hudSoon();
+
+      const resCard = $('#surv-boss-result');
+      if (resCard) {
+        resCard.classList.add('resolved');
+        resCard.classList.toggle('defeated', defeat);
+        resCard.classList.toggle('retreating', !defeat);
+      }
+      const iconEl = $('#surv-boss-result-icon');
+      if (iconEl) {
+        iconEl.textContent = defeat ? (def.icon || '👑') : '💨';
+      }
+      const titleEl = $('#surv-boss-result-title');
+      if (titleEl) {
+        titleEl.textContent = defeat
+          ? I18n.t('surv_boss_defeated').replace('{b}', '').trim()
+          : I18n.t('surv_boss_retreat').replace('{b}', '').trim();
+      }
+      const nameEl = $('#surv-boss-result-name');
+      if (nameEl) {
+        nameEl.textContent = name + (e.lvl > 1 ? ' · Niv. ' + e.lvl : '');
+      }
+      const eb = $('#surv-boss');
+      if (eb) eb.classList.add('resolved');
+      Survival.render();
     },
     resolve(outcome) {
       const e = this.enc; if (!e) return;
@@ -7551,10 +7609,8 @@
     // Apaga la presencia visual del jefe (banner, tinte del panel, acento global).
     _faceOff() {
       this.face = null;
-      const el = $('#surv-boss'); if (el) { el.hidden = true; el.classList.remove('mini', 'phase2', 'lvl-high', 'resolved', 'defeated', 'retreating'); }
-      const ww = $('#surv-wave-wrap'); if (ww) ww.hidden = false;
-      const sb = $('#surv-bar'); if (sb) sb.classList.remove('encounter');
       document.documentElement.style.removeProperty('--boss-accent');
+      Survival.render();
     },
     // ---- Ataques (JF-α: plomería con números provisionales; JF-γ los somete a B-J3).
     // Todos siguen el patrón de la marea (GM-20): objetivos elegidos al telegrafiar,
