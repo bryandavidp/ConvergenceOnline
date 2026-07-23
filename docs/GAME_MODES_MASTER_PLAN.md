@@ -458,6 +458,14 @@ Orden pensado para: valor visible temprano, dependencias respetadas, y cero camb
 - **Simulador**: batería v2.4.0 — Clásico y Zen idénticos bit a bit (control ✅); Contrarreloj +2–11% (cápsula, esperado); limitación documentada: los efectos diferidos por `setTimeout` de los eventos jefe (marea/quake) no se ejecutan dentro del bucle síncrono del sim.
 - i18n nuevas (ES+EN): marea (2), mutador semanal (3), mutador diario (14), racha/calendario (2), cápsula (1), jefe de Aventura (7), expedición (1), jardín (2), `board_excl`.
 
+### 2026-07-23 — Bugs de tablero reportados: carreras del mismo tick (v2.37.0)
+
+- **B-10 (celdas calientes):** `Engine.noteHot` marca las celdas de cada eliminación (convergencia + punto tocado, bombas/objetos, despejes suaves); `spawnOne` las evita 450 ms si hay alternativa fría. Elimina la ilusión "mi icono no se eliminó / reapareció en su casilla" sin cambiar overflow ni conteos.
+- **B-12 (relleno legible):** el relleno post-tablero-limpio entra en cascada radial retardada (`Render.refillAnim`, 320 ms base tras el aterrizaje del vuelo de convergencia) con gesto propio, y el popup del bonus espera 240 ms: causalidad visible "convergió → tablero limpio → bonus → relleno". Con `reduced-fx` todo es instantáneo como antes.
+- **B-11:** cinturón anti-glifo-fantasma en `Render.clearAnim` sin target (si `animationend` no llega, limpieza idempotente a los 480 ms).
+- **Guardarraíl recalibrado**: 52964 → 29292. Dos causas sumadas: (1) deriva acumulada de merges previos sin recalibrar (el p50 real de esta base ya era 33420, a un 5% del borde de la banda); (2) el desplazamiento del stream de celdas del fix mueve cada partida seedeada de trayectoria — efecto medio real ≲5% (101 runs/config: 27758 vs 29226, ≈1.1 SEM). Medallas del reto (750/1500/2500) sin cambios: el fix solo desplaza QUÉ celda recibe un spawn durante 450 ms.
+- **Método:** QA en vivo con agentes (invariant-sim con timers falsos: 180 partidas, 0 roturas de invariantes; live-probe Playwright: ~1300 acciones reales, 0 desyncs DOM↔State) + probe de métrica de carrera que confirmó el respawn idéntico a 7–11 ms. Detalle en `QA_PERF_PLAN.md` §2.1 (B-10…B-13).
+
 ### 2026-07-18 — Flujo de sesión y economía de boosters implementados (v2.7.1)
 
 - **Economía de boosters:** se eliminan las 10 unidades gratuitas de cada intento de Supervivencia. El lanzador permite
