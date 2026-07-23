@@ -2,6 +2,8 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 require('./dom-stub.js');
 require('../game.js');
@@ -112,12 +114,48 @@ test('Survival: offerBoons despliega el tutorial boss_boons la primera vez y eje
   }
 });
 
+test('BossCoach: aceptar bendiciones abre el selector y aplica la variante visual correcta', () => {
+  freshRun(6);
+  try {
+    let pickerOpened = false;
+    const originalOpen = cv.Picker.open;
+    cv.Picker.open = () => { pickerOpened = true; };
+
+    Survival.offerBoons();
+    assert.equal(document.querySelector('#boss-coach').dataset.tutorial, 'boons');
+    assert.equal(document.querySelector('#boss-coach').getAttribute('aria-labelledby'), 'boss-coach-boons-title');
+    BossCoach.accept();
+    assert.equal(pickerOpened, true, 'el selector real se abre al aceptar el tutorial');
+
+    cv.Picker.open = originalOpen;
+  } finally {
+    cleanup();
+  }
+});
+
+test('BossCoach: bendiciones mantiene título/texto en flujo y el 2× dentro de una tarjeta del mismo tamaño', () => {
+  const root = path.join(__dirname, '..');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+
+  assert.match(html, /<div class="boss-coach-boons-copy">[\s\S]*?<\/div>\s*<div class="boss-coach-boon-list">/);
+  assert.match(html, /<span><i class="boss-coach-score-icon" aria-hidden="true">2×<\/i><\/span>/);
+  assert.match(css, /\.boss-coach-boon-list\s*\{\s*grid-area:\s*list;/);
+  assert.doesNotMatch(css, /\.boss-coach-boons-copy\s*\{\s*display:\s*contents;/);
+});
+
 test('I18n: todas las claves de BossCoach y anclas blindadas existen en ES y EN', () => {
   const keys = [
     'bosstut_boss_intro_title', 'bosstut_boss_intro_body',
+    'bosstut_boss_intro_panel', 'bosstut_boss_intro_detail1_title', 'bosstut_boss_intro_detail1_body',
+    'bosstut_boss_intro_detail2_title', 'bosstut_boss_intro_detail2_body', 'bosstut_boss_intro_tip_title', 'bosstut_boss_intro_tip_body',
     'bosstut_boss_armored_title', 'bosstut_boss_armored_body',
+    'bosstut_boss_armored_panel', 'bosstut_boss_armored_detail1_title', 'bosstut_boss_armored_detail1_body',
+    'bosstut_boss_armored_detail2_title', 'bosstut_boss_armored_detail2_body', 'bosstut_boss_armored_tip_title', 'bosstut_boss_armored_tip_body',
     'bosstut_boss_phase2_title', 'bosstut_boss_phase2_body',
-    'bosstut_boss_boons_title', 'bosstut_boss_boons_body',
+    'bosstut_boss_phase2_panel', 'bosstut_boss_phase2_detail1_title', 'bosstut_boss_phase2_detail1_body',
+    'bosstut_boss_phase2_detail2_title', 'bosstut_boss_phase2_detail2_body', 'bosstut_boss_phase2_tip_title', 'bosstut_boss_phase2_tip_body',
+    'bosstut_boss_boons_title', 'bosstut_boss_boons_body', 'bosstut_boss_boons_tip',
     'surv_armored_hint', 'surv_armored_broken',
   ];
   for (const k of keys) {

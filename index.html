@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.36.0" />
+  <link rel="stylesheet" href="styles.css?v=2.37.1" />
 </head>
 <body data-screen="login">
   <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
@@ -353,16 +353,95 @@
         <button class="btn btn-ghost coach-skip" id="coach-skip" data-i18n="coach_skip">Saltar tutorial</button>
       </div>
 
-      <!-- Tutorial interactivo de Jefes: overlay contextual para mecánicas de jefe -->
-      <div class="boss-coach" id="boss-coach" hidden role="dialog" aria-modal="true" aria-labelledby="boss-coach-title">
+      <!-- Tutoriales de jefe: aparecen una sola vez y pausan la partida. -->
+      <div class="boss-coach" id="boss-coach" hidden role="dialog" aria-modal="true" aria-labelledby="boss-coach-title" aria-describedby="boss-coach-text">
         <div class="boss-coach-card">
-          <div class="boss-coach-head">
-            <span class="boss-coach-icon" id="boss-coach-icon" aria-hidden="true">🛡️</span>
-            <strong class="boss-coach-title" id="boss-coach-title"></strong>
+          <span class="boss-coach-spark boss-coach-spark-a" aria-hidden="true">✦</span>
+          <span class="boss-coach-spark boss-coach-spark-b" aria-hidden="true">✦</span>
+
+          <div class="boss-coach-frame">
+            <div class="boss-coach-standard">
+              <div class="boss-coach-portrait" aria-hidden="true">
+                <span class="boss-coach-portrait-ring"></span>
+                <img decoding="async" src="img/ui-generated/boss-coach/boss-portrait.webp" alt="">
+                <span class="boss-coach-icon" id="boss-coach-icon">🛡️</span>
+              </div>
+
+              <header class="boss-coach-head">
+                <strong class="boss-coach-title" id="boss-coach-title"></strong>
+                <span class="boss-coach-title-rule" aria-hidden="true"><i></i></span>
+              </header>
+
+              <section class="boss-coach-copy">
+                <p class="boss-coach-text" id="boss-coach-text" aria-live="polite"></p>
+                <div class="boss-coach-tip">
+                  <span class="boss-coach-tip-icon" aria-hidden="true">★</span>
+                  <p><b id="boss-coach-tip-title"></b><span id="boss-coach-tip-text"></span></p>
+                </div>
+              </section>
+
+              <aside class="boss-coach-details" aria-labelledby="boss-coach-details-label">
+                <b class="boss-coach-details-label" id="boss-coach-details-label"></b>
+                <div class="boss-coach-detail">
+                  <span class="boss-coach-detail-icon" id="boss-coach-detail-icon-1" aria-hidden="true"></span>
+                  <p><b id="boss-coach-detail-title-1"></b><span id="boss-coach-detail-text-1"></span></p>
+                </div>
+                <div class="boss-coach-detail">
+                  <span class="boss-coach-detail-icon" id="boss-coach-detail-icon-2" aria-hidden="true"></span>
+                  <p><b id="boss-coach-detail-title-2"></b><span id="boss-coach-detail-text-2"></span></p>
+                </div>
+              </aside>
+            </div>
+
+            <div class="boss-coach-boons" aria-hidden="true">
+              <div class="boss-coach-trophy" aria-hidden="true">
+                <span class="boss-coach-trophy-glow"></span>
+                <img decoding="async" src="img/ui-generated/home/tournament-trophy.png" alt="">
+                <img decoding="async" class="boss-coach-float boss-coach-float-heart" src="img/icon-packs/gem-pattern/pink-heart-2.png" alt="">
+                <img decoding="async" class="boss-coach-float boss-coach-float-bolt" src="img/ui-generated/mode-launch/bolt.png" alt="">
+                <img decoding="async" class="boss-coach-float boss-coach-float-gem" src="img/icon-packs/gem-pattern/orange-gem-2.png" alt="">
+              </div>
+
+              <div class="boss-coach-boons-copy">
+                <header class="boss-coach-boons-head">
+                  <span aria-hidden="true">✦</span>
+                  <strong id="boss-coach-boons-title"></strong>
+                </header>
+                <p id="boss-coach-boons-text"></p>
+              </div>
+
+              <div class="boss-coach-boon-list">
+                <div class="boss-coach-boon">
+                  <span><img decoding="async" src="img/icon-packs/gem-pattern/pink-heart-2.png" alt="" aria-hidden="true"></span>
+                  <b data-i18n="boon_life">Vida extra</b>
+                </div>
+                <div class="boss-coach-boon">
+                  <span><img decoding="async" src="img/ui-generated/mode-launch/bolt.png" alt="" aria-hidden="true"></span>
+                  <b data-i18n="boon_charge">Sobrecarga</b>
+                </div>
+                <div class="boss-coach-boon">
+                  <span><img decoding="async" src="img/icon-packs/prismatic-jewels/violet-spiral.png" alt="" aria-hidden="true"></span>
+                  <b data-i18n="boon_slow">Calma</b>
+                </div>
+                <div class="boss-coach-boon">
+                  <span><img decoding="async" src="img/ui/magnet.png" alt="" aria-hidden="true"></span>
+                  <b data-i18n="boon_magnet">Imán</b>
+                </div>
+                <div class="boss-coach-boon">
+                  <span><i class="boss-coach-score-icon" aria-hidden="true">2×</i></span>
+                  <b data-i18n="boon_score_boost">Impulso de Puntos</b>
+                </div>
+              </div>
+
+              <div class="boss-coach-boons-tip">
+                <span aria-hidden="true">💡</span>
+                <p id="boss-coach-boons-tip"></p>
+              </div>
+            </div>
           </div>
-          <p class="boss-coach-text" id="boss-coach-text" aria-live="polite"></p>
+
           <div class="boss-coach-actions">
-            <button class="btn btn-primary btn-sm boss-coach-ok" id="boss-coach-ok" data-i18n="understood">¡Entendido!</button>
+            <button class="btn boss-coach-ok" id="boss-coach-ok" data-i18n="understood">¡Entendido!</button>
           </div>
         </div>
       </div>
@@ -480,19 +559,166 @@
     </section>
     <!-- Cómo jugar -->
     <section class="hub-view view-how" id="view-how" data-hub-view="how" aria-labelledby="how-title" hidden>
-      <div class="m-head"><span class="m-emblem" aria-hidden="true"><img decoding="async" class="ic" src="img/ui/question.png" alt=""></span><h2 id="how-title" data-i18n="how_title">¿Cómo se juega?</h2></div>
-      <div class="modal-body view-body">
-        <ul class="how-list">
-          <li><img decoding="async" class="ic ic-inline" src="img/ui/target.png" alt=""> <span data-i18n-html="how1">Toca una <strong>casilla vacía</strong>.</span></li>
-          <li>👀 <span data-i18n-html="how2">Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).</span></li>
-          <li>✨ <span data-i18n-html="how3">Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!</span></li>
-          <li><img decoding="async" class="ic ic-inline" src="img/ui/fire.png" alt=""> <span data-i18n-html="how4">Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.</span></li>
-          <li><img decoding="async" class="ic ic-inline" src="img/ui/warning.png" alt=""> <span data-i18n-html="how5">Los iconos aparecen solos: vacía el tablero antes de que se llene.</span></li>
-        </ul>
+      <header class="how-hero">
+        <button class="how-back" type="button" data-view-back data-i18n-al="back" aria-label="Volver">
+          <img decoding="async" src="img/icons-v2/8-ui/arrow-left.svg" alt="">
+        </button>
+        <div class="how-hero-copy">
+          <span class="how-kicker" data-i18n="guide_kicker">Guía de juego</span>
+          <h2 id="how-title" data-i18n="how_title">¿Cómo se juega?</h2>
+          <p data-i18n="how_sub">Aprende la mecánica, descubre los modos y domina tus potenciadores.</p>
+        </div>
+        <div class="how-hero-art" aria-hidden="true">
+          <img decoding="async" src="img/ui-generated/guide/guide-mentor.png" alt="">
+          <img decoding="async" class="how-float-token how-float-star" src="img/icon-packs/basic-redesigned/yellow-star.png" alt="">
+          <img decoding="async" class="how-float-token how-float-circle" src="img/icon-packs/basic-redesigned/red-circle.png" alt="">
+          <img decoding="async" class="how-float-token how-float-triangle" src="img/icon-packs/basic-redesigned/green-triangle.png" alt="">
+        </div>
+      </header>
+
+      <div class="modal-body view-body how-scroll">
+        <section class="guide-section guide-rules" aria-labelledby="guide-rules-title">
+          <div class="guide-section-heading">
+            <span aria-hidden="true">✦</span>
+            <h3 id="guide-rules-title" data-i18n="guide_rules_title">Reglas básicas</h3>
+            <span aria-hidden="true">✦</span>
+          </div>
+
+          <div class="guide-rules-grid">
+            <article class="guide-rule-card">
+              <div class="guide-rule-visual guide-rule-image" aria-hidden="true">
+                <img decoding="async" src="img/ui-generated/guide/rule-1-tap.png" alt="">
+              </div>
+              <div class="guide-rule-copy">
+                <b class="guide-step">1</b>
+                <p data-i18n-html="how1">Toca una <strong>casilla vacía</strong>.</p>
+              </div>
+            </article>
+
+            <article class="guide-rule-card">
+              <div class="guide-rule-visual guide-rule-image" aria-hidden="true">
+                <img decoding="async" src="img/ui-generated/guide/rule-2-scan.png" alt="">
+              </div>
+              <div class="guide-rule-copy">
+                <b class="guide-step">2</b>
+                <p data-i18n-html="how2">Se mira el icono más cercano en cada dirección.</p>
+              </div>
+            </article>
+
+            <article class="guide-rule-card">
+              <div class="guide-rule-visual guide-rule-image" aria-hidden="true">
+                <img decoding="async" src="img/ui-generated/guide/rule-3-converge.png" alt="">
+              </div>
+              <div class="guide-rule-copy">
+                <b class="guide-step">3</b>
+                <p data-i18n-html="how3">Si <strong>2 o más coinciden</strong>, ¡convergen!</p>
+              </div>
+            </article>
+
+            <article class="guide-rule-card">
+              <div class="guide-rule-visual guide-rule-image" aria-hidden="true">
+                <img decoding="async" src="img/ui-generated/guide/rule-4-combo.png" alt="">
+              </div>
+              <div class="guide-rule-copy">
+                <b class="guide-step">4</b>
+                <p data-i18n-html="how4">Encadena eliminaciones para subir el <strong>combo</strong>.</p>
+              </div>
+            </article>
+          </div>
+
+          <div class="guide-warning">
+            <img decoding="async" src="img/ui/warning.png" alt="" aria-hidden="true">
+            <p data-i18n-html="how5">Los iconos aparecen solos: vacía el tablero antes de que se llene.</p>
+          </div>
+        </section>
+
+        <section class="guide-section guide-modes" aria-labelledby="guide-modes-title">
+          <div class="guide-section-heading">
+            <span aria-hidden="true">✦</span>
+            <h3 id="guide-modes-title" data-i18n="guide_modes_title">Modos de juego</h3>
+            <span aria-hidden="true">✦</span>
+          </div>
+          <p class="guide-section-sub" data-i18n="guide_modes_sub">Toca un modo para conocer sus reglas y empezar una partida.</p>
+
+          <div class="guide-mode-grid">
+            <button class="guide-mode-card guide-mode-classic" type="button" data-act="mission-play" data-mode="clasico">
+              <span class="guide-mode-art"><img decoding="async" src="img/ui-generated/mode-launch/trophy.png" alt=""></span>
+              <span class="guide-mode-copy">
+                <strong data-i18n="card_classic">Clásico</strong>
+                <small data-i18n="guide_mode_classic_desc">Supera niveles y gana hasta tres estrellas.</small>
+                <b data-i18n="card_classic_badge">Por niveles</b>
+              </span>
+            </button>
+            <button class="guide-mode-card guide-mode-timed" type="button" data-act="mission-play" data-mode="contrarreloj">
+              <span class="guide-mode-art"><img decoding="async" src="img/ui-generated/mode-launch/clock.png" alt=""></span>
+              <span class="guide-mode-copy">
+                <strong data-i18n="guide_mode_timed">Contrarreloj</strong>
+                <small data-i18n="guide_mode_timed_desc">Cada convergencia compra segundos y mantiene el ritmo.</small>
+                <b data-i18n="card_contra_badge">Tiempo límite</b>
+              </span>
+            </button>
+            <button class="guide-mode-card guide-mode-adventure" type="button" data-act="mission-play" data-mode="aventura">
+              <span class="guide-mode-art"><img decoding="async" src="img/ui-generated/mode-launch/mode-adventure.png" alt=""></span>
+              <span class="guide-mode-copy">
+                <strong data-i18n="guide_mode_adventure">Aventura</strong>
+                <small data-i18n="guide_mode_adventure_desc">Viaja por biomas con objetivos y mini-jefes.</small>
+                <b data-i18n="card_adv_badge">Viaje infinito</b>
+              </span>
+            </button>
+            <button class="guide-mode-card guide-mode-survival" type="button" data-act="mission-play" data-mode="supervivencia">
+              <span class="guide-mode-art"><img decoding="async" src="img/ui-generated/mode-launch/survival-emblem.png" alt=""></span>
+              <span class="guide-mode-copy">
+                <strong data-i18n="card_surv">Supervivencia</strong>
+                <small data-i18n="guide_mode_survival_desc">Resiste oleadas, jefes y un tablero cada vez más rápido.</small>
+                <b data-i18n="card_surv_badge">Desafío extremo</b>
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <section class="guide-section guide-powerups" aria-labelledby="guide-powerups-title">
+          <div class="guide-section-heading">
+            <span aria-hidden="true">✦</span>
+            <h3 id="guide-powerups-title" data-i18n="guide_powerups_title">Potenciadores</h3>
+            <span aria-hidden="true">✦</span>
+          </div>
+          <p class="guide-section-sub" data-i18n="guide_powerups_sub">Úsalos en el momento justo para recuperar el control del tablero.</p>
+
+          <div class="guide-powerup-grid">
+            <article class="guide-powerup-card">
+              <span><img decoding="async" src="img/ui/bomb.png" alt=""></span>
+              <strong data-i18n="booster_name_bomb">Bomba</strong>
+              <small data-i18n="guide_power_bomb">Elimina una zona alrededor del objetivo.</small>
+            </article>
+            <article class="guide-powerup-card">
+              <span><img decoding="async" src="img/icons-v2/4-nature/snowflake.svg" alt=""></span>
+              <strong data-i18n="booster_name_freeze">Congelación</strong>
+              <small data-i18n="guide_power_freeze">Detiene temporalmente el ritmo de aparición.</small>
+            </article>
+            <article class="guide-powerup-card">
+              <span><img decoding="async" src="img/ui/bolt.png" alt=""></span>
+              <strong data-i18n="booster_name_clearLine">Rayo</strong>
+              <small data-i18n="guide_power_ray">Limpia una línea completa del tablero.</small>
+            </article>
+            <article class="guide-powerup-card">
+              <span><img decoding="async" src="img/icons-v2/10-editing/brush.svg" alt=""></span>
+              <strong data-i18n="booster_name_wild">Escoba</strong>
+              <small data-i18n="guide_power_broom">Barre la fila o columna con más iconos.</small>
+            </article>
+            <article class="guide-powerup-card">
+              <span><img decoding="async" src="img/icons-v2/1-game/double.svg" alt=""></span>
+              <strong data-i18n="booster_name_x2">Comodín</strong>
+              <small data-i18n="guide_power_wild">Transforma un grupo repetido y salva la jugada.</small>
+            </article>
+          </div>
+        </section>
       </div>
-      <div class="modal-actions view-actions">
-        <button class="btn btn-primary btn-icon" id="btn-tutorial"><span class="btn-ic icv2" style="--icv2-url:url('img/icons-v2/9-media/play.svg')" aria-hidden="true"></span><span data-i18n="tutorial_btn">Tutorial interactivo</span></button>
-        <button class="btn btn-ghost" data-view-back data-i18n="understood">Entendido</button>
+
+      <div class="modal-actions view-actions how-actions">
+        <button class="btn btn-primary btn-icon" id="btn-tutorial">
+          <span class="btn-ic"><img decoding="async" src="img/icons-v2/9-media/play.svg" alt="" aria-hidden="true"></span>
+          <span data-i18n="guide_tutorial_cta">Jugar tutorial</span>
+        </button>
       </div>
     </section>
 
@@ -926,6 +1152,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.36.0" defer></script>
+  <script src="game.js?v=2.37.1" defer></script>
 </body>
 </html>

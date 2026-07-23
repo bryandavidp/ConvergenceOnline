@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.36.0';
+  const VERSION = '2.37.1';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -687,9 +687,17 @@
         hud_time_explain: 'Tiempo sobrevivido',
         hud_waveprog_explain: 'Cuenta atrás para la siguiente oleada',
         hud_danger_explain: 'Si esta barra se llena, pierdes una vida',
-        how_title: '¿Cómo se juega?', how1: 'Toca una <strong>casilla vacía</strong>.', how2: 'Se mira el icono más cercano en cada dirección (arriba, abajo, izquierda, derecha).',
-        how3: 'Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!', how4: 'Encadena eliminaciones rápidas para subir el <strong>combo</strong> y multiplicar puntos.',
+        how_title: '¿Cómo se juega?', how_sub: 'Aprende la mecánica, descubre los modos y domina tus potenciadores.', guide_kicker: 'Guía de juego',
+        how1: 'Toca una <strong>casilla vacía</strong>.', how2: 'Se mira el icono más cercano en cada dirección.',
+        how3: 'Si <strong>2 o más coinciden</strong>, ¡convergen y desaparecen!', how4: 'Encadena eliminaciones para subir el <strong>combo</strong> y multiplicar puntos.',
         how5: 'Los iconos aparecen solos: vacía el tablero antes de que se llene.',
+        guide_rules_title: 'Reglas básicas', guide_modes_title: 'Modos de juego', guide_modes_sub: 'Toca un modo para conocer sus reglas y empezar una partida.',
+        guide_mode_classic_desc: 'Supera niveles y gana hasta tres estrellas.', guide_mode_timed: 'Contrarreloj', guide_mode_timed_desc: 'Cada convergencia compra segundos y mantiene el ritmo.',
+        guide_mode_adventure: 'Aventura', guide_mode_adventure_desc: 'Viaja por biomas con objetivos y mini-jefes.', guide_mode_survival_desc: 'Resiste oleadas, jefes y un tablero cada vez más rápido.',
+        guide_powerups_title: 'Potenciadores', guide_powerups_sub: 'Úsalos en el momento justo para recuperar el control del tablero.',
+        guide_power_bomb: 'Elimina una zona alrededor del objetivo.', guide_power_freeze: 'Detiene temporalmente el ritmo de aparición.',
+        guide_power_ray: 'Limpia una línea completa del tablero.', guide_power_broom: 'Barre la fila o columna con más iconos.',
+        guide_power_wild: 'Transforma un grupo repetido y salva la jugada.', guide_tutorial_cta: 'Jugar tutorial',
         tutorial_btn: 'Tutorial interactivo', understood: 'Entendido',
         pause: 'Pausa', resume: 'Reanudar', restart: 'Reiniciar', menu: 'Menú', main_menu: 'Menú principal', close: 'Cerrar', back: 'Volver', retry: 'Reintentar', share: 'Compartir',
         pause_subtitle: 'Tómate un respiro, ¡tú puedes!', pause_tag_endless: 'Oleadas infinitas', pause_tag_timed: 'Contra el reloj',
@@ -865,12 +873,34 @@
         surv_boss_leave: 'Huye {s}s',
         bosstut_boss_intro_title: '¡Aparición de Jefe!',
         bosstut_boss_intro_body: 'El jefe no usa una barra de vida normal: sus PV son las ANCLAS con brillo sobre el tablero. ¡Haz coincidir los iconos situados SOBRE las anclas para dañarlo!',
+        bosstut_boss_intro_panel: '¿Cómo vencerlo?',
+        bosstut_boss_intro_detail1_title: 'Ataca sus anclas',
+        bosstut_boss_intro_detail1_body: 'Converge los iconos situados sobre las marcas luminosas.',
+        bosstut_boss_intro_detail2_title: 'Rompe todas',
+        bosstut_boss_intro_detail2_body: 'Cada ancla destruida reduce la vida real del jefe.',
+        bosstut_boss_intro_tip_title: 'Consejo',
+        bosstut_boss_intro_tip_body: 'Prioriza las anclas que ya tengan una convergencia preparada.',
         bosstut_boss_armored_title: 'Ancla Blindada con Escudo',
         bosstut_boss_armored_body: '🛡️ Esta ancla tiene un escudo de acero. No se puede converger directamente: realiza convergencias en casillas ADYACENTES (al lado) o usa una bomba 💣 para romper el escudo primero.',
+        bosstut_boss_armored_panel: '¿Cómo romperla?',
+        bosstut_boss_armored_detail1_title: 'Converge al lado',
+        bosstut_boss_armored_detail1_body: 'Una unión adyacente agrieta el blindaje de acero.',
+        bosstut_boss_armored_detail2_title: 'Usa una bomba',
+        bosstut_boss_armored_detail2_body: 'La explosión elimina el escudo y deja el ancla expuesta.',
+        bosstut_boss_armored_tip_title: 'Consejo',
+        bosstut_boss_armored_tip_body: 'Rompe primero el escudo; después podrás dañar el ancla con normalidad.',
         bosstut_boss_phase2_title: '¡Cambio a Fase 2!',
         bosstut_boss_phase2_body: '⚠️ El jefe ha perdido la mitad de su vida. Ahora atacará con una variante más rápida y peligrosa.',
+        bosstut_boss_phase2_panel: '¿Qué cambia?',
+        bosstut_boss_phase2_detail1_title: 'Atacará más rápido',
+        bosstut_boss_phase2_detail1_body: 'Sus ataques llegarán con mayor frecuencia.',
+        bosstut_boss_phase2_detail2_title: 'Más peligro',
+        bosstut_boss_phase2_detail2_body: 'El nuevo patrón ocupará más espacio del tablero.',
+        bosstut_boss_phase2_tip_title: 'Consejo',
+        bosstut_boss_phase2_tip_body: 'Prepárate y usa tus mejores movimientos para rematarlo.',
         bosstut_boss_boons_title: '✨ ¡Bendiciones de Victoria!',
         bosstut_boss_boons_body: 'Al derrotar a un jefe recibes una bendición. Elige 1 mejora entre 3 opciones aleatorias: corazones de vida, sobrecargas de suministro, ralentización de fichas, imán de convergencias o multiplicadores de puntuación permanentes.',
+        bosstut_boss_boons_tip: 'Estas mejoras pueden marcar la diferencia en las oleadas más difíciles.',
         surv_armored_hint: '🛡️ ¡Protegido! Converge al lado o usa bomba para romper el escudo',
         surv_armored_broken: '🛡️ ¡Escudo roto! Ahora puedes converger el icono',
         surv_boss_hp_sr: 'Vida del jefe: {n} de {m} anclas',
@@ -1084,9 +1114,17 @@
         hud_time_explain: 'Time survived',
         hud_waveprog_explain: 'Countdown to the next wave',
         hud_danger_explain: 'If this bar fills up, you lose a life',
-        how_title: 'How to play?', how1: 'Tap an <strong>empty cell</strong>.', how2: 'It looks at the nearest icon in each direction (up, down, left, right).',
-        how3: 'If <strong>2 or more match</strong>, they converge and vanish!', how4: 'Chain quick clears to raise the <strong>combo</strong> and multiply points.',
+        how_title: 'How to play?', how_sub: 'Learn the mechanic, discover every mode and master your boosters.', guide_kicker: 'Game guide',
+        how1: 'Tap an <strong>empty cell</strong>.', how2: 'It checks the nearest icon in every direction.',
+        how3: 'If <strong>2 or more match</strong>, they converge and vanish!', how4: 'Chain clears to raise the <strong>combo</strong> and multiply points.',
         how5: 'Icons spawn on their own: clear the board before it fills up.',
+        guide_rules_title: 'Core rules', guide_modes_title: 'Game modes', guide_modes_sub: 'Tap a mode to review its rules and start a run.',
+        guide_mode_classic_desc: 'Clear levels and earn up to three stars.', guide_mode_timed: 'Time Attack', guide_mode_timed_desc: 'Every convergence buys seconds and keeps your rhythm.',
+        guide_mode_adventure: 'Adventure', guide_mode_adventure_desc: 'Travel through biomes with goals and mini-bosses.', guide_mode_survival_desc: 'Endure waves, bosses and an ever-faster board.',
+        guide_powerups_title: 'Boosters', guide_powerups_sub: 'Use them at the right moment to take back control of the board.',
+        guide_power_bomb: 'Removes an area around the target.', guide_power_freeze: 'Temporarily stops the spawn pace.',
+        guide_power_ray: 'Clears a complete line from the board.', guide_power_broom: 'Sweeps the row or column with the most icons.',
+        guide_power_wild: 'Transforms a repeated group and saves the move.', guide_tutorial_cta: 'Play tutorial',
         tutorial_btn: 'Interactive tutorial', understood: 'Got it',
         pause: 'Paused', resume: 'Resume', restart: 'Restart', menu: 'Menu', main_menu: 'Main menu', close: 'Close', back: 'Back', retry: 'Retry', share: 'Share',
         pause_subtitle: "Take a breather, you've got this!", pause_tag_endless: 'Endless waves', pause_tag_timed: 'Beat the clock',
@@ -1262,12 +1300,34 @@
         surv_boss_leave: 'Flees {s}s',
         bosstut_boss_intro_title: 'Boss Arrival!',
         bosstut_boss_intro_body: 'The boss does not use a normal health bar: its HP are the glowing ANCHORS on the board. Match the icons ON the anchors to damage it!',
+        bosstut_boss_intro_panel: 'How do you beat it?',
+        bosstut_boss_intro_detail1_title: 'Attack its anchors',
+        bosstut_boss_intro_detail1_body: 'Match the icons sitting on the glowing marks.',
+        bosstut_boss_intro_detail2_title: 'Break them all',
+        bosstut_boss_intro_detail2_body: 'Every destroyed anchor reduces the boss’s real health.',
+        bosstut_boss_intro_tip_title: 'Tip',
+        bosstut_boss_intro_tip_body: 'Prioritize anchors that already have a match prepared.',
         bosstut_boss_armored_title: 'Armored Anchor with Shield',
         bosstut_boss_armored_body: '🛡️ This anchor has a steel shield. It cannot be merged directly: make matches in ADJACENT cells (next to it) or use a bomb 💣 to break the shield first.',
+        bosstut_boss_armored_panel: 'How do you break it?',
+        bosstut_boss_armored_detail1_title: 'Match beside it',
+        bosstut_boss_armored_detail1_body: 'An adjacent match cracks the steel armor.',
+        bosstut_boss_armored_detail2_title: 'Use a bomb',
+        bosstut_boss_armored_detail2_body: 'The blast removes the shield and exposes the anchor.',
+        bosstut_boss_armored_tip_title: 'Tip',
+        bosstut_boss_armored_tip_body: 'Break the shield first; then you can damage the anchor normally.',
         bosstut_boss_phase2_title: 'Shift to Phase 2!',
         bosstut_boss_phase2_body: '⚠️ The boss has lost half of its health. It will now attack with a faster, more dangerous pattern.',
+        bosstut_boss_phase2_panel: 'What changes?',
+        bosstut_boss_phase2_detail1_title: 'Faster attacks',
+        bosstut_boss_phase2_detail1_body: 'Its attacks will arrive more frequently.',
+        bosstut_boss_phase2_detail2_title: 'More danger',
+        bosstut_boss_phase2_detail2_body: 'The new pattern will occupy more of the board.',
+        bosstut_boss_phase2_tip_title: 'Tip',
+        bosstut_boss_phase2_tip_body: 'Get ready and use your best moves to finish it off.',
         bosstut_boss_boons_title: '✨ Victory Blessings!',
         bosstut_boss_boons_body: 'Defeating a boss grants you a blessing. Choose 1 upgrade out of 3 random choices: extra hearts, supply overcharges, icon slowdowns, magnet merges, or permanent score multipliers.',
+        bosstut_boss_boons_tip: 'These upgrades can make the difference in the toughest waves.',
         surv_armored_hint: '🛡️ Protected! Match next to it or use a bomb to break the shield',
         surv_armored_broken: '🛡️ Shield broken! You can now merge the icon',
         surv_boss_hp_sr: "Boss health: {n} of {m} anchors",
@@ -8720,6 +8780,14 @@
     KEY: 'cv_bosstut_flags',
     active: false,
     _wasPlaying: false,
+    _onCloseCb: null,
+    _returnFocus: null,
+    CONTENT: {
+      boss_intro: { icons: ['◆', '✦'] },
+      boss_armored: { icons: ['✣', '💣'] },
+      boss_phase2: { icons: ['⚡', '⌖'] },
+      boss_boons: { icons: [] },
+    },
     _getFlags() {
       try { return JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch (_) { return {}; }
     },
@@ -8741,14 +8809,53 @@
     },
     show(key, icon, onCloseCb) {
       const el = $('#boss-coach'); if (!el) return;
+      const content = this.CONTENT[key] || this.CONTENT.boss_intro;
       const titleEl = $('#boss-coach-title');
       const textEl = $('#boss-coach-text');
       const iconEl = $('#boss-coach-icon');
       if (titleEl) titleEl.textContent = I18n.t('bosstut_' + key + '_title');
       if (textEl) textEl.textContent = I18n.t('bosstut_' + key + '_body');
-      if (iconEl) iconEl.textContent = icon || '🛡️';
+      if (iconEl) iconEl.textContent = (icon && !String(icon).startsWith('v2:')) ? icon : '👑';
+
+      const isBoons = key === 'boss_boons';
+      el.dataset.tutorial = key.replace(/^boss_/, '');
+      el.setAttribute('aria-labelledby', isBoons ? 'boss-coach-boons-title' : 'boss-coach-title');
+      el.setAttribute('aria-describedby', isBoons ? 'boss-coach-boons-text' : 'boss-coach-text');
+      const standardEl = el.querySelector('.boss-coach-standard');
+      const boonsEl = el.querySelector('.boss-coach-boons');
+      if (standardEl) standardEl.setAttribute('aria-hidden', isBoons ? 'true' : 'false');
+      if (boonsEl) boonsEl.setAttribute('aria-hidden', isBoons ? 'false' : 'true');
+
+      if (isBoons) {
+        const boonsTitle = $('#boss-coach-boons-title');
+        const boonsText = $('#boss-coach-boons-text');
+        const boonsTip = $('#boss-coach-boons-tip');
+        if (boonsTitle) boonsTitle.textContent = I18n.t('bosstut_boss_boons_title');
+        if (boonsText) boonsText.textContent = I18n.t('bosstut_boss_boons_body');
+        if (boonsTip) boonsTip.textContent = I18n.t('bosstut_boss_boons_tip');
+      } else {
+        const prefix = 'bosstut_' + key;
+        const assignments = [
+          ['boss-coach-details-label', prefix + '_panel'],
+          ['boss-coach-detail-title-1', prefix + '_detail1_title'],
+          ['boss-coach-detail-text-1', prefix + '_detail1_body'],
+          ['boss-coach-detail-title-2', prefix + '_detail2_title'],
+          ['boss-coach-detail-text-2', prefix + '_detail2_body'],
+          ['boss-coach-tip-title', prefix + '_tip_title'],
+          ['boss-coach-tip-text', prefix + '_tip_body'],
+        ];
+        assignments.forEach(([id, i18nKey]) => {
+          const node = $('#' + id);
+          if (node) node.textContent = I18n.t(i18nKey);
+        });
+        content.icons.forEach((detailIcon, idx) => {
+          const node = $('#boss-coach-detail-icon-' + (idx + 1));
+          if (node) node.textContent = detailIcon;
+        });
+      }
 
       if (!this.active) {
+        this._returnFocus = document.activeElement || null;
         this._wasPlaying = (State.status === 'playing');
         if (this._wasPlaying) {
           State.status = 'paused';
@@ -8756,17 +8863,24 @@
         }
       }
       this.active = true;
+      this._onCloseCb = typeof onCloseCb === 'function' ? onCloseCb : null;
       el.hidden = false;
 
       const okBtn = $('#boss-coach-ok');
       if (okBtn) {
-        const onOk = () => {
-          this.hide();
-          okBtn.removeEventListener('click', onOk);
-          if (typeof onCloseCb === 'function') onCloseCb();
-        };
-        okBtn.addEventListener('click', onOk);
+        if (!okBtn._bossCoachWired) {
+          okBtn._bossCoachWired = true;
+          okBtn.addEventListener('click', () => this.accept());
+        }
+        const focusOk = () => { if (this.active && okBtn.focus) okBtn.focus(); };
+        if (window.requestAnimationFrame) window.requestAnimationFrame(focusOk); else setTimeout(focusOk, 0);
       }
+    },
+    accept() {
+      const onCloseCb = this._onCloseCb;
+      this._onCloseCb = null;
+      this.hide();
+      if (typeof onCloseCb === 'function') onCloseCb();
     },
     hide() {
       const el = $('#boss-coach'); if (el) el.hidden = true;
@@ -8776,8 +8890,14 @@
         Loop.last = performance.now();
         Loop.kick();
       }
+      const returnFocus = this._returnFocus;
       this.active = false;
       this._wasPlaying = false;
+      this._onCloseCb = null;
+      this._returnFocus = null;
+      if (returnFocus && returnFocus.focus) {
+        try { returnFocus.focus(); } catch (_) {}
+      }
     },
   };
 

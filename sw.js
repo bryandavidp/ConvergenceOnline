@@ -8,10 +8,10 @@
  *   imágenes ya descargadas sobreviven a las actualizaciones (antes se
  *   re-descargaba todo en cada bump). Súbelo a mano (v1 → v2 …) SOLO si cambias
  *   arte reutilizando la misma ruta de archivo. Ver docs/ASSET_CACHING_PLAN.md. */
-const CACHE = 'cv-cache-v2.36.0';
+const CACHE = 'cv-cache-v2.37.1';
 const ASSET_CACHE = 'cv-assets-v1';
 const ASSETS = [
-  './', './index.html', './styles.css?v=2.36.0', './game.js?v=2.36.0', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=2.37.1', './game.js?v=2.37.1', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable.png', './apple-touch-icon.png',
   './fonts/NunitoSans-Variable.ttf',
 ];
@@ -25,6 +25,10 @@ const HOME_GENERATED_ART = [
   'avatar-robot','classic-board','daily-gift','header-coin-star','header-plus','hero-rocket','multiplayer-versus','tournament-trophy',
   'nav-achievements','nav-chest','nav-collections','nav-daily','nav-events','nav-friends','nav-guide','nav-home','nav-home-redesign','nav-league','nav-missions','nav-settings','nav-shop',
 ].map((n) => './img/ui-generated/home/' + n + '.png');
+const GUIDE_GENERATED_ART = [
+  'guide-mentor','rule-1-tap','rule-2-scan','rule-3-converge','rule-4-combo',
+].map((n) => './img/ui-generated/guide/' + n + '.png');
+const BOSS_COACH_ART = ['./img/ui-generated/boss-coach/boss-portrait.webp'];
 const MODE_GENERATED_ART = [
   'mode-classic','mode-multiplayer','mode-survival','mode-timed','mode-zen',
 ].map((n) => './img/ui-generated/modes/' + n + '.png');
@@ -136,7 +140,7 @@ const V2_ICONS = [
 // fallaba). El shell crítico (ASSETS) sí es estricto: si falla, la instalación
 // falla, que es lo correcto.
 const IMAGE_MANIFEST = [].concat(
-  CORE_ART, UI_ICONS, HOME_V2_ICONS, HOME_GENERATED_ART, MODE_GENERATED_ART,
+  CORE_ART, UI_ICONS, HOME_V2_ICONS, HOME_GENERATED_ART, GUIDE_GENERATED_ART, BOSS_COACH_ART, MODE_GENERATED_ART,
   MODE_LAUNCH_ART, SHOP_GENERATED_ART, BOARD_THEME_PREVIEWS, CHEST_ATLASES,
   PLAYER_ICON_ASSETS, PLAYER_BORDER_ASSETS, ICON_PACK_ASSETS, V2_ICONS,
 );
