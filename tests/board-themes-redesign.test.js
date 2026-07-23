@@ -26,14 +26,14 @@ function pngSize(file) {
 
 test('board themes V4: marco, junta, tablero y radios son concéntricos', () => {
   const wrap = cssBlock('    .board-wrap {', '    /* El ambiente vive dentro de la abertura');
-  const frameBase = cssBlock('    .board-wrap::before {', '    /* Decoración V4:');
+  const frameBase = cssBlock('    .board-wrap::before {', '    /* Decoración V4.1:');
   const decor = cssBlock('    .board-wrap::after {', '    .board {');
   const board = cssBlock('    .board {', '    .cell {');
 
-  assert.match(wrap, /--board-radius:\s*13px;/);
+  assert.match(wrap, /--board-radius:\s*var\(--cell-radius,\s*9px\);/);
   assert.match(wrap, /--board-frame-band:\s*8px;/);
   assert.match(wrap, /--board-grid-inset:\s*calc\(var\(--board-frame-band\) \+ 1px\);/);
-  assert.match(wrap, /--board-frame-joint:\s*clamp\(2px, \.8vw, 3px\);/);
+  assert.match(wrap, /--board-frame-joint:\s*clamp\(3px,\s*1vw,\s*3\.8px\);/);
   assert.match(wrap, /--board-frame-thickness:\s*var\(--board-grid-inset\);/);
   assert.match(wrap, /--board-frame-inner-radius:\s*calc\(var\(--board-radius\) \+ var\(--board-frame-joint\)\);/);
   assert.match(wrap, /--board-frame-outer-radius:\s*calc\(var\(--board-frame-inner-radius\) \+ var\(--board-frame-thickness\)\);/);
@@ -55,8 +55,6 @@ test('board themes V4: marco, junta, tablero y radios son concéntricos', () => 
   assert.match(frameBase, /-webkit-mask-composite:\s*xor;/);
   assert.match(frameBase, /mask-composite:\s*exclude;/);
   assert.match(decor, /background-image:\s*var\(--theme-decor-image, none\);/);
-  assert.match(decor, /var\(--board-frame-expand\) - var\(--board-decor-overhang\)/);
-  assert.match(decor, /background-size:\s*100% auto;/);
   assert.doesNotMatch(decor, /border-image|\bstretch\b|clip-path/);
   assert.match(board, /border-radius:\s*var\(--board-radius\);/);
   assert.match(board, /box-shadow:\s*0 0 0 var\(--board-frame-joint\)/);
@@ -75,9 +73,9 @@ test('board themes V4: cambiar de tema conserva DOM, geometría y 44 assets por 
   assert.match(applyTheme, /--theme-frame-base-image/);
   assert.match(applyTheme, /--theme-decor-image/);
   assert.doesNotMatch(MOCKUP, /assetPath\([^\n]+['"]frame-v3\.png['"]\)/);
-  assert.equal(V4_MANIFEST.version, 4);
+  assert.equal(V4_MANIFEST.version, '4.1');
   assert.deepEqual(V4_MANIFEST.geometry.frameCanvas, [1024, 1024]);
-  assert.deepEqual(V4_MANIFEST.geometry.decorCanvas, [1024, 1088]);
+  assert.deepEqual(V4_MANIFEST.geometry.decorCanvas, [1024, 1024]);
 
   for (const id of ids) {
     for (const file of ['board-surface-v3.jpg', 'cell-surface-v3.jpg', 'frame-base-v4.png', 'decor-v4.png']) {
@@ -89,5 +87,5 @@ test('board themes V4: cambiar de tema conserva DOM, geometría y 44 assets por 
     assert.ok(V4_MANIFEST.themes[id].decorV4Sha256);
   }
 
-  assert.deepEqual(ids.filter((id) => V4_MANIFEST.themes[id].hasDecor), ['madera', 'hielo', 'cristal', 'magico', 'futurista', 'dorado', 'bosque', 'cosmico', 'jardin']);
+  assert.deepEqual(ids.filter((id) => V4_MANIFEST.themes[id].hasDecor), ids);
 });

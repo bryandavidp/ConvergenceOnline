@@ -2880,9 +2880,21 @@ body.reduced-fx .sbx-next.telegraph { animation: none; }
 .cell.tile-boss::after { content: "◆"; position: absolute; right: 3px; top: 2px; z-index: 2;
   color: color-mix(in srgb, var(--boss-accent, var(--accent-2)) 72%, #fff); font-size: .6rem; line-height: 1;
   text-shadow: 0 0 8px color-mix(in srgb, var(--boss-accent, var(--accent-2)) 50%, transparent); }
-.cell.tile-boss.boss-armored { background:
-  repeating-linear-gradient(45deg, rgba(210,220,240,.16) 0 6px, rgba(35,42,62,.55) 6px 12px), rgba(12,18,38,.86); }
-.cell.tile-boss.boss-armored::after { content: "◈"; }
+.cell.tile-boss.boss-armored {
+  border-color: #d6dce8;
+  background:
+    repeating-linear-gradient(45deg, rgba(214,220,232,.22) 0 6px, rgba(28,36,60,.75) 6px 12px), rgba(12,18,38,.92);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.25), 0 0 12px rgba(214,220,232,.45);
+}
+.cell.tile-boss.boss-armored::after { content: "🛡️"; font-size: .7rem; top: 1px; right: 2px; text-shadow: 0 0 6px rgba(255,255,255,.6); }
+@keyframes metallic-shake {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  20% { transform: translate(-3px, 0) rotate(-2deg); }
+  40% { transform: translate(3px, 0) rotate(2deg); }
+  60% { transform: translate(-2px, 0) rotate(-1deg); }
+  80% { transform: translate(2px, 0) rotate(1deg); }
+}
+.cell.metallic-shake { animation: metallic-shake .35s ease; border-color: #ff5b6e !important; }
 /* Hilos del Titiritero (JF-ε): los TIPOS enhebrados se marcan en toda celda que los
    contenga — convergerlos LE CURA. Estático (sin animación: presupuesto QP-2). */
 .cell.threaded { box-shadow: 0 0 0 2px rgba(255,108,176,.55) inset, 0 0 10px rgba(255,108,176,.25); }
@@ -2891,6 +2903,61 @@ body.reduced-fx .sbx-next.telegraph { animation: none; }
     linear-gradient(35deg, transparent 46%, rgba(255,108,176,.6) 47% 50%, transparent 51%),
     linear-gradient(145deg, transparent 52%, rgba(255,216,77,.42) 53% 55%, transparent 56%);
   opacity: .85; }
+
+/* Overlay de tutorial interactivo de jefes (BossCoach) */
+.boss-coach {
+  position: absolute;
+  inset: 0;
+  z-index: 95;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(4, 9, 26, 0.92);
+  animation: chipPop .22s ease both;
+}
+body.reduced-fx .boss-coach { animation: none; }
+.boss-coach-card {
+  width: min(340px, 90vw);
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 2px solid color-mix(in srgb, var(--boss-accent, var(--gold)) 70%, rgba(255,255,255,.2));
+  background: linear-gradient(180deg, rgba(24, 38, 86, 0.96), rgba(8, 16, 42, 0.98));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 12px 30px rgba(0,0,0,.6), 0 0 24px color-mix(in srgb, var(--boss-accent, var(--gold)) 22%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.boss-coach-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.boss-coach-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.boss-coach-title {
+  color: #fff;
+  font-size: .95rem;
+  font-weight: 1000;
+  letter-spacing: .02em;
+}
+.boss-coach-text {
+  color: rgba(235, 242, 255, 0.92);
+  font-size: .82rem;
+  line-height: 1.35;
+  margin: 0;
+}
+.boss-coach-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+.boss-coach-ok {
+  min-height: 34px;
+  padding-inline: 16px;
+  font-size: .8rem;
+}
 /* Jaula del Cerrajero (JF-γ): guarda un potenciador robado; se rompe por adyacencia. */
 .cell.tile-cage { background: #2a2f3c; }
 .cell.tile-cage::before { content: ""; position: absolute; inset: 0; z-index: 1;

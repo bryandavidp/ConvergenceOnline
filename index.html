@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.32.0" />
+  <link rel="stylesheet" href="styles.css?v=2.33.0" />
 </head>
 <body data-screen="login">
   <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
@@ -339,6 +339,20 @@
         <p class="coach-text" id="coach-text" aria-live="polite"></p>
         <button class="btn btn-primary coach-play" id="coach-play" hidden>Jugar nivel 1</button>
         <button class="btn btn-ghost coach-skip" id="coach-skip" data-i18n="coach_skip">Saltar tutorial</button>
+      </div>
+
+      <!-- Tutorial interactivo de Jefes: overlay contextual para mecánicas de jefe -->
+      <div class="boss-coach" id="boss-coach" hidden role="dialog" aria-modal="true" aria-labelledby="boss-coach-title">
+        <div class="boss-coach-card">
+          <div class="boss-coach-head">
+            <span class="boss-coach-icon" id="boss-coach-icon" aria-hidden="true">🛡️</span>
+            <strong class="boss-coach-title" id="boss-coach-title"></strong>
+          </div>
+          <p class="boss-coach-text" id="boss-coach-text" aria-live="polite"></p>
+          <div class="boss-coach-actions">
+            <button class="btn btn-primary btn-sm boss-coach-ok" id="boss-coach-ok" data-i18n="understood">¡Entendido!</button>
+          </div>
+        </div>
       </div>
 
       <!-- Barra de potenciadores (Supervivencia): toolbelt de objetos + pista integrada -->
@@ -900,6 +914,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.32.0" defer></script>
+  <script src="game.js?v=2.33.0" defer></script>
 </body>
 </html>

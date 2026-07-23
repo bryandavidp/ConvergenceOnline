@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.32.0';
+  const VERSION = '2.33.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -863,6 +863,16 @@
         feat_domaecos: 'Domaecos', feat_domaecos_d: 'Derrota a un eco de nivel III o superior',
         surv_boss_lvl: '{n}',
         surv_boss_leave: 'Huye {s}s',
+        bosstut_boss_intro_title: '¡Aparición de Jefe!',
+        bosstut_boss_intro_body: 'El jefe no usa una barra de vida normal: sus PV son las ANCLAS con brillo sobre el tablero. ¡Haz coincidir los iconos situados SOBRE las anclas para dañarlo!',
+        bosstut_boss_armored_title: 'Ancla Blindada con Escudo',
+        bosstut_boss_armored_body: '🛡️ Esta ancla tiene un escudo de acero. No se puede converger directamente: realiza convergencias en casillas ADYACENTES (al lado) o usa una bomba 💣 para romper el escudo primero.',
+        bosstut_boss_phase2_title: '¡Cambio a Fase 2!',
+        bosstut_boss_phase2_body: '⚠️ El jefe ha perdido la mitad de su vida. Ahora atacará con una variante más rápida y peligrosa.',
+        bosstut_boss_boons_title: '✨ ¡Bendiciones de Victoria!',
+        bosstut_boss_boons_body: 'Al derrotar a un jefe recibes una bendición. Elige 1 mejora entre 3 opciones aleatorias: corazones de vida, sobrecargas de suministro, ralentización de fichas, imán de convergencias o multiplicadores de puntuación permanentes.',
+        surv_armored_hint: '🛡️ ¡Protegido! Converge al lado o usa bomba para romper el escudo',
+        surv_armored_broken: '🛡️ ¡Escudo roto! Ahora puedes converger el icono',
         surv_boss_hp_sr: 'Vida del jefe: {n} de {m} anclas',
         surv_boss_enter_sr: 'Jefe: {b}, nivel {n}, {k} anclas. Converge los iconos sobre las anclas para dañarlo.',
         surv_boss_prep: '{b} prepara: {a}',
@@ -1250,6 +1260,16 @@
         feat_domaecos: 'Echo tamer', feat_domaecos_d: 'Defeat an echo of level III or higher',
         surv_boss_lvl: '{n}',
         surv_boss_leave: 'Flees {s}s',
+        bosstut_boss_intro_title: 'Boss Arrival!',
+        bosstut_boss_intro_body: 'The boss does not use a normal health bar: its HP are the glowing ANCHORS on the board. Match the icons ON the anchors to damage it!',
+        bosstut_boss_armored_title: 'Armored Anchor with Shield',
+        bosstut_boss_armored_body: '🛡️ This anchor has a steel shield. It cannot be merged directly: make matches in ADJACENT cells (next to it) or use a bomb 💣 to break the shield first.',
+        bosstut_boss_phase2_title: 'Shift to Phase 2!',
+        bosstut_boss_phase2_body: '⚠️ The boss has lost half of its health. It will now attack with a faster, more dangerous pattern.',
+        bosstut_boss_boons_title: '✨ Victory Blessings!',
+        bosstut_boss_boons_body: 'Defeating a boss grants you a blessing. Choose 1 upgrade out of 3 random choices: extra hearts, supply overcharges, icon slowdowns, magnet merges, or permanent score multipliers.',
+        surv_armored_hint: '🛡️ Protected! Match next to it or use a bomb to break the shield',
+        surv_armored_broken: '🛡️ Shield broken! You can now merge the icon',
         surv_boss_hp_sr: "Boss health: {n} of {m} anchors",
         surv_boss_enter_sr: 'Boss: {b}, level {n}, {k} anchors. Converge the icons on the anchors to damage it.',
         surv_boss_prep: '{b} is preparing: {a}',
@@ -6018,13 +6038,20 @@
         opts.push(bag.splice(selectedIdx, 1)[0]);
       }
       if (!opts.length) return;
-      Sound.milestone(); Haptics.milestone();
-      Picker.open({
-        title: I18n.t('boon_title'), sub: I18n.t('boon_sub'), accent: '#ffd24d',
-        options: opts.map((b) => ({ id: b.id, icon: b.icon, name: I18n.t('boon_' + b.id), desc: I18n.t('boon_' + b.id + '_d'), rarity: b.rarity })),
-        onPick: (id) => this.applyBoon(id),
-        safeDelayMs: 500
-      });
+      const doOpenPicker = () => {
+        Sound.milestone(); Haptics.milestone();
+        Picker.open({
+          title: I18n.t('boon_title'), sub: I18n.t('boon_sub'), accent: '#ffd24d',
+          options: opts.map((b) => ({ id: b.id, icon: b.icon, name: I18n.t('boon_' + b.id), desc: I18n.t('boon_' + b.id + '_d'), rarity: b.rarity })),
+          onPick: (id) => this.applyBoon(id),
+          safeDelayMs: 500
+        });
+      };
+      if (BossCoach.check('boss_boons', '✨', doOpenPicker)) {
+        // La 1ª vez se abre el tutorial de bendiciones; al pulsar ¡Entendido! se ejecutará doOpenPicker
+      } else {
+        doOpenPicker();
+      }
     },
     applyBoon(id) {
       if (id === 'life') this.lives = Math.min(this.MAX_LIVES + 1, this.lives + 1);
@@ -7188,11 +7215,15 @@
         anchorsMax: anchors.length, anchorsLeft: anchors.length,
         ms: 0, atkAcc: Math.max(0, def.attackMs - this.FIRST_ATTACK_MS), // BP-0: entrada legible antes del primer ataque
         reincAcc: 0, regenAcc: 0, attackEvery: def.attackMs,
-        durMs: Math.round(Survival.WAVE_MS * 1.8), // ~2 oleadas y se retira (§3.2)
+        durMs: Math.round(Survival.WAVE_MS * 2.5), // ~100s de permanencia en pantalla (margen justo)
         telegraphed: false, targets: null, threads: null, devoured: [],
         flawless: true, attacks: 0,
       };
       Meta.survBossSeen(id); // bestiario (JF-ε)
+      BossCoach.check('boss_intro', def.icon || '👑');
+      if (anchors.some(idx => State.tiles[idx] && State.tiles[idx].hits > 0)) {
+        BossCoach.check('boss_armored', '🛡️');
+      }
       // La cara del jefe (JF-β): acento global (banner/anclas/card lo heredan por
       // CSS), tarjeta de presentación estilo Gungeon y announce accesible. El sting
       // reutiliza bossWarn hasta los leitmotivs de QP-4.
@@ -7299,8 +7330,7 @@
     onAnchorHit(idx) {
       const e = this.enc; if (!e) return; // ancla huérfana (defensivo)
       e.anchorsLeft = Math.max(0, e.anchorsLeft - 1);
-      // El icono del ancla ya recibe el burst radial de la convergencia. No se
-      // añade aquí un segundo estallido heredado sobre la misma casilla.
+      e.durMs += 6000; // +6s de bonificación de tiempo al golpear anclas para premiar el esfuerzo activo
       Render.hudSoon();
       if (e.anchorsLeft <= 0) { this.resolve(e.kind === 'mini' ? 'miniKill' : 'defeat'); return; }
       // Fase 2 al caer la mitad de las anclas (§3.4): el patrón cambia, no solo escala.
@@ -7314,6 +7344,7 @@
           e.targets = null;
         }
         Feedback.event('bossPhase', { msg: I18n.t('surv_boss_phase2').replace('{b}', this.name(e.id)) });
+        BossCoach.check('boss_phase2', '⚠️');
         Render.boardEvent('surv-wave-soon', 500);
       }
     },
@@ -7350,6 +7381,10 @@
         t.hits--;
         if (t.hits <= 0) { t.hits = 0; t.solid = false; } // expuesta: ya se puede golpear
         Render.setTile(j); Sound.tap();
+        FX.burst(j, '#d6dce8', 8);
+        if (t.hits <= 0) {
+          Toasts.event(I18n.t('surv_armored_broken'), 'good', 1400, '🛡️');
+        }
         return;
       }
       if (t.type === 'cage') {
@@ -8506,6 +8541,72 @@
     },
   };
 
+  /* ===================== BossCoach (tutorial interactivo de jefes) ===================== */
+  const BossCoach = {
+    KEY: 'cv_bosstut_flags',
+    active: false,
+    _wasPlaying: false,
+    _getFlags() {
+      try { return JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch (_) { return {}; }
+    },
+    hasSeen(key) {
+      return !!this._getFlags()[key];
+    },
+    markSeen(key) {
+      try {
+        const f = this._getFlags();
+        f[key] = true;
+        localStorage.setItem(this.KEY, JSON.stringify(f));
+      } catch (_) {}
+    },
+    check(key, icon, onCloseCb) {
+      if (this.hasSeen(key)) return false;
+      this.markSeen(key);
+      this.show(key, icon, onCloseCb);
+      return true;
+    },
+    show(key, icon, onCloseCb) {
+      const el = $('#boss-coach'); if (!el) return;
+      const titleEl = $('#boss-coach-title');
+      const textEl = $('#boss-coach-text');
+      const iconEl = $('#boss-coach-icon');
+      if (titleEl) titleEl.textContent = I18n.t('bosstut_' + key + '_title');
+      if (textEl) textEl.textContent = I18n.t('bosstut_' + key + '_body');
+      if (iconEl) iconEl.textContent = icon || '🛡️';
+
+      if (!this.active) {
+        this._wasPlaying = (State.status === 'playing');
+        if (this._wasPlaying) {
+          State.status = 'paused';
+          Toasts.pause();
+        }
+      }
+      this.active = true;
+      el.hidden = false;
+
+      const okBtn = $('#boss-coach-ok');
+      if (okBtn) {
+        const onOk = () => {
+          this.hide();
+          okBtn.removeEventListener('click', onOk);
+          if (typeof onCloseCb === 'function') onCloseCb();
+        };
+        okBtn.addEventListener('click', onOk);
+      }
+    },
+    hide() {
+      const el = $('#boss-coach'); if (el) el.hidden = true;
+      if (this.active && this._wasPlaying && State.status === 'paused') {
+        State.status = 'playing';
+        Toasts.resume();
+        Loop.last = performance.now();
+        Loop.kick();
+      }
+      this.active = false;
+      this._wasPlaying = false;
+    },
+  };
+
   /* ===================== Gobernador de rendimiento (Perf, QP-2 P1) =====================
    * Degradación POR CAPAS con histéresis, en vez de perder frames a lo bruto. Loop.tick le
    * pasa cada frame el EMA del tiempo de frame (ms) y el dt; Perf decide un "nivel":
@@ -8957,7 +9058,23 @@
         }
         return;
       }
-      if (State.board[i] !== null) { Render.miss(i); Sound.tap(); return; }     // ocupada: nada (ahora con feedback visual)
+      if (State.board[i] !== null) {
+        const t = State.tiles[i];
+        if (t && t.type === 'boss' && (t.hits || 0) > 0) {
+          const el = Render.cells[i];
+          if (el) {
+            el.classList.remove('metallic-shake');
+            void el.offsetWidth;
+            el.classList.add('metallic-shake');
+          }
+          Sound.tap();
+          Haptics.tap();
+          Toasts.event(I18n.t('surv_armored_hint'), 'warn', 1800, '🛡️');
+          BossCoach.check('boss_armored', '🛡️');
+          return;
+        }
+        Render.miss(i); Sound.tap(); return;
+      }     // ocupada: nada (ahora con feedback visual)
       const conv = Engine.converging(i);
       if (conv.length < 2) { this.mistake(i); return; }          // error → penalización
 
@@ -13822,5 +13939,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, IconPacks, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, ShopFX, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, IconPacks, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, ShopFX, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, BossCoach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
 })();
