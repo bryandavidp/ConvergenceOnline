@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.31.0" />
+  <link rel="stylesheet" href="styles.css?v=2.32.0" />
 </head>
 <body data-screen="login">
   <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
@@ -215,20 +215,25 @@
           <div class="obj-banner" id="obj-banner" hidden></div>
           <!-- Barra de Supervivencia: vidas + oleada + tiempo sobrevivido -->
           <div class="surv-bar" id="surv-bar" hidden>
-            <!-- Banner del encuentro (JF-β): la cara del jefe, visible solo durante el encuentro -->
-            <div class="surv-boss" id="surv-boss" hidden>
-              <span class="sbx-portrait" id="surv-boss-icon" aria-hidden="true"></span>
-              <div class="sbx-mid">
-                <span class="sbx-name"><span id="surv-boss-name"></span><i class="sbx-lvl" id="surv-boss-lvl"></i></span>
-                <span class="sbx-hp" id="surv-boss-hp"></span>
-              </div>
-              <span class="sbx-next" id="surv-boss-next" aria-hidden="true"></span>
-            </div>
             <div class="surv-grid">
               <span class="surv-metric surv-life-box"><span class="surv-k">Vidas</span><span class="surv-lives" id="surv-lives" data-explain="hud_lives_explain">❤️❤️❤️</span></span>
-              <div class="surv-wave-wrap">
+              <div class="surv-wave-wrap" id="surv-wave-wrap">
                 <span class="surv-wave-row"><span class="surv-wave" id="surv-wave" data-explain="hud_wave_explain">Oleada 1</span><span class="surv-tier" id="surv-tier" aria-label="Tier de dificultad" data-explain="hud_tier_explain">N1</span><span class="surv-boss-flag" id="surv-boss-flag" data-i18n="surv_boss_soon" hidden>⚠ Jefe</span></span>
                 <span class="surv-waveprog" aria-hidden="true" data-explain="hud_waveprog_explain"><span class="surv-waveprog-fill" id="surv-waveprog-fill"></span></span>
+              </div>
+              <!-- Banner del encuentro (JF-β): la cara del jefe, sustituye la oleada en la celda central durante el encuentro -->
+              <div class="surv-boss" id="surv-boss" hidden>
+                <span class="sbx-portrait" id="surv-boss-icon" aria-hidden="true"></span>
+                <div class="sbx-mid">
+                  <div class="sbx-head">
+                    <span class="sbx-name"><span id="surv-boss-name"></span><i class="sbx-lvl" id="surv-boss-lvl"></i></span>
+                    <span class="sbx-leave" id="surv-boss-leave" aria-label="Tiempo para abandonar"></span>
+                  </div>
+                  <div class="sbx-sub">
+                    <span class="sbx-hp" id="surv-boss-hp"></span>
+                    <span class="sbx-next" id="surv-boss-next" aria-hidden="true"></span>
+                  </div>
+                </div>
               </div>
               <span class="surv-metric surv-time-box"><span class="surv-k" data-i18n="hud_time">Tiempo</span><span class="surv-time" id="surv-time" data-explain="hud_time_explain">0s</span></span>
             </div>
@@ -895,6 +900,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.31.0" defer></script>
+  <script src="game.js?v=2.32.0" defer></script>
 </body>
 </html>

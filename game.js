@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.31.0';
+  const VERSION = '2.32.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -862,6 +862,7 @@
         feat_ronda_maestra: 'Ronda maestra', feat_ronda_maestra_d: 'Logra 3 Rondas maestras (derrotas sin daño ni potenciadores)',
         feat_domaecos: 'Domaecos', feat_domaecos_d: 'Derrota a un eco de nivel III o superior',
         surv_boss_lvl: 'Nv. {n}',
+        surv_boss_leave: 'Huye {s}s',
         surv_boss_hp_sr: 'Vida del jefe: {n} de {m} anclas',
         surv_boss_enter_sr: 'Jefe: {b}, nivel {n}, {k} anclas. Converge los iconos sobre las anclas para dañarlo.',
         surv_boss_prep: '{b} prepara: {a}',
@@ -1248,6 +1249,7 @@
         feat_ronda_maestra: 'Master round', feat_ronda_maestra_d: 'Earn 3 Master rounds (defeats with no damage and no power-ups)',
         feat_domaecos: 'Echo tamer', feat_domaecos_d: 'Defeat an echo of level III or higher',
         surv_boss_lvl: 'Lv. {n}',
+        surv_boss_leave: 'Flees {s}s',
         surv_boss_hp_sr: "Boss health: {n} of {m} anchors",
         surv_boss_enter_sr: 'Boss: {b}, level {n}, {k} anchors. Converge the icons on the anchors to damage it.',
         surv_boss_prep: '{b} is preparing: {a}',
@@ -6864,6 +6866,7 @@
         const sb2 = $('#surv-bar'); if (sb2) sb2.classList.toggle('encounter', !!enc);
         const eb = $('#surv-boss');
         if (eb) { eb.hidden = !enc; if (!enc) eb.classList.remove('phase2', 'lvl-high', 'resolved', 'defeated', 'retreating'); }
+        const ww = $('#surv-wave-wrap'); if (ww) ww.hidden = !!enc;
       }
       if (enc) {
         const mini = enc.kind === 'mini';
@@ -6872,7 +6875,8 @@
         const secs = enc.resolved ? 0 : mini
           ? Math.max(0, Math.ceil((enc.durMs - enc.ms) / 1000))
           : Math.max(0, Math.ceil((enc.attackEvery - enc.atkAcc) / 1000));
-        const sig = enc.id + '|' + enc.lvl + '|' + enc.phase + '|' + enc.anchorsLeft + '|' + secs + '|' + (enc.telegraphed ? 1 : 0) + '|' + (enc.resolved || '') + '|' + (enc.resolveLabel || '');
+        const leaveSecs = enc.resolved ? 0 : Math.max(0, Math.ceil((enc.durMs - enc.ms) / 1000));
+        const sig = enc.id + '|' + enc.lvl + '|' + enc.phase + '|' + enc.anchorsLeft + '|' + secs + '|' + leaveSecs + '|' + (enc.telegraphed ? 1 : 0) + '|' + (enc.resolved || '') + '|' + (enc.resolveLabel || '');
         if (r.encSig !== sig) {
           r.encSig = sig;
           const eb = $('#surv-boss');
@@ -6904,6 +6908,10 @@
             nx.classList.toggle('resolved', !!enc.resolved);
             nx.classList.toggle('defeated', enc.resolved === 'defeat');
             nx.classList.toggle('retreating', enc.resolved === 'retreat');
+          }
+          const blv = $('#surv-boss-leave');
+          if (blv) {
+            blv.textContent = enc.resolved ? '' : I18n.t('surv_boss_leave').replace('{s}', leaveSecs);
           }
         }
       }
@@ -7509,6 +7517,7 @@
     _faceOff() {
       this.face = null;
       const el = $('#surv-boss'); if (el) { el.hidden = true; el.classList.remove('mini', 'phase2', 'lvl-high', 'resolved', 'defeated', 'retreating'); }
+      const ww = $('#surv-wave-wrap'); if (ww) ww.hidden = false;
       const sb = $('#surv-bar'); if (sb) sb.classList.remove('encounter');
       document.documentElement.style.removeProperty('--boss-accent');
     },

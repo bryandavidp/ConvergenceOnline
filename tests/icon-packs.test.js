@@ -1,3 +1,4 @@
+/* global Buffer */
 'use strict';
 
 const test = require('node:test');
