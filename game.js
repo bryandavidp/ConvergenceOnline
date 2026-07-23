@@ -481,7 +481,7 @@
         const img = new Image();
         img.decoding = 'async';
         img.src = this._assetPath(id, a.file);
-        if (img.decode) img.decode().catch(() => {});
+        if (img.decode) img.decode().catch(() => { });
       });
     },
   };
@@ -861,7 +861,7 @@
         feat_cazador: 'Cazador', feat_cazador_d: 'Derrota a los 5 Señores (Nubarrón, Corriente, Boreal, Cerrajero y Tectónico)',
         feat_ronda_maestra: 'Ronda maestra', feat_ronda_maestra_d: 'Logra 3 Rondas maestras (derrotas sin daño ni potenciadores)',
         feat_domaecos: 'Domaecos', feat_domaecos_d: 'Derrota a un eco de nivel III o superior',
-        surv_boss_lvl: 'Nv. {n}',
+        surv_boss_lvl: '{n}',
         surv_boss_leave: 'Huye {s}s',
         surv_boss_hp_sr: 'Vida del jefe: {n} de {m} anclas',
         surv_boss_enter_sr: 'Jefe: {b}, nivel {n}, {k} anclas. Converge los iconos sobre las anclas para dañarlo.',
@@ -1248,7 +1248,7 @@
         feat_cazador: 'Hunter', feat_cazador_d: 'Defeat the 5 Lords (Stormfront, Current, Boreal, Locksmith and Tectonic)',
         feat_ronda_maestra: 'Master round', feat_ronda_maestra_d: 'Earn 3 Master rounds (defeats with no damage and no power-ups)',
         feat_domaecos: 'Echo tamer', feat_domaecos_d: 'Defeat an echo of level III or higher',
-        surv_boss_lvl: 'Lv. {n}',
+        surv_boss_lvl: '{n}',
         surv_boss_leave: 'Flees {s}s',
         surv_boss_hp_sr: "Boss health: {n} of {m} anchors",
         surv_boss_enter_sr: 'Boss: {b}, level {n}, {k} anchors. Converge the icons on the anchors to damage it.',
@@ -2820,7 +2820,7 @@
       }, 1500);
     },
     // Compatibilidad con consumidores antiguos: el nuevo host siempre contiene uno.
-    _trim() {},
+    _trim() { },
     _out() { this._finishActive(false); },
   };
 
@@ -2836,18 +2836,18 @@
   const Feedback = {
     // valence: threat(rojo) · warn(ámbar) · cold(azul) · boon(oro/verde) — vía `kind`.
     SIG: {
-      quake:    { kind: 'warn', ms: 2000, priority: 88, icon: 'teleporter',   snd: 'quake',    hap: 'quake',   toast: 'surv_quake' },
-      tide:     { kind: 'warn', ms: 2000, priority: 88, icon: '🌊',           snd: 'tide',     hap: 'roll',    toastEn: ['surv_tide', 'surv_tide_enraged'] },
-      meteor:   { kind: 'bad',  ms: 2000, priority: 90, icon: 'v2:meteor',    snd: 'meteor',   hap: 'impacts', toastEn: ['surv_meteor', 'surv_meteor_enraged'] },
-      frost:    { kind: 'info', ms: 1900, priority: 86, icon: 'v2:snowflake', snd: 'frost',    hap: 'ice',     toastEn: ['surv_frost', 'surv_frost_enraged'] },
-      lockdown: { kind: 'bad',  ms: 2000, priority: 90, icon: '🔒',           snd: 'lockdown', hap: 'clank',   toast: 'surv_lockdown' },
-      echo:     { kind: 'bad',  ms: 1900, priority: 96, icon: '🔁',           snd: 'echo',     hap: 'quake' },
-      lifeLost: { kind: 'bad',  ms: 1900, priority: 100, icon: 'heart',       snd: 'lifeBlast',hap: 'life',    toast: 'surv_life_lost' },
-      grant:    { kind: 'good', ms: 1700, priority: 60, icon: '✨',           snd: 'grant',    hap: 'reward',  frame: 'fbk-boon' },
-      waveUp:   { kind: 'warn', ms: 1600, priority: 80, icon: 'fire',         snd: 'waveUp',   hap: 'combo' },
-      waveSoon: { kind: 'warn', ms: 1500, priority: 72, icon: 'fire',         snd: 'danger',   hap: null,      toast: 'surv_wave_soon' },
-      bossWarn: { kind: 'bad',  ms: 2400, priority: 98, icon: null,           snd: 'bossWarn', hap: 'fire' },
-      bossPhase:{ kind: 'warn', ms: 1600, priority: 95, icon: '⚠️',           snd: 'danger',   hap: 'combo' },
+      quake: { kind: 'warn', ms: 2000, priority: 88, icon: 'teleporter', snd: 'quake', hap: 'quake', toast: 'surv_quake' },
+      tide: { kind: 'warn', ms: 2000, priority: 88, icon: '🌊', snd: 'tide', hap: 'roll', toastEn: ['surv_tide', 'surv_tide_enraged'] },
+      meteor: { kind: 'bad', ms: 2000, priority: 90, icon: 'v2:meteor', snd: 'meteor', hap: 'impacts', toastEn: ['surv_meteor', 'surv_meteor_enraged'] },
+      frost: { kind: 'info', ms: 1900, priority: 86, icon: 'v2:snowflake', snd: 'frost', hap: 'ice', toastEn: ['surv_frost', 'surv_frost_enraged'] },
+      lockdown: { kind: 'bad', ms: 2000, priority: 90, icon: '🔒', snd: 'lockdown', hap: 'clank', toast: 'surv_lockdown' },
+      echo: { kind: 'bad', ms: 1900, priority: 96, icon: '🔁', snd: 'echo', hap: 'quake' },
+      lifeLost: { kind: 'bad', ms: 1900, priority: 100, icon: 'heart', snd: 'lifeBlast', hap: 'life', toast: 'surv_life_lost' },
+      grant: { kind: 'good', ms: 1700, priority: 60, icon: '✨', snd: 'grant', hap: 'reward', frame: 'fbk-boon' },
+      waveUp: { kind: 'warn', ms: 1600, priority: 80, icon: 'fire', snd: 'waveUp', hap: 'combo' },
+      waveSoon: { kind: 'warn', ms: 1500, priority: 72, icon: 'fire', snd: 'danger', hap: null, toast: 'surv_wave_soon' },
+      bossWarn: { kind: 'bad', ms: 2400, priority: 98, icon: null, snd: 'bossWarn', hap: 'fire' },
+      bossPhase: { kind: 'warn', ms: 1600, priority: 95, icon: '⚠️', snd: 'danger', hap: 'combo' },
     },
     event(id, opts) {
       opts = opts || {};
@@ -6955,14 +6955,14 @@
     // son PROVISIONALES hasta la puerta B-J3 (JF-γ): la intensidad total del
     // encuentro (~4 ataques) debe equivaler al evento único de hoy.
     DEX: {
-      meteor:   { acto: 1, accent: '#ff755b', icon: 'v2:meteor',    atkIcon: '☄', anchors: 3, armored: 0, attackMs: 12000, atk: 'rain',    frame: 'surv-meteor-board' },
-      tide:     { acto: 1, accent: '#59d6ff', icon: '🌊',           atkIcon: '≈', anchors: 3, armored: 0, attackMs: 13000, atk: 'tide',    frame: 'surv-tide', edgeAnchors: true },
-      frost:    { acto: 1, accent: '#94e8ff', icon: 'v2:snowflake', atkIcon: '❄', anchors: 2, armored: 0, attackMs: 12000, atk: 'frost',   frame: 'surv-frost' },
-      lockdown: { acto: 2, accent: '#d6dce8', icon: '🔒',           atkIcon: '▣', anchors: 3, armored: 1, attackMs: 13000, atk: 'locks',   frame: 'surv-lockdown' },
-      quake:    { acto: 2, accent: '#ffb24d', icon: 'teleporter',   atkIcon: '▤', anchors: 3, armored: 1, attackMs: 14000, atk: 'shuffle', frame: 'surv-quake', chaosPromote: true },
+      meteor: { acto: 1, accent: '#ff755b', icon: 'v2:meteor', atkIcon: '☄', anchors: 3, armored: 0, attackMs: 12000, atk: 'rain', frame: 'surv-meteor-board' },
+      tide: { acto: 1, accent: '#59d6ff', icon: '🌊', atkIcon: '≈', anchors: 3, armored: 0, attackMs: 13000, atk: 'tide', frame: 'surv-tide', edgeAnchors: true },
+      frost: { acto: 1, accent: '#94e8ff', icon: 'v2:snowflake', atkIcon: '❄', anchors: 2, armored: 0, attackMs: 12000, atk: 'frost', frame: 'surv-frost' },
+      lockdown: { acto: 2, accent: '#d6dce8', icon: '🔒', atkIcon: '▣', anchors: 3, armored: 1, attackMs: 13000, atk: 'locks', frame: 'surv-lockdown' },
+      quake: { acto: 2, accent: '#ffb24d', icon: 'teleporter', atkIcon: '▤', anchors: 3, armored: 1, attackMs: 14000, atk: 'shuffle', frame: 'surv-quake', chaosPromote: true },
       // --- Acto III: La Corte Profunda (JF-ε) — twists mentales ---
-      crystalid: { acto: 3, accent: '#19f0d0', icon: '💠', atkIcon: '✷', anchors: 4, armored: 0, attackMs: 12000, atk: 'shards',  frame: 'surv-frost', regenMs: 12000 },
-      void:      { acto: 3, accent: '#a06bff', icon: '🕳️', atkIcon: '◉', anchors: 2, armored: 0, attackMs: 11000, atk: 'devour',  frame: 'surv-lockdown', growCap: 4 },
+      crystalid: { acto: 3, accent: '#19f0d0', icon: '💠', atkIcon: '✷', anchors: 4, armored: 0, attackMs: 12000, atk: 'shards', frame: 'surv-frost', regenMs: 12000 },
+      void: { acto: 3, accent: '#a06bff', icon: '🕳️', atkIcon: '◉', anchors: 2, armored: 0, attackMs: 11000, atk: 'devour', frame: 'surv-lockdown', growCap: 4 },
       puppeteer: { acto: 3, accent: '#ff6cb0', icon: '🎭', atkIcon: '✚', anchors: 3, armored: 1, attackMs: 13000, atk: 'threads', frame: 'surv-quake' },
     },
     // ---- Minijefes (JF-δ, §3.7/§4.3): entidades de 1 ancla y 1 mecánica que
@@ -6970,10 +6970,10 @@
     // vocabulario del jefe de su acto en versión pequeña; sin card ni bendición.
     MINI_P: 0.22, MINI_PITY: 4, MINI_FROM_WAVE: 3,
     MINIDEX: {
-      magpie:  { acto: 1, accent: '#ffd84d', icon: '🐦', atkIcon: '✧', beatMs: 7000,  lifeWaves: 1 },   // roba 1 icono/7s; al morir lo devuelve TODO agrupado
-      firefly: { acto: 1, accent: '#ffe14d', icon: '✨', atkIcon: '✦', beatMs: 3000,  lifeMs: 15000, bonus: true }, // vaga; matarla = frenesí + monedas
-      sentinel:{ acto: 2, accent: '#7ad7ff', icon: '🗼', atkIcon: '❄', beatMs: 8000,  lifeWaves: 1, armor: 1 },     // congela en su fila/columna; al morir la limpia
-      herald:  { acto: 2, accent: '#ff5d73', icon: '📯', atkIcon: '▲', beatMs: 99000, lifeWaves: 1, armor: 1, preBoss: true }, // vivo al llegar el jefe = jefe +1 nivel
+      magpie: { acto: 1, accent: '#ffd84d', icon: '🐦', atkIcon: '✧', beatMs: 7000, lifeWaves: 1 },   // roba 1 icono/7s; al morir lo devuelve TODO agrupado
+      firefly: { acto: 1, accent: '#ffe14d', icon: '✨', atkIcon: '✦', beatMs: 3000, lifeMs: 15000, bonus: true }, // vaga; matarla = frenesí + monedas
+      sentinel: { acto: 2, accent: '#7ad7ff', icon: '🗼', atkIcon: '❄', beatMs: 8000, lifeWaves: 1, armor: 1 },     // congela en su fila/columna; al morir la limpia
+      herald: { acto: 2, accent: '#ff5d73', icon: '📯', atkIcon: '▲', beatMs: 99000, lifeWaves: 1, armor: 1, preBoss: true }, // vivo al llegar el jefe = jefe +1 nivel
     },
     _miniDry: 0, _lastWaveMini: false, _heraldEmpower: false, _heraldSlain: false,
     miniName(id) { return I18n.t('minidex_' + id); },
@@ -9100,7 +9100,7 @@
       // sola vez y solo en modos de puntuación. El récord no vive en el HUD permanente
       // (se ocultó con .score-meta); aparece solo cuando puede cambiar tu decisión.
       else if (!State.recordNear && Config.MODES[State.mode].scoreAttack
-          && Storage.best > 0 && State.score >= Storage.best * 0.85 && State.score < Storage.best) {
+        && Storage.best > 0 && State.score >= Storage.best * 0.85 && State.score < Storage.best) {
         State.recordNear = true;
         Toasts.show(I18n.t('rec_close').replace('{n}', fmtNum(Storage.best - State.score)), 'warn', 1700, 'trophy');
       }
@@ -13459,12 +13459,12 @@
 
     // La fuente variable cuenta como una unidad más de progreso.
     const fontJob = (document.fonts && document.fonts.load)
-      ? document.fonts.load('600 1em "Nunito Sans Game"').catch(() => {})
+      ? document.fonts.load('600 1em "Nunito Sans Game"').catch(() => { })
       : Promise.resolve();
 
     const total = assets.length + 1;
     let done = 0;
-    let armStall = () => {};
+    let armStall = () => { };
     const bump = () => {
       done++;
       const p = Math.min(100, Math.round((done / total) * 100));
@@ -13479,7 +13479,7 @@
       img.onload = finish; img.onerror = finish;
       img.src = url;
       // decode() garantiza que el bitmap está listo para pintar sin "pop" al revelar.
-      if (img.decode) img.decode().then(finish).catch(() => {});
+      if (img.decode) img.decode().then(finish).catch(() => { });
     });
 
     const jobs = assets.map((u) => loadImg(u).then(bump));
