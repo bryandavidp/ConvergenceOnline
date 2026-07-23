@@ -325,9 +325,20 @@ test('HUD: Supervivencia integra un unico marcador en el pie del bloque de estad
     'la fila compartida debe apoyarse directamente sobre el contenedor principal');
   assert.match(css, /body\.mode-surv \.surv-footer \.gscore\s*\{[^}]*background:\s*none;[^}]*box-shadow:\s*none;/,
     'la puntuacion no debe conservar un subcontenedor visual');
-  assert.match(css, /body\.mode-surv \.score-side\s*\{[^}]*grid-column:\s*3;/);
-  assert.match(css, /body\.mode-surv \.gscore\s*\{[^}]*grid-column:\s*2;/);
-  assert.match(css, /body\.mode-surv \.surv-footer > \.score-row \.power-rings\s*\{[^}]*width:\s*32px;/);
+  // HUD-redesign: la zona de score es PUNTUACIÓN (izq) · COMBO·MULT·FIEBRE (centro) · MEJOR MARCA (der).
+  assert.match(css, /body\.mode-surv \.surv-footer > \.score-row \.gscore\s*\{[^}]*grid-column:\s*1;/,
+    'la puntuacion manda a la izquierda de la zona de score');
+  assert.match(css, /body\.mode-surv \.surv-footer > \.score-row #surv-combo\s*\{[^}]*grid-column:\s*2;/,
+    'el componente compacto de combo/fiebre va al centro');
+  assert.match(css, /body\.mode-surv \.surv-footer > \.score-row #surv-best\s*\{[^}]*grid-column:\s*3;/,
+    'la mejor marca va a la derecha');
+  // El medidor de energia (anillos) ya no vive en el marcador: se reubica etiquetado en la zona vital.
+  assert.match(css, /\.surv-energy-box \.power-rings\s*\{[^}]*width:\s*42px;/,
+    'los anillos de energia se reubican en la celda de Energia');
+  assert.doesNotMatch(css, /body\.mode-surv \.surv-footer > \.score-row \.power-rings\s*\{/,
+    'el marcador ya no contiene el medidor de energia');
+  assert.match(css, /body\.mode-surv #hud-mult\s*\{[^}]*display:\s*none;/,
+    'en Supervivencia el multiplicador se muestra dentro de #surv-combo');
   assert.match(Survival.render.toString(), /#pr-frenzy/);
   assert.match(Survival.render.toString(), /#power-rings/);
 

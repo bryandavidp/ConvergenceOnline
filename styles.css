@@ -2571,10 +2571,13 @@ body:not(.mode-surv):not(.mode-tutorial) .event-dock .toast {
 }
 /* En Supervivencia la fila compartida se apoya directamente sobre el pie del
    bloque principal: mantiene su estructura técnica, pero no dibuja otra tarjeta. */
+/* Zona de puntuación (Supervivencia): PUNTUACIÓN (izq) · COMBO·MULT·FIEBRE (centro) ·
+   MEJOR MARCA (der). El estado/energía vive arriba en la zona vital; aquí solo el score. */
 body.mode-surv .surv-footer > .score-row {
-  grid-template-columns: minmax(32px, 1fr) auto minmax(32px, 1fr);
-  gap: 4px;
-  min-height: 38px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -2583,15 +2586,16 @@ body.mode-surv .surv-footer > .score-row {
 }
 .score-side { display: grid; justify-items: start; align-items: center; min-width: 0; }
 .score-side .power-rings { display: none; }
-body.mode-surv .score-side .power-rings { display: block; }
-body.mode-surv .score-side .gctx { display: none; }
-body.mode-surv .score-side { grid-column: 3; grid-row: 1; justify-items: end; }
-body.mode-surv .gscore { grid-column: 2; grid-row: 1; }
-body.mode-surv .score-spacer { grid-column: 1; grid-row: 1; }
 .score-row .power-rings { width: 42px; height: 42px; }
 .score-row .pr-flame { font-size: .95rem; }
-body.mode-surv .surv-footer > .score-row .power-rings { width: 32px; height: 32px; }
-body.mode-surv .surv-footer > .score-row .pr-flame { font-size: .76rem; }
+/* El lateral de chips y el espaciador no pintan aquí. */
+body.mode-surv .surv-footer > .score-row .score-side,
+body.mode-surv .surv-footer > .score-row .score-spacer { display: none; }
+body.mode-surv .surv-footer > .score-row .gscore { grid-column: 1; grid-row: 1; align-items: flex-start; justify-self: start; text-align: left; }
+body.mode-surv .surv-footer > .score-row #surv-combo { grid-column: 2; grid-row: 1; }
+body.mode-surv .surv-footer > .score-row #surv-best { grid-column: 3; grid-row: 1; justify-self: end; }
+/* El multiplicador ya no se pega al marcador: se muestra dentro de #surv-combo. */
+body.mode-surv #hud-mult { display: none; }
 .score-spacer { display: block; }
 .gscore {
   display: flex;
@@ -2612,8 +2616,15 @@ body.mode-surv .surv-footer .gscore {
   background: none;
   box-shadow: none;
 }
-body.mode-surv .surv-footer .gscore .hud-value { font-size: clamp(1.3rem, 5.8vw, 1.7rem); }
+body.mode-surv .surv-footer .gscore .hud-value { font-size: clamp(1.5rem, 6.6vw, 2.05rem); }
 body.mode-surv .surv-footer .score-meta { display: none; }
+/* Kicker "Puntuación" (solo Supervivencia): rotula la zona de score sin ruido. */
+.surv-score-k { display: none; }
+body.mode-surv .surv-footer .gscore .surv-score-k {
+  display: block; align-self: flex-start;
+  color: rgba(224,231,255,.56); font-size: .52rem; font-weight: 1000;
+  letter-spacing: .07em; text-transform: uppercase; line-height: 1; margin-bottom: 1px;
+}
 .gscore .hud-value {
   font-size: clamp(1.9rem, 8vw, 2.45rem);
   font-weight: 1000;
@@ -2781,7 +2792,7 @@ body.mode-surv .mult-bd { top: auto; bottom: calc(100% + 8px); }
   border: 2px solid var(--hud-border);
   box-shadow: inset 0 1px 0 var(--hud-highlight), inset 0 -1px 0 rgba(0,0,0,.5), 0 4px 0 var(--hud-lip), 0 11px 25px rgba(0,0,0,.34), 0 0 20px var(--hud-glow);
 }
-.surv-grid { display: grid; grid-template-columns: 82px minmax(0, 1fr) 72px; align-items: stretch; gap: 6px; min-width: 0; width: 100%; justify-self: stretch; }
+.surv-grid { display: grid; grid-template-columns: 76px minmax(0, 1fr) 84px; align-items: stretch; gap: 6px; min-width: 0; width: 100%; justify-self: stretch; }
 .surv-footer {
   width: 100%;
   min-width: 0;
@@ -2802,7 +2813,6 @@ body.mode-surv .mult-bd { top: auto; bottom: calc(100% + 8px); }
 .surv-k { color: rgba(224,231,255,.58); font-size: .56rem; font-weight: 1000; line-height: 1; letter-spacing: .06em; text-transform: uppercase; }
 .surv-lives { min-width: 0; display: inline-flex; justify-content: center; gap: 2px; color: var(--bad); line-height: 1; }
 .surv-lives .ic { width: 16px; height: 16px; filter: drop-shadow(0 0 5px rgba(255,72,112,.45)); }
-.surv-time-box { align-items: center; }
 .surv-time { color: #9c77ff; font-size: 1rem; font-weight: 1000; font-variant-numeric: tabular-nums; line-height: 1; text-shadow: 0 0 10px rgba(156,119,255,.34); }
 .surv-wave-wrap { display: grid; grid-template-rows: auto auto; align-items: center; gap: 6px; width: 100%; }
 .surv-wave-row { display: flex; justify-content: center; align-items: center; gap: 7px; min-width: 0; }
@@ -2810,6 +2820,65 @@ body.mode-surv .mult-bd { top: auto; bottom: calc(100% + 8px); }
 .surv-tier { height: 18px; display: inline-flex; align-items: center; color: #06122b; background: var(--gold); font-size: .62rem; font-weight: 1000; padding: 0 7px; }
 .surv-waveprog { width: 100%; height: 7px; background: rgba(2,7,22,.72); box-shadow: inset 0 1px 2px rgba(0,0,0,.5); }
 .surv-waveprog-fill { background: linear-gradient(90deg, #ffdc55, #ffb337); box-shadow: 0 0 8px rgba(255,202,63,.30); }
+
+/* ===== HUD-redesign: zona vital (Vidas · Oleada/Jefe · Energía) =====
+   Centro de la zona vital: la oleada y el jefe COMPARTEN celda (misma área de grid);
+   solo uno es visible a la vez (Survival.render conmuta [hidden]). El jefe reemplaza a
+   la oleada durante el encuentro, en vez de apilarse encima (JF-β / punto 2 del mockup). */
+.surv-center { position: relative; min-width: 0; display: grid; align-items: center; }
+.surv-center > .surv-wave-wrap,
+.surv-center > .surv-boss { grid-area: 1 / 1; }
+.surv-center > .surv-boss[hidden],
+.surv-center > .surv-wave-wrap[hidden] { display: none; }
+/* Jefe compacto para caber en la celda central (antes era un banner a todo lo ancho). */
+.surv-center > .surv-boss { width: 100%; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 6px; padding: 4px 6px; min-height: 48px; }
+.surv-center > .surv-boss .sbx-portrait { width: 28px; height: 28px; }
+.surv-center > .surv-boss .sbx-portrait img, .surv-center > .surv-boss .sbx-portrait span[style] { width: 17px; height: 17px; }
+.surv-center > .surv-boss .sbx-name { font-size: .72rem; }
+.surv-center > .surv-boss .sbx-next { min-width: 0; padding: 3px 6px; font-size: .64rem; min-height: 26px; }
+
+/* Energía: medidor único etiquetado. Conserva los dos anillos (suministro interior +
+   frenesí exterior) pero se presenta como un solo widget "ENERGÍA" con % y llama
+   (punto 3 del mockup, sin cambiar mecánica). */
+.surv-energy-box { justify-content: center; gap: 3px; padding: 4px 6px; }
+.surv-energy-ring { position: relative; width: 42px; height: 42px; display: grid; place-items: center; }
+.surv-energy-box .power-rings { width: 42px; height: 42px; }
+.surv-energy-box .pr-flame { font-size: .78rem; opacity: .2; }
+.surv-energy-box .power-rings.on .pr-flame { opacity: .42; animation: none; }
+.surv-energy-pct { position: absolute; inset: 0; display: grid; place-items: center; z-index: 2;
+  color: #dbe4ff; font-size: .58rem; font-weight: 1000; font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px rgba(0,0,0,.72); }
+.surv-energy-box .power-rings.on ~ .surv-energy-pct { color: #fff; }
+
+/* Rendimiento compacto: COMBO · MULT · FIEBRE en un solo componente (punto 4). Solo
+   se muestra con combo real (>×1); Render.survCombo controla su [hidden]. */
+.surv-combo { display: none; }
+body.mode-surv .surv-footer > .score-row #surv-combo:not([hidden]) {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 3px 10px; border-radius: var(--hud-radius-card);
+  border: 1px solid color-mix(in srgb, var(--gold) 30%, rgba(124,151,232,.24));
+  background: linear-gradient(180deg, rgba(38,30,10,.5), rgba(9,10,22,.5));
+}
+.surv-combo .sc-top { display: inline-flex; align-items: baseline; gap: 6px; line-height: 1; }
+.surv-combo .sc-k { color: rgba(255,231,170,.72); font-size: .54rem; font-weight: 1000; letter-spacing: .08em; text-transform: uppercase; }
+.surv-combo .sc-n { color: var(--gold); font-size: 1rem; font-weight: 1000; font-variant-numeric: tabular-nums; }
+.surv-combo .sc-mult { color: #ffd65f; font-size: .82rem; font-weight: 1000; font-variant-numeric: tabular-nums; }
+.surv-combo .sc-fever { display: inline-flex; align-items: center; gap: 5px; }
+.surv-combo .sc-fever-k { color: rgba(255,150,120,.82); font-size: .5rem; font-weight: 1000; letter-spacing: .06em; text-transform: uppercase; }
+.surv-combo .sc-fever-bar { width: 56px; height: 5px; border-radius: 999px; background: rgba(2,7,22,.7); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,.5); }
+.surv-combo .sc-fever-fill { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #ff8a3d, #ff5b6e); transition: width .2s linear; }
+.surv-combo.fever-on { border-color: color-mix(in srgb, var(--gold) 60%, transparent); box-shadow: 0 0 12px rgba(255,178,77,.28); }
+.surv-combo.fever-on .sc-fever-fill { background: linear-gradient(90deg, #ffd65f, #ff746f); }
+
+/* Mejor marca + tiempo sobrevivido: stats secundarias, alineadas a la derecha. */
+.surv-bestmark { display: none; }
+body.mode-surv .surv-footer > .score-row #surv-best { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 0; }
+.surv-bestmark .sb-line { display: inline-flex; align-items: baseline; gap: 4px; line-height: 1; white-space: nowrap; }
+.surv-bestmark .sb-k { color: rgba(224,231,255,.5); font-size: .5rem; font-weight: 1000; letter-spacing: .06em; text-transform: uppercase; }
+.surv-bestmark .sb-best b { color: var(--gold); font-size: .84rem; font-weight: 1000; font-variant-numeric: tabular-nums; }
+.surv-bestmark .sb-time { opacity: .85; }
+.surv-bestmark .sb-time .sb-ic { font-size: .6rem; }
+.surv-bestmark .sb-time b { color: #9c77ff; font-size: .72rem; font-weight: 1000; font-variant-numeric: tabular-nums; }
 /* ===== Sistema de jefes (JF-β, docs/BOSS_SYSTEM_MASTER_PLAN.md §5) =====
    Banner del encuentro: primera fila DENTRO de #surv-bar, encima de vidas/oleada/
    tiempo. Solo existe durante el encuentro (hidden fuera: coste cero). El acento
@@ -3027,11 +3096,13 @@ body.mode-surv .booster-bar { grid-template-columns: minmax(0, 1fr) 56px; }
   body.mode-surv .wallet-pill .ic { width: 13px; height: 13px; }
   body.mode-surv .wallet-plus { width: 14px; height: 14px; }
   body.mode-surv .wallet-xp-boost small { display: none; }
-  .surv-grid { grid-template-columns: 70px minmax(0, 1fr) 62px; gap: 4px; }
+  .surv-grid { grid-template-columns: 66px minmax(0, 1fr) 72px; gap: 4px; }
   .surv-metric, .surv-wave-wrap { padding-inline: 5px; }
   .surv-lives .ic { width: 14px; height: 14px; }
   body.mode-surv .surv-footer > .score-row { grid-template-columns: minmax(30px, 1fr) auto minmax(30px, 1fr); }
-  body.mode-surv .surv-footer > .score-row .power-rings { width: 30px; height: 30px; }
+  .surv-energy-ring, .surv-energy-box .power-rings { width: 38px; height: 38px; }
+  .surv-combo .sc-fever-bar { width: 46px; }
+  .surv-center > .surv-boss { grid-template-columns: 26px minmax(0, 1fr) auto; gap: 5px; }
   .event-dock .toast { grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; padding-inline: 9px; }
   .event-dock .toast .toast-ic { width: 29px; height: 29px; }
   .context-bar .occ-label { min-width: 68px; font-size: .62rem; }
@@ -3051,6 +3122,8 @@ body.mode-surv .booster-bar { grid-template-columns: minmax(0, 1fr) 56px; }
   body.mode-surv .surv-footer > .score-row { min-height: 36px; }
   body.mode-surv .surv-footer .gscore { min-height: 30px; }
   body.mode-surv .surv-boss { min-height: 40px; padding-block: 4px; }
+  body.mode-surv .surv-center > .surv-boss { min-height: 40px; }
+  body.mode-surv .surv-energy-ring, body.mode-surv .surv-energy-box .power-rings { width: 36px; height: 36px; }
   body.mode-surv .booster-bar { min-height: 62px; padding: 5px; margin-top: 4px; }
   body.mode-surv .booster { height: 51px; padding-top: 7px; }
   body.mode-surv .context-bar { min-height: 27px; padding-block: 3px; }

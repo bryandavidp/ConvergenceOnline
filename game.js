@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.31.0';
+  const VERSION = '2.32.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -668,6 +668,7 @@
         profile_action: 'Abrir perfil', edit_name_action: 'Editar nombre', get_coins: 'Conseguir monedas', get_gems: 'Conseguir gemas',
         q_missions: 'Misiones', q_daily: 'Diario', q_chests: 'Cofres', q_league: 'Liga', q_friends: 'Amigos', best_score: 'Mejor puntuación', play_word: 'Jugar',
         hud_record: 'Récord', hud_points: 'Puntos', hud_level: 'Nivel', hud_time: 'Tiempo', hud_speed: 'Velocidad', hud_occ: 'Ocupación',
+        hud_lives: 'Vidas', hud_energy: 'Energía', hud_score_k: 'Puntuación', hud_bestmark: 'Mejor marca', hud_combo: 'Combo', hud_fever_k: 'Fiebre',
         hud_danger: 'Peligro', hud_board_fill: 'Tablero',
         hud_event_boss: 'JEFE', hud_event_wave: 'NUEVA OLEADA', hud_event_next: 'A continuación',
         hud_next_boss: 'Siguiente jefe', hud_new_shapes: 'Nuevas figuras',
@@ -1054,6 +1055,7 @@
         profile_action: 'Open profile', edit_name_action: 'Edit name', get_coins: 'Get coins', get_gems: 'Get gems',
         q_missions: 'Missions', q_daily: 'Daily', q_chests: 'Chests', q_league: 'League', q_friends: 'Friends', best_score: 'Best score', play_word: 'Play',
         hud_record: 'Best', hud_points: 'Score', hud_level: 'Level', hud_time: 'Time', hud_speed: 'Speed', hud_occ: 'Fill',
+        hud_lives: 'Lives', hud_energy: 'Energy', hud_score_k: 'Score', hud_bestmark: 'Best', hud_combo: 'Combo', hud_fever_k: 'Fever',
         hud_danger: 'Danger', hud_board_fill: 'Board',
         hud_event_boss: 'BOSS', hud_event_wave: 'NEW WAVE', hud_event_next: 'Coming up',
         hud_next_boss: 'Next boss', hud_new_shapes: 'New shapes',
@@ -2348,6 +2350,30 @@
       });
       this.multChip();
       this.hero();
+      this.survCombo();
+    },
+    // Rendimiento compacto (Supervivencia): combo + multiplicador + fiebre en un solo
+    // componente que solo aparece cuando hay combo real (>×1). Reutiliza los datos ya
+    // existentes (State.combo, multiplicador efectivo y Survival.frenzy): sin mecánica nueva.
+    survCombo() {
+      if (State.mode !== 'supervivencia') return;
+      const el = $('#surv-combo'); if (!el) return;
+      const combo = State.combo | 0;
+      const show = State.status === 'playing' && combo >= 2;
+      if (el.hidden !== !show) el.hidden = !show;
+      if (show) {
+        const nEl = $('#surv-combo-n'); const nTxt = '×' + combo;
+        if (nEl && nEl.textContent !== nTxt) nEl.textContent = nTxt;
+        const mult = State.comboMult * Game.feverBoost() * (State.tempMult || 1) * Game.sprintMult() * Survival.scoreMult();
+        const mEl = $('#surv-combo-mult'); const mTxt = '×' + (mult % 1 === 0 ? mult : +mult.toFixed(1));
+        if (mEl && mEl.textContent !== mTxt) mEl.textContent = mTxt;
+        const active = Survival.frenzyActive();
+        const fill = $('#surv-fiebre-fill');
+        if (fill) fill.style.width = (active ? 100 : Math.min(100, Survival.frenzy)).toFixed(0) + '%';
+        el.classList.toggle('fever-on', active);
+      }
+      // Mejor marca (stat secundaria): se refresca junto al componente compacto.
+      const bv = $('#surv-best-val'); if (bv) { const b = fmtNum(Storage.best); if (bv.textContent !== b) bv.textContent = b; }
     },
     // Héroe del marcador (HUD-X3): resuelve la ÚNICA métrica dominante del modo y la
     // pinta grande en el centro, degradando la puntuación a línea secundaria. Si el
@@ -6841,7 +6867,11 @@
       // frenesí (→ furia). Un solo widget en vez de dos barras que subían a la par.
       const C_CHARGE = 106.8, C_FRENZY = 150.8; // 2π·r (r=17 / r=24 del SVG)
       const ch = Math.round(this.charge);
-      if (r.charge !== ch) { r.charge = ch; const c = $('#pr-charge'); if (c) c.style.strokeDashoffset = (C_CHARGE * (1 - Math.min(ch, 100) / 100)).toFixed(1); }
+      if (r.charge !== ch) {
+        r.charge = ch;
+        const c = $('#pr-charge'); if (c) c.style.strokeDashoffset = (C_CHARGE * (1 - Math.min(ch, 100) / 100)).toFixed(1);
+        const pct = $('#surv-energy-pct'); if (pct) pct.textContent = Math.min(100, ch) + '%';
+      }
       const fActive = this.frenzyActive();
       const fVal = fActive ? 100 : Math.round(this.frenzy);
       if (r.frenzyVal !== fVal || r.frenzyOn !== fActive) {
@@ -6864,6 +6894,8 @@
         const sb2 = $('#surv-bar'); if (sb2) sb2.classList.toggle('encounter', !!enc);
         const eb = $('#surv-boss');
         if (eb) { eb.hidden = !enc; if (!enc) eb.classList.remove('phase2', 'lvl-high', 'resolved', 'defeated', 'retreating'); }
+        // El jefe REEMPLAZA a la oleada en el centro de la zona vital (JF-β / HUD-redesign).
+        const ww = $('#surv-wave-wrap'); if (ww) ww.hidden = !!enc;
       }
       if (enc) {
         const mini = enc.kind === 'mini';

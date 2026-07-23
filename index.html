@@ -24,7 +24,7 @@
   <meta property="og:description" content="Junta iconos iguales y encadena combos. Aventura infinita, supervivencia, contrarreloj y más." />
   <meta property="og:image" content="icon-512.png" />
   <meta name="twitter:card" content="summary" />
-  <link rel="stylesheet" href="styles.css?v=2.31.0" />
+  <link rel="stylesheet" href="styles.css?v=2.32.0" />
 </head>
 <body data-screen="login">
   <!-- ============ PANTALLA DE CARGA INICIAL (BOOT) ============
@@ -213,27 +213,46 @@
         <div class="gtop-context">
           <!-- Banner de objetivo (modo Aventura) -->
           <div class="obj-banner" id="obj-banner" hidden></div>
-          <!-- Barra de Supervivencia: vidas + oleada + tiempo sobrevivido -->
+          <!-- Barra de Supervivencia: zona VITAL (vidas · oleada/jefe · energía) + zona de PUNTUACIÓN.
+               Jerarquía por zonas (HUD-redesign): lo vital arriba, la puntuación como su propia zona. -->
           <div class="surv-bar" id="surv-bar" hidden>
-            <!-- Banner del encuentro (JF-β): la cara del jefe, visible solo durante el encuentro -->
-            <div class="surv-boss" id="surv-boss" hidden>
-              <span class="sbx-portrait" id="surv-boss-icon" aria-hidden="true"></span>
-              <div class="sbx-mid">
-                <span class="sbx-name"><span id="surv-boss-name"></span><i class="sbx-lvl" id="surv-boss-lvl"></i></span>
-                <span class="sbx-hp" id="surv-boss-hp"></span>
-              </div>
-              <span class="sbx-next" id="surv-boss-next" aria-hidden="true"></span>
-            </div>
+            <!-- Zona vital: tres celdas de peso claro -->
             <div class="surv-grid">
-              <span class="surv-metric surv-life-box"><span class="surv-k">Vidas</span><span class="surv-lives" id="surv-lives" data-explain="hud_lives_explain">❤️❤️❤️</span></span>
-              <div class="surv-wave-wrap">
-                <span class="surv-wave-row"><span class="surv-wave" id="surv-wave" data-explain="hud_wave_explain">Oleada 1</span><span class="surv-tier" id="surv-tier" aria-label="Tier de dificultad" data-explain="hud_tier_explain">N1</span><span class="surv-boss-flag" id="surv-boss-flag" data-i18n="surv_boss_soon" hidden>⚠ Jefe</span></span>
-                <span class="surv-waveprog" aria-hidden="true" data-explain="hud_waveprog_explain"><span class="surv-waveprog-fill" id="surv-waveprog-fill"></span></span>
+              <span class="surv-metric surv-life-box"><span class="surv-k" data-i18n="hud_lives">Vidas</span><span class="surv-lives" id="surv-lives" data-explain="hud_lives_explain">❤️❤️❤️</span></span>
+              <!-- Centro: la OLEADA manda por defecto; el JEFE la REEMPLAZA durante el encuentro (JF-β) -->
+              <div class="surv-center">
+                <div class="surv-wave-wrap" id="surv-wave-wrap">
+                  <span class="surv-wave-row"><span class="surv-wave" id="surv-wave" data-explain="hud_wave_explain">Oleada 1</span><span class="surv-tier" id="surv-tier" aria-label="Tier de dificultad" data-explain="hud_tier_explain">N1</span><span class="surv-boss-flag" id="surv-boss-flag" data-i18n="surv_boss_soon" hidden>⚠ Jefe</span></span>
+                  <span class="surv-waveprog" aria-hidden="true" data-explain="hud_waveprog_explain"><span class="surv-waveprog-fill" id="surv-waveprog-fill"></span></span>
+                </div>
+                <!-- Banner del encuentro (JF-β): la cara del jefe, ocupa el hueco de la oleada -->
+                <div class="surv-boss" id="surv-boss" hidden>
+                  <span class="sbx-portrait" id="surv-boss-icon" aria-hidden="true"></span>
+                  <div class="sbx-mid">
+                    <span class="sbx-name"><span id="surv-boss-name"></span><i class="sbx-lvl" id="surv-boss-lvl"></i></span>
+                    <span class="sbx-hp" id="surv-boss-hp"></span>
+                  </div>
+                  <span class="sbx-next" id="surv-boss-next" aria-hidden="true"></span>
+                </div>
               </div>
-              <span class="surv-metric surv-time-box"><span class="surv-k" data-i18n="hud_time">Tiempo</span><span class="surv-time" id="surv-time" data-explain="hud_time_explain">0s</span></span>
+              <!-- Energía: medidor único etiquetado (suministro interior + frenesí exterior) con % y llama -->
+              <span class="surv-metric surv-energy-box"><span class="surv-k" data-i18n="hud_energy">Energía</span>
+                <span class="surv-energy-ring">
+                  <div class="power-rings" id="power-rings" aria-hidden="true">
+                    <svg viewBox="0 0 56 56">
+                      <circle class="pr-bg" cx="28" cy="28" r="24"/>
+                      <circle class="pr-fill pr-frenzy" id="pr-frenzy" cx="28" cy="28" r="24"/>
+                      <circle class="pr-bg" cx="28" cy="28" r="17"/>
+                      <circle class="pr-fill pr-charge" id="pr-charge" cx="28" cy="28" r="17"/>
+                    </svg>
+                    <span class="pr-flame">🔥</span>
+                  </div>
+                  <span class="surv-energy-pct" id="surv-energy-pct">0%</span>
+                </span>
+              </span>
             </div>
-            <!-- Pie compacto de Supervivencia. Game.start mueve aquí el único
-                 #hud-score-row compartido, sin clonar datos ni listeners. -->
+            <!-- Zona de puntuación. Game.start mueve aquí el único #hud-score-row
+                 compartido, sin clonar datos ni listeners. -->
             <div class="surv-footer" id="surv-footer"></div>
           </div>
 
@@ -257,15 +276,6 @@
           <div class="hud-score-slot" id="hud-score-slot">
           <div class="score-row" id="hud-score-row" aria-label="Puntuación, multiplicador y frenesí">
             <div class="score-side">
-              <div class="power-rings" id="power-rings" aria-hidden="true">
-                <svg viewBox="0 0 56 56">
-                  <circle class="pr-bg" cx="28" cy="28" r="24"/>
-                  <circle class="pr-fill pr-frenzy" id="pr-frenzy" cx="28" cy="28" r="24"/>
-                  <circle class="pr-bg" cx="28" cy="28" r="17"/>
-                  <circle class="pr-fill pr-charge" id="pr-charge" cx="28" cy="28" r="17"/>
-                </svg>
-                <span class="pr-flame">🔥</span>
-              </div>
               <div class="gctx">
                 <span class="g-chip lvl-chip"><span class="g-k" data-i18n="hud_level">Nivel</span> <b id="hud-level">1</b></span>
                 <span class="g-chip time-chip"><b id="hud-time">0:00</b></span>
@@ -274,6 +284,8 @@
               </div>
             </div>
             <div class="gscore">
+              <!-- Kicker "Puntuación": solo visible en Supervivencia (zona de score dedicada). -->
+              <small class="surv-score-k" data-i18n="hud_score_k" aria-hidden="true">Puntuación</small>
               <!-- Feedback inmediato (puntos, combo, monedas): pool fijo junto al
                    marcador; nunca ocupa el tablero ni entra en la cola de eventos. -->
               <div class="score-feedback" id="score-feedback" aria-hidden="true"></div>
@@ -289,6 +301,24 @@
               <span class="score-meta"><span class="score-best" id="hud-best-wrap"><span data-i18n="best_score">Mejor puntuación</span> <b id="hud-best">0</b></span></span>
               <!-- Desglose del multiplicador (HUD-S4): aparece al tocar el marcador. -->
               <div class="mult-bd" id="mult-bd" hidden aria-live="polite"></div>
+            </div>
+            <!-- Rendimiento compacto (Supervivencia): combo + multiplicador + fiebre en un solo
+                 componente; solo aparece cuando hay combo (>×1). Ver Render.survCombo(). -->
+            <div class="surv-combo" id="surv-combo" hidden aria-hidden="true">
+              <span class="sc-top">
+                <span class="sc-k" data-i18n="hud_combo">Combo</span>
+                <b class="sc-n" id="surv-combo-n">×0</b>
+                <span class="sc-mult" id="surv-combo-mult">×1</span>
+              </span>
+              <span class="sc-fever">
+                <span class="sc-fever-k" data-i18n="hud_fever_k">Fiebre</span>
+                <span class="sc-fever-bar"><span class="sc-fever-fill" id="surv-fiebre-fill"></span></span>
+              </span>
+            </div>
+            <!-- Mejor marca + tiempo sobrevivido (Supervivencia): stats secundarias a la derecha. -->
+            <div class="surv-bestmark" id="surv-best" aria-hidden="true">
+              <span class="sb-line sb-best"><span class="sb-k" data-i18n="hud_bestmark">Mejor marca</span><b id="surv-best-val">0</b></span>
+              <span class="sb-line sb-time"><span class="sb-ic" aria-hidden="true">⏱</span><b class="surv-time" id="surv-time" data-explain="hud_time_explain">0s</b></span>
             </div>
             <span class="score-spacer" aria-hidden="true"></span>
           </div>
@@ -895,6 +925,6 @@
     </section>
   </div>
 
-  <script src="game.js?v=2.31.0" defer></script>
+  <script src="game.js?v=2.32.0" defer></script>
 </body>
 </html>
