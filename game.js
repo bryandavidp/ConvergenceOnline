@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.33.0';
+  const VERSION = '2.34.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -1851,7 +1851,7 @@
       this.popupsEl = $('#popups');
       this.boardEl.style.setProperty('--size', State.size);
       this.boardEl.innerHTML = '';
-      this.cells = []; this.glyphs = []; this._cellId = []; this._cellPack = []; this._cellTile = [];
+      this.cells = []; this.glyphs = []; this._cellId = []; this._cellPack = []; this._cellTile = []; this._cellAria = [];
       const frag = document.createDocumentFragment();
       for (let i = 0; i < State.size * State.size; i++) {
         const b = document.createElement('button');
@@ -1942,10 +1942,25 @@
       el.classList.toggle('has-icon', v !== null);
       // Hilos del Titiritero (JF-ε): los tipos enhebrados se marcan en toda celda.
       el.classList.toggle('threaded', v !== null && Bosses.isThreaded(v));
-      el.setAttribute('aria-label', this.cellLabel(i));
+      // Grupo A · A3 (docs/RENDER_STABILITY_PLAN.md RS-12): aria-label memoizado. El texto
+      // solo depende de (icono, pack equipado, idioma); recomputar cellLabel (llama a
+      // IconPacks.iconName) y reescribir el atributo en CADA celda por barrido invalidaba el
+      // árbol de accesibilidad 64 veces por syncAll. Con muchos eventos de jefe encadenados
+      // (varios syncAll seguidos) ese coste se acumula en el hilo principal. Se salta cuando
+      // no cambia; el atributo queda exactamente igual, solo se evita el trabajo redundante.
+      if (!this._cellAria) this._cellAria = [];
+      const ariaKey = (v == null ? '∅' : v) + '|' + Meta.equippedIconPack() + '|' + Settings.lang;
+      if (this._cellAria[i] !== ariaKey) {
+        this._cellAria[i] = ariaKey;
+        el.setAttribute('aria-label', this.cellLabel(i));
+      }
     },
 
     syncAll() { for (let i = 0; i < State.board.length; i++) this.syncCell(i); },
+    // Grupo A · A3: sincroniza SOLO las celdas afectadas por un evento. Los eventos de jefe
+    // (meteoro/escarcha/cierre) tocan un puñado de celdas pero llamaban a syncAll (barrido de
+    // las 64). Un barrido dirigido evita 64 iteraciones por evento sin cambiar el resultado.
+    syncCells(list) { for (let k = 0; k < list.length; k++) this.syncCell(list[k]); },
 
     spawnAnim(i) {
       const el = this.cells[i], g = this.glyphs[i];
@@ -6461,7 +6476,7 @@
       this._lock(900, 'surv-meteor-board');
       const placed = [], n = enraged ? 10 : 8;
       for (let k = 0; k < n; k++) { const idx = Engine.spawnOne(); if (idx >= 0) placed.push(idx); }
-      Render.syncAll(); Render.meteor(placed);
+      Render.syncCells(placed); Render.meteor(placed); // A3: solo las celdas nuevas
       Feedback.event('meteor', { enraged });
     },
     quake() {
@@ -6481,7 +6496,7 @@
         const idx = f.splice(rand(f.length), 1)[0];
         if (!State.tiles[idx]) { State.tiles[idx] = Tiles.make('frozen'); placed.push(idx); }
       }
-      Render.syncAll(); placed.forEach(i => Render.iceHit(i));
+      Render.syncCells(placed); placed.forEach(i => Render.iceHit(i)); // A3: solo las celdas heladas
       Feedback.event('frost', { enraged });
     },
     // Cierre (SV-43): siembra candados de 1 golpe sobre huecos — amenaza de bloqueo
@@ -6497,7 +6512,7 @@
         const idx = e.splice(rand(e.length), 1)[0];
         const t = Tiles.make('locked'); t.hits = 1; State.tiles[idx] = t; placed.push(idx);
       }
-      Render.syncAll(); placed.forEach(i => Render.cellPulse(i, 'lock-stamp', 520));
+      Render.syncCells(placed); placed.forEach(i => Render.cellPulse(i, 'lock-stamp', 520)); // A3: solo los candados
       Feedback.event('lockdown');
     },
     // Eco (SV-43): "ha vuelto a por ti" — repite el último jefe real con intensidad +1

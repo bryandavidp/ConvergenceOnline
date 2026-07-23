@@ -2377,7 +2377,14 @@ body.surv-frenzy-2 .board-wrap { box-shadow: 0 0 0 1px rgba(255,91,110,.42), 0 0
 body.surv-frenzy-3 .board-wrap { box-shadow: 0 0 0 1px rgba(160,107,255,.48), 0 0 34px rgba(160,107,255,.28); }
 body.surv-frenzy-active .board-wrap { animation: surv-frenzy-pulse 1.15s ease-in-out infinite; border-color: rgba(255,216,77,.82); }
 body.surv-frenzy-active .surv-bar { border-color: rgba(255,216,77,.48); box-shadow: 0 0 18px rgba(255,178,77,.18); }
-@keyframes surv-frenzy-pulse { 50% { filter: saturate(1.22) brightness(1.08); transform: translateY(-1px); } }
+/* Grupo A · A1 (docs/RENDER_STABILITY_PLAN.md RS-11): el pulso de frenesí ya NO anima
+   `filter: saturate/brightness` sobre TODA la .board-wrap — ese repintado full-board por
+   frame a dpr× era el disparador nº1 del lag de Supervivencia y solo se curaba con
+   reduced-fx. Mismo criterio que RS-1 en fever-burst: se conserva el "latido" con un
+   `transform` (compositor) y la CALIDEZ la aporta el aura #fever (pulso de opacidad,
+   encendida durante todo el frenesí por Survival._setFrenzyClass) + el glow estático por
+   tier (box-shadow, líneas arriba). Estética equivalente, coste ~0. */
+@keyframes surv-frenzy-pulse { 50% { transform: translateY(-1px) scale(1.006); } }
 
 /* Modo apuntar power-up (Supervivencia): atenúa el tablero, resalta el botón armado y el área */
 body.aiming .board-wrap { box-shadow: 0 0 0 2px var(--accent-2), 0 0 26px rgba(0,208,255,.4); border-radius: 18px; }
@@ -5808,7 +5815,14 @@ body.perf-2 .cell.tile-slowdown::before, body.perf-2 .cell.tile-timecap::before 
   animation: none !important; opacity: 0;
 }
 body.perf-2 .cell.tile-slowdown::after, body.perf-2 .cell.tile-timecap::after { animation: none !important; }
-/* El toast de auto-sugerencia (P1-e) es accionable: un toque activa el modo ligero. */
+/* Grupo A · A2 (docs/RENDER_STABILITY_PLAN.md RS-11): las animaciones INFINITE de estrés
+   de Supervivencia también las degrada el gobernador por capas (antes solo reduced-fx),
+   para que la fluidez no dependa de que el usuario active "reducir efectos".
+   perf-1: fuera el borde de peligro que repinta (dangerBorder anima border-color full-board).
+   perf-2: además el tablero deja de "latir" en frenesí (el glow estático por tier y el
+   aura #fever —opacidad— siguen comunicando el estado; no se pierde legibilidad). */
+body.perf-1 .board-wrap.danger { animation: none !important; }
+body.perf-2.surv-frenzy-active .board-wrap { animation: none !important; }
 .toast.actionable { pointer-events: auto; cursor: pointer; }
 .toast.actionable .toast-tx { text-decoration: underline; text-underline-offset: 2px; }
 

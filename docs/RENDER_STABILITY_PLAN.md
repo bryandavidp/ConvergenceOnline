@@ -98,6 +98,22 @@ capas. Sostener 60 bajo carga es alcanzable en gama media-alta (Mi Pad 7, iPhone
 | RS-6 | **Reducir tamaño de capas**: acotar el pseudo sobredimensionado de skins, dimensiones explícitas en imágenes y confirmar que las capas FX full-screen no promueven hijos de más | P2 | ⬜ |
 | RS-8 | **Evaluar canvas único para partículas** (1 capa en vez de ~140) detrás de bandera, midiendo el regreso del bug blanco/negro; NO cambio a ciegas | P2 | ⬜ |
 | RS-9 | **Instrumentación multi-dispositivo**: `perf-probe` emulando Android hi-dpi + recuento de capas compuestas con presupuesto; validación real en Mi Pad 7 (chrome://inspect → Layers) | P2 | ⬜ (requiere navegador/dispositivo) |
+| RS-11 | **Supervivencia bajo estrés — repintados full-board vivos que el gobernador no cortaba** (A1: `surv-frenzy-pulse` animaba `filter` sobre toda la `.board-wrap`, solo lo curaba `reduced-fx`; A2: cortar en `perf-1/2` las infinitas de estrés `dangerBorder`/frenesí) | P0 | ✅ **Hecho v2.34.0** |
+| RS-12 | **Supervivencia bajo estrés — coste de hilo principal en la ráfaga de eventos** (A3: `syncAll` dirigido en meteoro/escarcha/cierre + `aria-label` memoizado en `syncCell`) | P1 | ✅ **Hecho v2.34.0** |
+| RS-13 | **Gobernador proactivo/predictivo** (B1: subir de nivel al detectar ocupación alta + eventos activos, sin esperar 2 s de EMA; B2: escalonar el trabajo del evento en varios frames; B3: reacción al pico de frame, no solo al EMA) | P1 | ⬜ (Grupo B) |
+| RS-14 | **Canvas único para partículas + medición** (C1: 1 capa en vez de ~140, detrás de bandera; C2: `perf-probe` emulando Android hi-dpi sobre la escena de estrés de Supervivencia) | P2 | ⬜ (Grupo C) |
+
+> **Escenario de seguimiento (jul 2026): Supervivencia con "todo a la vez".** Reporte del
+> propietario: con el **tablero lleno**, **varios eventos activos** (jefe/marea/frenesí) y cosas
+> pasando, se **pierden frames y se laguean las acciones del jugador**; en PC va fino, en móvil se
+> hace pesado y **solo "reducir efectos" lo cura**. Diagnóstico (anclado a código): (1) el frenesí
+> —muy frecuente en Supervivencia— animaba `filter: saturate/brightness` sobre TODA la `.board-wrap`
+> (`styles.css`, `surv-frenzy-pulse`), el mismo antipatrón que RS-1 quitó de la Fiebre, y **el
+> gobernador no lo cortaba** (solo `reduced-fx`, `styles.css:5770`) → por eso ese modo era el único
+> arreglo; (2) el gobernador es reactivo con umbral **sostenido 2 s** (`Perf.UP_MS`), pero un evento
+> de jefe dura ~1-2 s → la ráfaga acaba antes de que reaccione; (3) todo el trabajo del evento
+> (colocar fichas + `syncAll` de 64 celdas + N pulsos + flash + confeti) cae en **un frame** → ese
+> frame se come el tap del jugador. Grupos A (RS-11/12, hecho), B (RS-13) y C (RS-14) atacan las tres.
 
 **Invariante (igual que AP-*):** *no se elimina ninguna animación.* Se conservan estética, duración y
 coreografía; solo cambia la fontanería de composición (propiedad animada barata, menos capas
@@ -186,8 +202,43 @@ RS-9 (dispositivo real).
   (los `void offsetWidth` restantes son de **un** elemento por evento —tap fallido, shake, flash,
   fever— donde un reflujo aislado es despreciable). Bump 2.28.0 → 2.29.0.
 
+### v2.34.0 — Grupo A: Supervivencia bajo estrés, fontanería sin pérdida visual (RS-11/RS-12)
+
+Origen: el escenario de seguimiento de §4 (Supervivencia con tablero lleno + varios eventos a la
+vez). Todo respeta el invariante: **ninguna animación se recorta**; misma estética y duración.
+Cambios en `styles.css` (frenesí + cortes del gobernador) y `game.js` (módulo `Render`). Bump
+2.33.0 → 2.34.0. Tests: `tests/render-stability.test.js` amplía a 12 (A1/A2/A3); suite completa 324/324.
+
+- **A1 (RS-11) · Frenesí sin `filter` full-board.** `@keyframes surv-frenzy-pulse` deja de animar
+  `filter: saturate/brightness` sobre toda la `.board-wrap` y pasa a `transform` (latido composited).
+  Ese filtro re-rasterizaba una textura de tablero completo a `dpr×` **cada frame**, y como el
+  frenesí está activo buena parte de una partida de Supervivencia era el mayor sumidero del hilo de
+  paint. La **calidez** se conserva sin coste: el aura `#fever` (pulso de opacidad) la enciende
+  `Survival._setFrenzyClass()` durante todo el frenesí, y el glow por tier (`box-shadow` estático)
+  sigue. Mismo criterio que RS-1 en `fever-burst`. **Por esto `reduced-fx` era el único arreglo**
+  (era el único selector que anulaba esta animación, `styles.css:5770`).
+- **A2 (RS-11) · El gobernador degrada las infinitas de estrés.** Nuevas reglas `body.perf-1
+  .board-wrap.danger { animation:none }` (el borde de peligro `dangerBorder` repinta `border-color`
+  full-board) y `body.perf-2.surv-frenzy-active .board-wrap { animation:none }`. Antes estas
+  infinitas solo se cortaban con `reduced-fx`; ahora la degradación por capas del gobernador las
+  alcanza bajo carga sin que el usuario active nada. Queda el glow estático + aura `#fever` (no se
+  pierde legibilidad del estado).
+- **A3 (RS-12) · Menos hilo principal en la ráfaga de eventos.** (a) `Render.syncCells(list)` nuevo:
+  meteoro (`meteorRain`), escarcha (`frostSurge`) y cierre (`lockdown`) llamaban a `syncAll` (barrido
+  de las 64 celdas) para tocar solo un puñado; ahora sincronizan **solo las celdas afectadas** (`placed`).
+  (b) `aria-label` memoizado en `syncCell`: el texto solo depende de (icono, pack, idioma); recomputar
+  `cellLabel` (llama a `IconPacks.iconName`) y reescribir el atributo en las 64 celdas por barrido
+  invalidaba el árbol de accesibilidad en cada `syncAll`. Con varios eventos encadenados (varios
+  `syncAll` seguidos) ese coste se acumulaba. Se salta cuando no cambia; el atributo queda idéntico.
+
+**Verificación:** `node --check game.js` OK · `node --test tests/render-stability.test.js` 12/12 ·
+suite completa **324/324** · `eslint@9` 0 errores (solo warnings preexistentes de vars sin usar).
+
 ### Siguiente ola (pendiente)
 
+- **RS-13 (Grupo B)** — gobernador proactivo/predictivo (ocupación + eventos activos), escalonar el
+  trabajo del evento en varios frames, reacción al pico de frame.
+- **RS-14 (Grupo C)** — canvas único para partículas (con bandera) + `perf-probe` Android hi-dpi.
 - **RS-6** — dimensiones explícitas en imágenes + acotar tamaño de pseudos de skin.
 - **RS-8** — evaluar (con bandera y medición) un canvas único para partículas.
 - **RS-9** — `perf-probe` con recuento de capas + validación en Mi Pad 7 real (chrome://inspect → Layers).

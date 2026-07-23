@@ -96,3 +96,50 @@ test('RS-7: dispositivo de poca RAM arranca conservador aunque el dpr sea bajo',
   assert.equal(Perf.level, 1, 'táctil con deviceMemory≤4 arranca en nivel 1');
   window.devicePixelRatio = dprBak; navigator.maxTouchPoints = mtpBak; navigator.deviceMemory = memBak;
 });
+
+/* ===== Grupo A (Supervivencia bajo estrés) — RS-11 / RS-12 ===== */
+
+test('A1 (RS-11): el pulso de frenesí no anima filter sobre el tablero (solo transform)', () => {
+  const m = css.match(/@keyframes surv-frenzy-pulse \{[^\n]*\}/);
+  assert.ok(m, 'existe @keyframes surv-frenzy-pulse');
+  assert.ok(!/filter/.test(m[0]), 'no anima filter (re-rasterizaba full-board a dpr× cada frame)');
+  assert.ok(/transform/.test(m[0]), 'conserva el "latido" con transform (compositor)');
+});
+
+test('A2 (RS-11): el gobernador degrada las infinitas de estrés de Supervivencia (no solo reduced-fx)', () => {
+  assert.ok(/body\.perf-1 \.board-wrap\.danger \{[^}]*animation:\s*none/.test(css),
+    'perf-1 corta el borde de peligro (dangerBorder repinta border-color full-board)');
+  assert.ok(/body\.perf-2\.surv-frenzy-active \.board-wrap \{[^}]*animation:\s*none/.test(css),
+    'perf-2 corta el latido de frenesí (queda el glow estático + aura #fever)');
+});
+
+test('A3 (RS-12): aria-label memoizado — no reescribe el atributo si no cambia icono/pack/idioma', () => {
+  const { Render, State } = cv;
+  const cell = makeEl('button'), glyph = makeEl('span');
+  let ariaWrites = 0;
+  const origSet = cell.setAttribute.bind(cell);
+  cell.setAttribute = (k, v) => { if (k === 'aria-label') ariaWrites++; return origSet(k, v); };
+  Render.cells = [cell]; Render.glyphs = [glyph];
+  State.board = [null]; State.tiles = [null];
+  Render._cellId = []; Render._cellPack = []; Render._cellTile = []; Render._cellAria = [];
+  Render.syncCell(0);
+  assert.equal(ariaWrites, 1, 'el primer sync escribe el aria-label');
+  Render.syncCell(0);
+  assert.equal(ariaWrites, 1, 'un sync repetido SIN cambios no reescribe el atributo');
+  Render._cellAria[0] = 'STALE';            // clave distinta = cambió icono/pack/idioma
+  Render.syncCell(0);
+  assert.equal(ariaWrites, 2, 'una clave distinta sí fuerza la reescritura');
+});
+
+test('A3 (RS-12): syncCells sincroniza SOLO las celdas dadas (no barre las 64)', () => {
+  const { Render, State } = cv;
+  Render.cells = Array.from({ length: 64 }, () => makeEl('button'));
+  Render.glyphs = Array.from({ length: 64 }, () => makeEl('span'));
+  State.board = Array(64).fill(null); State.tiles = Array(64).fill(null);
+  Render._cellId = []; Render._cellPack = []; Render._cellTile = []; Render._cellAria = [];
+  let synced = 0; const orig = Render.syncCell.bind(Render);
+  Render.syncCell = (i) => { synced++; return orig(i); };
+  Render.syncCells([3, 7, 40]);
+  Render.syncCell = orig;
+  assert.equal(synced, 3, 'solo sincroniza las 3 celdas indicadas, no las 64');
+});
