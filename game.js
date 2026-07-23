@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.34.0';
+  const VERSION = '2.35.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -6117,8 +6117,11 @@
       this.frenzy = 0;
       this.frenzyUntil = performance.now() + (7200 + this.frenzyTier() * 900) * (this.mut.frenzyDur || 1);
       this._syncMult(); this._setFrenzyClass(); this._syncIntensity();
-      for (let k = 0; k < 2 + this.frenzyTier(); k++) Engine.spawnOne();
-      Render.syncAll(); Render.fever(true); Render.flash(); FX.confetti(36);
+      // B2a: captura las celdas nuevas y sincroniza SOLO esas (antes syncAll de las 64).
+      const spawned = [];
+      for (let k = 0; k < 2 + this.frenzyTier(); k++) { const i = Engine.spawnOne(); if (i >= 0) spawned.push(i); }
+      Render.syncCells(spawned); Render.fever(true); Render.flash();
+      this._deferFx(() => FX.confetti(36)); // B2b: el enjambre, fuera del frame de mutación
       // Primera FURIA MÁXIMA (tier 3) de la run: callout propio, una sola vez (SV-21).
       if (this.frenzyTier() === 3 && !this._frenzyT3Seen) {
         this._frenzyT3Seen = true;
@@ -6194,6 +6197,30 @@
     frozen() { return performance.now() < this.freezeUntil; },
     locked() { return performance.now() < this.lockUntil; },
     blockSpawn() { return this.frozen() || this.locked() || this._introActive(); },
+    // Grupo B · B1 (docs/RENDER_STABILITY_PLAN.md RS-13): señal PREDICTIVA para el gobernador.
+    // El gobernador reactivo (EMA sostenido 2s) llega tarde a las ráfagas de Supervivencia — un
+    // evento de jefe dura ~1-2s, se acaba antes de que reaccione. Aquí devolvemos un "suelo" de
+    // nivel a partir de lo que YA sabemos: ocupación del tablero + evento de estrés en curso. Así
+    // la degradación por capas (cortar ambientales/pulsos + acotar FX.cap) ocurre DURANTE la
+    // ráfaga. Con el tablero holgado devuelve 0: los eventos son baratos y no se degrada nada.
+    perfStress() {
+      if (State.status !== 'playing') return 0;
+      const cap = State.size * State.size;
+      const occ = cap ? State.iconCount / cap : 0;
+      if (occ < 0.6) return 0;                       // tablero holgado: sin presión de capas
+      const boss = Bosses.enc && Bosses.enc.kind === 'boss' && !Bosses.enc.resolved;
+      const eventActive = this.frenzyActive() || this.locked() || boss;
+      if (!eventActive) return occ >= 0.9 ? 1 : 0;   // casi lleno ya presiona por sí solo
+      return occ >= 0.82 ? 2 : 1;                    // lleno + evento = la ráfaga que lagea el tap
+    },
+    // Grupo B · B2 (RS-13): saca el trabajo DECORATIVO (enjambre de partículas) del frame que
+    // muta el estado del juego, al frame siguiente. 16ms invisibles, pero el frame del evento
+    // —y un posible tap del jugador en él— deja de cargar con el coste de crear decenas de
+    // animaciones WAAPI de golpe. Si no hay rAF (tests/Node) se ejecuta en el acto.
+    _deferFx(fn) {
+      if (typeof requestAnimationFrame !== 'function') { fn(); return; }
+      requestAnimationFrame(() => { if (State.status === 'playing') fn(); });
+    },
     _lock(ms, cls) {
       this.lockUntil = Math.max(this.lockUntil || 0, performance.now() + ms);
       if (cls) Render.boardEvent(cls, ms);
@@ -6398,7 +6425,7 @@
           key: 'boss-defeated-' + d.id, kicker: I18n.t('hud_event_boss'),
           title: msg, icon: 'trophy', kind: 'good', priority: 96, ms: 2200,
         });
-        Render.flash(); FX.confetti(d.flawless ? 74 : 60);
+        Render.flash(); this._deferFx(() => FX.confetti(d.flawless ? 74 : 60)); // B2b
         Sound.bossDefeat(); Haptics.record();
         // Botín del jefe (JF-γ, gated B-J1): monedas por nivel del encuentro.
         const coins = 8 + 4 * (d.lvl || 1);
@@ -6437,7 +6464,7 @@
         title: I18n.t(clean ? 'surv_boss_cleared_clean' : 'surv_boss_cleared'),
         icon: 'trophy', kind: 'good', priority: 92, ms: 1900,
       });
-      Render.flash(); FX.confetti(clean ? 54 : 40);
+      Render.flash(); this._deferFx(() => FX.confetti(clean ? 54 : 40)); // B2b
       Sound.record(); Haptics.record();
     },
     // Dispatcher declarativo (SV-40): ejecuta el jefe `id` con su intensidad. El eco
@@ -8637,7 +8664,14 @@
     GOOD: 16,                     // EMA(ms) considerado "bueno" (para bajar de nivel)
     UP_MS: 2000, DOWN_MS: 10000,  // ms sostenidos requeridos para subir / bajar
     FLOOR: 12,                    // tope mínimo de partículas
-    _badMs: 0, _goodMs: 0, _l2Ms: 0, _bootGuard: false, suggested: false,
+    FLOOR_HOLD: 700,              // ms que se mantiene un suelo PREDICTIVO antes de soltarlo (anti-parpadeo)
+    SPIKE_MS: 55,                 // un frame por encima de esto = pico real (B3)
+    SPIKE_UP: 120,                // ms de picos acumulados (con decaimiento) para escalar de nivel
+    _badMs: 0, _goodMs: 0, _l2Ms: 0, _spikeMs: 0, _bootGuard: false, suggested: false,
+    // Grupo B · B1 (RS-13): el nivel REACTIVO (this.level, histéresis por EMA) y el suelo
+    // PREDICTIVO (this._floor, señal del modo) son independientes. El nivel EFECTIVO que se
+    // pinta en <body> y acota FX.cap es el máximo de ambos (this.applied lo memoiza).
+    _floor: 0, _floorHoldUntil: 0, applied: -1,
     init() {
       try { this.suggested = localStorage.getItem('cv_perf_suggested') === '1'; } catch (_) { }
       // RS-7 (docs/RENDER_STABILITY_PLAN.md): arranque conservador NO solo en iOS Pro (dpr≥3).
@@ -8652,32 +8686,64 @@
       this.level = -1;                // fuerza a apply() a escribir la clase aunque el nivel sea 0
       this.apply(hiDpiTouch ? 1 : 0);
     },
-    apply(lvl) {
-      lvl = lvl < 0 ? 0 : lvl > 2 ? 2 : lvl;
-      if (lvl !== this.level) {
-        this.level = lvl;
-        const b = document.body && document.body.classList;
-        if (b) { b.toggle('perf-1', lvl >= 1); b.toggle('perf-2', lvl >= 2); }
-      }
-      if (FX.cap > this.CAP[lvl]) FX.cap = this.CAP[lvl]; // baja YA; el EMA lo re-sube dentro del nivel
-      this._badMs = 0; this._goodMs = 0;
+    apply(lvl) {           // fija el nivel REACTIVO (histéresis); el efectivo lo resuelve _render
+      this.level = lvl < 0 ? 0 : lvl > 2 ? 2 : lvl;
+      this._badMs = 0; this._goodMs = 0; this._spikeMs = 0;
+      this._render();
     },
+    _effective() { const f = this._floor; return this.level > f ? this.level : f; },
+    // Pinta el nivel EFECTIVO (max reactivo/predictivo) en <body> y acota FX.cap a su techo.
+    // Solo escribe el DOM cuando el nivel efectivo cambia (this.applied lo memoiza).
+    _render() {
+      const eff = this._effective();
+      if (eff !== this.applied) {
+        this.applied = eff;
+        const b = document.body && document.body.classList;
+        if (b) { b.toggle('perf-1', eff >= 1); b.toggle('perf-2', eff >= 2); }
+      }
+      const ceil = this.CAP[eff];
+      if (FX.cap > ceil) FX.cap = ceil;   // baja YA; el EMA lo re-sube dentro del techo efectivo
+    },
+    // Grupo B · B1 (RS-13): suelo PREDICTIVO por frame desde la señal del modo (ocupación +
+    // eventos activos). Sube al instante; al bajar mantiene el suelo FLOOR_HOLD ms (anti-parpadeo
+    // en el límite de ocupación y colita suave al terminar la ráfaga).
+    setFloor(f) {
+      f = f < 0 ? 0 : f > 2 ? 2 : f;
+      const now = performance.now();
+      if (f >= this._floor) { this._floor = f; this._floorHoldUntil = now + this.FLOOR_HOLD; }
+      else if (now >= this._floorHoldUntil) this._floor = f;
+      this._render();
+    },
+    // Suelta el suelo predictivo de inmediato (arranque/cierre de partida): evita que la clase
+    // perf-* quede pegada cuando el loop se detiene tras un game over en plena ráfaga.
+    resetFloor() { this._floor = 0; this._floorHoldUntil = 0; this._render(); },
     // Un paso por frame: EMA (ms) y dt (ms) del frame.
     step(ema, dt) {
-      const ceil = this.CAP[this.level];
-      // Tope de partículas DENTRO del nivel (clamp correcto: nunca supera el techo — B-08).
+      const ceil = this.CAP[this._effective()];
+      // Tope de partículas DENTRO del techo efectivo (clamp correcto: nunca lo supera — B-08).
       if (ema > 22) { if (FX.cap > this.FLOOR) FX.cap = Math.max(this.FLOOR, FX.cap - 6); }
       else if (ema < 17 && FX.cap < ceil) FX.cap = Math.min(ceil, FX.cap + 3);
-      if (FX.cap > ceil) FX.cap = ceil; // invariante dura: el tope jamás rebasa el techo del nivel
-      // Acumuladores de histéresis para el cambio de nivel.
+      // Acumuladores de histéresis para el nivel REACTIVO (independiente del suelo predictivo).
       if (this.level < 2 && ema > this.UP[this.level]) { this._badMs += dt; this._goodMs = 0; }
       else if (ema < this.GOOD) { this._goodMs += dt; this._badMs = 0; }
       else { this._badMs = 0; this._goodMs = 0; }
+      // Grupo B · B3 (RS-13): un frame-pico (dt real alto) es evidencia inmediata de ráfaga, que
+      // el EMA (media) tarda en notar. Acumulador PROPIO con decaimiento (independiente de la
+      // histéresis del EMA, que se resetea cada frame bueno): un pico aislado (GC) se olvida en
+      // ~un frame equivalente; picos encadenados (la ráfaga real) escalan de nivel sin esperar.
+      if (dt > this.SPIKE_MS && State.status === 'playing') {
+        if (FX.cap > this.FLOOR) FX.cap = Math.max(this.FLOOR, FX.cap - 12); // suelta partículas YA
+        this._spikeMs += dt;
+        if (this.level < 2 && this._spikeMs >= this.SPIKE_UP) { this._spikeMs = 0; this.apply(this.level + 1); }
+      } else if (this._spikeMs > 0) { this._spikeMs = Math.max(0, this._spikeMs - dt); }
+      if (FX.cap > ceil) FX.cap = ceil; // invariante dura: el tope jamás rebasa el techo efectivo
       if (this.level < 2 && this._badMs >= this.UP_MS) this.apply(this.level + 1);
       else if (this.level > 0 && this._goodMs >= (this._bootGuard ? 5000 : this.DOWN_MS)) { this._bootGuard = false; this.apply(this.level - 1); }
-      // Auto-sugerencia de modo ligero (P1-e): nivel 2 sostenido >30s, una sola vez por dispositivo.
+      // Auto-sugerencia de modo ligero (P1-e): nivel REACTIVO 2 sostenido >30s (no por ráfagas
+      // predictivas, que son transitorias), una sola vez por dispositivo.
       if (this.level >= 2) { this._l2Ms += dt; if (this._l2Ms > 30000) this.suggestLight(); }
       else this._l2Ms = 0;
+      this._render();
     },
     suggestLight() {
       if (this.suggested) return;
@@ -8695,7 +8761,9 @@
   const Loop = {
     raf: 0, last: 0, spawnAcc: 0, clockAcc: 0, ema: 16,
     start() { this.last = performance.now(); this.spawnAcc = 0; this.clockAcc = 0; cancelAnimationFrame(this.raf); this.raf = requestAnimationFrame(this.tick); },
-    stop() { cancelAnimationFrame(this.raf); this.raf = 0; },
+    // B1 (RS-13): al detener el loop se suelta el suelo predictivo del gobernador, para que la
+    // clase perf-* no quede pegada si la partida acaba (game over/salir) en plena ráfaga.
+    stop() { cancelAnimationFrame(this.raf); this.raf = 0; Perf.resetFloor(); },
     // Reinicia el rAF si está parado (para animar celebraciones aunque el juego no corra)
     kick() { if (!this.raf) { this.last = performance.now(); this.raf = requestAnimationFrame(this.tick); } },
     tick: (now) => {
@@ -8705,6 +8773,11 @@
       // Gobernador de rendimiento: EMA del tiempo de frame -> nivel de FX + tope de partículas.
       L.ema += (dt - L.ema) * 0.1;
       Perf.step(L.ema, dt);
+      // Grupo B · B1 (RS-13): suelo PREDICTIVO. Supervivencia sabe cuándo va a doler (tablero
+      // cargado + jefe/marea/frenesí en curso); alimentamos esa señal al gobernador para degradar
+      // por capas DURANTE la ráfaga, no 2s después. Fuera de Supervivencia (o sin ráfaga) es 0.
+      if (State.status === 'playing' && State.mode === 'supervivencia') Perf.setFloor(Survival.perfStress());
+      else Perf.setFloor(0);
 
       if (State.status === 'playing') {
         L.clockAcc += dt;

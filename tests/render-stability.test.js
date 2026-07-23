@@ -143,3 +143,57 @@ test('A3 (RS-12): syncCells sincroniza SOLO las celdas dadas (no barre las 64)',
   Render.syncCell = orig;
   assert.equal(synced, 3, 'solo sincroniza las 3 celdas indicadas, no las 64');
 });
+
+/* ===== Grupo B (gobernador proactivo/predictivo) — RS-13 ===== */
+
+test('B1 (RS-13): perfStress — suelo predictivo por ocupación + evento de estrés', () => {
+  const { Survival, State, Bosses } = cv;
+  const bak = { status: State.status, mode: State.mode, size: State.size, iconCount: State.iconCount };
+  const encBak = Bosses.enc, fuBak = Survival.frenzyUntil, luBak = Survival.lockUntil;
+  State.status = 'playing'; State.mode = 'supervivencia'; State.size = 8;
+  Bosses.enc = null; Survival.frenzyUntil = 0; Survival.lockUntil = 0;   // sin evento
+  State.iconCount = 20; assert.equal(Survival.perfStress(), 0, 'tablero holgado (0.31) -> 0');
+  State.iconCount = 42; assert.equal(Survival.perfStress(), 0, 'medio (0.66) sin evento -> 0');
+  State.iconCount = 59; assert.equal(Survival.perfStress(), 1, 'casi lleno (0.92) sin evento -> 1');
+  Survival.lockUntil = globalThis.performance.now() + 1000;               // evento activo (lock)
+  State.iconCount = 45; assert.equal(Survival.perfStress(), 1, 'lleno (0.70) + evento -> 1');
+  State.iconCount = 56; assert.equal(Survival.perfStress(), 2, 'lleno (0.875) + evento -> 2 (la ráfaga)');
+  State.status = 'idle'; assert.equal(Survival.perfStress(), 0, 'fuera de partida -> 0');
+  Object.assign(State, bak); Bosses.enc = encBak; Survival.frenzyUntil = fuBak; Survival.lockUntil = luBak;
+});
+
+test('B1 (RS-13): setFloor eleva el nivel EFECTIVO y acota FX.cap; resetFloor lo suelta', () => {
+  const { Perf, FX } = cv;
+  Perf.apply(0); Perf._floor = 0; Perf._floorHoldUntil = 0; Perf.applied = -1; Perf._render();
+  assert.equal(Perf._effective(), 0, 'nivel efectivo = reactivo cuando no hay suelo');
+  FX.cap = 50;
+  Perf.setFloor(2);
+  assert.equal(Perf._effective(), 2, 'el suelo predictivo eleva el efectivo a 2 sin tocar el reactivo');
+  assert.equal(Perf.level, 0, 'el nivel REACTIVO no cambia (independiente del suelo)');
+  assert.ok(FX.cap <= Perf.CAP[2], `FX.cap acotado al techo del nivel 2 (${FX.cap} <= ${Perf.CAP[2]})`);
+  assert.ok(document.body.classList.contains('perf-2'), 'aplica la clase perf-2 en <body>');
+  Perf.resetFloor();
+  assert.equal(Perf._effective(), 0, 'resetFloor suelta el suelo de inmediato');
+  assert.ok(!document.body.classList.contains('perf-2'), 'quita perf-2 al soltar');
+});
+
+test('B3 (RS-13): frames-pico sueltan partículas y escalan de nivel sin esperar al EMA', () => {
+  const { Perf, FX, State } = cv;
+  const bakStatus = State.status;
+  State.status = 'playing';
+  Perf.apply(0); Perf._floor = 0; Perf._floorHoldUntil = 0; Perf._spikeMs = 0; FX.cap = 40;
+  // Frame-pico con EMA aún "bueno" (16ms): la histéresis por EMA no subiría; B3 sí reacciona.
+  Perf.step(16, Perf.SPIKE_MS + 25);
+  assert.ok(FX.cap < 40, 'un pico suelta partículas de inmediato');
+  assert.ok(Perf._spikeMs > 0, 'acumula evidencia de pico pese al EMA bueno');
+  assert.equal(Perf.level, 0, 'un pico aislado todavía no escala');
+  // Segundo pico encadenado: supera SPIKE_UP -> sube el nivel reactivo.
+  Perf.step(16, Perf.SPIKE_MS + 25);
+  assert.equal(Perf.level, 1, 'dos picos encadenados escalan el nivel sin esperar 2s de EMA malo');
+  // Un pico aislado se OLVIDA con frames buenos (no deja el nivel clavado por un GC puntual).
+  Perf.apply(0); Perf._spikeMs = 0;
+  Perf.step(16, Perf.SPIKE_MS + 25);      // un pico
+  for (let k = 0; k < 6; k++) Perf.step(16, 16);   // frames buenos: decae
+  assert.equal(Perf._spikeMs, 0, 'el pico aislado decae a 0 con frames buenos');
+  State.status = bakStatus; Perf.apply(0); Perf._spikeMs = 0;
+});

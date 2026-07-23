@@ -100,7 +100,7 @@ capas. Sostener 60 bajo carga es alcanzable en gama media-alta (Mi Pad 7, iPhone
 | RS-9 | **Instrumentación multi-dispositivo**: `perf-probe` emulando Android hi-dpi + recuento de capas compuestas con presupuesto; validación real en Mi Pad 7 (chrome://inspect → Layers) | P2 | ⬜ (requiere navegador/dispositivo) |
 | RS-11 | **Supervivencia bajo estrés — repintados full-board vivos que el gobernador no cortaba** (A1: `surv-frenzy-pulse` animaba `filter` sobre toda la `.board-wrap`, solo lo curaba `reduced-fx`; A2: cortar en `perf-1/2` las infinitas de estrés `dangerBorder`/frenesí) | P0 | ✅ **Hecho v2.34.0** |
 | RS-12 | **Supervivencia bajo estrés — coste de hilo principal en la ráfaga de eventos** (A3: `syncAll` dirigido en meteoro/escarcha/cierre + `aria-label` memoizado en `syncCell`) | P1 | ✅ **Hecho v2.34.0** |
-| RS-13 | **Gobernador proactivo/predictivo** (B1: subir de nivel al detectar ocupación alta + eventos activos, sin esperar 2 s de EMA; B2: escalonar el trabajo del evento en varios frames; B3: reacción al pico de frame, no solo al EMA) | P1 | ⬜ (Grupo B) |
+| RS-13 | **Gobernador proactivo/predictivo** (B1: subir de nivel al detectar ocupación alta + eventos activos, sin esperar 2 s de EMA; B2: escalonar el trabajo del evento en varios frames; B3: reacción al pico de frame, no solo al EMA) | P1 | ✅ **Hecho v2.35.0** |
 | RS-14 | **Canvas único para partículas + medición** (C1: 1 capa en vez de ~140, detrás de bandera; C2: `perf-probe` emulando Android hi-dpi sobre la escena de estrés de Supervivencia) | P2 | ⬜ (Grupo C) |
 
 > **Escenario de seguimiento (jul 2026): Supervivencia con "todo a la vez".** Reporte del
@@ -234,10 +234,38 @@ Cambios en `styles.css` (frenesí + cortes del gobernador) y `game.js` (módulo 
 **Verificación:** `node --check game.js` OK · `node --test tests/render-stability.test.js` 12/12 ·
 suite completa **324/324** · `eslint@9` 0 errores (solo warnings preexistentes de vars sin usar).
 
+### v2.35.0 — Grupo B: gobernador proactivo/predictivo (RS-13)
+
+El gobernador dejaba de ser puramente reactivo (EMA sostenido 2 s), que llegaba tarde a las ráfagas
+de Supervivencia (un evento de jefe dura ~1-2 s). Ahora separa el **nivel reactivo** (histéresis por
+EMA, intacto) del **nivel efectivo** = `max(reactivo, suelo predictivo)`, y actúa antes. Cambios en
+`game.js` (módulos `Perf`, `Loop`, `Survival`). Bump 2.34.0 → 2.35.0. Tests: `render-stability.test.js`
+amplía a 15 (B1/B3); suite completa 323/323. Invariante intacto: ninguna animación se recorta.
+
+- **B1 · Suelo predictivo.** `Perf` gana `_floor`/`setFloor`/`resetFloor` y `_effective()`; `_render()`
+  pinta en `<body>` el nivel efectivo (memoizado en `applied`) y acota `FX.cap` a su techo. `Loop.tick`
+  llama cada frame a `Perf.setFloor(Survival.perfStress())` en Supervivencia (0 en el resto).
+  `Survival.perfStress()` deriva un suelo 0/1/2 de lo que el modo YA sabe: **ocupación del tablero** +
+  **evento de estrés en curso** (frenesí / lock de evento / encuentro de jefe). Tablero holgado
+  (`occ<0.6`) → 0 (los eventos son baratos, no se degrada nada); casi lleno sin evento → 1; lleno +
+  evento → 2. Así los cortes por capa (ambientales/pulsos) y el tope de `FX.cap` bajan **durante** la
+  ráfaga, no 2 s después. El suelo sube al instante y al bajar se mantiene `FLOOR_HOLD=700ms`
+  (anti-parpadeo en el límite de ocupación + colita suave); `Loop.stop()` llama a `resetFloor()` para
+  que la clase `perf-*` no quede pegada si la partida acaba en plena ráfaga.
+- **B2 · Menos trabajo en el frame del evento.** `activateFrenzy` sincroniza SOLO las celdas nuevas
+  (`syncCells`, antes `syncAll` de 64). Nuevo `Survival._deferFx(fn)`: saca el **enjambre de partículas**
+  (confeti) de frenesí y de "jefe superado" al frame SIGUIENTE (16 ms invisibles), para que el frame que
+  muta el estado —y un posible tap del jugador en él— no cargue con crear decenas de animaciones WAAPI.
+- **B3 · Reacción al pico, no solo a la media.** Un frame por encima de `SPIKE_MS=55ms` suelta `FX.cap`
+  de inmediato y suma a un acumulador de picos con decaimiento propio (independiente de la histéresis del
+  EMA, que se resetea cada frame bueno): un pico aislado (GC) se olvida, picos encadenados —la ráfaga
+  real— escalan de nivel sin esperar los 2 s de EMA malo.
+
+**Verificación:** `node --check game.js` OK · `node --test tests/render-stability.test.js` 15/15 ·
+suite completa **323/323** · `eslint@9` 0 errores.
+
 ### Siguiente ola (pendiente)
 
-- **RS-13 (Grupo B)** — gobernador proactivo/predictivo (ocupación + eventos activos), escalonar el
-  trabajo del evento en varios frames, reacción al pico de frame.
 - **RS-14 (Grupo C)** — canvas único para partículas (con bandera) + `perf-probe` Android hi-dpi.
 - **RS-6** — dimensiones explícitas en imágenes + acotar tamaño de pseudos de skin.
 - **RS-8** — evaluar (con bandera y medición) un canvas único para partículas.
