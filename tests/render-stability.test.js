@@ -197,3 +197,61 @@ test('B3 (RS-13): frames-pico sueltan partículas y escalan de nivel sin esperar
   assert.equal(Perf._spikeMs, 0, 'el pico aislado decae a 0 con frames buenos');
   State.status = bakStatus; Perf.apply(0); Perf._spikeMs = 0;
 });
+
+/* ===== Grupo C (estructural) — RS-14: canvas de partículas (experimental) + sonda ===== */
+
+test('C1 (RS-14): el backend de canvas está OFF por defecto (no altera producción)', () => {
+  const { FX } = cv;
+  assert.equal(FX._wantCanvas(), false, 'sin ?canvasfx ni flag, el canvas de partículas está OFF');
+});
+
+test('C1 (RS-14): _particleAt reproduce la parábola y el fundido de _emit', () => {
+  const { FX } = cv;
+  const p = { x: 100, y: 50, vx: 10, vy: 20, g: 100, life: 1, spin: 90, size: 6, shape: 0, color: '#fff' };
+  const s = FX._particleAt(p, 0.5);   // x=105; y=50+10+12.5=72.5; rot=45; frac .5 -> alpha 1
+  assert.equal(s.x, 105);
+  assert.ok(Math.abs(s.y - 72.5) < 1e-9, 'y sigue la parábola x + v·t + ½·g·t²');
+  assert.equal(s.rot, 45, 'rotación = spin·t');
+  assert.equal(s.alpha, 1);
+  assert.equal(s.dead, false);
+  assert.ok(Math.abs(FX._particleAt(p, 0.7).alpha - 0.5) < 1e-9, 'fundido lineal 60%→80% de la vida');
+  assert.equal(FX._particleAt(p, 1.0).dead, true, 't ≥ life -> muerta');
+  const pre = FX._particleAt(p, -0.1);
+  assert.equal(pre.alpha, 0, 'durante el delay es invisible');
+  assert.equal(pre.dead, false, 'pero no está muerta (aún no ha nacido)');
+});
+
+test('C1 (RS-14): _emitCanvas respeta el tope (descarta al saturar, como el pool DOM)', () => {
+  const { FX } = cv;
+  const capBak = FX.cap, cpsBak = FX.cps, ucBak = FX.useCanvas;
+  FX.useCanvas = true; FX.cps = []; FX.cap = 3;
+  for (let k = 0; k < 10; k++) FX._emitCanvas(0, 0, 0, 0, 0, 1, 5, '#fff', 0, 0, 0, false);
+  assert.equal(FX.cps.length, 3, 'no supera FX.cap (descarta el resto)');
+  FX.cps = [];
+  for (let k = 0; k < FX.ABS_MAX + 40; k++) FX._emitCanvas(0, 0, 0, 0, 0, 1, 5, '#fff', 0, 0, 0, true);
+  assert.equal(FX.cps.length, FX.ABS_MAX, 'con force llega hasta ABS_MAX (backstop de celebración)');
+  FX.cap = capBak; FX.cps = cpsBak; FX.useCanvas = ucBak;
+});
+
+test('C1 (RS-14): stepCanvas descarta las partículas muertas (compacta el array)', () => {
+  const { FX } = cv;
+  const bak = { uc: FX.useCanvas, c: FX.canvas, ctx: FX.cctx, cps: FX.cps, dpr: FX.cdpr };
+  const noop = () => {};
+  FX.useCanvas = true; FX.cdpr = 1; FX.canvas = { width: 200, height: 200 };
+  FX.cctx = { globalAlpha: 1, fillStyle: '', clearRect: noop, save: noop, restore: noop, translate: noop, rotate: noop, fillRect: noop, beginPath: noop, arc: noop, fill: noop };
+  FX.cps = [
+    { x: 0, y: 0, vx: 0, vy: 0, g: 0, life: 1, size: 5, shape: 0, color: '#fff', spin: 0, age: 0.9 }, // vive
+    { x: 0, y: 0, vx: 0, vy: 0, g: 0, life: 1, size: 5, shape: 1, color: '#0f0', spin: 30, age: 1.5 }, // muerta
+  ];
+  FX.stepCanvas(16);
+  assert.equal(FX.cps.length, 1, 'la muerta (age ≥ life) se recolecta; la viva permanece');
+  FX.useCanvas = bak.uc; FX.canvas = bak.c; FX.cctx = bak.ctx; FX.cps = bak.cps; FX.cdpr = bak.dpr;
+});
+
+test('C2 (RS-14/RS-9): la sonda soporta perfil Android hi-dpi y comparación de canvas', () => {
+  const probe = fs.readFileSync(path.join(__dirname, '..', 'tools', 'perf-probe.js'), 'utf8');
+  assert.ok(/--android/.test(probe), 'perf-probe acepta --android (tablet hi-dpi)');
+  assert.ok(/deviceScaleFactor/.test(probe), 'emula el dpr real (coste de paint)');
+  assert.ok(/--canvas/.test(probe) && /enableCanvas/.test(probe), 'perf-probe compara el backend de canvas');
+  assert.ok(/tideSurge|meteorRain|frostSurge/.test(probe), 'la escena de estrés fuerza eventos de Supervivencia');
+});

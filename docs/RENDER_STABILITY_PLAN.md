@@ -96,12 +96,12 @@ capas. Sostener 60 bajo carga es alcanzable en gama media-alta (Mi Pad 7, iPhone
 | RS-4 | **Presupuesto de capas de celda**: acotar/coalescer pulsos de celda concurrentes en cascadas grandes (integrado con el gobernador `perf-1/2`) | P1 | ✅ **Hecho v2.27.0** |
 | RS-10 | **Reflujo síncrono por celda en el spawn masivo** (`spawnAnim` → WAAPI): eliminar el `void offsetWidth` que causaba layout thrashing al aparecer muchos iconos de golpe (refill tras vaciar el tablero) — pérdida de frames en iOS | P0 | ✅ **Hecho v2.28.0** |
 | RS-6 | **Reducir tamaño de capas**: acotar el pseudo sobredimensionado de skins, dimensiones explícitas en imágenes y confirmar que las capas FX full-screen no promueven hijos de más | P2 | ⬜ |
-| RS-8 | **Evaluar canvas único para partículas** (1 capa en vez de ~140) detrás de bandera, midiendo el regreso del bug blanco/negro; NO cambio a ciegas | P2 | ⬜ |
-| RS-9 | **Instrumentación multi-dispositivo**: `perf-probe` emulando Android hi-dpi + recuento de capas compuestas con presupuesto; validación real en Mi Pad 7 (chrome://inspect → Layers) | P2 | ⬜ (requiere navegador/dispositivo) |
+| RS-8 | **Evaluar canvas único para partículas** (1 capa en vez de ~140) detrás de bandera, midiendo el regreso del bug blanco/negro; NO cambio a ciegas | P2 | 🟡 **Backend implementado v2.36.0** (bandera OFF por defecto; falta medir/promover) |
+| RS-9 | **Instrumentación multi-dispositivo**: `perf-probe` emulando Android hi-dpi + recuento de capas compuestas con presupuesto; validación real en Mi Pad 7 (chrome://inspect → Layers) | P2 | 🟡 **Sonda con perfil Android hi-dpi v2.36.0**; validación real pendiente (requiere dispositivo) |
 | RS-11 | **Supervivencia bajo estrés — repintados full-board vivos que el gobernador no cortaba** (A1: `surv-frenzy-pulse` animaba `filter` sobre toda la `.board-wrap`, solo lo curaba `reduced-fx`; A2: cortar en `perf-1/2` las infinitas de estrés `dangerBorder`/frenesí) | P0 | ✅ **Hecho v2.34.0** |
 | RS-12 | **Supervivencia bajo estrés — coste de hilo principal en la ráfaga de eventos** (A3: `syncAll` dirigido en meteoro/escarcha/cierre + `aria-label` memoizado en `syncCell`) | P1 | ✅ **Hecho v2.34.0** |
 | RS-13 | **Gobernador proactivo/predictivo** (B1: subir de nivel al detectar ocupación alta + eventos activos, sin esperar 2 s de EMA; B2: escalonar el trabajo del evento en varios frames; B3: reacción al pico de frame, no solo al EMA) | P1 | ✅ **Hecho v2.35.0** |
-| RS-14 | **Canvas único para partículas + medición** (C1: 1 capa en vez de ~140, detrás de bandera; C2: `perf-probe` emulando Android hi-dpi sobre la escena de estrés de Supervivencia) | P2 | ⬜ (Grupo C) |
+| RS-14 | **Canvas único para partículas + medición** (C1: 1 capa en vez de ~140, detrás de bandera; C2: `perf-probe` emulando Android hi-dpi sobre la escena de estrés de Supervivencia) | P2 | 🟡 **Hecho v2.36.0** (backend + sonda listos; medición real en dispositivo pendiente — requiere navegador) |
 
 > **Escenario de seguimiento (jul 2026): Supervivencia con "todo a la vez".** Reporte del
 > propietario: con el **tablero lleno**, **varios eventos activos** (jefe/marea/frenesí) y cosas
@@ -264,12 +264,50 @@ amplía a 15 (B1/B3); suite completa 323/323. Invariante intacto: ninguna animac
 **Verificación:** `node --check game.js` OK · `node --test tests/render-stability.test.js` 15/15 ·
 suite completa **323/323** · `eslint@9` 0 errores.
 
+### v2.36.0 — Grupo C: canvas único de partículas (experimental, con bandera) + sonda Android (RS-14)
+
+RS-8 avisa explícitamente: el canvas es la palanca más grande (1 capa en vez de ~140) **pero la de
+más riesgo** (puede reintroducir el bug blanco/negro), así que va **detrás de bandera y con medición,
+NO a ciegas**. Esta ola entrega justo eso: el backend listo (OFF por defecto, cero cambio en
+producción) y el arnés para medirlo. Cambios en `game.js` (módulo `FX`, `Loop`) y `tools/perf-probe.js`.
+Bump 2.35.0 → 2.36.0. Tests: `render-stability.test.js` amplía a 20 (C1/C2); suite completa 328/328.
+
+- **C1 · Backend de partículas en un canvas (RS-8), detrás de bandera.** `FX` gana un backend
+  alternativo: con la bandera activa (`?canvasfx` en la URL o `localStorage.cv_canvas_fx='1'`, o
+  `FX.enableCanvas(true)` en caliente), `_emit` dibuja la partícula en **un solo `<canvas>`** en vez
+  de tomar un span del pool DOM → colapsa las ~140 capas del compositor en **1**. Cubre las partículas
+  de `_emit` (burst / confeti / chispas de `boardClear`); la coreografía de convergencia (iconos que
+  vuelan) sigue en DOM (pocos nodos, iconos nítidos). El integrador `_particleAt` es **puro** y
+  reproduce EXACTAMENTE la parábola y el fundido de los keyframes de `_emit` (probado en Node).
+  `stepCanvas` (llamado por `Loop.tick`) avanza edades, descarta muertas y redibuja; respeta `FX.cap`
+  (descarta al saturar, mismo contrato que el pool). **OFF por defecto**: producción sigue en el pool
+  DOM hasta que la medición confirme que no reaparece el parpadeo. El tamaño del canvas se acota a
+  `viewport × min(3, dpr)` (RS-6).
+- **C2 · Sonda multi-dispositivo (RS-9).** `tools/perf-probe.js` gana: (a) `--android` — emula tablet
+  Android hi-dpi (`deviceScaleFactor: 3`), el presupuesto de capas ajustado de la Mi Pad 7, donde el
+  `dpr` alto es lo que dispara el coste de paint; (b) escena de estrés = **el caso reportado** (tablero
+  cargado + eventos concurrentes de Supervivencia: marea/escarcha/meteoro/frenesí + confeti), no solo
+  fiebre+confeti; (c) `--canvas` — mide el backend de C1 en la misma escena para comparar el ahorro de
+  capas contra el pool DOM; (d) `--assert N` sobre la escena de estrés etiquetada.
+
+**Cómo medir/validar (pendiente, requiere navegador):**
+```bash
+python3 -m http.server 8080 &
+node tools/perf-probe.js --android              # pool DOM en tablet Android hi-dpi (escena de estrés)
+node tools/perf-probe.js --android --canvas     # + comparación con el canvas único
+node tools/perf-probe.js --android --assert 55  # guardarraíl
+```
+La palabra final es el dispositivo real (Mi Pad 7 → chrome://inspect → Layers): confirmar el recuento
+de capas del canvas frente al pool DOM y que NO reaparece el parpadeo a negro antes de promover C1 a
+producción. `playwright` debe estar disponible para Node (el repo no tiene `package.json`).
+
+**Verificación:** `node --check game.js && node --check tools/perf-probe.js` OK ·
+`node --test tests/render-stability.test.js` 20/20 · suite completa **328/328** · `eslint@9` 0 errores.
+
 ### Siguiente ola (pendiente)
 
-- **RS-14 (Grupo C)** — canvas único para partículas (con bandera) + `perf-probe` Android hi-dpi.
+- **Medir y decidir sobre C1/RS-8** en dispositivo real antes de promover el canvas a producción.
 - **RS-6** — dimensiones explícitas en imágenes + acotar tamaño de pseudos de skin.
-- **RS-8** — evaluar (con bandera y medición) un canvas único para partículas.
-- **RS-9** — `perf-probe` con recuento de capas + validación en Mi Pad 7 real (chrome://inspect → Layers).
 
 ---
 

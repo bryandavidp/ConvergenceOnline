@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.35.0';
+  const VERSION = '2.36.0';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -3129,6 +3129,13 @@
   const FX = {
     layer: null, pool: [], idx: 0, active: 0, cap: 40, w: 0, h: 0, boardRect: null, supported: true,
     wave: null, convergeHost: null, convergeGroups: [], convergeGroupIdx: 0,
+    // Grupo C · C1 (docs/RENDER_STABILITY_PLAN.md RS-14/RS-8): backend de partículas en UN canvas
+    // (1 capa del compositor en vez de ~140 spans). EXPERIMENTAL y detrás de bandera: OFF por
+    // defecto (el pool DOM sigue siendo el camino de producción). Se activa con `?canvasfx` en la
+    // URL o `localStorage.cv_canvas_fx='1'`, para MEDIR con tools/perf-probe.js --android antes de
+    // considerar promoverlo (RS-8 exige medición, "NO cambio a ciegas"). Solo cubre las partículas
+    // de _emit (burst/confeti/chispas de boardClear); la coreografía de convergencia sigue en DOM.
+    useCanvas: false, canvas: null, cctx: null, cps: [], cdpr: 1,
     POOL: 140,                // backstop absoluto para celebraciones y recompensas
     ABS_MAX: 140,
     CONVERGE_GROUPS: 3,       // tres coreografías completas pueden convivir sin reciclar nodos
@@ -3157,6 +3164,7 @@
     init() {
       this.layer = $('#fx'); if (!this.layer) return;
       this.supported = typeof Element !== 'undefined' && !!Element.prototype.animate;
+      this.useCanvas = this._wantCanvas();   // C1: bandera experimental (OFF salvo ?canvasfx / flag)
       const frag = document.createDocumentFragment();
       for (let i = 0; i < this.POOL; i++) {
         const s = document.createElement('span');
@@ -3171,6 +3179,7 @@
       this.layer.appendChild(frag);
       this._attachConvergeLayer(Render.convergeLayer);
       this.resize();
+      if (this.useCanvas) this._initCanvas();   // C1: capa única de partículas (experimental)
       window.addEventListener('resize', () => this.resize(), { passive: true });
       window.addEventListener('scroll', () => this.syncBoardRect(), { passive: true });
       if (window.visualViewport) window.visualViewport.addEventListener('resize', () => this.resize(), { passive: true });
@@ -3238,6 +3247,7 @@
     resize() {
       this._cancelConvergeAnimations();
       this.w = window.innerWidth; this.h = window.innerHeight; this.syncBoardRect();
+      if (this.canvas) this._sizeCanvas();   // C1: mantener la resolución del canvas al viewport×dpr
     },
     syncBoardRect() { const el = $('#board'); this.boardRect = el ? el.getBoundingClientRect() : null; },
     // Coordenadas (viewport) del centro de la celda i
@@ -3286,6 +3296,9 @@
     // Si se alcanza el tope de concurrencia, se DESCARTA (nunca se cancela una activa),
     // así el nº de capas del compositor queda acotado y no hay parpadeo blanco.
     _emit(x, y, vx, vy, g, life, size, color, shape, spin, delay, force) {
+      // C1 (RS-14): con la bandera de canvas activa, la partícula se dibuja en la capa única en
+      // vez de tomar un span del pool DOM. Mismo contrato de tope (se descarta al saturar).
+      if (this.useCanvas && this.cctx) return this._emitCanvas(x, y, vx, vy, g, life, size, color, shape, spin, delay, force);
       if (!this.supported || this.active >= (force ? this.ABS_MAX : this.cap)) return;
       const p = this._slot(); if (!p) return;
       const el = p.el;
@@ -3316,6 +3329,82 @@
         try { anim.onfinish = null; anim.oncancel = null; anim.cancel(); } catch (_) { }
       };
       anim.onfinish = done; anim.oncancel = done;
+    },
+    /* ===== C1 (RS-14): backend de partículas en canvas único (experimental, detrás de bandera) =====
+       Colapsa las ~140 capas del pool DOM en 1 sola. OFF por defecto: solo se usa para MEDIR el
+       ahorro de presupuesto de capas (perf-probe --android) antes de decidir promoverlo (RS-8). */
+    _wantCanvas() {
+      try { if ((location.search || '').indexOf('canvasfx') !== -1) return true; } catch (_) { }
+      try { return localStorage.getItem('cv_canvas_fx') === '1'; } catch (_) { }
+      return false;
+    },
+    _initCanvas() {
+      if (this.canvas || !this.layer) return;
+      const c = document.createElement('canvas');
+      c.id = 'fx-canvas'; c.setAttribute('aria-hidden', 'true');
+      c.style.position = 'absolute'; c.style.inset = '0';
+      c.style.width = '100%'; c.style.height = '100%'; c.style.pointerEvents = 'none';
+      this.canvas = c;
+      this.cctx = typeof c.getContext === 'function' ? c.getContext('2d') : null;
+      this.layer.appendChild(c);
+      this._sizeCanvas();
+    },
+    _sizeCanvas() {
+      if (!this.canvas) return;
+      const dpr = Math.min(3, window.devicePixelRatio || 1);   // acota el tamaño de la textura (RS-6)
+      this.cdpr = dpr;
+      this.canvas.width = Math.round(this.w * dpr);
+      this.canvas.height = Math.round(this.h * dpr);
+    },
+    // Permite conmutar el backend en caliente (perf-probe/medición). No toca producción (OFF).
+    enableCanvas(on) {
+      this.useCanvas = !!on;
+      if (on) this._initCanvas();
+      else if (this.cctx && this.canvas) { this.cps.length = 0; this.cctx.clearRect(0, 0, this.canvas.width, this.canvas.height); }
+    },
+    _emitCanvas(x, y, vx, vy, g, life, size, color, shape, spin, delay, force) {
+      const capN = force ? this.ABS_MAX : this.cap;
+      if (this.cps.length >= capN) return;   // mismo contrato que el pool: se descarta al saturar
+      this.cps.push({ x, y, vx, vy, g, life, size, color, shape, spin: spin || 0, age: -((delay || 0) / 1000) });
+      if (typeof Loop !== 'undefined' && Loop.kick) Loop.kick();   // el loop debe estar vivo para dibujar
+    },
+    // Integrador PURO (testeable en Node): posición/rotación/alfa de la partícula a la edad t (s).
+    // Reproduce EXACTAMENTE la parábola y el desvanecimiento de los keyframes de _emit
+    // (opacidad 1 hasta el 60% de la vida, fundido lineal 60%→80%, 0 después).
+    _particleAt(p, t) {
+      if (t < 0) return { x: p.x, y: p.y, rot: 0, alpha: 0, dead: false };
+      if (t >= p.life) return { x: 0, y: 0, rot: 0, alpha: 0, dead: true };
+      const frac = t / p.life;
+      const alpha = frac < 0.6 ? 1 : frac >= 0.8 ? 0 : 1 - (frac - 0.6) / 0.2;
+      return { x: p.x + p.vx * t, y: p.y + p.vy * t + 0.5 * p.g * t * t, rot: p.spin * t, alpha, dead: false };
+    },
+    // Un paso por frame (lo llama Loop.tick): avanza edades, descarta muertas y redibuja la capa.
+    stepCanvas(dt) {
+      if (!this.useCanvas || !this.cctx || !this.canvas) return;
+      const ctx = this.cctx, dpr = this.cdpr, list = this.cps;
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      if (!list.length) return;
+      const ds = dt / 1000; let w = 0;
+      for (let i = 0; i < list.length; i++) {
+        const p = list[i]; p.age += ds;
+        const s = this._particleAt(p, p.age);
+        if (s.dead) continue;              // fuera del array (no se copia -> se recolecta)
+        list[w++] = p;                     // compacta in-place las vivas
+        if (s.alpha <= 0) continue;
+        this._drawParticle(ctx, p, s, dpr);
+      }
+      list.length = w;
+    },
+    _drawParticle(ctx, p, s, dpr) {
+      ctx.globalAlpha = s.alpha; ctx.fillStyle = p.color;
+      const cx = s.x * dpr, cy = s.y * dpr, sz = p.size * dpr;
+      if (p.shape === 1) {                 // confeti: rectángulo (mismo aspecto que el span DOM)
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(s.rot * Math.PI / 180);
+        ctx.fillRect(-sz / 2, -sz * 0.3, sz, sz * 0.6); ctx.restore();
+      } else {                             // burst/chispa: círculo
+        ctx.beginPath(); ctx.arc(cx, cy, sz / 2, 0, 6.2832); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
     },
     // Estallido en la celda eliminada (sale del centro hacia fuera).
     // OJO: usa el rect del tablero CACHEADO (no se llama a getBoundingClientRect
@@ -8778,6 +8867,9 @@
       // por capas DURANTE la ráfaga, no 2s después. Fuera de Supervivencia (o sin ráfaga) es 0.
       if (State.status === 'playing' && State.mode === 'supervivencia') Perf.setFloor(Survival.perfStress());
       else Perf.setFloor(0);
+      // C1 (RS-14): si el backend de canvas está activo, avanza/redibuja la capa única de
+      // partículas (no-op inmediato si la bandera está OFF, que es el caso por defecto).
+      if (FX.useCanvas) FX.stepCanvas(dt);
 
       if (State.status === 'playing') {
         L.clockAcc += dt;
