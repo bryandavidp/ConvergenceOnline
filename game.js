@@ -1701,6 +1701,33 @@
       return out;
     },
 
+    // Celdas "calientes": vaciadas por el jugador (o punto de convergencia) hace un
+    // instante. Un SPAWN ORGÁNICO inmediato ahí (sin retardo visual) se lee como "el
+    // icono eliminado no desapareció" o "reapareció el mismo icono en su casilla"
+    // (bug reportado): mientras exista alternativa, spawnOne las evita una ventana
+    // corta; si no hay alternativa se usan igual (overflow y conteo no cambian). El
+    // relleno post-tablero-limpio NO las evita: su entrada en cascada retardada
+    // (Render.refillAnim) ya hace legible cualquier celda, y evitar celdas ahí
+    // distorsionaba la geometría de los patrones (−12% de score del bot estándar,
+    // medido con balance-sim 31 runs — inaceptable para el guardarraíl de medallas).
+    HOT_MS: 650,
+    _hotCells: Object.create(null),
+    noteHot(cells) {
+      const now = performance.now();
+      for (const i of cells) this._hotCells[i] = now;
+    },
+    resetHot() { this._hotCells = Object.create(null); },
+    _isHot(i, win) {
+      const t = this._hotCells[i];
+      if (t === undefined) return false;
+      const dt = performance.now() - t;
+      return dt >= 0 && dt < (win || this.HOT_MS);
+    },
+    _preferCold(list, win) {
+      const cold = list.filter((i) => !this._isHot(i, win));
+      return cold.length ? cold : list;
+    },
+
     /* Iconos que convergen al tocar la casilla vacía `i`.
        Devuelve los índices a eliminar (grupos con 2+ del mismo tipo). */
     converging(i) {
@@ -1735,6 +1762,7 @@
     },
 
     placeInitial(n) {
+      this.resetHot(); // tablero nuevo: ninguna celda arrastra "calor" de la partida anterior
       const empties = this.emptyCells();
       for (let k = 0; k < n && empties.length; k++) {
         const j = rand(empties.length);
@@ -1771,8 +1799,12 @@
     },
 
     spawnOne() {
-      const empties = this.emptyCells();
+      let empties = this.emptyCells();
       if (!empties.length) return -1;
+      // Evitar la celda que el jugador acaba de vaciar (ventana corta): un spawn
+      // instantáneo ahí — a veces del MISMO icono por el sesgo de clear-assist —
+      // se lee como "mi icono no se eliminó".
+      empties = this._preferCold(empties, 450);
       const idx = empties[rand(empties.length)];
       State.board[idx] = this._pickSpawnId();
       State.iconCount++;
@@ -2075,13 +2107,45 @@
         // aparece un icono nuevo, su syncCell vuelve a poner has-icon.
         if (State.board[i] === null) { el.classList.remove('has-icon'); el.classList.toggle('empty', !State.tiles[i]); }
         el.classList.add('clear');
-        el.addEventListener('animationend', () => {
+        let done = false;
+        const fin = () => {
+          if (done) return; done = true;
           el.classList.remove('clear');
           // Borra el glyph al acabar el pop. Race-safe: si entre medias apareció un
           // icono nuevo (spawn/penalización), board[i]!==null y NO se toca.
           if (State.board[i] === null) this.setGlyph(i, null);
-        }, { once: true });
+        };
+        el.addEventListener('animationend', fin, { once: true });
+        // Cinturón: si animationend nunca llega (animación cancelada por cambio de
+        // clase, pestaña oculta, animation:none…), la celda NO puede quedarse con un
+        // icono fantasma pintado sobre board[i]===null (bug "no desaparece del todo").
+        setTimeout(fin, 480);
       });
+    },
+
+    // Entrada del relleno post-tablero-limpio: cascada con retardo por celda y gesto
+    // propio (brota desde abajo), distinguible del spawn normal (pop) y de la marea
+    // de Supervivencia (tide-fill). Solo transform/opacity; `fill:'backwards'`
+    // mantiene la ficha invisible durante su delay aunque syncAll ya la haya pintado,
+    // de modo que el tablero se VE vacío mientras aterriza el vuelo de convergencia
+    // y el relleno se lee como consecuencia del bonus, no como spawns misteriosos.
+    refillAnim(i, delay = 0) {
+      const el = this.cells[i], g = this.glyphs[i];
+      el.classList.remove('spawn', 'clear');
+      if (!g) return;
+      const anims = g.getAnimations ? g.getAnimations() : null;
+      if (anims) anims.forEach((a) => { try { a.cancel(); } catch (_) { } });
+      if (typeof g.animate !== 'function') return;
+      try {
+        g.animate(
+          [
+            { transform: 'translateY(38%) scale(.35)', opacity: 0 },
+            { transform: 'translateY(-6%) scale(1.08)', opacity: 1, offset: 0.72 },
+            { transform: 'translateY(0) scale(1)', opacity: 1 },
+          ],
+          { duration: 430, delay, fill: 'backwards', easing: 'cubic-bezier(.2,.85,.3,1.1)' },
+        );
+      } catch (_) { }
     },
 
     miss(i) { const el = this.cells[i]; el.classList.remove('miss'); void el.offsetWidth; el.classList.add('miss'); },
@@ -9528,6 +9592,9 @@
         }
         State.board[idx] = null; State.iconCount--;
       });
+      // Celdas calientes: las recién vaciadas + el punto tocado. Los spawns/rellenos
+      // inmediatos las evitarán una ventana corta (ilusión "no desapareció").
+      Engine.noteHot(conv.concat(i));
       Render.clearAnim(conv, i);
       conv.forEach(idx => { Render.setTile(idx); Render.cells[idx].setAttribute('aria-label', Render.cellLabel(idx)); });
 
@@ -9633,6 +9700,7 @@
     // Elimina las figuras de `cells` (sin convergencia) actualizando contador y render.
     _removeCells(cells) {
       cells.forEach((idx) => { if (State.board[idx] !== null) { State.board[idx] = null; State.iconCount--; } });
+      Engine.noteHot(cells);
       Render.clearAnim(cells);
       cells.forEach((idx) => { Render.setTile(idx); Render.syncCell(idx); });
     },
@@ -9810,7 +9878,9 @@
       const f = [];
       for (let i = 0; i < State.board.length; i++) if (State.board[i] !== null && !State.tiles[i]) f.push(i);
       let n = Math.floor(f.length * frac);
-      for (let k = 0; k < n && f.length; k++) { const idx = f.splice(rand(f.length), 1)[0]; FX.burst(idx, IconPacks.colorOf(Meta.equippedIconPack(), State.board[idx]), 4); State.board[idx] = null; State.iconCount--; }
+      const wiped = [];
+      for (let k = 0; k < n && f.length; k++) { const idx = f.splice(rand(f.length), 1)[0]; FX.burst(idx, IconPacks.colorOf(Meta.equippedIconPack(), State.board[idx]), 4); State.board[idx] = null; State.iconCount--; wiped.push(idx); }
+      Engine.noteHot(wiped);
       Render.syncAll();
     },
 
@@ -9943,14 +10013,26 @@
       const refilled = Engine.refillAfterEmpty(chain);
       if (refilled.length) {
         Render.syncAll();
-        refilled.forEach((idx) => Render.spawnAnim(idx));
+        // Cascada radial desde el punto del bonus, arrancando TRAS el aterrizaje del
+        // vuelo de convergencia (~305ms): el jugador VE el tablero vacío un instante
+        // y el relleno se lee como consecuencia del bonus (antes aparecía en el mismo
+        // frame que la última convergencia y era indistinguible de spawns normales).
+        const instant = motionOff();
+        const cr = center / State.size | 0, cc = center % State.size;
+        refilled.forEach((idx) => {
+          const dist = Math.abs((idx / State.size | 0) - cr) + Math.abs(idx % State.size - cc);
+          Render.refillAnim(idx, instant ? 0 : Math.min(320 + dist * 26, 700));
+        });
         State.emptyBonusClaimed = false;
         State.minIcons = Math.min(State.minIcons, State.iconCount);
       }
 
       const msg = `Tablero limpio · +${points} · +${coins} ${I18n.t('coins')}${extra.length ? ' · ' + extra.join(' · ') : ''}`;
       Toasts.show(msg, 'good', 2400, 'v2:four-pointed-star');
-      Render.popup(center, `+${fmtNum(points)} BONUS`, '#ffd84d');
+      // El popup del bonus también espera al aterrizaje del vuelo: causalidad legible
+      // ("convergió → tablero limpio → bonus"), no tres cosas en el mismo frame.
+      if (motionOff()) Render.popup(center, `+${fmtNum(points)} BONUS`, '#ffd84d');
+      else setTimeout(() => { if (State.status === 'playing') Render.popup(center, `+${fmtNum(points)} BONUS`, '#ffd84d'); }, 240);
       Render.bump($('#hud-score'));
       if (State.mode === 'zen') Render.bump($('#hud-zen-wrap'));
       Render.flash();
