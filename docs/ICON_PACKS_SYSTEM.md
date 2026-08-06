@@ -115,7 +115,8 @@
 - **Colecciones**: categoría `iconpacks` en `COLLECTION_CATS` (con `packModal:true`
   y `emblemHtml`); `collItems('iconpacks')`, `collEquip`. Tile de pack → abre
   `openIconPackModal(id, { onChange })`.
-- **Modal de pack**: `openIconPackModal` / `fillIconPackModal` sobre
+- **Modal de pack**: `openIconPackModal` / `fillIconPackModal` /
+  `iconPackModalAction` sobre
   `#modal-icon-pack` (index.html). Muestra todas las figuras reales de cada pack
   (16 en Cosmos; 20 en Básico Rediseñado y Pack Gemas; 12 en Elemental; 8 en
   Naturaleza Básico, Pack Neón, Marino y Mágico; y 10 en Naturaleza Avanzado y
@@ -124,6 +125,36 @@
 - **Tienda**: sección `shop_iconpacks` en `buildShop`; `data-ipack-view/eq/buy`.
 - **Renombrado**: `col_cat_icons` ahora = packs de tablero; `col_cat_avatars`
   (nuevo) = avatares de perfil. i18n de perfil/tienda/cofres actualizado.
+
+### Invariante del modal (bug del "inventario borrado", v2.37.2)
+
+`#modal-icon-pack` es **un solo modal reutilizado** para los 10 packs, con **un
+solo** `#icon-pack-action`. La regla que hay que respetar al tocarlo:
+
+> lo que el modal **pinta** y el pack sobre el que el botón **actúa** salen
+> siempre del mismo id.
+
+Antes no era así y se podía romper: `fillIconPackModal(id)` repintaba el modal
+pero no tocaba `action.dataset.pack`, y la confirmación de compra en dos toques
+usaba un booleano compartido (`dataset.armed`) más un `setTimeout` suelto de 3 s
+que capturaba *su* id. Si el jugador armaba una compra dentro de los 3 s
+siguientes a haber armado otra (comprar un pack y pasar al siguiente es
+exactamente eso), el temporizador del pack viejo repintaba el modal del pack
+nuevo: el jugador veía un pack **que ya tenía**, con el botón "Equipar", y al
+pulsarlo se le cobraba el otro pack. Desde fuera se lee como "los packs
+comprados se han borrado del inventario y me obliga a comprarlos de nuevo"
+(el inventario en `cosmetics.iconPacks` nunca se borró: solo se añade).
+
+Corrección:
+- `fillIconPackModal()` es el **único** sitio que fija `action.dataset.pack`, y
+  desarma cualquier confirmación pendiente al repintar.
+- El armado va marcado con el **id del pack** (`dataset.armed === id`) y su
+  temporizador se guarda en `_iconPackArmTimer` para poder cancelarlo
+  (`disarmIconPackAction`); además solo desarma si el modal sigue mostrando ese
+  mismo pack.
+- La acción vive en `iconPackModalAction()` (función con nombre, exportada en
+  `window.__cv` con `?dev`) para poder probarla: ver los tres tests de modal en
+  `tests/icon-packs.test.js`.
 
 ### Fidelidad / decisiones
 - Cosmos sigue siendo gratuito y equipado por defecto. Naturaleza Básico es
