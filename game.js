@@ -16,7 +16,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '2.37.1';
+  const VERSION = '2.37.2';
 
   /* ===================== Telemetría de errores (local, sin red) =====================
    * Guarda los últimos errores en localStorage para diagnóstico, sin enviar nada.
@@ -12459,8 +12459,25 @@
 
   /* ---- Modal de contenido de un pack de iconos (reutilizable: tienda + colección).
    * Muestra TODOS los iconos del pack + acción equipar/comprar. `onChange` refresca
-   * la vista que lo abrió. */
+   * la vista que lo abrió.
+   *
+   * INVARIANTE (bug del "inventario borrado"): el botón de acción es ÚNICO y se
+   * reutiliza para todos los packs, así que lo que se PINTA y el pack sobre el que
+   * se ACTÚA deben venir siempre del mismo id. Si divergen, el jugador ve un pack
+   * (p. ej. uno que ya tiene, con el botón "Equipar") y el toque compra/equipa otro
+   * distinto: parece que el pack anterior se ha perdido y que hay que volver a
+   * pagarlo. Por eso `fillIconPackModal()` es el ÚNICO sitio que fija
+   * `action.dataset.pack`, y el armado de confirmación va marcado con el id del
+   * pack + un temporizador cancelable (antes era un booleano y un `setTimeout`
+   * suelto: el temporizador de un pack repintaba el modal de otro). */
   let _iconPackOnChange = null;
+  let _iconPackArmTimer = 0;
+  function disarmIconPackAction(action) {
+    if (_iconPackArmTimer) { clearTimeout(_iconPackArmTimer); _iconPackArmTimer = 0; }
+    if (!action) return;
+    delete action.dataset.armed;
+    action.classList.remove('confirming');
+  }
   function fillIconPackModal(packId) {
     const pack = IconPacks.DEFS[packId]; if (!pack) return;
     const rarity = Rarity.of(pack), accent = Rarity.accent(rarity);
@@ -12474,11 +12491,39 @@
     const note = $('#icon-pack-note'); if (note) { note.hidden = !equipped; note.textContent = equipped ? I18n.t('iconpack_equipped_note') : ''; }
     const action = $('#icon-pack-action');
     if (action) {
-      action.classList.remove('confirming'); delete action.dataset.armed;
+      // Repintar SIEMPRE reata la acción al pack pintado y cancela cualquier armado
+      // pendiente (propio o heredado de otro pack).
+      disarmIconPackAction(action);
+      action.dataset.pack = packId;
       if (equipped) { action.disabled = true; action.innerHTML = esc(I18n.t('equipped')); }
       else if (owned) { action.disabled = false; action.innerHTML = esc(I18n.t('equip')); }
       else { action.disabled = false; action.innerHTML = pack.cost > 0 ? `${iconInline('coin')} ${pack.cost}` : esc(I18n.t('free')); }
     }
+  }
+  // Toque sobre el botón del modal: equipar si ya es propio, o comprar con
+  // confirmación en dos toques. Siempre sobre el pack que el modal está pintando.
+  function iconPackModalAction() {
+    const action = $('#icon-pack-action'); if (!action) return;
+    const id = action.dataset.pack;
+    const pack = IconPacks.DEFS[id]; if (!pack) return;
+    if (Meta.ownsIconPack(id)) {
+      if (Meta.equipIconPack(id)) Sound.success();
+    } else if (pack.cost > 0 && action.dataset.armed !== id) {
+      // Confirmación de compra en dos toques para packs de pago.
+      disarmIconPackAction(action);
+      action.dataset.armed = id; action.classList.add('confirming');
+      const prev = action.innerHTML; action.innerHTML = `${esc(I18n.t('confirm_buy'))} ${prev}`;
+      _iconPackArmTimer = setTimeout(() => {
+        _iconPackArmTimer = 0;
+        // Solo se desarma si el modal sigue mostrando ESTE pack y ESTE armado.
+        if (action.isConnected && action.dataset.pack === id && action.dataset.armed === id) fillIconPackModal(id);
+      }, 3000);
+      Sound.ui(); return;
+    } else if (Meta.buyIconPack(id)) { Meta.equipIconPack(id); Sound.success(); }
+    else { disarmIconPackAction(action); Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); fillIconPackModal(id); return; }
+    updateTopBars();
+    fillIconPackModal(id);
+    if (_iconPackOnChange) _iconPackOnChange();
   }
   function openIconPackModal(packId, opts = {}) {
     if (!IconPacks.DEFS[packId]) return;
@@ -12486,25 +12531,8 @@
     const action = $('#icon-pack-action');
     if (action && !action.dataset.wired) {
       action.dataset.wired = '1';
-      action.addEventListener('click', () => {
-        const id = action.dataset.pack;
-        const pack = IconPacks.DEFS[id]; if (!pack) return;
-        if (Meta.ownsIconPack(id)) {
-          if (Meta.equipIconPack(id)) Sound.success();
-        } else if (pack.cost > 0 && !action.dataset.armed) {
-          // Confirmación de compra en dos toques para packs de pago (futuros).
-          action.dataset.armed = '1'; action.classList.add('confirming');
-          const prev = action.innerHTML; action.innerHTML = `${esc(I18n.t('confirm_buy'))} ${prev}`;
-          setTimeout(() => { if (action.isConnected && action.dataset.armed) { delete action.dataset.armed; action.classList.remove('confirming'); fillIconPackModal(id); } }, 3000);
-          Sound.ui(); return;
-        } else if (Meta.buyIconPack(id)) { Meta.equipIconPack(id); Sound.success(); }
-        else { Sound.miss(); Toasts.show(I18n.t('no_coins'), 'warn', 1600); return; }
-        updateTopBars();
-        fillIconPackModal(id);
-        if (_iconPackOnChange) _iconPackOnChange();
-      });
+      action.addEventListener('click', iconPackModalAction);
     }
-    if (action) action.dataset.pack = packId;
     fillIconPackModal(packId);
     Modal.open('modal-icon-pack');
   }
@@ -14364,5 +14392,5 @@
   else init();
 
   // Hook opcional para pruebas/QA (solo con ?dev en la URL). No afecta al juego normal.
-  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, IconPacks, PlayerIcons, PlayerBorders, playerAvatarHtml, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, ShopFX, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, BossCoach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
+  if (location.search.indexOf('dev') !== -1) window.__cv = { State, Engine, Game, Render, Config, Storage, FX, Meta, IconPacks, PlayerIcons, PlayerBorders, playerAvatarHtml, openIconPackModal, fillIconPackModal, iconPackModalAction, Storefront, XP_BOOST_MULTIPLIER, CHEST_TYPES, CHEST_TYPE_ORDER, CHEST_SKIP_GEMS_PER_HOUR, chestOdds, chestRollCount, ChestNotices, Econ, ShopFX, Settings, Music, Loop, Sound, Tiles, Boosters, Modifiers, Rules, Themes, Cosmetics, Boards, Worlds, Classic, Coach, BossCoach, Adventure, Survival, Bosses, Share, I18n, Toasts, Feedback, RNG, RunSave, Picker, PreLevel, DailyMut, Modal, HubViews, Perf, ModeSignals, ModeLaunch, HomeModeCarousel, buildHomeModeCarousel, buildMissions, showHome, refreshStart, applyLanguage };
 })();

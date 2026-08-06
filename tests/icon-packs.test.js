@@ -11,7 +11,9 @@ const zlib = require('node:zlib');
 require('./dom-stub.js');
 require('../game.js');
 
-const { IconPacks, Engine, Meta, Render } = globalThis.window.__cv;
+const { IconPacks, Engine, Meta, Render, openIconPackModal, fillIconPackModal, iconPackModalAction } = globalThis.window.__cv;
+
+const packAction = () => document.querySelector('#icon-pack-action');
 
 function snapshotMeta() { return JSON.parse(JSON.stringify(Meta.state)); }
 function restoreMeta(snapshot) {
@@ -321,6 +323,60 @@ test('cambiar de pack repinta la misma ficha sin alterar su id lógico', () => i
     Render._cellId = prev.cellId;
     Render._cellPack = prev.cellPack;
   }
+}));
+
+/* --- Modal de pack: el botón de acción es único y compartido. Si lo que pinta y
+ * el pack sobre el que actúa divergen, el jugador compra/equipa un pack distinto
+ * del que ve: parece que los packs comprados antes se han borrado del inventario
+ * y que hay que volver a pagarlos. */
+test('repintar el modal reata la acción al pack que se está mostrando', () => isolated(() => {
+  Meta.state.coins = 100000;
+  openIconPackModal('neon');
+  assert.equal(packAction().dataset.pack, 'neon');
+  // Repintado ajeno (p. ej. el temporizador de confirmación de otro pack).
+  fillIconPackModal('prismatic');
+  assert.equal(packAction().dataset.pack, 'prismatic');
+}));
+
+test('el armado de confirmación es por pack y no sobrevive a un cambio de pack', () => isolated(() => {
+  Meta.state.coins = 100000;
+  openIconPackModal('neon');
+  iconPackModalAction(); // arma la compra de neon
+  assert.equal(packAction().dataset.armed, 'neon');
+  assert.equal(Meta.ownsIconPack('neon'), false, 'el primer toque nunca compra');
+  openIconPackModal('prismatic'); // el jugador se va a otro pack
+  assert.equal(packAction().dataset.armed, undefined, 'el armado no se hereda');
+  iconPackModalAction();
+  assert.equal(Meta.ownsIconPack('prismatic'), false, 'un toque heredado no debe comprar');
+  assert.equal(packAction().dataset.armed, 'prismatic');
+}));
+
+test('comprar en el modal cobra el pack mostrado y conserva los ya comprados', () => isolated(() => {
+  Meta.state.coins = 100000;
+  const before = Meta.coins();
+  openIconPackModal('basic-redesigned');
+  iconPackModalAction(); iconPackModalAction(); // armar + confirmar
+  assert.equal(Meta.ownsIconPack('basic-redesigned'), true);
+  assert.equal(Meta.coins(), before - IconPacks.DEFS['basic-redesigned'].cost);
+
+  openIconPackModal('neon');
+  iconPackModalAction(); iconPackModalAction();
+  assert.equal(Meta.ownsIconPack('neon'), true);
+  assert.equal(Meta.ownsIconPack('basic-redesigned'), true, 'comprar un pack no borra el anterior');
+  assert.equal(Meta.coins(), before - IconPacks.DEFS['basic-redesigned'].cost - IconPacks.DEFS.neon.cost);
+
+  // Un pack ya comprado nunca vuelve a cobrarse: la acción solo lo equipa.
+  const afterTwo = Meta.coins();
+  openIconPackModal('basic-redesigned');
+  assert.equal(packAction().dataset.armed, undefined);
+  iconPackModalAction();
+  assert.equal(Meta.equippedIconPack(), 'basic-redesigned');
+  assert.equal(Meta.coins(), afterTwo, 'equipar un pack propio no cuesta monedas');
+
+  // Persistencia: el inventario guardado conserva ambos packs.
+  const saved = JSON.parse(localStorage.getItem('cv_meta'));
+  assert.ok(saved.cosmetics.iconPacks['basic-redesigned']);
+  assert.ok(saved.cosmetics.iconPacks.neon);
 }));
 
 test('ningún pack raster duplica figuras distintas dentro de un nivel', () => {
